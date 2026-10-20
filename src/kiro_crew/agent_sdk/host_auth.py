@@ -524,13 +524,16 @@ AGENT_AUTH_DECLARATIONS: Tuple[AgentAuthDeclaration, ...] = (
         sign_in_remedy=(
             "OpenCode signs in on its own — run opencode auth login in a terminal "
             "to reach a hosted model. A model served locally on this machine needs "
-            "no sign-in: name it in the project's opencode.json instead. Neither is "
-            "checked here: the harness reads them."
+            "no sign-in: name it in the project's opencode.json instead. Any "
+            "OpenAI-compatible server can also be set in agent.openai_compatible, "
+            "with its key under Settings > Secrets. None of these is checked here: "
+            "the harness reads them."
         ),
         signed_out_message=(
             "OpenCode is not signed in. Run `opencode auth login` in your terminal "
-            "and complete its sign-in, or name a locally served model in the "
-            "project's opencode.json, then start a new chat."
+            "and complete its sign-in, name a locally served model in the "
+            "project's opencode.json, or set an OpenAI-compatible endpoint in "
+            "agent.openai_compatible, then start a new chat."
         ),
         # Excluded deliberately: it signs in through its own credential file, so a
         # ``kiro-cli logout`` says nothing about whether a running opencode session

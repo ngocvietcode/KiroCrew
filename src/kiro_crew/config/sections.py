@@ -109,6 +109,7 @@ from kiro_crew.config.sections_agent import (  # noqa: F401
     yolo_duration_to_secs,
 )
 from kiro_crew.config.sections_agent_env import (  # noqa: F401
+    _OPENAI_COMPAT_URL_SCHEMES,
     AGENT_ENV_CREDENTIAL_CLASS,
     AGENT_ENV_DATA_ONLY_NAMES,
     AGENT_ENV_DENIED_NAMES,
@@ -118,6 +119,11 @@ from kiro_crew.config.sections_agent_env import (  # noqa: F401
     CHILD_ENV_DEFAULT_MAX,
     CHILD_ENV_DEFAULT_MIN,
     CHILD_ENV_DEFAULT_NAMES,
+    OPENAI_COMPAT_KEYS,
+    OPENAI_COMPAT_SCHEMA_PROPERTIES,
+    OPENAI_COMPAT_TOKEN_KEYS,
+    OPENAI_COMPAT_TOKENS_MAX,
+    OPENAI_COMPAT_TOKENS_MIN,
     _agent_env_denied,
     _agent_env_entry_refusal,
     _agent_env_home_override_names,
@@ -127,7 +133,10 @@ from kiro_crew.config.sections_agent_env import (  # noqa: F401
     coerce_agent_env,
     coerce_child_env_defaults,
     coerce_deepseek_env,
+    coerce_openai_compatible,
     deepseek_env_plaintext_keys,
+    openai_compatible_issues,
+    openai_compatible_plaintext_key,
 )
 from kiro_crew.config.sections_agent_fields import (  # noqa: F401
     _AVATAR_EXPRESSION_AXES,

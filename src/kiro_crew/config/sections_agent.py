@@ -12,9 +12,11 @@ from kiro_crew import model_registry
 from kiro_crew.acp_backends import DEFAULT_ACP_BACKEND
 from kiro_crew.config.fields import _meta, field_default
 from kiro_crew.config.sections_agent_env import (
+    OPENAI_COMPAT_SCHEMA_PROPERTIES,
     coerce_agent_env,
     coerce_child_env_defaults,
     coerce_deepseek_env,
+    coerce_openai_compatible,
 )
 from kiro_crew.config.sections_agent_fields import (
     _VALID_JAIL_MODES,
@@ -292,6 +294,30 @@ class AgentConfig:
             "starts with a message naming the offending key. Empty means no key: "
             "a model served locally on this machine needs none. Ignored by every "
             "other backend.",
+        ),
+    )
+    openai_compatible: dict[str, str] = field(
+        default_factory=dict,
+        metadata=_meta(
+            "OpenAI-compatible endpoint (OpenCode)",
+            "Points the OpenCode harness ('opencode' backend) at any server that "
+            "speaks the OpenAI chat-completions API -- vLLM, Ollama, LM Studio, "
+            "LiteLLM, an internal gateway or a hosted provider. Keys: 'base_url' "
+            "(required, the URL ending in /v1), 'model' (required, the id the "
+            "server serves), 'api_key' (optional, a 'secret://<vault name>' "
+            "reference -- store the key under Settings > Secrets first), 'name' "
+            "(optional display name), 'context_tokens' and 'output_tokens' "
+            "(optional budgets from 1024 to 10000000). Example: "
+            '{"base_url": "https://llm.example.com/v1", "model": "qwen3-coder", '
+            '"api_key": "secret://llm-key"}. Kiro Crew registers the endpoint as '
+            "OpenCode provider 'kirocrew-openai' and makes it the session's "
+            "default model; the key reaches the harness as an environment "
+            "variable, never through a file. A plaintext api_key is REFUSED at "
+            "write time, and an entry with a missing or malformed field refuses "
+            "the OpenCode session with a message naming the key. Empty means "
+            "off. Ignored by every other backend; takes effect on the next "
+            "OpenCode session.",
+            properties=OPENAI_COMPAT_SCHEMA_PROPERTIES,
         ),
     )
     sweep_agents_backups: bool = field(
@@ -1260,6 +1286,7 @@ class AgentConfig:
         # names and values may BE is refused at spawn, by name -- see
         # coerce_deepseek_env.
         self.deepseek_env = coerce_deepseek_env(self.deepseek_env)
+        self.openai_compatible = coerce_openai_compatible(self.openai_compatible)
         self.child_env_defaults = coerce_child_env_defaults(self.child_env_defaults)
         self.env = coerce_agent_env(self.env)
         # Same defensive coercion for the throttle-fallback model: normalize to
