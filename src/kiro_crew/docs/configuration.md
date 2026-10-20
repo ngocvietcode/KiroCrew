@@ -131,7 +131,7 @@ provider.
 | `kiro` | kiro-cli | The Kiro CLI choice. |
 | `claude` | Claude Code | Uses the public `claude-agent-acp` adapter. |
 | `codex` | Codex | Uses the Codex ACP adapter. |
-| `opencode` | OpenCode | Uses OpenCode's native ACP server. |
+| `opencode` | OpenCode | Uses OpenCode's native ACP server. Any OpenAI-compatible endpoint can be set in `agent.openai_compatible` — see [OpenAI-compatible endpoint](#openai-compatible-endpoint). |
 | `pi` | Pi | Uses `pi-acp` and its Pi gate extension. |
 | `goose` | goose | Uses goose's native ACP server. |
 | `deepseek` | DeepSeek Harness | Runs `dsh --profile acp` with Kiro Crew's gate plugin; provider keys come from `agent.deepseek_env`. |
@@ -189,6 +189,49 @@ per-harness capability matrix.
 Set a registered value with, for example,
 `kirocrew config set agent.acp_backend kiro`. `agent.member_acp_backend`, the
 harness for crew-member DM sessions, reads the same values.
+
+### OpenAI-compatible endpoint
+
+The OpenCode harness can run on any server that speaks the OpenAI
+chat-completions API: vLLM, Ollama, LM Studio, LiteLLM, an internal LLM gateway
+or a hosted provider. Install OpenCode, then:
+
+1. If the server needs a key, store it under **Settings → Secrets** (for example
+   as `llm-key`). Keys are never written into `config.json`.
+2. Select OpenCode and point it at the server:
+
+   ```bash
+   kirocrew config set agent.acp_backend opencode
+   kirocrew config set agent.openai_compatible.base_url https://llm.example.com/v1
+   kirocrew config set agent.openai_compatible.model qwen3-coder
+   kirocrew config set agent.openai_compatible.api_key secret://llm-key
+   kirocrew config set agent.openai_compatible.context_tokens 131072
+   ```
+
+3. Start a new chat. The setting takes effect on the next OpenCode session.
+
+| Key | Required | Meaning |
+|-----|----------|---------|
+| `base_url` | yes | The `http://` or `https://` URL, usually ending in `/v1`. |
+| `model` | yes | The model id exactly as the server serves it. |
+| `api_key` | no | A `secret://<vault name>` reference. Leave it out for a server that takes no key. |
+| `name` | no | The display name OpenCode shows for the provider. |
+| `context_tokens`, `output_tokens` | no | The served context window and reply budget, from 1024 to 10000000. OpenCode uses them to know when to compact. |
+
+Kiro Crew registers the endpoint as OpenCode provider `kirocrew-openai` in the
+inline config it already hands the harness, and makes
+`kirocrew-openai/<model>` the session's default model (and the small model used
+for titles, unless your own OpenCode config names one). Your other OpenCode
+providers stay available in the model picker. Kiro Crew's permission routing is
+unchanged: every tool call still asks Kiro Crew's gate first.
+
+The key reaches OpenCode as the environment variable
+`KIROCREW_OPENAI_COMPAT_API_KEY`, resolved from the vault when the session
+starts. Like OpenCode's own `opencode auth login` credential, it is readable by
+OpenCode's process and the shell its tools run, so prefer a key scoped to this
+endpoint. A plaintext `api_key` is refused when saved; a missing field, a
+malformed URL or a secret missing from the vault refuses the OpenCode session
+before it starts, with a message naming the field.
 
 ## Key Settings
 
@@ -274,6 +317,7 @@ harness for crew-member DM sessions, reads the same values.
 | `agent.kas_bundle` | Run the `kas` backend from Kiro Crew's own installed engine bundle (`kirocrew kas install`) with its bundled Node, instead of kiro-cli's ACP relay. kiro-cli is not needed; the engine signs in through Kiro Crew's own login only. `true` with nothing installed refuses the spawn and names the install command | `false` |
 | `agent.kas_bundle_url` | `https://` base `kirocrew kas install` fetches the engine manifest from (`<base>/kas/<version>/manifest.json`). Every artifact is sha256-pinned by the manifest and the manifest by the release, so this chooses where the pinned build is fetched from, never what is trusted. Non-https values fall back to the default | the project's release bucket |
 | `agent.deepseek_env` | Provider keys handed to the DeepSeek Harness (`agent.acp_backend: deepseek`) as environment variables at spawn: a map of environment-variable NAME to a `secret://<vault name>` reference. Store the key under Settings → Secrets first, then map it — e.g. `{"DEEPSEEK_API_KEY": "secret://my-dsh-key"}`. Any provider name the harness knows works. A plaintext value is refused at write time — the `config set` itself fails, so no key is ever stored in `config.json` — and, at spawn, so is a name the harness would forward to its own shell children, a name Kiro Crew sets itself, or one Kiro Crew's agent environment scrub strips: the session is refused before it starts, naming the offending key. Empty means no key — a locally served model needs none. Other backends ignore it | `{}` |
+| `agent.openai_compatible` | An OpenAI-compatible endpoint for the OpenCode harness (`agent.acp_backend: opencode`): `base_url` and `model` (required), `api_key` (a `secret://<vault name>` reference, optional), `name`, `context_tokens`, `output_tokens` (optional). A plaintext `api_key` is refused at write time; a missing or malformed field refuses the OpenCode session, naming the field. Empty means off. Other backends ignore it. See [OpenAI-compatible endpoint](#openai-compatible-endpoint) | `{}` |
 | `agent.approval_mode` | `"auto"` or `"interactive"` | `"auto"` |
 | `agent.model` | Default LLM model for new sessions. `"auto"` defers to the agent config, then to Kiro's own default. Editable from Settings → Chat → Model; a per-session model picker overrides it for that session only | `"auto"` |
 | `agent.reasoning_effort` | Default reasoning effort on models that support it. One of `""`, `low`, `medium`, `high`, `xhigh`, `max`; `""` defers to the provider/model default. A per-session override wins | `""` |

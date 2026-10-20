@@ -22,17 +22,23 @@ import logging
 import os
 import re
 import subprocess as subprocess_mod
-from typing import Any, Collection
+from typing import Any, Awaitable, Callable, Collection
 
 from kiro_crew import acp_tool_gate
 from kiro_crew.acp import launch as launch_mod
 from kiro_crew.acp.harness.base import ProcessAdapter, ProcessSession, SpawnContext, SpawnPlan
+from kiro_crew.acp.harness.opencode_openai_compat import (
+    load_openai_compatible,
+    merge_openai_compat_seed,
+    openai_compat_key_env,
+    openai_compat_seed,
+)
 from kiro_crew.acp.harness_tool_names import (
     MAX_HARNESS_CONFIG_MCP_SERVERS,
     MAX_HARNESS_TOOL_NAME_LEN,
     opencode_rewrites_name,
 )
-from kiro_crew.acp.transport_errors import AcpToolGateUnroutable
+from kiro_crew.acp.transport_errors import AcpError, AcpToolGateUnroutable
 from kiro_crew.agent_sdk.backends import ACP_BACKEND_OPENCODE, launch_for
 from kiro_crew.sandbox import scrub_agent_subprocess_env, wrap_argv, wrap_argv_async
 
@@ -512,11 +518,18 @@ def _opencode_seeded_deny_rules(config_content: str, setting_key: str) -> tuple[
     )
 
 
-def _opencode_routing_config(backend: str, deny_rules: Collection[str] = ()) -> str:
+def _opencode_routing_config(
+    backend: str,
+    deny_rules: Collection[str] = (),
+    endpoint_seed: dict[str, Any] | None = None,
+) -> str:
     """The inline harness config that makes this session ask, as one env value.
 
     *deny_rules* are the tool ids the session's projection asks the harness itself to
-    deny (``SessionProjection.harness_deny_rules``).
+    deny (``SessionProjection.harness_deny_rules``). *endpoint_seed* is the
+    ``agent.openai_compatible`` provider (:func:`openai_compat_seed`), merged BEFORE
+    the permission setting is written, so nothing it carries can displace the value
+    the host gate depends on -- and the read-back then judges the merged document.
 
     MERGED over an ambient value rather than replacing it: an operator who set
     the variable themselves keeps every key they chose, and only the permission
@@ -546,6 +559,8 @@ def _opencode_routing_config(backend: str, deny_rules: Collection[str] = ()) -> 
                     "only Crew's permission routing.",
                     _ENV_OPENCODE_CONFIG_CONTENT,
                 )
+    if endpoint_seed:
+        merge_openai_compat_seed(merged, endpoint_seed)
     rules = tuple(deny_rules)
     if rules and value == "ask":
         # Each switched-off tool AFTER the "*", because the harness lets the last
@@ -796,6 +811,9 @@ class OpencodeLaunch(ProcessAdapter):
     def __init__(self) -> None:
         # The routing seed the read-back verified, carried to the child's environment.
         self._config_content = ""
+        # ``agent.openai_compatible`` as this launch read it, so the key resolved at
+        # spawn belongs to the same endpoint the seed registered.
+        self._endpoint: dict[str, str] = {}
 
     async def resolve_spawn(self, ctx: SpawnContext) -> SpawnPlan:
         """Resolve the binary, warm the session's MCP array, then establish the routing."""
@@ -804,6 +822,13 @@ class OpencodeLaunch(ProcessAdapter):
         opencode_bin, argv, spawn_label, stderr_label = await launch_mod.resolve_self_served_launch(
             self.backend
         )
+        # The configured endpoint, judged FIRST: a malformed entry refuses the session
+        # before any child of this harness starts, naming the field to fix.
+        self._endpoint = await asyncio.to_thread(load_openai_compatible)
+        try:
+            endpoint_seed = openai_compat_seed(self._endpoint)
+        except ValueError as exc:
+            raise AcpError(f"{self.backend} launch refused: {exc}") from None
         # Translate the agent spec into this session's MCP array HERE, for exactly
         # the reason the claude adapter does it in its own launch: the translation
         # reads disk, and doing it at the shared session/new call site would put an
@@ -855,7 +880,9 @@ class OpencodeLaunch(ProcessAdapter):
         # synchronous spawn on the gateway loop is the stall this path guards
         # against everywhere else.
         self._config_content = _opencode_routing_config(
-            self.backend, getattr(session, "_session_harness_deny_rules", ())
+            self.backend,
+            getattr(session, "_session_harness_deny_rules", ()),
+            endpoint_seed,
         )
         # Wrapped in the SAME sandbox, with the SAME credential mask, as the session
         # spawn. The read-back runs the harness's own binary, and this harness
@@ -937,3 +964,31 @@ class OpencodeLaunch(ProcessAdapter):
         """
         if self._config_content:
             env[_ENV_OPENCODE_CONFIG_CONTENT] = self._config_content
+
+    async def prepare_spawn_env(
+        self,
+        env: dict[str, str],
+        *,
+        to_thread: Callable[..., Awaitable[Any]],
+    ) -> None:
+        """The verified seed, then the configured endpoint's key from Crew's vault.
+
+        Placed before session identity, credential repair and the scrub, like the
+        DeepSeek key; :data:`OPENAI_COMPAT_KEY_ENV` is outside every scrub prefix, so
+        it survives to the child. Off-loop through the guarded hop, because it reads
+        the vault while the sandbox launcher is live. The resolver's plaintext dict is
+        emptied the moment its entry is copied onto *env*, which is a local of the
+        launch and never the gateway's own environment.
+        """
+        self.apply_spawn_env(env)
+        if not self._endpoint.get("api_key"):
+            return
+        try:
+            key_env = await to_thread(openai_compat_key_env, self._endpoint)
+        except ValueError as exc:
+            # Fail CLOSED: a session pointed at an endpoint whose key is missing would
+            # fail on its first prompt with an authentication error from the server
+            # that names nothing Crew can fix.
+            raise AcpError(f"{self.backend} launch refused: {exc}") from None
+        env.update(key_env)
+        key_env.clear()

@@ -478,3 +478,164 @@ def agent_env_write_refusals(raw: object) -> tuple[str, ...]:
         if reason is not None:
             refusals.append(f"{key!r}: {reason}")
     return tuple(refusals)
+
+
+# ── agent.openai_compatible: an OpenAI-compatible endpoint for the OpenCode harness ──
+
+#: Every key ``agent.openai_compatible`` reads. ``base_url`` and ``model`` are what
+#: make the entry usable; ``api_key`` is optional because a server on the operator's
+#: own network (vLLM, Ollama, LM Studio, an internal gateway) often takes none.
+OPENAI_COMPAT_KEYS = frozenset(
+    {"base_url", "model", "api_key", "name", "context_tokens", "output_tokens"}
+)
+
+#: The two token budgets: each a positive decimal integer the harness uses to track
+#: how much of the served window a session has left. Bounded so a typo cannot hand
+#: the harness a budget no server serves.
+OPENAI_COMPAT_TOKEN_KEYS = ("context_tokens", "output_tokens")
+OPENAI_COMPAT_TOKENS_MIN = 1024
+OPENAI_COMPAT_TOKENS_MAX = 10_000_000
+
+#: The schemes ``base_url`` may carry. Plain http is accepted on purpose: a model
+#: served on loopback or inside a private network is the commonest reason to point a
+#: harness at its own endpoint, and those rarely terminate TLS.
+_OPENAI_COMPAT_URL_SCHEMES = ("https://", "http://")
+
+
+#: The sub-keys ``agent.openai_compatible`` declares to the config schema, so each one
+#: flattens into its own Settings entry with its own type -- the token budgets are
+#: integers in the file even though the coerced mapping carries them as strings.
+OPENAI_COMPAT_SCHEMA_PROPERTIES: dict[str, dict] = {
+    "base_url": {
+        "type": "string",
+        "x-meta": {
+            "label": "Base URL",
+            "help": "The endpoint's OpenAI-compatible base URL, usually ending in /v1.",
+        },
+    },
+    "model": {
+        "type": "string",
+        "x-meta": {"label": "Model", "help": "The model id exactly as the server serves it."},
+    },
+    "api_key": {
+        "type": "string",
+        "x-meta": {
+            "label": "API key reference",
+            "help": (
+                "A 'secret://<vault name>' reference to the key stored under "
+                "Settings > Secrets. Leave empty for a server that takes no key."
+            ),
+            "sensitive": True,
+        },
+    },
+    "name": {
+        "type": "string",
+        "x-meta": {"label": "Display name", "help": "How OpenCode names this provider."},
+    },
+    "context_tokens": {
+        "type": "integer",
+        "x-meta": {
+            "label": "Context window",
+            "help": "Tokens the served model accepts as input (1024 to 10000000).",
+        },
+    },
+    "output_tokens": {
+        "type": "integer",
+        "x-meta": {
+            "label": "Max output",
+            "help": "Tokens the served model can generate per reply (1024 to 10000000).",
+        },
+    },
+}
+
+
+def coerce_openai_compatible(raw: object) -> dict[str, str]:
+    """Normalize ``agent.openai_compatible`` to a mapping of known keys to strings.
+
+    TYPE coercion only, the :func:`coerce_deepseek_env` split: an unknown key is
+    dropped with a warning naming the key, an integer token budget is stored as its
+    decimal string, and every other non-string value is dropped. What a value may BE
+    (a usable URL, a reference rather than a plaintext key) is judged by
+    :func:`openai_compatible_issues` at spawn, where a bad entry refuses the session
+    with a message naming the key -- dropping it here would hand the operator a
+    harness pointed at no endpoint and no error saying why. Values are stripped of
+    surrounding whitespace, since a pasted URL or model id routinely carries some and
+    neither can legitimately end in it.
+    """
+    if not isinstance(raw, dict):
+        if raw is not None:
+            logger.warning("agent.openai_compatible is not a mapping; ignoring it")
+        return {}
+    out: dict[str, str] = {}
+    for key, value in raw.items():
+        if key not in OPENAI_COMPAT_KEYS:
+            logger.warning(
+                "agent.openai_compatible: ignoring %r, only %s are read",
+                key if isinstance(key, str) else type(key).__name__,
+                ", ".join(sorted(OPENAI_COMPAT_KEYS)),
+            )
+            continue
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, int) and key in OPENAI_COMPAT_TOKEN_KEYS:
+            out[key] = str(value)
+        elif isinstance(value, str) and value.strip():
+            out[key] = value.strip()
+    return out
+
+
+def openai_compatible_plaintext_key(raw: object) -> bool:
+    """Whether ``agent.openai_compatible.api_key`` in *raw* is a literal rather than a reference.
+
+    The write-time rule of :func:`deepseek_env_plaintext_keys`, for this mapping's one
+    credential: a value is a ``secret://<vault name>`` reference, and anything else is
+    a provider key about to be persisted in ``config.json``. An absent or empty key is
+    not plaintext -- the endpoint simply takes none.
+    """
+    if not isinstance(raw, dict):
+        return False
+    value = raw.get("api_key")
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return False
+    return not (isinstance(value, str) and value.strip().startswith(SECRET_URI_PREFIX))
+
+
+def openai_compatible_issues(mapping: dict[str, str]) -> tuple[str, ...]:
+    """Each reason the coerced *mapping* cannot configure an endpoint, or ``()``.
+
+    An EMPTY mapping has no issues: it is the off state. Otherwise ``base_url`` must
+    be an http(s) URL, ``model`` must be present, a token budget must be a decimal
+    integer inside the bounds, and ``api_key`` must be a ``secret://`` reference.
+    Each phrase names the key and never echoes a value, so the result is safe on a
+    log line and in a chat error card.
+    """
+    if not mapping:
+        return ()
+    issues: list[str] = []
+    base_url = mapping.get("base_url", "")
+    if not base_url:
+        issues.append("'base_url' is missing")
+    elif not base_url.lower().startswith(_OPENAI_COMPAT_URL_SCHEMES) or len(base_url) <= len(
+        "https://"
+    ):
+        issues.append("'base_url' must be an http:// or https:// URL")
+    elif any(ch.isspace() for ch in base_url):
+        issues.append("'base_url' must not contain whitespace")
+    if not mapping.get("model"):
+        issues.append("'model' is missing")
+    for key in OPENAI_COMPAT_TOKEN_KEYS:
+        value = mapping.get(key)
+        if value is None:
+            continue
+        ok = value.isascii() and value.isdigit() and len(value) <= 9
+        if not ok or not OPENAI_COMPAT_TOKENS_MIN <= int(value) <= OPENAI_COMPAT_TOKENS_MAX:
+            issues.append(
+                f"{key!r} must be an integer from {OPENAI_COMPAT_TOKENS_MIN} "
+                f"to {OPENAI_COMPAT_TOKENS_MAX}"
+            )
+    if openai_compatible_plaintext_key(mapping):
+        issues.append(
+            f"'api_key' holds a literal value; it takes a '{SECRET_URI_PREFIX}<vault name>' "
+            "reference only"
+        )
+    return tuple(issues)

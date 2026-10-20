@@ -169,7 +169,8 @@ class ConfigWriteRefused(ValueError):
     content that must never be persisted: a provider key in plaintext under
     ``agent.deepseek_env``, where the only admissible value is a
     ``secret://<vault name>`` reference (``sections.deepseek_env_plaintext_keys``),
-    an ``aws.project_profiles`` entry the load would ignore, and an ``agent.env``
+    the same for ``agent.openai_compatible.api_key``
+    (``sections.openai_compatible_plaintext_key``), an ``aws.project_profiles`` entry the load would ignore, and an ``agent.env``
     entry no agent process would receive (``sections.agent_env_write_refusals``).
     The message names env-var KEYS only, never the value, so it is safe to print
     on a terminal and to log. A ``ValueError`` so the CLI's existing refusal shape
@@ -246,6 +247,7 @@ def _refuse_unpublishable(data: dict, path: Path) -> None:
     through the same function is untouched -- it has neither mapping.
     """
     _refuse_deepseek_env_plaintext(data, path)
+    _refuse_openai_compatible_plaintext(data, path)
     _refuse_agent_env_entries(data, path)
 
 
@@ -290,6 +292,37 @@ def _refuse_deepseek_env_plaintext(data: dict, path: Path) -> None:
         "write was refused: this mapping takes a 'secret://<vault name>' reference "
         "only, and no provider key is ever stored in config.json. Save the key "
         "under Settings > Secrets, then map it as 'secret://<vault name>'."
+    )
+
+
+def _refuse_openai_compatible_plaintext(data: dict, path: Path) -> None:
+    """Refuse a plaintext ``agent.openai_compatible.api_key``.
+
+    The :func:`_refuse_deepseek_env_plaintext` rule for the OpenCode endpoint's one
+    credential, scoped the same way: a plaintext this write introduces, or a mapping
+    it changes while the plaintext stays, is refused; a plaintext already on disk in
+    a mapping this write left untouched publishes with a warning, because most
+    writers reaching this floor have nothing to do with this field. The message
+    names the key and never the value.
+    """
+    agent = data.get("agent") if isinstance(data, dict) else None
+    mapping = agent.get("openai_compatible") if isinstance(agent, dict) else None
+    if not _sections.openai_compatible_plaintext_key(mapping):
+        return
+    if _agent_key_on_disk(path, "openai_compatible") == mapping:
+        logger.warning(
+            "config.json already holds a literal value under agent.openai_compatible "
+            "'api_key'; this write left that mapping as it found it. The key takes a "
+            "'secret://<vault name>' reference only, and an OpenCode session is "
+            "refused while it stands: save the key under Settings > Secrets, then set "
+            "it as 'secret://<vault name>'."
+        )
+        return
+    raise ConfigWriteRefused(
+        "agent.openai_compatible 'api_key' holds a literal value, so the config "
+        "write was refused: it takes a 'secret://<vault name>' reference only, and no "
+        "provider key is ever stored in config.json. Save the key under Settings > "
+        "Secrets, then set it as 'secret://<vault name>'."
     )
 
 
