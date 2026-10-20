@@ -463,14 +463,14 @@ describe('crew capability draft editor with mocked HTTP', () => {
     await review()
     const note = screen.getByTestId('capability-preview-withheld')
     expect(note).toHaveTextContent('Saving will not auto-approve these tools for crewA, so calls to them will still ask for approval.')
-    expect(note).toHaveTextContent('@search/list: A security profile governs this server, so Kiro Crew withholds the approval.')
+    expect(note).toHaveTextContent('@search/list: A security profile governs this server, so Sao Khuê withholds the approval.')
     expect(note).toHaveTextContent('@absent/tool: crewA has no enabled connection to this server. Add or enable it in the MCP Servers tab.')
-    expect(note).toHaveTextContent('@kirocrew-mate/ask: Kiro Crew rebuilds this connection itself, and the rebuilt connection keeps no approvals.')
+    expect(note).toHaveTextContent('@kirocrew-mate/ask: Sao Khuê rebuilds this connection itself, and the rebuilt connection keeps no approvals.')
     // The note leads the review, so the per-member summary follows from it.
     const members = screen.getByTestId('capability-preview-members')
     expect(note.compareDocumentPosition(members) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     // The not-connected fix opens the tab it names.
-    expect(note).toHaveTextContent('@other/ask: Kiro Crew will not save this approval, and no known setting explains why. Report this as a bug.')
+    expect(note).toHaveTextContent('@other/ask: Sao Khuê will not save this approval, and no known setting explains why. Report this as a bug.')
     // The member name renders as code, and a fully withheld draft's summary says why nothing changes.
     expect(within(note).getAllByText('crewA', { selector: 'code' }).length).toBeGreaterThan(0)
     expect(members).toHaveTextContent('crewA: saving changes nothing, because none of these approvals can be kept.')

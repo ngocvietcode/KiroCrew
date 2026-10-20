@@ -1,7 +1,7 @@
 """Tests for ``container.supervisor.backend`` -- launch argv/env and readiness.
 
 Readiness is exercised against a fake backend process that binds a real
-loopback port and writes a real secret file. No Kiro Crew gateway is booted.
+loopback port and writes a real secret file. No Sao Khuê gateway is booted.
 """
 
 from __future__ import annotations

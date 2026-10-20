@@ -182,9 +182,9 @@ class TestResolveImage:
         monkeypatch.setattr(
             engine_mod,
             "_staged_wheel",
-            lambda: (_ for _ in ()).throw(ValueError("no Kiro Crew wheel is staged")),
+            lambda: (_ for _ in ()).throw(ValueError("no Sao Khuê wheel is staged")),
         )
-        with pytest.raises(ValueError, match="no Kiro Crew wheel is staged"):
+        with pytest.raises(ValueError, match="no Sao Khuê wheel is staged"):
             ApiVmLauncher(spec).resolve_image(profile="p", region="us-east-1")
 
     def test_a_rebuilt_base_gives_the_crew_a_different_image_name(self, bundle, _staged_wheel):

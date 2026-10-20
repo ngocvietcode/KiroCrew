@@ -118,7 +118,7 @@ def test_runner_sigint_normalization_preserves_other_signals(tmp_path, normalize
 class TestPtyChildEnvStripsPythonStartupVars:
     """``PYTHONPATH``/``PYTHONHOME``/``PYTHONPYCACHEPREFIX`` are searched BEFORE a
     venv's own site-packages, so leaking the gateway's copies into an interactive
-    shell makes a user's Python 3.13 venv import Kiro Crew's 3.12 site-packages
+    shell makes a user's Python 3.13 venv import Sao Khuê's 3.12 site-packages
     and its C extensions fail to load. The agent surface already strips them
     (``sandbox.scrub_agent_subprocess_env``); these pin the terminal surface,
     which was never brought into line.

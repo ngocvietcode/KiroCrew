@@ -1,7 +1,7 @@
-"""Dev Fleet — standalone aiohttp backend for KiroCrew feature worktrees.
+"""Dev Fleet — standalone aiohttp backend for SaoKhue feature worktrees.
 
-Manages KiroCrew feature worktrees (git worktrees of the main repo) and their
-isolated pod test instances. Runs as a subprocess spawned by the KiroCrew app
+Manages SaoKhue feature worktrees (git worktrees of the main repo) and their
+isolated pod test instances. Runs as a subprocess spawned by the SaoKhue app
 backend system (apps/backend.py). The gateway proxies /apps/dev-fleet/api/* to
 this process with X-KiroCrew-Proxy HMAC signing; HMAC middleware validates
 every request (except /health) fail-closed.

@@ -93,7 +93,7 @@ def _load(path: Path) -> dict:
 async def _sync_one_remote(remote, mcp_env, *, owned: bool = True, marked: bool = True) -> dict:
     """Run api_mcp_sync over one remote server and return its written global entry.
 
-    ``owned`` marks the name as managed by Kiro Crew, which is the regime every caller
+    ``owned`` marks the name as managed by Sao Khuê, which is the regime every caller
     here exercises: writes to the kiro-global mcp.json are gated on ownership, so
     an unowned name is deliberately left untouched (see
     TestGlobalWritesAreOwnershipGated).

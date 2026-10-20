@@ -3,7 +3,7 @@
 ``allowedTools`` and each server's ``autoApprove`` are materialised: the writers ask
 ``may_skip_gate_now`` when they write, and that consults the policy ceiling AND every
 configured governance profile. kiro-cli then reads the FILE, and an auto-approved tool
-never reaches Kiro Crew's own PreToolUse gate. So a profile saved after the spec was
+never reaches Sao Khuê's own PreToolUse gate. So a profile saved after the spec was
 written, one that comes to govern an auto-approved tool, has to re-derive the spec the
 same way a ceiling install does, or every new session keeps running that tool without
 a prompt until something unrelated rebuilds the config.

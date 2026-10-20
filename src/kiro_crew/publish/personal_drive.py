@@ -536,7 +536,7 @@ class PersonalDriveProvider(PublishProvider):
                     "This account has a personal drive distribution "
                     f"({dist_id}) but its storage bucket is missing, so the drive is "
                     "only half present and nothing was changed. This is not a state "
-                    "Kiro Crew can safely rebuild -- publishing would create a second "
+                    "Sao Khuê can safely rebuild -- publishing would create a second "
                     "distribution and leave discovery unable to tell them apart. Restore "
                     "or remove the distribution in the AWS console for this account, then "
                     "publish again."
@@ -1084,7 +1084,7 @@ class PersonalDriveProvider(PublishProvider):
                 f"already exists in this account but does not carry the required "
                 f"opaque-origin sandbox (Content-Security-Policy {_SANDBOX_CSP!r} with "
                 f"Override enabled). Reusing it would let published documents share a "
-                f"browser origin. Policy names are account-global, so Kiro Crew cannot "
+                f"browser origin. Policy names are account-global, so Sao Khuê cannot "
                 f"create a correct one under this name automatically: inspect the existing "
                 f"policy in the CloudFront console and delete or rename it, then publish "
                 f"again."
@@ -1170,7 +1170,7 @@ class PersonalDriveProvider(PublishProvider):
         if not enabled:
             return (
                 "The drive's delivery network is DISABLED, so published links will "
-                "not resolve. This is not a state Kiro Crew sets -- an account "
+                "not resolve. This is not a state Sao Khuê sets -- an account "
                 "security control or an administrator disabled it. Re-enable the "
                 "distribution in the AWS console before publishing.",
                 "distribution_disabled",
@@ -1644,7 +1644,7 @@ class PersonalDriveProvider(PublishProvider):
             return PushResult(
                 conflict=True,
                 error=(
-                    "The copy in the drive changed since Kiro Crew last pushed it, so "
+                    "The copy in the drive changed since Sao Khuê last pushed it, so "
                     "it was left alone rather than overwritten."
                 ),
             )
@@ -1860,7 +1860,7 @@ class PersonalDriveProvider(PublishProvider):
         )
 
     def sync_model(self) -> SyncModel:
-        """Kiro Crew owns the content; the drive is a token-guarded mirror of it."""
+        """Sao Khuê owns the content; the drive is a token-guarded mirror of it."""
         return SyncModel(authority="kirocrew", concurrency="token")
 
     def discovery_model(self) -> DiscoveryModel:

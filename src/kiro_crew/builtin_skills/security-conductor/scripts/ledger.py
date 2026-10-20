@@ -334,7 +334,7 @@ DDL = (
 
 
 def data_home() -> Path:
-    """Where Kiro Crew keeps its data, resolved without importing the package.
+    """Where Sao Khuê keeps its data, resolved without importing the package.
 
     Mirrors ``pipeline-conductor/scripts/credit_spend.py``: a skill script cannot
     call ``kiro_crew.config.paths.data_home`` because it runs as a bare file

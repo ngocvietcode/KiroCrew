@@ -44,7 +44,7 @@ class _SessionsArchiveLayerBGateHarness:
 
     The autouse ``_isolated_state`` fixture keeps the state document under ``tmp_path``
     and stubs out the host's kiro-cli conversation store; ``_synthetic_store`` swaps in
-    a synthetic SQLite one. ``_both_halves`` populates the Kiro Crew and kiro-cli
+    a synthetic SQLite one. ``_both_halves`` populates the Sao Khuê and kiro-cli
     session halves and ``_store`` writes the permission as raw JSON. A sessions backup
     with the push mocked runs in ``_run_capturing_names``, which returns the record and
     archive member names; ``_skip_without_pinning`` skips where pinning is unavailable.

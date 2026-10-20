@@ -306,7 +306,7 @@ class TestRegistryInstallStream:
         """
         _setup_env(tmp_path, monkeypatch)
         refusal = (
-            "Python apps that require a build step are not supported in Kiro Crew's "
+            "Python apps that require a build step are not supported in Sao Khuê's "
             "desktop build: its bundled interpreter is inside the signed "
             "application bundle and cannot install packages"
         )

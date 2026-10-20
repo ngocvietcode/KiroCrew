@@ -9,7 +9,7 @@ The bitfield is the part that goes wrong when it is written by hand. A magic
 number in a URL says nothing about which permissions it grants, so nobody can
 tell a correct one from a typo, and a typo grants either too little (the bot
 reads a thread but cannot reply) or too much (the operator hands a bot
-permissions Kiro Crew never uses). The named bits below are therefore the
+permissions Sao Khuê never uses). The named bits below are therefore the
 source of truth, and :data:`THREAD_PERMISSIONS` is derived from them rather
 than typed out: it must equal ``309237711936``, the number
 ``src/kiro_crew/docs/discord-integration.md`` documents, and
@@ -91,7 +91,7 @@ def build_install_url(client_id: str, *, dm_only: bool = False) -> str:
     The result is printed to a terminal and pasted into a browser, so a value
     that could carry its own query parameters or a terminal control sequence
     is refused here rather than escaped and forwarded: an operator who follows
-    a URL Kiro Crew printed must be able to trust every parameter in it.
+    a URL Sao Khuê printed must be able to trust every parameter in it.
     """
     cid = str(client_id).strip()
     if not _CLIENT_ID_RE.match(cid):

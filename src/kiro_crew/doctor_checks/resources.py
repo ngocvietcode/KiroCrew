@@ -687,7 +687,7 @@ def _tmpfs_usage(root: str) -> tuple[float, float, int, int] | None:
     is Linux-only, so this is belt-and-braces for direct callers). ``tmp_entries``
     counts the names carrying the sandbox launcher's mount-source prefix
     (``kirocrew_sb_<pid>_``), so a warning can say how much of the pressure is
-    Kiro Crew's own; every other temporary entry belongs to somebody else and
+    Sao Khuê's own; every other temporary entry belongs to somebody else and
     is deliberately not counted, so the cleanup advice never points at it. A
     filesystem that reports no inode accounting (``f_files == 0``) reads as
     100% free inodes rather than as exhausted.
@@ -749,7 +749,7 @@ def _doctor_runtime_tmpfs(issues: list[str]) -> None:
             print(f"  {root}: ⚠️  low on {what} — {detail}")
             print(
                 "               Sandboxed tool spawns fail with rc=1 once this fills. "
-                f"Kiro Crew's own leaked mount dirs are the {cli_doctor._MOUNT_SOURCE_PREFIX}* "
+                f"Sao Khuê's own leaked mount dirs are the {cli_doctor._MOUNT_SOURCE_PREFIX}* "
                 "entries; a gateway restart reclaims them. Other entries there "
                 "belong to other applications: leave them alone."
             )
@@ -953,7 +953,7 @@ def _doctor_skill_view_residue(agents_dir: Path) -> None:
     if rewritten:
         print(
             f"{render._INDENT}Another program rewrites the specs in {agents_dir} (a sandbox or"
-            f" credential launcher does this on every launch). Kiro Crew tolerates it; if"
+            f" credential launcher does this on every launch). Sao Khuê tolerates it; if"
             f" sessions still fail with 'Agent spec ... is not installed', set"
             f" KIROCREW_NATIVE_SKILL_PROJECTION=0 for the gateway and report it."
         )
@@ -1057,7 +1057,7 @@ def _doctor_skill_view_census(agents_dir: Path) -> None:
     truncated = bool(counts.get("truncated", 0))
     metadata_dir, lease_dir = acp_driver.skill_view_sidecar_dirs()
     alias_glob = f"{cli_doctor.NATIVE_SKILL_ALIAS_PREFIX}*.json"
-    # Two Kiro Crew data homes share this directory whenever they share
+    # Two Sao Khuê data homes share this directory whenever they share
     # ``~/.kiro``; the remedy must then stop every gateway that uses it, not
     # only the one this doctor speaks for.
     stopped = (
@@ -1075,7 +1075,7 @@ def _doctor_skill_view_census(agents_dir: Path) -> None:
         if not truncated:
             detail += f", {total - leased} not"
         if foreign:
-            detail += f", {foreign}{floor} owned by another Kiro Crew home"
+            detail += f", {foreign}{floor} owned by another Sao Khuê home"
         detail += ")"
     warn = bool(unreadable) or total > _SKILL_VIEW_BACKLOG_WARN
     print(f"  skill views: {'⚠️ ' if warn else '✅'} {detail}")
@@ -1113,7 +1113,7 @@ def _doctor_skill_view_census(agents_dir: Path) -> None:
         )
     if foreign:
         drain += (
-            f" The {foreign}{floor} another Kiro Crew home owns never drain here;"
+            f" The {foreign}{floor} another Sao Khuê home owns never drain here;"
             f" only that home's gateway reclaims them."
         )
     print(

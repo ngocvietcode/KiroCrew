@@ -1,7 +1,7 @@
 # MCP Server Architecture
 
 How MCP (Model Context Protocol) servers are configured, merged, probed and
-loaded, plus the two invariants every new Kiro Crew MCP tool must satisfy: it
+loaded, plus the two invariants every new Sao Khuê MCP tool must satisfy: it
 ships as an MCP tool (not only a CLI command), and it holds no per-caller state.
 
 Async spawn receipts declare supported parent-work delivery
@@ -15,11 +15,11 @@ ceiling that filters auto-approve is
 [governance](../system-specs/modules/governance.md); the computer-use server's
 own gate model is [computer-use](../system-specs/modules/computer-use.md).
 
-> **Design invariant: Kiro Crew does NOT write to provider globals.**
-> `~/.kiro/settings/mcp.json` is user-owned. Kiro Crew reads it and never mutates
-> it. Kiro Crew's own additions go into the per-agent file it fully owns,
-> `~/.kiro/agents/kirocrew.json`. That keeps tools scoped to Kiro Crew out of every
-> interactive kiro-cli and Kiro IDE session the user runs outside Kiro Crew. If
+> **Design invariant: Sao Khuê does NOT write to provider globals.**
+> `~/.kiro/settings/mcp.json` is user-owned. Sao Khuê reads it and never mutates
+> it. Sao Khuê's own additions go into the per-agent file it fully owns,
+> `~/.kiro/agents/kirocrew.json`. That keeps tools scoped to Sao Khuê out of every
+> interactive kiro-cli and Kiro IDE session the user runs outside Sao Khuê. If
 > `kirocrew-core` / `kirocrew-cron` ever appear in a provider global, that is
 > leftover state from an older install: clean it from the dashboard MCP panel,
 > or run `kirocrew setup`, whose setup path calls the narrowly scoped
@@ -29,11 +29,11 @@ own gate model is [computer-use](../system-specs/modules/computer-use.md).
 
 | File | Owner | Purpose | Read by |
 |------|-------|---------|---------|
-| `~/.kiro/agents/kirocrew.json` | Kiro Crew gateway (`agent.rebuild_agent_config`) | The rendered Kiro agent: model + tools + merged `mcpServers` | kiro-cli, when spawned as the `kirocrew` agent |
-| `~/.kiro/settings/mcp.json` | User | Kiro global MCP servers | kiro-cli for all agents; merged into Kiro Crew's agent file at render time |
-| `~/.kiro/crew/mcp.json` | User, via the dashboard MCP panel | specific to Kiro Crew additions and per-server tool disables | Kiro Crew gateway only |
+| `~/.kiro/agents/kirocrew.json` | Sao Khuê gateway (`agent.rebuild_agent_config`) | The rendered Kiro agent: model + tools + merged `mcpServers` | kiro-cli, when spawned as the `kirocrew` agent |
+| `~/.kiro/settings/mcp.json` | User | Kiro global MCP servers | kiro-cli for all agents; merged into Sao Khuê's agent file at render time |
+| `~/.kiro/crew/mcp.json` | User, via the dashboard MCP panel | specific to Sao Khuê additions and per-server tool disables | Sao Khuê gateway only |
 
-Kiro Crew reads every MCP config file (`~/.kiro/crew/mcp.json`,
+Sao Khuê reads every MCP config file (`~/.kiro/crew/mcp.json`,
 `~/.kiro/settings/mcp.json`, and every seam-contributed scope global) as JSONC:
 comments and trailing commas are tolerated (`user_json.loads_user_jsonc`), so a
 commented-out server never discards the rest of the file. The dashboard MCP
@@ -43,7 +43,7 @@ trailing commas is refused with a `409 mcp_config_has_comments`
 file and dropping them; edit such a file by hand, or remove the comments first.
 
 `rebuild_agent_config()` writes exactly **one** file, `~/.kiro/agents/kirocrew.json`.
-There is no second rendered agent file: Kiro Crew's provider is ACP-only, and
+There is no second rendered agent file: Sao Khuê's provider is ACP-only, and
 non-kiro ACP harnesses consume projected configuration rather than another Kiro
 agent file.
 
@@ -103,10 +103,10 @@ kirocrew`). Onto that base:
    global did not: a name step 1 or step 2 already claimed in this pass has been
    retired, so it is left alone. Empty in this build.
 4. **`~/.kiro/crew/mcp.json`** via `update()` on an existing entry, so
-   Kiro Crew's `command`/`args`/`env` win while user-set fields such as
+   Sao Khuê's `command`/`args`/`env` win while user-set fields such as
    `autoApprove` survive.
 
-Kiro global outranks any seam-contributed provider global because Kiro Crew is
+Kiro global outranks any seam-contributed provider global because Sao Khuê is
 kiro-cli-only. Managed servers are skipped by every merge loop: their
 `command`/`args` are set by `_refresh_dynamic_fields()` and must not be
 overwritten by a stale global entry.
@@ -153,9 +153,9 @@ The gateway already merges the Kiro global into the agent file, so the agent
 file is the superset. With `includeMcpJson: true` kiro-cli would merge the
 global a second time at session start, producing duplicate entries and letting a
 stale path in the global shadow the fresh path the gateway just resolved.
-Kiro Crew forces `false` on every agent it manages (the primary agent, every
+Sao Khuê forces `false` on every agent it manages (the primary agent, every
 generated agent spec, every recorded fork, and every app agent). Plain kiro-cli
-agents outside Kiro Crew keep kiro-cli's own default.
+agents outside Sao Khuê keep kiro-cli's own default.
 
 The generated specs and the fork refresh get the pin from one shared step,
 `auto_approve.write_governed_spec`, which every spec writer under
@@ -197,7 +197,7 @@ User customizations are preserved, `autoApprove` included: a list the owner wrot
 by hand is a deliberate statement about their own tools and survives the refresh,
 which is what `mcp.honour_auto_approve` (on by default) decides. It is worth
 knowing what it costs, because the cost is not obvious from the key's name:
-kiro-cli approves those tools locally, so Kiro Crew never sees a permission
+kiro-cli approves those tools locally, so Sao Khuê never sees a permission
 request for them and its own tool gate does not run. Turn the setting off to drop
 every verb no server spec declares and put those tools back through the gate. A
 verb a managed or edition spec declares is unaffected either way, and a
@@ -207,7 +207,7 @@ Only the OWNER's own list is honoured. An app's `<app>:<server>` entry is grante
 by its manifest rather than chosen by the owner; an agent config materialized for an
 app declines the opt-in for its whole map, since an app's keys arrive from the
 manifest, the shipped spec and the per-agent policy and need not be namespaced; and
-an entry carrying the `x-kirocrew` provenance marker is Kiro Crew's own. All three
+an entry carrying the `x-kirocrew` provenance marker is Sao Khuê's own. All three
 stay on the strict floor, as does a value that is not a `list[str]`, which kiro-cli's
 strict parsing would reject with no rebuild able to repair the file. On that app map
 a verb a server spec DECLARES still survives.
@@ -769,7 +769,7 @@ SEL `rejected_install_pruned` record. When the gateway pool can respawn it
 still resolves), the refusal asks for a retry, every queued call gets the same
 answer, and the process exits with status `75` so the pool relaunches it from the
 current install. Otherwise nothing would bring it back, so it keeps its transport
-and refuses each call with a message to restart Kiro Crew.
+and refuses each call with a message to restart Sao Khuê.
 
 ## Shareability verdicts
 
@@ -778,7 +778,7 @@ server looks safe to stub, and separately whether its backend looks safe to
 share. The verdict is derived on this host from evidence ranked
 observation > measurement > declaration, and a server the gateway has WATCHED
 behave per-client while shared is never offered again. Nothing about which
-servers a machine runs ships with Kiro Crew and nothing leaves the host.
+servers a machine runs ships with Sao Khuê and nothing leaves the host.
 
 Full contracts — the two on-disk records, the reason-code vocabulary, what the
 pre-flight can and cannot decide, and the seed-once rule — live in
@@ -812,7 +812,7 @@ part of this contract.
    the purge changes nothing.
 2. **Scope adds** write the spec into the target scope file.
 3. **Scope removes** strip it. If the server would no longer be inherited into
-   Kiro Crew but the user kept the Kiro Crew badge on, the full spec is first
+   Sao Khuê but the user kept the Sao Khuê badge on, the full spec is first
    copied into `~/.kiro/crew/mcp.json` (the **preservation rule**), which is why
    "I removed it from the Kiro global and it came back" is correct behavior.
 4. **Per-tool overrides** update `disabledTools` on the entry.
@@ -826,7 +826,7 @@ and `"code": "mcp_server_name_ambiguous"` before any write, both by `POST /api/m
 (uninstalls included) and by `POST /api/mcp/toggle`.
 
 Listing and probe rows say why a server is off. `disabledIn` is `"kirocrew"` for a
-disable in Kiro Crew's own store, which the Kiro Crew badge plus Apply lifts, and
+disable in Sao Khuê's own store, which the Sao Khuê badge plus Apply lifts, and
 `"shared"` for a disable in a config this panel does not write, such as the Kiro
 global `mcp.json` or a provider global; it is `null` when the row is enabled.
 `disabledInFile` names the file to edit when the shared flag is the Kiro-global one.
@@ -905,7 +905,7 @@ launcher boundary it is.
 
 ### Managed servers that follow kirocrew-core
 
-When `kirocrew-core` is in the stub set, Kiro Crew's other caller-aware managed
+When `kirocrew-core` is in the stub set, Sao Khuê's other caller-aware managed
 servers join it (`config.integration_sections.MANAGED_STUB_FOLLOWERS`), so each
 is one shared backend instead of one process per session. They already need no
 launch approval (managed launch), get the per-session token from gatewayd, and
@@ -1180,7 +1180,7 @@ cancelled (releasing their permits neutral), charges are dropped -- then
 proceeds with the existing teardown.
 
 **Wire.** The `registered` reply carries the daemon's `code_fingerprint`.
-A stub whose `--server` names one of Kiro Crew's own MCP servers and whose
+A stub whose `--server` names one of Sao Khuê's own MCP servers and whose
 target argv names its managed subcommand also puts its `stub_code_fingerprint`
 on the Register frame and requires the two values to match exactly before it
 keeps the broker connection. A missing value identifies
@@ -1200,7 +1200,7 @@ old-daemon compatibility.
 (`KIROCREW_STUB_SESSION_TOKEN`) only when the target passes the same
 `_spawns_own_control_plane` vetting gatewayd applies before it hands a pooled
 backend the token: control-plane name, managed binary by real path, exact args,
-no loader or `PYTHON*` overlay in the child env (Kiro Crew's own pinned UTF-8
+no loader or `PYTHON*` overlay in the child env (Sao Khuê's own pinned UTF-8
 values excepted), and no import root shadowing `kiro_crew`. A kept token also
 gets `PYTHONSAFEPATH` (and `PYTHONNOUSERSITE` unless user-site holds this
 package). Every other target has the token removed, so a third-party binary
@@ -1291,7 +1291,7 @@ The three MCP server command resolvers share it, next to the `mcp_search_path`
 they already share: the agent-config resolver (`agent._resolve_command`), the
 dashboard probe (`mcp_discovery`) and the rewriter. The respawn lookup of a
 gateway restart in `cli_server` (`_own_console_script` and the PATH fallback in
-`_spawn_detached_gateway`) uses it too. Other resolvers of Kiro Crew's own
+`_spawn_detached_gateway`) uses it too. Other resolvers of Sao Khuê's own
 binaries stay outside it: the `kirocrew` lookup in
 `agent._resolve_kirocrew_bin`, and the kiro-cli resolver, whose discovery
 in `kiro_cli.py` does its own Windows `realpath`. So do the ACP adapter
@@ -1476,7 +1476,7 @@ in any state is a claim on the name, keeps refusing.
 ## How app agents reach MCP servers
 
 An app declares MCP servers in its manifest, and
-`apps.bridges._register_mcp_servers()` writes them into Kiro Crew's agent config
+`apps.bridges._register_mcp_servers()` writes them into Sao Khuê's agent config
 under a `{app}:{server}` namespace rather than into the shared Kiro global,
 because that global is read by Kiro IDE and every other kiro-cli agent, so an
 app's private tools would leak into surfaces that never installed it.
@@ -1539,7 +1539,7 @@ The third layer is defense in depth for hosts that ignore `disabledTools`. When 
 policy cannot be read, what it does depends on WHY, because the reasons differ in
 kind and its two consumers carry different risk.
 
-It runs only in Kiro Crew's own servers. `mcp_shared.serves_managed_tools` checks
+It runs only in Sao Khuê's own servers. `mcp_shared.serves_managed_tools` checks
 where the loop's `tools/call` handler is defined: under the `kiro_crew` package (the
 control plane and the builtin apps) the policy applies; anywhere else -- a
 user-installed app that serves its own tools through `run_mcp_stdio_loop` -- the
@@ -1549,7 +1549,7 @@ server is never handed a session token (identity rides only the
 control plane), so the read could only refuse every call. The app's tools stay gated
 by its spec's `tools` / `allowedTools` and kiro-cli's `disabledTools`. The check runs
 inside the server's own process and is not a boundary against the app; what it must
-not do is let a Kiro Crew server out, so a handler whose code location cannot be read
+not do is let a Sao Khuê server out, so a handler whose code location cannot be read
 keeps the policy.
 
 `tools/call` fails **closed** on the four reasons in `_UNRESOLVED_REFUSES_CALL`
@@ -1593,11 +1593,11 @@ onto the same established-session refusal instead of echoing the header name). W
 process carries neither the session token nor a launcher host pid
 (`mcp_shared.spawned_without_gateway_identity`), nothing the gateway does at spawn
 happened to it, and all three append the same `mcp_shared.external_client_identity_note`:
-a server started outside a Kiro Crew session (an editor's own MCP config) has no identity
+a server started outside a Sao Khuê session (an editor's own MCP config) has no identity
 channel and its identity-bearing tools are not supported; `KIROCREW_SESSION_KEY` is a
 gateway-injected fallback, not a credential, and set by hand it turns the partial
 refusals into `identity_unattested` on every call; the read-only tools work without it;
-the supported editor direction is connecting into a Kiro Crew session rather than
+the supported editor direction is connecting into a Sao Khuê session rather than
 spawning the server, and that server's entry in `~/.kiro/settings/mcp.json` is the
 leftover state the design invariant at the top of this document names. The note
 decorates a denial and never grants: which calls are refused is unchanged, and a server
@@ -4036,7 +4036,7 @@ capability cheap and deliberate; it does not prove the user consented to reach t
 agent does not otherwise have. For that, `config.json` is the WRONG home —
 `security.py` spells out why, and the keystone leaves (`computer_use.json`,
 `browser-mode-enabled`, the Ops Mission Control mode) exist because each grants
-something outside Kiro Crew (desktop input synthesis, the operator's logged-in
+something outside Sao Khuê (desktop input synthesis, the operator's logged-in
 browser, writes against production incident tooling) or is the security floor
 itself.
 
@@ -4151,7 +4151,7 @@ stub's own self-report (its `KIROCREW_SESSION_KEY` or `session_pid_<pid>.txt`
 walk), gatewayd's own SO_PEERCRED `/proc` walk, and claim-push, which re-targeted
 every connection indexed under a runtime PID. One kiro-cli process hosts N ACP
 sessions, so all three answered with the parent slot for a `spawn_run` subagent's
-stub, and a parent re-claim overwrote whatever a subagent had. So Kiro Crew mints
+stub, and a parent re-claim overwrote whatever a subagent had. So Sao Khuê mints
 one unguessable token per ACP session (`claim.mint_stub_session_token`), puts it
 in the `env` of that session's injected stub entries
 (`session_servers.attach_stub_session_token`), and remembers it on the session
@@ -4221,7 +4221,7 @@ The token is a bearer name for a session's identity, so it is never logged, neve
 in `stats()`, and stripped from the register payload before the prewarm recorder
 can persist it.
 
-**The one place the token is forwarded: Kiro Crew's own pooled control planes.**
+**The one place the token is forwarded: Sao Khuê's own pooled control planes.**
 gatewayd spawns a pooled backend from its OWN environment, so the per-session
 token the stub carries never reaches the backend's `os.environ`. That is right
 for a third-party server, which has no business proving a session to anyone.
@@ -4306,7 +4306,7 @@ The verdict is taken BEFORE `spawn_backend` forks, under `asyncio.to_thread`
 (it imports `kiro_crew.agent`, reads config and stats those roots), so foreign
 code cannot erase its shadow before a post-spawn check. An accepted backend is
 still launched with `PYTHONSAFEPATH=1` as defense in depth. After the verdict,
-and for every pooled backend, the spawn site re-applies Kiro Crew's own UTF-8
+and for every pooled backend, the spawn site re-applies Sao Khuê's own UTF-8
 pinning (`platform_compat._UTF8_PROCESS_ENV`: `PYTHONUTF8` and
 `PYTHONIOENCODING`) to the child environment, so a pooled interpreter builds
 its stdio from UTF-8 rather than a Windows ANSI codepage. The order is the
@@ -4377,7 +4377,7 @@ a gateway-minted key with no injected caller is the non-pooled topology and
 reports the outage instead.
 
 The kiro-backend element list carries one population `CONTROL_PLANE_BACKENDS`
-does not: the builtin app servers that run Kiro Crew's own code
+does not: the builtin app servers that run Sao Khuê's own code
 (`session_mcp.builtin_app_identity_launches`). A shipped, builtin-owned manifest
 that declares `command: "kirocrew"` (Mochi's `mochi:mochi`) is pinned by
 `bridges._pin_host_cli_command` to the gateway's interpreter and serves through
@@ -4389,7 +4389,7 @@ from the manifest by `apps.execution.builtin_app_host_cli_mcp_launches` and
 pinned exactly as registration pins it, never read from the spec, and with
 `PYTHONPATH` and `KIROCREW_HOME` set from that pin over anything the spec
 declares. A user app, a shadowed builtin, or a builtin app that ships its own
-binary is not Kiro Crew's code and gets no element. gatewayd's set stays the
+binary is not Sao Khuê's code and gets no element. gatewayd's set stays the
 managed servers: a pooled app server is not handed the token.
 
 `register_hook` resolves through `require_strict_session_key`. Member hooks
@@ -4966,7 +4966,7 @@ no cache entry for, but the result only appears on the next refresh. If it stays
 Unknown, the server is failing its handshake: read the dashboard error text or
 the gateway log.
 
-**Tools present in Kiro Crew but absent in interactive kiro-cli.** That is correct.
+**Tools present in Sao Khuê but absent in interactive kiro-cli.** That is correct.
 `kirocrew-core` / `kirocrew-cron` / `kirocrew-computer` are agent-scoped and must
 not appear in interactive kiro-cli or Kiro IDE sessions. If they do, something
 wrote them into a provider global.

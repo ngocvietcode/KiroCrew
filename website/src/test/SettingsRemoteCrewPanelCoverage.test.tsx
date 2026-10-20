@@ -80,7 +80,7 @@ import { copyToClipboard } from '../utils/clipboard'
 
 const CLOUD_INSTANCE: InstanceView = {
   id: 'kc1',
-  name: 'Kiro Crew Cloud (kc-3f9a)',
+  name: 'Sao Khuê Cloud (kc-3f9a)',
   connection_method: 'ssm',
   ssm_target: 'i-0abc123456789def0',
   ssh_host: '',
@@ -505,9 +505,9 @@ describe('RemoteCrewPanel — instance actions', () => {
     renderWithProviders(<RemoteCrewPanel />)
 
     await openRowMenu(u)
-    await u.click(await screen.findByRole('menuitem', { name: /Remove Kiro Crew Cloud/ }))
+    await u.click(await screen.findByRole('menuitem', { name: /Remove Sao Khuê Cloud/ }))
     expect(await screen.findByText(/keeps running and billing/i)).toBeInTheDocument()
-    await u.click(screen.getByRole('button', { name: /Remove Kiro Crew Cloud/ }))
+    await u.click(screen.getByRole('button', { name: /Remove Sao Khuê Cloud/ }))
     await waitFor(() => expect(api.removeInstance).toHaveBeenCalledWith('kc1'))
   })
 
@@ -521,7 +521,7 @@ describe('RemoteCrewPanel — instance actions', () => {
     renderWithProviders(<RemoteCrewPanel />)
 
     await openRowMenu(u)
-    await u.click(await screen.findByRole('menuitem', { name: /^Stop Kiro Crew Cloud/ }))
+    await u.click(await screen.findByRole('menuitem', { name: /^Stop Sao Khuê Cloud/ }))
     await waitFor(() =>
       expect(api.cloudStop).toHaveBeenCalledWith('kc-3f9a', {
         profile: 'Admin',
@@ -542,7 +542,7 @@ describe('RemoteCrewPanel — instance actions', () => {
     renderWithProviders(<RemoteCrewPanel />)
 
     await openRowMenu(u)
-    await u.click(await screen.findByRole('menuitem', { name: /^Start Kiro Crew Cloud/ }))
+    await u.click(await screen.findByRole('menuitem', { name: /^Start Sao Khuê Cloud/ }))
     expect(await screen.findByText('unknown error', undefined, { timeout: 5_000 })).toBeInTheDocument()
   })
 
@@ -560,7 +560,7 @@ describe('RemoteCrewPanel — instance actions', () => {
     expect(await screen.findByText(/Up to 10 stay warm at once/i)).toBeInTheDocument()
 
     await openRowMenu(u)
-    await u.click(await screen.findByRole('menuitem', { name: /^Delete Kiro Crew Cloud/ }))
+    await u.click(await screen.findByRole('menuitem', { name: /^Delete Sao Khuê Cloud/ }))
     expect(await screen.findByText(/terminates the EC2 instance/i)).toBeInTheDocument()
     await u.click(screen.getByRole('button', { name: /^Confirm deleting/ }))
     expect(await screen.findByRole('button', { name: /Deleting/, hidden: true })).toBeDisabled()
@@ -940,9 +940,9 @@ describe('RemoteCrewPanel — editing a crew', () => {
     const u = setup()
     renderWithProviders(<RemoteCrewPanel />)
 
-    await openRowMenu(u, /More actions for Kiro Crew Cloud/i)
+    await openRowMenu(u, /More actions for Sao Khuê Cloud/i)
     await u.click(await screen.findByRole('menuitem', { name: /Edit settings/i }))
-    const form = within(await screen.findByRole('group', { name: /Edit Kiro Crew Cloud/i }))
+    const form = within(await screen.findByRole('group', { name: /Edit Sao Khuê Cloud/i }))
     // Everything stop/start/delete addresses the machine BY is frozen, not just
     // the instance id: a different profile or region points those calls at
     // another AWS account and leaves the real instance running.
@@ -1098,9 +1098,9 @@ describe('RemoteCrewPanel — editing a crew', () => {
     const u = setup()
     renderWithProviders(<RemoteCrewPanel />)
 
-    await openRowMenu(u, /More actions for Kiro Crew Cloud/i)
+    await openRowMenu(u, /More actions for Sao Khuê Cloud/i)
     await u.click(await screen.findByRole('menuitem', { name: /Edit settings/i }))
-    const form = within(await screen.findByRole('group', { name: /Edit Kiro Crew Cloud/i }))
+    const form = within(await screen.findByRole('group', { name: /Edit Sao Khuê Cloud/i }))
     const target = form.getByRole('textbox', { name: /SSM target/i })
     expect(target).toHaveAttribute('aria-readonly', 'true')
     expect(target.className).toMatch(/cursor-not-allowed/)

@@ -1,6 +1,6 @@
 # Running the agent on an Anthropic-compatible LLM endpoint
 
-Kiro Crew's model requests normally follow your kiro-cli account. If you have
+Sao Khuê's model requests normally follow your kiro-cli account. If you have
 your own endpoint that speaks the Anthropic API — DeepSeek, a self-hosted
 gateway, or another provider's Anthropic-compatible surface — you can point the
 agent at it by selecting the `claude` harness. The harness is
@@ -168,10 +168,10 @@ restart is all that is needed after a change.
 ## 4. Models
 
 The endpoint's own catalog decides what runs. A model advertised by the
-endpoint runs even when it is absent from Kiro Crew's shipped model registry:
+endpoint runs even when it is absent from Sao Khuê's shipped model registry:
 the harness keeps the verbatim id and resolves its capabilities from the SDK's
 unfiltered list. `ANTHROPIC_MODEL` (and your `~/.claude/settings.json` model)
-is what the SDK resolves when Kiro Crew does not pin a model.
+is what the SDK resolves when Sao Khuê does not pin a model.
 
 - A chat slot on **auto** uses `ANTHROPIC_MODEL` only until the endpoint's
   advertised models have been cached (the first session); after that, Crew

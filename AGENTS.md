@@ -8,11 +8,11 @@ open before touching that subsystem: see
 
 ## What this is
 
-Kiro Crew is an open-source personal AI agent: chat from the web dashboard, the
+Sao Khuê is an open-source personal AI agent: chat from the web dashboard, the
 CLI, or a messaging channel like Slack and Discord; run multi-step tasks
 unattended; schedule cron jobs; keep memory across sessions.
 
-Kiro Crew's sole LLM provider speaks ACP. Its default backend runs `kiro-cli`
+Sao Khuê's sole LLM provider speaks ACP. Its default backend runs `kiro-cli`
 over ACP JSON-RPC; other verified ACP harnesses are selected with
 `agent.acp_backend`. MCP tools supply the agent's host capabilities.
 
@@ -123,7 +123,7 @@ Detail and rationale: [security](docs/system-specs/modules/security.md),
   leaf, and the other credential-bearing crew leaves, from a foreign child
   (`sandbox._CREW_CHILD_WITHHELD_LEAVES`), which is why the features whose
   in-sandbox readers need them do not work there.
-- **Governance is `POLICY ∩ PROFILE`, tightest-wins**, enforced at Kiro Crew's OWN
+- **Governance is `POLICY ∩ PROFILE`, tightest-wins**, enforced at Sao Khuê's OWN
   PreToolUse gate even when the kiro agent config granted the call. The evaluator
   is scope-name-agnostic, so adding a scope is a `SCOPE_CATALOG` data change, never
   an evaluator edit.

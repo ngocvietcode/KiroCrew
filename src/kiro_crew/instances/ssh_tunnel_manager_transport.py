@@ -231,7 +231,7 @@ def _transport_method(inst: Instance) -> str:
 def _unsupported_method_message(inst: Instance) -> str:
     return (
         f"crew {inst.id!r} uses connection method {inst.connection_method!r}, which this "
-        f"version of Kiro Crew cannot connect over (supported: {', '.join(CONNECTION_METHODS)})"
+        f"version of Sao Khuê cannot connect over (supported: {', '.join(CONNECTION_METHODS)})"
     )
 
 

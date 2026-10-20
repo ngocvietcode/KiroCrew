@@ -76,7 +76,7 @@ deadline, plus tearing down the proof's process group after every outcome
 (``killpg`` on POSIX, ``taskkill /T`` on Windows -- see ``reap``), so a helper a
 sloppy PoC started does not outlive the verdict. This script does not attempt to
 defend the operator from code they chose to check out and run as themselves --
-there is no privilege drop to defend, and Kiro Crew's namespace sandbox is
+there is no privilege drop to defend, and Sao Khuê's namespace sandbox is
 Linux-only, which a cross-platform verifier cannot take on.
 
 What the child process gets: the PoC's argv, ``cwd`` set to the worktree, a

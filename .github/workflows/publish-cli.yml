@@ -120,7 +120,7 @@ jobs:
           WHEEL_DIR=$(dirname "$WHEEL")
           WHEEL_NAME=$(basename "$WHEEL")
           if [[ ! "$WHEEL_NAME" =~ ^kirocrew-([A-Za-z0-9][A-Za-z0-9._+]{0,127})-py3-none-any\.whl$ ]]; then
-            echo "::error::Wheel name does not match the canonical KiroCrew pure-Python artifact contract: $WHEEL_NAME"
+            echo "::error::Wheel name does not match the canonical SaoKhue pure-Python artifact contract: $WHEEL_NAME"
             exit 1
           fi
           WHEEL_VERSION="${BASH_REMATCH[1]}"

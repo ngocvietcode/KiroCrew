@@ -1,4 +1,4 @@
-"""Session transfer — copy a session between Kiro Crew instances.
+"""Session transfer — copy a session between Sao Khuê instances.
 
 Two halves live here:
 

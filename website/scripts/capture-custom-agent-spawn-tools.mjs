@@ -1,5 +1,5 @@
 /**
- * Screenshot harness for granting a custom agent Kiro Crew's spawn tools.
+ * Screenshot harness for granting a custom agent Sao Khuê's spawn tools.
  *
  * Runs the REAL built SPA (website/dist) behind the shared in-process static
  * server and answers every /api/** call from fixtures via Playwright route

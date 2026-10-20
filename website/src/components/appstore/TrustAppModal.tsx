@@ -676,7 +676,7 @@ export default function TrustAppModal({
             ))}
           </ul>
           {/* The three rows are a CEILING, not a manifest reading: trust grants all
-              three regardless of what this app happens to use, and Kiro Crew
+              three regardless of what this app happens to use, and Sao Khuê
               cannot narrow it. Listing them without saying so reads as "here is what it
               does", which would be a promise we do not keep. */}
           <p className="text-muted leading-relaxed">

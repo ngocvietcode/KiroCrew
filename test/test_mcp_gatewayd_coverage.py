@@ -9,7 +9,7 @@ watchdog, the backend acquire/respawn helpers, and the CLI entry points.
 
 Everything here is driven with in-memory doubles -- no socket is bound, no
 subprocess is spawned, and every filesystem write lands under ``tmp_path`` or
-the per-test ``KIROCREW_HOME`` that Kiro Crew's conftest pins.
+the per-test ``KIROCREW_HOME`` that Sao Khuê's conftest pins.
 """
 
 from __future__ import annotations
@@ -986,7 +986,7 @@ class TestEnvTargetResolver:
         This pins the RESOLVER's output, which is what the classifier reads:
         no inherited ``PYTHON*`` key survives for a control-plane backend. The
         child's final environment is a separate step -- the spawn site re-applies
-        Kiro Crew's own UTF-8 pair after the verdict -- and is pinned by the
+        Sao Khuê's own UTF-8 pair after the verdict -- and is pinned by the
         spawn-site tests.
         """
         key = _pool_key(server="kirocrew-core")

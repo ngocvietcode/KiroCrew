@@ -45,7 +45,7 @@ const FIXTURES = {
   '/api/notifications': { notifications: [], unread: 0 },
   '/api/auth/me': { user: 'owner', app: '' },
   '/api/themes': { themes: [], installed: [] },
-  '/api/dashboard/branding': { bot_name: 'Kiro Crew', avatar: '/logo.png' },
+  '/api/dashboard/branding': { bot_name: 'Sao Khuê', avatar: '/logo.png' },
   '/api/recent-projects': { dirs: [] },
   '/api/agents': {
     agents: [{ name: 'kirocrew', kiro_agent: 'kirocrew', workspace: 'default', memory_store: 'default' }],

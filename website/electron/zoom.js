@@ -1,4 +1,4 @@
-// Native zoom ladder — the single source of truth for how KiroCrew steps
+// Native zoom ladder — the single source of truth for how SaoKhue steps
 // Chromium's per-origin zoom factor.
 //
 // Every zoom mutation in the app funnels through this module: the View-menu

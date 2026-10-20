@@ -1,4 +1,4 @@
-"""Coverage for the ``message`` (LLM) arm of the Kiro Crew gateway's cron callback.
+"""Coverage for the ``message`` (LLM) arm of the Sao Khuê gateway's cron callback.
 
 Covers the arm's fire-time governance denial, a crewmate goal check-in passing the same
 gate, the ``_init_cron`` wiring that skips the reaper without a session manager, and a
@@ -88,7 +88,7 @@ class TestCronMessageDenialAndWiring:
 
 
 class TestCronResolvesAgentAlias:
-    """A cron whose agent is a Kiro Crew ALIAS must dispatch the alias's real
+    """A cron whose agent is a Sao Khuê ALIAS must dispatch the alias's real
     kiro agent mode + workspace, not the alias verbatim.
 
     Regression: a cron created in a Slack channel carries that channel's agent

@@ -42,7 +42,7 @@ backend behaves exactly as today.
 
 ## Motivation
 
-Kiro Crew can already run a chat on several ACP harnesses, but only one per
+Sao Khuê can already run a chat on several ACP harnesses, but only one per
 gateway: `agent.acp_backend` decides for every session except a member DM
 thread. An orchestrator that wants one task done by a different harness (a
 second opinion from another model family, a task one harness's tools handle

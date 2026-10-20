@@ -1,4 +1,4 @@
-"""The KiroCrew Governance Model — archetypes, ceiling, evaluator, loader.
+"""The SaoKhue Governance Model — archetypes, ceiling, evaluator, loader.
 
 This module is the **decoupled, extensible core** of the two-level governance
 model (see ``docs/system-specs/modules/governance.md`` and the design doc).
@@ -402,7 +402,7 @@ def _is_owner_written(name: str, spec: Mapping[str, object], third_party: Contai
       in the name is treated as that shape: an owner who really used one keeps
       getting approval cards, which is the behaviour that shipped before this key
       existed, so the ambiguous case fails CLOSED rather than granting a bypass.
-    * An entry Kiro Crew itself authored in a file it does not own, which carries
+    * An entry Sao Khuê itself authored in a file it does not own, which carries
       :data:`~kiro_crew.mcp_provenance.MARKER_KEY`. That is our own emission, and
       what a spec declares is already handled by the declared set.
     """
@@ -441,7 +441,7 @@ def strip_ungoverned_auto_approve(
     ``autoApprove`` is the OTHER route to the exemption ``allowedTools`` grants,
     and a more direct one: kiro-cli approves an autoApproved MCP tool locally and
     emits no permission request, so ``hooks.on_tool_call`` never runs for it.
-    ``agent.py``'s managed-server block states the rule for the servers KiroCrew
+    ``agent.py``'s managed-server block states the rule for the servers SaoKhue
     ships ("DELIBERATELY NO autoApprove KEY, and none may ever be added"); this
     applies it to every other source.
 
@@ -463,7 +463,7 @@ def strip_ungoverned_auto_approve(
     gone. Only the OWNER's own statement is honoured. A writer whose map is entirely
     a third party's passes ``honour_owner_written=False`` and keeps nothing; a writer
     whose map MIXES the two names the third party's entries in ``third_party``; and an
-    app's ``<app>:<server>`` entry, one Kiro Crew authored in a shared file, and a
+    app's ``<app>:<server>`` entry, one Sao Khuê authored in a shared file, and a
     value that is not a ``list[str]`` are never honoured either (see
     :func:`_is_owner_written` and :func:`_is_honourable_shape`). Each of those falls
     through to the strict floor below. The whole-map switch exists because

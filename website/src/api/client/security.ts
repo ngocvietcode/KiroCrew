@@ -16,11 +16,11 @@ export interface DeniedCommandRule {
   enabled: boolean
   pinned: boolean
   /** Why the rule is locked (forced-on, non-toggleable): 'floor' = enforced by
-   *  an always-on floor built into Kiro Crew; 'policy' = governance-pinned;
+   *  an always-on floor built into Sao Khuê; 'policy' = governance-pinned;
    *  null/absent = freely toggleable. Additive — `pinned` keeps its
    *  governance-only meaning. */
   lock_reason?: 'floor' | 'policy' | null
-  /** Where the rule came from: 'builtin' = shipped in Kiro Crew's catalog;
+  /** Where the rule came from: 'builtin' = shipped in Sao Khuê's catalog;
    *  'edition' = contributed by a composed edition through the `denied_rules`
    *  seam. Edition rules are default-on and freely toggleable (never locked),
    *  and are grouped by their own `category`, so the panel needs no special

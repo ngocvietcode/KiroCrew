@@ -1,6 +1,6 @@
 # Backup & Restore
 
-`kirocrew snapshot` packs everything Kiro Crew has learned about you into a single
+`kirocrew snapshot` packs everything Sao Khuê has learned about you into a single
 portable `.tar.gz`, and `kirocrew restore` unpacks it, on this machine or a
 different one. Use it before an upgrade you are unsure about, to move your setup
 to a new laptop, or to merge the memory from two machines you have been using in

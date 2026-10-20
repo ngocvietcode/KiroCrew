@@ -691,7 +691,7 @@ def _remove_warm_mint_specs(agents_dir: Path) -> int:
 def scavenge_warm_mint_artifacts() -> int:
     """Boot cleanup for private crash leftovers and sentinel-owned global legacy specs.
 
-    An unsentinelled global file is deliberately retained: its name does not prove Kiro Crew
+    An unsentinelled global file is deliberately retained: its name does not prove Sao Khuê
     owns it. The design note documents the manual inspection/removal path for that legacy
     residue.
     """

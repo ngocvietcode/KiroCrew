@@ -7,7 +7,7 @@ Extends the Docker default allow-list with three unconditional ALLOW rules:
   - mount    — lets the inner sandbox bind-mount credential dirs after NEWNS
 
 All three are blocked or arg-filtered by the Docker default seccomp profile,
-causing Kiro Crew's sandbox probe to fail with EPERM inside containers.
+causing Sao Khuê's sandbox probe to fail with EPERM inside containers.
 
 NOTE: these rules are unconditional (no arg filters), so they grant unshare
 and clone for ANY namespace type, not just CLONE_NEWUSER/CLONE_NEWNS.  This
@@ -40,9 +40,9 @@ DOCKER_DEFAULT_PROFILE_URL = (
 )
 
 COMMENT = (
-    "Kiro Crew custom seccomp profile — extends the Docker default by adding "
+    "Sao Khuê custom seccomp profile — extends the Docker default by adding "
     "unconditional ALLOW rules for unshare, clone, and mount. "
-    "Required for Kiro Crew's inner Linux user-namespace sandbox to work inside "
+    "Required for Sao Khuê's inner Linux user-namespace sandbox to work inside "
     "Docker containers (the default profile blocks these syscalls). "
     "Less permissive than --security-opt seccomp=unconfined and far less "
     "permissive than --privileged; all other Docker default restrictions apply. "

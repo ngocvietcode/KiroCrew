@@ -1,8 +1,8 @@
-"""How Kiro Crew reaches KAS: kiro-cli's own ACP relay, not a private spawn.
+"""How Sao Khuê reaches KAS: kiro-cli's own ACP relay, not a private spawn.
 
 kiro-cli exposes the KAS (Kiro Agent Server) engine through its ``acp``
 subcommand -- ``--agent-engine v3`` selects it. The relay forwards ACP frames to
-KAS in both directions, so Kiro Crew speaks ordinary ACP to a kiro-cli process
+KAS in both directions, so Sao Khuê speaks ordinary ACP to a kiro-cli process
 and never touches KAS's bundle or its Node runtime.
 
 Who answers the engine's credential callback is a per-spawn choice:

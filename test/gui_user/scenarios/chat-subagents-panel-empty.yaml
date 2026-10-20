@@ -20,7 +20,7 @@ preconditions:
   members: [nova-sky]
   start_url: /chat
 steps:
-  - You are on the chat page. In the left sidebar click the pinned session "Welcome to KiroCrew" so a conversation is open.  # brand-ok: verbatim seeded session title from the rich fixture
+  - You are on the chat page. In the left sidebar click the pinned session "Welcome to SaoKhue" so a conversation is open.  # brand-ok: verbatim seeded session title from the rich fixture
   - In the row of small icon buttons at the top right of the conversation, click the one whose tooltip reads "Open activity panel" (a rectangle with its right third filled in). A side panel slides in to the right of the conversation with a row of tabs along its top.
   - Look at that tab row. If a tab named "Subagents" is already there, click it. Otherwise click the "+" button at the right end of the tab row (tooltip "Open side panel tab") and choose "Subagents" from the menu that opens.
   - Read the panel body.

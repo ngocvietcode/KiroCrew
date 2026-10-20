@@ -1,4 +1,4 @@
-"""Kiro Crew's own KAS engine bundle: manifest, install, resolve, and the spawn route.
+"""Sao Khuê's own KAS engine bundle: manifest, install, resolve, and the spawn route.
 
 The route exists so an operator can run KAS with no kiro-cli at all. What these
 tests pin: the manifest is validated before anything is fetched; every artifact is
@@ -659,7 +659,7 @@ class TestTheLeafIsSealed:
 
 
 class TestThePin:
-    """Each Kiro Crew release runs exactly one engine version, fixed by one digest."""
+    """Each Sao Khuê release runs exactly one engine version, fixed by one digest."""
 
     def test_the_pin_is_well_formed(self):
         from kiro_crew.acp import kas_pin

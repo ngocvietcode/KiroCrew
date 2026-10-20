@@ -281,7 +281,7 @@ def unrecognised_background_launch(update: dict[str, Any]) -> str | None:
     """Describe a launch-shaped tool response ``parse_background_launch`` missed.
 
     The two shapes that parse reads were captured from one claude-agent-acp
-    release, and Kiro Crew does not pin the adapter. If a later release renames
+    release, and Sao Khuê does not pin the adapter. If a later release renames
     or reshapes them, the parse silently returns None and the watchdog goes back
     to recycling sessions mid-workflow, with nothing failing. This is the
     tripwire for that: it fires only on a ``tool_call_update`` whose

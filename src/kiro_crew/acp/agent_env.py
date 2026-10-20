@@ -4,7 +4,7 @@ Read once per spawn by the shared launch tail (:func:`kiro_crew.acp.launch.launc
 which both drivers and every backend go through, and laid over the inherited
 gateway environment BEFORE the driver's own variables and the agent environment
 scrub. So the precedence is: the gateway's environment, then this map, then
-everything Kiro Crew sets for the session itself; and the scrub still removes a
+everything Sao Khuê sets for the session itself; and the scrub still removes a
 denied name whatever put it there.
 
 Config load already drops names the config layer refuses

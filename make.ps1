@@ -1,4 +1,4 @@
-# Kiro Crew - Windows build targets (pip + npm/vite + pytest).
+# Sao Khuê - Windows build targets (pip + npm/vite + pytest).
 #
 # The Windows counterpart of the Makefile: same target names, same artifacts.
 # It exists because `make` is not part of a Windows install (Git Bash ships no

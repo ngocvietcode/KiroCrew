@@ -918,14 +918,14 @@ class TestEveryToolGetsTheExplanation:
 
     def test_auth_mismatch_is_rewritten_for_every_caller(self) -> None:
         out = self._body(b'{"error": "Forbidden", "code": "internal_auth_mismatch"}')
-        assert "wrong Kiro Crew instance" in out["error"]
+        assert "wrong Sao Khuê instance" in out["error"]
         assert out["error"] != "Forbidden"
 
     def test_a_plain_forbidden_is_not_misdiagnosed(self) -> None:
         # A genuine permission denial carries the same body; explaining it as a
         # credential desync would send that user after a bug they do not have.
         out = self._body(b'{"error": "Forbidden"}')
-        assert "wrong Kiro Crew instance" not in out["error"]
+        assert "wrong Sao Khuê instance" not in out["error"]
         assert out["error"] == "Forbidden"
 
     def test_learn_add_surfaces_the_rewritten_message(self) -> None:
@@ -940,7 +940,7 @@ class TestEveryToolGetsTheExplanation:
             ),
         ):
             out = learn.learn_add("learn_add", {"rule": "always check the port"})
-        assert "wrong Kiro Crew instance" in out
+        assert "wrong Sao Khuê instance" in out
         assert out.strip() != "Error: Forbidden"
 
     def test_secret_missing_gets_its_own_code_and_honest_message(self) -> None:
@@ -948,7 +948,7 @@ class TestEveryToolGetsTheExplanation:
         # from a stale one; the decoder must not fold the first case into the
         # second-gateway explanation.
         out = self._body(b'{"error": "Forbidden", "code": "internal_secret_missing"}')
-        assert "wrong Kiro Crew instance" not in out["error"]
+        assert "wrong Sao Khuê instance" not in out["error"]
         assert "no internal credential" in out["error"]
 
     def test_secret_missing_does_not_promise_a_restart_or_one_cause(self) -> None:

@@ -1,6 +1,6 @@
 """The installed-skills list the dashboard shows, with the agents that load each skill.
 
-``collect_skills_blocking`` lists the Kiro and Kiro Crew skills, keeps one row per
+``collect_skills_blocking`` lists the Kiro and Sao Khuê skills, keeps one row per
 skill file, annotates each row with the agents whose specs load it, and warns about
 skills found outside the trusted roots.
 
@@ -236,7 +236,7 @@ def _resolve_loaded_by_agents(
     Pass *parsed_agents* (from :func:`_load_parsed_agents`) to reuse a single
     agent parse across many skills; omit it for a one-off lookup (parses
     agents inline). Empty list means no agent loads this skill via
-    ``skill://`` URIs (it may still be loaded via Kiro Crew text-injection or
+    ``skill://`` URIs (it may still be loaded via Sao Khuê text-injection or
     an external MCP server).
     """
     agents = parsed_agents if parsed_agents is not None else _load_parsed_agents()
@@ -366,7 +366,7 @@ def _skill_file_identity(row: dict[str, Any]) -> tuple[int, int] | None:
 def _row_is_editable(row: dict[str, Any]) -> bool:
     """Whether the dashboard's Edit/Delete can write this row's file.
 
-    Only a Kiro Crew row under the skills dir the loader writes to: the write
+    Only a Sao Khuê row under the skills dir the loader writes to: the write
     handlers join the key onto that dir, so a row reached through
     ``skills.extra_paths`` (``owned: False``) or any other source is read-only.
     """
@@ -394,7 +394,7 @@ def _one_row_per_skill_file(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Collapse rows that list the same SKILL.md into one row.
 
     Two sources can reach one file -- ``skills.extra_paths`` naming
-    ``~/.kiro/skills`` lists it as a Kiro Crew row AND ``list_kiro_skills``
+    ``~/.kiro/skills`` lists it as a Sao Khuê row AND ``list_kiro_skills``
     lists it as ``kiro-user`` -- and the browser showed both. :func:`_row_rank`
     picks the row kept. ``loaded_by_agents`` is the union, so an agent-scoped listing
     still finds the skill through whichever spelling its glob matched, and the

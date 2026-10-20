@@ -350,7 +350,7 @@ BENIGN_SPAWNS: frozenset[str] = frozenset(
         # ``test/test_acp_opencode_backend.py`` pins that.
         "acp/harness/opencode.py::_opencode_reported_major",
         # The pi gate read-back, the same shape as the opencode one above. ONE fixed
-        # argv -- Kiro Crew's own gate launcher (a file this core wrote into the
+        # argv -- Sao Khuê's own gate launcher (a file this core wrote into the
         # sandbox run directory, execing the resolved ``pi`` binary) plus the three
         # literal words in ``_PI_RPC_ARGS`` (``--mode rpc --no-themes``, what the
         # adapter itself passes) -- no shell, a 30s timeout, and a cwd that is the
@@ -1783,7 +1783,7 @@ BENIGN_SPAWNS: frozenset[str] = frozenset(
         # call has timeout=30. No HTTP/MCP-selected command reaches this site.
         "testing/harness.py::spawn_feature_gateway",
         # Apple on-device speech (macOS only). None of these takes an agent-authored
-        # command: the argv is a fixed toolchain path or the helper Kiro Crew itself
+        # command: the argv is a fixed toolchain path or the helper Sao Khuê itself
         # compiled. `_build_helper` runs swiftc over a file that ships inside the
         # package, writing to the data home's `run/` dir (sensitive-path fenced,
         # 0700). The three spawns that EXECUTE the compiled helper

@@ -653,7 +653,7 @@ class TestSealedRuntimeParentPredicate:
     def test_on_windows_a_declared_temp_is_honored_because_nothing_seals_run(
         self, monkeypatch, tmp_path
     ):
-        # Kiro Crew has no native Windows sandbox backend, so ``<data home>/run``
+        # Sao Khuê has no native Windows sandbox backend, so ``<data home>/run``
         # is never sealed for a probe child there and a declared temp under it is
         # writable. The classification therefore answers None for every path on
         # win32 -- the declaration is honored exactly as it was before the check

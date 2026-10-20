@@ -423,7 +423,7 @@ function createWindowLifecycle(options) {
       const remoteName = getRemoteHostDefaultNameForUrl(store, windowBackendUrl);
       if (!IS_WIN) {
         const suffix = customName || remoteName || `[:${windowPort}]`;
-        win.setTitle(`Kiro Crew ${suffix}`);
+        win.setTitle(`Sao Khuê ${suffix}`);
         return;
       }
       // Windows omits the default local port; secondary/remote windows retain a
@@ -432,7 +432,7 @@ function createWindowLifecycle(options) {
       if (!suffix && windowPort && String(windowPort) !== "5476") {
         suffix = `[:${windowPort}]`;
       }
-      win.setTitle(suffix ? `Kiro Crew ${suffix}` : "Kiro Crew");
+      win.setTitle(suffix ? `Sao Khuê ${suffix}` : "Sao Khuê");
     }
 
     win._mcSetCustomName = (name) => {

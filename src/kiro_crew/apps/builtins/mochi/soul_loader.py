@@ -5,7 +5,7 @@ policy). User-edited soul from config wins; empty falls back to the default.
 The soul is prepended to the pet agent's prompt at wiring time.
 
 The DEFAULT_SOUL text is byte-identical to the original, including its
-deliberate brevity — it sits on top of KiroCrew's own agent prompt, and every
+deliberate brevity — it sits on top of SaoKhue's own agent prompt, and every
 line repeated there is wasted context that can also contradict it (see the
 original's comment for the list of lines dropped for that reason). The
 opening line says "companion", never a specific creature: the user can swap

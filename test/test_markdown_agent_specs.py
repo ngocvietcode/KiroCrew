@@ -65,7 +65,7 @@ from kiro_crew.agent_spec_format import (
 )
 
 # The reporter's own probe file, verbatim: it loads under ``kiro-cli --v3`` and
-# was invisible to Kiro Crew.
+# was invisible to Sao Khuê.
 PROBE = """---
 name: kas-md-probe
 description: >
@@ -1061,7 +1061,7 @@ _ONE_FORM_SCAN_RE = re.compile(
 )
 
 # The writers that are JSON-only BY DESIGN: a markdown spec is never rewritten by
-# Kiro Crew, so a migration that reads-then-writes must not see it. agent.py has
+# Sao Khuê, so a migration that reads-then-writes must not see it. agent.py has
 # two: migrate_agent_specs (bookkeeping keys) and migrate_relocated_skill_uris
 # (skill:// paths of a moved builtin skill).
 _ONE_FORM_SCANS_ALLOWED: dict[str, int] = {"kiro_crew/agent.py": 2}

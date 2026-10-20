@@ -501,7 +501,7 @@ def discover_servers_to_sync() -> list[McpServerInfo]:
                 # re-sync, or the agent config keeps authorizing the old shape.
                 #
                 # Reaching this set is not permission to rewrite anything: each
-                # consumer guards its own surface, so the two that Kiro Crew does
+                # consumer guards its own surface, so the two that Sao Khuê does
                 # not own -- the kiro-global file and the Claude Code sidecar --
                 # decide for themselves what an existing entry allows.
                 if (
@@ -597,7 +597,7 @@ def kirocrew_managed_names() -> set[str]:
     """Server names the dashboard store owns.
 
     A usable dict under the ``kirocrew`` scope (``<data home>/mcp.json``) is the
-    one signal that Kiro Crew manages a name -- the same discriminator the
+    one signal that Sao Khuê manages a name -- the same discriminator the
     agent-spec emit path uses for its OAuth hints, so management means one thing
     everywhere.
 
@@ -605,7 +605,7 @@ def kirocrew_managed_names() -> set[str]:
     precondition for every write to a config surface we do not own -- the
     kiro-global ``mcp.json``, the Claude Code ``~/.mcp.json`` sidecar. Discovery
     merges ALL scopes, so a name present only in a user's global file reaches the
-    sync set exactly like a managed one; without the gate a Kiro Crew sync would
+    sync set exactly like a managed one; without the gate a Sao Khuê sync would
     rewrite a server the user configured by hand.
 
     It is deliberately NOT sufficient. Managing a NAME says nothing about who
@@ -731,7 +731,7 @@ def register_servers_for_cc(
 #
 #   ``mcp_discovery_server_info`` -- ``McpServerInfo``, its scopes and sources, and its redaction.
 #   ``mcp_discovery_probe_state`` -- Protocol revision, timeouts, warning ledgers, probe cache.
-#   ``mcp_discovery_managed`` -- Kiro Crew's managed servers: tables, shareability, repair.
+#   ``mcp_discovery_managed`` -- Sao Khuê's managed servers: tables, shareability, repair.
 #   ``mcp_discovery_config`` -- Reading the configured servers, and ``list_servers``.
 #   ``mcp_discovery_remote`` -- Probing a remote (HTTP) server.
 #   ``mcp_discovery_probe`` -- ``probe_server``: probing one server, a local one sandboxed.

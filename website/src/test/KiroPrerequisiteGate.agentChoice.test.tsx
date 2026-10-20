@@ -395,7 +395,7 @@ describe('KiroPrerequisiteGate agent choice', () => {
     expect(recheck).toBeEnabled()
     expect(screen.getByText('Check failed')).toBeInTheDocument()
     expect(within(unverified).getByText(
-      'Kiro Crew could not confirm that pi is installed. Press Check again to verify the installation before using this agent. Setup stays open until your chosen agent is ready. You can switch agents here, or later in Settings > Agent Harness.',
+      'Sao Khuê could not confirm that pi is installed. Press Check again to verify the installation before using this agent. Setup stays open until your chosen agent is ready. You can switch agents here, or later in Settings > Agent Harness.',
     )).toBeInTheDocument()
     expect(unverified).not.toHaveTextContent('This host cannot provide that sandbox')
     const useAgent = within(unverified).getByRole('button', { name: /Use pi/ })
@@ -568,7 +568,7 @@ describe('KiroPrerequisiteGate agent choice', () => {
     expect(screen.queryByText('Found, not active yet')).not.toBeInTheDocument()
     expect(screen.queryByText('Installed, press Check again')).not.toBeInTheDocument()
     expect(screen.getByText(
-      'Claude Code is installed on the gateway host. Press Check again to pick it up. If this line is still here after that, restart Kiro Crew on that host.',
+      'Claude Code is installed on the gateway host. Press Check again to pick it up. If this line is still here after that, restart Sao Khuê on that host.',
     )).toBeInTheDocument()
     expect(screen.queryByText(/on this machine/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Restart needed/)).not.toBeInTheDocument()
@@ -640,7 +640,7 @@ describe('KiroPrerequisiteGate agent choice', () => {
     // repeated as a heading: a reader who does not know what a sandbox is here
     // otherwise has a disabled button, a command, and no idea why.
     expect(within(detail).getByText(
-      'Kiro Crew runs codex inside a sandbox that keeps your credentials out of its reach. This host cannot provide that sandbox right now, so codex stays unavailable until it can.',
+      'Sao Khuê runs codex inside a sandbox that keeps your credentials out of its reach. This host cannot provide that sandbox right now, so codex stays unavailable until it can.',
     )).toBeInTheDocument()
     expect(within(detail).getByText(/Run this on the gateway host for a full prerequisite report/)).toBeInTheDocument()
     expect(within(detail).getByRole('button', { name: 'Copy command' })).toHaveTextContent('kirocrew doctor')
@@ -683,7 +683,7 @@ describe('KiroPrerequisiteGate agent choice', () => {
     expect(useAgent).toBeDisabled()
     const detail = screen.getByTestId('other-agent-detail')
     expect(within(detail).getByText(
-      "Kiro Crew runs codex inside a sandbox that keeps your credentials out of its reach, but the sandbox is turned off in Kiro Crew's settings (agent.sandbox). Turn it back on to use codex.",
+      "Sao Khuê runs codex inside a sandbox that keeps your credentials out of its reach, but the sandbox is turned off in Sao Khuê's settings (agent.sandbox). Turn it back on to use codex.",
     )).toBeInTheDocument()
     // Neither remedy for a host verdict is offered: nothing they measure is the cause.
     expect(within(detail).queryByText(/This host cannot provide that sandbox/)).not.toBeInTheDocument()
@@ -720,7 +720,7 @@ describe('KiroPrerequisiteGate agent choice', () => {
     fireEvent.click(await screen.findByRole('radio', { name: 'codex' }))
     const detail = screen.getByTestId('other-agent-detail')
     expect(within(detail).getByText(/This host cannot provide that sandbox/)).toBeInTheDocument()
-    expect(within(detail).queryByText(/turned off in Kiro Crew's settings/)).not.toBeInTheDocument()
+    expect(within(detail).queryByText(/turned off in Sao Khuê's settings/)).not.toBeInTheDocument()
     expect(within(detail).getByRole('button', { name: 'Check again' })).toBeEnabled()
     const selectedRow = screen.getByRole('radio', { name: 'codex' }).closest('label')
     expect(within(selectedRow!).getByText("Host can't sandbox")).toBeInTheDocument()
@@ -877,7 +877,7 @@ describe('KiroPrerequisiteGate agent choice', () => {
 
     expect(await screen.findByRole('heading', { name: 'Your Kiro CLI is out of date' })).toBeInTheDocument()
     expect(screen.getByText(
-      'Kiro CLI is installed, but this version predates the acp command Kiro Crew launches every session through. Update it and this page continues on its own.',
+      'Kiro CLI is installed, but this version predates the acp command Sao Khuê launches every session through. Update it and this page continues on its own.',
     )).toBeInTheDocument()
     expect(screen.queryByText(/signed in/i)).not.toBeInTheDocument()
   })

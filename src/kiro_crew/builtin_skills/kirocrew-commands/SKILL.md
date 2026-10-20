@@ -1,11 +1,11 @@
 ---
 name: kirocrew-commands
-description: Complete CLI reference for Kiro Crew commands. Use for help, commands, setup, how to, what can you do, getting started, onboarding.
+description: Complete CLI reference for Sao Khuê commands. Use for help, commands, setup, how to, what can you do, getting started, onboarding.
 always: false
 triggers: help, commands, setup, gateway, how to, what can you do, getting started, onboard, browse, auth, doctor, cron, artifact, memory, snapshot, eval, security, kirocrew pod, pod up, pod down, pod ls, pod status, pod logs, pod provision, pod install, pod token
 inject_on_trigger: false
 ---
-# Kiro Crew CLI Reference
+# Sao Khuê CLI Reference
 
 ## Setup & System
 
@@ -15,10 +15,10 @@ inject_on_trigger: false
 | `kirocrew setup --slack` | Also run the guided Slack credential setup (opt-in; ignored with `--agent-only`) |
 | `kirocrew setup --agent-only` | Only install kiro-cli agent config, skip the other wizard steps |
 | `kirocrew setup --clean` | Fresh install — don't merge from existing config |
-| `kirocrew doctor` | Verify Kiro Crew setup (checks all dependencies) |
+| `kirocrew doctor` | Verify Sao Khuê setup (checks all dependencies) |
 | `kirocrew doctor --bundle` | Collect logs + crash reports into a redacted diagnostics zip |
 | `kirocrew ledger-sweep` | List finished session/work ledgers older than 30 days (dry run, deletes nothing) |
-| `kirocrew update` | Update Kiro Crew to the latest version |
+| `kirocrew update` | Update Sao Khuê to the latest version |
 | `kirocrew update approve` | Approve a pending in-app update armed from the dashboard |
 | `kirocrew update --force` | Discard local commits when a git checkout has diverged from upstream (git installs only) |
 | `kirocrew --version` | Print installed version |
@@ -73,7 +73,7 @@ transcripts.
 
 ## Pods (Isolated Worktree Test Instances)
 
-Ephemeral, full-stack Kiro Crew gateways — one per feature worktree — that run on
+Ephemeral, full-stack Sao Khuê gateways — one per feature worktree — that run on
 their own port + isolated `KIROCREW_HOME` and never touch the live `:5476`
 gateway or shared data. Linux `systemd --user`, macOS `launchd`, Windows Task
 Scheduler. `<wt>` is a worktree name
@@ -180,7 +180,7 @@ Settings button is a convenience, not the only one. In order of likelihood:
    ```
 
    Two caveats worth stating to the user rather than burying: `~/.local/bin` has
-   to be **on `PATH`** or Kiro Crew still reports "not installed" (detection is
+   to be **on `PATH`** or Sao Khuê still reports "not installed" (detection is
    `PATH` + the Node bin dirs, nothing else); and `NPM_CONFIG_USERCONFIG=/dev/null`
    deliberately ignores their employer's registry configuration, which is their
    call to make, not ours to assume.
@@ -312,7 +312,7 @@ LLM-generated UI components (widgets, HTML, markdown, SVG, JSON, text).
 
 | Command | Description |
 |---------|-------------|
-| `kirocrew agent list` | List Kiro Crew agents |
+| `kirocrew agent list` | List Sao Khuê agents |
 | `kirocrew agent create --name NAME` | Create a new agent |
 | `kirocrew agent create --name NAME --kiro-agent kirocrew --workspace default` | Full options |
 | `kirocrew agent update NAME --kiro-agent new-agent` | Update agent settings |
@@ -437,8 +437,8 @@ or write them).
 
 ## Cloud (Bring-Your-Own AWS)
 
-Runs Kiro Crew on an EC2 instance in **your own** AWS account; credentials are
-resolved by the `aws` CLI and never stored by Kiro Crew. All verbs accept
+Runs Sao Khuê on an EC2 instance in **your own** AWS account; credentials are
+resolved by the `aws` CLI and never stored by Sao Khuê. All verbs accept
 `--profile` / `--region`; the single-instance verbs also accept `--tag`
 (defaults to the last launched instance).
 
@@ -449,7 +449,7 @@ resolved by the `aws` CLI and never stored by Kiro Crew. All verbs accept
 | `kirocrew cloud launch --size TIER -y` | Non-interactive launch at a size tier |
 | `kirocrew cloud launch --new` | Create a separate new instance instead of resuming the saved one |
 | `kirocrew cloud launch --keep-on-failure` | On bootstrap failure keep the instance for inspection |
-| `kirocrew cloud list` | List your Kiro Crew cloud instances |
+| `kirocrew cloud list` | List your Sao Khuê cloud instances |
 | `kirocrew cloud status` | Show one instance's state |
 | `kirocrew cloud connect` | Open the dashboard over an SSM tunnel |
 | `kirocrew cloud tunnel` | Open the dashboard SSM tunnel (standalone alias of connect) |
@@ -505,7 +505,7 @@ rather than reporting a silent success. These are human debug/diagnostic twins o
 
 | Command | Description |
 |---------|-------------|
-| `kirocrew snapshot` | Create a portable backup of Kiro Crew state |
+| `kirocrew snapshot` | Create a portable backup of Sao Khuê state |
 | `kirocrew snapshot /path/to/dir` | Snapshot to specific output directory |
 | `kirocrew snapshot --keep 7` | Keep N most recent snapshots (default: 7) |
 | `kirocrew snapshot --strict` | Exit 3 instead of 0 when the bundle omits entries it was asked to carry |

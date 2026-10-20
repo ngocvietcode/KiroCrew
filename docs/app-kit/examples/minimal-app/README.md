@@ -1,6 +1,6 @@
-# Hello World — Minimal Kiro Crew App
+# Hello World — Minimal Sao Khuê App
 
-The simplest possible Kiro Crew app: one agent + one skill, no UI.
+The simplest possible Sao Khuê app: one agent + one skill, no UI.
 
 ## Install
 
@@ -11,4 +11,4 @@ kirocrew app enable hello-world
 
 ## Use
 
-Chat with the `greeter` agent from any Kiro Crew chat after enabling the app.
+Chat with the `greeter` agent from any Sao Khuê chat after enabling the app.

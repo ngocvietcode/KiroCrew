@@ -1,4 +1,4 @@
-"""Shared helpers for building the KiroCrew website frontend assets.
+"""Shared helpers for building the SaoKhue website frontend assets.
 
 The canonical frontend lives **in-tree** at ``<repo-root>/website`` (a Vite +
 React app). Its ``npm run build`` output lands in ``<repo-root>/website/dist``
@@ -94,7 +94,7 @@ _REAP_TIMEOUT = 30
 # no pipes to drain because the build's output goes to DEVNULL.
 _BUILD_KILL_GRACE = 10
 #: How long ``python -m kiro_crew.frontend stage`` waits for the staging lock.
-#: A holder is a Kiro Crew build that publishes its own bundle, so a stager
+#: A holder is a Sao Khuê build that publishes its own bundle, so a stager
 #: run by hand reports that plainly rather than queueing behind the build.
 _CLI_STAGE_LOCK_TIMEOUT = 30.0
 #: How long gateway start waits for the staging lock before an edition serves
@@ -456,7 +456,7 @@ def _print_safe(message: str) -> None:
 def _staging_lock(static_parent: Path, timeout: Optional[float] = None) -> Iterator[None]:
     """Hold the cross-process staging lock for ``static/dist``.
 
-    Serializes every build or stage of the frontend initiated by Kiro Crew: Dev
+    Serializes every build or stage of the frontend initiated by Sao Khuê: Dev
     Fleet's Pull+Build and the dashboard update flow can run at once, and BOTH
     the ``npm run build`` (which swaps a new tree into ``website/dist``) and the copy/swap must
     be inside one holder. Covering only the copy still lets a peer's build rewrite
@@ -1089,7 +1089,7 @@ def build_frontend_sync(
     # _INSTALL_TIMEOUT) rather than only for a build. Two frontend builds on one
     # checkout are mutually destructive, so waiting is the correct outcome.
     #
-    # RESIDUAL: this closes races between Kiro Crew's own Python flows. Dev Fleet's
+    # RESIDUAL: this closes races between Sao Khuê's own Python flows. Dev Fleet's
     # Pull+Build takes this same lock for its build+stage child, but its `npm ci`
     # step runs from a generated stdlib-only script that cannot import kiro_crew
     # and so cannot take it. A Pull+Build install overlapping one of these is
@@ -1436,7 +1436,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     The one entry point the build drivers (Makefile, make.ps1) and the docs use.
     Waits at most :data:`_CLI_STAGE_LOCK_TIMEOUT` for the staging lock, and
-    refuses a directory that is not a Kiro Crew checkout before creating anything
+    refuses a directory that is not a Sao Khuê checkout before creating anything
     in it.
     """
     platform_compat.ensure_utf8_console()
@@ -1447,7 +1447,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = parser.parse_args(argv)
     repo = Path(args.repo).resolve()
     if not (repo / _DIR_NAME).is_dir() or not (repo / "src" / "kiro_crew").is_dir():
-        _print_safe(f"error: {repo} is not a Kiro Crew checkout (no website/ and src/kiro_crew/)")
+        _print_safe(f"error: {repo} is not a Sao Khuê checkout (no website/ and src/kiro_crew/)")
         return 1
     try:
         stage_built_dist(repo, lock_timeout=_CLI_STAGE_LOCK_TIMEOUT)

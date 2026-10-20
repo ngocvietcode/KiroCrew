@@ -562,7 +562,7 @@ jobs:
               list named in your system prompt and the images it names. Do not
               open anything else. If an image will not open, say so and move on.
 
-            SCENE (all the context you get): this is Kiro Crew, a desktop-style
+            SCENE (all the context you get): this is Sao Khuê, a desktop-style
             web app in which a person chats with an AI assistant and follows
             the work it does. The page in each screenshot is whatever the
             screenshot shows.
@@ -777,7 +777,7 @@ jobs:
                surrounding website/src code to compare against established
                patterns, labels, and components.
 
-            REPO CONTEXT: KiroCrew is an open-source AI agent platform (Python
+            REPO CONTEXT: SaoKhue is an open-source AI agent platform (Python
             backend + React/TS dashboard). Single-user tool; the dashboard is a
             SOVEREIGN surface (daily, full-attention use — dense, keyboard-
             friendly, muted) while dialogs/settings/onboarding are TRANSIENT

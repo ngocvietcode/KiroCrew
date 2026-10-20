@@ -1,4 +1,4 @@
-"""Test harness for spawning isolated KiroCrew gateways.
+"""Test harness for spawning isolated SaoKhue gateways.
 
 Companion to the ``--test-mode`` / ``--json-ready`` / ``--port`` / ``--approval``
 CLI flags on ``kirocrew gateway``. Provides a context manager that spins up

@@ -1110,7 +1110,7 @@ def _list_vetted_completions(
 
     Matching is a case-insensitive SUBSTRING search, not a prefix test, so a
     long name can be reached by its distinctive middle: ``termi`` finds
-    ``KiroCrew-terminal-completion``. Each entry reports ``at``, the offset the
+    ``SaoKhue-terminal-completion``. Each entry reports ``at``, the offset the
     fragment was found at, which both ranks the results (earliest match first,
     so a true prefix still wins) and lets the client highlight the span.
 

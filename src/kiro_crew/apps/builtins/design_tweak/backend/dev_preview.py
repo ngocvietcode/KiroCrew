@@ -48,7 +48,7 @@ NODE_BIN_DIRS = (
 # servers do) would try to bind a socket we already hold and die on EADDRINUSE.
 #
 # `SSH_AUTH_SOCK` / `GIT_SSH_COMMAND` / `GIT_SSH` are stripped because the dev
-# script is untrusted project code, not Kiro Crew's own: an inherited SSH agent
+# script is untrusted project code, not Sao Khuê's own: an inherited SSH agent
 # socket or SSH override command lets it authenticate to a remote (`git push`,
 # a bare `ssh`) AS the operator, with no confinement of its own — the same
 # credential class `sandbox._SENSITIVE_ENV_PREFIXES` strips for the sandboxed

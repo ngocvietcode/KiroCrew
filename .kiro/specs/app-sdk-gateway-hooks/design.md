@@ -4,7 +4,7 @@ Status: implemented in `src/kiro_crew/apps/hooks_integration.py` and the related
 
 ## Overview
 
-This design introduces a gateway-side hook system that allows KiroCrew apps to register HTTP routes, manage cron jobs, and participate in gateway lifecycle events through declarative manifest entries and Python entry points. The core principle is **convention over configuration**: apps declare capabilities in `app.json`, implement them in their own directory, and the gateway discovers and wires them up automatically.
+This design introduces a gateway-side hook system that allows SaoKhue apps to register HTTP routes, manage cron jobs, and participate in gateway lifecycle events through declarative manifest entries and Python entry points. The core principle is **convention over configuration**: apps declare capabilities in `app.json`, implement them in their own directory, and the gateway discovers and wires them up automatically.
 
 **Integration with existing lifecycle**: This is NOT a replacement for the current app lifecycle (`install_app` → `enable_app` → `register_app` via bridges.py → `start_app_backend`). It extends that pipeline by adding new hook points within the existing flow:
 
@@ -12,7 +12,7 @@ This design introduces a gateway-side hook system that allows KiroCrew apps to r
 - `disable_app()` already calls `deregister_app()` and `stop_app_backend()`. The new system adds route deregistration and `on_shutdown` hook invocation **before** the existing teardown.
 - The existing `setup.onEnable`/`setup.onDisable` shell scripts continue to run at their current position in the flow. Python lifecycle hooks run after shell scripts.
 
-**Standalone app compatibility**: The system supports both `resources="gateway"` (KiroCrew-managed) and `resources="app"` (self-managed/standalone) apps:
+**Standalone app compatibility**: The system supports both `resources="gateway"` (SaoKhue-managed) and `resources="app"` (self-managed/standalone) apps:
 
 - **Gateway-managed apps** (`resources="gateway"`): The Route Registry loads their route modules directly into the gateway process. The CronSDK wraps the gateway's CronService. This is the primary use case for builtin apps like Mimir.
 - **Self-managed/standalone apps** (`resources="app"`): These apps run their own backend process (managed by `backend.py`). They can still declare `backend.hooks.routes` — the Route Registry will proxy requests to their backend port rather than loading Python modules directly. The CronSDK is still available via the App Context for programmatic cron management.

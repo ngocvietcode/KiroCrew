@@ -1,7 +1,7 @@
 """Localized parsing for the second ACP backend's KAS-specific wire surfaces.
 
 Two surfaces live here, and they share one property: the shapes are the second
-backend's, not ordinary ACP, so this module is the ONE place Kiro Crew reads or
+backend's, not ordinary ACP, so this module is the ONE place Sao Khuê reads or
 builds them and an adjustment is a single-file edit.
 
 1. ``session/update`` display/telemetry frames, whose discriminant blob arrives
@@ -12,18 +12,18 @@ builds them and an adjustment is a single-file edit.
    execution to its ACP client, asking ``_kiro/hooks/list`` for the hooks
    matching a trigger, ``_kiro/hooks/sessionStart`` for results computed before
    the turn, and ``_kiro/hooks/executeHook`` to run one listed hook's command.
-   Kiro Crew answers all three from its own hook store, so the matcher stays on
+   Sao Khuê answers all three from its own hook store, so the matcher stays on
    the side where the UI that authored the hook lives, and the command is spawned
-   by Kiro Crew -- in its process, behind its own deny floor and governance gate
+   by Sao Khuê -- in its process, behind its own deny floor and governance gate
    -- rather than by the backend. The handshake does not announce the surface
    (see ``KAS_CLIENT_CAPABILITIES``), so today the backend asks none of them.
 
-The literals below are only what Kiro Crew must match to route a frame or answer
+The literals below are only what Sao Khuê must match to route a frame or answer
 a request; the backend's own internals are not documented here.
 
-The ids this module mints are Kiro Crew's own, and the execute path runs only one
-that a list answer produced for the Kiro Crew session that asks:
-:class:`ListedHookStore` is that record, keyed by the OWNING Kiro Crew session
+The ids this module mints are Sao Khuê's own, and the execute path runs only one
+that a list answer produced for the Sao Khuê session that asks:
+:class:`ListedHookStore` is that record, keyed by the OWNING Sao Khuê session
 key and never by the host-supplied ``sessionId`` (see
 ``docs/system-specs/modules/agent-host-contract.md``).
 """
@@ -152,7 +152,7 @@ METHOD_HOOKS_LIST = "_kiro/hooks/list"
 METHOD_HOOKS_SESSION_START = "_kiro/hooks/sessionStart"
 METHOD_HOOKS_EXECUTE = "_kiro/hooks/executeHook"
 
-#: JSON-RPC error code for an execute request Kiro Crew REFUSED. A refusal is
+#: JSON-RPC error code for an execute request Sao Khuê REFUSED. A refusal is
 #: answered as an error, never as a result: a result carries an ``exitCode``, and a
 #: command that never started has none to report. In the server-defined range,
 #: one below the auth-callback code the KAS transport already answers with.
@@ -483,10 +483,10 @@ def hooks_announced() -> bool:
 
 
 class ListedHookStore:
-    """Which hook ids a list answer produced for ONE owning Kiro Crew session.
+    """Which hook ids a list answer produced for ONE owning Sao Khuê session.
 
-    The execute path's first gate: an id is run only if a list answer Kiro Crew
-    built produced it for the SAME owning session. The key is the Kiro Crew
+    The execute path's first gate: an id is run only if a list answer Sao Khuê
+    built produced it for the SAME owning session. The key is the Sao Khuê
     session key the handle holds, never the request's ``sessionId`` -- that one is
     host-supplied, so keying by it would let one session's request name another
     session's set.
@@ -552,7 +552,7 @@ def hooks_list_response(
     to fire.
 
     Records the enabled hooks it answers in ``listed`` under ``session_key``, the
-    OWNING Kiro Crew session, so the execute path can refuse an id this session
+    OWNING Sao Khuê session, so the execute path can refuse an id this session
     was never handed. ``params.sessionId`` is never the key: it is host-supplied.
 
     Does NOT consult the ``capabilities.script_hooks`` governance gate, and that is
@@ -594,7 +594,7 @@ def hooks_session_start_response(params: Any) -> dict[str, Any]:
 
 
 class HookExecuteRefused(Exception):
-    """An execute request Kiro Crew refused before any command started.
+    """An execute request Sao Khuê refused before any command started.
 
     Raised rather than returned so the one route that answers it has one place to
     turn it into a JSON-RPC error, and so a refusal cannot be mistaken for an empty
@@ -679,7 +679,7 @@ def _resolve_listed_hook(session_key: str, hook_id: str, listed: ListedHookStore
 
 
 def _gate_hook_command(command: str, *, session_key: str, agent: str) -> str | None:
-    """The refusal reason Kiro Crew's own gates give ``command``, or ``None``.
+    """The refusal reason Sao Khuê's own gates give ``command``, or ``None``.
 
     The two gates a shell tool call and a dashboard-run hook already pass, reused
     rather than restated:
@@ -690,7 +690,7 @@ def _gate_hook_command(command: str, *, session_key: str, agent: str) -> str | N
       not put through the path resolver: the spawn is sandboxed, which is the
       control that exemption leans on. Only ``deny`` refuses:
       ``allow`` means no tier matched and a human decides, and the human who
-      decided is the one who authored this hook in Kiro Crew's own store;
+      decided is the one who authored this hook in Sao Khuê's own store;
     * ``capabilities.script_hooks``, the governance switch that stops every
       script hook, asked on the owning session's key and audited the way
       ``run_script_hook`` audits it.
@@ -711,7 +711,7 @@ def _gate_hook_command(command: str, *, session_key: str, agent: str) -> str | N
         **hook_gate_kwargs(None, tool_kind="execute", command=command, is_shell=_SHELL_TOOL),
     )
     if decision.action == TOOL_DENY:
-        return decision.reason or "denied by the Kiro Crew tool gate"
+        return decision.reason or "denied by the Sao Khuê tool gate"
     gov_denied = hooks_mod._script_hooks_capability_denied(session_key)
     if gov_denied:
         hooks_mod._audit_governance_hook_decision(
@@ -819,7 +819,7 @@ async def hooks_execute(
 
     Four gates, in order, and a request must clear all four:
 
-    1. an owning Kiro Crew session is known -- governance resolves per surface, and
+    1. an owning Sao Khuê session is known -- governance resolves per surface, and
        an unowned session has no surface to resolve;
     2. the id was listed for that session and still resolves to an enabled hook;
     3. the command clears the tool gate (:func:`_gate_hook_command`);
@@ -835,7 +835,7 @@ async def hooks_execute(
     label = _audit_label(hook_id)
     try:
         if not session_key:
-            raise HookExecuteRefused("no owning Kiro Crew session for this ACP session")
+            raise HookExecuteRefused("no owning Sao Khuê session for this ACP session")
         if not hook_id:
             raise HookExecuteRefused("hookId is missing")
         hook = _resolve_listed_hook(session_key, hook_id, listed)

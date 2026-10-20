@@ -1,4 +1,4 @@
-"""How Kiro Crew launches a harness's process, what confines it, and how it is
+"""How Sao Khuê launches a harness's process, what confines it, and how it is
 recognised later.
 
 The launch table for the harnesses whose own binary serves ACP, the argv0 and npm
@@ -30,7 +30,7 @@ from kiro_crew.agent_sdk.backends import (
 )
 
 # Backends carrying their OWN internal OS sandbox, which on macOS cannot nest
-# inside Kiro Crew's seatbelt (kernel EPERM) — so ``sandbox.wrap_argv`` skips
+# inside Sao Khuê's seatbelt (kernel EPERM) — so ``sandbox.wrap_argv`` skips
 # Crew's own layer for them. This is the one membership test that fails OPEN:
 # claiming it for a harness with no internal sandbox hands isolation to a layer
 # that never starts and leaves the agent process unconfined. Only kiro-cli

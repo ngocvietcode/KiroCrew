@@ -1,4 +1,4 @@
-"""Reclaim the dashboard bind port from a *stale* KiroCrew gateway.
+"""Reclaim the dashboard bind port from a *stale* SaoKhue gateway.
 
 Background
 ----------
@@ -30,7 +30,7 @@ of these hold:
 * the holder is identifiable via the port->PID lookup (``lsof`` on POSIX,
   ``netstat -ano`` on Windows) — else we cannot know who to signal → fall back
   to the old wait/retry;
-* the holder is a *KiroCrew gateway* process — reusing the same structural
+* the holder is a *SaoKhue gateway* process — reusing the same structural
   command-line check that gates ``kirocrew stop`` (:func:`_is_kirocrew_process`)
   so we never signal an unrelated process that merely grabbed the port; and
 * the holder does **not** answer an HTTP liveness probe — a *responsive*
@@ -246,7 +246,7 @@ async def reclaim_stale_gateway_port(
     identity_timeout: float = 5.0,
     log: logging.Logger = logger,
 ) -> str:
-    """Reclaim *port* iff it is held by a stale/unresponsive KiroCrew gateway.
+    """Reclaim *port* iff it is held by a stale/unresponsive SaoKhue gateway.
 
     Returns one of the module-level outcome constants. Only :data:`RECLAIMED`
     (and, transiently, :data:`NO_HOLDER`) means the port is now bindable; the
@@ -319,7 +319,7 @@ async def reclaim_stale_gateway_port(
 
     if await probe_healthy(port, probe_timeout):
         log.error(
-            "Port %d is owned by a live, responsive KiroCrew gateway (pid %s) — "
+            "Port %d is owned by a live, responsive SaoKhue gateway (pid %s) — "
             "not reclaiming. Stop it with `kirocrew stop` or use a different port.",
             port,
             kiro_pids,
@@ -348,7 +348,7 @@ async def reclaim_stale_gateway_port(
     if terminate is None:
         terminate = _terminate_pids
     log.warning(
-        "Port %d is held by an unresponsive KiroCrew gateway (pid %s) left by an "
+        "Port %d is held by an unresponsive SaoKhue gateway (pid %s) left by an "
         "unclean exit — terminating it to reclaim the port.",
         port,
         _describe_holders(kiro_pids),

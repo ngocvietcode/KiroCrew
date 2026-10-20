@@ -1,11 +1,11 @@
 /**
- * @kirocrew/app-sdk — lightweight SDK for KiroCrew apps.
+ * @kirocrew/app-sdk — lightweight SDK for SaoKhue apps.
  *
  * Provides React hooks backed by a context that AppHost sets up.
- * Apps import these hooks to access the KiroCrew API, real-time events,
+ * Apps import these hooks to access the SaoKhue API, real-time events,
  * theme, and navigation — all permission-scoped.
  *
- * This module lives inside the KiroCrew frontend for now. When we publish
+ * This module lives inside the SaoKhue frontend for now. When we publish
  * it as a standalone package, apps will `import { useAppApi } from '@kirocrew/app-sdk'`
  * and the import map will resolve it to the host's vendored copy.
  */
@@ -304,7 +304,7 @@ export function useAppInfo(): AppInfo {
   return useCtx().info
 }
 
-/** Navigate to a KiroCrew route (host-controlled). */
+/** Navigate to a SaoKhue route (host-controlled). */
 export function useNavigate(): (path: string) => void {
   return useCtx().navigate
 }

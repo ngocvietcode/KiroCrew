@@ -1,4 +1,4 @@
-// StreamTranscribe.swift — LIVE streaming speech-to-text for Kiro Crew's `apple`
+// StreamTranscribe.swift — LIVE streaming speech-to-text for Sao Khuê's `apple`
 // STT provider. Sibling of AppleTranscribe.swift (which does whole-file batch work).
 //
 // PROTOCOL (deliberately dumb, so the Python side stays a thin pipe)

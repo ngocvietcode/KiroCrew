@@ -1,4 +1,4 @@
-"""Track S3: launch the Kiro Crew backend headless and supervise the process tree.
+"""Track S3: launch the Sao Khuê backend headless and supervise the process tree.
 
 This package owns the container entrypoint. It runs the startup order the
 contract makes a correctness requirement (`docs/system-specs/modules/aws-control.md`, "Four

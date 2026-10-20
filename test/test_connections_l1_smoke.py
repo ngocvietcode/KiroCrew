@@ -361,7 +361,7 @@ async def test_a_multi_feed_body_is_accumulated_not_truncated(granted):
 
 @pytest.mark.asyncio
 async def test_a_tokenless_401_is_grant_held_not_needs_reconsent(granted):
-    """The regression that matters most: Kiro Crew holds no bearer, so a healthy
+    """The regression that matters most: Sao Khuê holds no bearer, so a healthy
     authorized provider answers with 401 -- grading that NEEDS_RECONSENT would
     report every working provider as broken, every run."""
     session = FakeSession([FakeResponse(401, None)])

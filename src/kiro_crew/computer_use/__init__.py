@@ -1,4 +1,4 @@
-"""KiroCrew computer use — read and drive desktop app windows via accessibility.
+"""SaoKhue computer use — read and drive desktop app windows via accessibility.
 
 Public surface of the package. Importing it is **side-effect free**: no native
 framework is loaded, no ``CDLL`` runs, no file is read, and no platform branch is

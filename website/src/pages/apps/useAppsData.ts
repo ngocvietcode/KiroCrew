@@ -515,7 +515,7 @@ export default function useAppsData({ showAll = true }: { showAll?: boolean } = 
         // installed under that name — names an app this wheel does not ship. A
         // built-in has no install coordinates, so the generic Install card would
         // render a control that cannot work. Dropped until a
-        // `minClientVersion`-aware "needs a newer Kiro Crew" state exists to say
+        // `minClientVersion`-aware "needs a newer Sao Khuê" state exists to say
         // so honestly. This reads `apps` purely as INSTALL STATE, never as a
         // source of display copy.
         if (

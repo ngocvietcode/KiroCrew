@@ -496,7 +496,7 @@ def _npm_bin() -> str | None:
     if npm:
         return npm
     _say(
-        "FATAL: npm not found. Kiro Crew looks for a Node toolchain in "
+        "FATAL: npm not found. Sao Khuê looks for a Node toolchain in "
         "<data-home>/node-bin-dir (written by ensure-node.sh), then in "
         "mise / asdf / nvm / fnm / volta install dirs, then on PATH.\n"
         "  Fix: run `bash ensure-node.sh` in the main checkout to install "

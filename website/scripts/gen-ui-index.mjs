@@ -173,7 +173,7 @@ if (outIdx >= 0) {
 }
 
 /** Matches `DEFAULT_PRODUCT_NAME` in src/i18n/index.ts (not imported: it pulls i18next in). */
-const PRODUCT_NAME = 'Kiro Crew'
+const PRODUCT_NAME = 'Sao Khuê'
 
 function read(abs) {
   return fs.readFileSync(abs, 'utf-8')

@@ -4,9 +4,9 @@ description: One-click deploy a user's pre-built app/artifact into their OWN AWS
 triggers: deploy, ship, publish demo, public link, deploy to aws, share externally, one-click deploy, vercel
 ---
 
-# Kiro Crew One-Click Deploy (MVP)
+# Sao Khuê One-Click Deploy (MVP)
 
-> **Shipped by Kiro Crew core** (`src/kiro_crew/deploy/`), not by an installable
+> **Shipped by Sao Khuê core** (`src/kiro_crew/deploy/`), not by an installable
 > app. Gateway startup copies this skill into `~/.kiro/crew/skills/artifact-deploy/`.
 > The `/deploy` console owns AWS profile setup, verification, pending confirmations,
 > and the fleet/cost view; this skill prepares and previews deployments.
@@ -86,7 +86,7 @@ skill or the card's Deploy button — fills in the rest.
   infrastructure. It does not wrap `scripts/deploy.sh` and must not be mixed with
   `deploy-backend.sh`, which targets the shared stack.
 - Cost lives in the **user's** account and is scale-to-zero (S3 storage +
-  CloudFront requests). Idle ≈ $0. AWS earns the consumption; Kiro Crew pays
+  CloudFront requests). Idle ≈ $0. AWS earns the consumption; Sao Khuê pays
   nothing.
 
 ## Invocation — how this skill is summoned (and where isolation comes from)
@@ -178,7 +178,7 @@ not *rewrites business logic*.
 
 - **POSIX platform (Linux / macOS)** — deploy scripts require `bash`.
   Windows is not supported; use WSL (Windows Subsystem for Linux) to run the
-  Kiro Crew gateway if your host OS is Windows. The backend returns HTTP 400
+  Sao Khuê gateway if your host OS is Windows. The backend returns HTTP 400
   with a clear message on unsupported platforms.
 - AWS access configured **once in the Artifact Deploy console** (profiles registered
   in `~/.kiro/crew/deploy/profiles.json`, verified at `/deploy`).
@@ -204,7 +204,7 @@ not by agents. They implement the separate shared-stack app path; the core
 `--profile` and `--region` (default `us-west-2`). `attach_backend.py` /
 `detach_backend.py` refuse to run unless `kiro_crew` is importable, and
 `deploy-backend.sh`, `teardown.sh` and `reaper.sh` call them with the first
-`python3` on `PATH`, so run these scripts with the Kiro Crew environment's
+`python3` on `PATH`, so run these scripts with the Sao Khuê environment's
 Python first on `PATH`.
 
 - **Deploy (static)**: `scripts/deploy.sh <app_dir> [--slug NAME] [--ttl HOURS] [--profile P] [--region R]`

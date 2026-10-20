@@ -22,7 +22,7 @@ superseded-by: []
 
 ## Summary
 
-KiroCrew already ships a **feature-tips engine** (`tips.py`): every 6 hours it reads the user's context and recent memory, generates memory-personalized tips from a docs catalog, and surfaces them one at a time in the chat view with a glow/snooze/dismiss cadence. Tips today carry at most a `{kind: 'route'}` one-click action that navigates to a Settings tab or page.
+SaoKhue already ships a **feature-tips engine** (`tips.py`): every 6 hours it reads the user's context and recent memory, generates memory-personalized tips from a docs catalog, and surfaces them one at a time in the chat view with a glow/snooze/dismiss cadence. Tips today carry at most a `{kind: 'route'}` one-click action that navigates to a Settings tab or page.
 
 This RFC promotes that engine from **feature discovery** to a **recommendation system** — the "Tips Kit". It adds a background **analyzer** that reads what the user actually does day to day (the daily memory history), and four recommendation kinds delivered through the existing tip card — three **executable** and one **educational**:
 
@@ -64,7 +64,7 @@ So the engine already has: activity-adjacent personalization, a consent-respecti
 - A background **analyzer** derives candidate recommendations from **observed daily activity** (local `memory/history/*.md`), not just from the feature catalog.
 - Three new **executable** tip action kinds — `app_install`, `setting_toggle`, `cron_create` — each executed through the existing tip card, each **consent-gated** (the action never runs on generation, only on an explicit user click that then confirms) — plus an **activity-grounded educational kind**, `feature_tip` (the existing `route`/informational tip, now surfaced *because* the analyzer saw a manual workflow a built-in feature would streamline). The kind set is open — designed so a new kind is a new detector + a new card renderer, not a new engine.
 - A **learning loop**: per-recommendation-family weights adjust on `ack`/`dismiss`; a strong accept may persist a durable preference (via the lessons store) so the recommendation becomes a standing behavior instead of a repeated suggestion.
-- **Zero egress.** Analysis runs entirely on-device against already-redacted daily summaries; no new data source leaves the machine (consistent with KiroCrew's local-first posture).
+- **Zero egress.** Analysis runs entirely on-device against already-redacted daily summaries; no new data source leaves the machine (consistent with SaoKhue's local-first posture).
 - **Reuse, don't fork.** The cadence model, `TipsState` suppression, the card surface, and the feedback endpoint are extended, not duplicated.
 - **Cheap by default.** The pattern-detection pass is deterministic (no tokens); the LLM is used only to phrase and rank a small candidate set, on the existing 6h cadence.
 
@@ -133,7 +133,7 @@ Detectors are small and explainable, e.g.:
 - **Repetition → cron**: the same intent recurs at a similar time across ≥3 days ("summarize #eng", "check my tickets") and no cron already covers it → `cron_create` candidate.
 - **Manual toil → app**: activity matches an installed-registry app's capability the user has *not* installed → `app_install` candidate (registry only; never invents an app).
 - **Config gap → setting**: an observed friction maps to a known toggle the user has left at default (e.g. heavy parallel work + `session.pool_size` at 1) → `setting_toggle` candidate.
-- **Manual workflow → built-in feature**: an activity shape maps to a KiroCrew capability the user isn't using → `feature_tip` candidate. Examples: a long multi-step task driven turn-by-turn across a session → `/goal`; a session grown large/slow → `/compact`; repeated independent parallel work done serially → spawning sub-agents; "keep checking X until Y" phrasing → `monitor`/watch cron. This is the educational kind — its `target` is a route or a `cta_prompt`, never a side effect. It differs from a static-catalog tip in that the *feature* is chosen from the observed workflow, not picked round-robin from the docs pool.
+- **Manual workflow → built-in feature**: an activity shape maps to a SaoKhue capability the user isn't using → `feature_tip` candidate. Examples: a long multi-step task driven turn-by-turn across a session → `/goal`; a session grown large/slow → `/compact`; repeated independent parallel work done serially → spawning sub-agents; "keep checking X until Y" phrasing → `monitor`/watch cron. This is the educational kind — its `target` is a route or a `cta_prompt`, never a side effect. It differs from a static-catalog tip in that the *feature* is chosen from the observed workflow, not picked round-robin from the docs pool.
 
 Candidates whose `family` is dismissed or whose `target` already exists (app installed, cron present, setting already non-default) are dropped before ranking. This is the same "already-have" suppression the app detector needs and the cron detector needs, centralized once.
 

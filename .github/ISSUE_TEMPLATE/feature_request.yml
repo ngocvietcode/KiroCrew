@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose a new capability or a change to how KiroCrew behaves.
+description: Propose a new capability or a change to how SaoKhue behaves.
 labels: ["enhancement"]
 body:
   - type: markdown

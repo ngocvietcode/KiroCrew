@@ -1,4 +1,4 @@
-"""Connect to a launched KiroCrew instance — SSM tunnel + token + open browser.
+"""Connect to a launched SaoKhue instance — SSM tunnel + token + open browser.
 
 The instance's gateway is bound to loopback (never public). To reach it we:
 
@@ -347,7 +347,7 @@ def register_instance(
 
 
 def is_launched_instance(ssm_target: str) -> bool:
-    """True if *ssm_target* (an EC2 instance id) was provisioned by a Kiro Crew
+    """True if *ssm_target* (an EC2 instance id) was provisioned by a Sao Khuê
     cloud launch, per the launch job store — i.e. it is a *correlated* instance,
     not a hand-added SSM record that merely happens to use the same transport.
 

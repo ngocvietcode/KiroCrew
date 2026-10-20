@@ -146,7 +146,7 @@ class TestLinuxControlPaths:
         with patch("kiro_crew.service.linux.subprocess.run", side_effect=run):
             out = svc_linux.status()
         # The scope with a unit carries its `systemctl status` block.
-        assert f"● {SERVICE_NAME}.service - Kiro Crew gateway (system scope block)" in out
+        assert f"● {SERVICE_NAME}.service - Sao Khuê gateway (system scope block)" in out
         # status() must NOT use sudo.
         assert all("sudo" not in c for c in run.calls)
 
@@ -364,7 +364,7 @@ class TestLinuxServiceScopesStatus:
             out = svc_linux.status()
 
         system_line = out.index("system scope: active (running)")
-        block = out.index(f"● {_UNIT} - Kiro Crew gateway (system scope block)")
+        block = out.index(f"● {_UNIT} - Sao Khuê gateway (system scope block)")
         user_line = out.index("user scope: not installed")
         assert system_line < block < user_line, out
         assert any(c[:3] == ["systemctl", "status", _UNIT] for c in run.calls), run.calls
@@ -381,7 +381,7 @@ class TestLinuxServiceScopesStatus:
 
         assert "system scope: inactive (dead)" in out
         assert "user scope: active (running)" in out
-        assert f"● {_UNIT} - Kiro Crew gateway (user scope block)" in out
+        assert f"● {_UNIT} - Sao Khuê gateway (user scope block)" in out
         assert active is True
 
     def test_the_user_scope_spawn_carries_the_shared_backfilled_bus_env(

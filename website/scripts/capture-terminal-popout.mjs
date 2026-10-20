@@ -105,7 +105,7 @@ async function stubContext(context) {
     if (path === '/api/auth/me') return json(route, { user: 'owner', app: '' })
     if (path === '/api/themes') return json(route, { themes: [], installed: [] })
     if (path === '/api/theme/boot') return json(route, { mode: 'dark', theme: '' })
-    if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Kiro Crew', avatar: '/logo.png' })
+    if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Sao Khuê', avatar: '/logo.png' })
     if (path === '/api/recent-projects') return json(route, { dirs: [] })
     if (path === '/api/agents') {
       return json(route, {

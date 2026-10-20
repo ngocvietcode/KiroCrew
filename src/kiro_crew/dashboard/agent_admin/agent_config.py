@@ -133,7 +133,7 @@ def _commit_agent_config(
       reverted.
     * The bookkeeping lift runs AFTER the ``config.json`` write (so prefix 2
       leaves the sidecar untouched) but BEFORE the spec write, because it STRIPS
-      Kiro Crew keys (``model_managed`` / ``cc_model``) out of the same *config*
+      Sao Khuê keys (``model_managed`` / ``cc_model``) out of the same *config*
       dict the spec write then persists — reverse the two and the spec lands with
       fields kiro-cli's ``deny_unknown_fields`` rejects.
 
@@ -515,7 +515,7 @@ async def api_agent_config(request: web.Request) -> web.Response:
                         )
             if changed:
                 logger.info(
-                    "Stripped Kiro Crew bookkeeping keys from a PUT to agent config for %r",
+                    "Stripped Sao Khuê bookkeeping keys from a PUT to agent config for %r",
                     name,
                 )
             # Restart kiro-cli sessions so new config takes effect

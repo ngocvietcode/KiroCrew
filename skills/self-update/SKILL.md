@@ -1,6 +1,6 @@
 ---
 name: self-update
-description: Check for and apply Kiro Crew updates. Use when user says "update yourself", "check for updates", "are you up to date", "keep yourself updated", or "auto-update".
+description: Check for and apply Sao Khuê updates. Use when user says "update yourself", "check for updates", "are you up to date", "keep yourself updated", or "auto-update".
 triggers: update yourself, check for updates, new version, out of date, latest version, auto-update, keep updated
 ---
 
@@ -8,7 +8,7 @@ triggers: update yourself, check for updates, new version, out of date, latest v
 
 ## Overview
 
-Check for available Kiro Crew updates and use the install layout's supported apply path. The gateway already performs periodic update checks; do not add a duplicate cron.
+Check for available Sao Khuê updates and use the install layout's supported apply path. The gateway already performs periodic update checks; do not add a duplicate cron.
 
 `kirocrew update` behaves differently on three install layouts, and which one the
 user is on decides everything below:
@@ -72,7 +72,7 @@ verdict through **Settings → About** and `GET /api/update/check`.
 
 The built-in capability selects the correct owner:
 
-- **git checkout / wheel install** — Kiro Crew checks the tracked upstream or
+- **git checkout / wheel install** — Sao Khuê checks the tracked upstream or
   signed release feed and reports a nullable `update_available` verdict.
 - **desktop app** — the Electron/package OTA updater owns checking and consent.
 - **Docker** — the image is immutable; update by pulling/redeploying an image.
@@ -115,5 +115,5 @@ dispatch, drain, and restart behavior.
 
 1. Inspect the install's update capability and current `check_status`.
 2. Explain which component owns updates for this layout (git/wheel, desktop OTA, container, or policy provider).
-3. Use the existing Kiro Crew `auto_update`/channel/policy controls where available; do not create a second update cron.
-4. For externally managed or container installs, give the capability's own remediation instead of claiming Kiro Crew can self-update.
+3. Use the existing Sao Khuê `auto_update`/channel/policy controls where available; do not create a second update cron.
+4. For externally managed or container installs, give the capability's own remediation instead of claiming Sao Khuê can self-update.

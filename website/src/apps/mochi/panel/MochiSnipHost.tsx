@@ -16,7 +16,7 @@
  * shell does not. It is degraded there for the reasons above, which is better
  * than a button that does nothing.
  *
- * The capture itself is KiroCrew's own (`captureScreen` + `SnipOverlay`), so Mochi
+ * The capture itself is SaoKhue's own (`captureScreen` + `SnipOverlay`), so Mochi
  * adds no second capture mechanism and no second permission path, and it works on
  * Windows and Linux — unlike the original, which shelled out to macOS's
  * `screencapture -i`.

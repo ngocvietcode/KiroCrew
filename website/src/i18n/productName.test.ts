@@ -35,12 +35,12 @@ i18next.addResource('en', 'translation', 'test.updating_product', 'Updating {{pr
 describe('productName interpolation variable', () => {
   it('defaults to the stock product name', () => {
     expect(i18next.options.interpolation?.defaultVariables).toMatchObject({
-      productName: 'Kiro Crew',
+      productName: 'Sao Khuê',
     })
   })
 
   it('renders a placeholder-bearing value identically to the old literal', () => {
-    expect(i18next.t('test.updating_product')).toBe('Updating Kiro Crew…')
+    expect(i18next.t('test.updating_product')).toBe('Updating Sao Khuê…')
   })
 
   it('lets a call-time variable win over the default', () => {
@@ -50,7 +50,7 @@ describe('productName interpolation variable', () => {
   it('keeps the update-restart handoff copy rebrandable', () => {
     const copy = i18next.t('pages.settings.aboutPanel.installing_quiet_note', { productName: 'Acme' })
     expect(copy).toContain('Acme')
-    expect(copy).not.toContain('Kiro Crew')
+    expect(copy).not.toContain('Sao Khuê')
   })
 
   it('refuses a late override rather than half-applying it', () => {
@@ -101,7 +101,7 @@ describe('productName interpolation variable', () => {
       const offenders = Object.entries(flat)
         .filter(([k, v]) => !isManifestKey(k) && !EXCEPTIONS.has(k)
           // The joined form is scanned for as a defect here, never written as prose.
-          && (v.includes('Kiro Crew') || v.includes('Kiro-Crew') || v.includes('KiroCrew'))) // brand-ok
+          && (v.includes('Sao Khuê') || v.includes('Kiro-Crew') || v.includes('KiroCrew'))) // brand-ok
         .map(([k]) => `${lang}:${k}`)
       expect(offenders, offenders.slice(0, 5).join(', ')).toEqual([])
       // The guard is bidirectional: an exception key that GAINS the placeholder
@@ -111,7 +111,7 @@ describe('productName interpolation variable', () => {
       for (const k of EXCEPTIONS) {
         const v = flat[k]
         if (v === undefined) continue
-        expect(v, `${lang}:${k} must keep the literal product name`).toMatch(/Kiro[ -]?Crew/) // brand-ok
+        expect(v, `${lang}:${k} must keep the literal product name`).toMatch(/Sao Khuê|SaoKhue|Kiro[ -]?Crew/) // brand-ok
         expect(v, `${lang}:${k} must not interpolate the product name`).not.toContain('{{productName}}')
       }
     }

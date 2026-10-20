@@ -1,6 +1,6 @@
 """Customer stream projection for the backend's OpenAI-compatible turn SSE.
 
-VERIFIED against a real Kiro Crew backend (isolated home on :8801):
+VERIFIED against a real Sao Khuê backend (isolated home on :8801):
 ``POST /v1/chat/completions`` with ``stream=true`` emits an **OpenAI** event
 stream, NOT the ACP ``sessionUpdate`` vocabulary:
 

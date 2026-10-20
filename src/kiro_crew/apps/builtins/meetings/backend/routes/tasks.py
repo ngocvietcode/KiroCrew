@@ -8,7 +8,7 @@
 ``GET    …/task-providers``       registered providers (for the settings picker)
 
 Filing goes through the :mod:`..providers.tasks` seam — the shipped provider is
-the local KiroCrew ledger. Upstream instead composed a natural-language prompt
+the local SaoKhue ledger. Upstream instead composed a natural-language prompt
 naming a company-internal tracker and handed it to a dedicated agent; that agent
 and its internal MCP servers are gone.
 

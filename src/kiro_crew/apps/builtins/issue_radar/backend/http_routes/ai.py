@@ -217,7 +217,7 @@ async def _run_oneshot_model(request: web.Request, key: str, prompt: str) -> str
     ``tools:[]`` via ``set_mode`` and resolves a cheaper model than the
     interactive default. The session is ephemeral: ``get_or_create`` → stream with
     ``REJECT_ALL`` (pure text generation, no tools may run) → release AND destroy
-    so no kiro-cli subprocess leaks. It reuses the user's own Kiro Crew backend, so
+    so no kiro-cli subprocess leaks. It reuses the user's own Sao Khuê backend, so
     there is no separate API key or cloud account (the app's whole premise).
     """
     from kiro_crew.llm_helpers import ToolApprovalPolicy, stream_and_collect

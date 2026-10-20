@@ -41,7 +41,7 @@ vi.mock('../api/client', () => ({
   SEARCH_MIN_CHARS: 2,
 }))
 vi.mock('../hooks/useVoiceInput', () => ({ useVoiceInput: () => ({ recording: false, transcribing: false, toggle: vi.fn() }), voiceInputSupported: false }))
-vi.mock('../hooks/useBranding', () => ({ useBranding: () => ({ botName: 'Kiro Crew', avatar: '' }) }))
+vi.mock('../hooks/useBranding', () => ({ useBranding: () => ({ botName: 'Sao Khuê', avatar: '' }) }))
 vi.mock('../hooks/useAgents', () => ({ useAgents: () => ({ agents: [], defaultAgent: 'default' }) }))
 vi.mock('../components/MarkdownRenderer', () => ({ default: ({ content }: { content: string }) => <span>{content}</span> }))
 vi.mock('../hooks/useWebSocket', () => ({ useWebSocket: () => ({ subscribeLogs: () => {} }) }))
@@ -307,11 +307,11 @@ describe("a crewmate's chat", () => {
   it('the composer addresses the crewmate by name, not the product', async () => {
     const view = renderPane()
     await waitFor(() => expect(view.getByPlaceholderText(/Message Radar/)).toBeInTheDocument())
-    expect(view.queryByPlaceholderText(/Message Kiro Crew/)).toBeNull()
+    expect(view.queryByPlaceholderText(/Message Sao Khuê/)).toBeNull()
   })
 
   it('an ordinary chat keeps the product placeholder', async () => {
     const view = renderPane({ crewmate: false })
-    await waitFor(() => expect(view.getByPlaceholderText(/Message Kiro Crew/)).toBeInTheDocument())
+    await waitFor(() => expect(view.getByPlaceholderText(/Message Sao Khuê/)).toBeInTheDocument())
   })
 })

@@ -19,7 +19,7 @@ Two things are asserted, and the second is the one that makes the error useful:
   evidence. Signature alone cannot supply the layer: a harness's internal sandbox
   nested inside Crew's wrap fails with the HARNESS's wording while the layer the
   operator must change is CREW's, which is how the field reports were actually
-  resolved. So the layer comes from the argv Kiro Crew itself built.
+  resolved. So the layer comes from the argv Sao Khuê itself built.
 
   The switch that turns a layer OFF is a separate question, and the stderr cannot
   answer it: the dead child is the unverified binary the sandbox exists to
@@ -151,7 +151,7 @@ async def test_an_uncorroborated_refusal_never_hands_out_the_disable_switch():
     The tail is the dead child's own stderr, and that child is the unverified
     binary the sandbox exists to contain. A message answering it with the
     ``agent.sandbox off`` switch would let a planted binary print one line and have
-    Kiro Crew instruct the operator to remove the isolation it is running under.
+    Sao Khuê instruct the operator to remove the isolation it is running under.
     So the switch is withheld and the operator is routed to the check that can
     reach a verdict.
     """
@@ -159,7 +159,7 @@ async def test_an_uncorroborated_refusal_never_hands_out_the_disable_switch():
         exc = await sandbox_init_failure("\n".join(HARNESS_SANDBOX_STDERR), crew_wrap=crew_wrap)
         assert "config set agent.sandbox off" not in str(exc)
         assert '"sandbox": false' not in str(exc)
-        # Still actionable: the layer is named, from Kiro Crew's own argv rather
+        # Still actionable: the layer is named, from Sao Khuê's own argv rather
         # than from the child.
         expected = SANDBOX_LAYER_CREW if crew_wrap else SANDBOX_LAYER_HARNESS
         assert expected in str(exc)
@@ -252,7 +252,7 @@ async def test_an_uncorroborated_harness_refusal_names_no_switch_either():
 async def test_a_crew_launcher_verdict_cannot_unlock_the_harness_switch():
     """No cross-layer inference, and this is the case that tempts one.
 
-    Corroboration re-runs KIRO CREW'S OWN launcher, so its verdict is evidence
+    Corroboration re-runs SAO KHUÊ'S OWN launcher, so its verdict is evidence
     about Crew's layer and says nothing about the harness's internal sandbox. A
     host that cannot build Crew's namespace would otherwise hand the operator the
     key that turns off the OTHER sandbox -- and on this branch that sandbox is the

@@ -421,7 +421,7 @@ class TestEnsureSslCerts:
 
 
 def _install_bundle(root: Path, install: str) -> Path:
-    """The certifi bundle path of a Kiro Crew install rooted at *root*/*install*.
+    """The certifi bundle path of a Sao Khuê install rooted at *root*/*install*.
 
     The shape every pip, venv and desktop-bundle install shares:
     ``<prefix>/lib/pythonX.Y/site-packages/certifi/cacert.pem``. Built from the
@@ -457,7 +457,7 @@ def _certifi_at(bundle) -> object:
 
 def _inherited_lines(caplog) -> list:
     return [
-        r for r in caplog.records if "inherited from another Kiro Crew process" in r.getMessage()
+        r for r in caplog.records if "inherited from another Sao Khuê process" in r.getMessage()
     ]
 
 
@@ -480,7 +480,7 @@ class TestInheritedInstallPinnedBundle:
     publishes beside each variable it assigns, and by nothing else -- is
     re-derived for this install.  An operator's value, including a certifi bundle they chose
     themselves, a pin whose file they have yet to repair, and a dead file
-    inside one of Kiro Crew's own install trees, is never touched.  A
+    inside one of Sao Khuê's own install trees, is never touched.  A
     predecessor from before the provenance existed is therefore not recognised:
     its dead export is kept, fails closed, and the warning names the way out.
     """
@@ -579,7 +579,7 @@ class TestInheritedInstallPinnedBundle:
 
         Its export carries no provenance marker, so the successor
         holds a dead path and nothing that says whose it is.  The directory it
-        lies in is not that proof either, not even one of Kiro Crew's own
+        lies in is not that proof either, not even one of Sao Khuê's own
         install trees (the retired ``<data home>/venv`` the installer re-run
         deletes, a versioned sibling of the managed venv): an operator can place
         a restricted bundle inside this runtime's venv, and a dead file there

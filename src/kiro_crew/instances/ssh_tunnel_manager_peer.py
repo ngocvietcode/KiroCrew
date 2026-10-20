@@ -729,7 +729,7 @@ async def send_session_bundle(
                         # user cannot act on.
                         return False, {
                             "error": (
-                                "instance is running an older Kiro Crew that cannot "
+                                "instance is running an older Sao Khuê that cannot "
                                 "receive sessions — update it, then reconnect"
                             ),
                             "code": "transfer_peer_too_old",

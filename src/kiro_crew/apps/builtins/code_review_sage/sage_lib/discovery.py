@@ -93,7 +93,7 @@ def gh_env() -> dict[str, str]:
     own auth + network/TLS vars when set — never the gateway's full environment.
     Owned by the shared hardened runner so every gh surface stays in lockstep."""
     if github_runner is None:  # pragma: no cover - standalone fallback
-        raise RuntimeError("gh_env requires the Kiro Crew runtime")
+        raise RuntimeError("gh_env requires the Sao Khuê runtime")
     return github_runner.gh_env()
 
 
@@ -104,7 +104,7 @@ def gh_bin() -> str:
     Set ``KIROCREW_SAGE_GH`` to an absolute path to override (still validated).
     Raises :class:`GhSetupError` when no acceptable executable is found."""
     if github_runner is None:  # pragma: no cover - standalone fallback
-        raise RuntimeError("gh_bin requires the Kiro Crew runtime")
+        raise RuntimeError("gh_bin requires the Sao Khuê runtime")
     try:
         return github_runner.resolve_gh(override_env=_GH_OVERRIDE_ENV)
     except github_runner.SetupError as exc:
@@ -117,7 +117,7 @@ def _run_gh(argv: list[str], *, timeout: float) -> subprocess.CompletedProcess:
     failure, and timeout. Transparent to this module's error mapping —
     ``FileNotFoundError`` and ``subprocess.TimeoutExpired`` propagate."""
     if github_runner is None:  # pragma: no cover - standalone fallback
-        raise RuntimeError("gh execution requires the Kiro Crew runtime")
+        raise RuntimeError("gh execution requires the Sao Khuê runtime")
     try:
         return github_runner.run_gh(argv, timeout=timeout, audit_caller="core:code-review-sage")
     except github_runner.SetupError as exc:

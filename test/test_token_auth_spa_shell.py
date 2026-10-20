@@ -407,7 +407,7 @@ async def test_index_serves_guidance_when_bundle_missing(tmp_path, monkeypatch) 
     body = resp_anon.text
     # Recognizable heading preserved + actionable guidance added.
     assert "<h1>Dashboard HTML not found</h1>" in body
-    assert "restarting Kiro Crew" in body
+    assert "restarting Sao Khuê" in body
     assert "kirocrew restart" in body
     # Request-independent and secret-free (same contract as the served shell).
     assert resp_anon.text == resp_authed.text

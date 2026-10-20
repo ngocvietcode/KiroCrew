@@ -833,7 +833,7 @@ async def _handle_mcp_tools_probe(request: web.Request) -> web.Response:
     # point has to repeat the check or it becomes a way around the consent gate.
     #
     # ``McpServerInfo.disabled`` alone is NOT that check. list_servers() only
-    # sets it for an entry in the Kiro Crew scope, but /api/mcp/toggle writes
+    # sets it for an entry in the Sao Khuê scope, but /api/mcp/toggle writes
     # ``disabled: true`` into the KIRO-GLOBAL mcp.json — so a server the user
     # switched off in the UI still arrives with ``disabled = False`` whenever a
     # retained agent entry introduced the row first. The effective state is the

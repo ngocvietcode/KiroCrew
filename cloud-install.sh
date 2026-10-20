@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ======================================================================
-#  KiroCrew — cloud launcher bootstrap (macOS / Linux)
+#  SaoKhue — cloud launcher bootstrap (macOS / Linux)
 # ======================================================================
 #  Ensures the client prerequisites — Python, the AWS CLI, and the SSM
 #  Session Manager plugin — then hands off to the Python launcher wizard
@@ -62,7 +62,7 @@ SUDO=""
 if [ "$(id -u)" != "0" ] && has sudo; then SUDO="sudo"; fi
 
 echo
-echo "  ${MAGENTA}${BOLD}KiroCrew — run on your own AWS${RESET}"
+echo "  ${MAGENTA}${BOLD}SaoKhue — run on your own AWS${RESET}"
 echo "  ${DIM}Platform: $OS $ARCH${RESET}"
 
 # --- 1. Python -------------------------------------------------------------
@@ -173,9 +173,9 @@ else
     rm -rf "$tmp"
 fi
 
-# --- 4. KiroCrew client + launch ------------------------------------------
-step 4 "KiroCrew client"
-info "Installing the KiroCrew client (pip, editable)…"
+# --- 4. SaoKhue client + launch ------------------------------------------
+step 4 "SaoKhue client"
+info "Installing the SaoKhue client (pip, editable)…"
 _venv="$REPO_ROOT/.venv"
 # Build the venv under a umask that masks group/other WRITE so bin/kirocrew
 # and its dirs are born non-group-writable -- `kirocrew service install`
@@ -206,7 +206,7 @@ if [ "$WITH_VOICE" -eq 1 ]; then
     _pip_target="${REPO_ROOT}[voice]"
     info "Including voice extras (.[voice])"
 fi
-KIROCREW_SKIP_FRONTEND=1 "$_venv/bin/pip" install -e "$_pip_target" -q && ok "Kiro Crew client installed" || { warn "pip install failed"; exit 1; }
+KIROCREW_SKIP_FRONTEND=1 "$_venv/bin/pip" install -e "$_pip_target" -q && ok "Sao Khuê client installed" || { warn "pip install failed"; exit 1; }
 umask "$_KC_PREV_UMASK"
 mkdir -p "$HOME/.local/bin"
 ln -sf "$_venv/bin/kirocrew" "$HOME/.local/bin/kirocrew"
@@ -227,5 +227,5 @@ if [ "$NONINTERACTIVE" -eq 1 ]; then
 fi
 
 echo
-echo "  ${CYAN}Launching KiroCrew on AWS…${RESET}"
+echo "  ${CYAN}Launching SaoKhue on AWS…${RESET}"
 if [ -n "$SIZE" ]; then "$KC" cloud launch --size "$SIZE"; else "$KC" cloud launch; fi

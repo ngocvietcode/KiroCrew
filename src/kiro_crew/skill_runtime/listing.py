@@ -189,7 +189,7 @@ def list_skills(
     ``deliveries`` is ``None`` when the skill has no ledger entry, which is
     different from zero: an entry can also age out of the 30-day window.
 
-    ``owned`` says whether Kiro Crew may rewrite the file. A skill reached
+    ``owned`` says whether Sao Khuê may rewrite the file. A skill reached
     through ``skills.extra_paths`` is listed but not ours to edit, so the UI
     must not offer a toggle the endpoint will refuse.
 
@@ -380,7 +380,7 @@ def list_skills(
 
 
 def _owned_hint(loader: SkillsLoader, skill_file: Path) -> bool:
-    """Whether *skill_file* sits under the directory Kiro Crew owns.
+    """Whether *skill_file* sits under the directory Sao Khuê owns.
 
     Syscall-free on purpose: this runs once per skill inside ``list_skills``,
     which the event loop calls while assembling the skill index, and

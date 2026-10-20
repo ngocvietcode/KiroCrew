@@ -1,5 +1,5 @@
 // The "Review" control in the pull-request-detail header — the PR analogue of
-// the issue InvestigateButton. Opens (or resumes) a KiroCrew chat session that
+// the issue InvestigateButton. Opens (or resumes) a SaoKhue chat session that
 // reviews this PR (see lib/review.ts) and shows "Resume" once a session exists.
 //
 // Unlike Investigate, there is NO status pill: the review agent only drafts the

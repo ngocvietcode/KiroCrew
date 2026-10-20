@@ -125,7 +125,7 @@ def _disabled() -> web.Response:
     422 rather than 404: the route exists and the request is well formed, and what
     blocks it is the state of the subsystem. The agent learns the flag state from
     THIS, which is why the MCP server registers its tools whether or not the flag
-    is on -- a missing tool would read as a Kiro Crew that cannot do this at all.
+    is on -- a missing tool would read as a Sao Khuê that cannot do this at all.
     """
     return web.json_response(
         {

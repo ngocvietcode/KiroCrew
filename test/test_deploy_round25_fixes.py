@@ -1,4 +1,4 @@
-"""Regression tests for Round-25 findings (KiroCrew PR #6).
+"""Regression tests for Round-25 findings (SaoKhue PR #6).
 
 F1: destroy confirm binds to the previewed resource ids (BE verifies
     expected_bucket / expected_distribution_id; FE runs the two-call flow).

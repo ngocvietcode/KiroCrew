@@ -1,4 +1,4 @@
-"""Display titles for the tools of Kiro Crew's own MCP servers.
+"""Display titles for the tools of Sao Khuê's own MCP servers.
 
 One table, ``data/mcp_tool_titles.json``, keyed by server then tool name. The
 servers add each title to their ``tools/list`` descriptors as the standard MCP

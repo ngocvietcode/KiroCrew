@@ -822,7 +822,7 @@ async def read_peer_slots(
     # above carries both.
     #
     # ``MAX_LIVE_SLOTS`` rather than ``_CAP_MAX_ROWS`` even though both are 500
-    # today, because only one of them is DERIVED: it is the ceiling a Kiro Crew
+    # today, because only one of them is DERIVED: it is the ceiling a Sao Khuê
     # gateway enforces on its own live slots at every path that allocates one,
     # so a peer running this software cannot honestly answer with more rows than
     # that, and a raised ceiling should widen this read along with it. The

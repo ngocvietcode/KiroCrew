@@ -162,7 +162,7 @@ def _absent(path: Path) -> bool:
 DESKTOP_BUILD_STEP_UNSUPPORTED = "desktop_build_step_unsupported"
 
 _DESKTOP_BUILD_REFUSAL = (
-    "Python apps that require a build step are not supported in Kiro Crew's desktop "
+    "Python apps that require a build step are not supported in Sao Khuê's desktop "
     "build: its bundled interpreter is inside the signed application bundle and cannot "
     "install packages"
 )

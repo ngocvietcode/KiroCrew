@@ -709,7 +709,7 @@ def _bare_kill_raw_bodies(source: str) -> "list[str]":
 
 
 def _is_self_kill(text_lower: str) -> bool:
-    """True if *text_lower* terminates a Kiro Crew process.
+    """True if *text_lower* terminates a Sao Khuê process.
 
     Two shapes, matched separately because the two kill families take different
     kinds of target:

@@ -1,7 +1,7 @@
 """Tests for sync_source on the aggregate "Auto-added" Knowledge source.
 
 The aggregate source (uri ``agent://``) collects documents the agent hands over
-through ``knowledge_add_document``; Kiro Crew fetches nothing for it. A manual
+through ``knowledge_add_document``; Sao Khuê fetches nothing for it. A manual
 Sync must never hand ``agent://`` to the agent URL-fetch path, whose failure
 leaves the row in a sticky 'error'. It is refused with 409
 ``source_not_syncable`` and the row's status is left as it was.

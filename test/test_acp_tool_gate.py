@@ -854,7 +854,7 @@ def test_no_backend_verdict_ignores_the_mutable_opt_in() -> None:
 def test_nested_sandbox_passthrough_refuses_an_enforced_adapter(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Inside an existing Kiro Crew sandbox the mask is never applied either.
+    """Inside an existing Sao Khuê sandbox the mask is never applied either.
 
     A nested re-wrap is impossible by design (Linux seccomp denies the unshare, macOS
     Seatbelt refuses sandbox_apply), so wrap_argv passes the argv through and

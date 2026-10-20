@@ -84,7 +84,7 @@ class AcpError(Exception):
         super().__init__(*args)
         self.transient = transient
         self.code = code
-        # Whether Kiro Crew wrote this message for a person to read: a curated
+        # Whether Sao Khuê wrote this message for a person to read: a curated
         # formatter branch, or a raise site with fixed recovery wording. False
         # for the formatter's fallback, which passes the provider's own text or
         # the raw error dict through. A surface that shows backend errors to a
@@ -293,7 +293,7 @@ class AcpRegistrationRateLimited(AcpProcessDied):  # noqa: N818
 
 
 class AcpToolGateUnroutable(AcpError):  # noqa: N818
-    """The harness's tool calls would not reach Kiro Crew's PreToolUse gate.
+    """The harness's tool calls would not reach Sao Khuê's PreToolUse gate.
 
     Non-retryable, and a DISTINCT type from the transport errors around it: the
     condition is a configuration fact, so a respawn re-reads the same answer and

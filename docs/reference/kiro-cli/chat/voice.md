@@ -1,9 +1,9 @@
 # Voice Input & Output
 
-> **Not a mirror.** This page has no upstream source: it documents Kiro Crew's
+> **Not a mirror.** This page has no upstream source: it documents Sao Khuê's
 > own voice setup. The surrounding tree's do-not-author rule does not reach it.
 
-Kiro Crew supports hands-free interaction through voice input (speech-to-text)
+Sao Khuê supports hands-free interaction through voice input (speech-to-text)
 and voice output (text-to-speech). Input works in the dashboard and on supported
 messaging attachments; output works in the dashboard, Slack, and Telegram.
 
@@ -19,7 +19,7 @@ The chat input bar has a microphone button. Here's how it works:
    just by pausing: a silence of `stt.silence_ms` ends the utterance for you.
 4. Review and edit the text, then press Enter to send.
 
-Recognition runs on your own machine by default, on a model Kiro Crew keeps
+Recognition runs on your own machine by default, on a model Sao Khuê keeps
 loaded, so no audio leaves your device and a finished phrase becomes text in
 tens of milliseconds. Turning `stt.streaming` off transcribes once at the end
 instead, and the button shows a spinner while it works. If recognition fails or
@@ -35,7 +35,7 @@ fallback).
 
 When STT is enabled, audio and voice attachments received through Slack, Discord,
 Teams, Telegram, Webex, WeCom, Weixin, and WhatsApp are automatically transcribed
-through the shared attachment path. Kiro Crew responds to the transcribed text as
+through the shared attachment path. Sao Khuê responds to the transcribed text as
 if it had been typed. A channel may impose its own attachment-size and media-type
 limits before transcription.
 
@@ -56,7 +56,7 @@ Macs, which use a system FFmpeg (`brew install ffmpeg`). A source install
 first checks fixed system locations and, if no usable binary exists, **Settings >
 Voice** offers a one-click download of the pinned `imageio-ffmpeg==0.6.0` artifact
 into `<data home>/models/ffmpeg/`; its SHA-256 is verified before every execution.
-Kiro Crew deliberately does not execute a decoder from an agent-writable project
+Sao Khuê deliberately does not execute a decoder from an agent-writable project
 venv. Platforms without a pinned artifact must install FFmpeg into one of the
 trusted system locations reported by `kirocrew doctor`.
 
@@ -83,11 +83,11 @@ program or provider-specific runtime to install. `kirocrew doctor` reports the
 recognizer, model, and resolved decoder.
 
 The other two providers, the full setting list and the retired providers are in
-Kiro Crew's own [configuration reference](../../../../src/kiro_crew/docs/configuration.md).
+Sao Khuê's own [configuration reference](../../../../src/kiro_crew/docs/configuration.md).
 
 ### CPU threads (many-core hosts)
 
-Kiro Crew derives the recognizer's thread count from the host: **half the
+Sao Khuê derives the recognizer's thread count from the host: **half the
 available cores**, capped at 16. The count comes from `sched_getaffinity` where
 available, so a CPU-restricted container gets its real budget rather than the
 whole machine's.
@@ -95,7 +95,7 @@ whole machine's.
 Why not use every core: Whisper decodes one output step at a time, and each step
 is a small matmul that ends in a thread barrier. Wide thread pools therefore cost
 latency per step instead of buying throughput, and on a host that is doing other
-work (a Kiro Crew host runs the gateway and agent sessions alongside) the workers
+work (a Sao Khuê host runs the gateway and agent sessions alongside) the workers
 get time-sliced, so each barrier waits on threads the scheduler has not run yet.
 
 Measured on a 32-vCPU Graviton3 host with an 11-second clip, 16 threads beat 31
@@ -112,7 +112,7 @@ extrapolating onto a 64-core host nobody measured.
 
 ## Voice Output (Text-to-Speech)
 
-Kiro Crew can speak responses aloud. Three providers are available, and the
+Sao Khuê can speak responses aloud. Three providers are available, and the
 default needs nothing installed:
 
 | Provider | What it needs | Notes |
@@ -211,7 +211,7 @@ Settings are in **Settings > Voice**, or directly in
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
-| `enabled` | `false` | Turn on voice replies for **every** Kiro Crew response (text-triggered). Also seeds the `auto_reply_to_voice` default — see below. |
+| `enabled` | `false` | Turn on voice replies for **every** Sao Khuê response (text-triggered). Also seeds the `auto_reply_to_voice` default — see below. |
 | `provider` | `"system"` | TTS backend: `"system"` (the host's built-in engine, nothing to install), `"piper"` (local, offline, better quality) or `"polly"` (AWS, cloud, and billed). An unrecognized value falls back to `system` with a warning logged: reaching for a paid service is not a choice a typo may make for you. If the key is ABSENT but `piper_model` is set, Piper is kept, so an existing Piper install is not silently downgraded on upgrade. |
 | `auto_reply_to_voice` | _follows `enabled`_ | **Voice-triggered**: when the user sends a voice memo, auto-respond with voice. Defaults to whatever `enabled` is — set explicitly to override. |
 | `rate` | `100%` | 50%–200%. Shared by `polly` and `system`; `piper` uses `piper_length_scale` instead |
@@ -244,7 +244,7 @@ You can also set `auto_reply_to_voice: true` explicitly while leaving
 i.e. text replies stay text, voice memos get a spoken reply.
 
 If TTS is **not configured** (missing `aws` CLI for Polly, missing binary or
-model for Piper), Kiro Crew posts a one-shot **ephemeral** explaining why and
+model for Piper), Sao Khuê posts a one-shot **ephemeral** explaining why and
 replies with text only. The ephemeral fires for every opt-in path —
 globally enabled, per-thread `!voice on`, or voice-memo auto-reply — so
 silent fallback never surprises the user.
@@ -271,7 +271,7 @@ Responses are cleaned for natural speech before synthesis:
 
 ### Prerequisites — Amazon Polly (`provider: "polly"`)
 
-- **AWS credentials** with `polly:SynthesizeSpeech` permission. Kiro Crew
+- **AWS credentials** with `polly:SynthesizeSpeech` permission. Sao Khuê
   calls the AWS CLI (`aws polly synthesize-speech`) under the hood, so any
   credential method the CLI supports will work:
 

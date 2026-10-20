@@ -22,7 +22,7 @@ from dataclasses import dataclass
 # human ``description``.  Rules are DEFAULT-ON but user-disableable from
 # Settings → Security; a governance ``commands``-scope policy can force-pin a
 # rule as un-opt-out-able (see ``platform/governance.py``).  Enforcement is at
-# Kiro Crew's own ``hooks.py`` PreToolUse gate — these are NOT injected into the
+# Sao Khuê's own ``hooks.py`` PreToolUse gate — these are NOT injected into the
 # kiro-cli agent spec.
 #
 # The always-on keystone controls (``_is_git_publish``,

@@ -21,7 +21,7 @@ platform-native isolation, per tier:
   The child retains the real UID so all toolchains work normally.
 - **macOS**: ``sandbox-exec`` with a Seatbelt profile that denies reads
 
-The parent KiroCrew process is completely unaffected — isolation applies
+The parent SaoKhue process is completely unaffected — isolation applies
 only to the spawned child.  Falls back gracefully to no sandbox when the
 OS mechanism is unavailable (logged as warning).
 

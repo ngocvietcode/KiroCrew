@@ -823,7 +823,7 @@ test("showing an overlay re-asserts the host's Dock presence on macOS", () => {
 
     // Showing the accessory-shaped overlay demotes the app to a Dock-less
     // accessory; the overlay must put the host straight back in the Dock, or
-    // opening the companion makes Kiro Crew's Dock icon disappear.
+    // opening the companion makes Sao Khuê's Dock icon disappear.
     assert.ok(
       stub.dockCalls.setActivationPolicy.includes("regular"),
       "activation policy re-asserted to regular after showing the overlay",

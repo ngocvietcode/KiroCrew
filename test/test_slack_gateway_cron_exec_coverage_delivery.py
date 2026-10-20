@@ -1,4 +1,4 @@
-"""Coverage for where the Kiro Crew gateway delivers a cron's results and alerts.
+"""Coverage for where the Sao Khuê gateway delivers a cron's results and alerts.
 
 Covers ``_channel_reply_link``'s resolution ladder and ``_deliver_channel_reply``'s early
 refusals, a cron created from a non-Slack channel reporting back to that channel (with

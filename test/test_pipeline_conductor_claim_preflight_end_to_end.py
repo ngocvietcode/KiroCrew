@@ -467,7 +467,7 @@ class TestClosureProseNeverCloses:
         script has no check for "my own pipeline already dispositioned this".
         """
         stand_down = (
-            "Kiro Crew Auto-Pipeline [operator: redacted] - standing down and "
+            "Sao Khuê Auto-Pipeline [operator: redacted] - standing down and "
             "handing back to `needs-human`. No longer being worked by the fleet; "
             "the investigation notes are below for whoever picks it up."
         )

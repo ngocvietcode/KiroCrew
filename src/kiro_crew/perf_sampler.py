@@ -1,6 +1,6 @@
 """Debug-only statistical stack sampler.
 
-KiroCrew has aggregate duration histograms (``kiro_crew.metrics``) and a stall
+SaoKhue has aggregate duration histograms (``kiro_crew.metrics``) and a stall
 detector that dumps thread stacks when the event loop wedges
 (``dashboard.loop_watchdog``), but nothing that attributes CPU/wall time to
 call paths. This module is the missing piece: a sampling profiler that turns a

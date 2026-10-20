@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  Shared Fargate scaffolding for Kiro Crew remote crews in the user's own AWS
+  Shared Fargate scaffolding for Sao Khuê remote crews in the user's own AWS
   account: the ECS cluster every crew task runs on and the egress-only security
   group they are placed in. One stack per account and region. The per-crew roles
   and log group live in kirocrew-fargate-crew.yaml, one stack per crew, so
@@ -76,7 +76,7 @@ Resources:
   TaskSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Sub "Kiro Crew Fargate crews ${StackTag} - egress only, no inbound"
+      GroupDescription: !Sub "Sao Khuê Fargate crews ${StackTag} - egress only, no inbound"
       VpcId: !Ref VpcId
       SecurityGroupEgress:
         - IpProtocol: "-1"

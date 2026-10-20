@@ -825,7 +825,7 @@ class TestTheRowCountIsBoundedNotOnlyTheByteCount:
     async def test_the_production_cap_is_the_peers_own_slot_ceiling(self, monkeypatch):
         """Derived, not chosen — which is why it is not ``_CAP_MAX_ROWS``.
 
-        ``MAX_LIVE_SLOTS`` is the ceiling every allocating path on a Kiro Crew
+        ``MAX_LIVE_SLOTS`` is the ceiling every allocating path on a Sao Khuê
         gateway enforces, so a peer running this software cannot honestly answer
         with more rows than that and the bound needs no judgement of its own. The
         capability reader's ``_CAP_MAX_ROWS`` is a judgement about how long a

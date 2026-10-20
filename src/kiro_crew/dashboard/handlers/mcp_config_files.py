@@ -1,6 +1,6 @@
 """Where the MCP config files are, and reading, refusing and writing them.
 
-The server-name check, the Kiro-global ``mcp.json`` path and the Kiro Crew one, the extra
+The server-name check, the Kiro-global ``mcp.json`` path and the Sao Khuê one, the extra
 provider scopes an edition adds, the refusal of a commented (JSONC) file, the atomic write
 and its off-loop form, resolving which key of a file names a server, and the synchronous
 config lock the cleanup sweep takes.
@@ -243,7 +243,7 @@ def _string_identifier(body: dict, field: str) -> tuple[str, web.Response | None
     )
 
 
-# ─── The Kiro Crew mcp.json, provider scopes, reads and writes ──────────
+# ─── The Sao Khuê mcp.json, provider scopes, reads and writes ──────────
 
 # Resolved per call, never captured at import: an import-time binding freezes
 # the data home and defeats pod isolation, the lazy legacy-home migration and
@@ -254,7 +254,7 @@ _KIROCREW_MCP_JSON: Path | None = None
 
 
 def _kirocrew_mcp_json() -> Path:
-    """Kiro Crew-scope ``mcp.json`` path, resolved against the live data home."""
+    """Sao Khuê-scope ``mcp.json`` path, resolved against the live data home."""
     return _KIROCREW_MCP_JSON if _KIROCREW_MCP_JSON is not None else data_home() / "mcp.json"
 
 
@@ -414,7 +414,7 @@ async def _offload_config_write(fn, /, *args, **kwargs):
 
 
 def _atomic_write(path: Path, data: dict) -> None:
-    """Atomic JSON write; secret-aware for the store owned by Kiro Crew.
+    """Atomic JSON write; secret-aware for the store owned by Sao Khuê.
 
     That store is secret-bearing by construction (``env`` values and remote
     ``headers`` carry credentials), so it is published through

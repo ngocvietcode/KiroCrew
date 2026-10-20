@@ -20,7 +20,7 @@ logger = logging.getLogger("kiro_crew.config.loader")
 # config. They are neither parsed into a field nor round-tripped through
 # to_dict(), so every consumer that classifies top-level keys — the
 # _extra_sections capture below and validation.py's unrecognized-key warning —
-# must exclude them, or Kiro Crew warns the user about a key it wrote itself.
+# must exclude them, or Sao Khuê warns the user about a key it wrote itself.
 # A retired key is therefore silently ignored at load and dropped on the next
 # save, never warned about and never resurrected.
 #   * agent_template_pane — retired: the agent editor's Template pane renders
@@ -238,7 +238,7 @@ def warn_misspelled_section_keys(data: dict, cfg: object) -> None:
 
     A key with no close field stays at the capture's DEBUG line: a config file can
     carry keys an older build wrote that this build does not model, and warning
-    about those would report Kiro Crew's own bookkeeping as an operator mistake.
+    about those would report Sao Khuê's own bookkeeping as an operator mistake.
     """
     hints: list[str] = []
     for section, unknown in sorted(_collect_extra_section_keys(data, cfg).items()):

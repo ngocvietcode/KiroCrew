@@ -1,4 +1,4 @@
-"""Regression tests for Round-23 findings (KiroCrew PR #6).
+"""Regression tests for Round-23 findings (SaoKhue PR #6).
 
 F1: the fullstack IAM policy conditions iam:CreateRole on the
     kirocrew-deploy-app-boundary permissions boundary and denies boundary

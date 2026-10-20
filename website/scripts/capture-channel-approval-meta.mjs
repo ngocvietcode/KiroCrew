@@ -99,8 +99,8 @@ for (const s of SCENES) {
     const baseItems = items.filter(t => /commands/.test(t))
     const hasAll = items.some(t => /Trust all tools in this channel/.test(t))
     if (s.scene === 'simple') {
-      ok = items.length === 3 && offersCommand && /until Kiro Crew restarts/.test(exact)
-        && baseItems.length === 1 && /Trust all ls commands for @dev — until Kiro Crew restarts/.test(baseItems[0]) && hasAll
+      ok = items.length === 3 && offersCommand && /until Sao Khuê restarts/.test(exact)
+        && baseItems.length === 1 && /Trust all ls commands for @dev — until Sao Khuê restarts/.test(baseItems[0]) && hasAll
     } else if (s.scene === 'compound') {
       ok = items.length === 2 && offersCommand && baseItems.length === 0 && hasAll
         && !items.some(t => /\bcat\b commands/.test(t))
@@ -130,9 +130,9 @@ for (const s of SCENES) {
     // three confirmations exist for -- so each frame asserts its own sentence.
     const [click, expected, suffix] = {
       base: [page.locator('[role="menuitem"]', { hasText: /commands/ }),
-        /Trusted — ls commands are auto-approved for @dev until Kiro Crew restarts/, '-confirmed'],
+        /Trusted — ls commands are auto-approved for @dev until Sao Khuê restarts/, '-confirmed'],
       command: [page.locator('[role="menuitem"]').first(),
-        /Trusted — “ls -la \/home\/dev\/project” is auto-approved for @dev until Kiro Crew restarts/, '-confirmed-command'],
+        /Trusted — “ls -la \/home\/dev\/project” is auto-approved for @dev until Sao Khuê restarts/, '-confirmed-command'],
       all: [page.locator('[data-capture-root] button', { hasText: /^Trust all tools in this channel/ }),
         /Trusted — all tools in this channel are auto-approved, persists across restarts/, '-confirmed-all'],
     }[s.confirm]

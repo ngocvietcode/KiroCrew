@@ -1,6 +1,6 @@
 /**
  * WidgetFrame — renders <mcwidget> HTML content in a sandboxed iframe.
- * Ported from the KiroCrew website/src/components/WidgetFrame.tsx.
+ * Ported from the SaoKhue website/src/components/WidgetFrame.tsx.
  *
  * Security: iframe uses sandbox="allow-scripts" with srcdoc (null origin).
  * The LLM content cannot access parent DOM, cookies, or localStorage.

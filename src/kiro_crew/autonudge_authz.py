@@ -690,7 +690,7 @@ async def authorize_and_update_nudge(
         except PlatformCompositionError:
             return _deny(
                 "Safety checks are temporarily unavailable, so this goal cannot "
-                "be saved. If this keeps happening, restart Kiro Crew.",
+                "be saved. If this keeps happening, restart Sao Khuê.",
                 503,
             )
         if resubmitted_projection:
@@ -723,7 +723,7 @@ async def authorize_and_update_nudge(
         except PlatformCompositionError:
             return _deny(
                 "Safety checks are temporarily unavailable, so this goal cannot "
-                "be saved. If this keeps happening, restart Kiro Crew.",
+                "be saved. If this keeps happening, restart Sao Khuê.",
                 503,
             )
     if banner is not None:

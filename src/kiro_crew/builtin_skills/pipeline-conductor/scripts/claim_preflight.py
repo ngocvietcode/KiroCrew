@@ -1269,7 +1269,7 @@ def scan_recency(issue: dict, now: datetime | None = None) -> dict:
 #:
 #:   * ``claimed`` ("An automated fix is in progress") -- 60 open items carried
 #:     it, 2 with no assignee at all. Matched.
-#:   * ``crew: in progress`` ("A Kiro Crew Issue Radar worker is actively
+#:   * ``crew: in progress`` ("A Sao Khuê Issue Radar worker is actively
 #:     working this issue") -- 4 of the 8 most recent closed items carrying it
 #:     had no assignee, so the assignee rule alone would miss that worker.
 #:     Matched, through ``in[ -]progress`` with any prefix.

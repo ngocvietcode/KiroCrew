@@ -807,7 +807,7 @@ test.describe('E2E: sidebar tag columns', () => {
 
     await expect(picker).toBeHidden()
     expect(await page.evaluate(() => (window as unknown as { __ctx?: boolean }).__ctx)).toBe(true)
-    // A fresh Kiro Crew context menu is open — and it is row B's: its Tags item
+    // A fresh Sao Khuê context menu is open — and it is row B's: its Tags item
     // opens the picker for B, and toggling a tag there updates B, not A.
     const menu = page.getByRole('menu').filter({ has: page.getByRole('menuitem', { name: /Tags/ }) })
     await expect(menu).toBeVisible()

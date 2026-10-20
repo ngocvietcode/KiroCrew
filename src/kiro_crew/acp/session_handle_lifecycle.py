@@ -202,7 +202,7 @@ async def _send_awaited(self: AcpSessionHandle, method: str, params: dict[str, A
 
 
 def bind_session_key(self: AcpSessionHandle, session_key: str) -> None:
-    """Rebind the owning Kiro Crew session on a warm-pool claim.
+    """Rebind the owning Sao Khuê session on a warm-pool claim.
 
     The listed-hook record is keyed by that session, so ids listed before the
     claim are unreachable from the new key, and its next list answer replaces

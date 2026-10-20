@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copy the KiroCrew data home into .kirocrew-dev/ for local development.
+# Copy the SaoKhue data home into .kirocrew-dev/ for local development.
 # Safe to re-run — wipes .kirocrew-dev first so you get a clean snapshot.
 #
 # Usage: ./dev-seed.sh

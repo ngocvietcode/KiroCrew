@@ -102,11 +102,11 @@ const LIVE_SKILL = {
  * the notice must state the outcome ONCE instead of hedging and then answering
  * itself a line below. */
 const HEDGED =
-  'Candidate “auto/evil-helper” is no longer pending — it was approved or dismissed in another window or by your Kiro Crew agent, so there was nothing left to approve.'
+  'Candidate “auto/evil-helper” is no longer pending — it was approved or dismissed in another window or by your Sao Khuê agent, so there was nothing left to approve.'
 const SETTLED_DISMISSED =
-  'Candidate “auto/evil-helper” is no longer pending — it was dismissed in another window or by your Kiro Crew agent and does not appear in the Skills list below, so there was nothing left to approve. A replacement candidate can be proposed again later.'
+  'Candidate “auto/evil-helper” is no longer pending — it was dismissed in another window or by your Sao Khuê agent and does not appear in the Skills list below, so there was nothing left to approve. A replacement candidate can be proposed again later.'
 const SETTLED_APPROVED =
-  'Candidate “auto/evil-helper” is no longer pending — it was already approved in another window or by your Kiro Crew agent and now appears in the Skills list below, so there was nothing left to approve.'
+  'Candidate “auto/evil-helper” is no longer pending — it was already approved in another window or by your Sao Khuê agent and now appears in the Skills list below, so there was nothing left to approve.'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -301,7 +301,7 @@ describe('pending-card script-validation verdict (issue #10861)', () => {
       // outright rather than "approved or dismissed".
       await waitFor(() =>
         expect(
-          screen.getByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — it was already dismissed in another window or by your Kiro Crew agent and does not appear in the Skills list below; a replacement candidate can be proposed again later).'),
+          screen.getByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — it was already dismissed in another window or by your Sao Khuê agent and does not appear in the Skills list below; a replacement candidate can be proposed again later).'),
         ).toBeInTheDocument(),
       )
       expect(screen.getByRole('alert').textContent).not.toContain('approved or dismissed')
@@ -319,7 +319,7 @@ describe('pending-card script-validation verdict (issue #10861)', () => {
       fireEvent.click(screen.getByText('Dismiss'))
       await waitFor(() =>
         expect(
-          screen.queryByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — it was already dismissed in another window or by your Kiro Crew agent and does not appear in the Skills list below; a replacement candidate can be proposed again later).'),
+          screen.queryByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — it was already dismissed in another window or by your Sao Khuê agent and does not appear in the Skills list below; a replacement candidate can be proposed again later).'),
         ).not.toBeInTheDocument(),
       )
     } finally {
@@ -346,13 +346,13 @@ describe('pending-card script-validation verdict (issue #10861)', () => {
       fireEvent.click(screen.getByText('Dismiss'))
       await waitFor(() =>
         expect(
-          screen.getByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — approved or dismissed in another window or by your Kiro Crew agent).'),
+          screen.getByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — approved or dismissed in another window or by your Sao Khuê agent).'),
         ).toBeInTheDocument(),
       )
       await waitFor(() => expect(mockApi.skills.mock.calls.length).toBeGreaterThan(1))
       // The refetch has failed; the hedge stands and no outcome is asserted.
       expect(
-        screen.getByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — approved or dismissed in another window or by your Kiro Crew agent).'),
+        screen.getByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — approved or dismissed in another window or by your Sao Khuê agent).'),
       ).toBeInTheDocument()
       expect(screen.getByRole('alert').textContent).not.toContain('already dismissed')
       expect(screen.getByRole('alert').textContent).not.toContain('already approved')
@@ -383,7 +383,7 @@ describe('pending-card script-validation verdict (issue #10861)', () => {
       fireEvent.click(screen.getByText('Dismiss'))
       await waitFor(() =>
         expect(
-          screen.getByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — it was already approved in another window or by your Kiro Crew agent and now appears in the Skills list below).'),
+          screen.getByText('Dismiss of “auto/evil-helper” failed (this candidate is no longer pending — it was already approved in another window or by your Sao Khuê agent and now appears in the Skills list below).'),
         ).toBeInTheDocument(),
       )
       expect(screen.getByRole('alert').textContent).not.toContain('approved or dismissed')

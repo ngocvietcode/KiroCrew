@@ -635,7 +635,7 @@ def test_at_or_above_the_ceiling_falls_back_and_writes_no_view(
     assert fallback
     # The warning says the count spans every home's views (the conductor's
     # option-a choice) and points at the doctor's foreign-file remedy.
-    assert "regardless of which Kiro Crew home" in fallback[0].message
+    assert "regardless of which Sao Khuê home" in fallback[0].message
     assert "doctor" in fallback[0].message
 
 

@@ -138,7 +138,7 @@ describe('BrowserPanel', () => {
 
   it('names the three setup paths and the host the downloads land on', async () => {
     await renderPanel(installed())
-    expect(screen.getByText(/Managed browsers on the Kiro Crew host/)).toBeTruthy()
+    expect(screen.getByText(/Managed browsers on the Sao Khuê host/)).toBeTruthy()
     expect(screen.getByText('Connect your existing browser')).toBeTruthy()
     expect(screen.getByText('Built-in browser in the desktop app')).toBeTruthy()
     await waitFor(() => expect(screen.getByTestId('browser-host-label').textContent).toMatch(/fedora-box/))
@@ -340,7 +340,7 @@ describe('BrowserPanel', () => {
     expect(screen.getAllByText('Unknown')).toHaveLength(3)
     // The row's own reason, then the shared block reason.
     expect(describedText(engineButton('webkit')!)).toBe(
-      'Kiro Crew could not confirm this build from the browser cache. Downloading again is safe. Another browser setup operation is running.',
+      'Sao Khuê could not confirm this build from the browser cache. Downloading again is safe. Another browser setup operation is running.',
     )
     expect(document.body.textContent).not.toMatch(/undefined/)
   })
@@ -349,7 +349,7 @@ describe('BrowserPanel', () => {
     await renderPanel(installed({ browser_status: { chromium: 'unknown', firefox: 'unknown', webkit: 'missing' } }))
     const reason = screen.getByTestId('browser-engine-unknown-reason')
     expect(reason.textContent).toBe(
-      'Kiro Crew could not confirm this build from the browser cache. Downloading again is safe.',
+      'Sao Khuê could not confirm this build from the browser cache. Downloading again is safe.',
     )
     // Two unknown rows, one sentence: each row's button points at the same element.
     expect(screen.getAllByText(/could not confirm this build/)).toHaveLength(1)
@@ -426,7 +426,7 @@ describe('BrowserPanel', () => {
     await renderPanel(installed())
     const toggle = screen.getByRole('switch', { name: /Use the built-in browser/ })
     expect(toggle.getAttribute('aria-disabled')).toBe('true')
-    expect(describedText(toggle)).toMatch(/Available in the Kiro Crew desktop app/)
+    expect(describedText(toggle)).toMatch(/Available in the Sao Khuê desktop app/)
   })
 
   it('offers the toggle in the desktop app, independent of the CLI state', async () => {
@@ -436,7 +436,7 @@ describe('BrowserPanel', () => {
     await waitFor(() => expect(toggle.getAttribute('aria-disabled')).toBeNull())
     // The sentence is the row's info tip (its `title` while closed).
     expect(screen.getByTitle(/built-in panel/)).toBeTruthy()
-    expect(screen.queryByText(/Available in the Kiro Crew desktop app/)).toBeNull()
+    expect(screen.queryByText(/Available in the Sao Khuê desktop app/)).toBeNull()
   })
 
   it('keeps a token draft through polling, a save error and a language switch', async () => {

@@ -18,7 +18,7 @@
  * and concealing it meant rebuilding notification delivery for no real gain.
  *
  * The skin is a FIXED warm cream palette — it intentionally does NOT follow the
- * Kiro Crew dashboard theme, because the pet is its own product surface.
+ * Sao Khuê dashboard theme, because the pet is its own product surface.
  */
 import { X } from 'lucide-react'
 import React, { useState } from 'react'

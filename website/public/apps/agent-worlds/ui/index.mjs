@@ -1,4 +1,4 @@
-// Agent Worlds — Standalone KiroCrew App
+// Agent Worlds — Standalone SaoKhue App
 // A pixel art office scene showing agents working at desks.
 // Uses the host's React and app-sdk via window.__kirocrew_modules.
 

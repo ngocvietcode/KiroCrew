@@ -5,7 +5,7 @@ is a *deny* gate: it either returns ``None`` (nothing to say) or a refusal
 sentence. Nothing in this module can widen access.
 
 Why this module carries so much weight: computer use is structurally invisible
-to every other security plane in KiroCrew. ``is_sensitive_path`` cannot see a
+to every other security plane in SaoKhue. ``is_sensitive_path`` cannot see a
 password field's ``AXValue``; the bash deny rules cannot see a keystroke posted
 into a terminal window; the exfil URL scan cannot see a logged-in banking tab
 rendered as pixels. The path matchers protect the filesystem the agent reaches
@@ -14,6 +14,8 @@ the same data reached through *the operator's own windows*.
 """
 
 from __future__ import annotations
+
+import unicodedata
 
 from kiro_crew import security
 from kiro_crew.computer_use.types import (
@@ -65,13 +67,31 @@ CATEGORY_KIROCREW_SELF = "kirocrew_self"
 # is not covered. That is why the governance ``apps`` ruleset exists as the
 # enterprise force-pin on top, and why the input-text scan below is a second,
 # independent layer.
+#: Every spelling our own window may carry, already in :func:`_fold` form.
+_SELF_NAME_MARKERS: tuple[str, ...] = ("sao khue", "saokhue", "kiro crew", "kirocrew")  # brand-ok
+
+
+def _fold(text: str) -> str:
+    """*text* lowercased with its diacritics removed, for a substring compare.
+
+    A window title reaches this module in whatever normalization form its host
+    produced -- macOS accessibility commonly hands back NFD, where "ê" is "e" plus a
+    combining circumflex -- so comparing the composed "sao khuê" against it would
+    silently miss our own dashboard. Decomposing and dropping the combining marks
+    folds every form, and an unaccented title, onto the same ASCII spelling.
+    """
+    decomposed = unicodedata.normalize("NFKD", text or "")
+    stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    return stripped.strip().lower()
+
+
 _DENIED_BUNDLE_PREFIXES: tuple[DeniedApp, ...] = (
     DeniedApp(
         category=CATEGORY_KIROCREW_SELF,
         # The ONE app that stays refused, and the only one that is not a judgement
         # call about the operator's own machine.
         #
-        # KiroCrew's Settings UI is where the computer-use primary enable lives, and
+        # SaoKhue's Settings UI is where the computer-use primary enable lives, and
         # that enable is on the keystone precisely so the AGENT cannot reach it (the
         # keystone sits behind ``security._SENSITIVE_HOME_DIRS``). If the agent could
         # DRIVE our own window, it would click that toggle itself — and every other
@@ -84,17 +104,20 @@ _DENIED_BUNDLE_PREFIXES: tuple[DeniedApp, ...] = (
         # the agent is trusted with the desktop, and a shipped list of "apps you may
         # not automate" was both incomplete by construction and in the operator's way.
         reason=(
-            "KiroCrew's own dashboard can change the agent's security settings, "
+            "SaoKhue's own dashboard can change the agent's security settings, "
             "which must only be done by the operator out-of-band"
         ),
         bundle_prefixes=("com.amazon.kiro.crew", "dev.kiro.crew"),
-        name_substrings=("kiro crew", "kirocrew"),
+        # Both product names: the display name is Sao Khuê, while the packaged app
+        # keeps the KiroCrew process and bundle identity an existing install has.  # brand-ok
+        # "sao khue" covers a title whose diacritic a host stripped or decomposed.
+        name_substrings=_SELF_NAME_MARKERS,
         # The dashboard is ALSO reachable as a browser tab, where the app identity
         # is Chrome's or Safari's and the two lists above cannot fire. The window
         # title is the only signal that survives that hosting, so it carries the
         # same rule. Substrings, not exact strings: the tab title takes a badge
-        # prefix ("(3) Kiro Crew") and popouts a "<label> — Kiro Crew" suffix.
-        title_substrings=("kiro crew", "kirocrew"),
+        # prefix ("(3) Sao Khuê") and popouts a "<label> — Sao Khuê" suffix.
+        title_substrings=_SELF_NAME_MARKERS,
     ),
 )
 
@@ -116,17 +139,17 @@ def denied_rule_for(app: AppRef) -> DeniedApp | None:
 
     * ``bundle_prefixes`` / ``name_substrings`` — the app's own identity;
     * ``title_substrings`` — the resolved WINDOW TITLE. Load-bearing for the
-      self-target rule: KiroCrew's dashboard served into a browser tab presents
+      self-target rule: SaoKhue's dashboard served into a browser tab presents
       Chrome's (or Safari's) bundle id and process name, so identity matching cannot
       see it, and the agent could drive our own Settings UI — clicking the very
       toggle the keystone exists to keep out of its reach.
 
     Deliberately a SUBSTRING test on the title rather than an exact match: the tab
-    title carries a badge prefix (``(3) Kiro Crew``) and a page suffix
-    (``… — Kiro Crew``), and popout frames prepend their own label.
+    title carries a badge prefix (``(3) Sao Khuê``) and a page suffix
+    (``… — Sao Khuê``), and popout frames prepend their own label.
 
     The known false-positive cost, stated rather than discovered: any window whose
-    title merely CONTAINS "kiro crew" is refused — a code editor with this repo open,
+    title merely CONTAINS "sao khue" (accents aside) or the older product name is refused — a code editor with this repo open,
     a browser reading this very PR. That is accepted because the failure directions
     are not symmetric. Refusing an unrelated window is visible and recoverable (the
     refusal names the target); failing to refuse our own dashboard silently hands the
@@ -134,8 +157,8 @@ def denied_rule_for(app: AppRef) -> DeniedApp | None:
     driver has no page URL, and ``AXURL`` is not read anywhere in this package.
     """
     bundle = (app.bundle_id or "").strip().lower()
-    name = (app.name or "").strip().lower()
-    title = (app.window_title or "").strip().lower()
+    name = _fold(app.name or "")
+    title = _fold(app.window_title or "")
     for rule in _DENIED_BUNDLE_PREFIXES:
         # Both sides are lowercased. Lowercasing only the *subject* was a real
         # defect: ``com.apple.userNotificationCenter`` is stored mixed-case (that
@@ -146,9 +169,9 @@ def denied_rule_for(app: AppRef) -> DeniedApp | None:
         # table, so a future mixed-case entry cannot silently do nothing either.
         if bundle and any(bundle.startswith(p.lower()) for p in rule.bundle_prefixes):
             return rule
-        if name and any(sub.lower() in name for sub in rule.name_substrings):
+        if name and any(_fold(sub) in name for sub in rule.name_substrings):
             return rule
-        if title and any(sub.lower() in title for sub in rule.title_substrings):
+        if title and any(_fold(sub) in title for sub in rule.title_substrings):
             return rule
     return None
 
@@ -166,11 +189,11 @@ def title_is_denied(title: str) -> bool:
     Lives here, next to the table it reads, so the enumeration layer cannot drift
     from the policy layer's idea of a denied title.
     """
-    subject = (title or "").strip().lower()
+    subject = _fold(title or "")
     if not subject:
         return False
     return any(
-        sub.lower() in subject for rule in _DENIED_BUNDLE_PREFIXES for sub in rule.title_substrings
+        _fold(sub) in subject for rule in _DENIED_BUNDLE_PREFIXES for sub in rule.title_substrings
     )
 
 

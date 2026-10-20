@@ -1,10 +1,10 @@
 # Webex Integration
 
-Chat with your Kiro Crew agent from Cisco Webex — on your phone, your laptop,
+Chat with your Sao Khuê agent from Cisco Webex — on your phone, your laptop,
 anywhere. Create a bot on the Webex developer portal, paste one token, and
 you're talking.
 
-Webex needs no public URL and no webhooks: Kiro Crew registers a device with
+Webex needs no public URL and no webhooks: Sao Khuê registers a device with
 Webex and receives messages over an outbound WebSocket, so it works from
 behind a firewall or NAT. Replies finish as one or more messages split at the 7,000 UTF-8-byte transport cap, with a live status placeholder ("🤔 Thinking…" → "🔧 Running: …") while the agent works.
 
@@ -139,7 +139,7 @@ is **denied** after five minutes.
   that list can run every command, which includes `/yolo` (auto-approves tools
   for the whole process, not just their own conversation, and the dashboard
   toggle and CLI drive the same grant) and `/kirocrew dashboard` (mints a
-  presigned dashboard login for YOUR Kiro Crew, DM-only). So add a second address
+  presigned dashboard login for YOUR Sao Khuê, DM-only). So add a second address
   only for a person you would hand your own dashboard to. Both commands write a
   SEL record naming the sender, so who took a grant or a link is always
   reviewable in the audit log.

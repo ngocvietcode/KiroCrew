@@ -572,7 +572,7 @@ def test_probe_unshare_fast_path_on_loop_when_backend_set(monkeypatch):
 
 
 class TestNoBackendGuidanceNamesTheRightRemedy:
-    """Which remedy is named depends on HOW Kiro Crew was launched."""
+    """Which remedy is named depends on HOW Sao Khuê was launched."""
 
     @staticmethod
     def _apparmor_host(monkeypatch):
@@ -689,7 +689,7 @@ class TestNoBackendGuidanceNamesTheRightRemedy:
         msg = sb._no_backend_guidance()
 
         assert str(bundled) in msg
-        assert "while Kiro Crew is open" in msg, "must say the path is live-only"
+        assert "while Sao Khuê is open" in msg, "must say the path is live-only"
 
     def test_which_is_not_trusted_as_evidence_the_user_has_the_cli(
         self, monkeypatch, tmp_path
@@ -724,7 +724,7 @@ class TestNoBackendGuidanceNamesTheRightRemedy:
         msg = sb._no_backend_guidance()
 
         assert "kirocrew sandbox install-profile" in msg
-        assert "while Kiro Crew is open" not in msg
+        assert "while Sao Khuê is open" not in msg
 
     def test_an_unaffected_host_keeps_the_original_text(self, monkeypatch):
         """macOS, Debian, and a relaxed sysctl must be untouched by this change."""

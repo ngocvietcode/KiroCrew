@@ -1,6 +1,6 @@
 ---
 name: blocked-by-policy
-description: What to do when a Kiro Crew safety policy blocks a tool call — tell a policy block from a user refusal, then take the sanctioned path for its class (AWS creds, SSO, key files, trust root, exfiltration, self-protection, SQL text in a heredoc). Load on a 'command denied' result or refused AWS access.
+description: What to do when a Sao Khuê safety policy blocks a tool call — tell a policy block from a user refusal, then take the sanctioned path for its class (AWS creds, SSO, key files, trust root, exfiltration, self-protection, SQL text in a heredoc). Load on a 'command denied' result or refused AWS access.
 triggers: blocked by security policy, user denied tool execution, access to sensitive path, sensitive credential path, data-exfiltration pattern, governance trust-root, permission denied by policy, cannot access aws, no aws credentials, aws access denied, sso login, credential path, credential tool not available
 ---
 
@@ -10,8 +10,8 @@ triggers: blocked by security policy, user denied tool execution, access to sens
 
 A rejected tool call is reported to you as a generic failure — on kiro-cli
 literally `User denied tool execution`. That string is wrong about *who*
-refused. Kiro Crew's own gate produces most refusals, and the real reason
-arrives separately as a `[Kiro Crew host notice]` message in the same turn.
+refused. Sao Khuê's own gate produces most refusals, and the real reason
+arrives separately as a `[Sao Khuê host notice]` message in the same turn.
 A host notice that says you made the same tool call several times is not a
 refusal: nothing was blocked. It is advice to change strategy.
 

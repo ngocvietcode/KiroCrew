@@ -236,5 +236,5 @@ class TestSetupDesktopPrompt:
             monkeypatch, tmp_path, electron_dir=tmp_path, answer="y"
         )
 
-        assert prompts == ["  Install Kiro Crew desktop app to ~/Applications? [Y/n]: "]
+        assert prompts == ["  Install Sao Khuê desktop app to ~/Applications? [Y/n]: "]
         assert installs == [1]

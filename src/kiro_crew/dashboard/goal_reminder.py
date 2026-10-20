@@ -162,7 +162,7 @@ async def sync_schedule(crons: Any, slug: str, label: str, schedules: dict[str, 
 
 
 _PREAMBLE = (
-    "Kiro Crew sends this; the user did not type it and sees only your reply, so "
+    "Sao Khuê sends this; the user did not type it and sees only your reply, so "
     "keep this note itself out of what you write. Write in the language of the "
     "dashboard's [UI LANGUAGE] when it is shown, else English.\n\n"
 )

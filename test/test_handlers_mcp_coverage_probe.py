@@ -488,7 +488,7 @@ class TestProbe:
         }
 
     def test_consent_lifts_a_raw_keyed_store_entry_in_place(self, sandbox: SimpleNamespace) -> None:
-        """The table offers the consent step (Kiro Crew badge + Apply) on a
+        """The table offers the consent step (Sao Khuê badge + Apply) on a
         ``disabledIn: "kirocrew"`` row stamped from a raw-keyed store entry; the
         writer must reach that same entry. Red under ``servers.get(name)``:
         without a spec it answered ``noop`` (row stuck Disabled), and with the

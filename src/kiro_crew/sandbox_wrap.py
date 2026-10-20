@@ -323,7 +323,7 @@ def unavailable_kind() -> str:
     reports ``"none"`` for a momentary fork/resource failure, which self-heals on
     the next spawn and must never buy a permanent bypass — and for a foreign
     outer sandbox, where the host's own sandbox is fine and the remedy is to hand
-    isolation back to Kiro Crew rather than disable it.
+    isolation back to Sao Khuê rather than disable it.
     """
     if detect_backend() != "none":
         return ""
@@ -543,7 +543,7 @@ def wrap_argv(
     if mode == "off":
         # Fix #2: verify kiro-cli delegation before honoring "off". The
         # documented invariant (beside ``_KIRO_INTERNAL_SETTINGS_PATH``) requires that when
-        # Kiro Crew's seatbelt is off, kiro-cli's internal sandbox is ON —
+        # Sao Khuê's seatbelt is off, kiro-cli's internal sandbox is ON —
         # but the old early return never checked. Now we verify the delegation
         # on macOS kiro-cli spawns; on Linux (where kiro's internal sandbox
         # doesn't apply) or non-kiro spawns, "off" means genuinely unconfined.
@@ -595,14 +595,14 @@ def wrap_argv(
         _warn_mode_off_unconfined(argv, kiro_spawn_off)
         return argv, None
 
-    # Already inside a Kiro Crew sandbox (script cron, sandboxed agent child, app
+    # Already inside a Sao Khuê sandbox (script cron, sandboxed agent child, app
     # backend, pooled MCP server): the outer sandbox confines every descendant,
     # and a nested wrap is impossible by design — Linux seccomp denies the
     # unshare, macOS Seatbelt refuses sandbox_apply with EPERM. Pass through
     # within the existing isolation boundary.
     #
     # On macOS the marker must agree with the kernel, and the two cover each
-    # other's blind spot: the marker proves Kiro Crew built the outer sandbox and
+    # other's blind spot: the marker proves Sao Khuê built the outer sandbox and
     # scrubbed the credential env on the way in, but an env var alone could be
     # forged; the kernel independently confirms a sandbox IS active, but cannot
     # say whose profile it is, so it can never grant this on its own. A definite
@@ -613,7 +613,7 @@ def wrap_argv(
         if not getattr(wrap_argv, "_nested_passthrough_logged", False):
             wrap_argv._nested_passthrough_logged = True  # type: ignore[attr-defined]
             logger.info(
-                "wrap_argv: already inside a Kiro Crew sandbox — nested OS "
+                "wrap_argv: already inside a Sao Khuê sandbox — nested OS "
                 "sandboxing is impossible by design (Linux seccomp denies "
                 "unshare; macOS Seatbelt refuses sandbox_apply with EPERM); "
                 "spawning within the existing isolation boundary rather than "
@@ -657,7 +657,7 @@ def wrap_argv(
         # slow/wedged background writer can NOT silently drop passthrough
         # records. What it does NOT do is re-raise into a *deny*: unlike
         # _delegate_to_kiro_internal_sandbox — which on audit failure falls back
-        # to Kiro Crew's own seatbelt, an equally-safe audited layer — a nested
+        # to Sao Khuê's own seatbelt, an equally-safe audited layer — a nested
         # passthrough has no safe alternative (seccomp denies the re-wrap by
         # design). Failing the spawn on a SEL filesystem error would couple every
         # in-sandbox MCP call to SEL health and reintroduce a prior in-sandbox
@@ -773,11 +773,11 @@ def wrap_argv(
     _warn_aliased_strict_leaves()
 
     # macOS sandbox mutual exclusion: kiro-cli >= 2.13's internal sandbox cannot
-    # initialize nested inside Kiro Crew's seatbelt (kernel EPERM even under an
+    # initialize nested inside Sao Khuê's seatbelt (kernel EPERM even under an
     # allow-all outer profile), so exactly one layer can own isolation. When
     # kiro's internal sandbox is enabled, it is that layer for kiro-cli spawns;
-    # Kiro Crew's sandbox stays on for everything else and whenever kiro's is off.
-    # Windows has no Kiro Crew OS sandbox backend. Official Kiro ACP spawns are
+    # Sao Khuê's sandbox stays on for everything else and whenever kiro's is off.
+    # Windows has no Sao Khuê OS sandbox backend. Official Kiro ACP spawns are
     # positively classified by their reviewed callers and delegate to Kiro's
     # built-in sandbox by default; basename inference is deliberately
     # insufficient to grant this exception. All other Windows spawns retain the
@@ -790,7 +790,7 @@ def wrap_argv(
     ) or (sys.platform == "win32" and is_kiro_cli is True)
     if delegate_to_kiro:
         # ``extra_private_dirs`` is deliberately NOT in this test: a private
-        # window only RELAXES a mask owned by Kiro Crew (the scratch root) for the
+        # window only RELAXES a mask owned by Sao Khuê (the scratch root) for the
         # spawn's own directory. A delegated sandbox applies none of those
         # masks, so the window is moot there and must not cost the delegation
         # (on Windows that would send every session to the no-backend path).
@@ -801,7 +801,7 @@ def wrap_argv(
             or extra_writable_dirs
             or extra_expose_files
         ):
-            # A delegated sandbox cannot enforce the path hides specific to Kiro Crew.
+            # A delegated sandbox cannot enforce the path hides specific to Sao Khuê.
             # macOS keeps the outer seatbelt. Windows falls through to its
             # no-backend policy and fail-closes unless explicitly opted in.
             if sys.platform == "darwin":
@@ -829,7 +829,7 @@ def wrap_argv(
                 return delegated
             if sys.platform == "darwin":
                 # Preserve macOS's audit-failure fallback: once delegation is
-                # refused, Kiro Crew's own seatbelt remains the safe owner.
+                # refused, Sao Khuê's own seatbelt remains the safe owner.
                 return sandbox_exec_argv(
                     argv,
                     sandbox_level,
@@ -905,7 +905,7 @@ def wrap_argv(
 
     if backend == "none":
         # Reaching here while the kernel says this process IS sandboxed means the
-        # outer sandbox is NOT one Kiro Crew built: one Kiro Crew built carries
+        # outer sandbox is NOT one Sao Khuê built: one Sao Khuê built carries
         # KIROCREW_SANDBOX_ACTIVE and was already passed through above. The
         # remaining nested case is a foreign confiner — kiro-cli's own internal
         # seatbelt, or an operator-wrapped gateway — whose profile macOS gives us
@@ -978,19 +978,19 @@ def wrap_argv(
                 ) + _linux_remedy_guidance(probe_remedy)
             elif _inside_macos_sandbox():
                 # Nesting under a FOREIGN sandbox — say so, and point at the
-                # config-level fix that hands isolation back to Kiro Crew's own
+                # config-level fix that hands isolation back to Sao Khuê's own
                 # profile, not at sandbox_allow_unsandboxed_exec (which would
                 # disable isolation everywhere to fix a case where a sandbox
                 # demonstrably exists).
                 guidance = (
                     "This host's sandbox is NOT broken: the kernel reports this "
                     "process is already inside a macOS Seatbelt sandbox that "
-                    "Kiro Crew did not create, and Seatbelt cannot nest, so "
-                    "sandbox-exec fails with EPERM. Spawns under Kiro Crew's OWN "
+                    "Sao Khuê did not create, and Seatbelt cannot nest, so "
+                    "sandbox-exec fails with EPERM. Spawns under Sao Khuê's OWN "
                     "sandbox are unaffected — they carry an isolation marker and "
                     "pass through. The usual cause is kiro-cli's internal "
                     'sandbox: set {"sandbox": false} in '
-                    "~/.kiro/settings/amazon-internal.json so Kiro Crew's own "
+                    "~/.kiro/settings/amazon-internal.json so Sao Khuê's own "
                     "profile owns isolation (that profile is the one that hides "
                     "the credential directories, so this keeps isolation rather "
                     "than weakening it), then restart the gateway. Other outer "
@@ -1045,7 +1045,7 @@ def wrap_argv(
                         f"(probe: {probe_reason}). "
                         "This is a container policy restriction, not a host kernel "
                         "limitation. To resolve, choose one of:\n"
-                        "  (a) Use the Kiro Crew custom seccomp profile (adds "
+                        "  (a) Use the Sao Khuê custom seccomp profile (adds "
                         "unconditional unshare/clone/mount allows to the Docker "
                         "default — less permissive than seccomp=unconfined):\n"
                         "        # With a repo checkout:\n"
@@ -1078,7 +1078,7 @@ def wrap_argv(
                     "agent.sandbox_allow_unsandboxed_exec — that flag is set on "
                     "this host and is deliberately powerless against the policy, "
                     "so editing config.json cannot resolve this. A governed host "
-                    "also withholds the first-party carve-out, so Kiro Crew's own "
+                    "also withholds the first-party carve-out, so Sao Khuê's own "
                     "built-in spawns are refused here too: this host runs no "
                     "agent subprocess until it has a working sandbox backend "
                     "(see docs/system-specs/modules/security.md) or the policy "

@@ -165,7 +165,7 @@ _SIGNER_REWRITTEN_FFMPEG_ARTIFACTS: frozenset[str] = frozenset({"ffmpeg-macos-aa
 _MAX_SIGNED_FFMPEG_BYTES = 192 * 1024 * 1024
 
 
-# Apple team identifier of the Developer ID certificate that signs Kiro Crew
+# Apple team identifier of the Developer ID certificate that signs Sao Khuê
 # releases (see packaging/signing/manifest-template.json). `anchor apple generic`
 # ties the chain to Apple's root, so only a certificate Apple issued to THIS team
 # satisfies the requirement -- a self-signed or ad-hoc replacement does not.

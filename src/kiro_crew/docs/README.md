@@ -1,4 +1,4 @@
-# Kiro Crew user documentation
+# Sao Khuê user documentation
 
 **These docs ship inside the Python package.** They are the end-user documentation:
 in-app reading, dashboard Settings links, and the feature-tips catalog all resolve
@@ -23,7 +23,7 @@ organized for someone browsing the repository.
 |---|---|
 | [agents.md](agents.md) | Switching between specialized agents per conversation, thread, or cron job. |
 | [crew-members.md](crew-members.md) | Named crewmates, their standing DM threads, and routing work to one with `select_crew` / `route_crew`. |
-| [remote-crew.md](remote-crew.md) | Reaching other machines running their own Kiro Crew gateway: the transports, the pane switcher, sessions that run on one, and federated history search. Formerly [remote-instances.md](remote-instances.md), which now points here. |
+| [remote-crew.md](remote-crew.md) | Reaching other machines running their own Sao Khuê gateway: the transports, the pane switcher, sessions that run on one, and federated history search. Formerly [remote-instances.md](remote-instances.md), which now points here. |
 | [agent-spec-fields.md](agent-spec-fields.md) | Every agent-spec field, what it does, and how that differs per ACP backend. |
 | [skills.md](skills.md) | Drop-in markdown knowledge packs for domain-specific workflows. |
 | [steering-and-hooks.md](steering-and-hooks.md) | Steering files and their inclusion modes, the prompt library, and chat lifecycle hooks. |
@@ -43,7 +43,7 @@ organized for someone browsing the repository.
 | [feature-videos.md](feature-videos.md) | Short intro clips for features this install has not used yet. |
 | [inbound-webhooks.md](inbound-webhooks.md) | Letting external systems trigger an agent turn over HTTP. |
 | [deploy-web.md](deploy-web.md) | Publishing artifacts to a public HTTPS URL on your own AWS. |
-| [snapshot-and-restore.md](snapshot-and-restore.md) | Backing up and restoring Kiro Crew state. |
+| [snapshot-and-restore.md](snapshot-and-restore.md) | Backing up and restoring Sao Khuê state. |
 | [workflows.md](workflows.md) | Multi-phase agent runs you can watch, restart in part, and save for reuse. |
 | [secrets-vault.md](secrets-vault.md) | Storing credentials encrypted where the agent cannot read them. |
 | [monitor-loops.md](monitor-loops.md) | Keeping one session checking something on an interval until an exit condition fires. |

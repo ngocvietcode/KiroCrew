@@ -876,7 +876,7 @@ def test_protected_runtime_pid_lands_in_sweep_active_set():
     their PID via ``register_protected_pid``, and ``_collect_active_pids`` seeds
     from ``_protected_pids()``. This asserts both a companion and a bg runtime
     PID land in the sweep's active set (so phase-2 never confirms them orphans) —
-    the Kiro Crew analog of the upstream project's end-to-end guard.
+    the Sao Khuê analog of the upstream project's end-to-end guard.
     """
     from kiro_crew.session_pid import (
         _collect_active_pids,

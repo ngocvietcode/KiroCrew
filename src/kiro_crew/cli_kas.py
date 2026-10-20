@@ -1,4 +1,4 @@
-"""``kirocrew kas`` -- install, inspect and remove Kiro Crew's own KAS engine bundle.
+"""``kirocrew kas`` -- install, inspect and remove Sao Khuê's own KAS engine bundle.
 
 Operator-facing, like ``kirocrew doctor`` and ``kirocrew sandbox``: it runs in the
 operator's own terminal, outside the agent sandbox, which is the only place the
@@ -211,7 +211,7 @@ def _report_installed(installed: kas_bundle.InstalledKasBundle, *, already: bool
     else:
         print("\nagent.kas_bundle is on; `kirocrew restart` picks the new engine up.")
     print(
-        "The engine signs in through Kiro Crew's own login (dashboard → Sign in); "
+        "The engine signs in through Sao Khuê's own login (dashboard → Sign in); "
         "kiro-cli is not used on this route."
     )
     return 0

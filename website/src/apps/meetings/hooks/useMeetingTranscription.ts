@@ -1,4 +1,4 @@
-// Live transcription for a meeting, over KiroCrew's OWN streaming speech-to-text.
+// Live transcription for a meeting, over SaoKhue's OWN streaming speech-to-text.
 //
 // Wire protocol — this conforms to `dashboard/stt_stream.py:api_ws_stt`, it does
 // not invent one:

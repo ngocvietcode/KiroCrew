@@ -38,7 +38,7 @@ const page = await browser.newPage({ viewport: { width: 900, height: 1180 }, dev
  */
 const LIBRARY = {
   packs: [
-    { id: 'kiro-ghost', name: 'Kiro ghost', author: 'Kiro Crew', type: 'builtin', format: 'svg' },
+    { id: 'kiro-ghost', name: 'Kiro ghost', author: 'Sao Khuê', type: 'builtin', format: 'svg' },
   ],
 }
 await page.route('**/api/appearances', route =>

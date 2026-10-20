@@ -1,7 +1,7 @@
-# Kiro Crew Desktop App
+# Sao Khuê Desktop App
 
 The desktop app is an [Electron](https://www.electronjs.org/) shell that wraps
-the Kiro Crew web dashboard and embeds a **self-contained Python backend**. The
+the Sao Khuê web dashboard and embeds a **self-contained Python backend**. The
 backend uses a [python-build-standalone](https://github.com/indygreg/python-build-standalone)
 (PBS) interpreter with all dependencies installed via `uv`/`pip` into the bundled
 interpreter — end users need **no** Python, pip, npm, or node. They just
@@ -32,7 +32,7 @@ The electron-builder configuration lives in
 
 - **appId:** `com.amazon.kiro.crew`
 - **productName:** `KiroCrew`
-- macOS display name: `Kiro Crew` via `CFBundleDisplayName`; `CFBundleName`
+- macOS display name: `Sao Khuê` via `CFBundleDisplayName`; `CFBundleName`
   remains aligned with `productName` because Electron uses it to locate the
   `KiroCrew Helper` app bundles during startup
 - mac targets: `dmg` and `zip` (category
@@ -46,14 +46,14 @@ The electron-builder configuration lives in
   captions either — Finder draws them in dark text even under Dark Mode, so they
   read on the accent directly.
 - Windows target: assisted NSIS. A 164×314 welcome/finish sidebar and a 150×57
-  page header reuse the Kiro Crew logo while preserving native NSIS controls,
+  page header reuse the Sao Khuê logo while preserving native NSIS controls,
   localization, the per-user default, and the no-UAC default path. The installer
   cross-fades the native top-level dialog at page boundaries with Win32's
   alpha-blended window animation, honoring the client-area animation preference.
   It performs no timer-driven bitmap work or `Sleep` on the NSIS UI thread;
   Windows CI installs the real artifact, records its duration, and enforces a
   5-minute ceiling. Auto-updates skip the assisted wizard's decision pages but
-  keep its native extraction progress visible, then relaunch Kiro Crew and close
+  keep its native extraction progress visible, then relaunch Sao Khuê and close
   automatically. A legacy silent `/S --updated` invocation is converted to the
   same visible update path so the transition works from already-fielded clients.
 - linux targets: `AppImage`, `deb`, `rpm` (category `Development`). One backend
@@ -158,7 +158,7 @@ beside the payload records provenance; a clean-room smoke — empty `HOME`, mini
 `PATH`, so no install on the build host can answer for the staged binary — runs
 three probes: `--version`, `login --help`, and one ACP `initialize` round trip
 over stdio, the call every
-Kiro Crew session opens with, so the lane log on each platform proves the staged
+Sao Khuê session opens with, so the lane log on each platform proves the staged
 payload is self-contained there before it is sealed into the app; and a layout
 gate refuses a payload that carries a nested `.app`/`.framework` under
 `Resources/`, which the signing manifest cannot seal per file.
@@ -636,7 +636,7 @@ When the app starts, [`main.js`](../../website/electron/main.js) composes the
 desktop lifecycle and delegates gateway ownership to
 [`gateway-supervisor.js`](../../website/electron/gateway-supervisor.js). The
 supervisor first checks whether a gateway is already running. An existing
-gateway that this machine runs (a Kiro Crew process or its service) is reused.
+gateway that this machine runs (a Sao Khuê process or its service) is reused.
 A port held by a process this app cannot attribute to itself, which is what a
 local SSH forward to a remote gateway looks like, is reused only when a remote
 crew is recorded for that port; otherwise the supervisor refuses it
@@ -654,7 +654,7 @@ Windows, and moved AppImages keep the existing reuse behavior. The shell does
 not restart or force-stop a stale gateway automatically.
 
 When nothing answers the first health check but the port is still held, the
-shell checks whether the sole listener is a local Kiro Crew gateway for this
+shell checks whether the sole listener is a local Sao Khuê gateway for this
 app's data folder: `gateway.lock` must name its pid, and that pid must have
 `gateway.lock` open. If that gateway keeps failing its health check for 15
 seconds, the same dialog offers Stop and restart or Quit. Stop and restart runs
@@ -710,7 +710,7 @@ the sender has the fixed primary origin,
 [`window-lifecycle.js`](../../website/electron/window-lifecycle.js) proves that
 its window uses a local gateway rather than a configured tunnel, and
 [`gateway-supervisor.js`](../../website/electron/gateway-supervisor.js)
-positively identifies the primary listener as Kiro Crew or its service. A
+positively identifies the primary listener as Sao Khuê or its service. A
 manual SSH tunnel, foreign listener, unbound port, or unavailable owner probe is
 therefore refused; only then may
 [`wsl-detection.js`](../../website/electron/wsl-detection.js) run the trusted
@@ -837,7 +837,7 @@ provider:
 3. It verifies authentication with `kiro-cli whoami`.
 
 If either check fails, the shared React setup gate appears in both the desktop
-shell and browser dashboard. Kiro Crew performs neither setup step: the gate
+shell and browser dashboard. Sao Khuê performs neither setup step: the gate
 links out to <https://kiro.dev/cli/> to obtain the CLI, and names the commands
 the user runs to sign in — `kiro-cli login` for a personal account, or
 `kiro-cli login --use-device-flow --license pro` for organization SSO. Both
@@ -858,7 +858,7 @@ minimal allowlisted environment rather than the desktop shell's credentials;
 version probes use the strict OS sandbox and hide every known Kiro identity
 store. `whoami` and device-login run for any runnable candidate; they use a
 standard sandbox with a temporary home containing only Kiro identity token
-files, so unrelated AWS, SSH, GitHub, Kubernetes, and Kiro Crew state remain
+files, so unrelated AWS, SSH, GitHub, Kubernetes, and Sao Khuê state remain
 unavailable, and POSIX auth still executes a private snapshot of the exact
 resolved bytes. Timed-out commands signal a POSIX process group only
 while its leader still anchors that identity; on Windows, exact retained process
@@ -1185,7 +1185,7 @@ it).
   `kirocrew gateway` command gets SIGTERM, then SIGKILL after a grace window.
   Identity is re-read before each signal, so a recycled pid or a `kirocrew mcp-*`
   child is never signalled.
-- When the other release family's app (Kiro Crew vs Kiro Crew Nightly) holds the
+- When the other release family's app (Sao Khuê vs Sao Khuê Nightly) holds the
   port, macOS
   offers **Quit <other> & Continue**. Other platforms cannot quit that app for
   the user, so `runtime/gateway/family-takeover.js` asks the user to quit it and
@@ -1250,7 +1250,7 @@ it).
 
 ## Code signing & notarization (macOS)
 
-An unsigned `.app`/DMG is quarantined by Gatekeeper and shows **"Kiro Crew is
+An unsigned `.app`/DMG is quarantined by Gatekeeper and shows **"Sao Khuê is
 damaged and can't be opened"** when downloaded on another Mac. To distribute a
 DMG that opens cleanly you must sign it with a **Developer ID Application**
 certificate and **notarize** it with Apple. (Local builds without credentials
@@ -1302,12 +1302,12 @@ clear the quarantine flag.
 
 macOS gates `~/Downloads`, `~/Documents`, `~/Desktop`, `~/Pictures`, `~/Movies`
 and `~/Music` behind **TCC** (Transparency, Consent and Control). The first time
-an app reads one of them, macOS shows a modal *"Kiro Crew would like to access
+an app reads one of them, macOS shows a modal *"Sao Khuê would like to access
 files in your Downloads folder"*, and consent is recorded **per (app, folder)
 pair** — so an operation that incidentally touches three of those folders
 produces **three separate prompts**, one after another.
 
-Nothing Kiro Crew does at startup needs those folders, and its own file walks
+Nothing Sao Khuê does at startup needs those folders, and its own file walks
 stay out of them:
 
 - **`/api/file-search` has no bare-`$HOME` fallback root.** With no project it
@@ -1323,7 +1323,7 @@ stay out of them:
 
 Two consequences worth knowing:
 
-- **Explicit access is unaffected.** If you point Kiro Crew at a project inside
+- **Explicit access is unaffected.** If you point Sao Khuê at a project inside
   `~/Documents` or browse to `~/Downloads` directly, that root is walked in full.
   macOS still shows its own one-time prompt for that deliberate access — that is
   the expected OS contract, and granting it once is enough.
@@ -1346,7 +1346,7 @@ entitlement, and the `Info.plist` usage string only supplies the prompt's
 wording. Get this wrong and the failure is deeply misleading:
 
 > **Symptom:** voice input reports *"Microphone permission denied"* instantly,
-> **no** system prompt ever appears, and there is no Kiro Crew row under System
+> **no** system prompt ever appears, and there is no Sao Khuê row under System
 > Settings › Privacy & Security › Microphone to switch on. The same mic works in
 > Chrome at the same origin on the same machine.
 
@@ -1422,7 +1422,7 @@ declaration.
 > an IoT device, another dev box — fails **instantly** with errno 65
 > (`EHOSTUNREACH`, "No route to host") in ~0.000s rather than timing out. `ping`
 > and ARP to the same host succeed, so it reads as a routing fault. There is no
-> Kiro Crew row under System Settings › Privacy & Security › Local Network, and
+> Sao Khuê row under System Settings › Privacy & Security › Local Network, and
 > `tccutil reset LocalNetwork com.amazon.kiro.crew` fails because no TCC record
 > exists to reset.
 

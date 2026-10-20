@@ -410,14 +410,14 @@ class TestResponsibleProcessWalk:
         """macOS grants TCC to the process it considers responsible, which is the
         OUTERMOST identifiable ancestor -- so a nearer name must be overwritten by a
         further one, not kept."""
-        self._tree(monkeypatch, chain=["python3", "kiro-cli", "Kiro Crew"])
-        assert permissions.responsible_process_name() == "Kiro Crew"
+        self._tree(monkeypatch, chain=["python3", "kiro-cli", "Sao Khuê"])
+        assert permissions.responsible_process_name() == "Sao Khuê"
 
     def test_the_walk_terminates_at_init(self, monkeypatch: pytest.MonkeyPatch):
         """Reaching pid 1 ends the walk. Without this the loop would keep asking the
         OS about pid 1's parent, which on Linux answers 0 forever."""
-        self._tree(monkeypatch, chain=["Kiro Crew"])
-        assert permissions.responsible_process_name() == "Kiro Crew"
+        self._tree(monkeypatch, chain=["Sao Khuê"])
+        assert permissions.responsible_process_name() == "Sao Khuê"
 
     def test_a_self_referential_parent_does_not_spin(self, monkeypatch: pytest.MonkeyPatch):
         """An unusual or hostile tree can report itself as its own parent."""
@@ -426,11 +426,11 @@ class TestResponsibleProcessWalk:
         monkeypatch.setattr(
             apps_macos,
             "resolve_identity",
-            lambda pid: apps_macos.AppIdentity(display_name="Kiro Crew"),
+            lambda pid: apps_macos.AppIdentity(display_name="Sao Khuê"),
             raising=False,
         )
         monkeypatch.setattr(permissions.platform_compat, "get_ppid", lambda pid: pid, raising=False)
-        assert permissions.responsible_process_name() == "Kiro Crew"
+        assert permissions.responsible_process_name() == "Sao Khuê"
 
     def test_a_failing_ppid_lookup_keeps_the_name_found_so_far(
         self, monkeypatch: pytest.MonkeyPatch
@@ -441,7 +441,7 @@ class TestResponsibleProcessWalk:
         monkeypatch.setattr(
             apps_macos,
             "resolve_identity",
-            lambda pid: apps_macos.AppIdentity(display_name="Kiro Crew"),
+            lambda pid: apps_macos.AppIdentity(display_name="Sao Khuê"),
             raising=False,
         )
 
@@ -449,7 +449,7 @@ class TestResponsibleProcessWalk:
             raise OSError("no such process")
 
         monkeypatch.setattr(permissions.platform_compat, "get_ppid", _boom, raising=False)
-        assert permissions.responsible_process_name() == "Kiro Crew"
+        assert permissions.responsible_process_name() == "Sao Khuê"
 
     def test_an_unidentifiable_chain_falls_back_to_the_executable(
         self, monkeypatch: pytest.MonkeyPatch
@@ -1052,7 +1052,7 @@ class TestDenylistCaseFolding:
         for name, bundle in (
             ("KIRO CREW", "DEV.KIRO.CREW"),
             ("kiro crew", "dev.kiro.crew"),
-            ("Kiro Crew", "Dev.Kiro.Crew"),
+            ("Sao Khuê", "Dev.Kiro.Crew"),
         ):
             assert policy.denied_rule_for(AppRef(name=name, pid=1, bundle_id=bundle)) is not None
 

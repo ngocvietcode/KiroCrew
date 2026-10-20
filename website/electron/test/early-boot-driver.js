@@ -112,7 +112,7 @@ const app = {
     return pathsByName[name] || path.join(userDataDir, name);
   },
   getVersion: () => "0.0.0-test",
-  getName: () => "Kiro Crew",
+  getName: () => "Sao Khuê",
   getAppPath: () => path.join(__dirname, ".."),
   requestSingleInstanceLock,
   setAppUserModelId() {},

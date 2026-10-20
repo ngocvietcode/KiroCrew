@@ -1,7 +1,7 @@
 """Keep the gateway's TCP listener alive after a failed ``accept()``.
 
 The defect this guards against is Windows-only and lives in CPython, not in
-Kiro Crew. ``asyncio.proactor_events.BaseProactorEventLoop._start_serving``
+Sao Khuê. ``asyncio.proactor_events.BaseProactorEventLoop._start_serving``
 runs one ``loop()`` callback per completed ``AcceptEx``::
 
     except OSError as exc:

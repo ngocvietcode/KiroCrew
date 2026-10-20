@@ -139,7 +139,7 @@ def _purge_server_config(
     scope can be a different server whose config this must not delete.
 
     The rendered agent files are stripped whenever any scope was purged, and not
-    at all otherwise: they are Kiro Crew's own merge output rather than a scope a
+    at all otherwise: they are Sao Khuê's own merge output rather than a scope a
     user edits, and leaving the entry there lets the next rebuild resurrect what
     was just removed.
 

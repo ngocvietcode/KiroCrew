@@ -1,4 +1,4 @@
-"""The managed tool policy applies to Kiro Crew's own servers, not to an app's.
+"""The managed tool policy applies to Sao Khuê's own servers, not to an app's.
 
 The reported defect: a user-installed app serves its own tools
 through ``mcp_shared.run_mcp_stdio_loop``. On the shared ACP runtime a server the

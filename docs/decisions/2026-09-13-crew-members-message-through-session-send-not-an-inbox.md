@@ -5,7 +5,7 @@ Date: 2026-09-13
 
 ## Decision
 
-A crew member reaches another member through the existing `session_send` path: a narrow allow in front of the creator fence, the steer path for a member that is busy, and a distinct "from member" row in the receiving thread. Kiro Crew does not build a separate inbox subsystem for members (typed envelopes, an inbox store, a scheduler, a wake runner, a projection UI), and member-to-member messaging carries no runtime hop counter or per-pair rate limit.
+A crew member reaches another member through the existing `session_send` path: a narrow allow in front of the creator fence, the steer path for a member that is busy, and a distinct "from member" row in the receiving thread. Sao Khuê does not build a separate inbox subsystem for members (typed envelopes, an inbox store, a scheduler, a wake runner, a projection UI), and member-to-member messaging carries no runtime hop counter or per-pair rate limit.
 
 ## Why
 

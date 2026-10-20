@@ -1,6 +1,6 @@
 # Asking KAS for a non-destructive session teardown
 
-Kiro Crew can run the KAS engine as an ACP backend, and its shared-runtime model
+Sao Khuê can run the KAS engine as an ACP backend, and its shared-runtime model
 needs a verb KAS does not have: **evict a session from memory while keeping its
 persisted record loadable**. KAS today offers only `_kiro/session/delete`, which
 frees the memory *and* removes the record, so a Crew sub-agent session on KAS

@@ -3,7 +3,7 @@
 Temporality is the difference between "the running total" (CUMULATIVE) and
 "what changed since the last export" (DELTA). It is a per-DESTINATION encoding
 choice, not a property of the instrument, which is exactly why it needs an
-owner: Kiro Crew attaches TWO readers to one ``MeterProvider`` (the local JSONL
+owner: Sao Khuê attaches TWO readers to one ``MeterProvider`` (the local JSONL
 sink, always; an opt-in OTLP reader per destination an edition names), each with
 its own exporter, and each exporter resolves temporality independently. Before
 this module the map lived inline in the local exporter's ``__init__`` and the
@@ -71,7 +71,7 @@ TEMPORALITY_ENV_VAR = "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"
 
 
 def delta_preference() -> "dict[type, AggregationTemporality]":
-    """The instrument-kind -> temporality map every Kiro Crew sink prefers.
+    """The instrument-kind -> temporality map every Sao Khuê sink prefers.
 
     A FRESH dict per call: an exporter stores the mapping it is handed, so a
     shared module-level dict would let one exporter's (or one test's) mutation

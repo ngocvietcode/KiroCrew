@@ -38,8 +38,8 @@ Python environment from startup before the sensitive-path gate imports. ``-B``
 keeps the packaged desktop from writing bytecode even though isolated mode
 ignores its ``PYTHONDONTWRITEBYTECODE`` environment setting.
 
-``KIROCREW_RUNTIME_PYTHON`` is overwritten by the Kiro Crew ACP parent with the
-absolute interpreter already running Kiro Crew. That path works in venv, POSIX
+``KIROCREW_RUNTIME_PYTHON`` is overwritten by the Sao Khuê ACP parent with the
+absolute interpreter already running Sao Khuê. That path works in venv, POSIX
 desktop (``bin/python3.12``), and Windows desktop (bundle-root ``python.exe``)
 layouts without requiring a system ``python`` name. A manual invocation under a
 foreign interpreter can still relocate through :func:`bundled_python` below.
@@ -76,7 +76,7 @@ try:
     # ``O_NOFOLLOW``, so the gate holds through a link and through a TOCTOU swap.
     from kiro_crew.hooks import safe_read_file
 except Exception:  # pragma: no cover - exercised when the package is not importable
-    # The normal startup procedure uses Kiro Crew's injected runtime, but the
+    # The normal startup procedure uses Sao Khuê's injected runtime, but the
     # copied skill script can still be run manually under a foreign interpreter,
     # where ``kiro_crew`` is not guaranteed to be importable. There is no safe
     # degradation for a READ GATE: falling back to ``read_text`` would reopen
@@ -106,7 +106,7 @@ def bundled_python() -> str | None:
 
     The ACP parent supplies the authoritative answer in
     ``KIROCREW_RUNTIME_PYTHON``. It is the exact ``sys.executable`` already
-    running Kiro Crew, injected after the child-env scrub and after agent
+    running Sao Khuê, injected after the child-env scrub and after agent
     overrides, so a desktop install never depends on a Python name on ``PATH``.
 
     The launcher-derived candidates keep manual and older invocations usable:

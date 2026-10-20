@@ -6,7 +6,7 @@ triggers: preview, live preview, dev server, serve, http.server, npm run dev, ru
 
 # Web Preview marker
 
-KiroCrew's chat right-side panel has a **Browser** tab (+ menu → Browser)
+SaoKhue's chat right-side panel has a **Browser** tab (+ menu → Browser)
 that embeds a URL in a live iframe. When you start a local web server so the user
 can preview a site/app, tell the dashboard which URL to load by emitting a single
 hidden marker in your reply.

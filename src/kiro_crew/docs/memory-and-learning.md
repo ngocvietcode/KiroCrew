@@ -1,6 +1,6 @@
 # Memory & Learning
 
-Kiro Crew has persistent memory that survives across sessions. It remembers your
+Sao Khuê has persistent memory that survives across sessions. It remembers your
 preferences, project context, daily activity, and corrections you teach it.
 
 ## Private member context
@@ -70,9 +70,9 @@ asks for it.
 
 ### Lessons
 
-Corrections and rules you teach Kiro Crew. Two ways to create:
+Corrections and rules you teach Sao Khuê. Two ways to create:
 1. **Explicit**: say "remember to always use pytest" → saved immediately
-2. **Implicit**: correct Kiro Crew during conversation → extracted during consolidation
+2. **Implicit**: correct Sao Khuê during conversation → extracted during consolidation
 
 Member lessons live in the member's SQLite database. Global V1 also supports the
 legacy `lessons.jsonl` fallback when vector memory is unavailable.
@@ -166,7 +166,7 @@ remain available without opening memory. The agent's own chat-history tools
 Incognito or Temporary chat, so what you said there does not reach another
 session.
 
-## Teaching Kiro Crew
+## Teaching Sao Khuê
 
 Just tell it naturally:
 - "Always use dark mode"
@@ -174,12 +174,12 @@ Just tell it naturally:
 - "Remember that our team uses pytest-asyncio strict mode"
 - "Prefer ruff over flake8 for linting"
 
-Kiro Crew saves these via the `learn_add` MCP tool. View them with `learn_list`
+Sao Khuê saves these via the `learn_add` MCP tool. View them with `learn_list`
 or on the dashboard Overview → Lessons tab.
 
 ## Workspaces
 
-Markdown memory is workspace-scoped: each workspace stores `memory/preferences.md`, `memory/projects.md`, and `memory/history/{date}.md` beneath its workspace directory. Legacy JSONL lessons are also workspace-local; vector memory defaults to `memory.db` under the Kiro Crew data directory. Lessons are global unless their optional `repo_scope` restricts them to a project tree.
+Markdown memory is workspace-scoped: each workspace stores `memory/preferences.md`, `memory/projects.md`, and `memory/history/{date}.md` beneath its workspace directory. Legacy JSONL lessons are also workspace-local; vector memory defaults to `memory.db` under the Sao Khuê data directory. Lessons are global unless their optional `repo_scope` restricts them to a project tree.
 
 ## Vector Memory
 
@@ -191,7 +191,7 @@ The vector-memory subsystem is always enabled:
   other server to install — the runtime is bundled; no data leaves your machine)
 
 The embedding model (~610MB) downloads automatically in the background the
-first time the gateway starts, over HTTPS from the Kiro Crew CDN — failed
+first time the gateway starts, over HTTPS from the Sao Khuê CDN — failed
 downloads retry automatically with backoff, and again on the next gateway
 start; the Memory tab shows download progress. Once downloaded, the model
 loads in the background too, so nothing ever waits on it. While the model is
@@ -222,7 +222,7 @@ original diagnostic text.
 
 ## Consolidation
 
-Kiro Crew automatically consolidates conversations into memory:
+Sao Khuê automatically consolidates conversations into memory:
 - **Preferences/projects**: every 30 messages per session
 - **Daily history + lessons**: after 3 hours idle per session
 
@@ -255,4 +255,4 @@ scheduled jobs.
 ## Editing Memory
 
 - **Dashboard**: Overview → Memory tab → edit preferences.md or projects.md
-- **Chat**: ask Kiro Crew to remember or correct a fact through its memory tools
+- **Chat**: ask Sao Khuê to remember or correct a fact through its memory tools

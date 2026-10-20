@@ -18,7 +18,7 @@ off this one flag: value redaction in the renderer, input refusal in
 all three at once, which is why the derivation lives in one function
 (:func:`_is_secure`) that a test pins directly.
 
-Electron/Chromium apps (Slack, VS Code, Obsidian, and KiroCrew's own desktop app)
+Electron/Chromium apps (Slack, VS Code, Obsidian, and SaoKhue's own desktop app)
 need ``AXManualAccessibility`` before they expose anything useful, and the symptom
 has two shapes — both reproduced live:
 

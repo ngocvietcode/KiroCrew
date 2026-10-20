@@ -81,7 +81,7 @@ def _collect_app_mcp_servers(*, audit: bool = True) -> dict[str, Any]:
     into the shared ``~/.kiro/settings/mcp.json``, because that file is read by
     everything else sharing ``~/.kiro`` — Kiro IDE and any other kiro-cli agent
     — so an app's private tools would leak into surfaces that never installed
-    the app. Kiro Crew sessions only ever read the agent config
+    the app. Sao Khuê sessions only ever read the agent config
     (``includeMcpJson`` is pinned False), so writing here is both sufficient and
     properly scoped.
 

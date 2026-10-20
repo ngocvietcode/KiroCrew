@@ -43,7 +43,7 @@ mkdirSync(OUT, { recursive: true })
 
 const slots = [{
   key: SLOT,
-  title: 'Kiro Crew performance investigation',
+  title: 'Sao Khuê performance investigation',
   running: true,
   last_message: 'Started workflow run wf_000025…',
   messages: 2,
@@ -105,7 +105,7 @@ function buildEvents() {
     'Drafting the workflow script (attempt 1/3)…',
     'Script validated: kirocrew-perf-investigation',
     'Workflow authored — starting execution.',
-    'Starting Kiro Crew performance investigation',
+    'Starting Sao Khuê performance investigation',
   ]) push('log', { message: line })
   return events
 }

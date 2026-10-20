@@ -8,7 +8,7 @@ Three false matches put a skill nobody asked for into a turn (27k chars for
   the trigger is marked case-exact (``=Word``);
 * a skill for a feature that is off: a session with no ``computer_*`` tool gets
   the skill describing those tools;
-* Kiro Crew's own words: a recovery continuation ("do NOT restart from scratch")
+* Sao Khuê's own words: a recovery continuation ("do NOT restart from scratch")
   fires a skill whose trigger is ``restart``.
 
 Each case is pinned beside the nearby input that must still match: the name as

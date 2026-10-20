@@ -4,7 +4,7 @@ This module is named ``test_supervisor_*`` so it falls inside Track S3's
 ownership, but it defines no test functions -- pytest collects nothing from it.
 It provides a fake backend process that is a real OS process tree (so process
 groups, draining and killpg escalation are exercised for real) and never boots a
-Kiro Crew gateway.
+Sao Khuê gateway.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 
 # A real process that can: bind a loopback port, write a gateway secret after a
 # delay, fork a grandchild into its own group, and either drain on SIGTERM or
-# ignore it (to force SIGKILL escalation). No Kiro Crew import.
+# ignore it (to force SIGKILL escalation). No Sao Khuê import.
 FAKE_BACKEND_SRC = r"""
 import argparse, os, signal, socket, sys, time
 from pathlib import Path

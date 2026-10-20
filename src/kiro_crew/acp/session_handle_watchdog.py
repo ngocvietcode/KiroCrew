@@ -176,7 +176,7 @@ def _load_watchdog_settings(crew_agent: str = "", cfg: Any = None) -> WatchdogSe
     ``_sync_effort_levels``) avoids the config -> dashboard -> acp import
     cycle; any failure falls back to defaults rather than breaking a handle.
 
-    ``crew_agent`` is the CANONICAL Kiro Crew agent name — a ``cfg.agents``
+    ``crew_agent`` is the CANONICAL Sao Khuê agent name — a ``cfg.agents``
     key resolved by the surface that owns the identity (the dashboard slot,
     or a crew-name-passing surface like Slack/cron) and plumbed here through
     provider -> runtime -> handle. Resolution is a direct dict lookup: no

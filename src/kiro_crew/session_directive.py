@@ -1,6 +1,6 @@
 """Session-directive protocol — stateless session-bound MCP tools.
 
-Some KiroCrew MCP tools act on *the session that called them* — arm a monitor
+Some SaoKhue MCP tools act on *the session that called them* — arm a monitor
 loop, set a chat slot's project, render a follow-up card. In the unpooled
 (gateway-off) topology the MCP server cannot know which session is calling
 (one ``kirocrew-core`` serves the whole runtime, and the ``/proc`` walk is
@@ -28,7 +28,7 @@ the subagent's session — never its parent's. There is no walk to get wrong.
 FORGERY: the marker payload is model-visible (it comes back as the tool result
 text), so a model *could* emit the literal bytes. The consumer defends by
 honouring a directive ONLY when the tool call it arrived under was recorded — by
-KiroCrew observing the tool CALL — as an MCP-served call whose CANONICAL name
+SaoKhue observing the tool CALL — as an MCP-served call whose CANONICAL name
 (``_meta.kiro.toolName``, with ``_meta.kiro.mcpServerName`` set) is one of
 :data:`DIRECTIVE_TOOLS`. That identity comes from kiro-cli's out-of-band ``_meta``
 channel, NOT the ``title`` (which is LLM-authored prose for shell tools — a shell
@@ -71,7 +71,7 @@ DIRECTIVE_TOOLS: frozenset[str] = frozenset(
     }
 )
 
-# The MCP server name KiroCrew registers its own tools under (kiro-cli reports
+# The MCP server name SaoKhue registers its own tools under (kiro-cli reports
 # it in ``_meta.kiro.mcpServerName``). The consumer honours a directive ONLY
 # from a call served by THIS server — a third-party MCP server that happens to
 # expose a tool named e.g. ``monitor_start`` must never be able to drive a
@@ -471,7 +471,7 @@ def is_refusal(text: str | None) -> bool:
 
 def decode(text: str, expected_tool: str) -> dict[str, Any] | None:
     """Return the directive ``args`` iff *text* carries a well-formed marker AND
-    *expected_tool* (the name KiroCrew recorded for this tool call) matches the
+    *expected_tool* (the name SaoKhue recorded for this tool call) matches the
     directive kind and is a known directive tool. Returns ``None`` otherwise —
     the forgery gate.
     """
@@ -708,7 +708,7 @@ def directive_tool_for(mcp_server_name: str, tool_name: str) -> str:
 
     THE forgery-gate identity predicate, spelled once: a directive-tool name is
     honoured ONLY when the call's trusted ``_meta.kiro`` identity says it was
-    served by Kiro Crew's OWN core MCP server (:data:`CORE_MCP_SERVER`) AND its
+    served by Sao Khuê's OWN core MCP server (:data:`CORE_MCP_SERVER`) AND its
     CANONICAL tool name resolves to a :data:`DIRECTIVE_TOOLS` member via
     :func:`match_tool`. Both ``EVENT_TOOL_CALL`` consumers (the dashboard's
     ``chat_runner`` and ``messaging.driver.TurnDriver``) MUST call this instead

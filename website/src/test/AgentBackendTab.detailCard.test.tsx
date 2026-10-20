@@ -141,9 +141,9 @@ describe('AgentBackendTab detail card', () => {
     schemaMock.mockReturnValue(schemaWith(['kiro']))
     wrap()
     await waitFor(() =>
-      expect(screen.getByText('Kiro Crew tools work in the chat')).toBeInTheDocument(),
+      expect(screen.getByText('Sao Khuê tools work in the chat')).toBeInTheDocument(),
     )
-    const supported = screen.getByText('Kiro Crew tools work in the chat')
+    const supported = screen.getByText('Sao Khuê tools work in the chat')
     expect(supported.parentElement?.textContent).toContain('Available.')
     const absent = screen.getByText('You can add a message while it works')
     expect(absent.parentElement?.textContent).toContain('Not available.')
@@ -183,9 +183,9 @@ describe('AgentBackendTab detail card', () => {
     schemaMock.mockReturnValue(schemaWith(['kiro']))
     wrap()
     await waitFor(() =>
-      expect(screen.getByText('Kiro Crew tools work in the chat')).toBeInTheDocument(),
+      expect(screen.getByText('Sao Khuê tools work in the chat')).toBeInTheDocument(),
     )
-    expect(screen.getByText('Kiro Crew tools work in the chat').closest('details')).toBeNull()
+    expect(screen.getByText('Sao Khuê tools work in the chat').closest('details')).toBeNull()
   })
 
   it('folds the detail lines behind a disclosure and keeps them out of the count', async () => {
@@ -220,7 +220,7 @@ describe('AgentBackendTab detail card', () => {
     expect(saved.parentElement?.textContent).toContain('Available.')
     const markdown = screen.getByText('Loads custom agents you define in a markdown file')
     expect(markdown.parentElement?.textContent).toContain('Not available.')
-    expect(screen.getByText('Kiro Crew tools work in the chat').closest('details')).toBeNull()
+    expect(screen.getByText('Sao Khuê tools work in the chat').closest('details')).toBeNull()
   })
 
   it('renders no disclosure when the gateway sends no detail lines', async () => {
@@ -228,7 +228,7 @@ describe('AgentBackendTab detail card', () => {
     schemaMock.mockReturnValue(schemaWith(['kiro']))
     wrap()
     await waitFor(() =>
-      expect(screen.getByText('Kiro Crew tools work in the chat')).toBeInTheDocument(),
+      expect(screen.getByText('Sao Khuê tools work in the chat')).toBeInTheDocument(),
     )
     expect(screen.queryByText('Other differences (not counted)')).toBeNull()
   })
@@ -254,7 +254,7 @@ describe('AgentBackendTab detail card', () => {
     schemaMock.mockReturnValue(schemaWith(['kiro']))
     wrap()
     await waitFor(() =>
-      expect(screen.getByText('Kiro Crew tools work in the chat')).toBeInTheDocument(),
+      expect(screen.getByText('Sao Khuê tools work in the chat')).toBeInTheDocument(),
     )
     expect(screen.queryByText(/some_future_capability/)).toBeNull()
     expect(screen.getByText('Kiro CLI supports 1 of 1 features')).toBeInTheDocument()
@@ -303,7 +303,7 @@ describe('AgentBackendTab detail card', () => {
       screen.getByText(label).closest('li')?.querySelector('svg')?.getAttribute('class') ?? ''
     expect(glyph('The /compact command works')).not.toEqual('')
     expect(glyph('The /compact command works')).not.toEqual(
-      glyph('Kiro Crew tools work in the chat'),
+      glyph('Sao Khuê tools work in the chat'),
     )
     expect(glyph('The /compact command works')).not.toEqual(
       glyph('You can add a message while it works'),
@@ -403,10 +403,10 @@ describe('AgentBackendTab detail card', () => {
     wrap()
     await waitFor(() =>
       expect(
-        screen.getByText('Asks before each tool, because Kiro Crew tells it to.'),
+        screen.getByText('Asks before each tool, because Sao Khuê tells it to.'),
       ).toBeInTheDocument(),
     )
-    expect(screen.getByText(/because Kiro Crew tells it to/).closest('details')).toBeNull()
+    expect(screen.getByText(/because Sao Khuê tells it to/).closest('details')).toBeNull()
     highlight('KAS (kiro-agent)')
     expect(screen.getByText(/cannot confirm it took effect/)).toBeInTheDocument()
   })
@@ -418,7 +418,7 @@ describe('AgentBackendTab detail card', () => {
     schemaMock.mockReturnValue(schemaWith(['kiro']))
     wrap()
     await waitFor(() =>
-      expect(screen.getByText('Kiro Crew tools work in the chat')).toBeInTheDocument(),
+      expect(screen.getByText('Sao Khuê tools work in the chat')).toBeInTheDocument(),
     )
     expect(screen.queryByText(/a_future_mechanism/)).toBeNull()
   })
@@ -441,7 +441,7 @@ describe('AgentBackendTab detail card', () => {
   })
 
   it('opens nothing for a security note or a credential note', async () => {
-    // "Kiro Crew's sandbox is not confining this child" is as material as how the
+    // "Sao Khuê's sandbox is not confining this child" is as material as how the
     // harness is made to ask, and both fail OPEN. A reader comparing agents must not
     // have to open anything to find either -- and the same now holds for the one
     // where-it-lives note the card keeps, since whose secret store an agent signs in
@@ -567,7 +567,7 @@ describe('AgentBackendTab MCP ability card', () => {
       backends: [probeRow('kiro', { ...card(), ...mcp({ per_tool_deny: 'settings-file' }) })],
     })
     wrap()
-    await waitFor(() => expect(panel().getByText(/Crew tools/)).toBeInTheDocument())
+    await waitFor(() => expect(panel().getByText(/Sao Khuê tools/)).toBeInTheDocument())
     expect(panel().queryByText(/stops every tool on the same server/)).toBeNull()
     expect(panel().queryByText(/One exception/)).toBeNull()
   })
@@ -602,7 +602,7 @@ describe('AgentBackendTab MCP ability card', () => {
       backends: [probeRow('kiro', { ...card(), ...mcp({ ineffective: [] }) })],
     })
     wrap()
-    await waitFor(() => expect(panel().getByText(/Crew tools/)).toBeInTheDocument())
+    await waitFor(() => expect(panel().getByText(/Sao Khuê tools/)).toBeInTheDocument())
     expect(panel().queryByText(/will not take effect on/)).toBeNull()
   })
 
@@ -628,7 +628,7 @@ describe('AgentBackendTab MCP ability card', () => {
         backends: [probeRow('kiro', { ...card(), ...mcp({ per_tool_deny: reach }) })],
       })
       wrap()
-      await waitFor(() => expect(panel().getByText(/Crew tools/)).toBeInTheDocument())
+      await waitFor(() => expect(panel().getByText(/Sao Khuê tools/)).toBeInTheDocument())
       const text = detail().textContent ?? ''
       expect(text).not.toContain('copies them across')
       expect(text).not.toContain('reads that file itself')
@@ -651,7 +651,7 @@ describe('AgentBackendTab MCP ability card', () => {
         ],
       })
       wrap()
-      await waitFor(() => expect(panel().getByText(/Crew tools/)).toBeInTheDocument())
+      await waitFor(() => expect(panel().getByText(/Sao Khuê tools/)).toBeInTheDocument())
       const text = detail().textContent ?? ''
       expect(text).not.toContain('{{')
       expect(text).not.toContain('Connections')
@@ -683,7 +683,7 @@ describe('AgentBackendTab MCP ability card', () => {
     // rather than guessing.
     acpBackendsMock.mockResolvedValue({ backends: [probeRow('kiro', { ...card() })] })
     wrap()
-    await waitFor(() => expect(panel().getByText(/Crew tools/)).toBeInTheDocument())
+    await waitFor(() => expect(panel().getByText(/Sao Khuê tools/)).toBeInTheDocument())
     expect(panel().queryByText(/stops every tool on the same server/)).toBeNull()
     expect(panel().queryByText(/will not take effect on/)).toBeNull()
   })
@@ -972,14 +972,14 @@ describe('AgentBackendTab new backend', () => {
     // A status strip.
     await waitFor(() => expect(panel().getByText('Experimental')).toBeInTheDocument())
     // Every capability line, with its verdict as a word.
-    expect(screen.getByText('Kiro Crew tools work in the chat')).toBeInTheDocument()
+    expect(screen.getByText('Sao Khuê tools work in the chat')).toBeInTheDocument()
     expect(screen.getByText('The /compact command works')).toBeInTheDocument()
     expect(
       screen.getByText('You can add a message while it works').parentElement?.textContent,
     ).toContain('Not available.')
     expect(screen.getByText(`${unheardOf} supports 2 of 3 features`)).toBeInTheDocument()
     // The graded line, from the routing enum.
-    expect(screen.getByText(/through an add-on Kiro Crew loads and checks/)).toBeInTheDocument()
+    expect(screen.getByText(/through an add-on Sao Khuê loads and checks/)).toBeInTheDocument()
     // The security note, never behind the disclosure.
     expect(screen.getByText(/Signs in with its own file/).closest('details')).toBeNull()
     // A where-it-lives note the server DID send renders, and as a plain line: which

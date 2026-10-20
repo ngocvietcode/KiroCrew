@@ -234,7 +234,7 @@ def schemas() -> list[dict[str, Any]]:
         {
             "name": "pod_up",
             "description": (
-                "Boot a Kiro Crew POD -- a complete preview gateway for one git "
+                "Boot a Sao Khuê POD -- a complete preview gateway for one git "
                 "worktree, on its own port with its own data directory -- and get "
                 "back the {base_url, token} handle for driving it. On a host whose "
                 "sandbox denies this session the systemd user bus, this is the only "

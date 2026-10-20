@@ -1,6 +1,6 @@
 # Architecture Overview
 
-The entry point for Kiro Crew's architecture: what the gateway is, how the pieces
+The entry point for Sao Khuê's architecture: what the gateway is, how the pieces
 connect, and where to read further. This is a **map**, not a manual. Every
 subsystem has a module spec under
 [`../system-specs/modules/`](../system-specs/README.md); the
@@ -12,9 +12,9 @@ For installation and the first run, see
 
 ---
 
-## What Kiro Crew is, and what it adds
+## What Sao Khuê is, and what it adds
 
-Three layers sit beneath Kiro Crew, and the distinction matters:
+Three layers sit beneath Sao Khuê, and the distinction matters:
 
 1. **An ACP harness** is an agent *runtime*, not an agent. `kiro-cli` is the
    default and baseline harness; it owns the LLM connection, tool execution
@@ -24,20 +24,20 @@ Three layers sit beneath Kiro Crew, and the distinction matters:
    harnesses implement that same transport with capability-gated differences.
 2. **Agent configs** (JSON under `~/.kiro/agents/`, or a project's own
    `<project>/.kiro/agents/`) tell the default harness *how* to behave: system
-   prompt, enabled tools, MCP servers. With the default backend Kiro Crew runs
+   prompt, enabled tools, MCP servers. With the default backend Sao Khuê runs
    `kiro-cli acp --agent <name>` and generates its own `kirocrew.json` there
    (`agent.py`); other harnesses receive the equivalent projection through the
    ACP provider seam.
-3. **Kiro Crew** is the gateway: a single asyncio process that multiplexes
+3. **Sao Khuê** is the gateway: a single asyncio process that multiplexes
    surfaces onto the selected harness and adds everything a runtime deliberately
    has no opinion about.
 
-Kiro Crew is **ACP-provider-only**: `agent.provider` is fixed to `acp`.
+Sao Khuê is **ACP-provider-only**: `agent.provider` is fixed to `acp`.
 `agent.acp_backend` selects the harness, with `kiro-cli` as the required baseline
 and default. The authoritative backend inventory and capability matrix are in
 [`../system-specs/modules/providers.md`](../system-specs/modules/providers.md).
 
-| Capability | kiro-cli alone | With Kiro Crew |
+| Capability | kiro-cli alone | With Sao Khuê |
 |---|---|---|
 | Sessions | One per terminal | Many concurrent (channel threads, dashboard slots, cron jobs, subagents, task steps) |
 | Surfaces | Terminal only | CLI, web dashboard, Electron desktop, and the messaging channels under [`src/kiro_crew/docs/`](../../src/kiro_crew/docs/README.md) (Slack, Discord, Telegram, Teams, WeChat and more) |
@@ -142,7 +142,7 @@ sequenceDiagram
     GW->>GW: trigger memory consolidation (async)
 ```
 
-Tool calls do **not** simply pass through: every one is evaluated at Kiro Crew's
+Tool calls do **not** simply pass through: every one is evaluated at Sao Khuê's
 own PreToolUse gate before kiro-cli is allowed to run it. See
 [Security layers](#security-layers).
 
@@ -470,8 +470,8 @@ Outer to inner:
    `~/.aws`, `~/.ssh` and `~/.kube` visible so the `aws` CLI,
    `credential_process`, git-over-SSH and `kubectl` work inside the agent. Set
    `strict` to also mask those (at the cost of those tools); set `off` to skip
-   Kiro Crew's sandbox. On macOS, when kiro-cli's own internal sandbox is
-   enabled, Kiro Crew delegates to it instead of applying either tier (the two
+   Sao Khuê's sandbox. On macOS, when kiro-cli's own internal sandbox is
+   enabled, Sao Khuê delegates to it instead of applying either tier (the two
    are mutually exclusive because nested Seatbelt profiles fail with EPERM).
 5. **Output redaction.** Credential shapes (AWS access key IDs, presigned-URL
    credential parameters, and more) are scrubbed before text reaches a user or
@@ -693,7 +693,7 @@ Generated kiro-cli agent JSON does **not** live here: it is written to
 `~/.kiro/agents/` (`kiro_home()/agents`), because that is where kiro-cli reads
 agent specs. That directory stays the only *write* target; a project's own
 `<project>/.kiro/agents/` is additionally *read* for sessions bound to a project
-(kiro-cli searches it first, since Kiro Crew runs kiro-cli in that directory).
+(kiro-cli searches it first, since Sao Khuê runs kiro-cli in that directory).
 
 ## Feature and subsystem map
 

@@ -155,7 +155,7 @@ class Stats:
             else:
                 health = f"🔴 critical ({rate:.0f}%)"
         return (
-            f"📊 *Kiro Crew Daily Report*\n"
+            f"📊 *Sao Khuê Daily Report*\n"
             f"Health: {health}\n"
             f"Uptime: {self.uptime_str()}\n"
             f"Messages: {s['messages_received']} received, "

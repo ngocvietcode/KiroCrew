@@ -1,7 +1,7 @@
 """Shared HTTP helper for REST-based providers.
 
 Uses ``urllib.request`` on a worker thread rather than adding an HTTP client
-dependency — Kiro Crew's convention is to prefer stdlib, and these adapters make a
+dependency — Sao Khuê's convention is to prefer stdlib, and these adapters make a
 handful of small JSON calls on a 2-minute cadence, which does not justify a new
 third-party dep.
 

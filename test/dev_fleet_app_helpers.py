@@ -221,7 +221,7 @@ async def _run_sync(mod, locked):
     MAIN_REPO is pinned because the sync refuses outright when no checkout was
     discovered, and these tests are about the sync's own behaviour: leaving it
     ambient makes them pass or fail on whether the HOST running them happens to
-    sit in a Kiro Crew checkout. Assertions that quote the repo path must use
+    sit in a Sao Khuê checkout. Assertions that quote the repo path must use
     ``_SYNC_REPO`` rather than reading ``mod.MAIN_REPO``.
 
     The venv-origin guard is answered by the module's autouse fixture; a test

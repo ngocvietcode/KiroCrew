@@ -135,7 +135,7 @@ export function themeDesignPrompt(): string {
     .map(g => `${g.title}\n${g.vars.map(([name, what]) => `  ${name} — ${what}`).join('\n')}`)
     .join('\n\n')
 
-  return `You are a UI colour designer. Design a colour theme for Kiro Crew, a web dashboard for running and supervising AI agent sessions: a chat transcript, a sidebar of sessions, cards, menus, code diffs and a terminal.
+  return `You are a UI colour designer. Design a colour theme for Sao Khuê, a web dashboard for running and supervising AI agent sessions: a chat transcript, a sidebar of sessions, cards, menus, code diffs and a terminal.
 
 Use the attached screenshot as inspiration. Take its palette, mood and contrast, not its layout. If I attached no image, ask me what look I want before answering.
 

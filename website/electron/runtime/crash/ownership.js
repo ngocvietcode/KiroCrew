@@ -37,7 +37,8 @@ function normalizeName(value) {
  * enumeration happens. It exists because the two names an Electron app has are
  * different strings that neither derives from the other:
  *
- * - the DISPLAY name, `app.getName()` — `Kiro Crew`, or `Kiro Crew Nightly`;
+ * - the DISPLAY name, `app.getName()` — `Sao Khuê`, or `Sao Khuê Nightly`, which
+ *   `DISPLAY_TO_PRODUCT_NAME` maps onto the on-disk product name;
  * - the EXECUTABLE name, `path.basename(process.execPath)` — on macOS that is
  *   the bundle binary and happens to match, but `electron/package.json` sets
  *   `executableName: "kirocrew-desktop"` for Linux and Windows, and
@@ -55,12 +56,28 @@ function normalizeName(value) {
  */
 function ownNames(value) {
   const names = [];
+  const add = (name) => {
+    if (name && !names.includes(name)) names.push(name);
+  };
   for (const item of Array.isArray(value) ? value : [value]) {
     const name = normalizeName(item);
-    if (name && !names.includes(name)) names.push(name);
+    add(name);
+    add(DISPLAY_TO_PRODUCT_NAME[name.normalize("NFC")]);
   }
   return names;
 }
+
+/**
+ * The display name no longer normalizes onto the on-disk one. The app is shown
+ * as `Sao Khuê`, while `build.productName` -- and so the bundle, its executable
+ * and every crash artifact macOS and Crashpad write -- keeps the `KiroCrew` // brand-ok
+ * identity an existing install has. Each display name therefore brings its
+ * product name with it, so `app.getName()` alone still recognises our own crashes.
+ */
+const DISPLAY_TO_PRODUCT_NAME = {
+  "saokhuê": "kirocrew",
+  "saokhuênightly": "kirocrewnightly",
+};
 
 /**
  * Is this one of our own process names, allowing for helpers?

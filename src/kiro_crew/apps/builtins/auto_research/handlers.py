@@ -3,7 +3,7 @@
 The campaign engine lives in ``campaign/``; its package docstring names the
 owner of each concern. This module keeps what is HTTP: auth, request parsing,
 the status and JSON each route answers with, route registration, and the
-watchdog task handle. Every other name it defined, and every Kiro Crew
+watchdog task handle. Every other name it defined, and every Sao Khuê
 collaborator it imported, still resolves as ``handlers.<name>``: reads, writes
 and deletes are forwarded to the component that binds the name, so a patch
 applied through this module is the one every caller sees. Two exceptions:

@@ -13,7 +13,7 @@ whatever launched the tree — ``KiroCrew.app`` when packaged, ``Terminal.app`` 
 dev ``kirocrew gateway``, an IDE if launched from one. A probe inspects only its
 own process's grant and therefore reports ``missing`` for a tree that is fully
 authorized. :attr:`PermissionProbe.responsible_hint` names the process the user
-should actually grant, because "grant Accessibility to KiroCrew" is unactionable
+should actually grant, because "grant Accessibility to SaoKhue" is unactionable
 advice when the thing holding the grant is their terminal.
 
 Two related hazards this module is careful about:
@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 # users to System Settings to fix something that is not broken.
 HINT_RESPONSIBLE = (
     "macOS attributes Accessibility and Screen Recording grants to the process "
-    "that launched Kiro Crew, not to Kiro Crew itself. Grant them to {process} — "
+    "that launched Sao Khuê, not to Sao Khuê itself. Grant them to {process} — "
     "and note that 'not detected' does not always mean unavailable."
 )
 HINT_UNSUPPORTED = (
@@ -79,7 +79,7 @@ KEY_SCREEN_RECORDING = "screen_recording"
 KEY_RESPONSIBLE_HINT = "responsible_hint"
 
 # Fallback label when the responsible process cannot be named.
-_UNKNOWN_PROCESS = "the application that launched Kiro Crew"
+_UNKNOWN_PROCESS = "the application that launched Sao Khuê"
 
 
 def probe() -> PermissionProbe:

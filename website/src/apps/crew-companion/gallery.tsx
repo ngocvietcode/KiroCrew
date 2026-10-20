@@ -14,7 +14,7 @@ import { GalleryPanel } from './GalleryPanel'
 const host = document.getElementById('root')
 if (host) {
   initI18n()
-  // Await the theme before the first paint: the gallery is styled from Kiro Crew's
+  // Await the theme before the first paint: the gallery is styled from Sao Khuê's
   // variables, and rendering ahead of them shows fallback colours and then snaps.
   void adoptDashboardTheme().then(() => {
     watchThemeChanges()

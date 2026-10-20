@@ -154,7 +154,7 @@ async def _answer_kas_hooks_request(self: AcpSessionHandle, msg: JsonRpcMessage)
                 params,
                 reason,
             )
-            await self._send_hook_error(msg.id, f"Refused by Kiro Crew: {reason}")
+            await self._send_hook_error(msg.id, f"Refused by Sao Khuê: {reason}")
             return
         task = asyncio.create_task(self._answer_kas_hook_execute(msg.id, params))
         self._hook_tasks.add(task)
@@ -193,11 +193,11 @@ async def _answer_kas_hook_execute(self: AcpSessionHandle, request_id: Any, para
         raise
     except kas_wire.HookExecuteRefused as exc:
         logger.info("KAS executeHook refused for %s: %s", self._session_id, exc)
-        await self._send_hook_error(request_id, f"Refused by Kiro Crew: {exc}")
+        await self._send_hook_error(request_id, f"Refused by Sao Khuê: {exc}")
         return
     except Exception:
         logger.exception("KAS executeHook failed for %s", self._session_id)
-        await self._send_hook_error(request_id, "Kiro Crew could not run the hook")
+        await self._send_hook_error(request_id, "Sao Khuê could not run the hook")
         return
     try:
         await self._runtime.send_response(request_id, result)

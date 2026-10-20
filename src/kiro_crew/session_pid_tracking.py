@@ -1,4 +1,4 @@
-"""Which pids Kiro Crew is tracking, and how a record names the process it means.
+"""Which pids Sao Khuê is tracking, and how a record names the process it means.
 
 The two tracking files -- ``kiro_pids.txt`` (bare and ``child:parent`` lines) and
 ``kiro_session_pids.txt`` (``<gateway>:<pid>:<start token>`` roots) -- with their paths,

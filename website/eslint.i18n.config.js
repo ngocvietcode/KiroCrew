@@ -915,7 +915,7 @@ export default [
               // which excluded most English prose and hid five of six strings in a
               // six-string probe file.
               '^[^A-Za-z]*$',
-              // The product brand. The display name is `Kiro Crew`; the unspaced
+              // The product brand. The display name is `Sao Khuê`; the unspaced
               // `KiroCrew` is the same name (and the glossary term that still guards the
               // generated Slack app name), so both are equally DNT. Anchored
               // to the whole value, so a sentence merely *containing* the brand is still
@@ -1075,7 +1075,7 @@ export default [
               '^(css|cx|clsx|twMerge|cva|cn)$',
               // Storage, telemetry and routing take machine keys.
               '(local|session)Storage\\.\\w+', 'navigate', 'track', 'emit',
-              // KiroCrew's own telemetry shim (`src/rum.ts`). Its first argument is
+              // SaoKhue's own telemetry shim (`src/rum.ts`). Its first argument is
               // a machine event name (`notifications_open`) and its second a tag
               // bag (`{ source: 'topbar' }`) — never rendered, so never copy. Sits
               // beside `track`/`emit` above, which are the same shape.

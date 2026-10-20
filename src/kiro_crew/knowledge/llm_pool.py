@@ -170,7 +170,7 @@ def _get_sandbox_mode(config: Optional[dict] = None) -> str:
       sandbox on macOS when it is enabled (kiro-cli >= 2.13).
     - ``sandbox`` **present but malformed/unrecognised** (typo, wrong type) ->
       ``"auto"``: fail SECURE. A garbage value is a misconfiguration, not an
-      intent to run unsandboxed, so we re-enable KiroCrew's OS-level confinement
+      intent to run unsandboxed, so we re-enable SaoKhue's OS-level confinement
       rather than degrade to no isolation.
     """
     data = _read_config() if config is None else config
@@ -771,7 +771,7 @@ class CCWorker(Worker):
         )
         # ``strip_python_env`` for the same reason every other agent spawn
         # passes it: this is a FOREIGN runtime, and any Python it reaches for
-        # must not inherit Kiro Crew's interpreter paths.
+        # must not inherit Sao Khuê's interpreter paths.
         wrapped = cgroup_scope_argv(
             (
                 await wrap_argv_async(

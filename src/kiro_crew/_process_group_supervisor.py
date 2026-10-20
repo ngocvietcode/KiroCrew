@@ -174,7 +174,7 @@ def _group_members(pgid: int) -> set[int]:
 # the same on every Linux architecture (they postdate the per-arch tables).
 # Used through ctypes when the interpreter was built without the ``os`` /
 # ``signal`` wrappers: the python-build-standalone CPython 3.12 that uv and mise
-# install has neither, and it is what runs Kiro Crew on the host that hit this.
+# install has neither, and it is what runs Sao Khuê on the host that hit this.
 _SYS_PIDFD_SEND_SIGNAL = 424
 _SYS_PIDFD_OPEN = 434
 _libc: object = None

@@ -261,7 +261,7 @@ def _repo_root(tree: Path) -> Path:
 
 
 def _write_protected_targets() -> tuple[str, ...]:
-    """Directories to bind-mount empty so agent-authored tests cannot write Kiro Crew's config.
+    """Directories to bind-mount empty so agent-authored tests cannot write Sao Khuê's config.
 
     Derived from ``security.write_protected_home_paths()`` rather than hardcoded, so a path
     added to the platform list is covered automatically instead of drifting. Two details that
@@ -278,7 +278,7 @@ def _write_protected_targets() -> tuple[str, ...]:
 
     Masking the whole ``~/.kiro/crew`` directory is safe *for this caller* specifically: the
     sandboxed child is the TARGET REPOSITORY's pytest, which has no legitimate reason to read
-    Kiro Crew's own configuration. It is a superset of the 18 per-file entries ``strict``
+    Sao Khuê's own configuration. It is a superset of the 18 per-file entries ``strict``
     already hides there, and measured not to disturb the interpreter.
 
     Fail-soft: if the helper is unavailable the sandbox is still applied without the extra
@@ -322,14 +322,14 @@ def _run(
     # operator's credentials. Measured on the author's host: under "standard" the child saw
     # all 7 ~/.aws entries; under "strict", 0. The agent SPAWN was already switched to
     # strict; this is the gate, the other place untrusted code executes. Raised by review.
-    # Also MASK Kiro Crew's own write-protected files. `mode="strict"` hides 52 credential
+    # Also MASK Sao Khuê's own write-protected files. `mode="strict"` hides 52 credential
     # paths so agent-authored code cannot READ secrets, but it does not make the rest of the
     # filesystem read-only — measured on this host: a strict-mode child appended to
     # `~/.kiro/crew/config.json` and exited 0. Those paths are `security.
     # write_protected_home_paths()`, enforced by the platform HOOK layer, which a sandboxed
     # subprocess never passes through — so the protection was inert for exactly the code that
     # most needs it. Bind-mounting an empty dir over each makes the write fail at the kernel
-    # instead. Scoped to Kiro Crew's OWN control files (config.json, config.local.json
+    # instead. Scoped to Sao Khuê's OWN control files (config.json, config.local.json
     # under both `.kiro/crew` and `.kirocrew`), i.e. the one-way doors that
     # would corrupt the installation; broader hiding is not possible here because the
     # interpreter's own stdlib can live under `$HOME` (measured: hiding `~/.local/share`
@@ -1403,7 +1403,7 @@ class RepoIsolation:
     def do_not_pollute_paths(self) -> list[Path]:
         """Host paths the spine snapshots around the (no-op) measurement boot.
 
-        The app's own data dir and the user's Kiro Crew home: the two places a leak
+        The app's own data dir and the user's Sao Khuê home: the two places a leak
         would actually land if the measured workload wrote outside its worktree. We do
         NOT snapshot ``$HOME`` wholesale — hashing a developer's entire home directory
         would take minutes per run and flag every unrelated background write as a leak,
@@ -1427,7 +1427,7 @@ class RepoIsolation:
     def do_not_pollute_excludes(self) -> list[Path]:
         """Subpaths to ignore inside the snapshot roots (optional spine hook).
 
-        The app's data dir lives UNDER the Kiro Crew config home, and the orchestrator
+        The app's data dir lives UNDER the Sao Khuê config home, and the orchestrator
         writes its own ledger/logs/activity there DURING the boot window by design.
         Without this exclude those writes register as a phantom leak and block every
         run. Everything else under the config home is still hashed, so a real write by
@@ -1631,7 +1631,7 @@ class GitHubRepoProfile(ProfileFieldAliases):
     def _test_dir(self) -> str:
         """This repo's DOMINANT test directory — ``tests`` or ``test``.
 
-        Not just "the first one that exists": a repo can have BOTH (Kiro Crew has 776
+        Not just "the first one that exists": a repo can have BOTH (Sao Khuê has 776
         ``test_*.py`` under ``test/`` and 9 under ``tests/``), and writing the reproducing
         test into the minor one puts it outside the suite the gate actually runs. Chooses
         by file count, so the answer follows where the tests really are; falls back to

@@ -845,7 +845,7 @@ def _normalize_operand(token: str) -> str:
 
 
 def _is_self_program(token: str) -> bool:
-    """True if *token* names the Kiro Crew CLI itself, bare or via a path.
+    """True if *token* names the Sao Khuê CLI itself, bare or via a path.
 
     Also true when the name carries a shell GLOB the shell would expand to the
     executable -- ``./bin/kiro[c]rew``, ``kiro?rew``, ``kiro*rew``.

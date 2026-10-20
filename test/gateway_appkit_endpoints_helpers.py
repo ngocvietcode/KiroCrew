@@ -1,6 +1,6 @@
 """Shared fixtures and builders for the ``test_gateway_appkit_endpoints*.py`` family.
 
-``app_env`` installs a test app under a temporary Kiro Crew home, with the app
+``app_env`` installs a test app under a temporary Sao Khuê home, with the app
 bridges and backend process tables isolated, and ``_make_state`` builds a
 minimal ``DashboardState`` without running its constructor.
 """

@@ -28,13 +28,13 @@ Look at the user's first message before asking anything.
 
 ## Asking questions
 
-You are running inside Kiro Crew's chat, not the engine's own web UI, so the
-engine's `hearing` tool is unavailable — it renders nothing here. Use Kiro Crew's
+You are running inside Sao Khuê's chat, not the engine's own web UI, so the
+engine's `hearing` tool is unavailable — it renders nothing here. Use Sao Khuê's
 native question affordances instead:
 
 - **Multiple choice:** state your reading of the situation, then put the options
   on their own line as `[OPTIONS: first choice | second choice | third choice]`.
-  KiroCrew renders these as buttons and the user's pick arrives as their next
+  SaoKhue renders these as buttons and the user's pick arrives as their next
   message. One `[OPTIONS:]` line per message.
 - **Open questions:** just ask in plain text.
 

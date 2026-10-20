@@ -182,7 +182,7 @@ def _make_linked_worktree(tmp_path: Path) -> Path:
 def test_private_target_is_never_declined(monkeypatch, tmp_path):
     """A pod/test target is private, so a worktree may write it freely.
 
-    This is what keeps the guard from breaking KiroCrew's own suite: development
+    This is what keeps the guard from breaking SaoKhue's own suite: development
     happens in worktrees by hard rule, and those tests write to ``tmp_path``.
     """
     from kiro_crew import agent
@@ -794,7 +794,7 @@ def test_pod_env_gives_the_pod_its_own_homes():
     """A pod owns its agent specs AND its transcripts, so it shares nothing.
 
     Both halves matter together. With only its own specs, a pod would write
-    transcripts somewhere KiroCrew never reads and lose session resume. With
+    transcripts somewhere SaoKhue never reads and lose session resume. With
     neither, a pod is refused the write and falls back to the shared spec — whose
     env pins the LIVE data home, so a pod's ``learn_add`` would write the real
     user's lessons.
@@ -840,7 +840,7 @@ def test_sessions_dir_follows_kiro_home(monkeypatch, tmp_path, unpinned_kiro_ses
     """The transcripts dir must move WITH the agent dir, or resume breaks.
 
     ``KIRO_HOME`` is directory-wide: kiro-cli writes transcripts under it. If
-    KiroCrew kept reading the machine-wide path, an instance with its own agent
+    SaoKhue kept reading the machine-wide path, an instance with its own agent
     home would look for transcripts that are not there — losing session resume and
     letting ``SessionMap`` prune mappings whose files it cannot see.
     """

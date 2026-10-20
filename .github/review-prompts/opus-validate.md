@@ -40,7 +40,7 @@ They are base-branch snapshots, so a PR cannot weaken the rules that govern it.
 
 ## Repo context
 
-Kiro Crew is an open-source AI agent platform (Python backend, React/TS
+Sao Khuê is an open-source AI agent platform (Python backend, React/TS
 dashboard). De-Amazoned public fork: the absence of Brazil/AUTOSDE tooling is not
 a defect.
 

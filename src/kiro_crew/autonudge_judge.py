@@ -1234,7 +1234,7 @@ def tool_changed_something(
     One tier only. A read-only claim needs an EMPTY server name and trusted provenance
     for the pair, which together mean a host built-in, checked against
     :data:`READ_ONLY_BUILTIN_TOOLS`. Anything carrying a server name is an MCP call and
-    counts as mutating whoever serves it, Kiro Crew's own servers included -- see the note
+    counts as mutating whoever serves it, Sao Khuê's own servers included -- see the note
     above :data:`READ_ONLY_BUILTIN_TOOLS` for the three write paths that settled it.
     """
     name = tool_name.strip() if isinstance(tool_name, str) else ""
@@ -1242,7 +1242,7 @@ def tool_changed_something(
     if not name:
         return True
     if server:
-        # Any MCP call, from any server including Kiro Crew's own: mutating. See the
+        # Any MCP call, from any server including Sao Khuê's own: mutating. See the
         # note above READ_ONLY_BUILTIN_TOOLS for why this tier has no allowlist.
         return True
     if not identity_trusted:

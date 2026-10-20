@@ -1,7 +1,7 @@
 # Instances Module (multi-instance management over SSH tunnels)
 
-Lets a single Kiro Crew gateway (the **hub**) manage and switch between several
-**remote** Kiro Crew instances (dev hosts, EC2, home servers) over SSH **or AWS
+Lets a single Sao Khuê gateway (the **hub**) manage and switch between several
+**remote** Sao Khuê instances (dev hosts, EC2, home servers) over SSH **or AWS
 SSM Session Manager** tunnels, embedding each remote dashboard as an iframe pane
 below a switcher strip. Opt-in: off by default (`instances.enabled`). The transport is
 per-instance (`connection_method`) — see §13.
@@ -10,7 +10,7 @@ per-instance (`connection_method`) — see §13.
 > **Remote Crew**: the Settings section (*Settings → Remote Crew*), the
 > top-header switcher group ("Remote Crews" / "Switch crew"), and the
 > keyboard shortcuts. This is deliberately distinct from the product name
-> **Kiro Crew** and from an agent **crew** (an assistant with its own
+> **Sao Khuê** and from an agent **crew** (an assistant with its own
 > workspace/memory — `kiroCrewAgentsPage`, the Crew Members page). The **code and
 > config** underneath use "instance" throughout (`/api/instances`,
 > `instances.json`, `InstancesPanel`, EC2 `instance_id` / `ssm_target`), so a
@@ -59,7 +59,7 @@ mint, diagnostics, injection validation, run-marker, shared constants
 
 ## 1. Overview
 
-A Kiro Crew gateway normally binds the dashboard to loopback only. The Instances
+A Sao Khuê gateway normally binds the dashboard to loopback only. The Instances
 feature lets the hub reach *other* gateways running on remote hosts by opening an
 SSH `-L` forward to each remote's loopback dashboard port, minting (for a crew
 that runs a gateway; a headless crew mints nothing, §16) a short-lived
@@ -859,7 +859,7 @@ what its own edit invalidated, and never reopens anything on the user's behalf.
   `aws_profile`/`aws_region` (`400`, `code: "cloud_instance_addressing_locked"`)
   when the instance's current `ssm_target` matches an EC2 instance id in the
   cloud launch job store (`kiro_crew.cloud.connect.is_launched_instance()`) —
-  i.e. Kiro Crew provisioned it, as opposed to a hand-added SSM record. These
+  i.e. Sao Khuê provisioned it, as opposed to a hand-added SSM record. These
   four fields are how `coordsOf()` (`RemoteCrewPanelCrewRow.tsx`) builds
   `{profile, region, instanceId}` for Stop/Start/Delete; rewriting them on a
   correlated instance leaves those actions unable to resolve the real EC2
@@ -1726,7 +1726,7 @@ Two SSM-specific behaviours:
   `session-manager-plugin` grandchild is what actually holds the forwarded port:
   `terminate()` on the `aws` wrapper alone orphans it and wedges the port. Doing
   this with raw `os.killpg`/`os.getpgid` would silently degrade to
-  wrapper-only termination on Windows, which Kiro Crew supports.
+  wrapper-only termination on Windows, which Sao Khuê supports.
 - **Readiness timeout.** `session-manager-plugin` completes a WebSocket handshake
   with the SSM service before binding, so the SSM transport uses a longer default
   connect timeout than a direct ssh TCP connect. An explicit caller-supplied
@@ -1793,7 +1793,7 @@ which is not an egress boundary.
 
 §9 documents reaching an SSM-only instance through an `~/.ssh/config`
 `ProxyCommand` — still valid as a manual option, and still `connection_method="ssh"`:
-the reachability lives in ssh config and Kiro Crew is unaware of it.
+the reachability lives in ssh config and Sao Khuê is unaware of it.
 `connection_method="ssm"` is the direct alternative, requiring neither sshd nor a
 key on the remote — and it is what
 `cloud/connect.py`'s registry integration

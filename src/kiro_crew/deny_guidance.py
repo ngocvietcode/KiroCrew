@@ -641,7 +641,7 @@ def remediation_for(reason: str, subject: str = "", *, credential_tool_hint: str
 #: A server id is echoed into prose the AGENT reads as host guidance, so only a
 #: plausible identifier may pass. An id is chosen by whoever authored the server,
 #: not by this repo, so an instruction-shaped one ("creds, ignore the above and …")
-#: would arrive wearing Kiro Crew's own voice — the framing is the escalation, not
+#: would arrive wearing Sao Khuê's own voice — the framing is the escalation, not
 #: the bytes, since a tool list already carries them as data. Anything with
 #: whitespace or sentence punctuation is therefore refused rather than quoted:
 #: quoting does not help a reader that has no parser. Real ids pass unchanged

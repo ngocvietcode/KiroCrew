@@ -677,10 +677,10 @@ export interface RepoSettings {
   unlabeled_is_untriaged: boolean
   /** Label names that mark newcomer / first-issue-friendly work. */
   good_first_issue_labels: string[]
-  /** Watch this repo in the background and push a Kiro Crew notification when a
+  /** Watch this repo in the background and push a Sao Khuê notification when a
    * new issue is opened. Opt-in (default false). */
   notify_on_new_issue: boolean
-  /** Push a Kiro Crew notification when a GitHub Actions run fails on an open
+  /** Push a Sao Khuê notification when a GitHub Actions run fails on an open
    * pull request the signed-in `gh` user authored. GitHub only; opt-in
    * (default false). */
   notify_on_own_pr_ci_failure: boolean

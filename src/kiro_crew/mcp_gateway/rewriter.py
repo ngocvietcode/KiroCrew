@@ -535,7 +535,7 @@ def rewrite_agents(
     """Populate ``overlay_dir`` with rewritten copies of ``source_dir/*.json``.
 
     Never modifies ``source_dir``. Idempotent — safe to call on every
-    Kiro Crew startup. When no input changed since the last completed run
+    Sao Khuê startup. When no input changed since the last completed run
     (see :func:`_rewrite_inputs_fingerprint`) the rewrite loop is skipped and
     the cached ``(results, target_env)`` is returned; the stale-file prune
     still runs on that path.
@@ -549,7 +549,7 @@ def rewrite_agents(
             hashing). Created if missing; gatewayd sets it as the backend
             process's ``current_dir``.
         sandbox_mode: Value from ``config.agent.sandbox`` — fed through
-            so the stub's PoolKey matches KiroCrew's sandbox policy.
+            so the stub's PoolKey matches SaoKhue's sandbox policy.
         approval_mode: Value from ``config.agent.approval_mode`` — same.
         stub_servers: Server names from ``config.mcp_gateway.stub_servers``.
             A stdio server gets a stub when its name is in this set — that list is

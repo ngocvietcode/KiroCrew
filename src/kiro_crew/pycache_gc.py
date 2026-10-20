@@ -55,7 +55,7 @@ logger = logging.getLogger(__name__)
 PYCACHE_MAX_AGE_DAYS = 30
 
 # Ceiling on the whole mirror. The legitimate content — one interpreter's
-# stdlib plus Kiro Crew's site-packages — is well under this; anything beyond
+# stdlib plus Sao Khuê's site-packages — is well under this; anything beyond
 # it is leftover foreign-interpreter residue, evicted oldest-first.
 PYCACHE_MAX_TOTAL_BYTES = 1 * 1024**3
 
@@ -92,12 +92,12 @@ def _fd_traversal_supported() -> bool:
 def pycache_cache_dir() -> Path:
     """The bytecode-cache root the GC prunes.
 
-    Only ever returns Kiro Crew's own configured cache directory. The
+    Only ever returns Sao Khuê's own configured cache directory. The
     interpreter's *active* ``sys.pycache_prefix`` (set from Electron's
     ``PYTHONPYCACHEPREFIX``) is honored **only when it resolves to that same
     configured directory** — its exact path form is then authoritative. An
     arbitrary user-set prefix pointing anywhere else must never become a
-    recursive deletion root: their ``.pyc`` mirrors are not Kiro Crew's to
+    recursive deletion root: their ``.pyc`` mirrors are not Sao Khuê's to
     manage, so the GC sticks to the configured directory (which is where the
     gateway's own historical residue lives regardless of the active prefix).
     """

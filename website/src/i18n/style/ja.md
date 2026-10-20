@@ -55,7 +55,7 @@ digits, no leading/trailing or doubled space).
 ### §1.1 Spacing at a script boundary
 
 Put a half-width space between a Latin run and adjacent Japanese
-(`Kiro Crew を起動`, `MCP サーバー`), except where a Latin run that is NOT a
+(`Sao Khuê を起動`, `MCP サーバー`), except where a Latin run that is NOT a
 do-not-translate term is the head of a compound the language has absorbed
 (`APIキー`). A do-not-translate term always takes the space: `i18n-translate.mjs
 verify` reads `MCPサーバー` as a dropped `MCP` and refuses the shard. Beyond that,
@@ -101,7 +101,7 @@ The `open` / free-slot row is review-only.
 
 Product names stay in Latin script. The canonical list in `glossary.json` includes
 `KiroCrew`, `Kiro`, `Slack`, `Discord`, `MCP`, `GitHub`, `Playwright`, and others. The
-prose brand `Kiro Crew` also remains unchanged.
+prose brand `Sao Khuê` also remains unchanged.
 
 Also stays in English: AWS service names, key legends (Enter, Shift, ⌘),
 `main`/`origin`/`HEAD`, paths, filenames, config keys, and `cron` (the syntax —

@@ -667,12 +667,12 @@ class CapabilityDependencies:
 
 @dataclass
 class Dependencies:
-    """External dependencies that Kiro Crew should resolve during install.
+    """External dependencies that Sao Khuê should resolve during install.
 
     ``managedBy`` controls the default installation strategy:
-      - ``"gateway"``: Kiro Crew resolves each dependency through the edition's
+      - ``"gateway"``: Sao Khuê resolves each dependency through the edition's
         ``CapabilityManager`` seam
-      - ``"app"``: Kiro Crew only checks existence, does not install
+      - ``"app"``: Sao Khuê only checks existence, does not install
 
     Individual entries can override via object format:
     ``{"id": "some-mcp", "managedBy": "app"}``
@@ -738,7 +738,7 @@ class Dependencies:
 class ClientInstallConfig:
     """Instructions for installing an app on the user's local machine.
 
-    Used when Kiro Crew runs remotely (e.g. cloud desktop) and the app
+    Used when Sao Khuê runs remotely (e.g. cloud desktop) and the app
     requires a specific local platform (e.g. macOS for Electron apps).
     """
 
@@ -770,9 +770,9 @@ class PlatformConfig:
     ``os`` declares which platforms the app can run on.
     ``installMode`` controls how the App Store handles installation:
 
-    - ``"server"`` (default): Kiro Crew clones + installs on the server.
+    - ``"server"`` (default): Sao Khuê clones + installs on the server.
     - ``"client"``: Must be installed on the user's local machine.
-      When Kiro Crew is on an incompatible platform, the App Store shows
+      When Sao Khuê is on an incompatible platform, the App Store shows
       copy-paste terminal instructions instead of running the install.
 
     ``requiresDesktopApp`` is a different axis from ``os``: ``os`` constrains
@@ -798,7 +798,7 @@ class PlatformConfig:
 
     # Map user-friendly OS names to sys.platform values.
     #
-    # ``windows`` is in both directions because Kiro Crew itself supports Windows
+    # ``windows`` is in both directions because Sao Khuê itself supports Windows
     # natively (see ``docs/guides/windows-install.md``): without the row, ``"windows"``
     # was not even EXPRESSIBLE in a manifest — a declaring app silently never
     # matched — and ``current_os()`` fell through to the raw ``"win32"``, which is

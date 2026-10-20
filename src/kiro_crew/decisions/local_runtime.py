@@ -3,7 +3,7 @@
 A local preset (:mod:`.local_models`) names everything the gateway needs to run
 the model itself, so the owner never installs or starts anything by hand:
 
-1. **Weights.** Each pinned file is fetched from Kiro Crew's model CDN through
+1. **Weights.** Each pinned file is fetched from Sao Khuê's model CDN through
    :func:`kiro_crew.asset_downloader.download_to`, which installs nothing until
    the streamed sha256 matches the pin. A receipt beside the files records which
    pins are already verified, so a restart does not rehash 8 GB.

@@ -1,8 +1,8 @@
 """Parse JSON from a config file a person may have saved by hand.
 
-MCP configs (``~/.kiro/settings/mcp.json``, Kiro Crew's own ``mcp.json``, a
+MCP configs (``~/.kiro/settings/mcp.json``, Sao Khuê's own ``mcp.json``, a
 project's ``.kiro/settings/mcp.json``, ``~/.mcp.json``), the agent specs that
-carry ``mcpServers``, Kiro Crew's ``agent.json`` overrides, ``~/.claude.json``
+carry ``mcpServers``, Sao Khuê's ``agent.json`` overrides, ``~/.claude.json``
 and a project's Claude settings are edited by people, and Windows editors save
 UTF-8 "with BOM" by default. That file is valid UTF-8 whose first character is
 U+FEFF, which is not content, and ``json.loads`` refuses it ("Unexpected UTF-8

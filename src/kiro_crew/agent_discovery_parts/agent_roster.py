@@ -309,7 +309,7 @@ def list_agents(
     (``<project>/.kiro/agents`` plus ``<project>/.kiro/*.agent-spec.json``). A
     project agent SHADOWS a user-level agent of the same name and the shadowing is
     logged, mirroring kiro-cli — which resolves ``--agent`` against its cwd first,
-    and is spawned by Kiro Crew with the session's project dir as that cwd. The
+    and is spawned by Sao Khuê with the session's project dir as that cwd. The
     losing entry is not returned: it is unreachable for this session, so listing it
     would offer an agent that cannot run.
 
@@ -451,7 +451,7 @@ def list_agents(
         a.markdown_only = is_markdown_spec(a.filename) and a.name not in json_names
 
     # Project scope LAST so it shadows: kiro-cli resolves --agent against its cwd
-    # before the user-level dir, and Kiro Crew spawns it with the session's project
+    # before the user-level dir, and Sao Khuê spawns it with the session's project
     # dir as cwd, so the project entry is what would actually run. The warning
     # mirrors kiro-cli's own conflict notice — shadowing is correct here, silent
     # shadowing is not, because the two configs can differ in tools and permissions.

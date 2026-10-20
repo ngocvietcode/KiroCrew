@@ -75,7 +75,7 @@ function skillUsage(s: Skill): { id: string; text: string; title: string } | nul
 const canControlInjection = (s: Skill) =>
   s.source === 'kirocrew' && !s.always && s.owned !== false
 
-/** Edit and Delete write into the Kiro Crew skills folder, so only a row
+/** Edit and Delete write into the Sao Khuê skills folder, so only a row
  *  from that folder gets them. A `kirocrew` row reached through
  *  `skills.extra_paths` reports `owned: false` and stays read-only, like
  *  every other source. */
@@ -334,7 +334,7 @@ export default function SkillsTab() {
     },
   })
 
-  // Two groups: skills KiroCrew can edit (kirocrew + kiro-cli's own dirs) and
+  // Two groups: skills SaoKhue can edit (kirocrew + kiro-cli's own dirs) and
   // read-only AIM-package skills.  The text filter is applied to both.
   const { localSkills, packageSkills } = useMemo(() => {
     const q = skillFilter.toLowerCase()
@@ -661,7 +661,7 @@ export default function SkillsTab() {
               </div>
             ) : (
               <div className="flex flex-col h-full min-h-0">
-                {/* Detail header: name, source badge, Edit/Delete (Kiro Crew skills folder only) */}
+                {/* Detail header: name, source badge, Edit/Delete (Sao Khuê skills folder only) */}
                 {/* Own row, same reason as the edit header: Edit and Delete
                     already fill this row's two-control budget. */}
                 {isMobile && (

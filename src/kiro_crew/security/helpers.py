@@ -214,7 +214,7 @@ def apply_resource_limits(config: dict | None = None) -> "Callable[[], None]":
     ``setrlimit`` here, no allocation-heavy or lock-taking work.
 
     Args:
-        config: Full Kiro Crew config dict (or any subset containing
+        config: Full Sao Khuê config dict (or any subset containing
             ``resource_limits``). Pass None for defaults.
 
     Returns:

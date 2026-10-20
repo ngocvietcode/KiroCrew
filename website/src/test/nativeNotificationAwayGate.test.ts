@@ -121,7 +121,7 @@ describe('useNativeNotification only toasts while the user is away', () => {
     function wrapper({ children }: { children: React.ReactNode }) {
       return createElement(Provider, { store }, children)
     }
-    renderHook(() => useNativeNotification('Kiro Crew', '/avatar.png'), { wrapper })
+    renderHook(() => useNativeNotification('Sao Khuê', '/avatar.png'), { wrapper })
     return store
   }
 
@@ -220,7 +220,7 @@ describe('one approval frame yields exactly one OS toast', () => {
     }
     renderHook(() => {
       useWebSocket()
-      useNativeNotification('Kiro Crew', '/avatar.png')
+      useNativeNotification('Sao Khuê', '/avatar.png')
     }, { wrapper })
     const ws = WS_INSTANCES[0]
     act(() => { ws.simulateOpen() })

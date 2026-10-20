@@ -249,7 +249,7 @@ def test_the_wheel_rules_do_not_carry_the_container_test_suite() -> None:
 # The staged wheel, which must travel in NEITHER lane
 # --------------------------------------------------------------------------
 # `vendor/` is the one directory in this tree whose contents are build INPUT rather
-# than shipped content: `scripts/build_microvm_image_zip.py` stages a Kiro Crew wheel
+# than shipped content: `scripts/build_microvm_image_zip.py` stages a Sao Khuê wheel
 # there and `cloud/microvm/engine.py` reads it back to assemble a MicroVM recipe. A
 # packaging rule that reaches it therefore puts each wheel inside the next one.
 #

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Kiro Crew Persistent Sessions Setup
+# Sao Khuê Persistent Sessions Setup
 #
 # Installs kirocrew gateway as a systemd user service.
 # Requires the systemd user manager to be running (see README.md Phase 1).
@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 USERNAME=$(whoami)
 HOSTNAME=$(hostname)
 
-echo "👻 Kiro Crew Persistent Sessions Setup"
+echo "👻 Sao Khuê Persistent Sessions Setup"
 echo ""
 
 # ── Check: systemd user manager running? ──

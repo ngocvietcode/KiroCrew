@@ -729,7 +729,7 @@ test("declining the stuck-gateway restart quits without stopping or spawning", a
 test("a service that brings the stopped gateway back is re-validated, not spawned over", async () => {
   const built = stuckHolderHarness({ ppid: 1, rebinds: true });
   assert.equal(await built.supervisor.start(), true);
-  assert.match(built.dialogs[0].detail, /If a background service restarts it automatically, Kiro Crew connects to it once it answers\./);
+  assert.match(built.dialogs[0].detail, /If a background service restarts it automatically, Sao Khuê connects to it once it answers\./);
   assert.equal(built.stopCalls().length, 1);
   assert.equal(built.spawnCalls.length, 0, "no second backend races the service's respawn");
   assert.ok(built.logs.some((line) => line.includes("re-bound after the stop")));

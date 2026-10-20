@@ -38,7 +38,7 @@ from kiro_crew.pod.config import PodConfig
 # crash-loops behind it.
 #
 # A bare `GET /api/health` cannot tell those apart. `{"ok": true}` is the same
-# answer from any Kiro Crew gateway on the host, and its identity fields say
+# answer from any Sao Khuê gateway on the host, and its identity fields say
 # `app=kirocrew` plus a version — true of the squatter as well. Reading a 200 as
 # "this pod is up" therefore reports a crash-looping pod as healthy and points
 # the operator's browser at somebody else's instance.

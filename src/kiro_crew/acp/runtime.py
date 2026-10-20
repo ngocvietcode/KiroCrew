@@ -350,7 +350,7 @@ def _oversize_frame_request_id(head: bytes) -> int | None:
 def _oversize_frame_message(size: int) -> str:
     """The error an awaited request fails with when its reply was dropped as oversize."""
     return (
-        f"The agent backend's reply was {size:,} bytes, over Kiro Crew's "
+        f"The agent backend's reply was {size:,} bytes, over Sao Khuê's "
         f"{_STDOUT_BUFFER_LIMIT:,}-byte frame limit, so it was dropped. On kiro-cli, a "
         "session/new or session/load reply lists every agent in ~/.kiro/agents with its "
         "description and welcomeMessage, so an agent package whose specs carry very large "
@@ -941,7 +941,7 @@ class AcpRuntime:
 
             self._work_dir = config_dir() / "workspace"
         self._agent = agent
-        # Canonical Kiro Crew agent identity (a cfg.agents key) resolved by the
+        # Canonical Sao Khuê agent identity (a cfg.agents key) resolved by the
         # surface that created this runtime — a DIFFERENT namespace from
         # ``agent`` (the kiro template the process spawns with). Default for
         # sessions created on this runtime; a warm-pool rekey overwrites it so
@@ -1006,7 +1006,7 @@ class AcpRuntime:
         # Whether sessions on this runtime should hold drain_init() open for
         # slow MCP servers (the no-report ceiling). A runtime whose agent is
         # KNOWN to have zero MCP servers — the kirocrew-lite background runtime,
-        # whose config Kiro Crew itself writes with an empty mcpServers map —
+        # whose config Sao Khuê itself writes with an empty mcpServers map —
         # opts out so hot one-liner paths (chat titles, suggestions, STT
         # endpointing) don't pay a full ceiling wait that can never be armed.
         self._expect_mcp_reports = expect_mcp_reports
@@ -2885,7 +2885,7 @@ class AcpRuntime:
 
     @property
     def sandbox_wrapped_by_crew(self) -> bool:
-        """Whether Kiro Crew's own sandbox wrapped this runtime's child.
+        """Whether Sao Khuê's own sandbox wrapped this runtime's child.
 
         The one fact a sandbox refusal's stderr cannot carry: WHICH layer to turn
         off. A harness's internal sandbox nested inside Crew's wrap fails with the
@@ -3146,7 +3146,7 @@ class AcpRuntime:
         (the reader hitting EOF on a root that died from OUTSIDE -- an OOM kill,
         an operator's ``pkill``) must not log "reaped after kill": ``kill()``'s
         own contract is that a line saying "killed" names WHO killed, and a kill
-        Kiro Crew never issued has no such name. Attribution is the whole reason
+        Sao Khuê never issued has no such name. Attribution is the whole reason
         the two paths log differently.
         """
         if rc is None or self._death_summary is None:
@@ -4011,7 +4011,7 @@ class AcpRuntime:
         servers nameable rather than only the present ones.
 
         The text says what that roster IS. On kiro-cli the array holds only the
-        broker stubs Kiro Crew injects (``pooled_session_servers``); the agent
+        broker stubs Sao Khuê injects (``pooled_session_servers``); the agent
         spec's own servers are started by the backend and are not in it, and
         the backend's session-start steps after MCP init are not observable
         from here at all. A bare ``4/4 MCP server(s) reported`` therefore read
@@ -4232,10 +4232,10 @@ class AcpRuntime:
         never read back, ``currentModeId`` is never re-compared, and
         :mod:`kiro_crew.acp.mcp_session_report` only LOGS — its own docstring
         forbids reading a missing report as "not mounted". The session then runs
-        with NONE of Kiro Crew's control plane, while the global provider
-        ``mcp.json`` that Kiro Crew pins off only on specs IT writes stays
+        with NONE of Sao Khuê's control plane, while the global provider
+        ``mcp.json`` that Sao Khuê pins off only on specs IT writes stays
         merged. So third-party MCP servers declared there keep working and every
-        Kiro Crew tool the injected prompt names — ``learn_add`` among them —
+        Sao Khuê tool the injected prompt names — ``learn_add`` among them —
         answers "does not exist", which the agent reports to the user as its
         memory being unavailable.
 
@@ -4315,14 +4315,14 @@ class AcpRuntime:
                     f"{spawn_agent!r} is defined in markdown ({markdown_spec.name}); the "
                     f"{self._harness.backend or 'kiro'!r} backend loads JSON agent specs "
                     f"only, so it ran its own default agent instead, which would "
-                    f"silently drop every Kiro Crew tool the agent's prompt relies on. "
+                    f"silently drop every Sao Khuê tool the agent's prompt relies on. "
                     f"Switch agent.acp_backend to {capable} or add a JSON spec for this "
                     f"agent."
                 )
         return (
             f"Its ~/.kiro/agents/{spawn_agent}.json is missing, or the backend "
             f"refused to load it. Refusing to run the backend's own default "
-            f"agent in its place, which would silently drop every Kiro Crew "
+            f"agent in its place, which would silently drop every Sao Khuê "
             f"tool the agent's prompt relies on. Run `kirocrew setup "
             f"--agent-only` to rewrite the agent config."
         )
@@ -4623,7 +4623,7 @@ class AcpRuntime:
                                 isinstance(e, CrossProcessProjectionLockTimeout)
                                 for e in lock_errors
                             ):
-                                held_by = "the skill-view lock is held by another Kiro Crew process"
+                                held_by = "the skill-view lock is held by another Sao Khuê process"
                             else:
                                 held_by = "a lock or file it needs was unavailable"
                             raise AcpRuntimeError(

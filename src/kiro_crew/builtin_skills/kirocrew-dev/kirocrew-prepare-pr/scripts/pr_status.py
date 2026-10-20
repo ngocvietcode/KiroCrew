@@ -766,7 +766,7 @@ def resolve_readiness_context(argv, environ):
     """Resolve the aggregate-readiness status-context name.
 
     Precedence: ``--readiness-context`` CLI flag > ``PREPARE_PR_READINESS_CONTEXT``
-    env var > the Kiro Crew default. Lets a project profile name a non-default
+    env var > the Sao Khuê default. Lets a project profile name a non-default
     aggregate status; when unset, behavior is identical to before (the default
     context, with the full-rollup fallback when that context is absent).
     """

@@ -1,7 +1,7 @@
 """Structured-output validation + bounded retry for ``ctx.agent(schema=...)`` (GATES C1–C3).
 
 The frozen contract says ``ctx.agent(prompt, schema=<JSON Schema>)`` returns a
-*validated dict* (or ``None`` after retries). KiroCrew's provider layer has no
+*validated dict* (or ``None`` after retries). SaoKhue's provider layer has no
 native schema enforcement, and the runtime ships neither ``jsonschema`` nor a
 JSON-Schema-consuming pydantic path — so this module is a small, dependency-free
 validator for the JSON-Schema **subset** the workflow DSL actually uses

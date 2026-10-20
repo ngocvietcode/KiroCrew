@@ -1,6 +1,6 @@
 # Narrow-viewport recommendations
 
-The measurement record behind Kiro Crew's narrow-viewport behaviour. Everything
+The measurement record behind Sao Khuê's narrow-viewport behaviour. Everything
 here is a recommendation, not a gate — each one earned its place by breaking on a
 real screen, and each carries the measurement that settled it, so reach for the
 measurement before arguing with the rule.

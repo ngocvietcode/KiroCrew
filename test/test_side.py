@@ -6,7 +6,7 @@
 3. Non-blocking: ``api_side_turn`` returns before ``_run_side_turn`` finishes.
 4. Channel separation: side run_id never appears in main-channel payloads.
 5. Tool rejection: empty LLM output produces a visible fallback bubble.
-6. Agent resolution: the KiroCrew slot agent name (e.g. "default") is resolved
+6. Agent resolution: the SaoKhue slot agent name (e.g. "default") is resolved
    to the real kiro-cli agent before get_or_create, so set_mode never rejects
    it with "Mode '<name>' not found".
 7. Streaming redaction: a credential split across streaming chunk boundaries is
@@ -380,7 +380,7 @@ async def test_empty_llm_output_produces_visible_fallback(tmp_path, monkeypatch)
 
 @pytest.mark.asyncio
 async def test_side_turn_resolves_slot_agent_to_kiro_agent(tmp_path, monkeypatch):
-    """slot.agent (a KiroCrew name like "default") is resolved to the real
+    """slot.agent (a SaoKhue name like "default") is resolved to the real
     kiro-cli agent before get_or_create -> create_session -> set_mode.
 
     Regression: passing the raw slot name straight through made kiro-cli reject

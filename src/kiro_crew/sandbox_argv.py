@@ -145,7 +145,7 @@ def _resolve_agent_executable(executable: str) -> str:
     """Resolve *executable* through the active edition before sandboxing.
 
     The public adapter is identity. An edition companion may replace a managed
-    launcher with the direct executable it ultimately invokes so Kiro Crew can
+    launcher with the direct executable it ultimately invokes so Sao Khuê can
     apply exactly one OS-level sandbox. A transient adapter failure degrades to
     the original executable, which preserves the secure behavior: the outer
     sandbox still applies and a launcher that cannot run nested fails closed.
@@ -888,7 +888,7 @@ def sandbox_exec_argv(
     # Mark the sandboxed tree, exactly as the Linux namespace launcher does after
     # its own env scrub (see ``scrub_env`` in ``sandbox_launcher_program``, the
     # program ``_build_launcher_script`` renders). Without
-    # this, an in-sandbox ``wrap_argv`` call cannot tell that Kiro Crew's own
+    # this, an in-sandbox ``wrap_argv`` call cannot tell that Sao Khuê's own
     # sandbox already confines it, tries to nest, and gets EPERM — which then
     # fail-closes every app-backend and MCP spawn on the host. Set as an ``env``
     # assignment so it lands AFTER the ``-u`` flags and cannot be dropped by them.
@@ -959,7 +959,7 @@ def _sandbox_env_unset_args(
 
     Shared by ``sandbox_exec_argv`` (seatbelt wrap) and
     ``_delegate_to_kiro_internal_sandbox`` (macOS mutual-exclusion path) so the
-    env-scrub guarantee is identical whether or not Kiro Crew's own seatbelt is
+    env-scrub guarantee is identical whether or not Sao Khuê's own seatbelt is
     the active isolation layer.
     """
     unset_args: list[str] = []

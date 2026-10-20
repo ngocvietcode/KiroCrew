@@ -115,7 +115,7 @@ KAS_MAX_CUSTOM_AGENTS = 50
 
 _PROMPT_FILE_SCHEME = "file://"
 
-#: Kiro Crew's OWN managed MCP servers — the ones whose ``env`` may retain a
+#: Sao Khuê's OWN managed MCP servers — the ones whose ``env`` may retain a
 #: single Crew-authored key through projection (see :func:`_project_mcp_servers`).
 #:
 #: Imported from :mod:`kiro_crew.mcp_cleanup`, which already pins this set to
@@ -264,7 +264,7 @@ class KasAgentSpecAbsent(KasAgentTranslationError):
 #: ``build_kas_custom_agents`` — so the kiro-cli path keeps its empty-prompt
 #: behaviour (kiro-cli supplies its own default) unchanged.
 _KAS_FALLBACK_PROMPT = """\
-You are a Kiro Crew lightweight background worker. You are dispatched by the
+You are a Sao Khuê lightweight background worker. You are dispatched by the
 system — never by a human in a chat — to perform one small, self-contained text
 task per request: naming or summarizing a conversation, classifying or tagging
 content, rephrasing a line, suggesting a short label, and similar. The specific
@@ -1503,7 +1503,7 @@ def _tokened_managed_element(
         logger.warning(
             "hoisted MCP server %r declares a launch that is not the managed"
             " invocation; launching the managed one so the session token only"
-            " reaches Kiro Crew's own binary",
+            " reaches Sao Khuê's own binary",
             name,
         )
     raw_env = element.get("env")

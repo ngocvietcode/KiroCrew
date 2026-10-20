@@ -194,7 +194,7 @@ class AgentRuntime(Protocol):
 class AgentExecutableResolver(Protocol):
     """Resolve an edition-provided agent launcher to its direct executable.
 
-    ``sandbox_argv.py`` calls this before applying Kiro Crew's OS-level sandbox so an
+    ``sandbox_argv.py`` calls this before applying Sao Khuê's OS-level sandbox so an
     edition can replace a managed launcher with the executable it ultimately
     invokes, avoiding nested isolation. The public Default is identity: ordinary
     ``kiro-cli`` paths and the explicit ``KIROCREW_KIRO_BIN`` override are used

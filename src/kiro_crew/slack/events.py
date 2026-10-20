@@ -1255,7 +1255,7 @@ async def _route_message(
     # and the loader both default use_transport to True and orch._cfg.messaging
     # is always populated (default_factory), so every install takes this path
     # unless it explicitly sets messaging.use_transport=false to opt back into
-    # the native path. (KiroCrew has no challenge-redirect path, so this simply
+    # the native path. (SaoKhue has no challenge-redirect path, so this simply
     # replaces the native dispatch when the flag is on.)
     #
     # Review-mode channels are EXCLUDED from the transport path: review mode is

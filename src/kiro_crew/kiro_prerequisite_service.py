@@ -63,7 +63,7 @@ _SETUP_COMPLETE_FILENAME = ".kiro_cli_setup_complete"
 
 
 def _established_installation(data_home: Path) -> bool:
-    """Recognize an existing Kiro Crew home when migrating onto the setup marker."""
+    """Recognize an existing Sao Khuê home when migrating onto the setup marker."""
 
     marker = data_home / _SETUP_COMPLETE_FILENAME
     if marker.is_file():
@@ -192,7 +192,7 @@ class KiroPrerequisiteService:
             mapping.source
             for mapping in _auth_store_mappings(self._platform, self._home, self._environ)
         ]
-        # Kiro Crew's own secret home is always hidden from a probed CLI. The
+        # Sao Khuê's own secret home is always hidden from a probed CLI. The
         # credential-minimal probe additionally hides the identity stores; the
         # real-home callers must leave those visible — the readiness probe so a
         # CLI whose valid session lives outside the staged files (an external
@@ -403,7 +403,7 @@ class KiroPrerequisiteService:
             or status.get("rejected_agent_specs")
             or kas_load_rejected
         ):
-            # KAS loads Kiro Crew's agent specs from kiro-cli's agents dir, so a
+            # KAS loads Sao Khuê's agent specs from kiro-cli's agents dir, so a
             # missing or rejected spec must stay on the repair card, not finish.
             return False
         if (

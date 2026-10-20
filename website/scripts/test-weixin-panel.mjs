@@ -143,7 +143,7 @@ await page.route('**/api/**', async route => {
   if (p === '/api/governance/channels') return json(route, {
     slack: true, discord: true, telegram: true, webex: true, wecom: true, weixin: true,
   })
-  if (p === '/api/dashboard/branding') return json(route, { bot_name: 'Kiro Crew', avatar: '' })
+  if (p === '/api/dashboard/branding') return json(route, { bot_name: 'Sao Khuê', avatar: '' })
   if (p === '/api/theme/boot') return json(route, { mode: 'dark', theme: '' })
   if (p === '/api/notifications') return json(route, { notifications: [], unread: 0 })
   if (p.startsWith('/api/instances')) return json(route, { instances: [], active: '' })

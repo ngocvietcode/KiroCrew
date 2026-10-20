@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Attach a per-app backend origin to the shared KiroCrew CloudFront distribution.
+"""Attach a per-app backend origin to the shared SaoKhue CloudFront distribution.
 
 Idempotently adds an origin for the backend + a '<slug>/api/*' cache behavior
 routing to it (no caching, all-viewer-except-host so the origin sees the right
@@ -40,7 +40,7 @@ def aws(profile, region, *args):
     except ImportError:
         sys.stderr.write(
             "error: kiro_crew package not importable — refusing to spawn AWS "
-            "commands unsandboxed. Run this script with the KiroCrew venv "
+            "commands unsandboxed. Run this script with the SaoKhue venv "
             "python (see skills/artifact-deploy/SKILL.md).\n"
         )
         sys.exit(1)
@@ -85,7 +85,7 @@ def ensure_lambda_oac(profile, region):
             return it["Id"]
     cfg = {
         "Name": OAC_NAME,
-        "Description": "KiroCrew deploy Lambda OAC",
+        "Description": "SaoKhue deploy Lambda OAC",
         "SigningProtocol": "sigv4",
         "SigningBehavior": "always",
         "OriginAccessControlOriginType": "lambda",
@@ -141,7 +141,7 @@ def _validate_args(profile: str, region: str, dist_id: str, slug: str) -> None:
 
 # Sensitive paths that must never be read via --origin-verify-secret-file.
 # Standalone list (duplicated here for standalone execution where kiro_crew
-# may not be importable) — covers both the current KiroCrew data home
+# may not be importable) — covers both the current SaoKhue data home
 # (~/.kiro/crew) and the legacy ~/.kirocrew home, so a not-yet-migrated box
 # is covered too.
 _SENSITIVE_PREFIXES: tuple[str, ...] = (

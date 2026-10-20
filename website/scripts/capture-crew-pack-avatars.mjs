@@ -47,7 +47,7 @@ const PACKS = [
   {
     id: 'kiro-ghost',
     name: 'Kiro',
-    author: 'Kiro Crew',
+    author: 'Sao Khuê',
     description: 'The default companion.',
     type: 'builtin',
     format: 'svg',

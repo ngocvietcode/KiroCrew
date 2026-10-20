@@ -361,7 +361,7 @@ def admit_background(
         else:
             omitted.add("skills" if "[Skills:]" in part else "background context")
     if omitted:
-        # Imported at call time, like every Kiro Crew name an owner reads.
+        # Imported at call time, like every Sao Khuê name an owner reads.
         from kiro_crew import context_omissions
 
         context_omissions.record(context_omissions.BACKGROUND, "budget", sections=omitted)

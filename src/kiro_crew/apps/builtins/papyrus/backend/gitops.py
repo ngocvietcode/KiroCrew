@@ -264,7 +264,7 @@ def _pin_attributes_sync(cwd: Path) -> None:
     info = git_dir / "info"
     target = info / "attributes"
     # A SYMLINK at either name is refused outright, before anything is read or
-    # written. Both are paths KiroCrew owns and writes BY NAME, so a link there is
+    # written. Both are paths SaoKhue owns and writes BY NAME, so a link there is
     # illegitimate wherever it points — the same rule `store._config_path` applies
     # for the same reason. Two concrete failures this closes:
     #   * `attributes -> /dev/null` (or any file) made the pin unobservable, so
@@ -280,7 +280,7 @@ def _pin_attributes_sync(cwd: Path) -> None:
     # at ANOTHER repository, `info` and `attributes` are legitimate non-links
     # *inside that repo*, so both inner checks pass and a `GET /git` status poll
     # rewrites a different repository's attributes, outside this project entirely.
-    # Verified before the fix. The rule has to hold for every segment KiroCrew
+    # Verified before the fix. The rule has to hold for every segment SaoKhue
     # traverses by name, not just the leaf.
     #
     # `store.is_reparse_link`, not `is_symlink()`: a Windows directory JUNCTION is a
@@ -293,7 +293,7 @@ def _pin_attributes_sync(cwd: Path) -> None:
         or store.is_reparse_link(target)
     ):
         # SEL-audited before raising, like every other refusal on this path: this is a
-        # security DECISION (a link where KiroCrew owns the name), and a denial that
+        # security DECISION (a link where SaoKhue owns the name), and a denial that
         # leaves no tamper-evident record is indistinguishable afterwards from an
         # operation that never happened.
         _audit("pin_attributes", str(cwd), "denied", error="attributes path is a link")

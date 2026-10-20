@@ -2,7 +2,7 @@
 
 Wraps the public ``spec-driven-presentation-maker`` engine (AWS Samples, MIT-0)
 at a pinned tag: the engine does the slide composition and .pptx writing, and
-this app supplies the KiroCrew integration — the agents that drive it, the
+this app supplies the SaoKhue integration — the agents that drive it, the
 in-dashboard creation studio, and the deck/style/template library API.
 
 Originally contributed as a standalone app by ``sktok``; see ``ATTRIBUTION.md``.

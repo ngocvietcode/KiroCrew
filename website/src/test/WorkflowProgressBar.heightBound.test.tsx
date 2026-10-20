@@ -24,7 +24,7 @@ const run = (over: Partial<WorkflowRunProgress> = {}): WorkflowRunProgress => ({
   run_id: 'wf_000025',
   name: 'kirocrew-perf-investigation',
   phase: 'critique',
-  lastLog: 'Starting Kiro Crew performance investigation',
+  lastLog: 'Starting Sao Khuê performance investigation',
   status: 'running',
   sessionKey: `dashboard:${SLOT}`,
   ...over,

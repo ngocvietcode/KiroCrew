@@ -53,7 +53,7 @@ real frame, so Tailwind classes stay unstyled here. Theme variables, inline
 The CSP, the sandbox, the base body style and the theme values below mirror
 the web app's widget frame (``cspFor``, ``BASE_BODY_CSS`` and
 ``THEME_VAR_NAMES`` in ``widgetSrcdoc.ts``, the sandbox in ``WidgetFrame.tsx``,
-and the default palette in ``theme-palettes.css``). A test in the Kiro Crew
+and the default palette in ``theme-palettes.css``). A test in the Sao Khuê
 repository reads those files and fails when this copy drifts from them.
 
 The Dashboard mode's CSP mirrors ``cspFor`` with ``offlineScripts`` and its
@@ -65,7 +65,7 @@ runs itself again under the interpreter a crewmate's shell names in
 needs neither.
 
 Exit codes: 0 written, 2 an input could not be read, the page not written, or
-the Dashboard mode has no Python that can import Kiro Crew.
+the Dashboard mode has no Python that can import Sao Khuê.
 """
 
 from __future__ import annotations
@@ -333,7 +333,7 @@ GENERATION = "preview"
 FIRST_VERSION = 1
 
 #: Set on the run this script starts under ``KIROCREW_RUNTIME_PYTHON``, so a
-#: second Python that cannot import Kiro Crew either refuses instead of re-running.
+#: second Python that cannot import Sao Khuê either refuses instead of re-running.
 REEXEC_ENV = "LIVING_UI_HARNESS_REEXEC"
 
 #: The page script's addition in the Dashboard mode, run after the shared script
@@ -410,7 +410,7 @@ def page(text: str, name: str = "widget") -> str:
 
 
 def _host_frame() -> Any:
-    """Kiro Crew's own Dashboard frame module, or ``None`` where this Python cannot import it."""
+    """Sao Khuê's own Dashboard frame module, or ``None`` where this Python cannot import it."""
     try:
         from kiro_crew import dashboard_frame
     except ImportError:
@@ -432,7 +432,7 @@ def dashboard_page(
     """
     frame = frame or _host_frame()
     if frame is None:
-        raise RuntimeError("the Dashboard mode needs Kiro Crew's dashboard_frame module")
+        raise RuntimeError("the Dashboard mode needs Sao Khuê's dashboard_frame module")
     read = {**frame.read_payload(fields), "version": FIRST_VERSION, "generation": GENERATION}
     body: str = frame.compose_body(view, read)
     # The host's own lines open the body; a unique view marks where the view starts.
@@ -519,7 +519,7 @@ def main(argv: list[str] | None = None) -> int:
             runtime = os.environ.get("KIROCREW_RUNTIME_PYTHON", "").strip()
             if os.environ.get(REEXEC_ENV) or not runtime or not os.path.isfile(runtime):
                 print(
-                    "harness: the Dashboard mode frames the page with Kiro Crew's own code, "
+                    "harness: the Dashboard mode frames the page with Sao Khuê's own code, "
                     "which this Python cannot import; a crewmate's shell names that "
                     "interpreter in KIROCREW_RUNTIME_PYTHON",
                     file=sys.stderr,

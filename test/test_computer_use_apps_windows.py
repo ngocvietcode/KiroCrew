@@ -124,7 +124,7 @@ class TestTransientPopupsAreNotApplications:
         denied = _info(
             hwnd=7,
             pid=901,
-            title="Kiro Crew",
+            title="Sao Khuê",
             cls="Microsoft.UI.Content.PopupWindowSiteBridge",
             exe="chrome.exe",
         )
@@ -133,7 +133,7 @@ class TestTransientPopupsAreNotApplications:
         )
         monkeypatch.setattr(ffi, "window_list", lambda: (denied, sibling))
         apps = apps_windows.list_apps()
-        assert [app.window_title for app in apps] == ["Kiro Crew"]
+        assert [app.window_title for app in apps] == ["Sao Khuê"]
         assert policy.check_app(apps[0], PolicyConfig()) is not None
 
 
@@ -237,12 +237,12 @@ class TestListApps:
             ffi,
             "window_list",
             lambda: (
-                _info(hwnd=1, title="Kiro Crew", exe="KiroCrew Nightly.exe"),
+                _info(hwnd=1, title="Sao Khuê", exe="KiroCrew Nightly.exe"),
                 _info(hwnd=2, title="Notepad", exe="notepad.exe"),
             ),
         )
         by_title = {a.window_title: a for a in apps_windows.list_apps()}
-        assert policy.check_app(by_title["Kiro Crew"], PolicyConfig()) is not None
+        assert policy.check_app(by_title["Sao Khuê"], PolicyConfig()) is not None
         assert policy.check_app(by_title["Notepad"], PolicyConfig()) is None
 
     def test_the_on_screen_filter_is_UPSTREAM_and_not_re_derived_here(self, monkeypatch) -> None:

@@ -42,7 +42,7 @@ constraint on ``argv`` fixes the shape. In order, the allowlist was defeated by
 (1) bare interpreters on it, so ``python -c <payload>`` ran anything;
 (2) a basename-only check, so ``/tmp/git`` executed an arbitrary binary under an
 allowlisted name; and (3) plain ``git reset --hard`` - allowlisted, and
-destructive. (3) is the one that settles it. Kiro Crew's denied-command floor
+destructive. (3) is the one that settles it. Sao Khuê's denied-command floor
 inspects the ``execute_bash`` command string, which here reads
 ``python3 .../accept_eval.py``; the real argv arrives on stdin and is executed
 with ``shell=False``, so a denied command never appears in any string the hook

@@ -41,7 +41,7 @@ describe('packSummariesFrom', () => {
           {
             id: BUILTIN_PACK_ID,
             name: 'Kiro',
-            author: 'Kiro Crew',
+            author: 'Sao Khuê',
             description: 'The default companion.',
             type: 'builtin',
             format: 'svg',
@@ -64,7 +64,7 @@ describe('packSummariesFrom', () => {
       {
         id: BUILTIN_PACK_ID,
         name: 'Kiro',
-        author: 'Kiro Crew',
+        author: 'Sao Khuê',
         type: 'builtin',
         format: 'svg',
       },

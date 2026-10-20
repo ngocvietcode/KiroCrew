@@ -3,7 +3,7 @@
 ``app.json`` has declared the ``notification`` event permission since the app's first
 commit and the app never produced a single notification: no ``notification_bus``
 reference, no ``notifications.channels`` block, no push of any shape. So the ONE
-push channel Kiro Crew offers that needs no credential and no inbound URL was inert,
+push channel Sao Khuê offers that needs no credential and no inbound URL was inert,
 and every operator-facing fact this app computes — an incident waiting on a person,
 a source that stopped answering, work released because an agent died — required
 either an open dashboard tab or a Slack workspace this app deliberately holds no
@@ -134,7 +134,7 @@ def bus_from_state(state: Any | None) -> Any | None:
     """Pull the live notification bus off gateway state, tolerating its absence.
 
     Threaded in from the route layer for the same reason ``slack_out.client_from_state``
-    is: Kiro Crew has no global state accessor (state is per ``web.Application``), and an
+    is: Sao Khuê has no global state accessor (state is per ``web.Application``), and an
     explicit dependency is what lets every push be tested without a gateway.
     """
     return getattr(state, "notification_bus", None) if state is not None else None

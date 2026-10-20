@@ -555,7 +555,7 @@ export function SageProvider({ children, initialRunId }: {
   }, [runs, runsQuery.isSuccess, selectedRunId])
 
   // Persist where the user is, on every change. Cheap (one small JSON write) and
-  // it means a reload — or a trip to another Kiro Crew page — comes back here.
+  // it means a reload — or a trip to another Sao Khuê page — comes back here.
   useEffect(() => {
     saveUiState({
       mainView,

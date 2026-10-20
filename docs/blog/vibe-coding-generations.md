@@ -11,7 +11,7 @@ These are the four phases I think vibe coding goes through.
 - 1.0: you read the code in an IDE and chat with one agent.
 - 2.0: there are too many sessions to hold in your head, and you have stopped
   reading the code. So the sessions go in a list and you switch between them.
-  Kiro Crew's interface is here today.
+  Sao Khuê's interface is here today.
 - 3.0: you stop caring what any individual agent is doing. You give guidance and
   unblock ten or more agents at once.
 - 4.0: you stop handing out tasks at all. An agent holds a standing mandate:
@@ -137,7 +137,7 @@ commit. The team watched the outage happen. Accountability is far more
 institutional than psychological, and that is good news for us, because you
 cannot ship a conscience but you can ship an institution.
 
-Kiro Crew already has the first part and the fourth, plus a narrow version of the
+Sao Khuê already has the first part and the fourth, plus a narrow version of the
 second: the security keystone is exactly "the agent cannot write its own ceiling", in
 any sandbox mode. It can read it, by design: hiding a policy file would make it
 resolve to the permissive default. The third is missing entirely. Today an agent whose change gets

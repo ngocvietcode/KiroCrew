@@ -125,7 +125,7 @@ function SignedInSummary({
 }
 
 /**
- * Settings > Agent Harness card for signing in to Kiro Crew's OWN Kiro identity
+ * Settings > Agent Harness card for signing in to Sao Khuê's OWN Kiro identity
  * -- the one the gateway hands to agent processes (KAS relay) so they run as the
  * user without depending on `kiro-cli login`. Wraps the sign-in flow
  * `KasLoginGate` carries in its embedded chrome, and adds the two things a card

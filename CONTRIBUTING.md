@@ -1,6 +1,6 @@
-# Contributing to Kiro Crew
+# Contributing to Sao Khuê
 
-Thanks for your interest in contributing! Kiro Crew is an open-source project and
+Thanks for your interest in contributing! Sao Khuê is an open-source project and
 we welcome issues and pull requests.
 
 ## Reporting Bugs and Requesting Features
@@ -10,7 +10,7 @@ do, search the open issues, because the fastest resolution is often a thread tha
 already exists.
 
 For a bug, what actually helps is a way to reproduce it, the version you are on,
-your operating system, and anything unusual about how Kiro Crew is installed or
+your operating system, and anything unusual about how Sao Khuê is installed or
 where it runs. A stack trace beats a description of a stack trace. If it only
 happens on one surface, say which one, because the dashboard, the CLI, and a chat
 channel take different paths through the code.
@@ -118,7 +118,7 @@ The contributor workflow is codified as agent-loadable skills in
 - **`dashboard-template`** — adding a dashboard page with its contract,
   provider, and parity test.
 
-An agent contributing to Kiro Crew loads this suite and follows the same
+An agent contributing to Sao Khuê loads this suite and follows the same
 worktree → build gate → kirocrew-prepare-pr → review loop human contributors use, so
 the PR process stays consistent regardless of who is writing the code. If you
 change the workflow, change it THERE. The checked-in workflows and
@@ -247,7 +247,7 @@ index, no changelog narration, run `./scripts/docs-lint.sh` — plus the
 `src/kiro_crew/docs/` filenames-are-an-API caveat are in
 [The rule for changing docs](docs/README.md#the-rule-for-changing-docs).
 
-## Extending Kiro Crew
+## Extending Sao Khuê
 
 - **Skills** — a skill is a directory holding a `SKILL.md`. See [skills/README.md](skills/README.md) for the format and where skills are installed
 - **MCP tools** — a `kirocrew-core` tool is a `schemas()` descriptor plus a `HANDLERS` entry in `src/kiro_crew/mcp_tools/<domain>.py`; cron tools live in `mcp_cron.py` (their bodies) and `mcp_cron_tool_list.py` (their schemas). See [MCP](docs/architecture/mcp.md#a-kirocrew-core-tool-has-two-halves). Every LLM-facing command must have an MCP tool
@@ -443,7 +443,7 @@ means following it and the open source code of conduct and FAQ it links.
 
 ## Licensing
 
-Kiro Crew is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for the
+Sao Khuê is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for the
 full text and [NOTICE](NOTICE) for attribution. Third-party components carry their
 own licenses, recorded in [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES).
 

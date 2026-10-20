@@ -160,7 +160,7 @@ class TestAppArmorProfileRendering:
         from kiro_crew.service import apparmor as aa
 
         text = aa.render_profile("4.0", self._EXEC)
-        assert "Managed by Kiro Crew" in text
+        assert "Managed by Sao Khuê" in text
         assert "Removing this file" in text
 
 

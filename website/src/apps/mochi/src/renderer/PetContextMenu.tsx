@@ -57,7 +57,7 @@ export function PetContextMenu({ x, y, isHidden, onClose }: Props) {
   }, [])
 
   // SUBTRACTED: screenshot (capture not ported), soul (each avatar carries its
-  // own persona), quit (KiroCrew owns the app lifecycle — the pet is disabled
+  // own persona), quit (SaoKhue owns the app lifecycle — the pet is disabled
   // from the app store). A row with no handler is a silent no-op, so the rows
   // go rather than the handlers being faked.
   const items: ContextMenuEntry[] = useMemo(() => [

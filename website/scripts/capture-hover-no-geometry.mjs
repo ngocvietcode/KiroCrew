@@ -192,10 +192,10 @@ const NAV_APPS = Array.from({ length: 18 }, (_, i) => ({
 }))
 
 const STORE_APPS = [
-  { name: 'hover-main', displayName: 'Hover Main', description: 'Full hero treatment.', author: 'Kiro Crew', version: '1.0.0', tags: ['developer-tools'], heroImage: '/hover-main.svg', featured: 1, origin: 'registry', provenance: 'official', verified: true },
-  { name: 'hover-compact-a', displayName: 'Hover Compact A', description: 'Compact collection member.', author: 'Kiro Crew', version: '1.0.0', tags: ['developer-tools'], origin: 'registry', provenance: 'official', verified: true },
-  { name: 'hover-compact-b', displayName: 'Hover Compact B', description: 'Compact collection member.', author: 'Kiro Crew', version: '1.0.0', tags: ['developer-tools'], origin: 'registry', provenance: 'official', verified: true },
-  { name: 'hover-row-peer', displayName: 'Hover Row Peer', description: 'Second row card.', author: 'Kiro Crew', version: '1.0.0', tags: ['developer-tools'], origin: 'registry', provenance: 'official', verified: true },
+  { name: 'hover-main', displayName: 'Hover Main', description: 'Full hero treatment.', author: 'Sao Khuê', version: '1.0.0', tags: ['developer-tools'], heroImage: '/hover-main.svg', featured: 1, origin: 'registry', provenance: 'official', verified: true },
+  { name: 'hover-compact-a', displayName: 'Hover Compact A', description: 'Compact collection member.', author: 'Sao Khuê', version: '1.0.0', tags: ['developer-tools'], origin: 'registry', provenance: 'official', verified: true },
+  { name: 'hover-compact-b', displayName: 'Hover Compact B', description: 'Compact collection member.', author: 'Sao Khuê', version: '1.0.0', tags: ['developer-tools'], origin: 'registry', provenance: 'official', verified: true },
+  { name: 'hover-row-peer', displayName: 'Hover Row Peer', description: 'Second row card.', author: 'Sao Khuê', version: '1.0.0', tags: ['developer-tools'], origin: 'registry', provenance: 'official', verified: true },
 ]
 const STORE_SECTIONS = [
   { form: 'full', items: [{ type: 'app', appRefs: ['hover-main'], artwork: { url: 'https://apps.crew.kiro.dev/hover-main.svg', alt: 'Full hero evidence' } }] },

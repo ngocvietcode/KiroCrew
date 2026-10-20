@@ -797,7 +797,7 @@ what the composer renders:
   fixed template, so `pr_checks` becomes `gh pr checks <n>` and nothing else
   executes. That is deliberate and load-bearing: this script is invoked as an
   approved wrapper, so a spec that could name a command would turn it into a
-  general way to run one, and Kiro Crew's denied-command floor cannot see inside
+  general way to run one, and Sao Khuê's denied-command floor cannot see inside
   it (the floor reads the `execute_bash` string, which says
   `python3 accept_eval.py`). Widening happens by adding a purpose-built kind that
   constructs its own argv — never by accepting one. A `refused` verdict is a spec

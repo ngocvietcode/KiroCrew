@@ -14,7 +14,7 @@ is [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ### Agent repair routing
 
-For Kiro Crew PR CI AI comments, agents MUST load and execute
+For Sao Khuê PR CI AI comments, agents MUST load and execute
 [kirocrew-prepare-pr's Review repair routing](../../src/kiro_crew/builtin_skills/kirocrew-dev/kirocrew-prepare-pr/SKILL.md#review-repair-routing).
 That section is the one canonical contract, and its table is the only place the
 repair-family preference order is written; this doc does not restate it, and
@@ -30,7 +30,7 @@ parent self-fix presented as delegation; a catalogue entry or accepted pin is no
 proof of service, so an unverified served model is reported as such. The CI
 workflows and the base-ref profile's read-only local reviewer semantics stay
 unchanged. Worktree-dev and babysit point to this contract; general monitoring
-does not depend on the Kiro Crew repository or on kirocrew-prepare-pr being installed.
+does not depend on the Sao Khuê repository or on kirocrew-prepare-pr being installed.
 
 ### Runner and service failures are not code failures
 
@@ -1756,7 +1756,7 @@ verdict already included this lane.
 
 **Who writes the triage state.** Not a workflow in this repository.
 `issue-triage.yml` writes only `channel:`, the fixed type set, `area:` and
-`platform:`. The Captain -- the maintainer-operated Kiro Crew triage crew (the
+`platform:`. The Captain -- the maintainer-operated Sao Khuê triage crew (the
 Issue Radar crews running against this repository) -- scans issues that carry no
 tier and writes one of `tier:T1` .. `tier:T4`. It also marks the issue
 `pending-triage`. `tier:T1` and `tier:T2` issues are handed to everyone and need

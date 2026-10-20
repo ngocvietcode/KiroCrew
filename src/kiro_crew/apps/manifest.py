@@ -1,7 +1,7 @@
-"""App manifest — static metadata for KiroCrew apps.
+"""App manifest — static metadata for SaoKhue apps.
 
 An app manifest (``app.json``) declares an app's identity, resources, and
-requirements without executing any app code.  KiroCrew reads it during
+requirements without executing any app code.  SaoKhue reads it during
 install to register agents, skills, crons, UI pages, and backend config.
 
 Design follows the same pattern as :class:`kiro_crew.plugins.manifest.PluginManifest`
@@ -343,7 +343,7 @@ _KNOWN_FIELDS = frozenset(
 
 @dataclass
 class AppManifest:
-    """Static metadata for a KiroCrew app — readable without executing app code.
+    """Static metadata for a SaoKhue app — readable without executing app code.
 
     Parsed from ``app.json`` at the root of an app package.  Follows the same
     pattern as :class:`~kiro_crew.plugins.manifest.PluginManifest`: dataclass
@@ -1139,7 +1139,7 @@ def is_module_style_entry_point(entry_point: str, app_root: Path) -> bool:
     """True when ``backend.entryPoint`` names a dotted Python module, not a file.
 
     The backend spawn runs such an entry with ``python -m`` from the trusted
-    package (a built-in app living inside the Kiro Crew package itself), never
+    package (a built-in app living inside the Sao Khuê package itself), never
     from the writable app directory, so nothing found in that directory -- a
     ``requirements.txt`` included -- is provisioned for it. Four conditions
     together decide the shape: no path separator, no script suffix, at least

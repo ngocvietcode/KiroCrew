@@ -1,6 +1,6 @@
 # Oncall Watchtower — Full Example Source
 
-Illustrates a Kiro Crew UI page, agent, skill, five-minute cron declaration,
+Illustrates a Sao Khuê UI page, agent, skill, five-minute cron declaration,
 real-time event subscription, and navigation badge.
 
 This directory is a source fixture, not a directly runnable app. Its `ui/`

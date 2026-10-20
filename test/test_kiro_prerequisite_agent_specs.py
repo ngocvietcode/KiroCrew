@@ -33,7 +33,7 @@ def _parked_on(lock: asyncio.Lock) -> bool:
 class TestAgentSpecsNarrowReadiness:
     """A viable binary + a good ``whoami`` are NOT sufficient for readiness.
 
-    Kiro Crew's own agent specs (``~/.kiro/agents/kirocrew*.json``) were not an
+    Sao Khuê's own agent specs (``~/.kiro/agents/kirocrew*.json``) were not an
     input to ``ready`` at all, so an install whose spec write failed reported
     ready while kiro-cli answered every ``session/set_mode`` with
     ``Mode '<name>' not found`` — the gate affirmatively told the user setup was
@@ -258,7 +258,7 @@ class TestRejectedAgentSpecsNarrowReadiness:
 
     ``missing_agent_specs`` answers presence by statting the file, which cannot
     see this: kiro-cli drops a spec it rejects from its agent table, so
-    ``--agent kirocrew`` resolves to the default agent with none of Kiro Crew's
+    ``--agent kirocrew`` resolves to the default agent with none of Sao Khuê's
     MCP servers and only a line on stderr. That is the shape of the customer
     report — "my migrated agents stopped working" with a
     perfectly present file on disk.

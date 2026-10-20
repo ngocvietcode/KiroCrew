@@ -629,7 +629,7 @@ def _provision_app_deps_locked(app_name: str, root: Path, pin: _PinnedDir) -> st
     code runs from the writable app dir itself.
     """
     # Install Python dependencies into a per-app deps dir (isolated from the
-    # Kiro Crew runtime). `pip install --target` rather than a venv: packaged
+    # Sao Khuê runtime). `pip install --target` rather than a venv: packaged
     # installs bundle an interpreter that ships pip but no ensurepip, so
     # `-m venv` dies after creating the directory skeleton - and the venv-first
     # interpreter policy would then prefer that skeleton while it holds none of

@@ -11,7 +11,7 @@ import { PET_W, PET_H } from './constants'
 import { petBridge } from './petBridge'
 
 // Same method names as the desktop app's IPC bridge, re-implemented over
-// Kiro Crew's gateway — so everything below is unchanged.
+// Sao Khuê's gateway — so everything below is unchanged.
 const api = petBridge
 
 export interface UseDragOptions {

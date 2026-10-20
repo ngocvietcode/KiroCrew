@@ -140,7 +140,7 @@ def test_single_task_default_survives_prompt_compaction() -> None:
 
 
 def test_cron_modes_and_session_ownership_remain_explicit() -> None:
-    capabilities = _section(_read(), "## KiroCrew Capabilities")  # brand-ok: exact prompt heading
+    capabilities = _section(_read(), "## SaoKhue Capabilities")
     _require(
         capabilities,
         r"no-LLM.*mutually exclusive `command`.*deterministic",

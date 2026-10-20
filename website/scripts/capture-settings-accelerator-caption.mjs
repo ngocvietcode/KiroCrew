@@ -33,7 +33,7 @@ mkdirSync(OUT, { recursive: true })
 const noop = () => {}
 const deps = (isMac) => ({
   isMac,
-  appName: 'Kiro Crew',
+  appName: 'Sao Khuê',
   openSettings: noop,
   openAbout: noop,
   reload: noop,

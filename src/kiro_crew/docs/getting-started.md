@@ -1,6 +1,6 @@
-# Getting Started with Kiro Crew
+# Getting Started with Sao Khuê
 
-Kiro Crew is an autonomous AI agent layer that runs on your own machine on top of
+Sao Khuê is an autonomous AI agent layer that runs on your own machine on top of
 the kiro-cli (KiroACP) backend. It adds persistent memory, scheduled jobs,
 background subagents, self-learning, and multi-session orchestration, and you
 talk to it from a web dashboard, from the terminal, or from messaging channels
@@ -40,7 +40,7 @@ faster one, or `--version X.Y.Z` to pin an exact release. The installer uses
 `pipx` when available, otherwise it creates a managed venv and symlinks
 `kirocrew` into `~/.local/bin`.
 
-`pip install kirocrew` alone does **not** work: Kiro Crew is not published to
+`pip install kirocrew` alone does **not** work: Sao Khuê is not published to
 PyPI. To install with pip directly, point it at a release channel's index:
 
 ```bash
@@ -83,7 +83,7 @@ kirocrew setup
 ```
 
 This interactive wizard detects `kiro-cli` on your PATH, saves the project
-directory so Kiro Crew works from any working directory, installs the agent
+directory so Sao Khuê works from any working directory, installs the agent
 config to `~/.kiro/agents/kirocrew.json`, and walks through the workspace
 directory, timezone, dashboard URL, and the `http://kirocrew.localhost:5476`
 custom domain. It configures no messaging channels: connect them after setup
@@ -142,7 +142,7 @@ Every other messaging channel is connected from the dashboard — the roster is 
 [the documentation index](index.md#chat-channels), and each channel has its own
 doc there.
 
-## Starting Kiro Crew
+## Starting Sao Khuê
 
 ### Gateway mode (dashboard + messaging channels)
 
@@ -210,4 +210,4 @@ kirocrew gateway
 `KIROCREW_HOME` gives the instance its own data directory, so dev memory, crons,
 and sessions never touch your real `~/.kiro/crew`. `KIROCREW_PORT` lets a second
 gateway run alongside the first. The two together are what make it safe to run
-several Kiro Crew instances at once.
+several Sao Khuê instances at once.

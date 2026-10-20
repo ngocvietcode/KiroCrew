@@ -522,7 +522,7 @@ def _governed_grants(
     retained = [ref for ref in users_own if ref in granted]
     if retained:
         # The user's own auto-approvals, carried past a rebuild: the decision that
-        # a grant Kiro Crew did not ship stays in force is a permission decision
+        # a grant Sao Khuê did not ship stays in force is a permission decision
         # and belongs in the SEL feed beside the withholds and revocations below,
         # so an operator reading the feed sees every grant that outlived the
         # rebuild and on whose authority. Best-effort: the audit must not break
@@ -535,7 +535,7 @@ def _governed_grants(
                 source=source,
                 resources=(
                     f"{', '.join(retained)} auto-approval retained on {filename} "
-                    "(your own entry, shipped by no release of Kiro Crew)"
+                    "(your own entry, shipped by no release of Sao Khuê)"
                 ),
             )
         except Exception:  # noqa: BLE001 — the audit must not break the install
@@ -552,7 +552,7 @@ def _governed_grants(
     )
     agent_mod.logger.warning(
         "%s: regeneration dropped allowedTools entries %s (withheld by the governance "
-        "ceiling, or shipped by an earlier release of Kiro Crew and no longer granted)%s",
+        "ceiling, or shipped by an earlier release of Sao Khuê and no longer granted)%s",
         filename,
         ", ".join(dropped),
         wildcard_note,

@@ -5,7 +5,7 @@ isAuthenticated / readToken) and can render the ``_kiro/auth/getAccessToken``
 acp-callback response. It resolves the highest-priority stored identity
 (External > Builder > Social), refreshes it under the cross-process lock when it is
 inside KAS's refresh margin, and returns the fields KAS needs — never the refresh token,
-which stays inside Kiro Crew.
+which stays inside Sao Khuê.
 """
 
 from __future__ import annotations

@@ -1,10 +1,10 @@
-# Kiro Crew Website — Agent Guidelines
+# Sao Khuê Website — Agent Guidelines
 
 **This file is a ROUTER, not a manual.** It carries only the rules whose violation
 causes damage before a pointer could be read. Everything else is a link you MUST
 open before touching that area. The backend router is [`../AGENTS.md`](../AGENTS.md).
 
-React + TypeScript + Vite SPA for the Kiro Crew dashboard. Built assets go to
+React + TypeScript + Vite SPA for the Sao Khuê dashboard. Built assets go to
 `dist/` and are staged into `../src/kiro_crew/static/dist/` so the gateway serves
 them.
 

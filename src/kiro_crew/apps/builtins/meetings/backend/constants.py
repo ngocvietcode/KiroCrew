@@ -209,7 +209,7 @@ CALENDAR_PROVIDER_ICS = "ics"
 CALENDAR_PROVIDER_NONE = "none"
 DEFAULT_CALENDAR_PROVIDER = CALENDAR_PROVIDER_NONE
 
-# STT provider ids. KiroCrew's own streaming endpoint is the only one.
+# STT provider ids. SaoKhue's own streaming endpoint is the only one.
 STT_PROVIDER_KIROCREW = "kirocrew"
 DEFAULT_STT_PROVIDER = STT_PROVIDER_KIROCREW
 

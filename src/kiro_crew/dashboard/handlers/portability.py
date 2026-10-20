@@ -1,4 +1,4 @@
-"""Portability API handlers — export/import KiroCrew state as zip."""
+"""Portability API handlers — export/import SaoKhue state as zip."""
 
 from __future__ import annotations
 
@@ -174,7 +174,7 @@ async def _read_upload_file(request: web.Request) -> tuple[Path | None, web.Resp
 
 
 async def api_portability_export(request: web.Request) -> web.StreamResponse:
-    """GET /api/portability/export — download Kiro Crew state as zip.
+    """GET /api/portability/export — download Sao Khuê state as zip.
 
     Owner-only. The archive is the whole install -- config, every workspace file, the
     default store's memory and every named store's memory -- so a dashboard
@@ -467,7 +467,7 @@ async def api_portability_export(request: web.Request) -> web.StreamResponse:
 
 
 async def api_portability_import(request: web.Request) -> web.Response:
-    """POST /api/portability/import — upload and apply a Kiro Crew export zip.
+    """POST /api/portability/import — upload and apply a Sao Khuê export zip.
 
     Owner-only, like the export: an import rewrites the install's memory -- every named
     store's included -- and its config. Merge (the default) never overwrites a settings

@@ -40,7 +40,7 @@ _STAGING_LEAF = "md-notebook-staging"
 
 
 # Data-home paths are resolved LAZILY, never at import time: the
-# active Kiro Crew home depends on KIROCREW_HOME, which a pod, the legacy-home
+# active Sao Khuê home depends on KIROCREW_HOME, which a pod, the legacy-home
 # migration, or the test-isolation fixture can change AFTER this module is
 # imported. `_HOME` is the override hook (None = live-resolve); tests do
 # `monkeypatch.setattr(server, "_HOME", tmp)`. See config/paths.py.
@@ -48,7 +48,7 @@ _HOME: Optional[Path] = None
 
 
 def _default_home() -> Path:
-    """The app's data root under the active Kiro Crew home.
+    """The app's data root under the active Sao Khuê home.
 
     ``config_dir()`` follows ``KIROCREW_HOME`` (default ``~/.kiro/crew``), so an
     isolated dev instance (``KIROCREW_HOME=.kirocrew-dev``) keeps its own vaults
@@ -63,7 +63,7 @@ def _default_home() -> Path:
 
 
 def _crew_data_home() -> Path:
-    """The app's data root under the Kiro Crew data home, IGNORING
+    """The app's data root under the Sao Khuê data home, IGNORING
     ``MD_NOTEBOOK_HOME``.
 
     The PAT is stored here (never under ``MD_NOTEBOOK_HOME``) so it always sits

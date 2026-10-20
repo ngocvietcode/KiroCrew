@@ -30,7 +30,7 @@ A launched box is registered like this (`cloud/connect.py::register_instance`):
 
 ```python
 reg.add(
-    name="Kiro Crew Cloud (kc-3f9a)",
+    name="Sao Khuê Cloud (kc-3f9a)",
     connection_method="ssm",
     ssm_target="i-0abc123456789def0",   # the EC2 instance id
     aws_profile="dev",                   # the profile the launch used
@@ -132,7 +132,7 @@ see [remote-crew-on-ec2.md](remote-crew-on-ec2.md).
 A launched box appears as a managed instance whose connection line reads, e.g.:
 
 ```
-Kiro Crew Cloud (kc-3f9a)
+Sao Khuê Cloud (kc-3f9a)
 SSM  i-0abc123456789def0 (us-west-2)   port 5476   TTL 20h · token 19h58m left
 ```
 

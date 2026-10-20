@@ -312,7 +312,7 @@ def _no_backend_guidance() -> str:
     only concrete thing that text suggests is the opt-out, which turns off the
     isolation the message exists to protect.
 
-    The remedy differs by HOW Kiro Crew was launched, so it is named per shape:
+    The remedy differs by HOW Sao Khuê was launched, so it is named per shape:
 
     * AppImage / desktop app — nothing applies a profile to a directly launched
       binary, so attach one to it (``kirocrew sandbox install-profile``).
@@ -356,7 +356,7 @@ def _no_backend_guidance() -> str:
             # it, and it is the same binary the desktop app already spawns.
             cli = _bundled_cli_invocation() or "kirocrew"
             where = (
-                " (that path is inside the running app, so run it while Kiro Crew " "is open)"
+                " (that path is inside the running app, so run it while Sao Khuê " "is open)"
                 if cli != "kirocrew"
                 else ""
             )
@@ -525,7 +525,7 @@ def _warn_first_party_unconfined_once(argv: list[str]) -> None:
     _warn_first_party_unconfined_once._warned = True  # type: ignore[attr-defined]
     logger.warning(
         "SECURITY: no OS-level sandbox backend on this host — spawning a "
-        "first-party fixed-argv Kiro Crew helper UNCONFINED (its full command "
+        "first-party fixed-argv Sao Khuê helper UNCONFINED (its full command "
         "line is derived inside this package with no agent, repo, or "
         "user-config input; the credential environment is scrubbed). "
         "Hostile-input spawn paths are unaffected: they keep failing closed "
@@ -664,7 +664,7 @@ class SandboxUnavailableError(RuntimeError):
     ``kind`` is machine-readable so a presentation layer can select its own
     translated remedy copy: ``"transient"`` (momentary resource pressure — not
     cached, retrying works, and callers must NOT advise disabling the sandbox),
-    ``"foreign_sandbox"`` (an outer Seatbelt sandbox Kiro Crew did not create
+    ``"foreign_sandbox"`` (an outer Seatbelt sandbox Sao Khuê did not create
     already confines this process and Seatbelt cannot nest — this host's sandbox
     is fine), or ``"no_backend"`` (the host genuinely offers no mechanism).
 
@@ -694,7 +694,7 @@ SandboxUnavailableError.__module__ = "kiro_crew.sandbox"
 #: ``sandbox: BLOCKED``, the two unshare steps say ``sandbox: unshare(``, a
 #: broken parent/child handshake or an unreadable ``known_hosts`` says
 #: ``sandbox: FATAL``, and a launcher invoked with no command says
-#: ``sandbox_launcher:``. The launcher is the only Kiro Crew code that writes
+#: ``sandbox_launcher:``. The launcher is the only Sao Khuê code that writes
 #: a line shaped this way to a child's stderr, and it exits right after, so a
 #: refused child's captured output carries exactly one of these. Public because
 #: it is the ONE definition every consumer keys on — :func:`launcher_refusal`

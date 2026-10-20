@@ -285,9 +285,9 @@ async def test_knowledge_worker_child_does_not_receive_an_agent_denied_key(
 async def test_knowledge_worker_child_does_not_receive_the_interpreter_env(
     tmp_path, monkeypatch
 ) -> None:
-    """Second class at the same site: Kiro Crew's own interpreter paths.
+    """Second class at the same site: Sao Khuê's own interpreter paths.
 
-    A foreign runtime that inherits ``PYTHONPATH`` imports Kiro Crew's
+    A foreign runtime that inherits ``PYTHONPATH`` imports Sao Khuê's
     site-packages instead of its own -- the hazard
     ``sandbox._PYTHON_ENV_PREFIXES`` documents.
     """

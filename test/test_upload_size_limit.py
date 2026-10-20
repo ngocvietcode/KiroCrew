@@ -130,7 +130,7 @@ async def test_zip_over_the_configured_cap_is_413_naming_the_limit(
     assert "(max 1 MB)" in body["error"]
     assert (
         "To share it anyway, type @ followed by its location on the computer running "
-        "Kiro Crew, for example @~/Downloads/project.zip." in body["error"]
+        "Sao Khuê, for example @~/Downloads/project.zip." in body["error"]
     )
     assert "project.zip" in body["error"]
     assert list(upload_dir.glob("*")) == []

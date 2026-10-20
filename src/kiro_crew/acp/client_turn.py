@@ -105,7 +105,7 @@ logger = logging.getLogger("kiro_crew.acp.client")
 # security filter cancels every tool use in an assistant turn (e.g. shell commands
 # containing "credentials").  After this text kiro-cli returns to an idle state waiting
 # for the next user prompt and NEVER sends a ``complete`` response for the in-flight
-# ``session/prompt`` — so without special handling Kiro Crew waits the full prompt timeout.
+# ``session/prompt`` — so without special handling Sao Khuê waits the full prompt timeout.
 # Treating this chunk as end-of-turn unblocks the caller; the text itself is still
 # yielded so the user/agent sees what happened.  We use an exact (stripped) match so
 # the detection does not fire if the model merely quotes the marker string in prose.

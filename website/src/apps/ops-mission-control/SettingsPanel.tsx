@@ -423,10 +423,10 @@ function ProviderRow({
 /**
  * Slack output channel — the pin board.
  *
- * Deliberately has NO token field. Kiro Crew already holds a Slack bot token for
+ * Deliberately has NO token field. Sao Khuê already holds a Slack bot token for
  * its own gateway and this app reuses that client, so there is no second
  * credential to enter, store, or rotate. The consequence is a real dependency
- * rather than a hidden one: when Kiro Crew's Slack is not connected, this card says
+ * rather than a hidden one: when Sao Khuê's Slack is not connected, this card says
  * so and points at the fix instead of silently doing nothing.
  */
 function SlackOutCard({
@@ -560,7 +560,7 @@ const isKnownChannel = (id: string): id is ChannelWhenId => id in CHANNEL_WHEN_K
  * inbound URL was inert — every fact this app computed required an open dashboard tab or
  * a Slack workspace it holds no token for.
  *
- * Deliberately has NO per-channel mute control. Kiro Crew renders that centrally at
+ * Deliberately has NO per-channel mute control. Sao Khuê renders that centrally at
  * Settings → Notifications (one row per channel with a mute switch and a priority
  * override), and a second copy here would be two controls that can disagree about the
  * same stored setting. What this card owns instead is the app-level on/off and the
@@ -600,7 +600,7 @@ function NotifyOutCard({
             not something a toggle, a field or a credential fixes. Telling an operator to
             set something up when nothing they can reach would help is advice that cannot
             work, and they would go looking for the missing field. Unlike the Slack card,
-            where the not-ready half genuinely IS the operator's (connect Kiro Crew's Slack),
+            where the not-ready half genuinely IS the operator's (connect Sao Khuê's Slack),
             so "needs setup" is honest there. */}
         {status ? (
           <Badge
@@ -649,7 +649,7 @@ function NotifyOutCard({
       </p>
 
       {/* Mute lives centrally. Say where, rather than adding a control that would fight
-          the one Kiro Crew already stores. */}
+          the one Sao Khuê already stores. */}
       {enabled ? (
         <p className="text-[12px] text-muted mt-1 flex items-start gap-1.5">
           <Info className="lucide-inline" />

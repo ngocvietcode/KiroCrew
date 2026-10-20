@@ -2,7 +2,7 @@
 
 The self-improvement use case (point the app at its OWN feature branch): discovery
 otherwise ranges over the WHOLE target package (the profile's ``discover`` scans
-``clone/src/kiro_crew``), so a bug run would fix all of Kiro Crew, not just the app.
+``clone/src/kiro_crew``), so a bug run would fix all of Sao Khuê, not just the app.
 Scoping the run to ``diff(base_ref, HEAD)`` confines it to exactly the change set the
 branch introduced — i.e. the feature you are dogfooding — without any hand-maintained
 path list (the diff self-updates as the branch evolves).

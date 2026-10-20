@@ -1,6 +1,6 @@
-# Kiro Crew Eval Harness
+# Sao Khuê Eval Harness
 
-Multi-session evaluation harness for benchmarking Kiro Crew's cross-session memory, lesson application, and context accumulation.
+Multi-session evaluation harness for benchmarking Sao Khuê's cross-session memory, lesson application, and context accumulation.
 
 ## Quick Start
 
@@ -188,7 +188,7 @@ String-matching assertions are case-insensitive by default. Add `case_sensitive:
 
 ## Tool Safety
 
-During eval, tool approval uses a name-based allowlist (`_SAFE_TOOL_EXACT` for exact matches, plus `_SAFE_TOOL_PREFIXES_FS` and `_SAFE_TOOL_PREFIXES_API` for prefix matches). Filesystem-prefix tools must expose a path and pass `is_sensitive_path()`; exact and read-only API entries do not take the filesystem path branch. All other tools are rejected. The permission gate (`refusal_for`) runs before the allowlist, and every rejection is preceded by an in-band `[Kiro Crew host notice]` deny steer (`_steer_host_deny`, see [injected messages](../../../docs/system-specs/common/injected-messages.md#turn-recovery-continuations)) so the model knows the host refused the call. The judge session refuses every tool. This keeps eval runs side-effect-free while allowing the agent to use read-only tools.
+During eval, tool approval uses a name-based allowlist (`_SAFE_TOOL_EXACT` for exact matches, plus `_SAFE_TOOL_PREFIXES_FS` and `_SAFE_TOOL_PREFIXES_API` for prefix matches). Filesystem-prefix tools must expose a path and pass `is_sensitive_path()`; exact and read-only API entries do not take the filesystem path branch. All other tools are rejected. The permission gate (`refusal_for`) runs before the allowlist, and every rejection is preceded by an in-band `[Sao Khuê host notice]` deny steer (`_steer_host_deny`, see [injected messages](../../../docs/system-specs/common/injected-messages.md#turn-recovery-continuations)) so the model knows the host refused the call. The judge session refuses every tool. This keeps eval runs side-effect-free while allowing the agent to use read-only tools.
 
 ## Architecture
 
@@ -199,4 +199,4 @@ kirocrew eval            CLI entry point — scenario selection, output
             └─ Turn      Send message → collect response → check assertions
 ```
 
-Key design: each session creates a **new provider instance**, simulating a user closing and reopening Kiro Crew. Cross-session context must come from persisted memory, not conversation history.
+Key design: each session creates a **new provider instance**, simulating a user closing and reopening Sao Khuê. Cross-session context must come from persisted memory, not conversation history.

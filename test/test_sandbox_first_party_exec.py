@@ -1,7 +1,7 @@
 """First-party fixed-argv carve-out in the no-backend fail-close branch.
 
 ``agent.sandbox_allow_unsandboxed_exec`` is one boolean that conflated two
-decisions on a host with no sandbox backend: allowing Kiro Crew's OWN managed
+decisions on a host with no sandbox backend: allowing Sao Khuê's OWN managed
 MCP servers to spawn (argv fully derived inside this package) and unconfining
 the ``mode="strict"`` hostile-input paths. The ``first_party_fixed_argv``
 carve-out lets the first class proceed — unconfined but env-scrubbed, loudly

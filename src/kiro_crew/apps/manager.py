@@ -1,4 +1,4 @@
-"""App Manager — install, uninstall, enable, disable lifecycle for KiroCrew apps.
+"""App Manager — install, uninstall, enable, disable lifecycle for SaoKhue apps.
 
 Apps are installed to ``~/.kiro/crew/apps/{name}/``.  Each installed app has an
 ``installed.json`` metadata file tracking version, timestamp, and enabled state.

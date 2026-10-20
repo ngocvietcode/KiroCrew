@@ -260,7 +260,7 @@ def _print_permission_notice(message: str) -> None:
 
 @dataclass(frozen=True)
 class _ToolGate:
-    """Kiro Crew's own PreToolUse gate, plus the identity it is asked under.
+    """Sao Khuê's own PreToolUse gate, plus the identity it is asked under.
 
     ``session_key`` and ``agent`` are what let the gate resolve the governance
     ceiling ∩ profile for this surface; without them it can only apply the
@@ -408,7 +408,7 @@ def _run_chat(message: str | None, model: str | None, agent: str | None = None) 
     is the shape an ordinary snapshot tool produces — and that refusal is deliberately
     NOT in the ``AcpError`` hierarchy, so ``_stream_and_print``'s handler never sees it
     and it escaped here as an unhandled exception. The remedy was technically on screen,
-    buried under a stack trace that reads as a Kiro Crew crash, which is the wrong thing
+    buried under a stack trace that reads as a Sao Khuê crash, which is the wrong thing
     to tell an operator whose actual problem is one extra file link.
 
     Printed verbatim: the exception's own text names the path and the one-step fix, and a
@@ -878,7 +878,7 @@ async def _answer_permission(
 ) -> None:
     """Answer a pending permission request so the backend can resume the turn.
 
-    Answering one is an authorization decision, so Kiro Crew's own PreToolUse
+    Answering one is an authorization decision, so Sao Khuê's own PreToolUse
     gate runs first and a human is asked only about what survives it. That gate
     is the shared :class:`~kiro_crew.hooks.HookManager` -- sensitive paths, the
     built-in denied commands, the governance ceiling -- never a second copy of
@@ -1300,7 +1300,7 @@ async def _interactive(
 
 
 def _ensure_default_agent_in_config() -> None:
-    """Ensure config.json includes a default Kiro Crew agent for fresh installs.
+    """Ensure config.json includes a default Sao Khuê agent for fresh installs.
 
     Through :func:`update_config_locked` so the seed shares the advisory
     ``<path>.lock`` with every other config writer. The read that decides

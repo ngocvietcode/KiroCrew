@@ -1438,7 +1438,7 @@ async def _do_mcp_apply(request: web.Request) -> web.Response:
 
                 # Audit the scope-toggle decision.  Changing scope presence
                 # controls which MCP servers (and therefore tools) are
-                # reachable from KiroCrew sessions — a permission-shaping
+                # reachable from SaoKhue sessions — a permission-shaping
                 # event that belongs in the SEL log alongside uninstalls.
                 sel().log_api_access(
                     caller="dashboard",
@@ -1538,7 +1538,7 @@ async def _do_mcp_apply(request: web.Request) -> web.Response:
 #   ``mcp_config_files`` -- Config paths, name checks, JSONC refusal, atomic writes, key lookup.
 #   ``mcp_config_entries`` -- Reading and editing one server's entry in each config scope.
 #   ``mcp_config_purge`` -- Removing a server's config everywhere when its package is uninstalled.
-#   ``mcp_agent_sync`` -- Copying servers into the Kiro Crew agent spec; the agent-home refusal.
+#   ``mcp_agent_sync`` -- Copying servers into the Sao Khuê agent spec; the agent-home refusal.
 #   ``mcp_probe`` -- The probe cache, quarantine, shareability measurement and the listing routes.
 #   ``mcp_gateway_routes`` -- The shared gateway's status, enable, refresh and per-server routes.
 #   ``mcp_gateway_stubs`` -- Which servers may be stubbed, and the set-stub route.

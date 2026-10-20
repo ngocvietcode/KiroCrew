@@ -814,7 +814,7 @@ describe('AppDetailPage — uncovered surfaces', () => {
     expect(screen.getByRole('button', { name: /enable/i })).toBeInTheDocument()
     // Stated in text, not only in a hover title: a tooltip is unreachable by
     // touch or keyboard, and this page is where the decision happens.
-    expect(screen.getByText(/the app's own window needs the Kiro Crew desktop app/i)).toBeInTheDocument()
+    expect(screen.getByText(/the app's own window needs the Sao Khuê desktop app/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument()
   })
 
@@ -959,7 +959,7 @@ describe('AppDetailPage — uncovered surfaces', () => {
     expect(screen.getByText(/https:\/\/example\.invalid\/ledger-lens/)).toBeInTheDocument()
     expect(screen.getByText(/2026/)).toBeInTheDocument()
     expect(screen.getByText(/Origin:/)).toBeInTheDocument()
-    expect(screen.getByText(/Min Kiro Crew: v0\.2\.0/)).toBeInTheDocument()
+    expect(screen.getByText(/Min Sao Khuê: v0\.2\.0/)).toBeInTheDocument()
   })
 
   it('shows the platform list for a registry app and no resources card', async () => {

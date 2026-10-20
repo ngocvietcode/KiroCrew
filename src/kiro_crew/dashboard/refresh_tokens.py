@@ -1,4 +1,4 @@
-"""OAuth-style refresh tokens for the KiroCrew dashboard.
+"""OAuth-style refresh tokens for the SaoKhue dashboard.
 
 Adds a paired refresh cookie alongside the existing access cookie
 (``mc_token_<port>``) so users do not need to re-mint via the

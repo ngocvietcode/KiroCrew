@@ -50,7 +50,7 @@ class TestPolicyDocument:
         because the statement denies by exemption rather than by enumeration.
 
         Two more Denies cut the secret-bearing reads back out of ec2:Describe*:
-        DenyForeignUserData (user data of instances Kiro Crew does not manage)
+        DenyForeignUserData (user data of instances Sao Khuê does not manage)
         and DenySecretReads (launch-template and Spot user data, VPN keys,
         account-wide tag values).
         """
@@ -517,7 +517,7 @@ class TestPolicyDocument:
         return next(s for s in iam.policy_document()["Statement"] if s["Sid"] == sid)
 
     def test_ssm_session_and_sendcommand_gated_to_managed_instances(self):
-        # The RCE-adjacent verbs must be tag-scoped to KiroCrew instances so a
+        # The RCE-adjacent verbs must be tag-scoped to SaoKhue instances so a
         # leaked launcher credential can't run commands account-wide.
         st = self._stmt("SsmSessionOnManagedInstances")
         assert set(st["Action"]) == {"ssm:StartSession", "ssm:SendCommand"}
@@ -903,7 +903,7 @@ class TestReachabilityCheck:
 class TestAgentDenyListForCloudVerbs:
     """The cloud teardown/provision verbs are human-only; the agent must be
     blocked from the destructive AWS CLI strings. That block is enforced at
-    KiroCrew's own PreToolUse gate (``security.is_denied`` via the ported
+    SaoKhue's own PreToolUse gate (``security.is_denied`` via the ported
     ``BUILTIN_DENIED_RULES``), NOT by injecting ``deniedCommands`` into the
     kiro agent config (that path is retired) — guard it so the guarantee can't
     silently regress."""

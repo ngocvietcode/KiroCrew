@@ -583,7 +583,7 @@ _STRICT_INTERNAL_API_PATHS = frozenset(
         "/api/agent-ask",
         # Session directives: the provider-neutral leg of the directive
         # protocol. STRICT for the same reasons as its sibling above — the
-        # only legitimate caller is a Kiro Crew directive tool in an MCP
+        # only legitimate caller is a Sao Khuê directive tool in an MCP
         # subprocess, and the route's whole point is that the payload arrives
         # somewhere the model's tool result is not trusted. A cookie
         # fall-through would let a browser bearer park a directive against a
@@ -2352,7 +2352,7 @@ async def start_dashboard(
     # agent runs the CLI as a shell command, so only an inherited environment
     # reaches it. Absent by default, in which case this adds nothing.
     os.environ.update(browser_cli_token.cli_env_overrides())
-    # Name the engine Kiro Crew actually installs. The CLI's own default is the
+    # Name the engine Sao Khuê actually installs. The CLI's own default is the
     # branded Chrome channel at an OS path the product never provisions, so
     # without this the first browse fails on a host where every readiness signal
     # is honestly green. Same channel and same reason as the two above; defers to

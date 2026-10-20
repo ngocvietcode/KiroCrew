@@ -3,7 +3,7 @@
   "path": "telemetry.enabled",
   "type": "boolean",
   "label": "Enabled",
-  "help": "Main switch for Kiro Crew metrics telemetry.",
+  "help": "Main switch for Sao Khuê metrics telemetry.",
   "tags": []
  },
  {

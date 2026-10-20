@@ -371,7 +371,7 @@ class TestLedgerEntryIdentity(unittest.TestCase):
 class TestTheLedgerRecordCarriesItsFormatVersion(unittest.TestCase):
     """``ledger.jsonl`` is the one artifact that leaves the machine.
 
-    ``ledger_sync`` git-pushes it and teammates on DIFFERENT Kiro Crew builds pull it, so an
+    ``ledger_sync`` git-pushes it and teammates on DIFFERENT Sao Khuê builds pull it, so an
     older instance can be handed a row a newer one wrote. With no version there was no way
     to notice: the reader coerces what it recognises and defaults what it does not, so a row
     it only partly understands reads as fully understood. Review called it the nearest thing

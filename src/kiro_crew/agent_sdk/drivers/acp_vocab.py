@@ -80,7 +80,7 @@ def is_runtime_death(exc: BaseException) -> bool:
 
 
 def is_user_worded_failure(exc: BaseException) -> bool:
-    """Whether *exc* is a backend failure whose message Kiro Crew wrote for a person.
+    """Whether *exc* is a backend failure whose message Sao Khuê wrote for a person.
 
     True for an ``AcpError`` with ``user_worded`` set (a curated formatter
     branch, or a raise site with fixed recovery wording such as an unavailable

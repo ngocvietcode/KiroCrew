@@ -488,7 +488,7 @@ class TestDiffScopedRun:
         result = self._run(root, base)
         assert result.returncode == 1, result.stdout
         assert "::error::" in result.stdout
-        assert "'Kiro Crew'" in result.stdout
+        assert "'Sao Khuê'" in result.stdout
         assert "doc.md:2" in result.stdout
 
     def test_no_base_ref_reports_the_whole_tree_without_failing(self, tmp_path) -> None:

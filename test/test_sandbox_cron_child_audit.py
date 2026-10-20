@@ -140,7 +140,7 @@ class TestNestedPassthroughAuditFailure:
 
 
 #: The one SEL-failure handler that is not a degrade: it refuses the delegation
-#: and hands the spawn back to Kiro Crew's own audited policy -- macOS seatbelt,
+#: and hands the spawn back to Sao Khuê's own audited policy -- macOS seatbelt,
 #: or a fail-closed error on Windows -- so a cron child already gets a loud
 #: failure there and needs no carve-out. Asserted to still match exactly one
 #: handler, so it cannot quietly grow to cover a site that proceeds unaudited.

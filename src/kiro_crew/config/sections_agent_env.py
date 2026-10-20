@@ -52,7 +52,7 @@ def coerce_deepseek_env(raw: object) -> dict[str, str]:
 
     TYPE coercion ONLY, and that split is deliberate. What a name may BE for this
     mapping — a POSIX identifier, inside the harness's own child-environment scrub
-    class, not a name Kiro Crew or the harness owns — is checked at SPAWN, in the
+    class, not a name Sao Khuê or the harness owns — is checked at SPAWN, in the
     DeepSeek arm, where a bad entry REFUSES the session with a message naming the
     offending env-var key (``acp/client.py``). Dropping such an entry here instead
     would hand the operator a harness with no provider key, a config file whose
@@ -138,7 +138,7 @@ def coerce_child_env_defaults(raw: object) -> dict[str, str]:
 #: ``fullmatch`` so a trailing newline is not accepted.
 AGENT_ENV_NAME_GRAMMAR = _re.compile("[A-Za-z_][A-Za-z0-9_]*")
 
-#: The ``agent.env`` refusal rule. A refused name is one Kiro Crew, the sandbox or
+#: The ``agent.env`` refusal rule. A refused name is one Sao Khuê, the sandbox or
 #: the platform sets on the child, or one that makes the dynamic loader, a shell, a
 #: language runtime or a tool the agent runs load or run code as a side effect of
 #: running some other program: a preload, a start-up file, a hook, an option
@@ -157,7 +157,7 @@ AGENT_ENV_NAME_GRAMMAR = _re.compile("[A-Za-z_][A-Za-z0-9_]*")
 #: there).
 AGENT_ENV_DENIED_NAMES = frozenset(
     {
-        # Process identity and paths Kiro Crew or the sandbox sets or remaps.
+        # Process identity and paths Sao Khuê or the sandbox sets or remaps.
         "PATH",
         "HOME",
         "USER",
@@ -245,7 +245,7 @@ AGENT_ENV_DENIED_NAMES = frozenset(
     }
 )
 
-#: ``agent.env`` name prefixes refused outright (upper-cased compare): Kiro Crew's
+#: ``agent.env`` name prefixes refused outright (upper-cased compare): Sao Khuê's
 #: and kiro-cli's own namespaces, the DeepSeek Harness's and the opencode
 #: harness's, the dynamic loaders', systemd's, Kerberos's, and the namespaces of
 #: the interpreters and tools that read code, commands or config locations from
@@ -253,7 +253,7 @@ AGENT_ENV_DENIED_NAMES = frozenset(
 #: launcher sets itself, ``GIT_CONFIG_*``, which injects any git config key
 #: (``core.fsmonitor``, ``core.hooksPath``), and ``GIT_EXEC_PATH``,
 #: ``GIT_EXTERNAL_DIFF``, ``GIT_ASKPASS``, ``GIT_PAGER`` and every later addition.
-#: ``OPENCODE_`` is where Kiro Crew hands the opencode harness its own config
+#: ``OPENCODE_`` is where Sao Khuê hands the opencode harness its own config
 #: (``OPENCODE_CONFIG_CONTENT``), and ``OPENCODE_CONFIG``/``OPENCODE_CONFIG_DIR``
 #: point that harness at a config file whose MCP commands it runs at start-up.
 AGENT_ENV_DENIED_PREFIXES = (
@@ -374,7 +374,7 @@ def agent_env_refusal(name: str) -> str | None:
     upper = name.upper()
     if _agent_env_denied(upper):
         return (
-            "Kiro Crew or the sandbox owns that name, or it can make a shell, the "
+            "Sao Khuê or the sandbox owns that name, or it can make a shell, the "
             "loader, a runtime or a tool run code the command did not name"
         )
     if upper in _agent_env_home_override_names():

@@ -273,7 +273,7 @@ describe('SttSettings provider-aware install surface', () => {
       prereqs: [],
     })
     expect(await screen.findByText(/bundled audio decoder is missing or damaged/i)).toBeTruthy()
-    expect(screen.getByText(/reinstall the Kiro Crew desktop app/i)).toBeTruthy()
+    expect(screen.getByText(/reinstall the Sao Khuê desktop app/i)).toBeTruthy()
     expect(screen.queryByText(/run these commands/i)).toBeNull()
   })
 

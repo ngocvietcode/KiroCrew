@@ -84,10 +84,10 @@ from kiro_crew.agent_sdk.backends import (
 ENTITLEMENT_HOST_IDENTITY_STORE = "host_identity_store"
 
 #: Signed in through the harness's OWN credential file, which it writes and reads
-#: itself. Kiro Crew never reads it and only ever checks that it exists.
+#: itself. Sao Khuê never reads it and only ever checks that it exists.
 ENTITLEMENT_OWN_CREDENTIAL_FILE = "own_credential_file"
 
-#: Entitled by a key Kiro Crew holds in ITS OWN secret vault and hands to the
+#: Entitled by a key Sao Khuê holds in ITS OWN secret vault and hands to the
 #: harness's process as an environment variable at spawn.
 #:
 #: The third source, and it is what lets a harness be enforced with NO carve-out in
@@ -115,7 +115,7 @@ ENTITLEMENT_HOST_VAULT = "host_vault"
 ENTITLEMENT_LABELS: Dict[str, str] = {
     ENTITLEMENT_HOST_IDENTITY_STORE: "kiro-cli's own sign-in",
     ENTITLEMENT_OWN_CREDENTIAL_FILE: "the harness's own credential file",
-    ENTITLEMENT_HOST_VAULT: "a key in Kiro Crew's secret vault",
+    ENTITLEMENT_HOST_VAULT: "a key in Sao Khuê's secret vault",
 }
 
 ENTITLEMENT_SOURCES: FrozenSet[str] = frozenset(
@@ -376,7 +376,7 @@ UNKNOWN_AGENT_AUTH = AgentAuthDeclaration(
         "harness's own sign-in, then start a new chat."
     ),
     signed_out_message=(
-        "This agent backend is not signed in, and Kiro Crew has no sign-in "
+        "This agent backend is not signed in, and Sao Khuê has no sign-in "
         "instruction recorded for it. Complete the harness's own sign-in, then "
         "start a new chat."
     ),
@@ -584,7 +584,7 @@ AGENT_AUTH_DECLARATIONS: Tuple[AgentAuthDeclaration, ...] = (
         # in ``secrets.yaml`` instead, the same run reaches its provider.
         signed_out_message=(
             "goose has no provider it can use here: none is configured, or its key "
-            "is in the system keyring, which Kiro Crew's sandbox cannot open. Run "
+            "is in the system keyring, which Sao Khuê's sandbox cannot open. Run "
             "`GOOSE_DISABLE_KEYRING=true goose configure` in your terminal so the key "
             "is saved to goose's secrets.yaml, or configure a locally served model, "
             "then start a new chat."
@@ -714,7 +714,7 @@ AGENT_AUTH_DECLARATIONS: Tuple[AgentAuthDeclaration, ...] = (
         # there may be no state to assert: a provider route pointed at a model served
         # on the operator's own machine needs no key at all.
         sign_in_remedy=(
-            "DeepSeek Harness reaches a hosted model with a provider key Kiro Crew "
+            "DeepSeek Harness reaches a hosted model with a provider key Sao Khuê "
             "holds for it. Save the key under Settings → Secrets, then map it in "
             "agent.deepseek_env under the environment-variable name the provider "
             "expects, such as DEEPSEEK_API_KEY. A model served locally on this "

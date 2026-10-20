@@ -34,12 +34,12 @@ mkdirSync(OUT, { recursive: true })
  *  `{{productName}}` resolved to its stock default. A frame is only written when
  *  the tips carry the whole string. */
 const CURATED_TIP =
-  'Reviewed by the Kiro Crew team before listing. Apps clone with your Git credentials.'
+  'Reviewed by the Sao Khuê team before listing. Apps clone with your Git credentials.'
 const COMMUNITY_TIP =
-  'Listed by contributors after a lighter review. Not vetted by the Kiro Crew team. '
+  'Listed by contributors after a lighter review. Not vetted by the Sao Khuê team. '
   + 'Apps still clone with your Git credentials, so install only apps you recognise.'
-const RAIL_CURATED = 'Reviewed by the Kiro Crew team'
-const RAIL_COMMUNITY = 'Community-listed, not vetted by the Kiro Crew team'
+const RAIL_CURATED = 'Reviewed by the Sao Khuê team'
+const RAIL_COMMUNITY = 'Community-listed, not vetted by the Sao Khuê team'
 
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1060, height: 760 }, deviceScaleFactor: 2 })

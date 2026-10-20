@@ -46,7 +46,7 @@ class TestClosure:
         assert sum(out.values()) == len(prompt)
 
     def test_leading_unmatched_content_becomes_unclassified(self):
-        # kiro-cli's own base prompt precedes KiroCrew's first marker; it must
+        # kiro-cli's own base prompt precedes SaoKhue's first marker; it must
         # surface as a visible bucket, not vanish.
         lead = "kiro-cli base prompt preamble\n"
         prompt = lead + "[Memory - x]\nmem\n\n[CURRENT USER REQUEST]\nq"

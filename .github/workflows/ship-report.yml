@@ -237,7 +237,7 @@ jobs:
           else
             LINK_RULE="Reference a PR as <URL|#NUMBER> right after the clause describing it."
           fi
-          INSTRUCTIONS="You write a daily ship update for the Kiro Crew engineering Slack channel. \
+          INSTRUCTIONS="You write a daily ship update for the Sao Khuê engineering Slack channel. \
           Below is a JSON array of pull requests merged into $GITHUB_REPOSITORY during one reporting window. \
           Write a SHORT, glanceable update: 2 to 4 plain sentences, 70 words maximum. \
           Name only the 2 or 3 most significant changes. $LINK_RULE \
@@ -346,7 +346,7 @@ jobs:
 
           cat > issue-instructions.txt <<'PROMPT'
           You write the inbound half of a daily engineering update for the
-          Kiro Crew repository. You are given the bugs and the feature requests filed in
+          Sao Khuê repository. You are given the bugs and the feature requests filed in
           one reporting window. Answer with a single JSON object and nothing else.
 
           Schema: {"must_fix": [{"number": number, "why": string}], "bugs": string, "features": string}
@@ -557,8 +557,8 @@ jobs:
           fi
           PLURAL="s"; [ "$COUNT" = "1" ] && PLURAL=""
           IPLURAL="s"; [ "$ICOUNT" = "1" ] && IPLURAL=""
-          TITLE="KiroCrew ship report"
-          [ "$LINK_STYLE" = "plain" ] || TITLE="*KiroCrew ship report*"
+          TITLE="SaoKhue ship report"
+          [ "$LINK_STYLE" = "plain" ] || TITLE="*SaoKhue ship report*"
           START_FMT="$(TZ=America/Los_Angeles date -d "$START" +'%b %d %I:%M %p')"
           if [ "$(TZ=America/Los_Angeles date -d "$START" +%Y%m%d)" = "$(TZ=America/Los_Angeles date -d "$END" +%Y%m%d)" ]; then
             END_FMT="$(TZ=America/Los_Angeles date -d "$END" +'%I:%M %p')"

@@ -11,9 +11,9 @@ end-to-end subsystem (install pipeline, validation, routes, security model).
 ## The rule for contributors
 
 **Pack manifest versioning:** every `theme.json` MUST declare
-`"formatVersion": 1` (integer). Kiro Crew rejects packs with a missing value or
+`"formatVersion": 1` (integer). Sao Khuê rejects packs with a missing value or
 an unknown major with an explicit "this pack requires a newer version of
-Kiro Crew" error. Author against the current major; breaking manifest changes
+Sao Khuê" error. Author against the current major; breaking manifest changes
 bump it.
 
 **Every new UI element MUST be themable at least at the color layer.** Style it
@@ -242,7 +242,7 @@ packaged asset names:
 ```json
 {
   "level": 1,
-  "branding": { "botName": "KIRO CREW" }
+  "branding": { "botName": "SAO KHUÊ" }
 }
 ```
 
@@ -255,7 +255,7 @@ branding/wordmark.svg   # reserved brand artwork for supporting surfaces
 `logo` accepts `.svg` or `.png`; `favicon` accepts `.ico`, `.png`, or `.svg`.
 The backend serves only validated files from the installed pack, and the label is
 trimmed to 48 printable characters. When an asset or label is absent, the shell
-falls back independently to its configured Kiro Crew branding. Compiled edition
+falls back independently to its configured Sao Khuê branding. Compiled edition
 branding registered through `registerThemeBranding()` has precedence over an
 installed pack. `useShellBranding` in `src/shell/branding.ts` owns that order.
 
@@ -281,8 +281,8 @@ Settings → Display → **Font Family** reads through them:
 
 | Option | Resolves to |
 |---|---|
-| Sans | the pack's `sans` face, else Kiro Crew's own proportional stack |
-| Mono | the pack's `mono` face, else Kiro Crew's own monospace stack |
+| Sans | the pack's `sans` face, else Sao Khuê's own proportional stack |
+| Mono | the pack's `mono` face, else Sao Khuê's own monospace stack |
 | System | the OS face — no token, so a pack cannot reach the body font here |
 | OpenDyslexic | the bundled OpenDyslexic stack — no token, so a pack cannot take this accessibility choice away; it supplies its own monospace face too |
 | Custom | the family the user types (`resolveCustomFontFamily`), bypassing the pack's sans token |

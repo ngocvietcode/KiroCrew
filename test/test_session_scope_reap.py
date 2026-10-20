@@ -316,7 +316,7 @@ def test_helper_that_is_its_own_live_leader_waits_for_a_pre_boot_scope(tmp_path)
 
 
 def test_unmarked_credential_helper_scope_is_left_alone(tmp_path, caplog):
-    # The helper is the toolbox's binary, not one Kiro Crew spawns by name, so
+    # The helper is the toolbox's binary, not one Sao Khuê spawns by name, so
     # without the spawn marker it is not attributable to this install and the
     # ownership condition refuses the scope before the anchor is even consulted.
     slice_dir = tmp_path / "slice"

@@ -805,7 +805,7 @@ async def _handle_teardown(request: web.Request) -> web.Response:
     if os.name == "nt":
         return web.json_response(
             {"error": "Artifact Deploy requires a POSIX shell (bash) for deploy scripts. "
-             "Use WSL (Windows Subsystem for Linux) to run the Kiro Crew gateway on Windows."},
+             "Use WSL (Windows Subsystem for Linux) to run the Sao Khuê gateway on Windows."},
             status=400,
         )
     if not _HAS_ARTIFACTS:

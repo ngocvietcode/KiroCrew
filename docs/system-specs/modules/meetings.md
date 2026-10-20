@@ -1,6 +1,6 @@
 # Meetings (builtin app)
 
-An AI meeting assistant. Transcribes a live meeting through Kiro Crew's own
+An AI meeting assistant. Transcribes a live meeting through Sao Khuê's own
 streaming speech-to-text, stores the finalized transcript, fans each line out to
 a small crew of background agents (structured notes, an HTML/Mermaid diagram, an
 action-item list), and gates the meeting's close behind a review of the extracted
@@ -620,7 +620,7 @@ every minute while it is open, so a pre-created meeting appears without a remoun
 
 ## Transcript UI and speech-to-text
 
-Kiro Crew's own `/api/ws/stt` (`dashboard/stt_stream.py`).
+Sao Khuê's own `/api/ws/stt` (`dashboard/stt_stream.py`).
 `hooks/useMeetingTranscription.ts` conforms to that endpoint's existing wire
 protocol — connect, wait for `{"type":"ready"}`, send 16 kHz Int16 PCM from
 `/pcm-worklet.js`, receive `partial`/`final`/`error`, send `{"type":"stop"}` and
@@ -730,7 +730,7 @@ broadcast bar remains available when speech input is unavailable.
      Remote-URL *fetches* are left to the CSP rather than pattern-matched.
 
   Mermaid still renders, and this is what makes control 3 affordable: it is driven
-  by Kiro Crew's own bootstrap from the declarative `div.mermaid` / fenced
+  by Sao Khuê's own bootstrap from the declarative `div.mermaid` / fenced
   ```mermaid markup the agent is instructed to emit, so the agent has no
   documented need to ship JS. Both directions are tested in
   `website/src/test/sketchSrcdoc.test.ts` — nothing executable survives, **and** a
@@ -754,7 +754,7 @@ broadcast bar remains available when speech input is unavailable.
 See `ATTRIBUTION.md` for the table. In short: the internal task system became
 the task-provider seam, the internal calendar MCP became the calendar-provider
 seam, the second (separately built, internally sourced) speech-to-text daemon was
-deleted in favour of Kiro Crew's own, the standalone server became in-gateway
+deleted in favour of Sao Khuê's own, the standalone server became in-gateway
 routes, the shell-blob self-heal cron became Python at startup, and the
 internal-git update-check cron was deleted (a builtin versions with the package).
 

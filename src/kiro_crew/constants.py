@@ -9,11 +9,11 @@ import re
 from collections.abc import Iterator
 
 # Positive-identity marker injected into the environment of every subprocess
-# tree KiroCrew spawns (the ACP provider, MCP probes, gateway pool backends).
+# tree SaoKhue spawns (the ACP provider, MCP probes, gateway pool backends).
 # Children inherit the environment, so marking the provider process
 # transitively marks every MCP server it launches. The untracked-orphan sweep
 # (``session_pid_orphan_scan.py``) reads it back from ``/proc/<pid>/environ`` to positively
-# identify escaped MCP launcher processes whose *cmdline* carries no KiroCrew
+# identify escaped MCP launcher processes whose *cmdline* carries no SaoKhue
 # fingerprint (e.g. ``npx @playwright/mcp`` -> node) without ever risking a
 # kill of a user's own identically-named processes. Constant by design: it must
 # never vary per session/agent, both so the check is a simple presence test and
@@ -21,9 +21,9 @@ from collections.abc import Iterator
 # identity (PoolKey hashes env).
 KIROCREW_SPAWNED_ENV = "KIROCREW_SPAWNED"
 KIROCREW_SPAWNED_VALUE = "1"
-# Per-spawn incarnation of a tree Kiro Crew spawned as its own session leader --
+# Per-spawn incarnation of a tree Sao Khuê spawned as its own session leader --
 # an agent runtime, and an app backend -- set on the root's environment and
-# inherited by its whole tree. KIROCREW_SPAWNED says "a Kiro Crew spawned this";
+# inherited by its whole tree. KIROCREW_SPAWNED says "a Sao Khuê spawned this";
 # this one says WHICH spawn, so a teardown that has lost its root can still tell
 # the root's own tree from a fresh spawn that took the root's recycled pid.
 KIROCREW_SPAWN_INSTANCE_ENV = "KIROCREW_SPAWN_INSTANCE"
@@ -42,7 +42,7 @@ KIROCREW_RUNTIME_AGENT_ENV = "KIROCREW_RUNTIME_AGENT"
 # Set on every tree spawned through ``sandbox.sandboxed_spawn_argv`` -- a build, an
 # ``npx`` install, a ``git``/``gh`` read, a provisioning run -- and inherited by that
 # whole tree exactly as KIROCREW_SPAWNED is. It says what KIROCREW_SPAWNED does not:
-# this tree was spawned as TOOL work rather than as a session leader Kiro Crew owns
+# this tree was spawned as TOOL work rather than as a session leader Sao Khuê owns
 # and tears down. ``session_pid._env_is_sandbox_tool`` reads it back out of the
 # kernel's exec-time copy, which lets the runtime reconciler leave such a tree out of
 # its kill-candidate population on evidence a same-uid process cannot forge on
@@ -188,7 +188,7 @@ def node_too_old_message(
       newer base image (Amazon Linux 2023, Ubuntu 22.04+) or build from source.
     """
     base = (
-        f"Node.js v{format_node_version(version)} is too old: Kiro Crew needs "
+        f"Node.js v{format_node_version(version)} is too old: Sao Khuê needs "
         f"v{format_node_version(floor)} or newer."
     )
     glibc = _host_glibc_version()
@@ -1517,7 +1517,7 @@ SUBAGENT_COMPLETION_META_KEY = "subagentCompletion"
 # part of the documented Win32 file-naming contract, not a quirk of one build,
 # and it applies to any host the identifier might travel to.
 #
-# ONE definition on purpose. Every Kiro Crew identifier that becomes a path
+# ONE definition on purpose. Every Sao Khuê identifier that becomes a path
 # component on disk — a git branch (a loose ref FILE under `.git/refs/heads/`),
 # an app name (a directory under the apps root) — has to refuse the same set,
 # and two copies would drift. Callers lowercase before testing; a caller whose
@@ -1661,7 +1661,7 @@ CHANNEL_OWNER_DM_NAMESPACES: tuple[str, ...] = tuple(
 # it into cli.py and cli_chat.py risks a rename leaving a stale product name in
 # the two most-seen surfaces (bare `kirocrew`, the chat REPL). Import it; never
 # re-inline it. `cloud/ui.py` keeps its own art because it renders a different
-# wordmark ("Kiro Crew Cloud") with ANSI color.
+# wordmark ("Sao Khuê Cloud") with ANSI color.
 BANNER = r"""
    _  ___            ___
   | |/ (_)_ _ ___   / __|_ _ _____ __ __

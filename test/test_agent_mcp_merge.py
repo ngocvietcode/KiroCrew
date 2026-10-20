@@ -234,7 +234,7 @@ class TestMcpMergePriority:
     def test_the_authorship_marker_never_reaches_the_rendered_spec(self, tmp_path: Path):
         """A shared-file marker is provenance, not configuration.
 
-        The marker records that Kiro Crew wrote an entry into a file it does NOT
+        The marker records that Sao Khuê wrote an entry into a file it does NOT
         own. The rendered spec is ours, so carrying the key through would put a
         field in front of the runtime that says nothing to it -- and would change
         the emitted spec for every managed remote, which nothing about recording

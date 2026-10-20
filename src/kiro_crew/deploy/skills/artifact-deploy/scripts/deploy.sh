@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - deploy a pre-built static site under a slug.
+# SaoKhue One-Click Deploy - deploy a pre-built static site under a slug.
 #
 # Usage:
 #   deploy.sh <app_dir> [--slug NAME] [--ttl HOURS] [--profile P] [--region R]

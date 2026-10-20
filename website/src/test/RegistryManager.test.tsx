@@ -538,7 +538,7 @@ describe('RegistryManager', () => {
       render(<RegistryManager />, { wrapper: Wrapper })
       await waitFor(() => expect(screen.getByText('Team reviewed')).toBeInTheDocument())
       expect(
-        screen.getByLabelText(/Reviewed by the Kiro Crew team before listing/),
+        screen.getByLabelText(/Reviewed by the Sao Khuê team before listing/),
       ).toBeInTheDocument()
     })
 
@@ -546,7 +546,7 @@ describe('RegistryManager', () => {
       mockListRegistries.mockResolvedValue({ registries: [], pinned: [{ ...PINNED, review: 'community' }] })
       render(<RegistryManager />, { wrapper: Wrapper })
       await waitFor(() => expect(screen.getByText('Not vetted')).toBeInTheDocument())
-      expect(screen.getByLabelText(/Not vetted by the Kiro Crew team/)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Not vetted by the Sao Khuê team/)).toBeInTheDocument()
     })
 
     it('does not badge a community registry as trusted', async () => {

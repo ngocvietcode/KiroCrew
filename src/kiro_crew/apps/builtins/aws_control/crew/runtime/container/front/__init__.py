@@ -1,7 +1,7 @@
 """S1: the front process.
 
 The only listener the network reaches. It authenticates the loopback call to the
-Kiro Crew backend, strips the crew route prefix, serializes turns per conversation,
+Sao Khuê backend, strips the crew route prefix, serializes turns per conversation,
 projects the backend's stream down to a customer-safe allowlist, and keeps the
 customer surface separate from the owner's control surface.
 

@@ -1167,7 +1167,7 @@ when the key changes.** Restrictions are the dangerous half: a persisted rule na
 a tool that no longer exists does not fail loudly, it stops matching. The capability
 the operator switched off comes back on, and nothing at the call site says so.
 
-Kiro Crew resolves tool restrictions at several name-keyed surfaces, at different
+Sao Khuê resolves tool restrictions at several name-keyed surfaces, at different
 lifecycle stages, in different shapes:
 
 | Site | Lifecycle stage | Shape | Reachable from code |

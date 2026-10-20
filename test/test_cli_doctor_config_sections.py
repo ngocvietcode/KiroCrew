@@ -134,9 +134,9 @@ class TestEffectiveModelSection:
         assert issues == ["agent spec unreadable"]
 
     def test_project_local_spec_is_flagged_as_shadowing(self, capsys) -> None:
-        """kiro-cli resolves <project>/.kiro/agents FIRST and Kiro Crew's own
+        """kiro-cli resolves <project>/.kiro/agents FIRST and Sao Khuê's own
         resolver never reads it, so that file can decide what actually runs while
-        every Kiro Crew surface reports something else."""
+        every Sao Khuê surface reports something else."""
         from kiro_crew.agent import AGENT_FILENAME
 
         self._install_spec(None)
@@ -711,7 +711,7 @@ class TestWhatsAppSection:
 class TestProjectSectionAndAuthRow:
     """`kirocrew doctor` Project labels + the local-bind auth row.
 
-    The Project row resolves the Kiro Crew SOURCE CHECKOUT (``cli.py``
+    The Project row resolves the Sao Khuê SOURCE CHECKOUT (``cli.py``
     ``_PROJECT_MARKERS``), never the user's own workspace, so its labels must
     say so. The Configuration auth row must not advertise a loopback
     exemption: the dashboard middleware requires a valid token on every
@@ -771,11 +771,11 @@ class TestProjectSectionAndAuthRow:
         self, monkeypatch, tmp_path: Path, capsys
     ) -> None:
         # Carry both _PROJECT_MARKERS so the directory measurably IS a
-        # Kiro Crew source checkout.
+        # Sao Khuê source checkout.
         (tmp_path / "skills").mkdir()
         (tmp_path / "src" / "kiro_crew").mkdir(parents=True)
         out = self._run_doctor(tmp_path, monkeypatch, capsys, project_dir=str(tmp_path))
-        assert f"source dir:  ✅ {tmp_path} (Kiro Crew source checkout)" in out
+        assert f"source dir:  ✅ {tmp_path} (Sao Khuê source checkout)" in out
         assert "project dir:" not in out
         # tmp_path holds no .git — the warning names the checkout, so the
         # adjacent row is not read as a finding about the user's workspace.
@@ -784,11 +784,11 @@ class TestProjectSectionAndAuthRow:
     def test_partially_marked_dir_is_not_called_a_checkout(
         self, monkeypatch, tmp_path: Path, capsys
     ) -> None:
-        # A single marker must not qualify as a Kiro Crew source checkout.
+        # A single marker must not qualify as a Sao Khuê source checkout.
         (tmp_path / "skills").mkdir()
         out = self._run_doctor(tmp_path, monkeypatch, capsys, project_dir=str(tmp_path))
         assert f"source dir:  ✅ {tmp_path}" in out
-        assert "(Kiro Crew source checkout)" not in out
+        assert "(Sao Khuê source checkout)" not in out
         assert "git repo:    ⚠️  not a git repo" in out
         assert "source checkout is not a git repo" not in out
 

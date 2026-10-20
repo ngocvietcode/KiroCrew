@@ -240,7 +240,7 @@ test("client-only: the local-start offer routes through a re-exec on a crew's po
   assert.match(source, /\}, \{ expectPort: successorPort, pinPort: true, restartingStatus: RESTARTING_FOR_LOCAL_GATEWAY_STATUS \}\);/);
   // The splash is the only surface showing status during the handoff, and this
   // caller is not updating anything, so it must not borrow the update wording.
-  assert.match(source, /const RESTARTING_FOR_LOCAL_GATEWAY_STATUS = "Restarting Kiro Crew to start a local gateway/);
+  assert.match(source, /const RESTARTING_FOR_LOCAL_GATEWAY_STATUS = "Restarting Sao Khuê to start a local gateway/);
   assert.doesNotMatch(source, /restartingStatus = RESTARTING_FOR_LOCAL_GATEWAY_STATUS/);
   // Pinning the port is what makes the watched port and the bound port one
   // value: the successor reads KIROCREW_PORT ahead of its own selection.

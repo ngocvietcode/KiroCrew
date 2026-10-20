@@ -1,6 +1,6 @@
 # macOS Signing and Notarization Runbook
 
-Operational reference for Kiro Crew's macOS signing chain: signing via the
+Operational reference for Sao Khuê's macOS signing chain: signing via the
 enterprise signing service (CDSigner), Apple notarization and stapling, and
 rotation of the notary credential.
 

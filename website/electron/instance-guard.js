@@ -7,7 +7,7 @@
  * separates installs by filename; Squirrel validates updates against the
  * host's designated requirement, which pins the id), ONE data home
  * (~/.kiro/crew), and ONE gateway port (5476). That makes the port a mutex:
- * only one KiroCrew-family gateway may run at a time. Electron's
+ * only one SaoKhue-family gateway may run at a time. Electron's
  * requestSingleInstanceLock is keyed on userData (per productName), so it
  * cannot stop "KiroCrew Nightly" launching while "KiroCrew" runs — this
  * module covers that cross-app seam.
@@ -81,8 +81,8 @@ function classifyGatewayReadiness(statusCode, payload) {
 const FAMILY_META = {
   // appName is the technical Finder/AppleScript target. displayName is the
   // product spelling shown in dialogs and status text.
-  prod: { appName: "KiroCrew", displayName: "Kiro Crew" },
-  nightly: { appName: "KiroCrew Nightly", displayName: "Kiro Crew Nightly" },
+  prod: { appName: "KiroCrew", displayName: "Sao Khuê" }, // brand-ok: appName is an identifier
+  nightly: { appName: "KiroCrew Nightly", displayName: "Sao Khuê Nightly" },
 };
 
 /**
@@ -137,11 +137,11 @@ function decideGatewayAction(ownVersion, remoteHealth, { localOwner = "unknown",
     return { action: "reuse", reason: "same-family" };
   }
   if (remote === null) return { action: "reuse", reason: "dev-gateway" };
-  // Cross-family: the payload says "a rival KiroCrew owns the port". That is
+  // Cross-family: the payload says "a rival SaoKhue owns the port". That is
   // necessary but NOT sufficient to evict, because the payload is identical
   // whether the responder is a local install or a REMOTE gateway forwarded
   // here by `ssh -L <port>:localhost:<port>`. Only a positively identified
-  // local KiroCrew LISTEN owner authorises the eviction; a tunnel ("foreign",
+  // local SaoKhue LISTEN owner authorises the eviction; a tunnel ("foreign",
   // owner is `ssh`), an unseen socket ("none"), or a failed probe ("unknown")
   // all reuse instead. Evicting a tunnel is doubly wrong: the AppleScript quit
   // targets a local app that is not running, and killing the port would tear

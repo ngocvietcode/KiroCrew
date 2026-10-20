@@ -68,7 +68,7 @@ def _proc_self_reader(*, uid_map: str, status: str):
 
 
 class TestUserNamespaceVantage:
-    """Only Kiro Crew's own agent-shell shape changes the host verdict."""
+    """Only Sao Khuê's own agent-shell shape changes the host verdict."""
 
     def test_confined_shell_reports_unverifiable_and_not_an_issue(
         self, monkeypatch: pytest.MonkeyPatch, capsys

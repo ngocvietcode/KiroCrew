@@ -134,7 +134,7 @@ class TrustedAcpExecutableSnapshot:
     """The resolved Kiro CLI path for one ACP launch.
 
     ``launch_path`` is ALWAYS the user's installed binary, launched in place —
-    Kiro Crew never copies the CLI and runs the copy, because a multi-call Kiro
+    Sao Khuê never copies the CLI and runs the copy, because a multi-call Kiro
     CLI resolves its sibling subcommand executable relative to its own path.
     """
 
@@ -208,7 +208,7 @@ def _acp_executable_is_runnable(
 
     Trust is "it runs" — install source, owner, and path do not gate ACP launch,
     so a toolbox / Homebrew / self-updated CLI is accepted like any other
-    (Kiro Crew is not the authority on where Kiro CLI is installed).
+    (Sao Khuê is not the authority on where Kiro CLI is installed).
 
     A zero-byte candidate is still refused. An interrupted install or
     self-update can leave a truncated but executable ``kiro-cli``; exec'ing it
@@ -236,7 +236,7 @@ def snapshot_trusted_acp_executable(
 ) -> TrustedAcpExecutableSnapshot:
     """Return the user's installed Kiro CLI, to be launched IN PLACE.
 
-    Kiro Crew always executes the Kiro CLI the user installed, at the path it was
+    Sao Khuê always executes the Kiro CLI the user installed, at the path it was
     resolved from. It never copies the binary elsewhere and runs the copy.
 
     Kiro CLI 2.15+ is a **multi-call binary**: it dispatches subcommands by

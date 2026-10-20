@@ -1,6 +1,6 @@
 """Multi-session evaluation runner.
 
-Runs scenarios against a KiroCrew instance, capturing responses and
+Runs scenarios against a SaoKhue instance, capturing responses and
 scoring assertions. Each scenario gets a fresh memory directory with
 optional profile seeding.
 """

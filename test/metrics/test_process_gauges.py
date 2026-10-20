@@ -154,7 +154,7 @@ def test_every_instrument_is_a_gauge_not_a_sum():
     """No instrument here may be a Sum — that is what a cumulative series is.
 
     The process CPU and GC readings were observable COUNTERS, which made them the
-    only cumulative series Kiro Crew exported, and one cumulative series forces
+    only cumulative series Sao Khuê exported, and one cumulative series forces
     every consumer into stateful whole-hour aggregation (its hourly increment is
     last-minus-first across the whole hour, per host and per process lifetime).
     The DELTA route is not the alternative: an observable callback reads an

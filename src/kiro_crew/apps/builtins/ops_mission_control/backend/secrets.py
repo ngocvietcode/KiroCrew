@@ -19,7 +19,7 @@ it — the same mechanism that makes the governance ceiling un-disableable. The
 dashboard PUT handler is the only writer and opens the path directly (it does not
 route through the agent gate), so the operator's Settings UI still works.
 
-Why not ``config.json``? Because Kiro Crew serves an app's ``data/config.json``
+Why not ``config.json``? Because Sao Khuê serves an app's ``data/config.json``
 over ``/api/apps/<name>/config`` **without session auth** — a documented behavior
 apps rely on to bootstrap their UI. A token in there would be readable by anything
 that can reach the gateway port. And a token in the main ``config.json`` would be

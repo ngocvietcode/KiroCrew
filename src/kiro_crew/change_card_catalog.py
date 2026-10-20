@@ -269,7 +269,7 @@ _CANNOT_WIDEN_SETTINGS: frozenset[str] = frozenset(
 #: a session that names no agent claims one (``session_pool._claim_from_pool``),
 #: so it picks which tool grants that session runs under. ``agent.kas_bundle``
 #: swaps the program the KAS harness is spawned from (the installed kiro-cli or
-#: Kiro Crew's own pinned engine bundle, ``acp.harness.kas.KasHarness.resolve_spawn``); a
+#: Sao Khuê's own pinned engine bundle, ``acp.harness.kas.KasHarness.resolve_spawn``); a
 #: different binary with its own update cadence is a different program, so a
 #: bool flip here is code exec, not a widen or tighten.
 _CODE_EXEC_SETTINGS: frozenset[str] = frozenset(

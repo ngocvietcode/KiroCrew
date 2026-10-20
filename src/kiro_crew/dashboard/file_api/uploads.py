@@ -410,7 +410,7 @@ async def api_upload_file(request: web.Request) -> web.Response:
                             "error": (
                                 f"File too large: {Path(fname).name} (max {max_upload_mb} MB). "
                                 "To share it anyway, type @ followed by its location on the "
-                                "computer running Kiro Crew, for example "
+                                "computer running Sao Khuê, for example "
                                 f"@~/Downloads/{Path(fname).name}."
                             ),
                             "code": "file_too_large",

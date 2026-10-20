@@ -81,7 +81,15 @@ function lightboxFilename(image: LightboxImage): string {
   } catch {
     // image.src is not a parseable URL (e.g. a bare data: payload) -- fall through.
   }
-  const altName = (image.alt || '').trim().replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '')
+  // Diacritics fold onto their base letter before the ASCII filter, so an alt text
+  // such as "Sao Khuê banner" names the file `Sao_Khue_banner` rather than
+  // silently losing the accented letters.
+  const altName = (image.alt || '')
+    .trim()
+    .normalize('NFKD')
+    .replace(/\p{M}+/gu, '')
+    .replace(/[^\w.-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
   return altName || 'image'
 }
 

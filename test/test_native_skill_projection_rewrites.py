@@ -410,7 +410,7 @@ def test_an_alias_view_leaves_out_the_welcome_message_and_keeps_a_short_descript
 ):
     """kiro-cli ships every agent's description and welcomeMessage in each
     session/new reply; an alias is a second copy of an agent the host already
-    lists, so it must not double that text. The authored spec keeps it (Kiro Crew
+    lists, so it must not double that text. The authored spec keeps it (Sao Khuê
     renders the welcomeMessage from there), and the source is named in a warning."""
     _home, agents, project = native_tree
     source = agents / "custom.json"
@@ -712,7 +712,7 @@ def test_the_churning_census_bounds_the_group_key_it_retains(native_tree):
 
 def test_a_preparation_writes_only_views_into_the_agents_directory(native_tree):
     """The Kiro IDE lists every entry of ``~/.kiro/agents/`` as an agent. The
-    lock, the lease records and the ownership sidecars are Kiro Crew's own and
+    lock, the lease records and the ownership sidecars are Sao Khuê's own and
     belong under its data home; only the views kiro-cli resolves by name may
     land beside the authored specs."""
     _home, agents, project = native_tree

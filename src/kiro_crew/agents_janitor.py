@@ -14,7 +14,7 @@ when they are old enough that no in-flight operation could still own them:
 * orphaned atomic-write temps ``<base>.json.<digits>.tmp`` (foreign writers) and
   ``tmp<alnum>.tmp`` (this project's own ``mkstemp`` residue) — swept at 24h;
 * aged backups ``*.bak-<digits>`` and ``*.json.bak.<digits>`` — OPT-IN
-  (``sweep_backups=True``) and swept at a much longer 14-day window. Kiro Crew
+  (``sweep_backups=True``) and swept at a much longer 14-day window. Sao Khuê
   authors no backups in this directory, so every backup a sweep would remove
   belongs to a foreign writer whose retention policy is not ours to decide; and
   a backup exists precisely to outlive its write, so the millisecond "garbage by
@@ -79,7 +79,7 @@ DEFAULT_BACKUP_MAX_AGE_SECONDS = 14 * 24 * 60 * 60
 #:   counter); requiring at least one digit between ``.json.`` and ``.tmp`` is
 #:   what distinguishes a stranded temp from a legitimately-named file ending in
 #:   ``.tmp``.
-#: * ``tmp<alnum>.tmp`` — Kiro Crew's OWN atomic-write residue. ``agent.py``'s
+#: * ``tmp<alnum>.tmp`` — Sao Khuê's OWN atomic-write residue. ``agent.py``'s
 #:   ``_atomic_json_write`` calls ``tempfile.mkstemp(suffix=".tmp")``, which
 #:   emits ``tmp`` + random alphanumerics + ``.tmp`` (never the dotted
 #:   ``.json.<digits>.tmp`` shape), so without this pattern the project's own
@@ -216,7 +216,7 @@ def sweep_agents_dir(
     :param now: reference time (epoch seconds) for age computation; defaults to
         :func:`time.time`. Exposed for deterministic tests.
     :param sweep_backups: when false (the default), only temps are swept and
-        recognized backups are left entirely alone. Kiro Crew authors no
+        recognized backups are left entirely alone. Sao Khuê authors no
         ``*.bak-<digits>`` / ``*.json.bak.<digits>`` files in this directory, so
         every backup a sweep would remove belongs to a foreign writer whose
         retention policy is not ours to decide; the default therefore reaps only

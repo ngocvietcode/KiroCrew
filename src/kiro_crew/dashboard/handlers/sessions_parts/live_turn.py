@@ -175,7 +175,7 @@ async def api_session_directive(request: web.Request) -> web.Response:
     """POST /api/session-directive — park a validated session directive.
 
     The provider-neutral leg of the session-directive protocol. Its only caller is
-    a Kiro Crew directive tool (``mcp_tools.control._emit_directive``), which has
+    a Sao Khuê directive tool (``mcp_tools.control._emit_directive``), which has
     already validated the payload; this route carries that payload to the gateway
     OUT OF BAND so the turn's consumer can apply it without having to trust the
     model-visible marker in the tool result. See
@@ -190,7 +190,7 @@ async def api_session_directive(request: web.Request) -> web.Response:
     caller parking a directive against somebody else's session.
 
     A call that derives no directive (unknown tool, validation refusal) is a 400,
-    not a silent drop: the only legitimate callers are Kiro Crew's own directive
+    not a silent drop: the only legitimate callers are Sao Khuê's own directive
     tools, so a request that does not derive did not come from one.
     """
     _, refusal = await internal_memory_scope(
@@ -261,7 +261,7 @@ async def api_session_directive(request: web.Request) -> web.Response:
     if not isinstance(raw_args, dict):
         raw_args = {}
     if not tool and "kind" in body:
-        # The body shape a Kiro Crew MCP server from BEFORE the call-input
+        # The body shape a Sao Khuê MCP server from BEFORE the call-input
         # protocol sends: the directive's ``kind``/``args`` rather than the call.
         # That server is running older code than this gateway -- a pooled MCP
         # backend that outlived a code change -- and every directive it emits

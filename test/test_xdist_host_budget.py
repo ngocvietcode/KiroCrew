@@ -607,7 +607,7 @@ def test_the_xdist_env_var_is_honoured_as_a_ceiling(
 
     ``pytest_xdist_auto_num_workers`` is ``firstresult``, and a conftest impl
     outranks a plugin impl -- so this hook runs INSTEAD of xdist's default, which
-    is where the variable would otherwise have been read. Kiro Crew itself seeds
+    is where the variable would otherwise have been read. Sao Khuê itself seeds
     it with a memory-aware cap at every agent spawn boundary, so discarding it
     would hand an agent session more workers than it deliberately asked for.
     """

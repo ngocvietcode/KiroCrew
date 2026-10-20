@@ -77,7 +77,7 @@ class TestRefreshDynamicFieldsStripsStaleUrl:
         assert config["mcpServers"]["deepwiki"]["url"] == "https://mcp.deepwiki.com/mcp"
 
     def test_non_managed_server_oauth_hints_preserved(self):
-        """scopes/clientId are passthrough — the runtime, not Kiro Crew, uses them."""
+        """scopes/clientId are passthrough — the runtime, not Sao Khuê, uses them."""
         from kiro_crew.agent import _refresh_dynamic_fields
 
         config = {
@@ -316,7 +316,7 @@ class TestMigrateRelocatedSkillUris:
 
 
 class TestMigrateAgentSpecs:
-    """migrate_agent_specs lifts Kiro Crew bookkeeping keys into the sidecar."""
+    """migrate_agent_specs lifts Sao Khuê bookkeeping keys into the sidecar."""
 
     def test_strips_and_lifts_keys(self, tmp_path: Path):
         kiro = tmp_path / "kiro_agents"
@@ -352,7 +352,7 @@ class TestMigrateAgentSpecs:
         assert agent_state.get_model_managed("alpha") is False
 
     def test_installed_spec_is_schema_clean(self, tmp_path: Path):
-        """After install the written spec carries no Kiro Crew bookkeeping keys."""
+        """After install the written spec carries no Sao Khuê bookkeeping keys."""
         cfg_dir = _bundled_defaults(tmp_path)
         path = _run_install(tmp_path, cfg_dir)
         config = json.loads(path.read_text(encoding="utf-8"))

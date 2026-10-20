@@ -1,6 +1,6 @@
 """A running stub never loads the gateway's pool, manager or metrics graph.
 
-The stub is the most replicated process Kiro Crew runs, one per session per MCP
+The stub is the most replicated process Sao Khuê runs, one per session per MCP
 server, so whatever it loads is paid for once per stub on the host.
 
 The bound here is on the STEADY STATE -- the module set a stub holds once it has

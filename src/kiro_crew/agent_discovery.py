@@ -1,7 +1,7 @@
 """Agent discovery — scans ~/.kiro/agents/ for installed agents.
 
 Provides ``list_agents()`` which returns metadata about all installed
-agents, including KiroCrew's own agent and any agents shipped by
+agents, including SaoKhue's own agent and any agents shipped by
 locally-installed skill packages (agent config files on disk). It only
 reads on-disk agent config files and has no external-tool dependency.
 

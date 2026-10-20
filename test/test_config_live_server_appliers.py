@@ -169,7 +169,7 @@ class TestServerAppliers:
         )
         assert state.notify.call_args.args[2] == (
             "The setting was saved but new sessions will keep using the previous model. "
-            "Kiro Crew retries automatically; check the gateway logs if this persists."
+            "Sao Khuê retries automatically; check the gateway logs if this persists."
         )
 
     @pytest.mark.asyncio

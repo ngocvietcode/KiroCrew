@@ -64,11 +64,11 @@ Create the API-key secret through the existing [secrets vault](secrets-vault.md)
 
 This ceiling does not govern compaction scoring, which is a separate switch and sends a whole transcript when you turn it on — see [Measuring what a compaction should keep](#measuring-what-a-compaction-should-keep) below.
 
-This setting alone does not permit the transfer. Your consent record holds a **ceiling** for it, and Kiro Crew sends the smaller of the two. Lowering the setting works on its own; raising it above the ceiling does nothing until you consent again with the larger figure. The reason is that `config.json` can be written by an agent working on your machine, while the consent record cannot: if the permission lived only in the settings file, an agent reading your conversation could raise it and send that conversation. A consent recorded before this ceiling existed has no figure in it, which reads as `0` — so an upgrade never starts sending your earlier turns.
+This setting alone does not permit the transfer. Your consent record holds a **ceiling** for it, and Sao Khuê sends the smaller of the two. Lowering the setting works on its own; raising it above the ceiling does nothing until you consent again with the larger figure. The reason is that `config.json` can be written by an agent working on your machine, while the consent record cannot: if the permission lived only in the settings file, an agent reading your conversation could raise it and send that conversation. A consent recorded before this ceiling existed has no figure in it, which reads as `0` — so an upgrade never starts sending your earlier turns.
 
 `model_route` says which model answers a message at each difficulty level. **Every level starts empty, which means "leave it alone".** No model is named for you on purpose: accounts differ in which models they are offered, and a name you cannot use would fail on the first message rather than when you set it. The block above is the example to copy from — put in the ids your own model picker shows.
 
-An empty level does not turn the feature off. Jev is still asked, the answer is still recorded, and the reply still shows it — it reads `complex → (unpinned)`. The message runs on your own model: the one the chat was on before routing ever moved it, so an earlier message routed to a cheap level does not keep this one there. That is on purpose: you can watch which level your messages land in for a while, and then pin only the levels worth moving. Kiro Crew can only move a chat back to a model it can name, so a chat whose model your backend never reported stays where it is.
+An empty level does not turn the feature off. Jev is still asked, the answer is still recorded, and the reply still shows it — it reads `complex → (unpinned)`. The message runs on your own model: the one the chat was on before routing ever moved it, so an earlier message routed to a cheap level does not keep this one there. That is on purpose: you can watch which level your messages land in for a while, and then pin only the levels worth moving. Sao Khuê can only move a chat back to a model it can name, so a chat whose model your backend never reported stays where it is.
 
 The three keys above are the only ones read; anything else is ignored. `auto` means the same as empty. If you name a model your account cannot run, that message also stays put, and the log below says which of the two happened, so nothing is dropped silently.
 
@@ -90,21 +90,21 @@ Instead of Jev, decisions can be answered by an open-weight model running on you
 
 "Accuracy vs Jev" is how many of Jev's correct answers the model also got right on the 231 public items of [JevBench](https://github.com/fstandhartinger/jevbench), measured on a 10-core CPU with no GPU. The card recommends a model only on a machine with at least four times its memory, so running it leaves the rest for your other sessions; below 24 GB it recommends hosted Jev.
 
-A running local model keeps its memory the whole time, not only while it answers, and the card says how much. That memory is gone for everything else on the machine: when free memory runs low Kiro Crew runs fewer subagents at once, and other software you have open can slow down. Pick **No model** to give it back.
+A running local model keeps its memory the whole time, not only while it answers, and the card says how much. That memory is gone for everything else on the machine: when free memory runs low Sao Khuê runs fewer subagents at once, and other software you have open can slow down. Pick **No model** to give it back.
 
 A local model is slower than Jev, and each decision point waits only a few seconds for an answer. A slower answer is skipped and the point does what it does without Jev, so a slow model makes fewer decisions, not worse ones. Two points do wait in front of you: picking the model for a turn, and placing a message you send mid-turn. With Plumb-4B or Strands Decider 2B each can add up to 5 seconds, and up to 2 seconds with Laya. The accuracy figures on the card were measured with no time limit, and the answers that take longest are mostly the hard ones, so treat them as an upper bound: with its 5-second limit, Plumb-4B skips many of the long, hard decisions its "hard" figure counts. To stop a local model, pick **No model** and press **Use this model**: nothing is sent, the server stops, and every decision uses the built-in rules. Turning the Decisions switch off does not stop it: the server keeps its memory and starts again with the gateway, it just receives nothing. Only **No model** stops it. Plumb-4B is the better choice for the background points (risky tool calls, recalled memories, compaction scoring); Strands Decider 2B is the middle ground: most of Plumb-4B's accuracy at a quarter of its typical time and less memory. Laya is fast enough for everything but misses more of the hard judgements.
 
-You do not install or start anything yourself. When you press **Use this model**, Kiro Crew does it and the card shows each step:
+You do not install or start anything yourself. When you press **Use this model**, Sao Khuê does it and the card shows each step:
 
-1. **Download.** The model files come from Kiro Crew's own model CDN: about 8.4 GB for Plumb-4B, about 4.6 GB for Strands Decider 2B, about 0.85 GB for Laya, which keeps only its English checkpoint. Each file is checked against a SHA-256 fixed in Kiro Crew before it is used, so a changed file is refused rather than run. An interrupted download resumes where it stopped.
+1. **Download.** The model files come from Sao Khuê's own model CDN: about 8.4 GB for Plumb-4B, about 4.6 GB for Strands Decider 2B, about 0.85 GB for Laya, which keeps only its English checkpoint. Each file is checked against a SHA-256 fixed in Sao Khuê before it is used, so a changed file is refused rather than run. An interrupted download resumes where it stopped.
 2. **Install.** A Python 3.12 environment of about 1 GB is built for the model with `uv`, from a lock that pins every package to the version the card's figures were measured with. On Linux, PyTorch comes from its CPU-only index. This happens once per model and takes a few minutes.
 3. **Start.** The model's server starts in the background, sandboxed, and listens on `127.0.0.1` only. The card says **Running on this machine** once it answers.
 
-The weights, with their license and notice files, live under `~/.kiro/crew/decisions/models/<model>/`; the model's software and its log live under `~/.kiro/crew/run/decisions/<model>/`. The server runs for as long as Kiro Crew does: it stops when you switch to another model and when the gateway exits, and starts again when the gateway does. If it exits on its own it is restarted a few times; if it keeps failing, the card shows why, with the end of the server's log, and a **Try again** button. **Remove download** under a model you are not using deletes its files and environment to give the disk space back.
+The weights, with their license and notice files, live under `~/.kiro/crew/decisions/models/<model>/`; the model's software and its log live under `~/.kiro/crew/run/decisions/<model>/`. The server runs for as long as Sao Khuê does: it stops when you switch to another model and when the gateway exits, and starts again when the gateway does. If it exits on its own it is restarted a few times; if it keeps failing, the card shows why, with the end of the server's log, and a **Try again** button. **Remove download** under a model you are not using deletes its files and environment to give the disk space back.
 
 What changes when you switch:
 
-- The card writes `provider.endpoint` as `http://127.0.0.1:<port>/v1/systemone`, together with the model and a longer `timeout_ms`. Kiro Crew picks the port: the model's usual one, or a free one when something else holds it. The card never takes an address or a port from you, so the dashboard cannot be used to send decisions somewhere else.
+- The card writes `provider.endpoint` as `http://127.0.0.1:<port>/v1/systemone`, together with the model and a longer `timeout_ms`. Sao Khuê picks the port: the model's usual one, or a free one when something else holds it. The card never takes an address or a port from you, so the dashboard cannot be used to send decisions somewhere else.
 - **Your Jev API key is not sent** to a local address. Only a literal loopback address counts as local: an address written with the name `localhost` is treated like any other server and gets the key.
 - If the Decisions switch was on, it stays on for the local address. Switching back to Jev does the opposite: nothing is sent until you turn the switch off and on again, because that is the direction that starts sending to TypeSafe.
 
@@ -142,7 +142,7 @@ The thumbs on each strip line are that button, and the thumbs on the risk badge 
 
 In a session that approves its own tool calls, nothing stops to describe what is about to run. Jev can put a small note on those cards: **Jev: risky (0.88)** under the tool line, with a thumbs pair beside it.
 
-It is a note and only a note. Kiro Crew decides whether a tool call may run exactly as it did before, using your permission setting alone, and Jev is asked what it thinks alongside that. Nothing here changes who may run what, and nothing you can set here does either. The note is not a promise that the call went ahead: a security rule or one of your own hooks can still stop a call that carries one, and the audit log is where what happened is recorded. The one thing the note costs is a short wait -- Jev is asked before the next step of the turn is read, so a flagged call can be approved a moment later than it would have been. The wait is capped, and only sessions the switch covers pay it.
+It is a note and only a note. Sao Khuê decides whether a tool call may run exactly as it did before, using your permission setting alone, and Jev is asked what it thinks alongside that. Nothing here changes who may run what, and nothing you can set here does either. The note is not a promise that the call went ahead: a security rule or one of your own hooks can still stop a call that carries one, and the audit log is where what happened is recorded. The one thing the note costs is a short wait -- Jev is asked before the next step of the turn is read, so a flagged call can be approved a moment later than it would have been. The wait is capped, and only sessions the switch covers pay it.
 
 You have to turn this on separately. The Decisions switch covers your message text and your skill descriptions; flagging tool calls also sends the name and arguments of each call, which is more than you agreed to when you turned that switch on. So there is a second switch under it -- **Also send tool-call arguments so Jev can flag risky calls** -- and it starts off, including for anyone who already had the main switch on before this existed. Turning the main switch off and on again keeps your answer to the second one; turning it off is what clears it.
 
@@ -187,22 +187,22 @@ The decision appears on your own message in the transcript: one line saying what
 
 ## Measuring what a compaction should keep
 
-When a conversation fills its context window, Kiro Crew compacts it automatically. What survives is the conversation text: your messages and the assistant's replies. Every tool call and every tool result is dropped, and that is where most of the conversation was — in a measured sample of real sessions, tool calls and their output are about seven eighths of everything the window held.
+When a conversation fills its context window, Sao Khuê compacts it automatically. What survives is the conversation text: your messages and the assistant's replies. Every tool call and every tool result is dropped, and that is where most of the conversation was — in a measured sample of real sessions, tool calls and their output are about seven eighths of everything the window held.
 
-Jev can be asked, at each of those automatic compactions, which of those tool calls were worth keeping. **Nothing is kept.** The compaction happens exactly as it does today whatever Jev answers, and the answer appears as one line on the compaction notice in the chat: *Jev would keep 23 of 61 tool calls · 41% of the characters*, with a thumbs pair beside it. The word is "would". This is a measurement, so that a later version of Kiro Crew can be argued about with numbers instead of guesses.
+Jev can be asked, at each of those automatic compactions, which of those tool calls were worth keeping. **Nothing is kept.** The compaction happens exactly as it does today whatever Jev answers, and the answer appears as one line on the compaction notice in the chat: *Jev would keep 23 of 61 tool calls · 41% of the characters*, with a thumbs pair beside it. The word is "would". This is a measurement, so that a later version of Sao Khuê can be argued about with numbers instead of guesses.
 
 This is off until you turn it on, and it needs a switch of its own — **Also send the conversation and tool-call inputs so Jev can score compaction**, under the tool-argument one. Turning on the main switch does not turn this on, and neither does turning on the tool-argument switch: that one was about the arguments of the single call about to run, and this is about everything the session has run, in a request one to two orders of magnitude larger. An owner who granted either of the others has not granted this.
 
 Manual `/compact` is never measured. If you typed the command yourself, nothing is sent.
 
-Nor is a compaction Kiro Crew did not carry out itself. Some backends shrink their own context and just tell Kiro Crew afterwards — Claude Code does it inside the reply, and KAS summarizes on its own schedule. There is nothing for this to measure on those, because the compacting is not happening here. What is measured is the automatic compaction Kiro Crew runs when a session crosses the threshold, including the restart it falls back to when that compaction does not work.
+Nor is a compaction Sao Khuê did not carry out itself. Some backends shrink their own context and just tell Sao Khuê afterwards — Claude Code does it inside the reply, and KAS summarizes on its own schedule. There is nothing for this to measure on those, because the compacting is not happening here. What is measured is the automatic compaction Sao Khuê runs when a session crosses the threshold, including the restart it falls back to when that compaction does not work.
 
 | Your session | What you see |
 |---|---|
 | This switch is off | Nothing — no transcript is sent and no line appears |
 | You ran `/compact` yourself | Nothing — the manual command is never scored |
-| An automatic compaction Kiro Crew ran, and Jev answered | One line on the compaction notice, with thumbs |
-| A backend that compacts itself and reports it (Claude Code, KAS) | Nothing — Kiro Crew is not the one compacting |
+| An automatic compaction Sao Khuê ran, and Jev answered | One line on the compaction notice, with thumbs |
+| A backend that compacts itself and reports it (Claude Code, KAS) | Nothing — Sao Khuê is not the one compacting |
 | An automatic compaction with no tool calls in it | Nothing — there is nothing to score |
 | Jev was too slow, refused, or answered only part of it | Nothing — the compaction notice looks as it always did |
 
@@ -212,7 +212,7 @@ The conversation text of that session, and the INPUT of each tool call in it —
 
 A whole transcript is far larger than one question can carry, so it is cut down in steps until it fits: tool inputs to 1000 characters, then 200, then 60, then your messages to half their length, then to a quarter with each call on one line. The mildest step that fits is the one used. About one session in twelve does not fit even at the last step; that one is recorded as too large and nothing is sent for it.
 
-If your organisation ships its own list of things that count as a secret, that list is applied here too, not just the one Kiro Crew ships. On a machine where that list cannot be loaded, the field is dropped rather than sent with the shorter list.
+If your organisation ships its own list of things that count as a secret, that list is applied here too, not just the one Sao Khuê ships. On a machine where that list cannot be loaded, the field is dropped rather than sent with the shorter list.
 
 Your private reasoning is not part of this. Neither is any other session: one compaction sends one conversation.
 
@@ -232,7 +232,7 @@ A measurement that finishes after its own compaction's notice has already been d
 
 ## Choosing which recalled memories come back
 
-When the assistant asks its own memory a question -- the `memory_recall` tool -- Kiro Crew looks through what it remembered from earlier conversations and hands back the closest matches. "Closest" means the wording is similar. That is a useful first pass and a poor last one: a note that happens to share your words gets in whether or not it helps with what you are doing, and it takes up room the rest of the prompt could have used.
+When the assistant asks its own memory a question -- the `memory_recall` tool -- Sao Khuê looks through what it remembered from earlier conversations and hands back the closest matches. "Closest" means the wording is similar. That is a useful first pass and a poor last one: a note that happens to share your words gets in whether or not it helps with what you are doing, and it takes up room the rest of the prompt could have used.
 
 With the Decisions switch on AND the recalled-memory switch under it on, Jev looks at that shortlist and says which entries to keep. Both are needed: until the second one is on, nothing about your memories is sent and every close match goes into the prompt as before. It only ever REMOVES: it cannot add a memory that was not on the shortlist, and it cannot change their order. Everything else about memory stays the same -- what gets remembered, what gets forgotten, and what `memory_recall` finds when the assistant asks for it by hand.
 

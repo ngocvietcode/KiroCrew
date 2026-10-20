@@ -1,7 +1,7 @@
 """What an agent spec may auto-approve, under the governance ceiling.
 
 ``allowedTools`` and a server's ``autoApprove`` are the two paths that never reach
-Kiro Crew's PreToolUse gate, so every writer filters both through the ceiling here:
+Sao Khuê's PreToolUse gate, so every writer filters both through the ceiling here:
 :func:`_may_auto_approve` is the one predicate, :func:`_apply_allowed_tools_ceiling`
 the list filter every template-derived spec inherits, and :func:`final_ceiling_pass`
 the rebuild's last pass over the assembled list. Withholding a grant is a permission
@@ -249,7 +249,7 @@ def _seed_kas_permissions(config: dict[str, Any]) -> None:
     agent specs with serde ``deny_unknown_fields`` and serves the KAS backend as
     well as its own, so one binary decides both questions: a release whose schema
     predates ``permissions`` refuses the ENTIRE spec, drops the agent from its
-    table, and leaves every Kiro Crew MCP server absent from the session -- and
+    table, and leaves every Sao Khuê MCP server absent from the session -- and
     that same release cannot be the KAS relay the field exists for. Withholding
     it there gives up nothing that release could have honoured, while writing it
     gives up the whole spec. An UNKNOWN version (no pinned binary, a refused
@@ -367,7 +367,7 @@ def _ceiling_filtered_spec(ref: str, spec: dict[str, Any], *, audit: bool = True
     it to app-contributed ones, which were copied verbatim.
 
     That verbatim copy meant the grant was declared by an app MANIFEST — content
-    that can come from outside this repo — rather than by Kiro Crew or the user.
+    that can come from outside this repo — rather than by Sao Khuê or the user.
     An app could hand itself a permanent gate exemption by adding three lines to
     its own JSON.
 

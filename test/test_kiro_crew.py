@@ -1,4 +1,4 @@
-"""Tests for KiroCrew package."""
+"""Tests for SaoKhue package."""
 
 import kiro_crew
 

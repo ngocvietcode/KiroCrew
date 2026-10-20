@@ -106,7 +106,7 @@ SEED_DICTIONARY = """\
 # The Settings page edits this file, but hand-editing works too.
 
 [[term]]
-correct = "Kiro Crew"
+correct = "Sao Khuê"
 aliases = ["kirocrew", "kiro crew", "kiro-crew"]
 
 # Add your team's terms below:

@@ -1440,7 +1440,7 @@ class TestHandlers:
     ):
         # PATCH must not let a non-dashboard caller
         # (CLI, script, agent) rewrite the fields Stop/Start/Delete use to
-        # resolve an EC2 stack launched by Kiro Crew — doing so strands a running,
+        # resolve an EC2 stack launched by Sao Khuê — doing so strands a running,
         # billing instance with no dashboard path to reach it.
         from kiro_crew.cloud import launch_job as lj
         from kiro_crew.dashboard import handlers_instances as handlers
@@ -1455,7 +1455,7 @@ class TestHandlers:
             aws_region="us-east-1",
             instance_id="cloud-launched",
         )
-        # A job Kiro Crew provisioned whose EC2 instance id matches the
+        # A job Sao Khuê provisioned whose EC2 instance id matches the
         # instance's ssm_target — this is what makes it "correlated".
         store = lj.LaunchJobStore()  # honours KIROCREW_HOME, same as production
         job = store.create(profile="prod", region="us-east-1", size_key="light")

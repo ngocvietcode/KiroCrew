@@ -1,4 +1,4 @@
-"""Sections for what Kiro Crew keeps and derives across sessions.
+"""Sections for what Sao Khuê keeps and derives across sessions.
 
 Owns the DTOs, defaults and field coercion for ``memory``, ``knowledge``,
 ``skills``, ``session_summary`` and the named ``memory_stores`` records, plus the
@@ -105,7 +105,7 @@ class MemoryConfig:
         metadata=_meta(
             "Embedding Model URL",
             "Override HTTPS URL for the embedding model GGUF download (mirrored/airgapped "
-            "deployments). Empty uses the public Kiro Crew CDN default; the "
+            "deployments). Empty uses the public Sao Khuê CDN default; the "
             "KIROCREW_EMBED_MODEL_URL env var wins over both. The download is "
             "sha256-verified regardless of source.",
         ),
@@ -446,7 +446,7 @@ class KnowledgeConfig:
             "Let the agent add documents it comes across during normal work to the "
             "Knowledge Library, so they become searchable later. The agent reads the "
             "document with its own tools, under your approval, and hands over the "
-            "text -- Kiro Crew fetches nothing itself, so the doc-ingest host "
+            "text -- Sao Khuê fetches nothing itself, so the doc-ingest host "
             "allowlist below does not apply. Added documents appear in a single "
             "aggregate 'Auto-added' source you can remove in one click. Off by "
             "default: the Library should only hold what you asked it to hold. "
@@ -487,7 +487,7 @@ class KnowledgeConfig:
             "Empty = fetch nothing (SSRF-safe deny-by-default). This governs only "
             "that server-fetch path -- it does NOT gate 'Auto-Add Documents' "
             "above, where the agent has already fetched the content under its own "
-            "approval and Kiro Crew fetches nothing. Applying it there would make "
+            "approval and Sao Khuê fetches nothing. Applying it there would make "
             "the feature ingest nothing on a default config while its toggle "
             "reads on.",
         ),

@@ -107,7 +107,7 @@ function Scene() {
           )}
         </div>
         <div className="mt-1 rounded-2xl border border-border bg-bg-elevated px-3 py-3 text-[13px] text-muted">
-          Message Kiro Crew… (/command · @file · $skill)
+          Message Sao Khuê… (/command · @file · $skill)
         </div>
       </div>
     </div>

@@ -835,7 +835,7 @@ class TestAnnotation:
         assert rows[0]["probeFailures"] == 3
 
     def test_every_server_is_counted(self, store):
-        """Including Kiro Crew's own. An earlier revision filtered these out so no
+        """Including Sao Khuê's own. An earlier revision filtered these out so no
         badge could claim an unmount that did not happen; nothing is unmounted
         now, so withholding the count would only hide information.
         """

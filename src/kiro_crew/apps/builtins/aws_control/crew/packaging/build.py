@@ -62,7 +62,7 @@ deny-by-default review template, WITHOUT writing a bundle.
 ``agents/<name>.json`` and ``skills/``. ``--source`` overrides that root (a test
 points it at a fixture); by default the agent spec resolves under
 ``$KIRO_HOME`` / ``~/.kiro`` and skills under ``$KIROCREW_HOME`` -- the same
-locations Kiro Crew uses (``kiro_crew/config/paths.py:604`` ``kiro_agents_dir`` =
+locations Sao Khuê uses (``kiro_crew/config/paths.py:604`` ``kiro_agents_dir`` =
 ``kiro_home()/agents``, ``:510`` ``kiro_home``; ``config_dir()/skills`` per
 ``crew_export/candidates.py``). Never defaults to a temp dir.
 

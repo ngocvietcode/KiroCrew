@@ -66,7 +66,7 @@ async def test_runtime_missing_kiro_bin_reports_the_directories_it_searched(back
     That gap misleads. A "not found in PATH" message invites running
     ``where kiro-cli``, getting nothing, seeing the gateway's OWN ``kirocrew.exe``
     in the app bundle, and concluding the agent CLI is renamed and this
-    lookup is stale. It is not: ``kirocrew`` is Kiro Crew's own console
+    lookup is stale. It is not: ``kirocrew`` is Sao Khuê's own console
     script and ``kiro-cli`` is a separate prerequisite the message never said it
     was looking for anywhere but PATH.
 

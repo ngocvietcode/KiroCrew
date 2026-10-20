@@ -316,7 +316,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Enterprise MCP Registry Mode",
-      "help": "Set true when this Kiro account is governed by an enterprise MCP registry (Kiro console -> Shared settings -> MCP Registry URL, which applies to IAM Identity Center and API-key sign-ins). In registry mode the client connects ONLY to mcpServers entries carrying 'type': \"registry\" that resolve to a catalog entry of the same name, so Kiro Crew stamps that marker on the servers it manages. Leave false on a personal account: with no registry configured the filter inverts and registry-marked entries are the ones dropped. The administrator must also allow-list, by those exact names, every managed kirocrew-* server Kiro Crew mounts: kirocrew-core, kirocrew-cron and kirocrew-computer by default, plus any opt-in server (e.g. kirocrew-dashboard, kirocrew-work) an agent is granted.",
+      "help": "Set true when this Kiro account is governed by an enterprise MCP registry (Kiro console -> Shared settings -> MCP Registry URL, which applies to IAM Identity Center and API-key sign-ins). In registry mode the client connects ONLY to mcpServers entries carrying 'type': \"registry\" that resolve to a catalog entry of the same name, so Sao Khuê stamps that marker on the servers it manages. Leave false on a personal account: with no registry configured the filter inverts and registry-marked entries are the ones dropped. The administrator must also allow-list, by those exact names, every managed kirocrew-* server Sao Khuê mounts: kirocrew-core, kirocrew-cron and kirocrew-computer by default, plus any opt-in server (e.g. kirocrew-dashboard, kirocrew-work) an agent is granted.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": false
@@ -371,8 +371,8 @@
       "deprecated": false,
       "sensitive": false,
       "tags": [],
-      "label": "KAS: run Kiro Crew's own engine bundle",
-      "help": "When true, the 'kas' backend spawns the @kiro/agent build that 'kirocrew kas install' laid down under the data home (engines/kas/) with its own Node runtime, instead of reaching the engine through kiro-cli's ACP relay. kiro-cli is not needed on this route, and the engine always takes its credential from Kiro Crew's own sign-in (the dashboard's Sign in), never from kiro-cli's store. A true value with nothing installed refuses the spawn and names the install command.",
+      "label": "KAS: run Sao Khuê's own engine bundle",
+      "help": "When true, the 'kas' backend spawns the @kiro/agent build that 'kirocrew kas install' laid down under the data home (engines/kas/) with its own Node runtime, instead of reaching the engine through kiro-cli's ACP relay. kiro-cli is not needed on this route, and the engine always takes its credential from Sao Khuê's own sign-in (the dashboard's Sign in), never from kiro-cli's store. A true value with nothing installed refuses the spawn and names the install command.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": false,
@@ -415,7 +415,7 @@
       "sensitive": false,
       "tags": [],
       "label": "DeepSeek Harness provider keys",
-      "help": "Provider keys handed to the DeepSeek Harness ('deepseek' backend) as environment variables at spawn, mapping an environment-variable NAME to a 'secret://<vault name>' reference. The harness resolves a provider credential from its inherited environment above its own credential files, so this is how it reaches a hosted model without Kiro Crew leaving those files readable inside the sandbox. Store the key under Settings > Secrets, then map it here, e.g. {\"DEEPSEEK_API_KEY\": \"secret://my-dsh-key\"}. Any provider name the harness knows works (ANTHROPIC_API_KEY, OPENAI_API_KEY, ...). A plaintext value is REFUSED at write time -- the config write itself fails, so no credential is ever stored in config.json -- and so, at spawn, is a name the harness would forward to its own shell children, a name Kiro Crew owns, or one Kiro Crew's agent environment scrub strips; the DeepSeek session is refused before it starts with a message naming the offending key. Empty means no key: a model served locally on this machine needs none. Ignored by every other backend.",
+      "help": "Provider keys handed to the DeepSeek Harness ('deepseek' backend) as environment variables at spawn, mapping an environment-variable NAME to a 'secret://<vault name>' reference. The harness resolves a provider credential from its inherited environment above its own credential files, so this is how it reaches a hosted model without Sao Khuê leaving those files readable inside the sandbox. Store the key under Settings > Secrets, then map it here, e.g. {\"DEEPSEEK_API_KEY\": \"secret://my-dsh-key\"}. Any provider name the harness knows works (ANTHROPIC_API_KEY, OPENAI_API_KEY, ...). A plaintext value is REFUSED at write time -- the config write itself fails, so no credential is ever stored in config.json -- and so, at spawn, is a name the harness would forward to its own shell children, a name Sao Khuê owns, or one Sao Khuê's agent environment scrub strips; the DeepSeek session is refused before it starts with a message naming the offending key. Empty means no key: a model served locally on this machine needs none. Ignored by every other backend.",
       "hasChildren": true,
       "enumValues": null,
       "defaultValue": {}
@@ -443,7 +443,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Sweep foreign agent backups",
-      "help": "When true, the agents-directory janitor also deletes aged backup files (*.bak-<digits> / *.json.bak.<digits>, older than 14 days) from the shared kiro agents directory. OFF by default: Kiro Crew does not author those backups, so every one it would delete belongs to another tool whose retention policy is not ours to decide. The orphaned atomic-write TEMP sweep (24h) always runs and reclaims most of the growth at near-zero risk; enable this only if you also want foreign backups in that directory reaped.",
+      "help": "When true, the agents-directory janitor also deletes aged backup files (*.bak-<digits> / *.json.bak.<digits>, older than 14 days) from the shared kiro agents directory. OFF by default: Sao Khuê does not author those backups, so every one it would delete belongs to another tool whose retention policy is not ours to decide. The orphaned atomic-write TEMP sweep (24h) always runs and reclaims most of the growth at near-zero risk; enable this only if you also want foreign backups in that directory reaped.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": false
@@ -457,7 +457,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Sandbox",
-      "help": "Sandbox mode for ACP provider. Default 'auto' engages OS-level isolation (namespace on Linux, sandbox-exec on macOS) at the standard tier and automatically defers to kiro-cli's internal sandbox on macOS when it is enabled (kiro-cli >= 2.13; nested seatbelt causes EPERM). The standard tier deliberately leaves ~/.aws, ~/.ssh and ~/.kube visible to the agent's shell so the aws CLI, boto3 credential_process, git-over-SSH and kubectl keep working; the file tools still refuse those paths. Set to 'strict' to also hide ~/.aws (including ~/.aws/sso/cache, kiro-cli's grant store for OAuth-connected remote MCP servers), ~/.ssh (except known_hosts), ~/.kube and ~/.config/gh, plus the credential files ~/.npmrc, ~/.pypirc, ~/.netrc and ~/.git-credentials, from every agent subprocess -- opt-in, and inside the agent it breaks the aws CLI, boto3, git-over-SSH, gh, kubectl, npm/pip registry auth, .netrc HTTPS auth, the git credential store and remote-MCP OAuth for the same reason. Like every value of this key, a change applies to sessions started after it; a session already running keeps the tier it was spawned with until it ends. 'strict' changes nothing where Kiro Crew applies no sandbox of its own: Windows has no OS backend, and a macOS spawn delegated to kiro-cli's internal sandbox is confined by that profile instead. Set to 'off' to skip Kiro Crew's own OS-level sandbox -- delegation to kiro-cli's internal sandbox still fires on macOS if it is enabled, and a SECURITY warning is logged when neither layer is active.",
+      "help": "Sandbox mode for ACP provider. Default 'auto' engages OS-level isolation (namespace on Linux, sandbox-exec on macOS) at the standard tier and automatically defers to kiro-cli's internal sandbox on macOS when it is enabled (kiro-cli >= 2.13; nested seatbelt causes EPERM). The standard tier deliberately leaves ~/.aws, ~/.ssh and ~/.kube visible to the agent's shell so the aws CLI, boto3 credential_process, git-over-SSH and kubectl keep working; the file tools still refuse those paths. Set to 'strict' to also hide ~/.aws (including ~/.aws/sso/cache, kiro-cli's grant store for OAuth-connected remote MCP servers), ~/.ssh (except known_hosts), ~/.kube and ~/.config/gh, plus the credential files ~/.npmrc, ~/.pypirc, ~/.netrc and ~/.git-credentials, from every agent subprocess -- opt-in, and inside the agent it breaks the aws CLI, boto3, git-over-SSH, gh, kubectl, npm/pip registry auth, .netrc HTTPS auth, the git credential store and remote-MCP OAuth for the same reason. Like every value of this key, a change applies to sessions started after it; a session already running keeps the tier it was spawned with until it ends. 'strict' changes nothing where Sao Khuê applies no sandbox of its own: Windows has no OS backend, and a macOS spawn delegated to kiro-cli's internal sandbox is confined by that profile instead. Set to 'off' to skip Sao Khuê's own OS-level sandbox -- delegation to kiro-cli's internal sandbox still fires on macOS if it is enabled, and a SECURITY warning is logged when neither layer is active.",
       "hasChildren": false,
       "enumValues": [
         "auto",
@@ -649,7 +649,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Ad-hoc Auto-approve Duration",
-      "help": "How long auto-approve (YOLO) lasts when it is enabled AD HOC — from the dashboard picker, Slack, or the API. Every one of those surfaces uses this same duration. Accepts 30m / 1h / 6h / 12h / 24h, or until_shutdown to keep it on with no timed expiry until Kiro Crew restarts. Timed values are capped at 24h. Does NOT apply to a grant declared via 'dangerously_skip_permissions' above, which persists.",
+      "help": "How long auto-approve (YOLO) lasts when it is enabled AD HOC — from the dashboard picker, Slack, or the API. Every one of those surfaces uses this same duration. Accepts 30m / 1h / 6h / 12h / 24h, or until_shutdown to keep it on with no timed expiry until Sao Khuê restarts. Timed values are capped at 24h. Does NOT apply to a grant declared via 'dangerously_skip_permissions' above, which persists.",
       "hasChildren": false,
       "enumValues": [
         "30m",
@@ -1013,7 +1013,7 @@
       "sensitive": false,
       "tags": [],
       "label": "kiro-cli Child Env Defaults",
-      "help": "Environment variables given to every spawned kiro-cli process (chat sessions, background sessions and subagents) ONLY when the variable is not already set in the environment it inherits. Empty by default. kiro-cli sizes its thread pools by core count, so on a many-core host running dozens of kiro-cli processes they can be capped, e.g. {\"TOKIO_WORKER_THREADS\": \"4\", \"RAYON_NUM_THREADS\": \"4\"}. Only TOKIO_WORKER_THREADS and RAYON_NUM_THREADS are accepted, each a decimal integer string from 1 to 1024; any other entry is ignored with a warning. Kiro Crew's own agent environment scrub still applies. Every process the agent runs (tools, MCP servers, your own programs) inherits these variables too. Takes effect on the next spawn.",
+      "help": "Environment variables given to every spawned kiro-cli process (chat sessions, background sessions and subagents) ONLY when the variable is not already set in the environment it inherits. Empty by default. kiro-cli sizes its thread pools by core count, so on a many-core host running dozens of kiro-cli processes they can be capped, e.g. {\"TOKIO_WORKER_THREADS\": \"4\", \"RAYON_NUM_THREADS\": \"4\"}. Only TOKIO_WORKER_THREADS and RAYON_NUM_THREADS are accepted, each a decimal integer string from 1 to 1024; any other entry is ignored with a warning. Sao Khuê's own agent environment scrub still applies. Every process the agent runs (tools, MCP servers, your own programs) inherits these variables too. Takes effect on the next spawn.",
       "hasChildren": true,
       "enumValues": null,
       "defaultValue": {}
@@ -1041,7 +1041,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Agent Environment Variables",
-      "help": "Environment variables set on every agent process Kiro Crew starts for a chat session, background session or subagent, on every backend, and therefore inherited by everything that agent runs: shell tool calls, the MCP servers the agent itself starts, and their children. Not the gateway, MCP servers the gateway hosts, or Kiro Crew's own one-shot helper commands. For non-sensitive configuration such as a proxy, a CA bundle, an AWS profile or a package registry, e.g. {\"HTTPS_PROXY\": \"http://proxy.example:3128\", \"NO_PROXY\": \"localhost,127.0.0.1\", \"AWS_PROFILE\": \"dev\"}. A value set here wins over the same variable in the gateway's own environment; variables Kiro Crew sets for the session itself still win over this map, except defaults it fills in only when a name is unset (agent.child_env_defaults, the pytest-xdist worker cap), which this map overrides. A name this map refuses is rejected when the setting is saved (kirocrew config set or a dashboard write fails and names the key and the reason), and dropped with a warning naming the key if a hand edit puts it in config.json. Values are stored in plaintext, so a name that looks like a credential, with a name segment that is or ends in KEY, TOKEN, SECRET, PASSWORD, PASSWD or CREDENTIAL (API_KEY, GITHUB_TOKEN, APIKEY), is refused: keep credentials under Settings > Secrets. GOPRIVATE and TOKENIZERS_PARALLELISM are not credential names. Also refused: names Kiro Crew or the sandbox owns (PATH, HOME, TMPDIR, DBUS_*_BUS_ADDRESS, KIROCREW_*, KIRO_*, OPENCODE_*, ...); names known to make a shell, the loader, a runtime or a tool run code the command did not name (LD_*, DYLD_*, PYTHON*, NODE_OPTIONS, BASH*, SHELLOPTS, PS4, ZDOTDIR, IFS, SSH_*, GIT_* except GIT_TERMINAL_PROMPT and GIT_SSL_CAINFO, and any name ending in PATH, LIB, OPT, OPTS, OPTIONS, FLAGS, COMMAND, SHELL, EXECUTABLE, EDITOR, PAGER, ASKPASS, BROWSER, ...), including the location of a config file a tool may read a program from (KUBECONFIG, AWS_CONFIG_FILE, any name ending in CONFIG, CONFIG_DIR, CONFIG_FILE or CONFIG_HOME); the variables that move a harness's sign-in directory (CLAUDE_CONFIG_DIR, CODEX_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME, ...); and names the agent environment scrub removes. Takes effect for agent processes started after the change: warm pooled processes and the shared background process are replaced, while a session that is already running, and subagents sharing its process, keep the environment that process started with.",
+      "help": "Environment variables set on every agent process Sao Khuê starts for a chat session, background session or subagent, on every backend, and therefore inherited by everything that agent runs: shell tool calls, the MCP servers the agent itself starts, and their children. Not the gateway, MCP servers the gateway hosts, or Sao Khuê's own one-shot helper commands. For non-sensitive configuration such as a proxy, a CA bundle, an AWS profile or a package registry, e.g. {\"HTTPS_PROXY\": \"http://proxy.example:3128\", \"NO_PROXY\": \"localhost,127.0.0.1\", \"AWS_PROFILE\": \"dev\"}. A value set here wins over the same variable in the gateway's own environment; variables Sao Khuê sets for the session itself still win over this map, except defaults it fills in only when a name is unset (agent.child_env_defaults, the pytest-xdist worker cap), which this map overrides. A name this map refuses is rejected when the setting is saved (kirocrew config set or a dashboard write fails and names the key and the reason), and dropped with a warning naming the key if a hand edit puts it in config.json. Values are stored in plaintext, so a name that looks like a credential, with a name segment that is or ends in KEY, TOKEN, SECRET, PASSWORD, PASSWD or CREDENTIAL (API_KEY, GITHUB_TOKEN, APIKEY), is refused: keep credentials under Settings > Secrets. GOPRIVATE and TOKENIZERS_PARALLELISM are not credential names. Also refused: names Sao Khuê or the sandbox owns (PATH, HOME, TMPDIR, DBUS_*_BUS_ADDRESS, KIROCREW_*, KIRO_*, OPENCODE_*, ...); names known to make a shell, the loader, a runtime or a tool run code the command did not name (LD_*, DYLD_*, PYTHON*, NODE_OPTIONS, BASH*, SHELLOPTS, PS4, ZDOTDIR, IFS, SSH_*, GIT_* except GIT_TERMINAL_PROMPT and GIT_SSL_CAINFO, and any name ending in PATH, LIB, OPT, OPTS, OPTIONS, FLAGS, COMMAND, SHELL, EXECUTABLE, EDITOR, PAGER, ASKPASS, BROWSER, ...), including the location of a config file a tool may read a program from (KUBECONFIG, AWS_CONFIG_FILE, any name ending in CONFIG, CONFIG_DIR, CONFIG_FILE or CONFIG_HOME); the variables that move a harness's sign-in directory (CLAUDE_CONFIG_DIR, CODEX_HOME, XDG_CONFIG_HOME, XDG_DATA_HOME, ...); and names the agent environment scrub removes. Takes effect for agent processes started after the change: warm pooled processes and the shared background process are replaced, while a session that is already running, and subagents sharing its process, keep the environment that process started with.",
       "hasChildren": true,
       "enumValues": null,
       "defaultValue": {}
@@ -1652,7 +1652,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Idle-Exempt Sessions",
-      "help": "Session keys the idle timeout never ends, for a chat that automation wakes hours apart. A dashboard chat's key is dashboard: followed by the sid in its URL, e.g. dashboard:chat-12-1790000000, unless the tab is linked to a cron job or a channel thread, which uses that link's key instead, e.g. cron:<job id>. Closing a dashboard or cron tab still ends its process; a channel thread's session belongs to the channel, so closing its viewer does not. The Watchdog RSS Limit, when set, still applies. A listed session with no tab, such as a cron job that runs without one, keeps running even after its job is deleted, so take a deleted job's key off the list. The RSS limit or a gateway restart still ends it. On the kiro-cli or KAS backend, a Kiro sign-out from the dashboard ends it at once, whatever account it signed in with. After any other switch or sign-out of the Kiro account it signed in with, the next dashboard chat turn ends it, and so does the next agent cron run unless Kiro Crew then cannot tell which account is signed in, as with a social login. A session that is mid-turn then ends later instead, when its next turn starts or at a later dashboard chat turn or agent cron run. At most 10 keys are kept.",
+      "help": "Session keys the idle timeout never ends, for a chat that automation wakes hours apart. A dashboard chat's key is dashboard: followed by the sid in its URL, e.g. dashboard:chat-12-1790000000, unless the tab is linked to a cron job or a channel thread, which uses that link's key instead, e.g. cron:<job id>. Closing a dashboard or cron tab still ends its process; a channel thread's session belongs to the channel, so closing its viewer does not. The Watchdog RSS Limit, when set, still applies. A listed session with no tab, such as a cron job that runs without one, keeps running even after its job is deleted, so take a deleted job's key off the list. The RSS limit or a gateway restart still ends it. On the kiro-cli or KAS backend, a Kiro sign-out from the dashboard ends it at once, whatever account it signed in with. After any other switch or sign-out of the Kiro account it signed in with, the next dashboard chat turn ends it, and so does the next agent cron run unless Sao Khuê then cannot tell which account is signed in, as with a social login. A session that is mid-turn then ends later instead, when its next turn starts or at a later dashboard chat turn or agent cron run. At most 10 keys are kept.",
       "hasChildren": true,
       "enumValues": null,
       "defaultValue": []
@@ -1960,7 +1960,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Use Transport",
-      "help": "Route inbound Slack messages through the SlackTransport → TurnDriver → SlackRenderer channel-neutral path instead of the native handle_message monolith. Default ON in Kiro Crew (the transport abstraction is the canonical path, shared with future channels). Set to false to fall back to the legacy native handler.",
+      "help": "Route inbound Slack messages through the SlackTransport → TurnDriver → SlackRenderer channel-neutral path instead of the native handle_message monolith. Default ON in Sao Khuê (the transport abstraction is the canonical path, shared with future channels). Set to false to fall back to the legacy native handler.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": true
@@ -2239,7 +2239,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Embedding Model URL",
-      "help": "Override HTTPS URL for the embedding model GGUF download (mirrored/airgapped deployments). Empty uses the public Kiro Crew CDN default; the KIROCREW_EMBED_MODEL_URL env var wins over both. The download is sha256-verified regardless of source.",
+      "help": "Override HTTPS URL for the embedding model GGUF download (mirrored/airgapped deployments). Empty uses the public Sao Khuê CDN default; the KIROCREW_EMBED_MODEL_URL env var wins over both. The download is sha256-verified regardless of source.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": ""
@@ -2786,7 +2786,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Auto-Add Documents",
-      "help": "Let the agent add documents it comes across during normal work to the Knowledge Library, so they become searchable later. The agent reads the document with its own tools, under your approval, and hands over the text -- Kiro Crew fetches nothing itself, so the doc-ingest host allowlist below does not apply. Added documents appear in a single aggregate 'Auto-added' source you can remove in one click. Off by default: the Library should only hold what you asked it to hold. Renamed from auto_ingest_doc_links, which is still accepted.",
+      "help": "Let the agent add documents it comes across during normal work to the Knowledge Library, so they become searchable later. The agent reads the document with its own tools, under your approval, and hands over the text -- Sao Khuê fetches nothing itself, so the doc-ingest host allowlist below does not apply. Added documents appear in a single aggregate 'Auto-added' source you can remove in one click. Off by default: the Library should only hold what you asked it to hold. Renamed from auto_ingest_doc_links, which is still accepted.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": false
@@ -2828,7 +2828,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Doc-Ingest Host Allowlist",
-      "help": "Exact hostnames whose links may be fetched by KIROCREW ITSELF and ingested, for an edition that wires a server-side doc-link scanner. Empty = fetch nothing (SSRF-safe deny-by-default). This governs only that server-fetch path -- it does NOT gate 'Auto-Add Documents' above, where the agent has already fetched the content under its own approval and Kiro Crew fetches nothing. Applying it there would make the feature ingest nothing on a default config while its toggle reads on.",
+      "help": "Exact hostnames whose links may be fetched by KIROCREW ITSELF and ingested, for an edition that wires a server-side doc-link scanner. Empty = fetch nothing (SSRF-safe deny-by-default). This governs only that server-fetch path -- it does NOT gate 'Auto-Add Documents' above, where the agent has already fetched the content under its own approval and Sao Khuê fetches nothing. Applying it there would make the feature ingest nothing on a default config while its toggle reads on.",
       "hasChildren": true,
       "enumValues": null,
       "defaultValue": []
@@ -3330,7 +3330,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Enabled",
-      "help": "Main switch for Kiro Crew metrics telemetry. Off by default: metric call sites are no-ops and nothing is written. When on, a local-first JSONL sink under ~/.kiro/crew/metrics is enabled (no network egress).",
+      "help": "Main switch for Sao Khuê metrics telemetry. Off by default: metric call sites are no-ops and nothing is written. When on, a local-first JSONL sink under ~/.kiro/crew/metrics is enabled (no network egress).",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": false
@@ -3529,7 +3529,7 @@
       "sensitive": true,
       "tags": [],
       "label": "Custom Model File",
-      "help": "The file name of a whisper.cpp ggml model (`.bin`) to run INSTEAD of a catalog model, used when `model` is `custom`. Put the file in the speech models folder (`models/whisper` under the Kiro Crew home) first: the path must resolve to a regular file inside that folder, so `..`, an absolute path elsewhere, and a symlink pointing out of it are refused. Nothing is downloaded. Both this and the digest must be set; otherwise `custom` degrades to the default model with a warning.",
+      "help": "The file name of a whisper.cpp ggml model (`.bin`) to run INSTEAD of a catalog model, used when `model` is `custom`. Put the file in the speech models folder (`models/whisper` under the Sao Khuê home) first: the path must resolve to a regular file inside that folder, so `..`, an absolute path elsewhere, and a symlink pointing out of it are refused. Nothing is downloaded. Both this and the digest must be set; otherwise `custom` degrades to the default model with a warning.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": ""
@@ -4384,7 +4384,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Extra MCP Binary Directories",
-      "help": "Additional directories to search for MCP server binaries, ahead of the built-in locations. Add one when a package manager installs its MCP launchers somewhere Kiro Crew does not know about: a server declared by bare name that resolves nowhere never starts, and the session just comes up short of tools. Each entry must be a single absolute directory (``~`` is expanded); anything else is ignored with a warning. These directories are prepended to the search path used by the MCP probe, the agent-config command resolver, and the broker's rewriter alike, so a binary found here is found everywhere. They also join the PATH of the broker daemon and every pooled MCP backend it spawns, so a wrapper script found here can exec a bare tool name; the daemon reads this when it starts, so a change reaches it only once it is replaced. They do NOT join the search for the agent runtime itself, which must not be shadowable by a configured directory.",
+      "help": "Additional directories to search for MCP server binaries, ahead of the built-in locations. Add one when a package manager installs its MCP launchers somewhere Sao Khuê does not know about: a server declared by bare name that resolves nowhere never starts, and the session just comes up short of tools. Each entry must be a single absolute directory (``~`` is expanded); anything else is ignored with a warning. These directories are prepended to the search path used by the MCP probe, the agent-config command resolver, and the broker's rewriter alike, so a binary found here is found everywhere. They also join the PATH of the broker daemon and every pooled MCP backend it spawns, so a wrapper script found here can exec a bare tool name; the daemon reads this when it starts, so a change reaches it only once it is replaced. They do NOT join the search for the agent runtime itself, which must not be shadowable by a configured directory.",
       "hasChildren": true,
       "enumValues": null,
       "defaultValue": [],
@@ -4413,7 +4413,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Honour MCP autoApprove",
-      "help": "Keep an ``autoApprove`` list you wrote yourself -- one hand-added to ``mcp.json`` or to an agent file -- in the agent config Kiro Crew writes. On by default: an ``autoApprove`` is a deliberate choice about your own tools and is respected, so those verbs run without an approval card. Know what it costs before writing one: the agent runtime approves such a call locally and emits no permission request, so Kiro Crew's own tool gate never runs for it. Turn this OFF to drop every verb no server spec declares, which puts those tools back through the gate. A governance ceiling strips the key whatever this says, and a verb a spec declares is kept either way. Applies at restart, when the spec is rebuilt, so a change does not retract or restore a grant already in the file.",
+      "help": "Keep an ``autoApprove`` list you wrote yourself -- one hand-added to ``mcp.json`` or to an agent file -- in the agent config Sao Khuê writes. On by default: an ``autoApprove`` is a deliberate choice about your own tools and is respected, so those verbs run without an approval card. Know what it costs before writing one: the agent runtime approves such a call locally and emits no permission request, so Sao Khuê's own tool gate never runs for it. Turn this OFF to drop every verb no server spec declares, which puts those tools back through the gate. A governance ceiling strips the key whatever this says, and a verb a spec declares is kept either way. Applies at restart, when the spec is rebuilt, so a change does not retract or restore a grant already in the file.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": true,
@@ -4428,7 +4428,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Instances",
-      "help": "Multi-instance management — manage/switch remote Kiro Crews over SSH.",
+      "help": "Multi-instance management — manage/switch remote Sao Khuês over SSH.",
       "hasChildren": true,
       "enumValues": null,
       "defaultValue": {
@@ -4452,7 +4452,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Enabled",
-      "help": "Enable multi-instance management — lets this gateway open SSH tunnels to remote Kiro Crews and embed their dashboards. Default off (opt-in). Enabling also scopes a CSP frame-src relaxation to active tunnel ports.",
+      "help": "Enable multi-instance management — lets this gateway open SSH tunnels to remote Sao Khuês and embed their dashboards. Default off (opt-in). Enabling also scopes a CSP frame-src relaxation to active tunnel ports.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": false,
@@ -7160,7 +7160,7 @@
         "wakatime"
       ],
       "label": "Send coding-activity heartbeats",
-      "help": "Send a heartbeat to WakaTime after each agent turn that edited files or ran a command, so your Kiro Crew coding time shows up in WakaTime alongside your editor. Off by default: sending activity outward is a separate opt-in from reading your own stats. Requires the WakaTime integration to be enabled. Covers dashboard chat and dashboard-linked Slack threads; the other messaging channels (Telegram, Discord, Teams, WhatsApp and the rest), the task runner, subagents, installed apps, and the standalone kirocrew chat CLI each run their own turn loop and do not emit heartbeats yet. Incognito and temporary sessions never send one: they keep no record of the chat, and a heartbeat is an external record of it.",
+      "help": "Send a heartbeat to WakaTime after each agent turn that edited files or ran a command, so your Sao Khuê coding time shows up in WakaTime alongside your editor. Off by default: sending activity outward is a separate opt-in from reading your own stats. Requires the WakaTime integration to be enabled. Covers dashboard chat and dashboard-linked Slack threads; the other messaging channels (Telegram, Discord, Teams, WhatsApp and the rest), the task runner, subagents, installed apps, and the standalone kirocrew chat CLI each run their own turn loop and do not emit heartbeats yet. Incognito and temporary sessions never send one: they keep no record of the chat, and a heartbeat is an external record of it.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": false
@@ -8049,7 +8049,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Use Built-in Browser",
-      "help": "When on, the browser tool opens pages in Kiro Crew's built-in panel (desktop app only). When off, the agent browses via playwright-cli.",
+      "help": "When on, the browser tool opens pages in Sao Khuê's built-in panel (desktop app only). When off, the agent browses via playwright-cli.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": true
@@ -9261,7 +9261,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Agents",
-      "help": "Named Kiro Crew agent definitions.",
+      "help": "Named Sao Khuê agent definitions.",
       "hasChildren": true,
       "enumValues": null,
       "defaultValue": {}
@@ -9569,7 +9569,7 @@
       "sensitive": false,
       "tags": [],
       "label": "Default Agent",
-      "help": "Active Kiro Crew agent name from the agents section.",
+      "help": "Active Sao Khuê agent name from the agents section.",
       "hasChildren": false,
       "enumValues": null,
       "defaultValue": ""

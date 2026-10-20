@@ -196,7 +196,7 @@ describe('DisplayPanel — catalog load failure', () => {
     const alerts = screen.getAllByRole('alert')
     expect(alerts).toHaveLength(2)
     expect(alerts[0]).toHaveTextContent(/couldn't load the selected language/i)
-    expect(alerts[1]).toHaveTextContent(/couldn't save this to your Kiro Crew config/i)
+    expect(alerts[1]).toHaveTextContent(/couldn't save this to your Sao Khuê config/i)
     expect(screen.queryByRole('button', { name: /ask the agent/i })).not.toBeInTheDocument()
   })
 })

@@ -209,7 +209,7 @@ admission again, including when rollback failure closes an uncertain connection.
 
 ## Data Home Location
 
-Kiro Crew's data root nests **under kiro-cli's own `~/.kiro/` base** so all
+Sao Khuê's data root nests **under kiro-cli's own `~/.kiro/` base** so all
 Kiro-family apps share a single directory a user can secure. `config_dir()`
 (in `kiro_crew/config/paths.py`, re-exported from `kiro_crew/config/loader.py`)
 is the single accessor and resolves to:
@@ -235,13 +235,13 @@ tree, where the launcher fence refuses it, so the one-click browser install
 refuses up front (see the browser module).
 
 **Repository-controlled uninstall contract.** Every uninstall path owned by this
-repository preserves the Kiro Crew data home by default. `kirocrew service
+repository preserves the Sao Khuê data home by default. `kirocrew service
 uninstall` removes only its service definition; the Python/npm packages define
 no uninstall lifecycle hook; and the desktop shell's generated NSIS uninstaller
 removes only installed program state: its install directory, shortcuts,
 channel-scoped updater cache, and any legacy “start with Windows” registry entry
 (`deleteAppDataOnUninstall` stays false), without
-resolving or removing the Kiro Crew home. App Kit uninstall also preserves the
+resolving or removing the Sao Khuê home. App Kit uninstall also preserves the
 app's `data/` subtree unless the dedicated `purge_data=true` API action (CLI
 `--purge-data`, or an explicit dashboard choice) is supplied. The API checks
 for the literal boolean `true`; absent, legacy, or malformed values fail closed
@@ -249,7 +249,7 @@ to preservation. A whole-home purge is never coupled to uninstall.
 
 **Uninstaller consideration (external dependency).** Because the data home now
 lives under `~/.kiro/`, a hypothetical Kiro-family uninstaller that removes
-`~/.kiro/` would also remove `~/.kiro/crew` and take Kiro Crew's data — config,
+`~/.kiro/` would also remove `~/.kiro/crew` and take Sao Khuê's data — config,
 credentials, memory DB, session history, and the SEL audit chain — with it. This
 is a persisted-data one-way door, and — unlike when an archived rollback copy
 existed — there is now no `~/.kirocrew.archived` fallback for ANY install
@@ -277,7 +277,7 @@ eliminate, the one-way-door risk above; the release gate still stands.
 > **Release gate (UNINSTALLER-EXCLUDE-CREW).** This is a pre-release,
 > human-sign-off dependency, NOT a code change in this repo: the code cannot
 > constrain another product's uninstaller. For every release that ships data
-> under `~/.kiro/`, the Kiro Crew product owner MUST confirm the
+> under `~/.kiro/`, the Sao Khuê product owner MUST confirm the
 > Kiro-family uninstaller either excludes `~/.kiro/crew` or prompts — because
 > there is no `~/.kirocrew.archived` fallback for any install, so a
 > `~/.kiro/`-wide wipe would be unrecoverable total data loss. Until confirmed,
@@ -1813,20 +1813,20 @@ written atomically only when its content changed. It is a runtime resource, neve
 hand-edited (an edit is overwritten on the next turn), and it lives HERE because
 kiro-cli discovers selectable agents from nowhere else: this directory and the
 session's `<project>/.kiro/agents`, at process start (`acp/runtime.py`). The project
-scope is the user's checkout, which Kiro Crew does not write into, so the user-level
+scope is the user's checkout, which Sao Khuê does not write into, so the user-level
 registry is the only publishable location. The derived spec declares its own `name`
 so no two files declare the base agent's name (`agent.agent_spec_path` refuses that
 ambiguity), and its `description` starts with the owner marker
-`Kiro Crew derived read-only spec`: the writer refuses — never overwrites — a file at
+`Sao Khuê derived read-only spec`: the writer refuses — never overwrites — a file at
 the derived path without that marker, and refuses to publish at all when another
 spec (project scope, or a second user-scope file) declares the derived name, because
 kiro-cli would load that one instead. See `side.md`.
 
 ### `project_agents_dir(project_dir)` / `project_kiro_dir(project_dir)` (`config/paths.py`)
 The **project** scope, read-only: `<project>/.kiro/agents` (kiro-cli's own workspace
-agents dir) and `<project>/.kiro` (which holds Kiro Crew's older
+agents dir) and `<project>/.kiro` (which holds Sao Khuê's older
 `*.agent-spec.json` convention). kiro-cli resolves `--agent` against
-`$PWD/.kiro/agents` before the user-level dir with **no upward walk**, and Kiro Crew
+`$PWD/.kiro/agents` before the user-level dir with **no upward walk**, and Sao Khuê
 spawns kiro-cli with the session's project directory as its cwd, so this is exactly
 the directory the backend searches for that session.
 
@@ -2413,14 +2413,14 @@ multi-member batch spanning layers commits one overlay delta atomically.
 Public capability versions are random identifiers tied to the saved internal
 materialization digest, never the digest of secret-bearing source bytes.
 
-Kiro Crew tracks two pieces of per-agent state that are **not** part of the
+Sao Khuê tracks two pieces of per-agent state that are **not** part of the
 kiro-cli agent schema: `model_managed` (whether an agent's `model` tracks the
 shipped default or is a frozen user pick) and `cc_model` (a per-agent Claude
 Code model). kiro-cli validates `~/.kiro/agents/*.json` with serde
 `deny_unknown_fields` and rejects the *entire* spec on any unknown key, then
 silently falls back to the default agent (`--agent <name>` resolves to default
 with only a stderr "no agent with name X found" line). To keep every spec
-schema-valid, this state lives in a Kiro Crew-owned sidecar
+schema-valid, this state lives in a Sao Khuê-owned sidecar
 `~/.kiro/crew/agent_model_state.json` (honoring `KIROCREW_HOME`), keyed by agent
 name:
 
@@ -2464,7 +2464,7 @@ name:
   `migrate_agent_specs()` and `_refresh_dynamic_fields()`; the function's callers
   are the authoritative list — so none of them can drift from the others.
 
-Note: Kiro Crew uses KiroACP (kiro-cli) only — the deleted `claude_code` provider
+Note: Sao Khuê uses KiroACP (kiro-cli) only — the deleted `claude_code` provider
 was the sole reader of spec `cc_model`, so `cc_model` is now dead config. The
 lite/heartbeat installers still write it to the sidecar (harmless bookkeeping)
 purely to keep the kiro spec schema-clean; nothing in the fork resolves it.
@@ -2918,7 +2918,7 @@ class AgentConfig:
     model_context_tokens: dict[str, int] = {}  # operator-declared served context window per EXACT agent.model id, e.g. {"server-a/org/model-7b": 32768}; value an int in [1024, 10000000], first 64 entries read, a warning per dropped entry (coerce_model_context_tokens); live via model_registry.apply_operator_windows
     provider: str = "acp"          # fixed to "acp" (kiro-cli) — the only provider
     bot_name: str = ""             # the name the agent identifies as in conversations (the {bot_name} placeholder in prompts); "" = the provider's default (Kiro). Loaded through _sanitize_bot_name (sections_agent_fields.py): NFC-normalized, capped at 50 code points (_BOT_NAME_MAX), then filtered to Unicode letters (Lu/Ll/Lt/Lm/Lo), the combining marks that attach to them (Mn/Mc), decimal digits (Nd) and letter numbers (Nl, the ideographic zero) in any script, plus the ASCII space, "_", "-" and "." -- the character policy of the artifact tag rule (artifacts.md § Validation & Limits), applied as a filter that drops instead of a validator that refuses. Everything else is dropped: braces (the placeholder must not recurse), other punctuation, symbols and emoji, enclosing marks (the keycap), other numbers (², ½), controls, format characters (zero-width, bidi), the letters and marks that render as nothing (variation selectors, Hangul fillers: terminal_safe._is_invisible, the one shared table), surrogates and private-use. A non-ASCII space (NO-BREAK SPACE, IDEOGRAPHIC SPACE) becomes the plain space; a space run a removal leaves behind folds to one and a leading or trailing one is stripped; a double space the user typed is kept; the result is NFC-normalized again, since a removal can leave a composable pair adjacent. Three tag rules are not applied: compatibility forms (full-width ｋｉｒｏ) are kept as typed because a drop cannot name the plain spelling; a name may open with a separator; and a run of combining marks is not bounded, since the bound guards a chip's width and nothing draws this name. A name that filters to "" takes the default. Nothing is logged when a name changes, and the CLI `config set` echo shows the raw value (#18728 follow-ups). dashboard.bot_name is a separate field and is not filtered.
-    sandbox: str = "auto"          # "auto" (default: standard tier -- namespace on Linux, seatbelt on macOS; leaves ~/.aws, ~/.ssh, ~/.kube visible for credential tooling; delegates to kiro-cli's internal sandbox on macOS when enabled) | "strict" (opt-in: also hides ~/.aws incl. sso/cache, ~/.ssh bar known_hosts, ~/.kube, ~/.config/gh and the _CC_FILES credential files; applies to sessions started after the change) | "off" (skips Kiro Crew's sandbox). Any other value falls back to "auto"
+    sandbox: str = "auto"          # "auto" (default: standard tier -- namespace on Linux, seatbelt on macOS; leaves ~/.aws, ~/.ssh, ~/.kube visible for credential tooling; delegates to kiro-cli's internal sandbox on macOS when enabled) | "strict" (opt-in: also hides ~/.aws incl. sso/cache, ~/.ssh bar known_hosts, ~/.kube, ~/.config/gh and the _CC_FILES credential files; applies to sessions started after the change) | "off" (skips Sao Khuê's sandbox). Any other value falls back to "auto"
     sandbox_allow_no_isolation: bool = False  # SEC-009: acknowledge running un-isolated when no sandbox backend exists; false = loud SECURITY warning, true = info-level
     soft_stop_budget_secs: float = 10.0  # seconds to wait for cooperative cancel before hard kill [0.5, 60.0]
     dangerously_skip_permissions: bool = False  # persistent all-tool approval; restart required
@@ -3988,7 +3988,7 @@ newer import marker remains a cache only and continues to yield to server state.
 
 Foreign settings are never deep-merged into `config.json`. The importer applies
 only its explicit non-security settings allowlist, preserves every existing
-Kiro Crew value on collision, and reports unsupported or secret-bearing source
+Sao Khuê value on collision, and reports unsupported or secret-bearing source
 settings without copying them. Foreign credentials, security policy,
 approval/sandbox settings, agent/runtime state, hooks, and arbitrary unknown
 config sections cannot enter configuration through this path.

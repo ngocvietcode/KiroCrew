@@ -1,6 +1,6 @@
 # Connections
 
-**Connections** is the one page for everything outside Kiro Crew that an agent can
+**Connections** is the one page for everything outside Sao Khuê that an agent can
 reach: the MCP servers this install runs, and the third-party services you have
 signed into. A curated vendor connects in a click and its tools appear in your next
 session; a server nobody curated is added by hand on the same page and behaves the
@@ -18,7 +18,7 @@ the only place a sign-in is offered.
 ## The vendor catalogue
 
 `src/kiro_crew/connections/registry.json` holds **29** curated providers. A catalogue
-entry is what lets Kiro Crew offer a one-click **Connect** instead of asking you for
+entry is what lets Sao Khuê offer a one-click **Connect** instead of asking you for
 a URL: the entry carries the vendor's MCP endpoint, the scopes worth asking for, the
 revoke page to send you to later, and a baseline of the vendor's published OAuth
 metadata that a nightly job watches for drift.
@@ -47,13 +47,13 @@ you keep the tools.
 Anything not in the catalogue is added on the same page. A server takes one of two
 shapes, and exactly one:
 
-**stdio** — Kiro Crew launches a local process and talks to it over its pipes:
+**stdio** — Sao Khuê launches a local process and talks to it over its pipes:
 
 ```json
 { "command": "npx", "args": ["-y", "some-mcp-server"], "env": { "API_REGION": "us-east-1" } }
 ```
 
-**remote** — an HTTP endpoint Kiro Crew calls over the network:
+**remote** — an HTTP endpoint Sao Khuê calls over the network:
 
 ```json
 { "url": "https://mcp.example.com/" }
@@ -91,12 +91,12 @@ Two other ways to authorize a remote server:
   when the handshake is sent; an unresolved one stays literal, which then reads as a
   server asking for a sign-in.
 - **An operator-registered OAuth app**, for the two vendors that refuse runtime
-  registration. See [credentials](#credentials-and-what-kiro-crew-can-see) below.
+  registration. See [credentials](#credentials-and-what-sao-khuê-can-see) below.
 
 ### The tools appear in the next *cold* session
 
 A running `kiro-cli` process caches its token and its tool list in memory, so a file
-on disk changing does not reach a session that is already alive. Kiro Crew also keeps
+on disk changing does not reach a session that is already alive. Sao Khuê also keeps
 a warm pool of pre-spawned processes, and a new chat claims one of those whenever it
 can — which means **a new chat alone is often not enough**, and this is the step that
 looks like the sign-in failed.
@@ -104,16 +104,16 @@ looks like the sign-in failed.
 After authorizing: drain the warm pool (or restart the gateway) **first**, then start
 a fresh session.
 
-## Credentials, and what Kiro Crew can see
+## Credentials, and what Sao Khuê can see
 
 `kiro-cli` owns the OAuth chain end to end. On a successful sign-in it writes two
 files into its own cache directory, keyed by a hash of the server's URL — one holding
 the bearer and refresh token, one holding the client registration. Both survive a
 restart.
 
-**Kiro Crew checks whether those files exist and never opens them.** That is what the
+**Sao Khuê checks whether those files exist and never opens them.** That is what the
 "Signed in" badge reports: a sign-in happened, not that the token is still valid. It
-also means Kiro Crew can tell you neither the granted scope nor the expiry, and there
+also means Sao Khuê can tell you neither the granted scope nor the expiry, and there
 is no place in the product where a provider token can be printed.
 
 One consequence worth knowing: **removing a server's config entry does not revoke its
@@ -142,7 +142,7 @@ happens when the agent tries to read one anyway.
 
 ## Health: what a row's badge means
 
-Each row carries the result of a real handshake — Kiro Crew launches the stdio
+Each row carries the result of a real handshake — Sao Khuê launches the stdio
 command or calls the URL and sends an MCP `initialize`.
 
 | Badge | Meaning | What to do |
@@ -181,7 +181,7 @@ machine; both are why an entry got a card in the first place.
 | **L0** | no | the vendor's published OAuth metadata still matches the baseline committed with the entry |
 | **L1** | yes, one human consent click per provider, once | a grant that exists still works against the live endpoint |
 
-L1's vocabulary is shaped by Kiro Crew holding no token: a tokenless request to a
+L1's vocabulary is shaped by Sao Khuê holding no token: a tokenless request to a
 healthy authorized server *correctly* gets a challenge, so that is its own verdict
 rather than a failure. `PASS` and `GRANT_HELD` are green, `NEEDS_RECONSENT` means a
 credential was actually refused and a human must re-approve, `FAIL` means reached and
@@ -197,7 +197,7 @@ Todoist both expose `search` and `fetch`. An agent calls a tool by bare name, so
 second server to mount would shadow the first — one provider's tool becomes
 unreachable and the agent silently calls the other one's.
 
-Kiro Crew renames the collision instead. The pattern is always
+Sao Khuê renames the collision instead. The pattern is always
 `<provider>_<tool>`, and **every** claimant is renamed — none keeps the bare name, so
 there is no "first one wins" to reason about:
 
@@ -218,7 +218,7 @@ the inventory actually lists rather than the name the vendor's own documentation
 ## Quarantine: a server that keeps failing
 
 A single failed probe is routine — a cold package cache, a laptop that just woke, a
-registry blip. So Kiro Crew counts **consecutive** failures instead, durably, and the
+registry blip. So Sao Khuê counts **consecutive** failures instead, durably, and the
 row reports the count. After **3** in a row the server is marked quarantined; change
 the threshold with `agent.mcp_quarantine_after_failures`, and set it to `0` to turn
 the feature off entirely.
@@ -245,16 +245,16 @@ reset control — do not edit the user's MCP config to work around it.
 ## Behind enterprise MCP governance
 
 If your organization runs an enterprise MCP registry, a server can be configured
-correctly here and still refuse to connect, because the registry — not Kiro Crew —
+correctly here and still refuse to connect, because the registry — not Sao Khuê —
 decides which servers a host may launch. That needs two halves, and both are
-required: declaring registry mode on the Kiro Crew side, and having an administrator
+required: declaring registry mode on the Sao Khuê side, and having an administrator
 allow-list the servers. The walkthrough, including central policy distribution across
 hosts, is in
-[Kiro Crew behind enterprise MCP governance](https://github.com/kirodotdev/KiroCrew/blob/main/docs/guides/enterprise-mcp-governance.md)
+[Sao Khuê behind enterprise MCP governance](https://github.com/kirodotdev/KiroCrew/blob/main/docs/guides/enterprise-mcp-governance.md)
 — a contributor document in the repository, not part of this installed package.
 
 The longer walkthrough for one stubborn remote OAuth server, including the operator
-keystone for an identity provider Kiro Crew does not recognize, is in
+keystone for an identity provider Sao Khuê does not recognize, is in
 [Connecting a remote / OAuth MCP server](https://github.com/kirodotdev/KiroCrew/blob/main/docs/guides/connecting-remote-oauth-mcp-server.md).
 
 ## Related docs

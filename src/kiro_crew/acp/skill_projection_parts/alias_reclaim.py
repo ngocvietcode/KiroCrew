@@ -557,7 +557,7 @@ def _projection_prune_candidates(directory: Path, skip: set[str]) -> Iterator[Pa
 def _prune_stale_managed_aliases(
     directory: Path, crew_home_id: str, *, keep: set[str], sweep_sidecars: bool = True
 ) -> int:
-    """Remove aliases owned by this Kiro Crew data home that no projection uses.
+    """Remove aliases owned by this Sao Khuê data home that no projection uses.
 
     Runs while the publication lock is held, so a deletion cannot land on an alias
     a publisher that takes that lock is writing; a build predating the lease takes
@@ -1074,7 +1074,7 @@ def census_projected_aliases(directory: Path) -> dict[str, int]:
         record counts here until the next spawn's probe reclaims it;
     ``foreign_home`` / ``foreign_leased``
         of the unreferenced and of the lease-named aliases respectively, how
-        many an ownership sidecar attributes to a Kiro Crew data home other
+        many an ownership sidecar attributes to a Sao Khuê data home other
         than this process's own -- spelled exactly as the publisher records it,
         so a caller cannot pass a differently normalised id. Two homes share
         one agents directory whenever they share ``~/.kiro``, and this

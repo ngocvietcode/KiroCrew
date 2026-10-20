@@ -348,7 +348,7 @@ class TestInstall:
 
         assert not result.ok
         assert result.error == (
-            f"{planted} is a link; Kiro Crew keeps the app's data directory at that name "
+            f"{planted} is a link; Sao Khuê keeps the app's data directory at that name "
             "while it replaces the app files and cannot use it -- remove it first"
         ), result.error
         assert _read_installed("test-app") is None

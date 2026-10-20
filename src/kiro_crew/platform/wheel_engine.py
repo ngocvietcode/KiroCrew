@@ -31,7 +31,7 @@ feed alone is never trusted for anything actionable.
 What this engine deliberately does NOT change, stated for parity rather than
 guarded against: the shadow ``pip install`` resolves the wheel's dependencies
 from the index exactly as ``cli.sh``'s own venv branch does today, so the
-provenance story covers the Kiro Crew wheel itself, not the dependency set.
+provenance story covers the Sao Khuê wheel itself, not the dependency set.
 Raising that bar (hash-pinned constraints inside the signed payload) is worth
 doing for the installer and this engine together, not here alone.
 """
@@ -774,7 +774,7 @@ def _no_wheel_message(missing: list[str]) -> str:
             host += f", {libc[0]} {libc[1]}"
     return (
         f"pip found no prebuilt wheel of {', '.join(missing)} it may install on this host "
-        f"({host}). Kiro Crew installs prebuilt wheels only and never compiles a dependency. "
+        f"({host}). Sao Khuê installs prebuilt wheels only and never compiles a dependency. "
         "Usually this means the host is older than the wheels' floor: the current dependency "
         "set needs a newer Linux (Amazon Linux 2023, RHEL/Rocky 8+, Ubuntu 22.04+, Debian "
         "12+) on x86_64/aarch64, or macOS. It can also mean the package index could not be "

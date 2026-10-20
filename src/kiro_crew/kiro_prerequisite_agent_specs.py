@@ -1,4 +1,4 @@
-"""Kiro Crew's own agent specs: presence, acceptance by kiro-cli and KAS, and repair.
+"""Sao Khuê's own agent specs: presence, acceptance by kiro-cli and KAS, and repair.
 
 Bound into :class:`KiroPrerequisiteService`; reads ``self._assume_ready``,
 ``self._spec_lister``, ``self._status`` (through :meth:`_dashboard_snapshot`) and
@@ -207,7 +207,7 @@ async def _agent_spec_overlay(
     except Exception:
         # Unreadable agents dir: report nothing rather than inventing a
         # missing spec and blocking a working install behind a repair card.
-        logger.debug("Could not check Kiro Crew agent specs", exc_info=True)
+        logger.debug("Could not check Sao Khuê agent specs", exc_info=True)
         return result
     result["missing_agent_specs"] = list(missing)
     if missing:
@@ -385,7 +385,7 @@ async def repair_agent_specs(self: KiroPrerequisiteService, caller: str = "") ->
 async def _probe_spec_acceptance(
     self: KiroPrerequisiteService, executable: str
 ) -> tuple[list[str], str]:
-    """Ask kiro-cli whether it accepts each required Kiro Crew spec on disk.
+    """Ask kiro-cli whether it accepts each required Sao Khuê spec on disk.
 
     Returns ``(rejected filenames, first reason)`` — both empty when every
     present spec is accepted.
@@ -414,7 +414,7 @@ async def _probe_spec_acceptance(
     try:
         specs = await asyncio.to_thread(_present)
     except Exception:
-        logger.debug("Could not enumerate Kiro Crew agent specs", exc_info=True)
+        logger.debug("Could not enumerate Sao Khuê agent specs", exc_info=True)
         return [], ""
     rejected: list[str] = []
     detail = ""
@@ -456,6 +456,6 @@ async def _probe_kas_spec_loading(self: KiroPrerequisiteService) -> tuple[list[s
     try:
         specs = await asyncio.to_thread(self._spec_lister)
     except Exception:
-        logger.debug("Could not enumerate Kiro Crew agent specs", exc_info=True)
+        logger.debug("Could not enumerate Sao Khuê agent specs", exc_info=True)
         return [], ""
     return await asyncio.to_thread(_kas_spec_load_failures, specs)

@@ -1,5 +1,5 @@
 #!/bin/bash
-# sync-to-remote.sh — push KiroCrew state from LOCAL → REMOTE Cloud Desktop
+# sync-to-remote.sh — push SaoKhue state from LOCAL → REMOTE Cloud Desktop
 # Direction: one-way (local overwrites remote). Run from your laptop/Mac.
 # Improvements over sync-kirocrew.sh:
 #   - Custom port support (patches config.json after copy)
@@ -23,7 +23,7 @@ usage() {
   cat <<EOF
 Usage: sync-to-remote.sh [OPTIONS] [HOST] [PORT]
 
-Push KiroCrew state from LOCAL → REMOTE (one-way, local overwrites remote).
+Push SaoKhue state from LOCAL → REMOTE (one-way, local overwrites remote).
 Run this from your laptop/Mac. Patches remote config.json with the specified
 port and disables auto_open_browser.
 
@@ -87,7 +87,7 @@ rsync_dry() {
   fi
 }
 
-echo "=== Syncing KiroCrew to $HOST (port=$PORT) $(${DRY_RUN} && echo '[DRY RUN]') ==="
+echo "=== Syncing SaoKhue to $HOST (port=$PORT) $(${DRY_RUN} && echo '[DRY RUN]') ==="
 
 # --- Create remote dirs ---
 if ! $DRY_RUN; then

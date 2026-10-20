@@ -192,7 +192,7 @@ class TestTheWorkerBudgetIsMemoryBounded:
         monkeypatch.setattr(budget, "_cgroup_limit_mib", lambda: 0)
         monkeypatch.setattr(budget, "_host_available_mib", lambda: 0)
         monkeypatch.delenv(budget._MAX_WORKERS_ENV, raising=False)
-        # Kiro Crew seeds this cap at every agent spawn boundary; a run started
+        # Sao Khuê seeds this cap at every agent spawn boundary; a run started
         # from an agent shell would otherwise read the spawner's cap here.
         monkeypatch.delenv(budget._XDIST_ENV_CAP, raising=False)
 

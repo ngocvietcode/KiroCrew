@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-authored, action-first feature tips for features native to Kiro Crew (keyboard shortcuts, Settings toggles, config keys) that have no docs/*.md entry and so can never surface through the doc-scan catalog. Each tip's body ends with the exact thing to do. An optional 'action' object ({kind:'route', label, route}) renders a one-click button that navigates to the exact settings page/control; tips whose feature has no navigable destination (a keyboard shortcut or a mid-turn composer control) omit 'action' and render body only. A curated tip that wants a 'learn more' doc link MUST use 'doc_link' (rendering-only), never 'doc': 'doc' is the tip's dismissal identity, and a curated tip claiming a catalog-owned doc there would suppress the catalog's own tip for that doc on dismissal. Loaded by kiro_crew.tips._load_curated_tips; the string fields are validated like generated tips, and 'action' is validated separately by _sanitize_tip_action (kind must be 'route'; route must be an internal path).",
+  "_comment": "Hand-authored, action-first feature tips for features native to Sao Khuê (keyboard shortcuts, Settings toggles, config keys) that have no docs/*.md entry and so can never surface through the doc-scan catalog. Each tip's body ends with the exact thing to do. An optional 'action' object ({kind:'route', label, route}) renders a one-click button that navigates to the exact settings page/control; tips whose feature has no navigable destination (a keyboard shortcut or a mid-turn composer control) omit 'action' and render body only. A curated tip that wants a 'learn more' doc link MUST use 'doc_link' (rendering-only), never 'doc': 'doc' is the tip's dismissal identity, and a curated tip claiming a catalog-owned doc there would suppress the catalog's own tip for that doc on dismissal. Loaded by kiro_crew.tips._load_curated_tips; the string fields are validated like generated tips, and 'action' is validated separately by _sanitize_tip_action (kind must be 'route'; route must be an internal path).",
   "tips": [
     {
       "id": "split-view",
@@ -95,7 +95,7 @@
       "id": "dev-fleet",
       "feature": "Dev Fleet",
       "title": "Manage worktrees and pods from the dashboard",
-      "body": "Building Kiro Crew itself? Enable the **Dev Fleet** app under **Apps → Installed → Show**, then open **Dev Fleet** to manage git worktrees and isolated test pods.",
+      "body": "Building Sao Khuê itself? Enable the **Dev Fleet** app under **Apps → Installed → Show**, then open **Dev Fleet** to manage git worktrees and isolated test pods.",
       "why": "",
       "doc": "",
       "cta_prompt": "",
@@ -155,7 +155,7 @@
       "id": "auto-skills",
       "feature": "Auto-generated Skills",
       "title": "Turn repeated work into a skill",
-      "body": "Let Kiro Crew draft a reusable skill when a finished session shows a procedure a future session would run again on a different target. Enable **Auto-generate skills from sessions** in **Settings › Skills** — by default drafts wait in a review queue for your approval. Turning off **skills.approval_required** lets prose-only skills publish directly; skills with scripts always need approval. Off by default.",
+      "body": "Let Sao Khuê draft a reusable skill when a finished session shows a procedure a future session would run again on a different target. Enable **Auto-generate skills from sessions** in **Settings › Skills** — by default drafts wait in a review queue for your approval. Turning off **skills.approval_required** lets prose-only skills publish directly; skills with scripts always need approval. Off by default.",
       "why": "",
       "doc": "",
       "doc_link": "skills.md",
@@ -216,8 +216,8 @@
     {
       "id": "remote-crew",
       "feature": "Remote Crew",
-      "title": "Reach another machine's Kiro Crew",
-      "body": "Add another Kiro Crew gateway over SSH or AWS SSM in **Settings › Remote Crew**, then switch between crews from the header.",
+      "title": "Reach another machine's Sao Khuê",
+      "body": "Add another Sao Khuê gateway over SSH or AWS SSM in **Settings › Remote Crew**, then switch between crews from the header.",
       "why": "",
       "doc": "",
       "cta_prompt": "",

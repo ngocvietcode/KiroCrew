@@ -1106,7 +1106,7 @@ class TestCliPathTrust:
         assert result["ok"] is False
         assert [s["name"] for s in result["steps"]] == ["check-install-boundary"]
         detail = result["steps"][0]["stderr"]
-        assert f"{home.resolve()} contains the Kiro Crew data home ({crew})" in detail
+        assert f"{home.resolve()} contains the Sao Khuê data home ({crew})" in detail
         assert "agent-writable" in detail
         assert calls == []
 

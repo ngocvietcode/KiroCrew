@@ -499,7 +499,7 @@ class TestOneRowPerSkillFile:
 
     def test_extra_paths_over_kiro_user_lists_once(self, fake_home, close_skills_loaders):
         """Real loader: ``skills.extra_paths`` naming ``~/.kiro/skills`` reaches
-        the file as a Kiro Crew row AND as a ``kiro-user`` row; one is listed."""
+        the file as a Sao Khuê row AND as a ``kiro-user`` row; one is listed."""
         from kiro_crew.config import KiroCrewConfig
         from kiro_crew.skills import SkillsLoader
 

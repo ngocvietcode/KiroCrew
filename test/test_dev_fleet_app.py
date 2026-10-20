@@ -153,9 +153,9 @@ async def test_discover_worktrees_sandbox_error_keeps_remedy():
         "available on this host, and the agent subprocess cannot be safely "
         "isolated. Probe detail: sandbox-exec probe failed (exit 71). This "
         "host's sandbox is NOT broken: the kernel reports this process is "
-        "already inside a macOS Seatbelt sandbox that KiroCrew did not create. "
+        "already inside a macOS Seatbelt sandbox that SaoKhue did not create. "
         'Set {"sandbox": false} in ~/.kiro/settings/amazon-internal.json so '
-        "KiroCrew's own profile owns isolation, then restart the gateway."
+        "SaoKhue's own profile owns isolation, then restart the gateway."
     )
     assert len(stderr) > 200, "fixture must exceed the old cap to be meaningful"
     with patch.object(runtime_mod, "_run_cmd", new=AsyncMock(return_value=(-1, "", stderr))):
@@ -483,7 +483,7 @@ async def test_fleet_handler_missing_repo_returns_error_payload():
     async def boom():
         raise RuntimeError(
             "main checkout not found: /nope/kirocrew is missing or not a git "
-            "checkout. Set KIROCREW_DEVFLEET_REPO to your Kiro Crew checkout, "
+            "checkout. Set KIROCREW_DEVFLEET_REPO to your Sao Khuê checkout, "
             "or clone it to ~/kirocrew."
         )
 
@@ -508,7 +508,7 @@ async def test_fleet_handler_missing_repo_returns_error_payload():
 
 
 def _make_checkout(root: Path) -> Path:
-    """Create a directory carrying every Kiro Crew checkout marker."""
+    """Create a directory carrying every Sao Khuê checkout marker."""
     (root / ".git").mkdir(parents=True)
     (root / "src" / "kiro_crew").mkdir(parents=True)
     (root / "pyproject.toml").write_text("[project]\nname = 'kiro-crew'\n")
@@ -653,7 +653,7 @@ async def test_fleet_handler_reports_needs_setup_without_an_error():
     instead of rendering a red banner against a path the user never chose."""
 
     async def unconfigured():
-        raise mod.RepoNotConfigured("no Kiro Crew checkout found to manage")
+        raise mod.RepoNotConfigured("no Sao Khuê checkout found to manage")
 
     with (
         patch.object(fleet_state_mod, "_fleet_refresh", new=unconfigured),
@@ -678,7 +678,7 @@ async def test_discover_worktrees_refuses_a_configured_non_kirocrew_repo():
     with (
         patch.object(repository_mod, "MAIN_REPO", "/some/other/repo"),
         patch.object(
-            repository_mod, "_REPO_INVALID_MSG", "not a Kiro Crew checkout: /some/other/repo ..."
+            repository_mod, "_REPO_INVALID_MSG", "not a Sao Khuê checkout: /some/other/repo ..."
         ),
         patch.object(runtime_mod, "_run_cmd", new=run),
     ):
@@ -688,7 +688,7 @@ async def test_discover_worktrees_refuses_a_configured_non_kirocrew_repo():
     # happily, so the guard cannot rely on a non-zero exit.
     run.assert_not_awaited()
     assert "/some/other/repo" in str(exc.value)
-    assert "not a Kiro Crew checkout" in str(exc.value)
+    assert "not a Sao Khuê checkout" in str(exc.value)
 
 
 @pytest.mark.asyncio
@@ -705,7 +705,7 @@ async def test_auto_prune_reaper_idles_for_a_configured_non_kirocrew_repo():
     sel = MagicMock()
     with (
         patch.object(repository_mod, "MAIN_REPO", "/some/other/repo"),
-        patch.object(repository_mod, "_REPO_INVALID_MSG", "not a Kiro Crew checkout: ..."),
+        patch.object(repository_mod, "_REPO_INVALID_MSG", "not a Sao Khuê checkout: ..."),
         patch.object(worktree_ops_mod, "_auto_prune_cfg", return_value=(True, 0.01)),
         patch.object(worktree_ops_mod, "_auto_prune_once", new=prune),
         patch.object(runtime_mod, "_sel", return_value=sel),
@@ -726,12 +726,12 @@ async def test_sync_refuses_a_configured_non_kirocrew_repo():
     with (
         patch.object(repository_mod, "MAIN_REPO", "/some/other/repo"),
         patch.object(
-            repository_mod, "_REPO_INVALID_MSG", "not a Kiro Crew checkout: /some/other/repo ..."
+            repository_mod, "_REPO_INVALID_MSG", "not a Sao Khuê checkout: /some/other/repo ..."
         ),
     ):
         res = await mod._sync_start_locked()
     assert res["ok"] is False
-    assert "not a Kiro Crew checkout" in res["error"]
+    assert "not a Sao Khuê checkout" in res["error"]
 
 
 @pytest.mark.asyncio
@@ -740,7 +740,7 @@ async def test_status_refresher_idles_for_a_configured_non_kirocrew_repo():
     with (
         patch.object(repository_mod, "MAIN_REPO", "/some/other/repo"),
         patch.object(
-            repository_mod, "_REPO_INVALID_MSG", "not a Kiro Crew checkout: /some/other/repo ..."
+            repository_mod, "_REPO_INVALID_MSG", "not a Sao Khuê checkout: /some/other/repo ..."
         ),
         patch.object(runtime_mod, "_run_cmd", new=run),
     ):
@@ -795,7 +795,7 @@ async def test_sync_refuses_without_a_repo():
     with patch.object(repository_mod, "MAIN_REPO", ""):
         res = await mod._sync_start_locked()
     assert res["ok"] is False
-    assert "no Kiro Crew checkout" in res["error"]
+    assert "no Sao Khuê checkout" in res["error"]
 
 
 @pytest.mark.asyncio
@@ -807,7 +807,7 @@ async def test_unconfigured_repo_answers_a_coded_409_not_a_500():
     secret = "s" * 32
 
     async def boom(request):
-        raise mod.RepoNotConfigured("no Kiro Crew checkout found to manage")
+        raise mod.RepoNotConfigured("no Sao Khuê checkout found to manage")
 
     app = web.Application(middlewares=[mod.hmac_proxy_middleware])
     app.router.add_get("/api/prune-candidates", boom)

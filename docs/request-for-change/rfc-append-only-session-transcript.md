@@ -26,7 +26,7 @@ superseded-by: []
 
 ## 1. Problem statement
 
-Kiro Crew's session transcript is a JSONL file that reads like an append-only log and
+Sao Khuê's session transcript is a JSONL file that reads like an append-only log and
 is not one. The hot write path rewrites a bounded window on every flush, and two
 paths can leave an already-recorded row reachable only from the archive directory.
 Verified on main `2a665e735` (2026-08-16); symbols are cited rather than line
@@ -80,17 +80,17 @@ DeepSeek Harness makes its session log the single source of truth and *derives* 
 model-visible message list from it on every turn. That is why resume, fork, replay,
 and compaction all reduce to one read there.
 
-Kiro Crew cannot do this, and this RFC does not attempt it. Each turn sends **one
+Sao Khuê cannot do this, and this RFC does not attempt it. Each turn sends **one
 string**, built by `src/kiro_crew/context.py::ContextBuilder.build_message` (via
 `build_session_context`) and handed to `client.stream(full_message)` in
 `dashboard/chat_runner.py`. The model's actual conversation lives in kiro-cli's own
-native ACP session, reached through `session/load`. Kiro Crew's JSONL is a *parallel
+native ACP session, reached through `session/load`. Sao Khuê's JSONL is a *parallel
 durable transcript*, injected back only at session start, replay, and provider switch.
 Compaction likewise happens inside the provider —
 `src/kiro_crew/session_parts/turn_context.py::check_context_usage` → `_compact_session` sends kiro-cli an
-in-place `/compact` and watches its status; it mutates no Kiro Crew record.
+in-place `/compact` and watches its status; it mutates no Sao Khuê record.
 
-Adopting DSH's derivation model would mean Kiro Crew holding the message array and
+Adopting DSH's derivation model would mean Sao Khuê holding the message array and
 sending it in full every turn — giving up the incremental semantics of `session/load`
 and creating two authorities writing the same history. That is an architecture
 inversion, not a refactor.
@@ -150,7 +150,7 @@ consequences:
 `dashboard/chat_fork.py::api_chat_slot_fork` copies messages into a new slot file. DSH
 instead records a parent session id plus a seed length and reads through. Adopting
 that would save the copy and make the fork tree traceable, but it only solves the
-Kiro Crew half — kiro-cli's own session still has to be forked for real. Phased last
+Sao Khuê half — kiro-cli's own session still has to be forked for real. Phased last
 and separable; it is not required by the append-only goal.
 
 ## 4. Phases
@@ -194,7 +194,7 @@ Measurable, and to be asserted in tests rather than claimed in prose:
 ## 7. Alternatives considered
 
 1. **Adopt DSH's full model** — session log as sole truth, model history derived.
-   Rejected in §2: Kiro Crew does not own the model context, kiro-cli does.
+   Rejected in §2: Sao Khuê does not own the model context, kiro-cli does.
 2. **Leave the rewrite path and only fix the dedup drop.** Cheaper, and it removes one
    data-loss class, but it leaves the write amplification and leaves the transcript's
    semantics unstatable. Available as a fallback if S2 proves too invasive.
@@ -204,7 +204,7 @@ Measurable, and to be asserted in tests rather than claimed in prose:
    — load-bearing for support and for log-style debugging — for a property that
    appended revisions already deliver.
 4. **Event-source the whole subsystem** with a typed event enum in the style of DSH's
-   ~48 known session event types. Larger than the problem. Kiro Crew already has
+   ~48 known session event types. Larger than the problem. Sao Khuê already has
    role-typed rows (`history_consolidation_skills.py::_TOOL_ROLES` covering `tool`/`tool_call`/`tool_result`,
    alongside `user`, `assistant`, `system`, `error`, `notice`, `inject`, `subagent`) plus
    `dashboard/state_parts/transcript_rows.py::_TRANSIENT_ROLES` (imported by `chat_persistence.py`) that are

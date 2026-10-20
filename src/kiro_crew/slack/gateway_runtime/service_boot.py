@@ -1372,7 +1372,7 @@ async def run(self: GatewayOrchestrator) -> None:
     # event loop.
     await asyncio.get_running_loop().run_in_executor(subprocess_executor(), check_bundle_freshness)
 
-    print("👻 Kiro Crew gateway starting…")
+    print("👻 Sao Khuê gateway starting…")
 
     connected = await self._connect_slack()
     # Record the real socket outcome so status surfaces (e.g. the Slack

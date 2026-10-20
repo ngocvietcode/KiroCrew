@@ -150,11 +150,11 @@ export async function stubDashboardApi(page, opts = {}) {
     // instead.
     localStorageEntries = null,
     // The backend's own default (`api_branding`: `cfg.dashboard.bot_name or
-    // "Kiro Crew"`). It must stay TWO WORDS: the nav brand row accents the last
+    // "Sao Khuê"`). It must stay TWO WORDS: the nav brand row accents the last
     // word only, and the composer placeholder interpolates the whole name — so
     // a single-word "Kiro" here silently produced screenshots with no "CREW"
     // and a "Message Kiro…" composer, in every harness in this folder.
-    botName = 'Kiro Crew',
+    botName = 'Sao Khuê',
     extra = null,
   } = opts
 

@@ -216,7 +216,7 @@ def build_spawn_impl(subagents: object) -> SpawnImpl:
             # approval_mode="auto", a full-privilege escalation from the app's own
             # restricted background agent.
             prefix = f"{app}--"
-            # Kiro Crew's own generated specs are never an app's agent, even when
+            # Sao Khuê's own generated specs are never an app's agent, even when
             # derived from one (``<app>--<agent>--readonly`` shares the prefix).
             known = {
                 a.name

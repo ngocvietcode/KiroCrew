@@ -212,7 +212,7 @@ Comment numbering shown to the designer is `<request number>.<index>` — commen
   were selected as a set (e.g. "increase spacing between these cards" applies to
   the shared container or gap).
 - The `file` path inside `source` is relative to the **project root**, not the
-  Kiro Crew workspace. Combine it with `projectRoot`.
+  Sao Khuê workspace. Combine it with `projectRoot`.
 - Prefer editing the exact `line:col`; use `htmlSnippet`, `classes`, and `id` to
   disambiguate when a component renders in a `.map()` loop (same source line,
   many instances).

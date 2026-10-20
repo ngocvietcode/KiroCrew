@@ -509,7 +509,7 @@ tests exist.
 
 ### Task 7: In-repo extra + IaC (this repository) — planned, not on main
 
-Planned as an opt-in extra in Kiro Crew, not a `kirocrew.plugins`
+Planned as an opt-in extra in Sao Khuê, not a `kirocrew.plugins`
 companion, so a launched box that opts into AgentCore actually vends. None of
 it is on `main`: there is no `agentcore` extra, `platform/agentcore_aws.py`,
 `platform/agentcore_sigv4.py`, `platform/agentcore_inspect.py`, or

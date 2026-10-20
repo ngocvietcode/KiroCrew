@@ -256,7 +256,7 @@ def gguf_declared_pooling(path: Path) -> str:
 
     Every embedding GGUF a current converter writes carries the key: Qwen3
     declares last-token, EmbeddingGemma and Nemotron mean, the ModernBERT family
-    CLS. A missing or unreadable header, or a pooling Kiro Crew cannot use (none,
+    CLS. A missing or unreadable header, or a pooling Sao Khuê cannot use (none,
     rank), keeps last-token, the pooling every custom model ran with before.
     """
     try:

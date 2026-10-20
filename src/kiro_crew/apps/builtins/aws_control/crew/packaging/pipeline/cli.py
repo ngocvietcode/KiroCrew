@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
             "--source",
             default=None,
             help="crew home holding agents/<name>.json and skills/ (defaults to the "
-            "real Kiro Crew locations; $SMC_CREW_SOURCE also honoured).",
+            "real Sao Khuê locations; $SMC_CREW_SOURCE also honoured).",
         )
 
     sub = parser.add_subparsers(dest="cmd", required=True)

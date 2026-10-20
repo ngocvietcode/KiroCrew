@@ -120,7 +120,7 @@ def _resolve_kiro_bin(
 ) -> str | None:
     """Resolve the user's installed Kiro CLI, to be launched in place.
 
-    Returns the installed binary's own path. Kiro Crew never copies the CLI and
+    Returns the installed binary's own path. Sao Khuê never copies the CLI and
     executes the copy: Kiro CLI 2.15+ dispatches subcommands by exec'ing a
     sibling executable resolved relative to its own path, which a copy into a
     private directory destroys.
@@ -203,7 +203,7 @@ def kiro_cli_not_found_message(
       ``KIROCREW_KIRO_BIN`` override, so "not found in PATH" sent a reader whose
       install was simply uncovered off to check the one thing that was not the
       question. It can send them further still: ``where kiro-cli`` finds nothing,
-      the app bundle DOES contain a ``kirocrew.exe`` — Kiro Crew's OWN console
+      the app bundle DOES contain a ``kirocrew.exe`` — Sao Khuê's OWN console
       script — and the conclusion invited is that the agent CLI has been renamed
       and this lookup left stale. Naming the searched directories and the
       override makes both wrong turns unavailable.
@@ -594,7 +594,7 @@ def apply_pod_bundle_spawn(
     normal "not logged in" state, which is precisely the state
     ``pod.runtime._seed_pod_os_home``'s staged SSO token answers.
 
-    **So Kiro Crew's own sandbox takes over for that child.** Skipping the
+    **So Sao Khuê's own sandbox takes over for that child.** Skipping the
     seatbelt/delegation is only sound while kiro-cli's internal sandbox actually
     runs; bypassing the shim means it does not, so ``delegate_internal_sandbox``
     goes ``False`` and ``wrap_argv`` wraps the child in Crew's launcher instead.

@@ -1,4 +1,4 @@
-# Kiro Crew Documentation
+# Sao Khuê Documentation
 
 **This directory is the contributor and architecture documentation.** It is not
 shipped to users: the docs that ship inside the Python package live in
@@ -12,12 +12,12 @@ New here? Start with [guides/install.md](guides/install.md), then
 
 | Directory | What it is for |
 |---|---|
-| [guides/](guides/README.md) | Install, run, and operate Kiro Crew. Task-oriented. |
+| [guides/](guides/README.md) | Install, run, and operate Sao Khuê. Task-oriented. |
 | [architecture/](architecture/README.md) | How the system fits together, one doc per cross-cutting concern. |
 | [feature-map/](feature-map/README.md) | Every dashboard feature, mapped to the nav path, page, and handler that own it. A lookup index. |
 | [build/](build/README.md) | Packaging, signing, and releasing. |
 | [ci/](ci/README.md) | Everything that gates a pull request. |
-| [app-kit/](app-kit/README.md) | Building apps that run inside Kiro Crew (third-party developer docs). |
+| [app-kit/](app-kit/README.md) | Building apps that run inside Sao Khuê (third-party developer docs). |
 | [system-specs/](system-specs/README.md) | Change-control contracts. The doc a code change MUST update in the same commit. |
 | [request-for-change/](request-for-change/README.md) | Proposals and decision records for large or contested changes, plus the dated implementation plans that execute them under [plans/](request-for-change/plans/README.md). |
 | [decisions/](decisions/README.md) | The append-only record of product and design decisions a person on the team made. One immutable file per decision; grep it before changing a user-facing label, placement or behaviour. |

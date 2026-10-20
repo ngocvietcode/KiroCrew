@@ -43,7 +43,7 @@ OIDC_SCOPES = (
     "codewhisperer:conversations",
 )
 # client_name we register our own public OAuth client under (kiro-cli uses "Kiro CLI").
-OIDC_CLIENT_NAME = "Kiro Crew"
+OIDC_CLIENT_NAME = "Sao Khuê"
 
 # Device-flow fallback when the poll response omits an expiry (kiro-cli uses 3600).
 DEFAULT_TOKEN_TTL_SECS = 3600

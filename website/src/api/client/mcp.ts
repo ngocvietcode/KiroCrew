@@ -32,7 +32,7 @@ export type McpShareReason = {
  */
 export type McpShareRecommendation = {
   strength: string
-  // Two axes, not one verdict. `recommendStub` is the safe half — Kiro Crew's
+  // Two axes, not one verdict. `recommendStub` is the safe half — Sao Khuê's
   // stub in the path, backend still 1:1 with the session — while
   // `recommendShare` is the one that introduces co-tenancy. A bulk action has to
   // consult whichever one the global sharing switch makes true of a click.

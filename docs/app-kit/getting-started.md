@@ -1,10 +1,10 @@
-# Getting Started with Kiro Crew Apps
+# Getting Started with Sao Khuê Apps
 
-Build, install, and run your first Kiro Crew app in 5 minutes.
+Build, install, and run your first Sao Khuê app in 5 minutes.
 
 ## Prerequisites
 
-- Kiro Crew installed and running (`kirocrew gateway`)
+- Sao Khuê installed and running (`kirocrew gateway`)
 - Node.js 22.12+ (24 LTS recommended) (for apps with UI)
 
 ## 1. Create an App Directory
@@ -48,7 +48,7 @@ SDK rejects a path or event the manifest does not declare.
   "name": "my-dashboard",
   "version": "0.1.0",
   "displayName": "My Dashboard",
-  "description": "A Kiro Crew app: My Dashboard",
+  "description": "A Sao Khuê app: My Dashboard",
   "author": "yourname",
   "iconPath": "assets/icon.png",
   "agents": ["agents/sample-agent.json"],
@@ -165,7 +165,7 @@ kirocrew app enable my-dashboard
 ```
 
 The REST routes require dashboard or app authentication, so do not replace these
-commands with a bare `curl`. You can also open the Kiro Crew dashboard → App Store
+commands with a bare `curl`. You can also open the Sao Khuê dashboard → App Store
 and install from a local path. The enabled app then appears in the sidebar.
 
 ## 5. Iterate
@@ -192,7 +192,7 @@ Available in `@kirocrew/app-sdk`:
 | `useAppEvents(event, cb)` | Subscribe to real-time WebSocket events |
 | `useTheme()` | Reactive theme (mode, accent, colorTheme) |
 | `useAppInfo()` | App metadata (name, version, permissions, `active`) |
-| `useNavigate()` | Navigate to Kiro Crew routes |
+| `useNavigate()` | Navigate to Sao Khuê routes |
 | `useNotify()` | Show toast notifications |
 | `useNavBadge()` | Update sidebar badge count |
 | `useChatLauncher()` | Open a new chat or target `slotKey`; set `autoSend: false` for an unsent draft |
@@ -332,12 +332,12 @@ undeclared paths throws an error.
 ## Python Client
 
 Python apps, CLI tools and services use the source-only `kirocrew-client`
-package from a Kiro Crew checkout. Install steps, the constructor and the full
+package from a Sao Khuê checkout. Install steps, the constructor and the full
 method table are in [API Reference](api-reference.md#python-client).
 
 ## Publishing Your App
 
 Once your app works locally, publish it to the App Store registry so other
-Kiro Crew users can install it with one click.
+Sao Khuê users can install it with one click.
 
 See [Publishing Guide](publishing-guide.md) for the full workflow.

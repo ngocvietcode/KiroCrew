@@ -31,13 +31,13 @@ _SEARCH_TOOL = "@kirocrew-core/skill_search"
 # each ``session/new`` / ``session/load`` reply (its per-agent info: name,
 # description, source, welcomeMessage). A projected alias is a second copy of an
 # agent the host already lists, so its copy of that text only doubles the reply,
-# and past the stdout frame limit the reply is dropped. Kiro Crew renders an
+# and past the stdout frame limit the reply is dropped. Sao Khuê renders an
 # agent's welcomeMessage from the AUTHORED spec (agent_discovery), never from an
 # alias, so the alias leaves it out and keeps a short description.
 _ALIAS_DROPPED_DISPLAY_FIELDS = ("welcomeMessage",)
 _ALIAS_DESCRIPTION_MAX_CHARS = 512
 # Warn when an authored spec's display text alone is this large: kiro-cli sends it
-# in every session reply however Kiro Crew projects it, so the fix is at the source.
+# in every session reply however Sao Khuê projects it, so the fix is at the source.
 _DISPLAY_TEXT_WARN_BYTES = 32 * 1024
 # ... and when the whole directory's display text approaches the frame limit.
 _DISPLAY_TEXT_TOTAL_WARN_BYTES = 4 * 1024 * 1024
@@ -102,7 +102,7 @@ def _warn_on_display_text(sizes: dict[str, tuple[int, str]]) -> None:
         logger.warning(
             "skill projection: agent %s (%s) carries %d KB of description/welcomeMessage "
             "text; kiro-cli sends it for every agent in every session/new reply, which "
-            "Kiro Crew drops past %d MB. Skill-view aliases leave it out; trim it at the source.",
+            "Sao Khuê drops past %d MB. Skill-view aliases leave it out; trim it at the source.",
             _loggable(name),
             _loggable(path),
             size // 1024,

@@ -124,7 +124,7 @@ class TestWrapArgv:
 
     @patch("kiro_crew.sandbox.detect_backend")
     def test_inside_sandbox_passes_through(self, mock_detect, monkeypatch):
-        # Inside an existing Kiro Crew sandbox, nested unshare is seccomp-denied,
+        # Inside an existing Sao Khuê sandbox, nested unshare is seccomp-denied,
         # so wrap_argv must pass the argv through unchanged without consulting a
         # backend (rather than fail closed and brick script-cron MCP spawns).
         # Deny-by-default: the passthrough is gated SOLELY on the explicit
@@ -451,7 +451,7 @@ class TestBuildSeatbeltProfile:
         assert str(runtime) in message
         assert "contains" in message
         assert (
-            "Pick a project subdirectory that does not contain the Kiro Crew data home." in message
+            "Pick a project subdirectory that does not contain the Sao Khuê data home." in message
         )
 
     def test_voice_guard_refusal_names_both_paths_when_workspace_is_inside_runtime(
@@ -476,7 +476,7 @@ class TestBuildSeatbeltProfile:
         assert str(runtime) in message
         assert "lives inside it" in message
         assert (
-            "Pick a project subdirectory that does not contain the Kiro Crew data home." in message
+            "Pick a project subdirectory that does not contain the Sao Khuê data home." in message
         )
 
     def test_voice_guard_alias_refusal_names_both_paths(self, monkeypatch, tmp_path):
@@ -509,7 +509,7 @@ class TestBuildSeatbeltProfile:
         assert str(runtime) in message
         assert "aliases" in message
         assert (
-            "Pick a project subdirectory that does not contain the Kiro Crew data home." in message
+            "Pick a project subdirectory that does not contain the Sao Khuê data home." in message
         )
 
     def test_voice_guard_cannot_verify_refusal_names_the_failed_stat(self, monkeypatch, tmp_path):
@@ -544,7 +544,7 @@ class TestBuildSeatbeltProfile:
         assert "Permission denied" in message
         assert "fails closed" in message
         assert (
-            "Pick a project subdirectory that does not contain the Kiro Crew data home." in message
+            "Pick a project subdirectory that does not contain the Sao Khuê data home." in message
         )
         assert isinstance(excinfo.value.__cause__, OSError)
 
@@ -572,7 +572,7 @@ class TestBuildSeatbeltProfile:
         assert "a filesystem check failed on" in message
         assert "Permission denied" in message
         assert (
-            "Pick a project subdirectory that does not contain the Kiro Crew data home." in message
+            "Pick a project subdirectory that does not contain the Sao Khuê data home." in message
         )
         assert isinstance(excinfo.value.__cause__, OSError)
 
@@ -796,7 +796,7 @@ class TestBuildSeatbeltProfile:
         assert "/mutable/workspace" in message
         assert "/protected/voice-runtime" in message
         assert (
-            "Pick a project subdirectory that does not contain the Kiro Crew data home." in message
+            "Pick a project subdirectory that does not contain the Sao Khuê data home." in message
         )
         assert closed == [51, 52]
 

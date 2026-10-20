@@ -3,7 +3,7 @@
 ## Overview
 
 Dev Fleet is a builtin App Store app (`kiro_crew/apps/builtins/dev_fleet/`) for
-managing Kiro Crew feature worktrees (git worktrees of the main repo) and their isolated
+managing Sao Khuê feature worktrees (git worktrees of the main repo) and their isolated
 pod test instances. It runs as a managed app backend SUBPROCESS: an aiohttp server on the
 backend-assigned port, reached only through the gateway proxy. Every proxied request
 carries an HMAC signature (`X-KiroCrew-Proxy: <ts>:<hmac>` over
@@ -324,7 +324,7 @@ Contract:
 - **No operator opt-in and no per-call approval, deliberately.** A pod runs the code
   in a git worktree an agent can write, started by the per-user service manager
   (systemd `--user` on Linux or launchd on macOS), so it
-  executes outside the agent's sandbox. That reachability is Kiro Crew's DOCUMENTED
+  executes outside the agent's sandbox. That reachability is Sao Khuê's DOCUMENTED
   posture rather than something these routes introduce: `security.md`, under "Scoped
   user-bus locator forward", records that sandboxed agent shells legitimately run
   `systemctl --user` and the `kirocrew pod` CLI, and names the residual in the same
@@ -1515,7 +1515,7 @@ typically `~/.kiro/crew/live_target.json`). Contents:
 ```
 
 `previous_checkout` is optional and records exactly one completed cutover for the
-post-restart **Undo** banner. Both fields validate as executable Kiro Crew
+post-restart **Undo** banner. Both fields validate as executable Sao Khuê
 checkouts before they are written. At read time, `checkout` follows the normal
 boot validation, while the Undo path validates `previous_checkout`; rebuilding
 the checkout already running does not hide an otherwise safe return target.

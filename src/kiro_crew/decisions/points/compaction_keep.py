@@ -14,7 +14,7 @@ so rather than a comment saying so.
 
 Why this point exists in shadow rather than live
 -----------------------------------------------
-Nothing in Kiro Crew can replace a harness's message list -- no backend offers a
+Nothing in Sao Khuê can replace a harness's message list -- no backend offers a
 set-messages call, and ``/compact`` summarizes inside the harness process. The one
 place a keep-list COULD land is the transcript Crew re-injects after a recycle
 (``context.build_session_replay``), and today that replay admits ``user`` /

@@ -11,7 +11,7 @@ install (see Managed compiler), so `pip install kirocrew` does not ship a
 broken-by-default editor. Compiler output is parsed into a clickable
 diagnostics list that jumps the editor to the offending line. A paper can be
 cloned from any git remote and committed/pulled/pushed from the toolbar. The
-co-author panel is a real Kiro Crew chat session scoped to the paper, so the agent
+co-author panel is a real Sao Khuê chat session scoped to the paper, so the agent
 edits the LaTeX while the user watches the PDF update.
 
 Ported from a standalone app by **tricatte**; see
@@ -147,7 +147,7 @@ external compiler, so two functions own every filesystem decision:
 
 - **`safe_project_dir(name)`** — the name must match `PROJECT_NAME_RE`; a
   **symlink OR Windows junction at the project entry is refused outright** (like
-  `_config_path`: this is a directory Kiro Crew creates, so a link there is
+  `_config_path`: this is a directory Sao Khuê creates, so a link there is
   illegitimate wherever it points); and the resolved directory must be a **strict
   child** of `projects_dir()`.
 
@@ -591,7 +591,7 @@ cannot reach:
   indirection — point it at another repository and `info`/`attributes` are
   legitimate non-links *inside that repo*, so both inner checks pass while a status
   poll rewrites a different repository's attributes, outside the project entirely.
-  The rule holds for every segment Kiro Crew traverses by name, not just the leaf.
+  The rule holds for every segment Sao Khuê traverses by name, not just the leaf.
 - **The rewrite preserves the existing mode.** `atomic_write` renames a fresh temp
   file into place, so without carrying the mode across, a user who had tightened
   `.git/info/attributes` to 0600 would find it 0644 after any status poll — a

@@ -14,7 +14,7 @@ One adaptation matters more than the rest. The retrieval ruler is **deterministi
 — local embedder, deterministic ranker, no sampling — so its delta is exact and a
 single rep is not an approximation of the truth, it *is* the truth. Running reps
 against it would produce identical numbers and a spread of zero, which reads as
-false precision. The end-to-end answer scorers are the opposite: Kiro Crew threads
+false precision. The end-to-end answer scorers are the opposite: Sao Khuê threads
 no ``temperature`` or ``seed`` through its provider stack, so those scores are
 random variables and a delta smaller than the noise band means nothing.
 

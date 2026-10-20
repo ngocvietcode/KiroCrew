@@ -39,7 +39,7 @@ const NOTICE_2 =
   'ℹ️ The model returned nothing this turn (it was retried and auto-continued ' +
   'automatically). Just send your message again to continue.'
 const NOTICE_WARN = '⚠️ Queued message dropped: the session reset while it was waiting.'
-const NOTICE_BLOCKED = '⛔ Tool call blocked by a Kiro Crew safety policy.'
+const NOTICE_BLOCKED = '⛔ Tool call blocked by a Sao Khuê safety policy.'
 const RECOVERY = parseRecoveryMessage(
   '[Empty response — automatic recovery]\n' +
     'Your previous turn produced no output (the model returned an empty ' +

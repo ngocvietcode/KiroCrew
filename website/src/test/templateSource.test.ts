@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { templateSourceKind, templateSourceLabel, templateSourceBadge } from '../lib/templateSource'
 
 describe('templateSourceKind', () => {
-  it('treats a template Kiro Crew owns as built-in whatever source reports', () => {
+  it('treats a template Sao Khuê owns as built-in whatever source reports', () => {
     // The helper specs report source 'builtin' — the same value a hand-written
     // template gets — so the ownership flag is the only thing that separates them.
     expect(templateSourceKind({ source: 'builtin', kirocrew_owned: true })).toBe('builtin')
@@ -11,7 +11,7 @@ describe('templateSourceKind', () => {
 
   it('lets ownership outrank a package-shaped filename', () => {
     // `<package>-<name>.json` is a filename convention, so a package literally
-    // named kirocrew would collide with a file Kiro Crew rewrites. Kiro Crew wins:
+    // named kirocrew would collide with a file Sao Khuê rewrites. Sao Khuê wins:
     // it is the one that will overwrite the file.
     expect(templateSourceKind({ source: 'package', package: 'kirocrew', kirocrew_owned: true }))
       .toBe('builtin')

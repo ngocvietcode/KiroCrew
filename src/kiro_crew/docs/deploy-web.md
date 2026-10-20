@@ -7,9 +7,9 @@
 > (§3), and an operator can remove this path entirely (§6.8).
 
 Artifact Deploy publishes an artifact from your library to a public HTTPS URL in **your own AWS
-account**: a private S3 bucket behind CloudFront with Origin Access Control, with an optional time-to-live and automatic cleanup. Kiro Crew stores a local registry of profile names, regions, and verified account metadata, never AWS credentials, and it never edits your IAM. Your account pays only for what the site actually serves, which for a small static page is effectively nothing.
+account**: a private S3 bucket behind CloudFront with Origin Access Control, with an optional time-to-live and automatic cleanup. Sao Khuê stores a local registry of profile names, regions, and verified account metadata, never AWS credentials, and it never edits your IAM. Your account pays only for what the site actually serves, which for a small static page is effectively nothing.
 
-Deploy is part of Kiro Crew itself, so there is nothing to install. Its buttons are a Feature
+Deploy is part of Sao Khuê itself, so there is nothing to install. Its buttons are a Feature
 Preview that starts off: turn on **Artifact Deploy** in Settings → Developer → Feature Previews,
 and the **Artifact Deploy** button on the Artifacts page, the **Deploy** button on an app card,
 and the **Publish to public web (your AWS)** row appear. The console at `/deploy` stays reachable
@@ -28,7 +28,7 @@ You need an AWS account you control. Setup happens once; later publishes take se
 ### 1.1 The profile must live on the gateway host
 
 Artifact Deploy shells out to the `aws` CLI **from the gateway process**, so the AWS profile has
-to be configured on the machine running the Kiro Crew gateway, not on your laptop if the gateway
+to be configured on the machine running the Sao Khuê gateway, not on your laptop if the gateway
 runs somewhere else. Running `aws configure sso` on a different machine has no effect.
 
 Deploy needs a POSIX shell. On Windows every deploy endpoint returns an error asking you to run
@@ -58,7 +58,7 @@ the binary.
 
 ### 1.3 Authenticate
 
-Run one of these in a terminal on the gateway host. Kiro Crew never sees the keys:
+Run one of these in a terminal on the gateway host. Sao Khuê never sees the keys:
 
 ```bash
 aws configure sso                  # recommended: short-lived, auto-refreshing
@@ -74,14 +74,14 @@ On the console at `/deploy`:
 
 1. Register the **profile name** and **region**. Registered profiles are kept in
    `~/.kiro/crew/deploy/profiles.json`, and one of them is the default. Optionally supply a
-   12-digit account plus a role name and Kiro Crew writes a `credential_process` entry that assumes
+   12-digit account plus a role name and Sao Khuê writes a `credential_process` entry that assumes
    that role; only `region` and `credential_process` are ever written to your AWS config, never
    credential material.
 2. Click **Verify**. This is a read-only reachability check (`sts:GetCallerIdentity` plus harmless
    `s3` and `cloudfront` list calls). It confirms the profile resolves and the services answer. It
    is **not** full verification: create and write permissions cannot be checked without writing.
 3. Click **Get IAM policy** and apply the generated least-privilege policy **yourself** to a
-   dedicated role or identity. **Kiro Crew never writes IAM.** For the `fullstack` tier the console
+   dedicated role or identity. **Sao Khuê never writes IAM.** For the `fullstack` tier the console
    also emits a permissions-boundary policy that must exist as `kirocrew-deploy-app-boundary`
    *before* the first deploy, because role creation is conditioned on it.
 
@@ -149,7 +149,7 @@ not installed.
 The reaper is installed once per account by an operator, with
 `scripts/install-reaper.sh --profile <P> --region <R>` from
 `~/.kiro/crew/skills/artifact-deploy/`. It is an operator step by design: the stack creates an IAM
-role, and Kiro Crew never writes IAM. It needs the shared base stack (`kirocrew-deploy-base`) to
+role, and Sao Khuê never writes IAM. It needs the shared base stack (`kirocrew-deploy-base`) to
 exist first and exits when it does not. Dashboard deploys never create that stack, so on a fresh
 account create it with the same `aws cloudformation deploy` of `templates/base-stack.yaml` that
 `scripts/deploy.sh` runs. When a finite-TTL deploy is refused, the 409 body carries the exact
@@ -205,14 +205,14 @@ cost surface is labelled as an estimate, and no billing permissions are requeste
 
 ## 6. Security model
 
-Artifact Deploy is built to keep Kiro Crew out of credential and account management entirely, and
+Artifact Deploy is built to keep Sao Khuê out of credential and account management entirely, and
 to serve content from a bucket that is never itself public.
 
-### 6.1 Credentials never touch Kiro Crew
+### 6.1 Credentials never touch Sao Khuê
 - The local registry stores a **profile name**, region, last-verified account metadata, and the selected default in `~/.kiro/crew/deploy/profiles.json`; it does not store credentials.
 - Every AWS call runs through the **`aws` CLI as a subprocess** with `--profile` rather than an
   in-process SDK, so credential resolution stays in your OS credential store.
-- Kiro Crew **never writes IAM** and never creates or manages accounts, users, or roles. You apply
+- Sao Khuê **never writes IAM** and never creates or manages accounts, users, or roles. You apply
   the generated least-privilege policy yourself.
 
 ### 6.2 The origin bucket is private
@@ -237,14 +237,14 @@ to serve content from a bucket that is never itself public.
 
 ### 6.4 Mutations are tag-gated
 The generated IAM policy conditions every mutating and deleting action on
-`aws:ResourceTag/kirocrew:managed=true`, and Kiro Crew tags each resource at creation. An unrelated
+`aws:ResourceTag/kirocrew:managed=true`, and Sao Khuê tags each resource at creation. An unrelated
 production bucket, distribution, or API in the same account carries no such tag, so it cannot be
 modified or deleted through this policy even with its id in hand. Resource names are additionally
 scoped to the `kirocrew-deploy-*` and `kirocrew-web-*` prefixes, and the audit-log bucket is
 covered by an explicit Deny.
 
 ### 6.5 Pre-publish content scan
-- Before upload, content runs through Kiro Crew's credential patterns plus data-leak heuristics
+- Before upload, content runs through Sao Khuê's credential patterns plus data-leak heuristics
   (private-key headers, vendor API keys, internal hostnames, cloud account ids and ARNs).
 - **Credential-severity findings can never be overridden.** The deploy is refused outright.
 - Other findings block the deploy and are shown to you; you may then explicitly choose "publish

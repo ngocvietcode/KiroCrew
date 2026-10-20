@@ -1674,10 +1674,10 @@ class TestLaunchDispatch:
     ):
         # THE launch-specific security assertion. Every other verb resolves an
         # ``AppRef`` from the window list first, so the denylist sees a real identity;
-        # a launch has only the name typed. Kiro Crew's own rule matches on name
+        # a launch has only the name typed. Sao Khuê's own rule matches on name
         # substrings, so it fires — and it must fire before a process exists, which
         # is what the empty journal proves.
-        out = _launch("Kiro Crew")
+        out = _launch("Sao Khuê")
         assert out.startswith(ERROR_PREFIX)
         assert fake_computer_backend.calls == []
 
@@ -1688,7 +1688,7 @@ class TestLaunchDispatch:
         whose OS-reported identity is denied while its display name is innocuous passes
         it. That identity is knowable BEFORE the spawn — the resolver produced it — so
         the refusal belongs there rather than after the fact: a detached spawn cannot be
-        undone, and refusing afterwards only stops Kiro Crew driving a process it has
+        undone, and refusing afterwards only stops Sao Khuê driving a process it has
         already started.
 
         ``launch_app`` appearing alone in the journal, with no ``snapshot`` after it, is
@@ -1936,8 +1936,8 @@ def test_the_denylist_probe_shape_reaches_the_self_target_rule():
     # exists yet. That is only sound if the self-target rule can actually fire on a
     # name-only ref — pinned here so a future denylist change that dropped
     # ``name_substrings`` would fail loudly rather than silently open the launch path
-    # to Kiro Crew's own dashboard.
-    probe = AppRef(name="Kiro Crew", pid=0, bundle_id="Kiro Crew", window_title="Kiro Crew")
+    # to Sao Khuê's own dashboard.
+    probe = AppRef(name="Sao Khuê", pid=0, bundle_id="Sao Khuê", window_title="Sao Khuê")
     assert policy.denied_rule_for(probe) is not None
 
 

@@ -60,7 +60,7 @@ HEARTBEAT_TASK_TIMEOUT_SECS = 1800  # 30 min per heartbeat task
 HEARTBEAT_FILE = "HEARTBEAT.md"
 _HEADER = (
     "# Heartbeat Tasks\n\n<!-- Add tasks below (one per line). "
-    "KiroCrew picks them up on next heartbeat. -->\n"
+    "SaoKhue picks them up on next heartbeat. -->\n"
 )
 
 

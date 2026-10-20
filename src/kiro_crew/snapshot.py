@@ -1,4 +1,4 @@
-"""Kiro Crew snapshot and restore — portable state management.
+"""Sao Khuê snapshot and restore — portable state management.
 
 The command and API facade. ``snapshot`` and ``restore`` are implemented here, together
 with the seam that prepares a redacted copy for an off-host upload. ``restore_main``
@@ -551,7 +551,7 @@ def snapshot_main(
     if parsed is None:
         p = argparse.ArgumentParser(
             prog="kirocrew-snapshot",
-            description="Create a portable .tar.gz snapshot of Kiro Crew state.",
+            description="Create a portable .tar.gz snapshot of Sao Khuê state.",
         )
         p.add_argument("output_dir", nargs="?", default=_default_snapshot_dir())
         p.add_argument("--keep", type=int, default=7)
@@ -839,7 +839,7 @@ def snapshot_main(
 
 
 def _is_gateway_running() -> bool:
-    """Check if the KiroCrew gateway is listening on its dashboard port."""
+    """Check if the SaoKhue gateway is listening on its dashboard port."""
     # Deterministic override (used by tests / scripted restores) — avoids a real
     # socket probe whose result is environment-dependent.
     override = os.environ.get("KIROCREW_ASSUME_GATEWAY_RUNNING")
@@ -856,7 +856,7 @@ def _is_gateway_running() -> bool:
 def restore_main(argv: list[str] | None = None, *, parsed: argparse.Namespace | None = None) -> int:
     if parsed is None:
         p = argparse.ArgumentParser(
-            prog="kirocrew-restore", description="Restore KiroCrew state from a snapshot."
+            prog="kirocrew-restore", description="Restore SaoKhue state from a snapshot."
         )
         p.add_argument("snapshot", nargs="?")
         p.add_argument("--mode", choices=("replace", "merge"))

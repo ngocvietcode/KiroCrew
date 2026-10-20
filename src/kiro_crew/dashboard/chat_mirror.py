@@ -619,7 +619,7 @@ async def api_chat_slot_mirror_link(request: web.Request) -> web.Response:
         # mirrored turn is delivered in _deliver_cross_surface_reply, so a long
         # message arrives in full instead of being cut at 2,000 chars. No Slack
         # mrkdwn conversion here: this path targets Telegram/Discord/Teams.
-        speaker = "You" if row.get("role") == "user" else "Kiro Crew"
+        speaker = "You" if row.get("role") == "user" else "Sao Khuê"
         # DISPLAY form, not just the byte scan: a catch-up row reaches the channel
         # without passing a renderer, so a markdown-collapse credential would be
         # reassembled whole by the client. Same floor and same context-aware
@@ -627,7 +627,7 @@ async def api_chat_slot_mirror_link(request: web.Request) -> web.Response:
         text, _ = redact_for_display(
             strip_control_comments(backfill_content(row)), redact_via_context
         )
-        if speaker == "Kiro Crew" and capabilities is not None:
+        if speaker == "Sao Khuê" and capabilities is not None:
             # ``send_message`` takes no choices, so a backfilled answer builds no
             # button: number its ``[OPTIONS:]`` choices rather than ship the raw
             # marker, as the live mirror in ``_deliver_cross_surface_reply`` does.

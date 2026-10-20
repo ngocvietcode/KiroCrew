@@ -294,7 +294,7 @@ class McpServerInfo:
     # resolved fragment. Never serialized.
     resolved_header_values: list[str] | None = None
     # Remote-only OAuth hints carried verbatim to the runtime, which owns the
-    # authorization exchange. Kiro Crew never enforces scopes and never registers
+    # authorization exchange. Sao Khuê never enforces scopes and never registers
     # a client — it only refuses to lose these fields while syncing.
     scopes: list[str] = field(default_factory=list)
     client_id: str = ""
@@ -333,7 +333,7 @@ class McpServerInfo:
     # not flip a switch. ``None`` when enabled, or when some source really says
     # ``true`` (the row is off either way, and the switch is the honest story).
     disabled_reason: str | None = None
-    # True when a scope OTHER than the Kiro Crew store mutes this row -- the
+    # True when a scope OTHER than the Sao Khuê store mutes this row -- the
     # Kiro-global ``mcp.json`` or a provider global: a disable the dashboard
     # never lifts by editing the store. Set with ``disabled`` in step 3c and
     # consumed by the ``GET /api/mcp`` stamping, which holds only the Kiro-global

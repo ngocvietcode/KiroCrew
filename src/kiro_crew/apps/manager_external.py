@@ -67,10 +67,10 @@ def register_external_app(
     lifecycle: str = "app",
     source_repository: str = "",
 ) -> AppResult:
-    """Register a self-managed app with Kiro Crew's app system.
+    """Register a self-managed app with Sao Khuê's app system.
 
     Self-managed apps (``resources="app"``) handle their own agent/skill/MCP
-    registration.  Kiro Crew only tracks metadata so the dashboard can display them.
+    registration.  Sao Khuê only tracks metadata so the dashboard can display them.
 
     If the app is already registered, updates version and manifest.
 
@@ -122,7 +122,7 @@ def register_external_app(
         return AppResult(
             ok=False,
             name=name,
-            error="builtin origin is reserved for KiroCrew-shipped apps",  # brand-ok: BASE error text
+            error="builtin origin is reserved for SaoKhue-shipped apps",
         )
 
     # Admission: register_external_app writes enabled=True and is HTTP-reachable
@@ -197,7 +197,7 @@ def register_external_app(
             ok=False,
             name=name,
             error=(
-                f"{name!r} is a KiroCrew-shipped builtin and cannot be replaced "  # brand-ok: BASE error text
+                f"{name!r} is a SaoKhue-shipped builtin and cannot be replaced "
                 "by self-registration"
             ),
         )

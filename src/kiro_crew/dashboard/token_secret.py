@@ -114,7 +114,7 @@ def signing_key_health(
       Whether a key is there is unknown, so the boot preflight still runs the
       real load and refuses only when that load answers ``"short"``; an
       ephemeral fallback boots on the loader's WARNING and doctor reports it;
-    * ``"masked"``: this process runs inside a Kiro Crew agent sandbox, where the
+    * ``"masked"``: this process runs inside a Sao Khuê agent sandbox, where the
       launcher bind-mounts an EMPTY file over the key (on macOS, denies the
       ``lstat``), so the size seen here says nothing about the real file. Reading
       the mask as ``"short"`` would hand an operator a remedy that deletes a

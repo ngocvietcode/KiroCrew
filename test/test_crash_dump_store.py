@@ -100,7 +100,7 @@ def _create_header_only_dump(
     pid_line = f"# PID: 12345 @ {domain}\n" if domain else "# PID: 12345\n"
     p = dumps_dir / name
     p.write_text(
-        "# KiroCrew loop-stall crash dump — opened 20260717T010000Z\n"
+        "# SaoKhue loop-stall crash dump — opened 20260717T010000Z\n"
         + pid_line
         + "# If thread stacks appear below, the event loop wedged and faulthandler fired.\n"
         "\n"
@@ -112,7 +112,7 @@ def _create_stacked_dump(dumps_dir: Path, name: str) -> Path:
     """Create a dump file with real stack content (simulating a wedge)."""
     p = dumps_dir / name
     p.write_text(
-        "# KiroCrew loop-stall crash dump — opened 20260717T020000Z\n"
+        "# SaoKhue loop-stall crash dump — opened 20260717T020000Z\n"
         f"# PID: 12345 @ {crash_dump_store._pid_domain()}\n"
         "# If thread stacks appear below, the event loop wedged and faulthandler fired.\n"
         "\n"
@@ -174,7 +174,7 @@ def test_open_dump_file_creates_file(dumps_dir: Path) -> None:
         assert files[0].name.endswith(DUMP_SUFFIX)
         # Header should be written
         content = files[0].read_text(encoding="utf-8")
-        assert "KiroCrew loop-stall crash dump" in content
+        assert "SaoKhue loop-stall crash dump" in content
         assert "PID:" in content
 
 
@@ -304,7 +304,7 @@ def test_dump_first_stack_lines_surfaces_wedged_thread(dumps_dir: Path) -> None:
     lines = dump_first_stack_lines(p, max_lines=8)
     body = "\n".join(lines)
     assert lines[0] == "Timeout (0:00:25)!"
-    assert "_should_prevent_sleep" in body  # the wedged thread's Kiro Crew frame
+    assert "_should_prevent_sleep" in body  # the wedged thread's Sao Khuê frame
     assert "queue.py" not in body  # no idle-worker frames
 
 

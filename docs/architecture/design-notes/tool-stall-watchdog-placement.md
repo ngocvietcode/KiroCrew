@@ -1,6 +1,6 @@
 # Where a stall detector belongs: in the read loop, or out of band
 
-Kiro Crew has one stall detector, and it lives inside the code path it is
+Sao Khuê has one stall detector, and it lives inside the code path it is
 supposed to be watching. `AcpSessionHandle._dispatch_events` is an async
 generator; its watchdog logic is the `except asyncio.TimeoutError` arm of
 

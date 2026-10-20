@@ -1,13 +1,13 @@
-"""The KAS engine bundle Kiro Crew installs and runs itself.
+"""The KAS engine bundle Sao Khuê installs and runs itself.
 
 The KAS relay (:mod:`kiro_crew.acp.kas_transport`) reaches the engine through a
 kiro-cli process, so an operator needs kiro-cli installed and kiro-cli decides
-which engine build runs. This module is the other route: Kiro Crew downloads a
+which engine build runs. This module is the other route: Sao Khuê downloads a
 pinned ``@kiro/agent`` build plus a Node runtime from a manifest it trusts,
 installs both under its own data home, and the KAS harness spawns
 ``node .../acp-server.js`` directly. Nothing of kiro-cli's is involved -- not
 its binary, not its on-disk ``kas/`` layout, not its credential store. The
-engine asks Kiro Crew for its token (``_kiro/auth/getAccessToken``) and Kiro
+engine asks Sao Khuê for its token (``_kiro/auth/getAccessToken``) and Kiro
 Crew answers from its own vault (:mod:`kiro_crew.acp.kas_host_auth`), which is
 the only auth owner this route has.
 
@@ -18,16 +18,16 @@ What is on disk, under ``<data home>/engines/kas/``::
       bundle/node_modules/@kiro/agent/dist/server/acp-server.js
       node/node-v22.20.0-linux-x64/bin/node
 
-The ``engines`` leaf is sealed READ-ONLY inside Kiro Crew's sandbox
+The ``engines`` leaf is sealed READ-ONLY inside Sao Khuê's sandbox
 (``sandbox._CREW_READONLY_LEAVES``) and write-protected at the file-tool gate
 (``security.paths._WRITE_PROTECTED_HOME_PATHS``): a sandboxed agent may read
 and execute the engine but cannot rewrite the code its next session runs.
 Installation happens in the gateway process (``kirocrew kas install``), outside
 both.
 
-Which version runs is not a file on disk: it is the Kiro Crew release's pin
+Which version runs is not a file on disk: it is the Sao Khuê release's pin
 (:mod:`kiro_crew.acp.kas_pin`), and :func:`installed_bundle` looks up exactly
-that version's directory. A Kiro Crew update therefore switches engines by
+that version's directory. A Sao Khuê update therefore switches engines by
 switching which directory is asked for -- the old version's directory stays,
 so a process of the previous release still running keeps its engine, and a
 rollback finds its engine still installed.
@@ -368,9 +368,9 @@ def _read_json_url(url: str, opener: Any, *, sha256: str | None = None) -> Any:
         raise KasBundleError(f"{asset_downloader.redact_url(url)} is too large to be a manifest")
     if sha256 is not None and hashlib.sha256(body).hexdigest() != sha256:
         raise KasBundleError(
-            f"{asset_downloader.redact_url(url)} does not match the sha256 this Kiro Crew "
+            f"{asset_downloader.redact_url(url)} does not match the sha256 this Sao Khuê "
             "release pins for it; refusing to install. The publishing host was changed "
-            "after this release was cut -- install a matching Kiro Crew, or pass "
+            "after this release was cut -- install a matching Sao Khuê, or pass "
             "--unpinned to accept the host's manifest as-is"
         )
     try:

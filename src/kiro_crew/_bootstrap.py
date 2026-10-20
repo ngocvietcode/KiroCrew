@@ -145,10 +145,12 @@ def _load_healing(load: Callable[[], _T]) -> _T:
         return load()
     except ModuleNotFoundError as exc:
         if not _self_heal(exc.name or str(exc)):
+            # ASCII only, the product name included: this prints before the console
+            # is UTF-8 on Windows.
             print(
                 f"kirocrew: cannot start - {exc}.\n"
                 "Your installed dependencies are older than your checkout. "
-                "Fix with: pip install -e <path to your Kiro Crew checkout>",
+                "Fix with: pip install -e <path to your Sao Khue checkout>",
                 file=sys.stderr,
             )
             raise SystemExit(1) from exc

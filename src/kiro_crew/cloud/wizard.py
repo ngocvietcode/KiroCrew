@@ -1,6 +1,6 @@
 """The interactive ``kirocrew cloud launch`` wizard.
 
-One command → answer at most a question or two → KiroCrew running on a
+One command → answer at most a question or two → SaoKhue running on a
 correctly-sized, correctly-configured EC2 box in the user's own AWS account,
 backend signed in, browser open on the live dashboard.
 
@@ -437,7 +437,7 @@ def launch(
     steps.step("AWS account")
     if not profile:
         ui.info("Using the AWS CLI's default credentials (no --profile).")
-        ui.detail("KiroCrew never stores AWS credentials — the aws CLI resolves them.")
+        ui.detail("SaoKhue never stores AWS credentials — the aws CLI resolves them.")
     with ui.Spinner("Checking AWS access…"):
         reach = iam.reachability_check(profile, region)
     if not reach["reachable"]:
@@ -515,7 +515,7 @@ def launch(
         # deploy, `--size` included; only `--yes` skips the question.
         if not assume_yes:
             if not ui.confirm(
-                f"Create the Kiro Crew stack in AWS account {who} "
+                f"Create the Sao Khuê stack in AWS account {who} "
                 f"({_credential_source(profile)}) and launch a {tier.label} "
                 f"instance in {region}?",
                 default=True,
@@ -582,7 +582,7 @@ def launch(
         if not _clear_prior_pointer(cfg.last_tag):
             return 1
         cfg = dataclasses.replace(cfg, profile=profile, region=region, last_tag=tag)
-        ui.info("Provisioning EC2 + installing KiroCrew (this takes a few minutes)…")
+        ui.info("Provisioning EC2 + installing SaoKhue (this takes a few minutes)…")
         try:
             result = _deploy_with_progress(
                 tag=tag,
@@ -625,7 +625,7 @@ def launch(
         # the instance is deployed and billing, before sign-in and dashboard setup -- so the
         # command aborted over a file it did not need to write at all.
         _record_launch(profile=profile, region=region, tag=tag)
-        ui.ok(f"Instance {result.instance_id} is up and KiroCrew is healthy.")
+        ui.ok(f"Instance {result.instance_id} is up and SaoKhue is healthy.")
     elif not result.instance_id:
         ui.warn("Previous cloud stack exists but the instance is not ready yet.")
         ui.detail("Check progress with: kirocrew cloud status")
@@ -744,7 +744,7 @@ def launch(
     # SSH key / inbound port / ~/.ssh/config.
     connect_mod.register_instance(
         instance_id,
-        name=f"Kiro Crew Cloud ({result.tag})",
+        name=f"Sao Khuê Cloud ({result.tag})",
         profile=profile,
         region=region,
     )
@@ -754,14 +754,14 @@ def launch(
     dashboard_ready = bool(conn and conn.ready and conn.url)
     if signin_state == "mismatch":
         ui.fail(
-            f"Kiro Crew is running on AWS, but signed in to a DIFFERENT Kiro identity than "
+            f"Sao Khuê is running on AWS, but signed in to a DIFFERENT Kiro identity than "
             f"{target.describe()} — this launch did not deliver the identity it was asked for."
         )
         ui.detail(f"Fix: {target.recovery_command()}")
     elif dashboard_ready:
-        ui.note(f"{ui.GREEN}{ui.BOLD}KiroCrew is live on AWS.{ui.RESET}")
+        ui.note(f"{ui.GREEN}{ui.BOLD}SaoKhue is live on AWS.{ui.RESET}")
     else:
-        ui.warn("KiroCrew is running on AWS, but the dashboard tunnel is not open.")
+        ui.warn("SaoKhue is running on AWS, but the dashboard tunnel is not open.")
         ui.detail("Fix the local SSM tunnel issue, then run: kirocrew cloud connect")
     print()
     ui.note(f"{ui.BOLD}Manage it:{ui.RESET}")
@@ -789,7 +789,7 @@ def launch(
                 conn.process.wait()
             except KeyboardInterrupt:
                 conn.close()
-                ui.info("Tunnel closed. KiroCrew keeps running on AWS.")
+                ui.info("Tunnel closed. SaoKhue keeps running on AWS.")
     if signin_state == "mismatch":
         return 1
     return 0 if dashboard_ready else 1
@@ -802,7 +802,7 @@ def _ensure_session_manager_plugin(*, assume_yes: bool = False) -> bool:
         return True
 
     ui.warn("session-manager-plugin is required for SSM dashboard tunnels.")
-    ui.detail("KiroCrew can install AWS's official Session Manager plugin locally.")
+    ui.detail("SaoKhue can install AWS's official Session Manager plugin locally.")
     if not assume_yes and not ui.confirm("Install session-manager-plugin now?", default=True):
         ui.detail("Install it later with: kirocrew cloud doctor")
         return False
@@ -997,14 +997,14 @@ def _choose_existing_launch(
         if len(launches) == 1 or cfg.last_tag:
             chosen = _preferred_existing_launch(launches, cfg)
             ui.info(
-                f"Existing KiroCrew cloud stack found: {chosen.stack_name}. "
+                f"Existing SaoKhue cloud stack found: {chosen.stack_name}. "
                 "Keeping it by default."
             )
             ui.detail("Use `kirocrew cloud launch --new` to create a separate instance.")
             return chosen
         tags = ", ".join(launch.tag for launch in launches)
         raise AWSError(
-            "multiple existing KiroCrew cloud stacks found; rerun interactively "
+            "multiple existing SaoKhue cloud stacks found; rerun interactively "
             f"to choose one ({tags}), or pass `kirocrew cloud launch --new` "
             "to create a separate instance"
         )
@@ -1012,7 +1012,7 @@ def _choose_existing_launch(
     if len(launches) == 1:
         launch = launches[0]
         idx = ui.choose(
-            "Existing KiroCrew cloud deployment",
+            "Existing SaoKhue cloud deployment",
             [
                 ("Keep and resume existing", _launch_summary(launch)),
                 (
@@ -1029,7 +1029,7 @@ def _choose_existing_launch(
 
     options = [(f"Keep {launch.tag}", _launch_summary(launch)) for launch in launches]
     options.append(("Create a new installation", "Leaves existing AWS stacks untouched."))
-    idx = ui.choose("Existing KiroCrew cloud deployments", options, default_index=0)
+    idx = ui.choose("Existing SaoKhue cloud deployments", options, default_index=0)
     if idx < len(launches):
         return launches[idx]
     ui.info("Creating a new installation; existing stacks are unchanged.")

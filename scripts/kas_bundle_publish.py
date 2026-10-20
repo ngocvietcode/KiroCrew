@@ -13,7 +13,7 @@ against that release's ``SHASUMS256.txt`` -- and writes the manifest
 
 With ``--s3 s3://<bucket>`` the same tree is uploaded with the ``aws`` CLI. The
 script never reads a credential itself; the CLI resolves its own. Nothing points
-at a "current" release: each Kiro Crew release pins the one version it runs.
+at a "current" release: each Sao Khuê release pins the one version it runs.
 
 Why a Node per architecture when the engine's Mac build is universal: Node
 ships no universal binary, so ``node.builds`` is keyed by ``<os>-<arch>`` and

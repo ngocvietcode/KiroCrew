@@ -220,7 +220,7 @@ def header_secret_refs(headers: object) -> list[str]:
 #: headers itself, while Crew hands the other backends their headers as written.
 REMOTE_HEADER_ALTERNATIVE = (
     "On the kiro-cli backend, use ${env:NAME} in the header value and set NAME in "
-    "the Kiro Crew .env file; kiro-cli expands it at session time. Other backends "
+    "the Sao Khuê .env file; kiro-cli expands it at session time. Other backends "
     "receive the header as written"
 )
 

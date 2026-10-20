@@ -3,7 +3,7 @@
 Adapts the supervised-child + state-machine design of
 ``kiro_crew.tunnel.manager.TunnelManager`` (which points *outward* to expose the
 dashboard) to point *inward*: for each connected remote instance it supervises a
-local child process that forwards a loopback port to the remote Kiro Crew's
+local child process that forwards a loopback port to the remote Sao Khuê's
 dashboard port, over one of two transports (``Instance.connection_method``):
 
 * ``"ssh"`` (default): ``ssh -N -L 127.0.0.1:LP:127.0.0.1:RP <ssh_host>``.

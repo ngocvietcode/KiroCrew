@@ -281,7 +281,7 @@ test("a second stale exit starts a fresh copy of the app and exits only once its
   assert.deepStrictEqual(successor[1], ["--some-flag"], "the successor gets this instance's arguments");
   assert.deepStrictEqual(successor[2], { detached: true, stdio: "ignore" });
   assert.strictEqual(state.lockReleases, 1, "the single-instance lock is released so the successor can win it");
-  assert.ok(state.statuses.includes("status:Restarting Kiro Crew to finish the update…"),
+  assert.ok(state.statuses.includes("status:Restarting Sao Khuê to finish the update…"),
     "the window is told why it is about to go away");
   assert.deepStrictEqual(state.exits, [], "this instance must not exit before the successor is confirmed running");
 
@@ -304,7 +304,7 @@ test("a second stale exit starts a fresh copy of the app and exits only once its
   assert.deepStrictEqual(state.exits, [0]);
   assert.ok(logs.some((line) => line.includes("is serving on :5476") && line.includes("exiting this instance")));
   assert.deepStrictEqual(timers.pending, [], "the deadline is disarmed once the successor is confirmed");
-  assert.ok(state.statuses.filter((entry) => entry === "status:Restarting Kiro Crew to finish the update…").length >= 2,
+  assert.ok(state.statuses.filter((entry) => entry === "status:Restarting Sao Khuê to finish the update…").length >= 2,
     "the restart announcement is re-sent on every poll so a splash that loaded late still shows it");
 });
 
@@ -591,7 +591,7 @@ test("a pruned Windows backend opens the removed-files dialog and still auto-sta
   const dialog = windows[0];
   const html = decodeURIComponent(dialog.loaded[0]);
   assert.match(html, /app files missing/);
-  assert.match(html, /app files were removed, likely by an update\. Quit and reopen Kiro Crew/);
+  assert.match(html, /app files were removed, likely by an update\. Quit and reopen Sao Khuê/);
   assert.doesNotMatch(html, /installation still finishing|still being installed|five minutes/);
   assert.ok(html.includes(QUIT_ACCENTED), "the accent follows the sentence onto Quit");
   assert.match(html, /var primaryAct = "act\('quit'\)";/, "Enter presses the highlighted Quit");
@@ -631,7 +631,7 @@ test("a Retry from the removed-files dialog reopens it with the same copy", asyn
 // not say "Finishing installation".
 test("the splash behind the removed-files dialog does not claim an install", async () => {
   const { statuses } = await windowsNoBundleDialog({ pruneMidRun: true });
-  assert.ok(statuses.some((line) => line.includes("Some app files are missing. Use Quit in the dialog, then reopen Kiro Crew.")), statuses.join(" | "));
+  assert.ok(statuses.some((line) => line.includes("Some app files are missing. Use Quit in the dialog, then reopen Sao Khuê.")), statuses.join(" | "));
   assert.ok(!statuses.some((line) => line.includes("Finishing installation")), statuses.join(" | "));
 });
 

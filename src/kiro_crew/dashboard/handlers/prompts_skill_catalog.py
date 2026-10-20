@@ -207,7 +207,7 @@ async def api_skills(request: web.Request) -> web.Response:
     Each entry carries ``loaded_by_agents`` — the names of installed agents
     whose ``resources`` would load the skill via a ``skill://`` URI. Empty
     list means no agent loads it via the kiro-cli native loader (it may
-    still be loaded via Kiro Crew text-injection or an external MCP server).
+    still be loaded via Sao Khuê text-injection or an external MCP server).
 
     ``?agent=<name>`` scopes the listing to that agent's own ``skill://``
     mapping (matching the same globs the prompt-injection path resolves via

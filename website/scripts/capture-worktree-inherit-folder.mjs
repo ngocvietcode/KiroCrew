@@ -13,10 +13,10 @@
  * after the page has rendered.
  *
  * The story in one image: the spawning session ("Add rate limiting to uploads")
- * is filed under the "Kiro Crew" project folder. Clicking "Start in new worktree"
+ * is filed under the "Sao Khuê" project folder. Clicking "Start in new worktree"
  * creates the sibling worktree and opens a new session. With the fix, the create
  * call carries the spawning session's folder_id, so the server returns the new
- * slot ALREADY filed under "Kiro Crew" and the sidebar renders it nested there
+ * slot ALREADY filed under "Sao Khuê" and the sidebar renders it nested there
  * rather than at the top level.
  *
  * Usage: node scripts/capture-worktree-inherit-folder.mjs <baseUrl> <outDir>
@@ -30,11 +30,11 @@ const SLOT = 'chat-followup'
 const WT_SLOT = 'chat-worktree'
 const PROJECT = '/home/user/workspace/myproject'
 const FOLDER_ID = 'folder-kirocrew'
-const FOLDER_NAME = 'Kiro Crew'
+const FOLDER_NAME = 'Sao Khuê'
 
 mkdirSync(OUT, { recursive: true })
 
-// The spawning session, filed under the Kiro Crew project folder.
+// The spawning session, filed under the Sao Khuê project folder.
 const originSlot = {
   key: SLOT,
   title: 'Add rate limiting to uploads',
@@ -192,7 +192,7 @@ async function main() {
 
   for (const theme of ['dark', 'light']) {
     await load(theme)
-    // 1. Before: the spawning session sits under the Kiro Crew folder.
+    // 1. Before: the spawning session sits under the Sao Khuê folder.
     await shot(`01-origin-filed-${theme}`)
     // 2. Trigger the worktree action from the follow-up card.
     await pushCard([ITEM])

@@ -362,7 +362,7 @@ _NO_SANDBOX_HINT = "the Apple speech helper must run in an OS sandbox and this h
 def _sandboxed(argv: list[str]) -> tuple[list[str], dict[str, str], str | None]:
     """Wrap a helper invocation in the OS sandbox with a scrubbed environment.
 
-    The helper is a binary Kiro Crew compiles on demand from Swift that ships inside
+    The helper is a binary Sao Khuê compiles on demand from Swift that ships inside
     the package, and the gateway executes it. Even though the source sits at the
     same trust level as the surrounding Python — an agent able to write there
     already has gateway-privileged execution through any ``.py`` file — routing the

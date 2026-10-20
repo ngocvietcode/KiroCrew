@@ -1085,7 +1085,7 @@ def _tier_operator_grants(facts: GateFacts, tier: GateTier) -> ToolHookResult | 
 
 
 def _tier_read_only(facts: GateFacts, tier: GateTier) -> ToolHookResult | None:
-    """Kiro Crew's own read-only auto-approve: the LAST row of the table.
+    """Sao Khuê's own read-only auto-approve: the LAST row of the table.
 
     AFTER every deny tier (deny-by-default shell, sensitive-path, sensitive-bash,
     exfil, write-protected-config, the effective deny set, the file-search target)

@@ -217,7 +217,7 @@ def _warn_probe_sandbox_unavailable_once(name: str) -> None:
     _probe_sandbox_warned.add(name)
     logger.warning(
         "MCP probe skipped [%s]: no OS-level sandbox backend on this host, so "
-        "Kiro Crew cannot spawn the server to enumerate its tools. The server "
+        "Sao Khuê cannot spawn the server to enumerate its tools. The server "
         "itself is unaffected — kiro-cli launches it from the agent config "
         "without this probe. Set agent.sandbox_allow_unsandboxed_exec=true to "
         "enable probing (the dashboard will otherwise show it with 0 tools).",

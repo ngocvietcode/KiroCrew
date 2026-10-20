@@ -24,7 +24,7 @@ from kiro_crew.platform.governance import CU_MCP_SERVER
 
 
 def _managed_mcp_env() -> dict[str, str]:
-    """Env every managed Kiro Crew MCP server is launched with.
+    """Env every managed Sao Khuê MCP server is launched with.
 
     Pins ``KIROCREW_HOME`` when the gateway is running under an override, because
     a child process does NOT inherit it: the spec's ``env`` is the only channel.
@@ -121,7 +121,7 @@ _MANAGED_MCP_ENTRY_ITEM_TYPES: dict[str, type] = {
 # server's ``env`` is launched verbatim by kiro-cli as the child process's
 # environment, so the filter has to be exactly the one env.sanitize_spec_env
 # already applies for the probe: PREFIX-matched, case-insensitively, over
-# Kiro Crew's whole reserved namespace plus the loader/interpreter channels.
+# Sao Khuê's whole reserved namespace plus the loader/interpreter channels.
 #
 # Delegating rather than restating is the point. This function exists so the
 # ownership rules live in one place: hand-synced copies drift, a local frozenset
@@ -454,7 +454,7 @@ def _enforce_managed_mcp_ownership(
     *,
     auto_approve: str,
 ) -> None:
-    """Strip/re-pin the fields Kiro Crew owns on one managed-server entry.
+    """Strip/re-pin the fields Sao Khuê owns on one managed-server entry.
 
     Applied identically by the fresh-build path (``build_agent_config``) and
     the existing-config refresh path (``_refresh_dynamic_fields``) so the two
@@ -483,7 +483,7 @@ def _enforce_managed_mcp_ownership(
     # Entry keys are an ALLOW-LIST, not a list of known-bad names. kiro-cli
     # rejects a server spec carrying a field it does not know, and it rejects the
     # WHOLE agent when it does, so a single stray ``cwd`` on a managed entry
-    # takes every Kiro Crew tool down with it. Dropping the key we cannot honour
+    # takes every Sao Khuê tool down with it. Dropping the key we cannot honour
     # keeps the agent loadable, which is what the user actually wanted.
     #
     # It has to be an allow-list because the deny side is unbounded: ``url`` and
@@ -581,7 +581,7 @@ def _enforce_managed_mcp_ownership(
     # Env: keep the user's own variables, but only genuine ones. A malformed
     # (non-dict) override is dropped rather than fed to dict(...), which would
     # otherwise raise and abort the whole config rebuild over a single bad
-    # agent.json value. sanitize_spec_env then drops Kiro Crew's whole reserved
+    # agent.json value. sanitize_spec_env then drops Sao Khuê's whole reserved
     # namespace and the loader/interpreter channels by prefix (see the module
     # comment above), the home-deriving names are dropped for this population
     # (see _HOME_DERIVING_ENV_KEYS), and KIROCREW_HOME is re-pinned to the

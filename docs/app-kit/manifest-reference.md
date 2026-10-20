@@ -258,7 +258,7 @@ slot: an overlay `id` must name a component compiled into the dashboard bundle, 
 there is no ESM `entryPoint` for overlays the way `ui.pages` has one. An installed app
 declaring `ui.overlays` is refused at install, and a self-registered one is refused
 when slots are resolved -- `builtin` provenance is assigned only by the builtin
-registration Kiro Crew runs at startup and cannot be self-reported. Treat this as the
+registration Sao Khuê runs at startup and cannot be self-reported. Treat this as the
 mechanism builtin apps use to replace a host surface, not yet as a third-party
 extension point.
 
@@ -1090,12 +1090,12 @@ entry's own `managedBy` overrides `dependencies.managedBy`.
 
 ### `lifecycle` and `resources`
 
-Control how Kiro Crew manages the app:
+Control how Sao Khuê manages the app:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `lifecycle` | string | `"gateway"` | `"gateway"` (managed), `"app"` (self-managed), or `"locked"` (cannot uninstall) |
-| `resources` | string | `"gateway"` | `"gateway"` (Kiro Crew registers agents/skills/MCP) or `"app"` (app handles its own) |
+| `resources` | string | `"gateway"` | `"gateway"` (Sao Khuê registers agents/skills/MCP) or `"app"` (app handles its own) |
 
 ## Platform
 
@@ -1165,7 +1165,7 @@ Two things decide whether your app can honestly claim `windows`:
    `backend.hooks` only, runs inside the Gateway process and spawns nothing, so
    it is unaffected by the item below. An app with a `backend.entryPoint` is
    spawned through `sandbox.wrap_argv` without the first-party carve-out, and
-   Kiro Crew has no native Windows sandbox backend — so on native Windows that
+   Sao Khuê has no native Windows sandbox backend — so on native Windows that
    spawn runs unconfined under this platform's default, since no backend is
    installable here; it is refused only where the operator declared
    `agent.sandbox_allow_unsandboxed_exec=false` or a governance
@@ -1177,7 +1177,7 @@ Two things decide whether your app can honestly claim `windows`:
 When `installMode` is `"client"`, the App Store shows copy-paste terminal
 instructions instead of running the install on the server. This is used for
 apps that must run on the user's local machine (e.g. Electron desktop apps
-when Kiro Crew runs on a remote host).
+when Sao Khuê runs on a remote host).
 
 #### `platform.requiresDesktopApp` — Desktop-Only UI
 
@@ -1318,4 +1318,4 @@ gateway has them: `DISPLAY`, `WAYLAND_DISPLAY`, `XAUTHORITY`,
 
 Unknown fields in `app.json` are preserved during parsing and round-tripped
 through `to_dict()` / `to_json()`. This allows newer manifest features to
-coexist with older Kiro Crew versions without breaking validation.
+coexist with older Sao Khuê versions without breaking validation.

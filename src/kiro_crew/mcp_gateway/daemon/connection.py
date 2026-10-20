@@ -303,7 +303,7 @@ async def _handle_connection(
             "type": "registered",
             "backend_id": provisional_id,
             "pool_label": pool_key.human_readable(),
-            # A Kiro Crew-owned stub requires an exact match before it entrusts
+            # A Sao Khuê-owned stub requires an exact match before it entrusts
             # its session to this broker. An older daemon omits this field, so a
             # new stub takes its existing direct-exec fallback at cold start
             # instead of mixing protocol generations after an in-place package

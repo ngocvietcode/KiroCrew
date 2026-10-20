@@ -261,7 +261,7 @@ async def test_create_session_refusal_explains_a_derived_readonly_spec(tmp_path,
     message = str(exc.value)
     assert "kirocrew setup --agent-only" not in message
     assert "is likely missing" not in message
-    assert "read-only spec Kiro Crew derives from 'scout'" in message
+    assert "read-only spec Sao Khuê derives from 'scout'" in message
     assert "name 'scout'" in message
     assert "Refusing to run the backend default mode kirocrew in its place" in message
 
@@ -288,7 +288,7 @@ async def test_create_session_fails_closed_when_spawn_agent_not_advertised():
     """Guard (A2): the agent `--agent` selected is absent from the advertised
     modes, so its spec never loaded (missing, or rejected wholesale on an unknown
     field) and kiro-cli silently fell back to its own default agent. That default
-    mounts none of Kiro Crew's control plane while the global provider mcp.json
+    mounts none of Sao Khuê's control plane while the global provider mcp.json
     stays merged, so third-party servers keep working and every Crew tool the
     injected prompt names -- learn_add among them -- answers "does not exist".
     No override is passed, which is exactly why Guard (A) cannot catch it."""
@@ -332,7 +332,7 @@ async def test_create_session_fails_closed_when_current_mode_names_another_agent
     of the substitution, so it fails closed even with no advertised list. Admitting
     a current-mode mismatch would let exactly this response through the
     compatibility escape: `_mode_available` returns True whenever no list was
-    advertised, so the substituted agent would run with none of Kiro Crew's tools.
+    advertised, so the substituted agent would run with none of Sao Khuê's tools.
     A live probe of kiro-cli pins the meaning of the field -- a spec that loads is
     reported as the current mode, and a spec the backend refuses reports the
     backend's own default instead."""

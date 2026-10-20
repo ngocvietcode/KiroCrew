@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  KiroCrew One-Click Deploy - shared per-account base stack. One PRIVATE S3
+  SaoKhue One-Click Deploy - shared per-account base stack. One PRIVATE S3
   bucket (origin) + one global CloudFront distribution that serves many demos
   under /<slug>/ prefixes. Created once per account; individual deploys are just
   S3 uploads under a slug prefix + an invalidation.
@@ -275,7 +275,7 @@ Resources:
             Override: true
           # Permissive by design: demos are arbitrary user apps that need inline
           # scripts to run. Override:false lets an app set its own stricter CSP.
-          # frame-ancestors: 'self' plus loopback origins so the KiroCrew
+          # frame-ancestors: 'self' plus loopback origins so the SaoKhue
           # dashboard (localhost gateway / Electron) can embed the deployed
           # site as a live preview. Public-web clickjacking surface is
           # unchanged — an attacker page cannot be served from the victim's
@@ -289,7 +289,7 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-        Comment: KiroCrew One-Click Deploy shared distribution
+        Comment: SaoKhue One-Click Deploy shared distribution
         # CWE-770: attach an optional WAFv2 WebACL (rate limiting / request
         # filtering) when one is supplied. Must be a CLOUDFRONT-scoped WebACL in
         # us-east-1 (see WafWebAclArn parameter). AWS::NoValue keeps the property

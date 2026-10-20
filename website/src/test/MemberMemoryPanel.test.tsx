@@ -328,7 +328,7 @@ describe('private member memory lifecycle', () => {
     await loaded()
     for (let visit = 0; visit < 2; visit++) {
       fireEvent.mouseDown(screen.getByRole('tab', { name: 'Recovery' }), { button: 0, ctrlKey: false })
-      expect(await screen.findByText('Restart the Kiro Crew gateway to restore this backup. Current memory stays active until then.')).toBeInTheDocument()
+      expect(await screen.findByText('Restart the Sao Khuê gateway to restore this backup. Current memory stays active until then.')).toBeInTheDocument()
       expect(screen.getByRole('link', { name: 'Open restart controls' })).toHaveAttribute('href', '/settings/about')
       expect(screen.getByRole('button', { name: 'Restore backup', exact: true })).toBeDisabled()
       if (visit === 0) { view.rerender(<></>); view.rerender(<MemoryTab refreshTrigger={0} />); await loaded() }

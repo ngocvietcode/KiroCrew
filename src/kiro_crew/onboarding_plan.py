@@ -656,13 +656,13 @@ def _add_instruction_files(
     scan: _Scan,
     paths: list[tuple[Path, Path]],
 ) -> None:
-    """Project user-authored instruction documents onto Kiro Crew's memory tiers.
+    """Project user-authored instruction documents onto Sao Khuê's memory tiers.
 
     ``CLAUDE.md`` / ``AGENTS.md`` and the DIRECTIVE body of a persona document
     (OpenClaw / Hermes ``SOUL.md``) are the least replaceable thing a user owns,
     so they land in ``lessons.jsonl`` — the highest-priority durable tier
     (see docs/system-specs/modules/onboarding-import.md). The persona *role* is
-    deliberately NOT imported: Kiro Crew's persona surface is theme-pack persona,
+    deliberately NOT imported: Sao Khuê's persona surface is theme-pack persona,
     governed by ``capabilities.theme_persona``, and no foreign text may become
     system-prompt identity through this path.
 

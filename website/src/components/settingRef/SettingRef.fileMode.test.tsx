@@ -150,7 +150,7 @@ describe('SettingRef file-mode with no launcher hints', () => {
 
     expect(await screen.findByText(/kirocrew config set instances\.enabled true/)).toBeTruthy()
     expect(screen.getByText('This command may need quoting changes in some shells.')).toBeTruthy()
-    expect(document.body.textContent).not.toMatch(/Update Kiro Crew/)
+    expect(document.body.textContent).not.toMatch(/Update Sao Khuê/)
     expect(document.body.textContent).not.toContain('--value-base64')
   })
 

@@ -1,11 +1,11 @@
 ---
 name: kirocrew-app-dev
-description: "Build, package, and publish Kiro Crew external apps. Covers app.json manifests, UI components, crons, skills, lifecycle hooks, development mode, registry publishing, and common pitfalls."
+description: "Build, package, and publish Sao Khuê external apps. Covers app.json manifests, UI components, crons, skills, lifecycle hooks, development mode, registry publishing, and common pitfalls."
 ---
 
-# Kiro Crew App Development
+# Sao Khuê App Development
 
-Guide for building external Kiro Crew apps against the current App Kit manifest, lifecycle, UI SDK, and registry contracts. The canonical field and API references live in [App Kit](../../docs/app-kit/README.md).
+Guide for building external Sao Khuê apps against the current App Kit manifest, lifecycle, UI SDK, and registry contracts. The canonical field and API references live in [App Kit](../../docs/app-kit/README.md).
 
 ## When to Use
 
@@ -110,7 +110,7 @@ Lifecycle scripts have explicit scope:
 - A registry install runs `setup.onInstall` in the cloned source before copying
   it into the data home. Keep that hook idempotent.
 - `setup.onEnable` / `onDisable` run around enablement, and `onUninstall` is only
-  for external state Kiro Crew cannot remove itself.
+  for external state Sao Khuê cannot remove itself.
 
 Keep runtime data under the app's `data/` directory. The gateway owns registered
 resource links and scheduler entries; app code must not recreate them manually.
@@ -119,7 +119,7 @@ resource links and scheduler entries; app code must not recreate them manually.
 
 ### Design System
 
-Kiro Crew apps should default to the host visual language. Colors come
+Sao Khuê apps should default to the host visual language. Colors come
 from the theme tokens (`var(--accent)` and friends) — see "Don't Reinvent the
 Dashboard" below, which is the normative rule. The hex values here are the legacy
 palette, kept for apps that predate the tokens and as the fallback inside
@@ -176,7 +176,7 @@ Visual mock of the target style:
 
 ```html
 <!--
-  Legacy geometry reference for a Kiro Crew app header and card.
+  Legacy geometry reference for a Sao Khuê app header and card.
   Use host components and theme tokens instead of copying the hardcoded colors.
 -->
 <div style="max-width:1200px; margin:0 auto; padding:16px; font-family:system-ui; color:#e2e8f0; background:#1a1b26">
@@ -579,7 +579,7 @@ Publish the app as a plain git repository (any git host — e.g. GitHub):
 
 ### 2. App Registry Entry
 
-Open a pull request to the Kiro Crew repo adding an entry to
+Open a pull request to the Sao Khuê repo adding an entry to
 `src/kiro_crew/apps/app-registry.json`:
 ```json
 {
@@ -743,7 +743,7 @@ process — but the contract DIFFERS from builtins (`auto_research` etc.):
   `ls -l ~/.kiro/crew/apps/<n>/ui` shows a real dir, not a link. Fix: re-create
   the symlink after ANY install/update, and re-check dev mode is still on.
 - Same clobber applies to locally edited shipped skills: installed skill files
-  under `~/.kiro/crew/skills/` re-sync from the Kiro Crew package on update.
+  under `~/.kiro/crew/skills/` re-sync from the Sao Khuê package on update.
   Durable bundled-skill changes belong in `src/kiro_crew/builtin_skills/`;
   top-level `skills/` is checkout-only guidance.
 - Validate `.mjs` before relying on a reload: `node --check ui/index.mjs` —
@@ -884,7 +884,7 @@ and use `position: absolute; inset: 0` for the overlay.
 
 ## Graduating an External App to a Builtin
 
-When an app proves out and should ship with Kiro Crew, port it into the repo —
+When an app proves out and should ship with Sao Khuê, port it into the repo —
 the contracts CHANGE on both sides. Template: `src/kiro_crew/apps/builtins/issue_radar/`.
 
 - Layout: `src/kiro_crew/apps/builtins/<snake_name>/` with `app.json`,
@@ -910,7 +910,7 @@ the contracts CHANGE on both sides. Template: `src/kiro_crew/apps/builtins/issue
   to the app root), registered at enable-time.
 - Keep `defaultEnabled: false`; users opt in via the App Store.
 - Full worktree + build-gate discipline applies (see the kirocrew-worktree-dev
-  skill) — this is now Kiro Crew source.
+  skill) — this is now Sao Khuê source.
 - **Tests**: the suite under `tests/` follows the repo's test rules — the
   [writing-tests](../../src/kiro_crew/builtin_skills/kirocrew-dev/writing-tests/SKILL.md)
   skill and the

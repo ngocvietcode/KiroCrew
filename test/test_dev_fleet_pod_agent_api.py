@@ -228,7 +228,7 @@ def test_the_capability_is_not_gated_on_an_operator_grant() -> None:
     Pinned as a test because the reverse is what a reader would assume from the
     security note in the module docstring -- and because adding a grant would
     silently break the unattended QA loop these routes exist to restore. The
-    residual such a grant would appear to close is Kiro Crew's documented posture
+    residual such a grant would appear to close is Sao Khuê's documented posture
     (security.md, "Scoped user-bus locator forward"), reachable by other paths
     regardless, so a gate here buys nothing and costs the loop.
     """
@@ -319,7 +319,7 @@ async def test_every_verb_answers_an_unusable_checkout(
     from kiro_crew.apps.builtins.dev_fleet import repository
 
     async def _aboom(*_a: Any, **_k: Any) -> Any:
-        raise repository.RepoNotConfigured("no Kiro Crew checkout found to manage")
+        raise repository.RepoNotConfigured("no Sao Khuê checkout found to manage")
 
     class _Ops:
         _pod_up = staticmethod(_aboom)

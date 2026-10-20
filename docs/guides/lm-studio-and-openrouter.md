@@ -1,11 +1,11 @@
 # Using LM Studio and OpenRouter models through OpenCode or Pi
 
-Kiro Crew does not call LM Studio or OpenRouter itself. Two of the harnesses it
+Sao Khuê does not call LM Studio or OpenRouter itself. Two of the harnesses it
 can drive already do: [OpenCode](https://opencode.ai/docs/) and
 [Pi](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent). Each
-keeps its own provider configuration and credentials. Kiro Crew starts the
+keeps its own provider configuration and credentials. Sao Khuê starts the
 harness, and the chat model picker lists the models that harness advertises.
-Kiro Crew holds no LM Studio or OpenRouter key and needs no setting of its own
+Sao Khuê holds no LM Studio or OpenRouter key and needs no setting of its own
 for either provider.
 
 The provider steps below follow each harness's own documentation, which is the
@@ -188,7 +188,7 @@ first.
 2. Open `/model`. With a key, Pi lists the OpenRouter models that key may use.
    Press `Ctrl+S` on one to make it the default.
 
-## 4. Pick the model in Kiro Crew
+## 4. Pick the model in Sao Khuê
 
 1. Start a new chat. Its first session reports the harness's models to Kiro
    Crew; until then the picker offers **auto**, plus the configured default,
@@ -203,7 +203,7 @@ Models added to the harness later appear once a new session reports them.
 
 ## 5. Credentials
 
-Kiro Crew stores no provider key for this setup. OpenCode and Pi read their own
+Sao Khuê stores no provider key for this setup. OpenCode and Pi read their own
 credential files (`~/.local/share/opencode/auth.json`,
 `~/.pi/agent/auth.json`) when they start. The agent's file tools are refused
 those files; the harness process itself still reads them. The exact posture
@@ -215,7 +215,7 @@ for each harness is its auth declaration, described in Stage 5 of
 | Symptom | Check |
 |---|---|
 | "OpenCode is not signed in" or "Pi is not signed in" when a chat starts | The harness found no usable provider. Run the sign-in step for OpenRouter, or add the LM Studio provider entry, then start a new chat. |
-| The model is missing from the Kiro Crew picker | Run `opencode models <provider>` or Pi's `/model`. If the harness does not list it, fix the harness config first. If it does, start a new chat so a session reports it. |
+| The model is missing from the Sao Khuê picker | Run `opencode models <provider>` or Pi's `/model`. If the harness does not list it, fix the harness config first. If it does, start a new chat so a session reports it. |
 | LM Studio requests fail | `curl http://localhost:1234/v1/models` must answer on the gateway host. Check that the server is started and the port in the config matches. |
 | Pi lists the LM Studio model nowhere | The provider entry needs an `apiKey`, and `models.json` must be valid JSON. `pi --list-models` reads the file on each run; inside Pi, opening `/model` reloads it. |
 | `opencode models openrouter` answers "Provider not found" | No OpenRouter key is stored yet. Run `opencode auth login` and choose OpenRouter. |

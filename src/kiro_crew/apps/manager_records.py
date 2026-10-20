@@ -83,17 +83,17 @@ class InstalledApp:
     Three orthogonal classification fields replace the old ``managed`` field:
 
     ``origin`` — where the app came from (read-only, set at install time):
-      - ``"builtin"``: baked into the Kiro Crew dashboard
+      - ``"builtin"``: baked into the Sao Khuê dashboard
       - ``"registry"``: installed from the curated app registry
       - ``"local"``: installed from a local directory path
       - ``"external"``: self-registered via SDK / API
 
     ``resources`` — who manages agent/skill/cron registration:
-      - ``"gateway"``: Kiro Crew manages via bridges.py symlinks
+      - ``"gateway"``: Sao Khuê manages via bridges.py symlinks
       - ``"app"``: the app manages its own resource registration
 
     ``lifecycle`` — who manages updates and uninstall:
-      - ``"gateway"``: Kiro Crew handles updates and uninstall
+      - ``"gateway"``: Sao Khuê handles updates and uninstall
       - ``"app"``: the app handles its own updates
       - ``"locked"``: cannot be uninstalled (builtin only)
     """

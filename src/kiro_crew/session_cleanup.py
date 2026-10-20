@@ -293,7 +293,7 @@ class CleanupDeps:
     has_pending_injection: Callable[[str], bool] = _no_pending_injection
     # ``(seconds since, description)`` of the newest work the session's harness
     # launched to keep running after the prompt returned, or ``None``. A free
-    # semaphore only proves Kiro Crew's own prompt returned, and this is the only
+    # semaphore only proves Sao Khuê's own prompt returned, and this is the only
     # witness to that work. Synchronous -- it reads one record -- and defaults
     # to "nothing launched" so a manager without ACP providers is unchanged.
     provider_background_launch: Callable[[LLMProvider], tuple[float, str] | None] = (

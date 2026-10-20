@@ -1,7 +1,7 @@
-"""Serve Laya on this machine's CPU for Kiro Crew's decision seam.
+"""Serve Laya on this machine's CPU for Sao Khuê's decision seam.
 
 Runs inside the model's own environment, never the gateway's: it imports torch
-and laya, which Kiro Crew does not depend on. The weights are a directory the
+and laya, which Sao Khuê does not depend on. The weights are a directory the
 gateway already downloaded and verified, so nothing here reaches the network.
 """
 

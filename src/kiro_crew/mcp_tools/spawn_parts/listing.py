@@ -105,7 +105,7 @@ def spawn_list(name: str, args: dict[str, Any]) -> str:
     # ("call spawn_list", "which lists them all"), so withholding names from this
     # listing would falsify what they promise. The reserved pair is not suggested
     # elsewhere because it is reached by omitting ``agent`` -- but it is still a
-    # name the gateway accepts, so a full listing shows it. Kiro Crew's own
+    # name the gateway accepts, so a full listing shows it. Sao Khuê's own
     # generated specs are NOT: the gateway refuses them, so even the full listing
     # leaves them out (``is_internal_agent_spec``).
     try:

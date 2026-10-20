@@ -1,4 +1,4 @@
-# KiroCrew — public build targets (pip + npm/vite + pytest).
+# SaoKhue — public build targets (pip + npm/vite + pytest).
 # Common flow: `make` runs build (frontend + backend) then tests.
 #
 # Standalone distribution targets:

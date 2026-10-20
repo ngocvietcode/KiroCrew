@@ -395,7 +395,7 @@ def _live_browser_gate() -> bool:
     working browser without its approval and loopback rules.
     """
     try:
-        # Function-local: an owner takes no Kiro Crew import at module scope, so
+        # Function-local: an owner takes no Sao Khuê import at module scope, so
         # loading the context does not load the browser install plane.
         from kiro_crew.browser_cli import install
 
@@ -538,7 +538,7 @@ def _resolve_agent_prompt(
     is_custom = bool(agent) and agent != "kirocrew"
     agent_prompt: str
     if is_cc and not is_custom:
-        # CC gets the same Kiro Crew persona prompt as kiro — including
+        # CC gets the same Sao Khuê persona prompt as kiro — including
         # the Output Format rules (diff blocks, image embeds, OPTIONS)
         # which are dashboard UI contracts, not kiro-specific. Only the
         # kiro-cli *branding* references are rewritten to claude code.

@@ -317,7 +317,7 @@ def _refresh_forked_templates_locked(*, gated_off: "frozenset[str] | None" = Non
     So forks get the same merge-preserving refresh ``kirocrew.json`` gets, in
     ``fork`` mode (human-edited fields untouched; see _refresh_dynamic_fields).
 
-    Only forks whose origin CHAIN reaches a Kiro Crew-owned template get the
+    Only forks whose origin CHAIN reaches a Sao Khuê-owned template get the
     PLUMBING refresh: a fork of a user's custom template inherits no machine
     plumbing (setup never composes non-owned specs), and refreshing it would
     stamp kirocrew's prompt and hooks onto an unrelated spec. The GOVERNANCE
@@ -423,7 +423,7 @@ def _refresh_forked_templates_locked(*, gated_off: "frozenset[str] | None" = Non
                 # No spec on disk: nothing carries grants, nothing to refresh.
                 continue
             if is_markdown_spec(spec_path):
-                # Forks are JSON copies Kiro Crew wrote; a markdown file that
+                # Forks are JSON copies Sao Khuê wrote; a markdown file that
                 # resolves as one cannot be re-serialized, so its grants cannot
                 # be refreshed. Fail closed like an unreadable spec.
                 failures.add(fork_name)
@@ -736,7 +736,7 @@ def _files_with_their_own_writer(
 ) -> "frozenset[Path] | None":
     """The spec files claiming *name* that another writer re-filters, or ``None`` if none does.
 
-    Kiro Crew's installer rewrites only ``<name>.json`` for an owned name it governs
+    Sao Khuê's installer rewrites only ``<name>.json`` for an owned name it governs
     (:func:`_owned_spec_has_its_own_writer`), and the fork refresh only the file
     ``agent.agent_spec_path`` resolves for a fork. Those files are exempt from the
     shared-template pass, the name is not: any other file that claims it
@@ -760,9 +760,9 @@ def _govern_bound_shared_specs(
 ) -> "tuple[frozenset[Path], bool]":
     """Re-filter ``allowedTools``/``autoApprove`` on every crew-bound spec that is not a fork.
 
-    kiro-cli reads both lists from the spec file and honours them before Kiro Crew's
+    kiro-cli reads both lists from the spec file and honours them before Sao Khuê's
     PreToolUse gate, so a grant written under an older ceiling stays live until the
-    file is rewritten. Forks and Kiro Crew's own specs have writers that re-filter
+    file is rewritten. Forks and Sao Khuê's own specs have writers that re-filter
     them on every rebuild, so this pass skips the one file each of those writers
     rewrites (:func:`_files_with_their_own_writer`) and filters every other file that
     claims the same name. Everything else a crew is bound to is

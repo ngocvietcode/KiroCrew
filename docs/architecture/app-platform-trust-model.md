@@ -1,8 +1,8 @@
 # App Platform Trust Model
 
-Kiro Crew's app platform loads app Python directly into the gateway process
+Sao Khuê's app platform loads app Python directly into the gateway process
 (`apps/module_loader.py` → `importlib` → `exec_module`). This page documents the
-resulting trust boundary and how Kiro Crew makes it explicit.
+resulting trust boundary and how Sao Khuê makes it explicit.
 
 ## What an app can do
 
@@ -24,9 +24,9 @@ sandbox** around in-process app code (hooks and route handlers). An app's
 separate backend process is launched under the OS sandbox's `standard` mode
 where a sandbox backend applies, which does not bound the in-process modules.
 
-> **Admitting and enabling an app is therefore equivalent to running that code with the same privileges as Kiro Crew itself.** Only trust apps you trust.
+> **Admitting and enabling an app is therefore equivalent to running that code with the same privileges as Sao Khuê itself.** Only trust apps you trust.
 
-## How Kiro Crew makes the boundary explicit
+## How Sao Khuê makes the boundary explicit
 
 - **Builtin vs third-party split** — apps shipped inside the package
   (`apps/builtins/`) are trusted like core. Anything loaded from outside that

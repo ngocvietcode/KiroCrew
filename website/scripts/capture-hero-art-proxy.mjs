@@ -143,7 +143,7 @@ const API_FIXTURES = {
   }),
   '/api/themes': () => ({ themes: [], installed: [] }),
   '/api/status': () => status,
-  '/api/dashboard/branding': () => ({ bot_name: 'Kiro Crew', avatar: '' }),
+  '/api/dashboard/branding': () => ({ bot_name: 'Sao Khuê', avatar: '' }),
   '/api/theme/boot': () => ({ mode: themeMode, theme: '' }),
   '/api/notifications': () => ({ notifications: [], unread: 0 }),
   '/api/chat/slots': () => [],

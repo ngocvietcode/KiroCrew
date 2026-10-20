@@ -466,7 +466,7 @@ class TestCanonicalDepKey:
 class TestUncleanableTypesArePreserved:
     """A dependency type with no cleanup operation must keep its ledger row.
 
-    Deleting the row for something KiroCrew cannot actually uninstall leaves the
+    Deleting the row for something SaoKhue cannot actually uninstall leaves the
     installed package on disk with nothing recording that it was ever referenced —
     an untraceable orphan. Ownership is dropped instead, so it reads as
     user-installed and stays reclaimable."""

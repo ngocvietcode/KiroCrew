@@ -77,7 +77,7 @@ _GIT_BINARY = "git"
 #: `.invalid` is the reserved TLD for exactly this (RFC 2606), so the address cannot route.
 _COMMIT_IDENTITY = (
     "-c",
-    "user.name=Kiro Crew ops-mission-control",
+    "user.name=Sao Khuê ops-mission-control",
     "-c",
     "user.email=ops-mission-control@kirocrew.invalid",
 )
@@ -119,7 +119,7 @@ _align_refusal: str = ""
 #: predicting it is not possible from the platform alone: ``sandbox.unavailable_kind()``
 #: reports "no backend" without knowing whether the operator has set
 #: ``agent.sandbox_allow_unsandboxed_exec``, so a platform check would claim sync is dead
-#: on a host where it works. Windows is where this actually fires: Kiro Crew has a Seatbelt
+#: on a host where it works. Windows is where this actually fires: Sao Khuê has a Seatbelt
 #: backend and a Linux user-namespace backend and no native Windows one, so ``wrap_argv``
 #: fail-closes before git is ever executed. ``status()`` reads this so Settings names the
 #: real reason instead of leaving the operator with "pull errored".
@@ -131,7 +131,7 @@ _sandbox_refusal: str = ""
 #: — only the git transport that shares the ledger with teammates is refused.
 _SANDBOX_REFUSAL_DETAIL = (
     "git could not start: no OS sandbox backend is available on this host, so the "
-    "spawn was refused before git ran. Kiro Crew sandboxes this transport because the "
+    "spawn was refused before git ran. Sao Khuê sandboxes this transport because the "
     "remote URL and branch come from settings. Windows has no native backend, so ledger "
     "sync needs agent.sandbox_allow_unsandboxed_exec=true in ~/.kiro/crew/config.json, "
     "or a macOS or Linux host as the publishing instance. Everything else keeps working: "

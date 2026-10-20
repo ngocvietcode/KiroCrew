@@ -3,7 +3,7 @@
 The authoritative manifest and root an app's executable resources come from
 (``_registration_source``) and the shared execution decision each bridge applies
 (``_registration_denied``), the namespaced resource and link names, and the kiro-cli
-agents directory and Kiro Crew skills directory the bridges write into. Every other
+agents directory and Sao Khuê skills directory the bridges write into. Every other
 ``bridges_*`` owner reads this module.
 
 Part of the ``kiro_crew.apps.bridges`` family: callers and tests reach every name here
@@ -40,7 +40,7 @@ def _kiro_agents_dir() -> Path:
     return KIRO_AGENTS_DIR if KIRO_AGENTS_DIR is not None else kiro_agents_dir()
 
 
-# Where Kiro Crew loads skills from
+# Where Sao Khuê loads skills from
 SKILLS_DIR_NAME = "skills"
 
 

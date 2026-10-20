@@ -25,9 +25,9 @@ const wire = (value: unknown): string => value as string
 
 /** Put a live, mid-flight run in the store the only way the app can: WS frames. */
 function liveRun(store: Store, run_id = 'wf_000025', session_key = 'dashboard:chat-1') {
-  store.dispatch(sseWorkflowEvent({ run_id, session_key, type: 'run_started', data: { name: 'Kiro Crew perf investigation' } }))
+  store.dispatch(sseWorkflowEvent({ run_id, session_key, type: 'run_started', data: { name: 'Sao Khuê perf investigation' } }))
   store.dispatch(sseWorkflowEvent({ run_id, type: 'phase_started', data: { title: 'synthesize' } }))
-  store.dispatch(sseWorkflowEvent({ run_id, type: 'log', data: { message: 'Starting Kiro Crew performance investigation' } }))
+  store.dispatch(sseWorkflowEvent({ run_id, type: 'log', data: { message: 'Starting Sao Khuê performance investigation' } }))
 }
 
 describe('reconcileWorkflowRuns', () => {
@@ -40,7 +40,7 @@ describe('reconcileWorkflowRuns', () => {
     expect(runs(store)['wf_000025'].status).toBe('running')
 
     store.dispatch(reconcileWorkflowRuns([
-      { run_id: 'wf_000025', name: 'Kiro Crew perf investigation', status: 'finished', session_key: 'dashboard:chat-1' },
+      { run_id: 'wf_000025', name: 'Sao Khuê perf investigation', status: 'finished', session_key: 'dashboard:chat-1' },
     ]))
 
     expect(runs(store)['wf_000025'].status).toBe('finished')
@@ -131,7 +131,7 @@ describe('reconcileWorkflowRuns', () => {
       run_id: 'wf_000025', status: 'running', phase: 'discover', last_log: 'an older line',
     }]))
     // Stale snapshot values must not overwrite newer frames...
-    expect(runs(store)['wf_000025']).toMatchObject({ phase: 'synthesize', lastLog: 'Starting Kiro Crew performance investigation' })
+    expect(runs(store)['wf_000025']).toMatchObject({ phase: 'synthesize', lastLog: 'Starting Sao Khuê performance investigation' })
 
     // ...but a gap this client never received IS filled.
     const bare = createTestStore()

@@ -1,7 +1,7 @@
 """Example dynamic workflow: review a diff across dimensions, verify each finding.
 
 This is the canonical pipeline pattern, ported from an external agent CLI's
-`Workflow` tool into the proposed Kiro Crew Python DSL. Illustrative only — the
+`Workflow` tool into the proposed Sao Khuê Python DSL. Illustrative only — the
 DSL is not implemented yet.
 
 Run:  workflow run review-changes --args '{"cr": "CR-1234567"}'

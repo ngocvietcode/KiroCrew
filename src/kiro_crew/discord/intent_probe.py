@@ -1,8 +1,8 @@
 """Privileged-intent grant probe for the Discord application.
 
 Discord's three privileged Gateway intents (Message Content, Server Members,
-Presence) are toggled in the Developer Portal, never in Kiro Crew's config, so
-the two can disagree without anything on the Kiro Crew side noticing. A thread
+Presence) are toggled in the Developer Portal, never in Sao Khuê's config, so
+the two can disagree without anything on the Sao Khuê side noticing. A thread
 allow-list can be perfectly configured while Message Content is off, and the
 result is not an error but silence: Discord delivers thread messages with empty
 content, or closes the Gateway with code 4014. The app itself is the only

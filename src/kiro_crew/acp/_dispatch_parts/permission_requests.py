@@ -151,9 +151,9 @@ _DENY_OPTION_IDS: frozenset[str] = frozenset(
 )
 
 
-#: The marker key Kiro Crew's own gate extension puts in a harness confirm dialog.
+#: The marker key Sao Khuê's own gate extension puts in a harness confirm dialog.
 #:
-#: A harness with no permission gate of its own is gated by an extension Kiro Crew
+#: A harness with no permission gate of its own is gated by an extension Sao Khuê
 #: loads into it (``agent_sdk.backends.Routing.VERIFIED_GATE_EXTENSION``). That
 #: extension can only raise the harness's generic confirm dialog, which the adapter
 #: forwards as a ``session/request_permission`` whose ``toolCall`` describes the
@@ -161,7 +161,7 @@ _DENY_OPTION_IDS: frozenset[str] = frozenset(
 #: not the tool call behind it. So the extension writes the tool call into the
 #: dialog's message as a JSON envelope under this marker, and the builder below
 #: reads it back out. Keyed on the marker, not on a backend id: the envelope is a
-#: wire contract between two pieces of Kiro Crew's own code, and any harness whose
+#: wire contract between two pieces of Sao Khuê's own code, and any harness whose
 #: gate is one of these extensions speaks it.
 GATE_ENVELOPE_MARKER = "kiro-crew-gate"
 
@@ -170,7 +170,7 @@ def gate_envelope(tool_call: dict[str, Any], nonce: str | None) -> dict[str, Any
     """The tool call a gate-extension confirm dialog is asking about, or ``None``.
 
     Returns ``{"toolCallId", "title", "kind", "input", "truncated"}`` when
-    *tool_call* is the adapter's rendering of Kiro Crew's own dialog: ``rawInput.method``
+    *tool_call* is the adapter's rendering of Sao Khuê's own dialog: ``rawInput.method``
     is ``confirm``, ``rawInput.message`` parses as a JSON object carrying
     :data:`GATE_ENVELOPE_MARKER`, its ``nonce`` is the one this session issued,
     and its ``tool`` is the dialog's own title. Anything else -- another
@@ -386,7 +386,7 @@ def build_permission_event(
 ) -> tuple[AcpEvent | None, dict[str, str] | None]:
     """Build an ``EVENT_PERMISSION_REQUEST`` from a ``session/request_permission``.
 
-    ``gate_envelope_nonce`` is set only by a caller whose session runs Kiro Crew's
+    ``gate_envelope_nonce`` is set only by a caller whose session runs Sao Khuê's
     gate extension (``Routing.VERIFIED_GATE_EXTENSION``); see :func:`gate_envelope`
     for what it unlocks and why the default consults nothing.
 
@@ -609,7 +609,7 @@ def build_permission_event(
     cached_shell = shell_cache.get(_ck) if (shell_cache is not None and tool_call_id) else None
     if cached_shell is None and envelope is not None:
         # The envelope's kind is the gate extension's own rendering of the
-        # harness's tool name -- Kiro Crew's code reading the harness's event, the
+        # harness's tool name -- Sao Khuê's code reading the harness's event, the
         # same provenance the cached ``tool_call`` kind has. It is NOT the frame's
         # own agent-influenced ``kind``, which the deny-by-default rule above is
         # about; that field described the dialog and was discarded.

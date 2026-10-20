@@ -171,7 +171,7 @@ def _assert_block_reason_recovered(slot, client, reason: str) -> None:
 
 class TestRefusalRecovery:
     """A recoverable refusal (host-gate policy deny / read-only bash gate) ends
-    the turn via kiro-cli's tool-interrupted marker. KiroCrew should hand the
+    the turn via kiro-cli's tool-interrupted marker. SaoKhue should hand the
     reason back to the model as an auto-continuation so the agent can adapt
     instead of stalling — without the user having to poke it."""
 

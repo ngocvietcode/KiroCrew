@@ -389,7 +389,7 @@ def fetch_dependency_edges(
 # ── crew claim protocol (reading a claim back off the issue) ──────────────────
 #
 # A crew's claim on an issue lives in a COMMENT, not in a label and not only in
-# Kiro Crew's own store: the comment is the authority, so the claim survives a
+# Sao Khuê's own store: the comment is the authority, so the claim survives a
 # gateway restart, is visible to a human reading the issue on GitHub, and is
 # readable by a crew running in a different process. The `crew:` labels are a
 # cheap index over it, never the source of truth.

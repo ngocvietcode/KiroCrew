@@ -39,7 +39,7 @@ export type BuiltinManifestFields = {
  * ONE function because the precedence IS the contract, and it was previously
  * spelled twice with OPPOSITE answers: the browse list preferred the row while
  * the detail page preferred the manifest, so the same app could read
- * "Kiro Crew · Developer Tools" in the list and "kirocrew · Productivity" one
+ * "Sao Khuê · Developer Tools" in the list and "kirocrew · Productivity" one
  * click later. Two truthiness chains in two files cannot disagree if there is
  * only one of them.
  *

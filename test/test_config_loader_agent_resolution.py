@@ -745,7 +745,7 @@ class TestAppAgentDispatch(unittest.TestCase):
     def test_app_agent_matched_by_name_field_dispatches_itself(self):
         # bridges._register_agents writes the NAMESPACED filename while the config
         # inside keeps the app's bare name, and app panels bind the slot to that
-        # bare name. Before this fix the bare name was not a Kiro Crew alias, so it
+        # bare name. Before this fix the bare name was not a Sao Khuê alias, so it
         # fell through to default_agent and the DEFAULT agent answered.
         import kiro_crew.config.loader as loader
 
@@ -791,7 +791,7 @@ class TestAppAgentDispatch(unittest.TestCase):
         assert r.kiro_agent == "kirocrew"
 
     def test_alias_still_wins_over_materialized_file(self):
-        # A Kiro Crew alias keeps full control of the binding (and the directory is
+        # A Sao Khuê alias keeps full control of the binding (and the directory is
         # not even scanned for it).
         import kiro_crew.config.loader as loader
         from kiro_crew.config.loader import KiroCrewAgentConfig
@@ -1145,8 +1145,8 @@ class TestAppAgentDispatch(unittest.TestCase):
         return tmp / "repo"
 
     def test_project_agent_dispatches_itself(self):
-        # A project-local agent is resolvable by kiro-cli (Kiro Crew spawns it with
-        # the project dir as cwd) but is not a Kiro Crew alias, so without the
+        # A project-local agent is resolvable by kiro-cli (Sao Khuê spawns it with
+        # the project dir as cwd) but is not a Sao Khuê alias, so without the
         # project scope it fell through to default_agent and the DEFAULT agent
         # answered a session the user bound to the repo's own agent.
         import kiro_crew.config.loader as loader
@@ -1176,7 +1176,7 @@ class TestAppAgentDispatch(unittest.TestCase):
         assert r.requested_resolved is False
 
     def test_alias_still_wins_over_a_project_agent(self):
-        # An explicit Kiro Crew alias is authored config; it must not be displaced by
+        # An explicit Sao Khuê alias is authored config; it must not be displaced by
         # a file that happens to share its name.
         import kiro_crew.config.loader as loader
 

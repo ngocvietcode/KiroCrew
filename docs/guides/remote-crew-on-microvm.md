@@ -133,7 +133,7 @@ fingerprint: a value you cannot read is one you cannot refuse.
 
 ### Stage the wheel once
 
-The base recipe installs Kiro Crew from a wheel in the build context, and a
+The base recipe installs Sao Khuê from a wheel in the build context, and a
 launch reads that wheel rather than building one -- building inside a launch would
 let the launch decide which version of the product your crew runs. Stage it once
 from a checkout:

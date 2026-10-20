@@ -72,7 +72,7 @@ def _discord_msg_content_line(
 
 
 def _discord_unused_intent_line(label: str, name: str, state: str) -> None:
-    """Flag a privileged intent nothing in Kiro Crew reads, if it is granted.
+    """Flag a privileged intent nothing in Sao Khuê reads, if it is granted.
 
     Silent when the intent is off (the wanted state) or unknown (the probe
     already reported that once), so this line only ever appears when there is

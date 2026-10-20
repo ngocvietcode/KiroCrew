@@ -18,7 +18,7 @@
  *     back on, so the provider rejects an anchor missing start/end offsets or
  *     `version_number` and the comment silently disappears.
  *
- * Kiro Crew convention: this suite mirrors `ArtifactDetailPage.test.tsx` and
+ * Sao Khuê convention: this suite mirrors `ArtifactDetailPage.test.tsx` and
  * `ArtifactDetailPage.anchoredComments.test.tsx` — automocked api client,
  * `renderWithProviders` with a real `MemoryRouter` route so `useParams` and
  * `navigate` are exercised for real, and a `Range`-backed `window.getSelection`

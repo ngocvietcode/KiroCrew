@@ -16,26 +16,26 @@ like a dead end:
 1. Add the server to the **agent's own** config, not just the Kiro global.
 2. Mount it by adding its `@ref` to `tools`.
 3. Start a session — nothing useful is *printed*.
-4. For a custom server, click **Authorize** on the banner Kiro Crew raises in
+4. For a custom server, click **Authorize** on the banner Sao Khuê raises in
    chat. For a curated provider such as Miro, use its Connections card or the
    MCP table's **Sign in** action instead.
 5. Complete the browser flow, then **drain the warm pool** and start a fresh
    session — a new chat alone can reuse a pre-authentication process.
 
 If the browser step fails closed with a "credential or exfiltration pattern"
-error, the provider's authorization host is not on Kiro Crew's recognized set
+error, the provider's authorization host is not on Sao Khuê's recognized set
 and you need the [`oauth_endpoints.json`](#if-the-host-is-not-recognized-the-oauth-endpoint-allowlist)
 keystone. Each section below is one of those moves and its trap.
 
 ## Add it to the right config for your agent
 
-Kiro Crew renders one agent file it fully owns —
+Sao Khuê renders one agent file it fully owns —
 `~/.kiro/agents/kirocrew.json` — and `kiro-cli` loads MCP servers with this
 precedence (highest wins for a same-named server; different names are additive):
 
 | Priority | Source | Owner |
 |---|---|---|
-| 1 (highest) | `mcpServers` in the agent JSON (`~/.kiro/agents/kirocrew.json`) | Kiro Crew gateway (`agent.rebuild_agent_config`) |
+| 1 (highest) | `mcpServers` in the agent JSON (`~/.kiro/agents/kirocrew.json`) | Sao Khuê gateway (`agent.rebuild_agent_config`) |
 | 2 | workspace `.kiro/settings/mcp.json` | you |
 | 3 (lowest) | global `~/.kiro/settings/mcp.json` | you |
 
@@ -81,7 +81,7 @@ Two things make that entry usable, and both are required:
 > `hooks.on_tool_call` — the PreToolUse plane carrying the always-on deny floor,
 > the sensitive-path check and the governance ceiling. `tools` alone makes the
 > server's tools **reachable**, which is all OAuth and normal use need; calls
-> then go through the approval path like any other. Kiro Crew treats this list
+> then go through the approval path like any other. Sao Khuê treats this list
 > as governed state, not preference: every in-product writer of it must clear
 > `platform.governance.may_skip_gate_now()` (which fails closed), and
 > `kirocrew doctor` will **revoke** a `@ref` the ceiling disallows and log an
@@ -105,7 +105,7 @@ This is the first round-trip and the one with the most misleading symptom. The
 The gateway already merges the Kiro global into the agent file, so with
 `includeMcpJson: true` kiro-cli would merge that global a **second** time at
 session start — producing duplicate entries and letting a stale path in the
-global shadow the fresh path the gateway just resolved. Kiro Crew forces
+global shadow the fresh path the gateway just resolved. Sao Khuê forces
 `false` on every agent it manages to avoid that double-merge
 ([../architecture/mcp.md](../architecture/mcp.md), "`includeMcpJson` is pinned
 false").
@@ -118,7 +118,7 @@ so there is no `401` to trigger OAuth.
 
 What makes that hard to read is the dashboard: the MCP panel's `kirocrew` badge
 reads **green** for such a server anyway. That badge does not mean "loaded now"
-— `mcp_discovery.list_servers()` computes it as *"will this load in Kiro Crew
+— `mcp_discovery.list_servers()` computes it as *"will this load in Sao Khuê
 sessions after the next rebuild"*, and since the rebuild inherits from the Kiro
 global, membership in the global alone is enough to turn it green. So the panel
 is reporting the future and the session is reporting the present, which is
@@ -138,15 +138,15 @@ trigger. kiro-cli connects to the server, is met with a `401`, and runs OAuth
 itself
 ([../architecture/design-notes/mcp-oauth-ownership.md](../architecture/design-notes/mcp-oauth-ownership.md),
 "Path A"). There is no command to type: kiro-cli owns the OAuth chain end to
-end, and Kiro Crew's only view of it is the one-directional `_kiro.dev/*`
+end, and Sao Khuê's only view of it is the one-directional `_kiro.dev/*`
 notifications.
 
 **The authorization URL is never printed into the transcript as text**, so a
 session that comes up with no visible mention of the server is not a silent
-failure. kiro-cli hands the URL to Kiro Crew over the ACP notification
+failure. kiro-cli hands the URL to Sao Khuê over the ACP notification
 `_kiro.dev/mcp/oauth_request`
 ([../reference/kiro-cli/acp.md](../reference/kiro-cli/acp.md), "MCP server
-events"), and Kiro Crew renders it as an **inline banner** in chat — a lock
+events"), and Sao Khuê renders it as an **inline banner** in chat — a lock
 icon, `miro requires authentication.`, and an **Authorize** link that opens the
 provider (`dashboard/chat_turn/mcp_session._emit_mcp_oauth_request`, rendered by
 `McpOAuthBanner`). Requests kiro-cli buffered while bringing MCP servers up are
@@ -221,7 +221,7 @@ screen:
 3. Approve the requested scopes.
 
 The exact wording and layout of Miro's consent screen are not verified in this
-repo (see the [UNVERIFIED note](#where-the-credentials-live-and-what-kiro-crew-can-see)
+repo (see the [UNVERIFIED note](#where-the-credentials-live-and-what-sao-khuê-can-see)
 at the end), so treat the team/tenant selection as a step to *watch for* rather
 than a pixel-exact walkthrough. On success the provider redirects to kiro-cli's
 own local callback — which listens on the machine running the gateway — and the
@@ -245,7 +245,7 @@ authorization endpoint):
 Authentication failed: URL contained credential or exfiltration pattern
 (endpoint: <host><path>). If you trust this identity provider, add
 {"host": "<host>", "path": "<path>"} to "additional_authorization_endpoints"
-in <Kiro Crew data home>/oauth_endpoints.json and retry
+in <Sao Khuê data home>/oauth_endpoints.json and retry
 ```
 
 The failed banner renders the message's `error` field, so that is the on-screen
@@ -258,8 +258,8 @@ of the same notice. A sign-in URL on this machine (`localhost`, `127.0.0.1`,
 host, so the banner says that a local MCP server that needs no sign-in usually
 lands here when its first connection failed and the MCP client fell back to
 OAuth, and suggests checking that the server is running and starting a new chat.
-The authorization URL was rejected by Kiro Crew's gate, not by the provider.
-Kiro Crew scans consent URLs for credential-exfiltration patterns, and it
+The authorization URL was rejected by Sao Khuê's gate, not by the provider.
+Sao Khuê scans consent URLs for credential-exfiltration patterns, and it
 relaxes the base64-blob / query-length heuristics **only** for authorization
 endpoints it recognizes by exact `(host, path)`. That recognized set is
 code-owned — read its current contents from
@@ -310,7 +310,7 @@ unconditionally.
   **empty** extension set. A mangled file never widens trust.
 - **Agent-fenced keystone.** The file is an OS read-only keystone leaf: the
   agent cannot write it in any sandbox mode, so a prompt-injected agent cannot
-  author its own trust widening. Kiro Crew's tool gate also refuses the agent's
+  author its own trust widening. Sao Khuê's tool gate also refuses the agent's
   reads of it; that read refusal rests on the tool gate, not on the OS layer. The operator **hand-edits it
   out-of-band** — there is deliberately no dashboard writer.
 - **No restart needed.** The loader is keyed on the file's stat (path, mtime,
@@ -372,7 +372,7 @@ and `scopes` (see
 
 **Three OAuth fields are configurable on a remote entry, and the dashboard API
 exposes only the public one.** To skip DCR against a provider that pre-registers
-clients, set `clientId` on the entry: Kiro Crew maps it to the wire field
+clients, set `clientId` on the entry: Sao Khuê maps it to the wire field
 `oauth.clientId` (`mcp_utils.kiro_oauth_wire_entry`, and `kiro_entry_client_id`
 reads it in either spelling). kiro-cli's `oauth` block also accepts
 `clientSecret` — when it is present alongside `clientId`, DCR is skipped and
@@ -385,7 +385,7 @@ there sits in plaintext in a file the agent can read, with nothing owning its
 lifecycle. The supported path for a confidential pre-registered client is a
 **Connections registry provider** with `auth.mode: "preregistered"` — the
 operator enters the client under **Settings → OAuth Apps**, the secret goes to
-the encrypted vault, and Kiro Crew writes all three fields into the emitted
+the encrypted vault, and Sao Khuê writes all three fields into the emitted
 spec itself (see
 [../system-specs/modules/connections.md](../system-specs/modules/connections.md),
 "Pre-registered OAuth clients", and the runbooks under
@@ -396,7 +396,7 @@ here.
 ## Tools register only in a fresh session
 
 A newly authenticated MCP server's tools become available only in a **new
-session**. Kiro Crew keeps a **warm session pool**, and a running `kiro-cli acp`
+session**. Sao Khuê keeps a **warm session pool**, and a running `kiro-cli acp`
 subprocess caches its tokens and tool list **in memory** — the file on disk
 changing does not reach a session that is already alive
 ([../reference/kiro-cli/mcp/oauth-token-storage.md](../reference/kiro-cli/mcp/oauth-token-storage.md),
@@ -417,7 +417,7 @@ the fresh session actually cold.
 
 Until then the tools will look absent even though the sign-in succeeded.
 
-## Where the credentials live (and what Kiro Crew can see)
+## Where the credentials live (and what Sao Khuê can see)
 
 `kiro-cli` owns the OAuth chain end to end. On a successful sign-in it writes a
 **paired** set of files, keyed by `sha256(origin + path)` of the server URL, in
@@ -435,13 +435,13 @@ A consequence worth knowing: removing only the MCP config entry leaves a usable
 refresh token on disk, so a later reconnect silently resumes the old grant
 (`mcp_grant.py`).
 
-Kiro Crew **stats these files for presence** (`mcp_grant.grant_presence`) to
+Sao Khuê **stats these files for presence** (`mcp_grant.grant_presence`) to
 render the "Signed in" badge, but **nothing in that module opens a token file**
-(`mcp_grant.py`): it reads no token value. So Kiro Crew can report neither the
+(`mcp_grant.py`): it reads no token value. So Sao Khuê can report neither the
 **effective granted scope** nor the **expiry** of a Miro token. Miro is a
 curated provider in `connections/registry.json`, so it participates in the
 Connections mint, reconnect, and ownership lifecycle; that still does not make
-the token bytes or their live validity visible to Kiro Crew.
+the token bytes or their live validity visible to Sao Khuê.
 
 > **UNVERIFIED.** Miro's effective granted scopes, token expiry, and exact
 > consent-screen layout are not measured by this repo. The authorization server,
@@ -455,7 +455,7 @@ the token bytes or their live validity visible to Kiro Crew.
   `includeMcpJson` pinning, `@server` ref resolution, and the discovery /
   probing badges.
 - [../architecture/design-notes/mcp-oauth-ownership.md](../architecture/design-notes/mcp-oauth-ownership.md)
-  — why kiro-cli owns token custody and what Kiro Crew can and cannot see.
+  — why kiro-cli owns token custody and what Sao Khuê can and cannot see.
 - [../reference/kiro-cli/mcp/oauth-token-storage.md](../reference/kiro-cli/mcp/oauth-token-storage.md)
   — where the paired token files live, their contents, and the file-level
   "sign out" recipes.

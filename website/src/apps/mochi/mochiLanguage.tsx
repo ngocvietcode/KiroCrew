@@ -20,11 +20,11 @@
  *
  * `mochi.language` is a NARROWING of the app's choice, not a parallel one:
  *
- *   ''        -> follow KiroCrew (the shared `mc-lang` the dashboard persists)
+ *   ''        -> follow SaoKhue (the shared `mc-lang` the dashboard persists)
  *   '<code>'  -> Mochi overrides it for its own windows only
  *
  * `initI18n(undefined)` already falls back to `readStoredLanguage()`, and Mochi's
- * windows are same-origin with the dashboard, so "follow KiroCrew" needs no
+ * windows are same-origin with the dashboard, so "follow SaoKhue" needs no
  * plumbing — it is the default path.
  *
  * NOTE this is the UI language only. What language the pet REPLIES in is not
@@ -46,7 +46,7 @@ import { api } from './src/mochiApi'
  * Called at module scope by every Mochi entry, mirroring how the dashboard seeds
  * itself: synchronous so the first frame is already in the right language rather
  * than flashing the fallback and swapping once the config request lands. With no
- * argument it resolves the shared `mc-lang`, i.e. whatever KiroCrew is set to;
+ * argument it resolves the shared `mc-lang`, i.e. whatever SaoKhue is set to;
  * `MochiLocalized` narrows that to Mochi's own override once the config arrives.
  */
 export function initMochiI18n(): void {
@@ -89,7 +89,7 @@ export function MochiLocalized({
     let alive = true
     const apply = (value: unknown) => {
       const override = typeof value === 'string' ? value : ''
-      // Empty means "follow KiroCrew", which is what the shared key holds.
+      // Empty means "follow SaoKhue", which is what the shared key holds.
       void changeLanguage(override || readStoredLanguage()).then(() => {
         // Only the remounting windows need the state bump (it changes the
         // subtree key). The pet renders `i18nT` at call time and is a live

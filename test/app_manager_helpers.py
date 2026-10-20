@@ -19,7 +19,7 @@ from kiro_crew.apps.manager import APP_MANIFEST_FILENAME
 #: beside -- the one explanation the install log, the AppResult and the audit
 #: record carry, so the tests pin the sentence, not a fragment of it.
 _DATA_IS_A_FILE = (
-    "`data` in the app tree is a file; Kiro Crew creates the app's data directory at "
+    "`data` in the app tree is a file; Sao Khuê creates the app's data directory at "
     "that path and cannot install beside it."
 )
 

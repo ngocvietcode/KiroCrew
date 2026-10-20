@@ -460,7 +460,7 @@ async def test_fork_reserved_id_match_is_case_sensitive(tmp_path):
 
 @pytest.mark.asyncio
 async def test_fork_suffixes_past_managed_agent_stems_even_when_absent(tmp_path):
-    """A crew named like a Kiro Crew-managed spec (kirocrew-lite) must not claim
+    """A crew named like a Sao Khuê-managed spec (kirocrew-lite) must not claim
     kirocrew-lite.json while that file is missing: the boot rebuild regenerates
     it and would overwrite the crew's private customization."""
     agents_dir = tmp_path / "agents"

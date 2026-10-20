@@ -1,6 +1,6 @@
-# Exporting Kiro Crew metrics over OTLP
+# Exporting Sao Khuê metrics over OTLP
 
-Kiro Crew records its metrics through the OpenTelemetry SDK. By default they go
+Sao Khuê records its metrics through the OpenTelemetry SDK. By default they go
 nowhere but this machine: a local JSONL sink under `~/.kiro/crew/metrics`, which
 the dashboard's Telemetry panel reads. This page is about the other option —
 pushing the same metrics to an **OpenTelemetry Collector**, and from there to
@@ -31,7 +31,7 @@ local copy.
 ### 1. Install the exporter
 
 From a source checkout, install the declared extra without replacing the editable
-Kiro Crew install:
+Sao Khuê install:
 
 ```bash
 pip install -e ".[otlp]"
@@ -48,7 +48,7 @@ The project is not published on the default package index, so
 **OTLP over HTTP only** — there is no gRPC exporter, so your collector needs its
 OTLP receiver's `http` protocol enabled (port 4318 by convention, not 4317).
 
-If the exporter package is missing but an endpoint is configured, Kiro Crew logs
+If the exporter package is missing but an endpoint is configured, Sao Khuê logs
 a warning and stays local-only rather than failing to start.
 
 ### 2. Enable collection
@@ -106,7 +106,7 @@ disagree about which they want, and sending the wrong one is the most common
 reason metrics arrive but look wrong — a cumulative counter graphed as a rate, or
 a delta counter treated as a total that appears to reset constantly.
 
-Kiro Crew exports **delta** by default, for counters, up-down counters and
+Sao Khuê exports **delta** by default, for counters, up-down counters and
 histograms alike. That is the same encoding its local JSONL sink uses, so both
 destinations describe the same instrument the same way; it is also the cheaper
 one, because a cumulative histogram re-sends every bucket of every series on
@@ -114,7 +114,7 @@ every interval whether or not anything happened, while an idle delta series send
 nothing at all.
 
 To match a backend that wants something else, set the standard OpenTelemetry
-variable. When it is set, Kiro Crew passes no preference of its own and the
+variable. When it is set, Sao Khuê passes no preference of its own and the
 setting is in full control:
 
 ```bash
@@ -122,9 +122,9 @@ setting is in full control:
 OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=CUMULATIVE
 
 # Delta — what Datadog and most product-analytics ingests expect. Equivalent
-# to the unset default for every instrument Kiro Crew currently emits (the
+# to the unset default for every instrument Sao Khuê currently emits (the
 # unset default also maps up-down counters to delta; this value keeps them
-# cumulative, and Kiro Crew emits none).
+# cumulative, and Sao Khuê emits none).
 OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=DELTA
 
 # Delta for counters and histograms, cumulative for up-down counters.
@@ -139,7 +139,7 @@ Two things are unaffected by this setting, and knowing that saves debugging time
 - **Gauges have no temporality at all.** Every instrument reporting a
   point-in-time reading (thread counts, memory, CPU and GC totals, install
   inventory, the probe-failure count) is a gauge, so the preference does not
-  apply to them. Nothing Kiro Crew exports is a cumulative sum, which is what
+  apply to them. Nothing Sao Khuê exports is a cumulative sum, which is what
   lets a consumer aggregate one datapoint at a time instead of holding
   whole-hour state per host.
 - **The local JSONL sink always uses delta** for counters and histograms,
@@ -171,7 +171,7 @@ zero, so one consecutive-sample difference across that boundary comes out
 negative. That is one datapoint at a restart boundary, not a corrupted series, and
 a clamp is the standard treatment.
 
-Kiro Crew's own dashboard is not exposed to this: the local JSONL exporter stamps
+Sao Khuê's own dashboard is not exposed to this: the local JSONL exporter stamps
 each record with the writing process's OS start-time token, and the aggregator
 keys each stream by (PID, that token), so a reused PID lands in a brand-new
 stream. The token is deliberately host-local and reboot-unique, so it never leaves
@@ -183,7 +183,7 @@ two backends that disagree.
 
 ## Collector configuration
 
-The examples below are collector configs. Point Kiro Crew at the collector's OTLP
+The examples below are collector configs. Point Sao Khuê at the collector's OTLP
 HTTP receiver and let the collector fan out.
 
 **Distribution matters.** The `otelcol` core distribution ships the OTLP receiver
@@ -310,14 +310,14 @@ gauge families are these two:
 One threshold is worth knowing when you set alerts on the counts, because it is
 the product's own limit rather than a round number: `200` is the point the lesson
 store starts pruning. The gauges publish the raw number and leave the banding to
-your queries, so you can move that line without a Kiro Crew change.
+your queries, so you can move that line without a Sao Khuê change.
 
 Resource attributes identify the sending process and are attached to every
 series, so they are what you group by. `service.name` is always `kirocrew`.
 
 ### Before you build a per-host dashboard
 
-Kiro Crew sets `service.instance.id` explicitly to a random, persisted install
+Sao Khuê sets `service.instance.id` explicitly to a random, persisted install
 identifier, so group by that attribute to distinguish machines and follow an
 install across gateway restarts. It is not derived from a hostname or username.
 `process.pid` is a separate resource attribute: it prevents the gateway, agents,
@@ -327,7 +327,7 @@ That process attribute means an individual series normally turns over when a
 restart receives a different PID even though the install identity stays stable.
 For longitudinal host panels, aggregate the relevant process series by
 `service.instance.id`; for lifetime-total gauges, also treat a new PID as a reset.
-If the data home is unwritable and the install-id mint fails, Kiro Crew omits its
+If the data home is unwritable and the install-id mint fails, Sao Khuê omits its
 explicit id and the SDK may fall back to a per-process identity, so cross-restart
 continuity is unavailable on that broken host.
 
@@ -337,7 +337,7 @@ They describe **the machines you run and have opted in**, and nothing wider. Bot
 switches default off and OTLP additionally needs the optional exporter package,
 so an aggregate over these gauges is a statement about your own fleet — useful
 for spotting a host that stopped scheduling crons or whose skills tree drifted,
-not a measurement of how a feature is used in general. Kiro Crew's own install
+not a measurement of how a feature is used in general. Sao Khuê's own install
 analytics are a separate, deliberately unrelated channel (`beacon.py`), for
 reasons its docstring sets out.
 
@@ -351,7 +351,7 @@ a gap in collection.
 
 ### Traces are not exported
 
-Kiro Crew emits the OpenTelemetry **metrics** signal only. There are no spans
+Sao Khuê emits the OpenTelemetry **metrics** signal only. There are no spans
 and no log records, so a trace-oriented backend (Langfuse, Jaeger, Tempo, or a
 vendor's trace view) receives nothing from it, and nothing in this page turns
 traces on. Pointing `otlp_endpoint` at a `/v1/traces` or `/v1/logs` URL does not
@@ -393,13 +393,13 @@ skips unless the OTLP exporter package is installed.
 
 ### Against a real collector
 
-The automated tiers stop at the process boundary: they prove what Kiro Crew
+The automated tiers stop at the process boundary: they prove what Sao Khuê
 serializes and puts on the wire, not what a collector does with it. Closing that
 last gap needs a collector binary and outbound network, so it is a manual step —
 and one worth doing once against whatever collector you actually run, rather than
 against a stand-in.
 
-Point a collector at Kiro Crew using the [Shared receiver](#shared-receiver)
+Point a collector at Sao Khuê using the [Shared receiver](#shared-receiver)
 config above, and give it an exporter you can read directly instead of a vendor
 backend, so the payload is inspectable:
 
@@ -456,7 +456,7 @@ the collector, or temporality — not collection.
 | No `telemetry OTLP export active` line | `otlp_endpoint` empty, or the OTLP exporter package is not installed — check for the warning naming the missing package. |
 | `OTLP exporter init failed` warning | Malformed endpoint. The message deliberately omits the URL, since it can carry a credential. |
 | Local shards fill, nothing at the backend | Endpoint missing `/v1/metrics`, collector on 4317 (gRPC) instead of 4318 (HTTP), or the collector's `http` protocol not enabled. |
-| `points at an OTLP traces route` warning | The endpoint ends in `/v1/traces` (or `/v1/logs`). Kiro Crew exports metrics only, so a trace backend such as Langfuse receives nothing. See "Traces are not exported". |
+| `points at an OTLP traces route` warning | The endpoint ends in `/v1/traces` (or `/v1/logs`). Sao Khuê exports metrics only, so a trace backend such as Langfuse receives nothing. See "Traces are not exported". |
 | Metrics arrive but counters look like resets | Temporality mismatch. See the temporality section. |
 | `unknown type: "awsemf"` at collector startup | Running the core `otelcol`; vendor exporters need `otelcol-contrib`. |
 | One expected series is absent | That probe could not read its source. Absence is a gap, never a zero. |

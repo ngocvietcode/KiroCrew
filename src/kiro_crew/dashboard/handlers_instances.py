@@ -352,7 +352,7 @@ async def api_instances_update(request: web.Request) -> web.Response:
         _audit("update", "denied", request_id=instance_id, error="not found")
         return web.json_response({"error": "not found", "code": "instance_not_found"}, status=404)
     # Addressing fields resolve the real EC2 stack for Stop/Start/Delete, so
-    # editing them on an instance Kiro Crew launched would strand a running,
+    # editing them on an instance Sao Khuê launched would strand a running,
     # billing instance with no dashboard path to reach it. Checked against the
     # `current` record already fetched above rather than re-reading the
     # registry, so this costs no extra (blocking) lookup.
@@ -405,7 +405,7 @@ async def api_instances_update(request: web.Request) -> web.Response:
             {
                 "error": (
                     "connection_method/ssm_target/aws_profile/aws_region cannot be "
-                    "edited on an instance Kiro Crew launched — Stop/Start/Delete "
+                    "edited on an instance Sao Khuê launched — Stop/Start/Delete "
                     "resolve the real EC2 stack through these fields, so changing "
                     "them here would strand a running, billing instance with no "
                     "dashboard path to reach it"

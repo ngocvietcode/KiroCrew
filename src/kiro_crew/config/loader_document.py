@@ -37,7 +37,7 @@ logger = logging.getLogger("kiro_crew.config.loader")
 def unsandboxed_exec_platform_default() -> bool:
     """What an UNDECLARED ``agent.sandbox_allow_unsandboxed_exec`` resolves to here.
 
-    True on Windows, where Kiro Crew has no native OS wrapper to apply — no Linux
+    True on Windows, where Sao Khuê has no native OS wrapper to apply — no Linux
     user namespace, no macOS ``sandbox-exec``, and nothing installable that would
     produce one, so fail-closing there refuses every script cron, hook, app
     backend, MCP probe and provider CLI on the platform in perpetuity, with no

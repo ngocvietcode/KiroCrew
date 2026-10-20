@@ -69,7 +69,7 @@ def _no_git_fingerprint(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     read runs ``git -C <checkout> rev-parse HEAD`` and ``git diff HEAD`` on the
     developer's own repository with the worker's cwd inherited; which test pays
     depends on run order. Nothing here reads the value (the stubs' target is the
-    fake server, not a Kiro Crew subcommand, so no stub folds it into its pool
+    fake server, not a Sao Khuê subcommand, so no stub folds it into its pool
     key), so the trusted-git resolver is pinned to "absent" -- the product's own
     no-spawn arm, the mtime rule -- exactly as ``test_mcp_gateway_daemon_lifecycle.py``
     does. The cache is cleared on both sides so the pinned value neither reuses

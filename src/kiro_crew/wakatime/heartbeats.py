@@ -111,7 +111,7 @@ def is_coding_event(
 def line_changes_from_file_changes(file_changes: Any) -> int:
     """Total lines added or removed across a turn's file changes.
 
-    ``file_changes`` is the per-turn list Kiro Crew accumulates for the diff
+    ``file_changes`` is the per-turn list Sao Khuê accumulates for the diff
     chips: dicts with a ``content`` before-snapshot and, once resolved, an
     ``after``. The count is the symmetric line difference (added + removed) via
     difflib, summed over every changed file. Entries without a resolved
@@ -174,7 +174,7 @@ def _make_heartbeat(
 ) -> dict[str, Any]:
     """Build one AI-coding heartbeat.
 
-    Kiro Crew is a GenAI agent, so activity is logged in WakaTime's ``ai coding``
+    Sao Khuê is a GenAI agent, so activity is logged in WakaTime's ``ai coding``
     category and carries the AI-activity fields (tokens, line changes) that
     populate the AI Percent / AI Prompts views. The editor and OS are resolved
     by WakaTime from the request User-Agent, not from a body field, so they are

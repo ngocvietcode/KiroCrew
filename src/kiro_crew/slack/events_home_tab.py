@@ -96,7 +96,7 @@ async def _publish_home_tab(orch: GatewayOrchestrator, user_id: str) -> None:
         # ── Status ──
         yolo = is_yolo_mode()
         blocks.append(
-            {"type": "header", "text": {"type": "plain_text", "text": "👻 Kiro Crew Status"}}
+            {"type": "header", "text": {"type": "plain_text", "text": "👻 Sao Khuê Status"}}
         )
         status_lines = [
             "*Gateway:* ✅ Online",
@@ -404,7 +404,7 @@ async def _publish_home_tab(orch: GatewayOrchestrator, user_id: str) -> None:
         blocks.append(command_hint_block(f"{_sc} #channel", "track/untrack channel"))
 
         # ── Version ──
-        version_text = f"📦 Kiro Crew v{__version__}"
+        version_text = f"📦 Sao Khuê v{__version__}"
         update_info = get_update_info()
         remote_ver = update_info.get("latest_version")
         if update_info.get("update_available") and remote_ver:

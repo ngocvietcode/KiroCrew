@@ -433,7 +433,7 @@ def test_list_models_spawns_at_the_configured_sandbox_tier(tmp_path):
     ``wrap_argv``'s mode parameter defaults to ``"auto"``, which ignores what the
     operator configured. Where ``agent.sandbox`` is an explicit ``"off"``
     (isolation deferred to kiro-cli's own internal sandbox, which cannot nest
-    inside Kiro Crew's), taking that default asks for a STRICTER tier than chat
+    inside Sao Khuê's), taking that default asks for a STRICTER tier than chat
     itself runs under. Explicit Windows Kiro classification delegates either
     tier, but the configured-tier invariant remains cross-platform.
     """

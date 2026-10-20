@@ -178,7 +178,7 @@ class TestFirstPrinciplesProblemsFirstContract:
         assert contract.startswith("SYSTEM RULES (non-negotiable")
         assert "EVERY suggestion you emit must be a SUBTRACTION" in contract
         # Security boundaries, repo context and the user-count rule stay.
-        assert "REPO CONTEXT: Kiro Crew is an open-source AI agent platform" in contract
+        assert "REPO CONTEXT: Sao Khuê is an open-source AI agent platform" in contract
         assert "DO NOT REASON FROM AN ASSUMED USER COUNT, in either direction" in contract
         assert "the AGENT is untrusted with respect to its own governance" in contract
 

@@ -34,7 +34,7 @@ The runner also disables aiohttp's server-side request-body decompression
 (``DeflateBuffer.feed_data`` -> ``decompress_sync``), so a single
 highly-compressible body can wedge the loop long enough to trip the loop-stall
 watchdog and take the whole gateway down (event-loop starvation, CWE-400).
-No Kiro Crew client sends compressed request bodies, so the code path is pure
+No Sao Khuê client sends compressed request bodies, so the code path is pure
 attack surface. With decompression off, such a body would reach handlers as
 raw bytes and fail JSON parsing with a confusing 400 — the
 :func:`reject_compressed_body_middleware` below turns that into an explicit

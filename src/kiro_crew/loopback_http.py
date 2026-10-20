@@ -1,6 +1,6 @@
 """Loopback HTTP requests with proxies and redirects disabled.
 
-Every request Kiro Crew makes to its own gateway carries ``X-Internal-Secret``,
+Every request Sao Khuê makes to its own gateway carries ``X-Internal-Secret``,
 which authorises write endpoints on the local dashboard. ``urlopen`` builds its
 opener from ``getproxies()``, and urllib has **no implicit loopback exemption**:
 ``proxy_bypass_environment`` returns ``False`` when ``no_proxy`` is unset, and

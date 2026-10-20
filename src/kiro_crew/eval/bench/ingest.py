@@ -1,7 +1,7 @@
 """Load a benchmark corpus into a real ``VectorMemoryStore``.
 
 This is the seam where the benchmark stops being a dataset and starts being a
-measurement of Kiro Crew. Everything here is deliberate about one thing: the store
+measurement of Sao Khuê. Everything here is deliberate about one thing: the store
 under test is the production store, unmodified, with production defaults, and
 every knob that could move a score is an explicit recorded field rather than a
 hidden default. Memory-benchmark numbers are dominated by answer model, judge and

@@ -61,7 +61,7 @@ if TYPE_CHECKING:  # real types for annotations; never imported at runtime
     from kiro_crew.config.loader import TelemetryConfig
     from kiro_crew.platform.interfaces import OtlpDestination
 
-# KiroCrew declares opentelemetry-sdk as a required dependency, so
+# SaoKhue declares opentelemetry-sdk as a required dependency, so
 # the availability probe below is defense-in-depth — not for a genuinely
 # optional dep, but for a partial / --no-deps / broken env-closure install where
 # the SDK is absent. This module is on the eager boot chain (cli.py -> dashboard
@@ -1135,7 +1135,7 @@ def _build_otlp_reader(dest: "OtlpDestination", cfg: object) -> Optional["_Reade
     foreign = _foreign_signal_route(endpoint)
     if foreign is not None:
         logger.warning(
-            "OTLP destination %r points at an OTLP %s route, but Kiro Crew exports "
+            "OTLP destination %r points at an OTLP %s route, but Sao Khuê exports "
             "metrics only (no %s); use the collector's /v1/metrics URL",
             dest.name,
             foreign,

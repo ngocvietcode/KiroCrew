@@ -6,14 +6,14 @@ triggers: ios simulator, iphone simulator, iphone preview, swiftui preview, run 
 
 # iOS Simulator Preview (Browser-tab mirror)
 
-Mirror a running iOS Simulator into KiroCrew's Browser side panel so the user
+Mirror a running iOS Simulator into SaoKhue's Browser side panel so the user
 watches the app — and you driving it — live next to the chat.
 
 Architecture, end to end, all local: **simulator → `serve-sim` (loopback HTTP)
 → the `kirocrew:preview` marker → Browser panel iframe.** Nothing leaves the
 machine. This mirrors OpenAI Codex's `ios-simulator-browser` approach (same
 `serve-sim` mirror) with one substitution: Codex opens the URL in its in-app
-browser via a browser tool, while KiroCrew's panel is driven by the hidden
+browser via a browser tool, while SaoKhue's panel is driven by the hidden
 preview marker (see the `web-preview` skill).
 
 ## Requirements

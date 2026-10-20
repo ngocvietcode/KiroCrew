@@ -22,7 +22,7 @@ holds no slot; and the monitor trio only reads ``slot`` through fail-safe
 
 Every branch returns a human-readable confirmation string and NEVER raises into
 the runner. NOTE: gateway-off (the default), the MODEL already received the
-tool's OWN return over the MCP pipe; this string is recorded on KiroCrew's
+tool's OWN return over the MCP pipe; this string is recorded on SaoKhue's
 transcript / WS / hook surfaces, it does NOT replace the model's tool result.
 That is why the tool bodies phrase their own message to not over-claim an effect
 this consumer applies (and may refuse) after the fact.

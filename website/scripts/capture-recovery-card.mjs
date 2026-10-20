@@ -35,7 +35,7 @@ const PROMISE_ONLY = '[Unfinished action — automatic recovery]'
 
 const refusalBody = [
   REFUSAL,
-  'One or more tool calls in your previous turn were blocked by a Kiro Crew safety policy, which ended the turn early. This was NOT a user action — do not treat it as a cancellation or interruption by the user.',
+  'One or more tool calls in your previous turn were blocked by a Sao Khuê safety policy, which ended the turn early. This was NOT a user action — do not treat it as a cancellation or interruption by the user.',
   '',
   'Blocked:',
   '  - Running: echo "== mypy =="; .venv/bin/mypy src/kiro_crew/config/loader.py src/kiro_crew/dashboard/handlers/core.py 2>&1 | tail -15; echo "== regenerate baseline =="; .venv/bin/python scripts/generate_config...: Blocked by security policy: .*env.*grep.*AWS.*',

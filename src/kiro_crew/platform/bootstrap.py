@@ -296,8 +296,8 @@ def bootstrap_context(cfg: "KiroCrewConfig") -> PlatformContext:
 #: WARNING, and the same reason rides on the KAS row of the dashboard's backend
 #: panel through ``agent_sdk.backends.host_unservable_reason``.
 KAS_CLI_FLOOR_NOTICE = (
-    "KAS is selected, but {reason}. Kiro Crew is using kiro-cli instead. "
-    "Update kiro-cli and restart Kiro Crew to use KAS."
+    "KAS is selected, but {reason}. Sao Khuê is using kiro-cli instead. "
+    "Update kiro-cli and restart Sao Khuê to use KAS."
 )
 
 
@@ -335,7 +335,7 @@ def apply_kas_cli_floor(cfg: "KiroCrewConfig") -> str | None:
     if ACP_BACKEND_KAS not in (agent.acp_backend, agent.member_acp_backend):
         return None
     if agent.kas_bundle:
-        # The bundle route spawns Kiro Crew's own engine and never runs kiro-cli,
+        # The bundle route spawns Sao Khuê's own engine and never runs kiro-cli,
         # so kiro-cli's engine support is not a fact about this host's KAS. Acting
         # on it would silently move a bundle-route user back onto kiro-cli.
         return None

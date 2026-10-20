@@ -275,7 +275,7 @@ class TestSanitization:
 class TestSupersetSemantics:
     def test_a_reported_server_need_not_be_in_the_roster(self):
         # The backend starts the agent spec's own servers as well as the ones
-        # Kiro Crew injects, so reports are a SUPERSET of the roster. This is
+        # Sao Khuê injects, so reports are a SUPERSET of the roster. This is
         # how a spec-declared server (github-mcp) proves it started.
         r = McpSessionReport()
         r.begin_session([{"name": "kirocrew-core"}])

@@ -53,7 +53,7 @@ _WARM_ALL_AGENT = f"{_WARM_AGENT_PREFIX}all"
 #: plausibly carries, so on their own they judged a user's own spec at a warm path as ours.
 #: ``description`` is the only schema-legal field free enough to carry a marker: kiro-cli
 #: rejects an unknown spec key, and the agent-spec migration sweep strips bookkeeping keys.
-_WARM_SPEC_SENTINEL = "Kiro Crew warm mint spec (machine-written; safe to delete)"
+_WARM_SPEC_SENTINEL = "Sao Khuê warm mint spec (machine-written; safe to delete)"
 
 
 def connections_tool_aliases(server_aliases: list[str]) -> dict[str, str]:

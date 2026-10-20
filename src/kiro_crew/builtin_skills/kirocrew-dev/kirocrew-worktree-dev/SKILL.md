@@ -1,12 +1,12 @@
 ---
 name: kirocrew-worktree-dev
-description: "HARD RULE for developing the Kiro Crew source repo ITSELF (not users' projects): develop, build and verify in a git worktree, never against the live gateway. Covers env setup, main-clone sync, build/dist ordering, flags, previews, cleanup, publish authorization; kirocrew-prepare-pr owns PRs."
+description: "HARD RULE for developing the Sao Khuê source repo ITSELF (not users' projects): develop, build and verify in a git worktree, never against the live gateway. Covers env setup, main-clone sync, build/dist ordering, flags, previews, cleanup, publish authorization; kirocrew-prepare-pr owns PRs."
 triggers: kirocrew worktree, kirocrew main clone sync, kirocrew build gate, kirocrew dev, kirocrew source, contribute to kirocrew, kirocrew repo
 ---
 
-# Kiro Crew worktree development
+# Sao Khuê worktree development
 
-This skill applies ONLY to the Kiro Crew source repository or a worktree of it.
+This skill applies ONLY to the Sao Khuê source repository or a worktree of it.
 Ignore it for other projects. One feature uses one dedicated worktree containing
 both `src/kiro_crew/` and `website/`, including backend-only changes.
 Never edit the live checkout or start/stop the live gateway from a feature session.
@@ -44,7 +44,7 @@ without asking, and the checkout form keeps every file upstream deleted. Never
 session's work.
 
 Working from several worktrees? If `uv` resolves in your shell (`command -v uv`
-— it is a declared dependency of the package, so any activated Kiro Crew venv
+— it is a declared dependency of the package, so any activated Sao Khuê venv
 has it on `PATH`; a bare shell may not), build the venv with it instead: same
 deps, but site-packages are copy-on-write clones out of one global cache, so on a
 reflink filesystem (XFS with reflink, btrfs, APFS) each extra venv costs ~10 MB
@@ -239,7 +239,7 @@ a complete preview-isolation switch.
 
 ## Review repair and publication authorization
 
-For Kiro Crew PR CI AI comments, MUST load
+For Sao Khuê PR CI AI comments, MUST load
 [kirocrew-prepare-pr: Review repair routing](../kirocrew-prepare-pr/SKILL.md#review-repair-routing)
 BEFORE any repair. Follow that canonical model-pinned delegation procedure;
 parent self-fixing is not a substitute. This pointer does not change the profile's

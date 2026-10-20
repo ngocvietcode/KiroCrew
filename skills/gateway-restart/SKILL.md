@@ -1,6 +1,6 @@
 ---
 name: gateway-restart
-description: Gracefully restart the Kiro Crew gateway from a running agent session while preserving continuity with a finite same-session resume monitor. Use when the user says "restart yourself", "restart gateway", or "reload config", or after a change that actually requires restart.
+description: Gracefully restart the Sao Khuê gateway from a running agent session while preserving continuity with a finite same-session resume monitor. Use when the user says "restart yourself", "restart gateway", or "reload config", or after a change that actually requires restart.
 triggers: restart, reload, restart yourself, restart gateway, apply changes, reload config
 ---
 
@@ -8,7 +8,7 @@ triggers: restart, reload, restart yourself, restart gateway, apply changes, rel
 
 ## Overview
 
-Gracefully restart the Kiro Crew gateway from a running agent session. The direct lifecycle command is blocked by the agent shell, and restarting the gateway interrupts the current process. This skill arms a durable same-session verifier before launching the detached helper.
+Gracefully restart the Sao Khuê gateway from a running agent session. The direct lifecycle command is blocked by the agent shell, and restarting the gateway interrupts the current process. This skill arms a durable same-session verifier before launching the detached helper.
 
 ## Core Concepts
 
@@ -18,7 +18,7 @@ The agent cannot invoke the lifecycle command directly, and an unverified detach
 
 ### Restart Mechanism
 
-The agent cannot run `kirocrew restart` directly — Kiro Crew's own shell gate refuses it with the argv-structural `self-protection-restart` floor (no catalog row, no opt-out). Do not try to respell the command to get past it: that is an attempt to defeat a control. Platform-specific scripts handle this indirectly:
+The agent cannot run `kirocrew restart` directly — Sao Khuê's own shell gate refuses it with the argv-structural `self-protection-restart` floor (no catalog row, no opt-out). Do not try to respell the command to get past it: that is an attempt to defeat a control. Platform-specific scripts handle this indirectly:
 
 **Linux / macOS:**
 
@@ -147,7 +147,7 @@ The script's 10-second delay gives the current session time to finish responding
 
 - User explicitly asks ("restart yourself", "reload")
 - Config change made that requires restart (`config.json`, `mcp.json`, agent files)
-- After applying a Kiro Crew update (see self-update skill)
+- After applying a Sao Khuê update (see self-update skill)
 
 If the user is at the dashboard and no pending work needs resuming, point them at
 **Settings → About → Restart Gateway** (confirm-gated, backed by
@@ -173,7 +173,7 @@ If the user grants blanket permission for a specific scenario (e.g. "yes, always
 
 ```python
 learn_add(
-    rule="Okay to automatically restart the gateway after applying a Kiro Crew update.",
+    rule="Okay to automatically restart the gateway after applying a Sao Khuê update.",
     category="preference",
 )
 ```
@@ -182,7 +182,7 @@ In future sessions, if that lesson exists, you may restart without re-asking for
 
 ### Automatic updates
 
-The self-update skill uses Kiro Crew's built-in layout-aware updater, not a custom
+The self-update skill uses Sao Khuê's built-in layout-aware updater, not a custom
 cron. An authenticated in-app apply owns its drain and restart. If the user grants
 standing permission for an agent-initiated restart after a terminal update, save
 that narrow scenario as a preference; otherwise notify and wait for confirmation.

@@ -67,7 +67,7 @@ const PROMPTS = {
   atlas: 'You plan long tasks. Break the goal into steps and track each one.',
   'papyrus-writer': 'You co-author LaTeX papers. Keep the author’s voice.',
   'pr-bot-copy': 'You review pull requests for pr-bot. Read before you judge.',
-  kirocrew: 'You are the Kiro Crew assistant.',
+  kirocrew: 'You are the Sao Khuê assistant.',
 }
 const OVERRIDE_PATH = '/home/user/.kiro/crew/config.local.json'
 

@@ -1,6 +1,6 @@
 # Build and release
 
-Packaging, signing, and shipping Kiro Crew. For what gates a pull request before any
+Packaging, signing, and shipping Sao Khuê. For what gates a pull request before any
 of this runs, see [../ci/](../ci/README.md).
 
 | Document | Covers |

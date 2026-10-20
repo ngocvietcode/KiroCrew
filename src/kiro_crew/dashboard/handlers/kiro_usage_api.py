@@ -7,7 +7,7 @@ KIRO POWER accounts (it now caps at ``10000 of 10000 covered in plan``). The
 dashboard credit pill scraped that text, so it froze at the plan limit even
 when the account was well into overage. The real numbers still exist — the Kiro
 IDE credit meter reads them from the ``GetUsageLimits`` API on the CodeWhisperer
-runtime service (RTS). This module calls that same API so KiroCrew surfaces the
+runtime service (RTS). This module calls that same API so SaoKhue surfaces the
 true used/limit/overage regardless of how kiro-cli reshuffles its stdout.
 
 Whose credits are these?
@@ -127,7 +127,7 @@ _TARGET_LIST_PROFILES = f"{_SVC}.ListAvailableProfiles"
 _CONTENT_TYPE = "application/x-amz-json-1.0"
 # A Kiro/Q user-agent is required for the IDE-origin code path; without it the
 # API rejects the request.
-_USER_AGENT = "AmazonQ-For-CLI/1.24.0 ua/2.0 os/linux lang/rust KiroCrew"
+_USER_AGENT = "AmazonQ-For-CLI/1.24.0 ua/2.0 os/linux lang/rust SaoKhue"
 _TIMEOUT_SECS = 15
 # Aggregate wall-clock budget across ALL candidate tokens. Each token can cost
 # up to two 15s requests (ListAvailableProfiles + GetUsageLimits), and there can
@@ -764,7 +764,7 @@ def _bounded(value: object) -> float | None:
 
 
 def _map_response(data: dict) -> dict | None:
-    """Translate a GetUsageLimits response into KiroCrew's canonical usage dict.
+    """Translate a GetUsageLimits response into SaoKhue's canonical usage dict.
 
     Canonical shape (shared with the text-scrape fallback so consumers never
     branch on source):

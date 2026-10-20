@@ -1,7 +1,7 @@
 """In-process HTTP surface for the auto-improvement app.
 
 The ported app ran its own aiohttp process on a gateway-assigned port and
-authenticated every request with a proxy HMAC header. A Kiro Crew builtin
+authenticated every request with a proxy HMAC header. A Sao Khuê builtin
 does not: ``register_routes(app)`` mounts handlers on the gateway's OWN aiohttp
 application at startup, so requests are same-origin and already authenticated by
 the gateway's middleware. That deletes the app's ``proxy_auth.py`` +

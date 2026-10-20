@@ -14,7 +14,7 @@ import type { ActiveRepo } from './lib/types'
 //
 // Scope note: this is `absolute inset-0`, not `fixed`, so the blur covers only
 // the Issue Radar app area (its `relative` wrapper in IssueRadarPage) rather
-// than the whole KiroCrew window — the settings page becomes the blurred
+// than the whole SaoKhue window — the settings page becomes the blurred
 // backdrop, per product intent.
 //
 // Motion is Framer Motion (not CSS keyframe animations) per the frontend rule:

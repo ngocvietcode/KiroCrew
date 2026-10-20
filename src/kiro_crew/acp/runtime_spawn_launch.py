@@ -422,7 +422,7 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
     # Off-loop: mkdir is a blocking syscall and the parent dirs may live on
     # slow storage; the loop must never wait on the kernel here.
     await asyncio.to_thread(ensure_directory, self._work_dir)  # 0700 in the data home
-    # Delegated Kiro agents on macOS do not inherit Kiro Crew's Seatbelt
+    # Delegated Kiro agents on macOS do not inherit Sao Khuê's Seatbelt
     # deny rules. Keep their workspace disjoint from the named voice-decoder
     # runtime so verified executable bytes cannot be replaced before spawn.
     if self._harness.internal_sandbox:

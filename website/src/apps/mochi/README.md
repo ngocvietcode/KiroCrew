@@ -1,7 +1,7 @@
 # Mochi — architecture map
 
 Mochi is a desktop pet companion, migrated from a standalone Electron app into a
-Kiro Crew built-in. This file is the map: where everything lives, why the layout
+Sao Khuê built-in. This file is the map: where everything lives, why the layout
 looks the way it does, and where the seams are. Read it before moving files or
 adding cross-boundary calls.
 

@@ -1,7 +1,7 @@
 ---
 title: Config System, Named Memory Stores & Plugin Architecture
 status: partial
-author: KiroCrew contributors
+author: SaoKhue contributors
 created: 2026-03-25
 last-audited: 2026-08-03
 audited-at: 0ab6ed48
@@ -20,7 +20,7 @@ superseded-by: []
 > receive isolated V2 stores with immutable member/store identities. Treat the
 > concrete Phase 3 paths, query parameter, and migration plan below as historical.
 
-**Author:** KiroCrew contributors  
+**Author:** SaoKhue contributors  
 **Date:** 2026-03-25 (rev 2: 2026-03-25)  
 **Status:** partial — Phases 1–2 are implemented in `config/sections_session.py` (`KiroCrewAgentConfig`, `WorkspaceConfig`, `_migrate_workspaces`), `config/fields.py` (`_meta` field metadata), `config/memory_sections.py` (`MemoryStoreConfig`, `resolve_memory_store_config`), `config/migration.py` (the workspace and default-agent write-back migrations), the `config/loader_*.py` owners behind the `config/loader.py` facade, and `memory_stores.py`. Current member-memory routing is captured in `execution_context.py` and carried by sessions, runs, and scheduled jobs; owner-authorized dashboard reads use `?store=`, while agent and MCP recall derive the store from the trusted execution context. Phase 4 is partial: `embeddings.py` provides `EmbeddingBackend` and `register_embedding_backend()`, but there is no `MemoryBackend` or per-store backend plugin system. Per-workspace agent overrides and `resolve_effective_config` were not implemented.
 **Branches:** both named below are **gone** — neither `feat/workspace-scoped-vector-memory` nor `config-standarize-` exists on the remote; Phases 1–2 landed via the pre-fork import commit `64e47961`.
@@ -31,7 +31,7 @@ superseded-by: []
 
 ## 1. Problem Statement
 
-KiroCrew's configuration and memory systems have grown organically. Several pain points have emerged:
+SaoKhue's configuration and memory systems have grown organically. Several pain points have emerged:
 
 1. **Ad-hoc config parsing** — `workspaces`, `default_workspace`, `slack.*` are parsed outside the dataclass hierarchy in `KiroCrewConfig.load()`. No validation, no schema, no discoverability for the dashboard.
 2. **Global memory** — `VectorMemoryStore` uses a single `memory.db` + `memory.faiss` at `~/.kirocrew/`. Users working across multiple projects (oncall vs. feature work vs. personal) get cross-contaminated context. The parked `feat/workspace-scoped-vector-memory` branch prototyped per-workspace stores but depends on a proper config foundation.

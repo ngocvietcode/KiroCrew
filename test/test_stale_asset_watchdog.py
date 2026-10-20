@@ -429,7 +429,7 @@ def test_token_probe_silent_on_healthy_dashboard():
     """_probe_dashboard_health stays silent when dashboard is real."""
     from kiro_crew.cli_server import _probe_dashboard_health
 
-    healthy_body = b"<!DOCTYPE html><html><head><title>KiroCrew</title></head></html>"
+    healthy_body = b"<!DOCTYPE html><html><head><title>SaoKhue</title></head></html>"
     mock_resp = MagicMock()
     mock_resp.read.return_value = healthy_body
     mock_resp.__enter__ = lambda s: s

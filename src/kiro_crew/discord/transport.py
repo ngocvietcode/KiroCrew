@@ -568,7 +568,7 @@ class DiscordTransport(MessagingTransport):
                         source="discord",
                     )
                     return
-                title = " ".join(inbound.text.split())[:90] or "Kiro Crew"
+                title = " ".join(inbound.text.split())[:90] or "Sao Khuê"
                 created = await self._client.create_thread_from_message(
                     inbound.channel_id, inbound.message_id, title
                 )

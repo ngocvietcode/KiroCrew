@@ -30,7 +30,7 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
     (
         "Start here",
         (
-            ("gateway", "Start Kiro Crew in this terminal (dashboard + messaging channels)"),
+            ("gateway", "Start Sao Khuê in this terminal (dashboard + messaging channels)"),
             ("service", "Run the gateway as a background service that starts on boot"),
             ("doctor", "Verify this install and diagnose problems"),
         ),
@@ -46,7 +46,7 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
             ("token", "Print a dashboard access URL with auth token"),
             ("logout", "Revoke all active dashboard sessions"),
             ("ledger-sweep", "List finished session/work ledgers; --purge deletes them"),
-            ("update", "Update Kiro Crew to the latest version"),
+            ("update", "Update Sao Khuê to the latest version"),
         ),
     ),
     (
@@ -55,7 +55,7 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
             ("setup", "Install agent config and run the setup wizard"),
             ("config", "Get or set configuration values"),
             ("sandbox", "Manage the AppArmor profile the agent sandbox needs (Linux)"),
-            ("kas", "Install Kiro Crew's own KAS engine bundle (no kiro-cli needed)"),
+            ("kas", "Install Sao Khuê's own KAS engine bundle (no kiro-cli needed)"),
             ("manifest", "Generate a Slack app manifest with your alias"),
         ),
     ),
@@ -82,8 +82,8 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
     (
         "Extend it",
         (
-            ("app", "Manage Kiro Crew apps"),
-            ("agent", "Manage Kiro Crew agent definitions"),
+            ("app", "Manage Sao Khuê apps"),
+            ("agent", "Manage Sao Khuê agent definitions"),
             ("workspace", "Manage workspace definitions"),
         ),
     ),
@@ -100,14 +100,14 @@ COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
     (
         "Move it and back it up",
         (
-            ("cloud", "Run Kiro Crew on your own AWS EC2 instance"),
+            ("cloud", "Run Sao Khuê on your own AWS EC2 instance"),
             ("tailnet", "Publish this dashboard on your tailnet (Tailscale)"),
-            ("snapshot", "Create a portable backup of Kiro Crew state"),
-            ("restore", "Restore Kiro Crew state from a snapshot"),
+            ("snapshot", "Create a portable backup of Sao Khuê state"),
+            ("restore", "Restore Sao Khuê state from a snapshot"),
         ),
     ),
     (
-        "Develop Kiro Crew itself",
+        "Develop Sao Khuê itself",
         (
             ("pod", "Isolated, throwaway, full-stack test instances per worktree"),
             ("eval", "Run multi-session evaluation scenarios"),

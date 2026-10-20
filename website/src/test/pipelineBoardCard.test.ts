@@ -158,7 +158,7 @@ describe('the pipeline board card through the real document builder', () => {
     expect(stale.meta_when).toContain('stale')
 
     const mismatch = boundText(compose(fixture.boards.mismatch))
-    expect(mismatch.contract_note).toContain('different version of Kiro Crew')
+    expect(mismatch.contract_note).toContain('different version of Sao Khuê')
 
     const overflow = boundText(compose(fixture.boards.overflow))
     expect(overflow.column_0_rows).toMatch(/\+\d+ more items \(of \d+\)/)

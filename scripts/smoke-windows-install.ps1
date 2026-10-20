@@ -44,7 +44,7 @@
 # name and the uninstall registry key together. Hardcoding stable's spelling
 # would fail this gate on every nightly build. Reading the repo's package.json
 # would be just as wrong: those overrides are electron-builder CLI flags, so the
-# file on disk still says "Kiro Crew" while the artifact says otherwise. The
+# file on disk still says "Sao Khuê" while the artifact says otherwise. The
 # identity therefore comes from the registration this install CREATES, found by
 # diffing the uninstall keys around it.
 #

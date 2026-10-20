@@ -159,7 +159,7 @@ def _doctor_selected_backend_projection(cfg: KiroCrewConfig) -> None:
     label = agents._backend_policy_label(backend)
     if kind != "no-channel":
         return
-    print(f"  mcp projection: \u23f9 {label} carries none of Kiro Crew's own tools")
+    print(f"  mcp projection: \u23f9 {label} carries none of Sao Khuê's own tools")
     render._print_wrapped(
         "This harness advertises no transport the session MCP array can use, so "
         "Crew's servers are absent by declaration rather than by a "

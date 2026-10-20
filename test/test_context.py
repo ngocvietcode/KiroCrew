@@ -1005,10 +1005,10 @@ class TestContextBuilder:
         # build_message injects whenever the caller supplies folder_path
         # (is_new_session=False here proves the block is not gated to new sessions).
         msg, _ = builder.build_message(
-            "hello", is_new_session=False, folder_path="KiroCrew › Backend"
+            "hello", is_new_session=False, folder_path="SaoKhue › Backend"
         )
         assert "[FOLDER]" in msg
-        assert "KiroCrew › Backend" in msg
+        assert "SaoKhue › Backend" in msg
         # Absent when no folder path is supplied.
         msg_none, _ = builder.build_message("hello", is_new_session=False)
         assert "[FOLDER]" not in msg_none
@@ -1461,7 +1461,7 @@ class TestLoadAgentPrompt:
 
     def test_custom_agent_gets_own_prompt_under_claude_code(self, tmp_path, monkeypatch):
         """Under claude_code a custom agent without a private owner gets its own
-        prompt as its [AGENT SYSTEM PROMPT], not the Kiro Crew persona."""
+        prompt as its [AGENT SYSTEM PROMPT], not the Sao Khuê persona."""
         self._managed_contract(tmp_path, monkeypatch)
         self._write_spec(tmp_path, monkeypatch, "You are a bespoke reviewer.")
         builder = ContextBuilder(
@@ -1483,14 +1483,14 @@ class TestRuntimeDisplayName:
     @pytest.mark.parametrize(
         "session_key, expected_runtime",
         [
-            ("dashboard:chat-1-100", "KiroCrew dashboard"),
-            ("dashboard_chat-1-100", "KiroCrew dashboard"),
-            ("cron:daily", "KiroCrew cron job"),
-            ("cron_076ab486", "KiroCrew cron job"),
-            ("subagent:abc-123", "KiroCrew subagent"),
-            ("taskrunner:proj:task1", "KiroCrew task runner"),
-            ("_bg", "KiroCrew background"),
-            ("_hb", "KiroCrew heartbeat"),
+            ("dashboard:chat-1-100", "SaoKhue dashboard"),
+            ("dashboard_chat-1-100", "SaoKhue dashboard"),
+            ("cron:daily", "SaoKhue cron job"),
+            ("cron_076ab486", "SaoKhue cron job"),
+            ("subagent:abc-123", "SaoKhue subagent"),
+            ("taskrunner:proj:task1", "SaoKhue task runner"),
+            ("_bg", "SaoKhue background"),
+            ("_hb", "SaoKhue heartbeat"),
             ("cli_chat", "CLI terminal"),
             ("slack:1234567890.123456", "Slack"),
             ("discord:kirocrew:direct:474737235959480320", "Discord"),
@@ -1513,7 +1513,7 @@ class TestRuntimeDisplayName:
         builder = ContextBuilder(memory=MemoryStore(workspace=tmp_path))
         ctx = builder.build_session_context("dashboard:chat-1", agent="gpu-comms")
         assert "[CURRENT AGENT] gpu-comms" in ctx
-        assert "[RUNTIME] KiroCrew dashboard" in ctx
+        assert "[RUNTIME] SaoKhue dashboard" in ctx
 
     def test_agent_identity_omitted_without_session_key(self, tmp_path):
         """build_session_context omits agent identity when session_key is None."""
@@ -1536,7 +1536,7 @@ class TestRuntimeDisplayName:
             runtime_source="discord",
         )
         assert "[RUNTIME] Discord" in ctx
-        assert "[RUNTIME] KiroCrew dashboard" not in ctx
+        assert "[RUNTIME] SaoKhue dashboard" not in ctx
 
     def test_follow_up_refreshes_runtime_from_current_transport(self, tmp_path):
         """Warm cross-surface sessions receive authoritative per-turn runtime."""

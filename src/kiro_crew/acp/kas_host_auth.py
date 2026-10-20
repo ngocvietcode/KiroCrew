@@ -77,7 +77,7 @@ async def answer_get_access_token() -> dict:
         return await handle_get_access_token(provider)
     except NotAuthenticated as exc:
         # The engine renders this string in its sign-in prompt; keep it short.
-        raise HostAuthCallbackError("not signed in to Kiro Crew") from exc
+        raise HostAuthCallbackError("not signed in to Sao Khuê") from exc
     except TokenStoreError as exc:
         # Detail (a path, never a secret) stays in the local log; the engine gets
         # only the category.

@@ -963,7 +963,7 @@ def _exit_reason(proc: subprocess.Popen[bytes], profile: str) -> str:
     if any(marker in text for marker in _SANDBOX_MARKERS):
         return (
             "the browser cannot start its sandbox on this machine (it needs unprivileged "
-            "user namespaces), and Kiro Crew does not turn the sandbox off"
+            "user namespaces), and Sao Khuê does not turn the sandbox off"
         )
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     if not lines:

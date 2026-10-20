@@ -164,14 +164,14 @@ export function ensureCatalog(lng: string): Promise<boolean> {
  *
  * Catalog strings never hardcode the displayed product name; they interpolate
  * this variable, supplied to i18next as `interpolation.defaultVariables`. The
- * stock build resolves it to "Kiro Crew", so rendered output is identical to a
+ * stock build resolves it to "Sao Khuê", so rendered output is identical to a
  * hardcoded literal — the indirection exists for downstream editions.
  *
  * The `apps.<id>.manifest.*` keys are the deliberate exception: they must stay
  * byte-identical to the Python-side `app.json` prose (the manifest-sync gate),
  * so they keep the literal.
  */
-const DEFAULT_PRODUCT_NAME = 'Kiro Crew'
+const DEFAULT_PRODUCT_NAME = 'Sao Khuê'
 let productName = DEFAULT_PRODUCT_NAME
 
 /**

@@ -87,17 +87,17 @@ describe('main window tab title', () => {
       store.dispatch(addSlotOptimistic(slot('s1', 'Fix the login page')))
       store.dispatch(setActiveSlot('s1'))
     })
-    await waitFor(() => expect(document.title).toBe('Fix the login page — Chat — Kiro Crew'))
+    await waitFor(() => expect(document.title).toBe('Fix the login page — Chat — Sao Khuê'))
   })
 
   it('names Chat alone when no session is selected', async () => {
     renderAt('/chat')
-    await waitFor(() => expect(document.title).toBe('Chat — Kiro Crew'))
+    await waitFor(() => expect(document.title).toBe('Chat — Sao Khuê'))
   })
 
   it('names the panel on any other page', async () => {
     renderAt('/schedule')
-    await waitFor(() => expect(document.title).toBe('Schedule — Kiro Crew'))
+    await waitFor(() => expect(document.title).toBe('Schedule — Sao Khuê'))
   })
 
   it('keeps the attention count first', async () => {
@@ -108,6 +108,6 @@ describe('main window tab title', () => {
       store.dispatch(setActiveSlot('s1'))
       store.dispatch(markSlotUnread('s2'))
     })
-    await waitFor(() => expect(document.title).toMatch(/^\(\d+\) Fix the login page — Chat — Kiro Crew$/))
+    await waitFor(() => expect(document.title).toMatch(/^\(\d+\) Fix the login page — Chat — Sao Khuê$/))
   })
 })

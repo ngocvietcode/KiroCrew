@@ -12,7 +12,7 @@ Covers the always-on Python gate in ``kiro_crew.security`` and its kiro-cli
 * ``is_denied`` — the enforcement point: denial reason for a blocked publish,
   ``push_allowed`` SEL audit for an allowed one (final-outcome only).
 
-KiroCrew protects the git default branch names only (enumerated at line 9
+SaoKhue protects the git default branch names only (enumerated at line 9
 above); it has no ``beta-braveheart``/``develop``/``prod`` integration branch
 nor a ``release/*`` namespace, so those names are ordinary feature branches here.
 
@@ -56,7 +56,7 @@ class TestIsPushToProtectedBranch:
         assert _is_push_to_protected_branch(f"{PUSH} origin master") is True
 
     def test_nondefault_integration_branches_not_protected(self) -> None:
-        """KiroCrew protects only git defaults; other integration branch names
+        """SaoKhue protects only git defaults; other integration branch names
         are ordinary feature branches here and stay pushable."""
         assert _is_push_to_protected_branch(f"{PUSH} origin beta-integration") is False
         assert _is_push_to_protected_branch(f"{PUSH} origin develop") is False
@@ -379,7 +379,7 @@ class TestGitPushEnforcement:
 
 
 class TestDefaultsJsonPushRegexes:
-    """Git-publish enforcement at the KiroCrew hooks gate (``is_denied``).
+    """Git-publish enforcement at the SaoKhue hooks gate (``is_denied``).
 
     Denied commands are not injected into the kiro-cli agent config's
     ``deniedCommands`` (that injection path is retired); the git-publish

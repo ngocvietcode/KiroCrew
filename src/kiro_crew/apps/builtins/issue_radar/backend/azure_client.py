@@ -35,7 +35,7 @@ everything below:
    the open filter is built from that.
 
 Auth and credential handling follow the same model as the other two clients: no
-OAuth app, no PAT stored by Kiro Crew, no hosted backend. Every call shells out
+OAuth app, no PAT stored by Sao Khuê, no hosted backend. Every call shells out
 to ``az devops invoke`` -- the Azure CLI's REST passthrough -- which owns its own
 credential (an ``az login`` session, or ``AZURE_DEVOPS_EXT_PAT``). This module
 only (a) parses a project URL safely and (b) runs ``az`` with a list argv (never

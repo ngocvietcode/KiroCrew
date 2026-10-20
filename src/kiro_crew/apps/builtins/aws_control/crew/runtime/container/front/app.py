@@ -147,7 +147,7 @@ def judge_addressed_crew(
     schema and REQUIRED in effect: a request that names nobody is refused rather
     than answered by whatever agent the backend would otherwise pick.
 
-    That distinction is the whole point. Kiro Crew maps ``model`` to an agent name
+    That distinction is the whole point. Sao Khuê maps ``model`` to an agent name
     (``dashboard/openai_compat.py:237``) and validates it against a NAME REGEX, not
     against the set of agents that exist, so an unrecognised name does not fail --
     it lands on the installed default. A deployment whose crew was never installed
@@ -265,7 +265,7 @@ def _forward_body(payload: dict[str, Any], crew: str) -> tuple[dict[str, Any], s
     What goes on the wire is the crew's AGENT ID -- its name inside the crew
     namespace (``common.crew_agent_id``) -- not the bare crew name, because that is
     the id the supervisor installs the crew's spec under. The bare name resolves to
-    whatever else declares it, which for the crew this deployment ships is Kiro Crew's
+    whatever else declares it, which for the crew this deployment ships is Sao Khuê's
     own ``kirocrew-worker`` mirror. The customer's address is unchanged: they name the
     crew, the namespace never leaves this process, and the responses carry the crew's
     own name back (``backend._with_customer_model``, ``stream.project_frame``).

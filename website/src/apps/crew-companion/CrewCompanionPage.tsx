@@ -1,5 +1,5 @@
 /**
- * Crew Companion — KiroCrew builtin dashboard page.
+ * Crew Companion — SaoKhue builtin dashboard page.
  *
  * The companion lives on the desktop as a separate macOS app running its own HTTP
  * server on 127.0.0.1:7778. A browser page can't read that server directly, so every

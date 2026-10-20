@@ -664,7 +664,7 @@ async def test_a_runtime_session_records_the_spec_and_wire_launches():
 
 @requires_symlinks
 def test_loopback_peer_is_not_a_remote_call(tmp_path):
-    """An MCP server talking to a local service (the Kiro Crew gateway) is not
+    """An MCP server talking to a local service (the Sao Khuê gateway) is not
     waiting on a remote peer, so the full window holds."""
     clock = _Clock()
     fake = FakeProc(tmp_path / "proc")

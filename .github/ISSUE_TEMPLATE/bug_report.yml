@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in KiroCrew is broken or behaves differently than documented.
+description: Something in SaoKhue is broken or behaves differently than documented.
 labels: ["bug"]
 body:
   - type: markdown
@@ -22,7 +22,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: KiroCrew version
+      label: SaoKhue version
       description: Output of `kirocrew --version`. If it ends in "(source checkout, not a release build)", keep that note and add the commit you built from (`git rev-parse --short HEAD`).
       placeholder: 1.2.3
     validations:

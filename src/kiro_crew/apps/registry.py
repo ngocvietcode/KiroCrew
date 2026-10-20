@@ -1,4 +1,4 @@
-"""App registry — curated list of available KiroCrew apps.
+"""App registry — curated list of available SaoKhue apps.
 
 The registry JSON (``app-registry.json``) is a minimal index: just app name,
 git URL, branch, and install metadata.  All display information (description,
@@ -6,7 +6,7 @@ screenshots, highlights, tags, platform) comes from each app's own
 ``app.json``, fetched on demand and cached locally.
 
 This "single source of truth" design means app authors only maintain their
-own ``app.json`` — they never need to update the KiroCrew registry JSON
+own ``app.json`` — they never need to update the SaoKhue registry JSON
 when changing descriptions, screenshots, or versions.
 
 Each registry entry identifies the source repository via a ``gitUrl`` field

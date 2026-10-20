@@ -45,7 +45,7 @@ _SHARED_START_MIN_GB = 0.05
 
 
 # What a dedicated start of a bucket with no learned settled figure yet is
-# reserved at: a ``kiro-cli acp`` process (2.26.1) driven through Kiro Crew's own
+# reserved at: a ``kiro-cli acp`` process (2.26.1) driven through Sao Khuê's own
 # initialize / session/new shape with the default agent's MCP roster measured
 # 0.80 GiB of process-tree USS after its first session, ~0.96 GiB with the
 # gateway's own per-session MCP stubs at their real size; rounded up. A fresh

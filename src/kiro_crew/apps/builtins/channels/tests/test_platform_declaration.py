@@ -96,7 +96,7 @@ def test_app_declares_no_backend_and_no_dependencies(raw_manifest: dict):
     """The Windows claim is "functionally complete", not merely "installable" —
     and that holds only while the app spawns no external process.
 
-    Kiro Crew has no native OS sandbox backend on Windows, so a backend that
+    Sao Khuê has no native OS sandbox backend on Windows, so a backend that
     shelled out would fail closed there. If someone adds one, the manifest's
     ``windows`` promise becomes a lie and this test is the place that says so.
 

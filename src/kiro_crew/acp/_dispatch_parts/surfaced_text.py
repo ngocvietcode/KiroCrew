@@ -116,7 +116,7 @@ def select_tool_title(
     """Pick the pill label, using ``description`` for shell and sub-agent calls.
 
     Some backends' Bash tool emits a ``description`` field alongside ``command``
-    (e.g. "List Kiro Crew ACP module files" rather than ``ls <workspace>/...``).
+    (e.g. "List Sao Khuê ACP module files" rather than ``ls <workspace>/...``).
     We surface it on the pill when supplied, then the literal shell command for
     a shell tool, and only then the SDK-provided ``title``. Used for both the
     initial ``tool_call`` and the second-phase ``tool_call_update`` refinement

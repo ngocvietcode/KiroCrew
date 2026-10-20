@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - cost ESTIMATE from usage metrics (NOT the AWS bill;
+# SaoKhue One-Click Deploy - cost ESTIMATE from usage metrics (NOT the AWS bill;
 # billing lags ~24h). Per-slug S3 storage is exact; CloudFront is account-wide
 # for the shared distribution (per-slug egress needs access logs - see NOTE).
 # Usage: cost.sh [slug] [--hours N] [--profile P] [--region R]
@@ -48,7 +48,7 @@ fi
 start="$(python3 -c "import sys; from datetime import datetime,timedelta,timezone; print((datetime.now(timezone.utc)-timedelta(hours=int(sys.argv[1]))).strftime('%Y-%m-%dT%H:%M:%SZ'))" "$HOURS")"
 end="$(python3 -c "from datetime import datetime,timezone; print(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))")"
 
-echo "KiroCrew deploy cost - ESTIMATE from usage (NOT the AWS bill; billing lags ~24h)"
+echo "SaoKhue deploy cost - ESTIMATE from usage (NOT the AWS bill; billing lags ~24h)"
 echo "window: last ${HOURS}h   origin region: $REGION"
 echo ""
 

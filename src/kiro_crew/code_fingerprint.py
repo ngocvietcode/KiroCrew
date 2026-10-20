@@ -1,4 +1,4 @@
-"""One token that names WHICH Kiro Crew code a process is running.
+"""One token that names WHICH Sao Khuê code a process is running.
 
 Two processes that must speak the same wire protocol -- the gateway and the
 MCP gateway daemon it spawns, the daemon and the pooled MCP backends it hands

@@ -2,9 +2,9 @@
 """check_builtin_skill_scope.py -- keep this repository out of shipped skills.
 
 Every file under ``src/kiro_crew/builtin_skills/`` installs on every machine that
-installs Kiro Crew. A skill body that names THIS repository -- its GitHub slug, a
+installs Sao Khuê. A skill body that names THIS repository -- its GitHub slug, a
 source path only a dev checkout has, a test file, a workflow file -- is giving an
-instruction that resolves for exactly one reader: someone working on Kiro Crew
+instruction that resolves for exactly one reader: someone working on Sao Khuê
 itself. For everyone else it is a dead reference, and for an agent it is worse
 than dead: a confident pointer at a path that does not exist, which the agent
 will try.
@@ -64,7 +64,7 @@ that were actually leaking. Read it as "these four shapes are extinct", not as
 
 ``builtin_skills/kirocrew-dev/`` is the family FOR developing this repository --
 ``kirocrew-prepare-pr``, ``babysit``, ``writing-tests``, ``kirocrew-worktree-dev`` and
-``dashboard-template``. A Kiro Crew path there is the subject matter, not a leak.
+``dashboard-template``. A Sao Khuê path there is the subject matter, not a leak.
 That exemption is a directory rule rather than a list of recorded lines on
 purpose: it is a property of what the family IS, so it stays true as
 those skills are edited, where a per-line list would just record today's bytes

@@ -54,7 +54,7 @@ const LocalImage: React.FC<{ path: string; onClickImage?: (src: string) => void 
 
 /**
  * Streaming-aware markdown renderer.
- * Ported from Kiro Crew's MarkdownRenderer — handles incomplete code fences
+ * Ported from Sao Khuê's MarkdownRenderer — handles incomplete code fences
  * during streaming so partial responses render as proper markdown instead of
  * raw text.
  */

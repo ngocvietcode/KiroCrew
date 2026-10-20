@@ -43,7 +43,7 @@ import os
 import site
 import sys
 
-#: Standard-library names Kiro Crew imports at startup whose shadowing has
+#: Standard-library names Sao Khuê imports at startup whose shadowing has
 #: either been seen in the field (``concurrent``) or is one stray directory
 #: away in any home directory. Checked with ``find_spec`` -- located, never
 #: imported -- so listing a name here costs nothing at runtime beyond a path
@@ -302,9 +302,11 @@ def format_shadow_report(shadows: list[ShadowedModule]) -> str:
         # non-ASCII path would turn the refusal itself into a UnicodeEncodeError.
         lines.append(f"  {s.name} -> {ascii(s.resolved)}")
         lines.append(f"      provided by sys.path entry {ascii(entry)} ({s.entry_kind})")
+    # The product name is spelled without its diacritic here for the same reason:
+    # this whole report must encode as ASCII.
     lines.append(
         "A directory or module named like a standard-library module sits on"
-        " sys.path ahead of the interpreter's own copy, so Kiro Crew would run on"
+        " sys.path ahead of the interpreter's own copy, so Sao Khue would run on"
         " foreign code and fail later with an unrelated-looking error (typically a"
         " TypeError from asyncio or concurrent.futures)."
     )
@@ -319,13 +321,13 @@ def format_shadow_report(shadows: list[ShadowedModule]) -> str:
         lines.append(
             "Fix: move or rename the shadowed module or package named above,"
             " or start kirocrew from a different directory."
-            " This is not caused by Kiro Crew's configuration or data home."
+            " This is not caused by Sao Khue's configuration or data home."
         )
     else:
         lines.append(
             f"Fix: move or rename it (e.g. `{remedy}`),"
             " or start kirocrew from a different directory."
-            " This is not caused by Kiro Crew's configuration or data home."
+            " This is not caused by Sao Khue's configuration or data home."
         )
     return "\n".join(lines)
 

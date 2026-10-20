@@ -260,7 +260,7 @@ def mount_identity(path: str, *, dir_fd: int | None = None) -> tuple[int, int, i
 # recorded PER (app, folder) pair — so incidentally touching three of them
 # during one operation produces THREE separate prompts, not one.
 #
-# Nothing Kiro Crew does at startup needs these folders: they are only ever
+# Nothing Sao Khuê does at startup needs these folders: they are only ever
 # reached INCIDENTALLY, by a breadth-first walk that was rooted at $HOME as a
 # catch-all fallback (the @-mention file picker's search root). Pruning them
 # from such unscoped walks removes the prompts entirely, which is strictly
@@ -731,7 +731,7 @@ def path_volume_is_remote(path: str | os.PathLike) -> bool | None:
 
 
 # Hook-script extensions treated as runnable on Windows (where there is no
-# POSIX execute bit). A hook is a small script Kiro Crew shells out to; on
+# POSIX execute bit). A hook is a small script Sao Khuê shells out to; on
 # Windows its runnability is decided by extension + interpreter at exec time,
 # not a filesystem bit.
 _WINDOWS_RUNNABLE_HOOK_SUFFIXES = (".sh", ".ps1", ".cmd", ".bat", ".py", ".exe")
@@ -752,7 +752,7 @@ def is_executable_file(
     kiro-hooks autoimport (observed: no preToolUse hook ever registered). On
     Windows we instead accept a regular file whose extension is a known script
     type (``.sh``/``.ps1``/``.cmd``/``.bat``/``.py``/``.exe``) — runnability is
-    determined when Kiro Crew actually invokes it, not by a meaningless bit.
+    determined when Sao Khuê actually invokes it, not by a meaningless bit.
     ``platform_name`` lets cross-platform discovery apply the target platform's
     rules instead of the host's. A Windows host cannot represent POSIX execute
     bits, so an existing regular file is accepted for an explicit POSIX target.

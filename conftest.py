@@ -263,7 +263,7 @@ def _create_host_home_floor() -> pathlib.Path:
             return pathlib.Path(tempfile.mkdtemp(dir=base, prefix=prefix))
         except OSError:
             continue
-    raise RuntimeError("no writable system temp directory exists outside live Kiro Crew homes")
+    raise RuntimeError("no writable system temp directory exists outside live Sao Khuê homes")
 
 
 _HOST_HOME_FLOOR: "pathlib.Path | None" = None
@@ -1151,7 +1151,7 @@ def _isolate_sandbox_mount_source_roots(_sandbox_mount_source_root, _floor_monke
     # resolves its own narrower root chain -- the launcher's two tmpfs roots,
     # deliberately excluding the redirected system tempdir -- so without this it
     # would scan the developer's real /run/user/$UID and /dev/shm, and there it
-    # matches names no Kiro Crew build has created since #6268: an unpinned test
+    # matches names no Sao Khuê build has created since #6268: an unpinned test
     # could delete a stranger's temp entry on the host. The bind scan is
     # defaulted fail-closed for the same reason as the pin scan above: a test
     # that forgets to fix its answer gets an INERT sweep (coverage unproven ->
@@ -4780,7 +4780,7 @@ def _test_owned_roots(tmp_path_factory) -> tuple[pathlib.Path, ...]:
 
     A path under either was created by a fixture or by the test itself, so it is never
     the operator's -- even when the tree sits INSIDE a guarded root. That happens
-    routinely: a Kiro Crew agent session sets ``TMPDIR`` to its scratch dir under
+    routinely: a Sao Khuê agent session sets ``TMPDIR`` to its scratch dir under
     ``~/.kiro/crew/scratch/``, which puts both trees under the real ``~/.kiro``. A fence
     keyed on the real home alone would then redirect a test that relocated kiro-cli's
     home to its OWN ``tmp_path`` away from the tree it just built.
@@ -5054,7 +5054,7 @@ def _reset_platform_context(_floor_monkeypatch):
     Also pins ``KIROCREW_PROFILE=standalone`` so the profile a test boots under
     comes from the test, never from the operator's shell: a dev box with a real
     SSO-marker directory, or a shell whose parent process exported
-    ``KIROCREW_PROFILE`` set to the enterprise profile (a Kiro Crew agent session
+    ``KIROCREW_PROFILE`` set to the enterprise profile (a Sao Khuê agent session
     does exactly that for every child it spawns), would otherwise make
     ``boot_platform`` resolve the enterprise profile and fail CLOSED (no companion installed) for every test
     that drives ``run_gateway`` / boot / the governance hook.  A test that wants

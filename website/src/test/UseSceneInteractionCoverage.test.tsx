@@ -1,5 +1,5 @@
 // Behaviour coverage for `useSceneInteraction` — the shared hover / mini-thread
-// layer every Kiro Crew "Worlds" scene mounts on top of its pixel canvas.
+// layer every Sao Khuê "Worlds" scene mounts on top of its pixel canvas.
 //
 // `agentStatusLine.test.ts` already pins the exported status-line helper. This
 // file drives the hook itself through a tiny harness canvas, mocking exactly

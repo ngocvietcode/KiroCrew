@@ -58,7 +58,7 @@ CODE_INTERRUPTED = "interrupted"
 CODE_CHECKPOINT_FAILED = "checkpoint_failed"
 CODE_STORE_UNAVAILABLE = "store_unavailable"
 _INTERRUPTED_MESSAGE = (
-    "Kiro Crew stopped while this change was running, so it may or may not have "
+    "Sao Khuê stopped while this change was running, so it may or may not have "
     "taken effect. Check it before asking for it again."
 )
 #: The fields :func:`kiro_crew.change_card_catalog.build_preview` derives, as

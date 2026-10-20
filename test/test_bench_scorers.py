@@ -12,7 +12,7 @@ golden values below are its output, frozen.
 
 DIVERGENCE, stated once and loudly: upstream stems with ``nltk.PorterStemmer()``,
 whose default mode is ``NLTK_EXTENSIONS`` (a small irregular-form table plus
-"leave words of length <= 2 alone"). nltk is not and will not be a Kiro Crew
+"leave words of length <= 2 alone"). nltk is not and will not be a Sao Khuê
 dependency, so the port uses ``snowballstemmer.stemmer("porter")`` — already a
 hard install dependency — which is the *original* Porter algorithm. The two agree
 on the overwhelming majority of English tokens but are not bit-identical, so a

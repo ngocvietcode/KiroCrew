@@ -473,7 +473,7 @@ def _doctor_agent_auth() -> None:
                 # to ⚠️, never to a false ✅.
                 healthy = vault_detail is not None and vault_detail.endswith("-> usable")
                 glyph = "✅ " if healthy else "⚠️  "
-                print(f"  {label.ljust(13)}{glyph}Kiro Crew vault (signed in through Kiro Crew)")
+                print(f"  {label.ljust(13)}{glyph}Sao Khuê vault (signed in through Sao Khuê)")
                 if vault_detail:
                     render._print_wrapped(f"crew vault: {vault_detail}")
                 if host_probed and host_signed_in is True:

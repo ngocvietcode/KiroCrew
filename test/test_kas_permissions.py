@@ -453,7 +453,7 @@ class TestTheInstalledCliDecidesWhetherTheFieldIsWrittenAtAll:
 
     kiro-cli validates agent specs with serde ``deny_unknown_fields``, so a
     release whose schema predates ``permissions`` does not ignore the key: it
-    refuses the whole file, drops the agent from its table, and every Kiro Crew
+    refuses the whole file, drops the agent from its table, and every Sao Khuê
     MCP server is absent from the session. The user sees "agent specs rejected"
     and has no working tools. Nothing is given up by withholding the field
     there, because the same binary serves KAS, so a release that cannot read the

@@ -118,10 +118,10 @@ async def create_session(
 ) -> AcpSessionHandle:
     """Create a new ACP session on this runtime. Returns a session handle.
 
-    ``crew_agent`` is the canonical Kiro Crew identity for THIS session;
+    ``crew_agent`` is the canonical Sao Khuê identity for THIS session;
     None falls back to the runtime's own (spawn-time or rekeyed) identity.
 
-    ``session_key`` is the Kiro Crew session that will OWN this ACP session.
+    ``session_key`` is the Sao Khuê session that will OWN this ACP session.
     It is what makes the session's broker stubs resolvable as this session
     rather than as the runtime — see :meth:`_own_stub_session`. Empty when
     the owner is not known yet (a pooled worker claimed later), and the

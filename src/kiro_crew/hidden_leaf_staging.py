@@ -308,7 +308,7 @@ def publish_env(
         # with a bare PermissionError instead of this refusal and its fix.
         raise EnvStagingRefused(
             errno.EACCES,
-            f"{path} was not changed: Kiro Crew writes it through {staging}, and another "
+            f"{path} was not changed: Sao Khuê writes it through {staging}, and another "
             "account owns that directory. Remove it (as the account that created it, "
             "for example with sudo), then save again.",
         )
@@ -318,7 +318,7 @@ def publish_env(
 def _env_staging_refusal(path: Path, exc: OSError) -> str:
     """The refusal text for a ``.env`` save, with the fix that works for its cause."""
     staging = path.parent / _AUTH_STORE_STAGING_LEAF
-    head = f"{path} was not changed: Kiro Crew writes it through {staging}"
+    head = f"{path} was not changed: Sao Khuê writes it through {staging}"
     if exc.errno == errno.ENOTDIR:
         return f"{head}, and something that is not a directory is at that name. Remove it, then save again."
     if not isinstance(exc, AuthStoreStagingRefused):
@@ -335,7 +335,7 @@ def _env_staging_refusal(path: Path, exc: OSError) -> str:
     # restrict_dir_to_owner already tried chmod 700 and it did not stick: the directory
     # belongs to another account, or the mount fixes the mode (CIFS, vfat).
     return (
-        f"{head}, and it stays writable by other accounts after Kiro Crew tried to make it "
+        f"{head}, and it stays writable by other accounts after Sao Khuê tried to make it "
         "owner-only. If another account owns it, remove it; if the data home is on a mount "
         "that does not keep permission bits, move the data home to one that does. Then "
         "save again."

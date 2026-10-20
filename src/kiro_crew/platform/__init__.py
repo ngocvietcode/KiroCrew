@@ -1,4 +1,4 @@
-"""KiroCrew platform contract — the Composed Platform Providers (CPP) seam.
+"""SaoKhue platform contract — the Composed Platform Providers (CPP) seam.
 
 Public API for booting and reading the platform context.  Core code imports
 from ``kiro_crew.platform`` only; an enterprise companion imports

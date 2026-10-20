@@ -1,13 +1,13 @@
 """Per-agent default model: storage, precedence, and normalization.
 
-The default model is stored per KiroCrew agent (``agents.<name>.model`` in
+The default model is stored per SaoKhue agent (``agents.<name>.model`` in
 config.json), NOT on the kiro agent spec files under ``~/.kiro/agents`` — several
-KiroCrew agents can bind the same spec, and KiroCrew regenerates most of those
+SaoKhue agents can bind the same spec, and SaoKhue regenerates most of those
 files on every install. The global ``agent.model`` remains a fallback for agents
 that pin nothing.
 
 Precedence under test, highest first:
-  1. the KiroCrew agent's own ``model``
+  1. the SaoKhue agent's own ``model``
   2. the bound kiro agent's pinned ``model`` (not for the built-in "kirocrew")
   3. the global ``agent.model``
   4. the installed agent file / bundled defaults
@@ -308,7 +308,7 @@ class TestSessionModelCoversEverySurface:
 
     ``_session_model`` is the shared resolver ``get_or_create`` uses. Callers are
     inconsistent about what they pass as ``agent`` (the dashboard passes a resolved
-    kiro template name; Slack threads and cron jobs pass a Kiro Crew agent name),
+    kiro template name; Slack threads and cron jobs pass a Sao Khuê agent name),
     so
     both namespaces must work.
     """

@@ -480,7 +480,7 @@ class TestChatRunnerDirectiveSeam:
     async def test_non_core_mcp_server_directive_is_not_applied(self, tmp_path, monkeypatch):
         """A tool named like a directive but served by a DIFFERENT (e.g.
         third-party) MCP server must NOT drive a session directive — the gate
-        pins mcp_server_name to KiroCrew's own core server."""
+        pins mcp_server_name to SaoKhue's own core server."""
         state = _stub_state(tmp_path)
         slot = state.get_or_create_slot("evilsrv")
         slot._titled = True

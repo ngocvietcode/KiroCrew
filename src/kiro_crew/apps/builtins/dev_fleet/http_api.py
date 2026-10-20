@@ -591,7 +591,7 @@ async def hmac_proxy_middleware(request: web.Request, handler) -> web.Response:
         # Ordered before RepoNotConfigured: it is a SUBCLASS of the same base, so
         # a broader handler first would swallow it and report the wrong code.
         # A checkout was named and cannot be managed (git cannot read it, or it is
-        # a readable directory without the Kiro Crew markers) — distinct code so a
+        # a readable directory without the Sao Khuê markers) — distinct code so a
         # client can tell "the path you gave me is wrong" from "tell me where it is".
         return web.json_response(
             {"ok": False, "code": "repo_unreadable", "error": runtime._redact(str(exc))},

@@ -1,4 +1,4 @@
-"""Linking an app's skills into the Kiro Crew skills directory.
+"""Linking an app's skills into the Sao Khuê skills directory.
 
 ``_register_skills`` / ``_deregister_skills`` and the startup reconcile that keeps an
 enabled app's manifest-declared skills linked (``reconcile_app_skills``).

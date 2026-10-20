@@ -1,6 +1,6 @@
 """Remember, per machine, what a shareability pre-flight concluded.
 
-Nothing about which MCP servers a machine runs ships with Kiro Crew. Each host
+Nothing about which MCP servers a machine runs ships with Sao Khuê. Each host
 derives its own verdicts and keeps them here, which is why there is no curated
 list of server names in the repository and none has to leave the host.
 

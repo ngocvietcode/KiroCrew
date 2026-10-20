@@ -140,7 +140,7 @@ _FILTER_PROBE_FAILED = "unreadable git config"
 
 
 _SANDBOX_REFUSAL = (
-    "This host has no OS sandbox backend, so Kiro Crew will not run git for you. "
+    "This host has no OS sandbox backend, so Sao Khuê will not run git for you. "
     "Create the worktree manually."
 )
 

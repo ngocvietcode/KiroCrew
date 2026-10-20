@@ -34,12 +34,12 @@ const DEFAULTS = {
   '/api/themes': { themes: [], installed: [] },
   '/api/theme/boot': { mode: 'dark', theme: '' },
   // Two WORDS, matching the backend's own default (`api_branding`:
-  // `cfg.dashboard.bot_name or "Kiro Crew"`). The nav brand row accents the last
+  // `cfg.dashboard.bot_name or "Sao Khuê"`). The nav brand row accents the last
   // word only and the composer placeholder interpolates the whole name, so a
   // single-word "Kiro" here silently shot every harness in this folder with no
   // "CREW" in the top-left. Fixed once in stub-dashboard-api.mjs; this table was
   // extracted later and did not carry it over.
-  '/api/dashboard/branding': { bot_name: 'Kiro Crew', avatar: '' },
+  '/api/dashboard/branding': { bot_name: 'Sao Khuê', avatar: '' },
   '/api/recent-projects': { dirs: [] },
   '/api/dashboard/config': {
     restore_sessions: false, restore_window_minutes: 30,

@@ -65,7 +65,7 @@ class _LoopHarness:
             lambda *a, **k: mcp_shared.ToolPolicy(frozenset(), ""),
         )
         # The test's handlers stand in for a managed server's own code, so the
-        # tool policy applies to them as it does to Kiro Crew's servers.
+        # tool policy applies to them as it does to Sao Khuê's servers.
         # ``managed=False`` keeps the real classifier, for a handler the test
         # deliberately places outside the package.
         if managed:

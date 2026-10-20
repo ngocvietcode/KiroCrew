@@ -1,6 +1,6 @@
 ---
 name: self-nudge-loop
-description: Build a deadline-preserving same-session autonomy loop using Kiro Crew's AutoNudgeService. One long-lived session keeps working toward a goal; each completed loop turn schedules the next nudge, while user turns defer but do not reset that deadline. Survives tab close, logout, and gateway restart. Use when user says "continuous improvement session", "keep going on its own", "same session loop", "self-nudge", or "north star loop". NOT for fresh-session crons, parallel work, or external-system callbacks.
+description: Build a deadline-preserving same-session autonomy loop using Sao Khuê's AutoNudgeService. One long-lived session keeps working toward a goal; each completed loop turn schedules the next nudge, while user turns defer but do not reset that deadline. Survives tab close, logout, and gateway restart. Use when user says "continuous improvement session", "keep going on its own", "same session loop", "self-nudge", or "north star loop". NOT for fresh-session crons, parallel work, or external-system callbacks.
 tags: [skill, kirocrew, autonudge, autonomy, loop]
 ---
 

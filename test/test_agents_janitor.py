@@ -154,7 +154,7 @@ def test_sweep_survives_zeroed_dirent_identity(tmp_path: Path, monkeypatch) -> N
 
 
 def test_removes_aged_own_mkstemp_residue(tmp_path: Path) -> None:
-    # Kiro Crew's own _atomic_json_write leaves tmp<random>.tmp on a crash.
+    # Sao Khuê's own _atomic_json_write leaves tmp<random>.tmp on a crash.
     residue = _touch(tmp_path / "tmpA1b2C3d4.tmp", mtime=_OLD_TEMP)
 
     result = sweep_agents_dir(tmp_path, now=_NOW)
@@ -178,7 +178,7 @@ def test_removes_aged_backups_when_opted_in(tmp_path: Path) -> None:
 def test_backups_left_alone_when_gated_off(tmp_path: Path) -> None:
     # sweep_backups=False (what the wired-in callers pass by default from
     # agent.sweep_agents_backups): foreign backups are never touched, even when
-    # well past the backup window, because their retention is not Kiro Crew's to
+    # well past the backup window, because their retention is not Sao Khuê's to
     # decide. This is the ownership-boundary guarantee.
     bak_epoch = _touch(tmp_path / "spec.bak-1700000000", mtime=_OLD_BACKUP)
     bak_json = _touch(tmp_path / "spec.json.bak.7", mtime=_OLD_BACKUP)

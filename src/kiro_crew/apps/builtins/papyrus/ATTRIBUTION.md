@@ -1,7 +1,7 @@
 # Attribution
 
 Papyrus was written by **tricatte** as a standalone app named `Papyrus` for a
-KiroCrew-family dashboard, and is included here as a first-party builtin app with
+SaoKhue-family dashboard, and is included here as a first-party builtin app with
 the original author's name preserved in `app.json`.
 
 ## What was kept

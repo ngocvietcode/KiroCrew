@@ -1,4 +1,4 @@
-# Copyright Kiro Crew contributors
+# Copyright Sao Khuê contributors
 # SPDX-License-Identifier: Apache-2.0
 """``kirocrew-team-lead`` ships as a default agent, built like ``kirocrew-research``.
 
@@ -74,7 +74,7 @@ class TestTheInstallerWritesADefaultAgent:
     def test_the_file_carries_this_agent_name_and_charter(self, installed):
         assert installed["name"] == "kirocrew-team-lead"
         assert installed["prompt"] == agent._TEAM_LEAD_SYSTEM_PROMPT
-        assert installed["prompt"].startswith("# Kiro Crew Team Lead")
+        assert installed["prompt"].startswith("# Sao Khuê Team Lead")
         assert installed["description"]
 
     def test_the_filename_is_owned_so_the_boot_sweep_covers_it(self):

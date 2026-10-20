@@ -57,7 +57,7 @@ export function kiroPrerequisiteRefetchInterval(
 // Two behaviors key off it: the faster poll above, and forcing that poll to probe
 // the HOST rather than read the boot-time latch.
 //
-// Forcing matters because Kiro Crew no longer performs setup — the user installs
+// Forcing matters because Sao Khuê no longer performs setup — the user installs
 // Kiro CLI from kiro.dev and may sign in from a terminal. Neither of those
 // touches the gateway, and the latched status is refreshed only at boot or on an
 // explicit request, so a latch-reading poll can never observe them and the gate
@@ -362,14 +362,14 @@ function splitSharedCommandPrefix(a: string, b: string): [string, string, string
 /**
  * The two sign-in commands, rendered VERBATIM from the backend constants, never
  * catalog values: a translated command cannot be typed. Shown only once a CLI
- * exists to sign into — before that the install step owns the screen. Kiro Crew
+ * exists to sign into — before that the install step owns the screen. Sao Khuê
  * does not run them; the footer's Check again reads the result.
  *
  * BOTH tiers are offered, because the sign-in page the bare command opens
  * presents a free Builder ID as a peer of organization SSO: a user on an SSO
  * plan who picks the wrong one authenticates successfully and only discovers
  * the mismatch later, as missing models. Naming the tier here makes it a
- * decision instead of a guess. Kiro Crew does not detect which one applies —
+ * decision instead of a guess. Sao Khuê does not detect which one applies —
  * that would mean inspecting the host's identity configuration — so the copy
  * describes the choice and lets the user make it.
  *
@@ -646,12 +646,12 @@ function CliOutdated({
   onUpdate: () => void
   onRetry: () => void
 }) {
-  // The CLI is installed but too old to expose the `acp` subcommand Kiro Crew
+  // The CLI is installed but too old to expose the `acp` subcommand Sao Khuê
   // launches every session through — so it would fail at session-create rather
   // than here. The probe runs for a signed-out CLI too, so this card says
   // nothing about sign-in: a "signed in" claim here would be false for that
   // reader. The remedy is an UPDATE in place, not a reinstall, and unlike the
-  // install/sign-in steps Kiro Crew CAN run this one for the user (it is the
+  // install/sign-in steps Sao Khuê CAN run this one for the user (it is the
   // CLI's own self-update). We therefore offer a button that runs it AND show
   // the command for anyone who would rather run it on the host themselves.
   return (
@@ -703,7 +703,7 @@ function CliOutdated({
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted">
           {i18nT('components.kiroPrerequisiteGate.kiro_cli_is_installed_but_too_old')}
         </p>
-        {/* Kiro Crew runs the update for the user via the button below, but the
+        {/* Sao Khuê runs the update for the user via the button below, but the
             command is shown too — some hosts prefer to run it themselves, and it
             is the one thing a support conversation needs. Verbatim in a <code>,
             never a catalog value: a translated command cannot be run. */}
@@ -983,7 +983,7 @@ function configuredBackendCanStart(
   if (status.sandbox_blocked_backends?.includes(probe.id)) return false
   // KAS is kiro-cli's relay: it completes first-run setup on the kiro-cli
   // ACP-support rule, the SAME rule record_independent_backend_setup enforces
-  // (by the same id) before it writes the marker. KAS also loads Kiro Crew's
+  // (by the same id) before it writes the marker. KAS also loads Sao Khuê's
   // agent specs, so a missing or rejected spec keeps the gate on its repair card.
   if (probe.id === ACP_BACKEND_KAS) {
     return status.acp_supported !== false
@@ -1057,7 +1057,7 @@ export function knownPlatform(platform: string | undefined): string {
 /**
  * The install command for Kiro CLI, for the gateway's platform.
  *
- * Kiro Crew still does not RUN it: the command is shown for the user to paste on
+ * Sao Khuê still does not RUN it: the command is shown for the user to paste on
  * the gateway host, and Kiro's own setup page stays one click away for every
  * other install route (RPM, AppImage, musl). The commands are `<code>` children,
  * never catalog values — a translated command cannot be typed.
@@ -1338,7 +1338,7 @@ function OtherCodingAgents({
                             </p>
                           )}
                           {/* Server-owned sentence, rendered verbatim like Settings → Agent Harness
-                              does: it names this harness's own sign-in, which Kiro Crew
+                              does: it names this harness's own sign-in, which Sao Khuê
                               neither performs nor can check. */}
                           {shown.auth?.signs_in_separately && shown.auth.sign_in_remedy ? (
                             <p className="text-[12px] leading-relaxed text-muted">{shown.auth.sign_in_remedy}</p>
@@ -1680,7 +1680,7 @@ export default function KiroPrerequisiteGate({ children }: { children: ReactNode
   const repairError = repairMutation.data?.agent_spec_repair_error
     || (repairMutation.error ? asSentence(repairMutation.error.message) : '')
     || (status.agent_spec_repair_error ?? '')
-  // Kiro Crew's own agent specs are absent, so kiro-cli answers every
+  // Sao Khuê's own agent specs are absent, so kiro-cli answers every
   // session/set_mode with "Mode '<name>' not found" and not one message can
   // succeed. Placed BEFORE the `initial_setup_complete` bail-out -- the only
   // branch here that hijacks an established install -- and gated ON that same
@@ -1704,7 +1704,7 @@ export default function KiroPrerequisiteGate({ children }: { children: ReactNode
     )
   }
   // Present but refused. Kiro CLI drops a spec it rejects from its agent table,
-  // so `--agent kirocrew` resolves to the default agent with none of Kiro Crew's
+  // so `--agent kirocrew` resolves to the default agent with none of Sao Khuê's
   // MCP servers -- the same total failure as an absent spec, and the one the
   // stat-only check above cannot see. Ordered AFTER missing for the same reason
   // that check is scoped to present files: one fault should raise one card, and
@@ -1729,7 +1729,7 @@ export default function KiroPrerequisiteGate({ children }: { children: ReactNode
   // probe result, not a latch (a `false` default would hide the state on an older
   // gateway that omits the field, so the strict `=== false` is deliberate), so it
   // is safe to surface even on an established install — and its remedy is unique:
-  // update the CLI in place, which Kiro Crew runs for the user here. Ordered
+  // update the CLI in place, which Sao Khuê runs for the user here. Ordered
   // BEFORE the established-install bail-out for the same reason as the spec
   // branches: this is a total failure the chat error card cannot pre-empt, and
   // this screen is the only place that offers the update.
@@ -1868,7 +1868,7 @@ export default function KiroPrerequisiteGate({ children }: { children: ReactNode
               </div>
               <StepStatus complete={false} current />
             </div>
-            {/* The one-line installer is SHOWN, never run: Kiro Crew does not
+            {/* The one-line installer is SHOWN, never run: Sao Khuê does not
                 install Kiro CLI. The setup page stays as the route for every
                 other install form (RPM, AppImage, musl) and stays correct as
                 those change. */}

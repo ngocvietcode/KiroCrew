@@ -1027,7 +1027,7 @@ def test_mates_first_welcome_asks_for_a_name_for_mate(others: bool) -> None:
     assert "Introduce yourself as Mate" in kickoff
     # The three things Mate offers, and nothing beyond them.
     assert (
-        "getting Kiro Crew set up, sorting out anything that is not working in it, or "
+        "getting Sao Khuê set up, sorting out anything that is not working in it, or "
         "showing them around. Keep to those three" in kickoff
     )
     # It finishes on what to call it -- the name is Mate's, not the user's.

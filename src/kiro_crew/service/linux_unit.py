@@ -67,7 +67,7 @@ ENV_FILE_PATH = ENV_DIR / "kirocrew.env"
 # clobbers operator edits). Everything is commented out so the file changes
 # nothing until an operator opts in.
 _ENV_FILE_TEMPLATE = """\
-# Kiro Crew service environment overrides.
+# Sao Khuê service environment overrides.
 #
 # This file is read by the systemd unit (EnvironmentFile=) AFTER the values
 # baked in at `kirocrew service install` time, so anything set here WINS. Edit
@@ -324,7 +324,7 @@ def render_unit(*, user_scope: bool = False) -> str:
     selinux_line = f"SELinuxContext={selinux_context}\n" if selinux_context else ""
     return (
         "[Unit]\n"
-        "Description=Kiro Crew gateway (dashboard + Slack + cron)\n"
+        "Description=Sao Khuê gateway (dashboard + Slack + cron)\n"
         "Documentation=https://github.com/kirodotdev/KiroCrew\n"
         "After=network-online.target\n"
         "Wants=network-online.target\n"

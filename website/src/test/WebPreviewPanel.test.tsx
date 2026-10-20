@@ -1675,7 +1675,7 @@ describe('WebPreviewPanel — address bar launcher (non-native transport)', () =
     const text = 'Error: Daemon pid=1467353: Daemon process exited with code 1\n'
       + 'Chromium sandboxing failed!\n'
       + 'No usable sandbox! If you want to live dangerously and need an immediate workaround, you can try using --no-sandbox.\n\n'
-      + 'Chromium could not start because this host cannot run its sandbox. Kiro Crew never disables the sandbox by default. '
+      + 'Chromium could not start because this host cannot run its sandbox. Sao Khuê never disables the sandbox by default. '
       + 'To accept that trade-off on this host, point PLAYWRIGHT_MCP_CONFIG in the gateway\'s environment at your own playwright-cli config.'
     openInBrowser.mockResolvedValue({ ok: false, session: 'panel-1234abcd', error: text, view: RUNNING })
     renderWithProviders(<WebPreviewPanel sessionKey="sess-1" />)

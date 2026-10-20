@@ -136,7 +136,7 @@ async def test_api_agent_config_put_strips_governed_grants(tmp_path, monkeypatch
 
 @pytest.mark.asyncio
 async def test_api_agent_config_put_strips_bookkeeping_keys(tmp_path):
-    """A dashboard PUT must not re-pollute the kiro spec with Kiro Crew keys.
+    """A dashboard PUT must not re-pollute the kiro spec with Sao Khuê keys.
 
     The whole-config PUT strips ``model_managed`` / ``cc_model``, matching the
     agent-detail PATCH. Persisting them verbatim is fatal:
@@ -742,7 +742,7 @@ async def test_agent_config_put_lock_releases_only_after_every_write_landed(tmp_
         "write lets the next holder observe a half-applied PUT."
     )
     # Order that is load-bearing (as opposed to incidental): the bookkeeping lift
-    # STRIPS Kiro Crew keys out of the very dict the spec write persists, so it
+    # STRIPS Sao Khuê keys out of the very dict the spec write persists, so it
     # must complete first or the spec lands with keys kiro-cli rejects. The
     # sidecar write's position relative to the other two is not pinned.
     assert landed.index("bookkeeping") < landed.index("spec")

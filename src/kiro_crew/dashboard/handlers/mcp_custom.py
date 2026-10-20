@@ -55,7 +55,7 @@ _MAX_SERVERS_PER_ADD = 20
 # the process spawner.
 _STDIO_KEYS = {"command", "args", "env"}
 # ``scopes`` and ``clientId`` are OAuth hints carried to the runtime verbatim.
-# Kiro Crew validates only their SHAPE and never interprets them: the runtime
+# Sao Khuê validates only their SHAPE and never interprets them: the runtime
 # owns the authorization exchange, so scope narrowing and client registration
 # are its decisions, not ours.  A clientId is a public OAuth identifier — the
 # corresponding secret never lives in an MCP spec — so neither key is redacted.
@@ -502,7 +502,7 @@ async def api_mcp_custom_get(request: web.Request) -> web.Response:
 async def api_mcp_custom_update(request: web.Request) -> web.Response:
     """PUT /api/mcp/custom/{name} — replace an installed server's spec.
 
-    404 when the name isn't a KiroCrew-managed entry.  The server's
+    404 when the name isn't a SaoKhue-managed entry.  The server's
     enabled/disabled state is preserved — editing is not consent to run.
 
     Keys outside the editable allowlist that already exist on the entry
@@ -521,7 +521,7 @@ async def api_mcp_custom_update(request: web.Request) -> web.Response:
     renaming a stored header, or changing ``url``, still means removing and
     re-adding the server.
 
-    The authorship marker is the one exception: it records that Kiro Crew
+    The authorship marker is the one exception: it records that Sao Khuê
     wrote an entry into a file it does NOT own, so it has no meaning in the
     store.  An unmodified round trip still SAVES with it present — refusing
     would strand the entry — but it is dropped rather than written back.  That

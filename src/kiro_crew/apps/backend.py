@@ -1,6 +1,6 @@
 """App backend process management — spawn, health check, stop, and proxy config.
 
-When an app declares a ``backend`` section in its manifest, KiroCrew manages
+When an app declares a ``backend`` section in its manifest, SaoKhue manages
 the backend process lifecycle: spawn on enable, health-check, stop on disable.
 
 This module is the backend's only import path and patch surface. Its rules live in
@@ -432,7 +432,7 @@ def _start_app_backend_body(app_name: str, manifest: Any) -> AppProcess | None:
     root = app_dir(app_name)
     entry_point = manifest.backend.entryPoint
     # Module-style entry point (e.g. "kiro_crew.apps.builtins.<name>"):
-    # used by built-in apps that live inside the KiroCrew package itself.
+    # used by built-in apps that live inside the SaoKhue package itself.
     # The shape test is the shared `is_module_style_entry_point` -- the same
     # predicate `bridges_mcp.py` and the install-time desktop gate answer from,
     # so what this spawn provisions and what those sites assume it provisions
@@ -773,7 +773,7 @@ def _start_app_backend_body(app_name: str, manifest: Any) -> AppProcess | None:
     # signals VOUCHED MEMBERS instead -- see _reap_orphaned_backend_group and
     # session_pid.signal_orphaned_spawn_group.
     #
-    # KIROCREW_SPAWNED says a Kiro Crew spawned the process; the instance says
+    # KIROCREW_SPAWNED says a Sao Khuê spawned the process; the instance says
     # WHICH spawn, and is minted here (before the process exists) because it has
     # to travel in the child's environment where /proc/<pid>/environ can read it
     # back. Random rather than pid-derived so a recycled pid cannot false-match.
@@ -946,13 +946,13 @@ def _start_app_backend_body(app_name: str, manifest: Any) -> AppProcess | None:
     #
     # Bundled app backends start with the user site disabled through the shared
     # helper. A non-bundled module-style child keeps its parent's policy because
-    # Kiro Crew may itself be installed in the user site, and this ``-m`` launch
+    # Sao Khuê may itself be installed in the user site, and this ``-m`` launch
     # supplies no independent import path. md-notebook keeps its stronger ``-I``
     # contract because it re-admits the exact package root in its script body.
     #
     # ``-I`` drops cwd-on-sys.path and ``PYTHONPATH`` (it implies ``-E``), so the
     # import universe md-notebook needs is restated EXPLICITLY: ``runpy`` (the
-    # machinery behind ``-m``) runs the module after inserting the root Kiro Crew
+    # machinery behind ``-m``) runs the module after inserting the root Sao Khuê
     # itself was imported from. Correct across a venv install, a --user install,
     # and a source tree; ``repr`` keeps both injected strings inert literals.
     elif entry is None:
@@ -1134,7 +1134,7 @@ def _start_app_backend_body(app_name: str, manifest: Any) -> AppProcess | None:
     # file and fail closed without it, so hiding it here would stop every app backend on
     # a centrally-governed host. Reading the ceiling it is about to be bound by is not an
     # escalation — the exposure the mask exists to prevent is the model-driven agent
-    # learning the deny patterns, and this is Kiro Crew's own spawn, not a tool call.
+    # learning the deny patterns, and this is Sao Khuê's own spawn, not a tool call.
     # Passed only when cache-only mode is actually on, so an ungoverned host is unchanged.
     #
     # READ is all it gets WHERE A SANDBOX APPLIES. ``wrap_argv`` seals this particular

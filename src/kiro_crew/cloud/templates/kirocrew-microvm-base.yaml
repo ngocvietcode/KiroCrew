@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  Shared scaffolding for Kiro Crew remote crews on AWS Lambda MicroVMs, in the
+  Shared scaffolding for Sao Khuê remote crews on AWS Lambda MicroVMs, in the
   user's own AWS account: the customer-managed key each crew's control secret is
   encrypted with, the bucket an image build reads its recipe from, and the roles
   a MicroVM's SSM agent registers and runs under. One stack per account and
@@ -59,7 +59,7 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      Description: !Sub "Kiro Crew MicroVM per-crew control secrets (${StackTag})"
+      Description: !Sub "Sao Khuê MicroVM per-crew control secrets (${StackTag})"
       EnableKeyRotation: true
       KeyPolicy:
         Version: "2012-10-17"

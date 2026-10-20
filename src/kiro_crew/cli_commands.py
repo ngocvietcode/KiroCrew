@@ -276,7 +276,7 @@ def _tailnet(args: argparse.Namespace) -> None:
     The command that was missing. Reaching the dashboard from another device on
     your tailnet has always taken **two** independent steps — publish it with
     ``tailscale serve``, and tell the gateway to trust the resulting origin — and
-    Kiro Crew only ever did the second. Doing one without the other is the failure
+    Sao Khuê only ever did the second. Doing one without the other is the failure
     this exists to remove: publish without trusting and every request is refused
     by the Origin check with a bare 403; trust without publishing and there is
     nothing on the tailnet to open.
@@ -335,7 +335,7 @@ def _tailnet(args: argparse.Namespace) -> None:
     # configured port was occupied and the gateway moved (``--port``), publishing in
     # front of the configured port aims `tailscale serve` at whatever unrelated
     # loopback service now holds it, exposing it on the tailnet. So the verified run
-    # marker wins: it only reports a port where a Kiro Crew gateway process is actually
+    # marker wins: it only reports a port where a Sao Khuê gateway process is actually
     # listening (`_gateway_owns_port`, and it refuses when several are up), which is
     # evidence, whereas ``dashboard.url`` is a statement of intent.
     #
@@ -366,7 +366,7 @@ def _tailnet(args: argparse.Namespace) -> None:
     if action == "up" and not port_source:
         # Publishing needs EVIDENCE about the port, not a default. Every source above
         # is evidence -- an explicit flag/env is the operator naming the target, and
-        # the run marker only reports a port a Kiro Crew gateway is actually listening
+        # the run marker only reports a port a Sao Khuê gateway is actually listening
         # on. `resolve_client_port` is not: it falls back to the configured
         # `dashboard.url` (or the built-in default) whether or not anything answers
         # there. `tailscale serve` does not care what is behind the port -- so if the

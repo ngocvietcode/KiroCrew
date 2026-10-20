@@ -71,7 +71,7 @@ worker which reads an issue, recognises it as already fixed, and says so is doin
 real work.
 
 The ceiling is measured, not assumed. An audit of 40 of the 50 most recent
-Kiro Crew issues found:
+Sao Khuê issues found:
 
 - **3 of 40 (7.5%)** were cleanly implementable without a human decision.
 - **15 of 40 (37.5%)** were duplicates of work already fixed or already in an open
@@ -197,7 +197,7 @@ GitHub does not notify subscribers on an edit, so progress edits are silent wher
 new comments would not be. Edit only on real progress.
 
 ```
-👻 **Whirlpool** is on this · Kiro Crew Issue Radar
+👻 **Whirlpool** is on this · Sao Khuê Issue Radar
 implementing · PR #2271 · CI round 3 · updated 20:44 UTC
 
 <details><summary>progress</summary>
@@ -489,7 +489,7 @@ All crews run allow-all-tools and unattended. What that means, and what is left:
 
 **Still enforced in code.** The PreToolUse hook path fires independently of
 `allowedTools` (the PreToolUse paths in `dashboard/chat_turn/tool_rows.py` and `tool_approval.py` — `allowedTools` skips *approval*, not the
-hook), so Kiro Crew's own policy still hard-refuses destructive commands,
+hook), so Sao Khuê's own policy still hard-refuses destructive commands,
 force-pushes to protected branches, and credential-file reads. Branch protection
 keeps crews off `main`. Every PR needs human approval before merge, so nothing
 lands unreviewed. `_repo_can_write` fails closed on permission checks

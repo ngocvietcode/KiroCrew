@@ -1,6 +1,6 @@
 """Off-loop watchdog that turns an event-loop stall into a logged stack dump.
 
-KiroCrew's gateway runs the dashboard HTTP server, every agent turn, and all
+SaoKhue's gateway runs the dashboard HTTP server, every agent turn, and all
 background tasks on a *single* asyncio event loop on *one* thread.  If a
 coroutine performs a blocking syscall on that thread — e.g. an un-timed-out
 socket ``close()`` while tearing down a half-dead ACP/model stream, a burst of

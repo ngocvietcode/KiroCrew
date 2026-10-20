@@ -172,7 +172,7 @@ class TestKiroPrerequisiteWorkflowProbe:
     ) -> None:
         # The readiness whoami runs against the REAL home (like an ACP session),
         # not a credential-minimal rewritten home — so a CLI whose session or
-        # tool registry lives in the real home is detected. Only Kiro Crew's own
+        # tool registry lives in the real home is detected. Only Sao Khuê's own
         # secret home is hidden.
         executable = tmp_path / ".local" / "bin" / "kiro-cli"
         _make_executable(executable)

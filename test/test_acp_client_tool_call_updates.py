@@ -781,7 +781,7 @@ class TestExtractToolCallRefinement:
 
     def test_prefers_rawinput_description_over_title(self):
         # Bash tool emits both `command` and `description` — the description
-        # is the human-readable purpose ("List Kiro Crew dashboard module
+        # is the human-readable purpose ("List Sao Khuê dashboard module
         # files"), and that's what we surface on the pill.
         client = self._client()
         msg = self._make_msg(
@@ -792,13 +792,13 @@ class TestExtractToolCallRefinement:
                 "kind": "execute",
                 "rawInput": {
                     "command": "ls /workplace/.../dashboard/",
-                    "description": "List Kiro Crew dashboard module files",
+                    "description": "List Sao Khuê dashboard module files",
                 },
             }
         )
         event = client._extract_tool_call_refinement(msg)
         assert event is not None
-        assert event.title == "List Kiro Crew dashboard module files"
+        assert event.title == "List Sao Khuê dashboard module files"
 
     def test_generic_shell_title_yields_the_command(self):
         # A backend whose shell `title` is a kind label ("Run Command") names no

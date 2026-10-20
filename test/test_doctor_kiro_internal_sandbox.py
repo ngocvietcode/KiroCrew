@@ -1,6 +1,6 @@
 """`kirocrew doctor` names the sandbox that actually confines a kiro-cli spawn.
 
-On macOS with kiro-cli's internal sandbox enabled, Kiro Crew deliberately skips
+On macOS with kiro-cli's internal sandbox enabled, Sao Khuê deliberately skips
 its own seatbelt wrap for kiro-cli spawns (mutual exclusion: only one layer can
 be active per spawn). A Sandbox section that answers with the backend alone and
 returns leaves a host in exactly that configuration reading:
@@ -16,7 +16,7 @@ the operator grants Full Disk Access and nothing changes.
 
 These tests pin the diagnostic: report the delegation on every backend verdict,
 name the exact switch, say Full Disk Access cannot help, keep the remedy safe
-under Kiro Crew's own configured tier, and never count a working audited
+under Sao Khuê's own configured tier, and never count a working audited
 delegation as a fault.
 """
 
@@ -153,7 +153,7 @@ class TestDelegationIsReported:
 class TestRemedyDependsOnKiroCrewsOwnTier:
     """The advice must never remove the only layer confining the spawn.
 
-    With ``agent.sandbox="off"`` Kiro Crew builds no profile, so "disable
+    With ``agent.sandbox="off"`` Sao Khuê builds no profile, so "disable
     kiro-cli's sandbox" leaves nothing confining a kiro-cli spawn and turns
     ``~/.aws`` and ``~/.ssh`` into readable files. The two settings correlate --
     ``"off"`` exists to defer isolation to kiro-cli -- so that is a reachable
@@ -252,7 +252,7 @@ class TestSilentWhenNotDelegating:
 
         Linux namespace isolation is unaffected by that file, so reporting it
         there would tell a Linux operator their agent is confined by kiro-cli
-        when Kiro Crew's own launcher is what wraps the child.
+        when Sao Khuê's own launcher is what wraps the child.
         """
         monkeypatch.setattr(sys, "platform", "linux")
         monkeypatch.setattr(sandbox, "kiro_internal_sandbox_enabled", lambda: True)

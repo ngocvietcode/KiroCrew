@@ -8,7 +8,7 @@ Source: https://kiro.dev/docs/cli/acp/ (fetched 2026-09-06)
 > counterpart in upstream's method table; they are measured here and describe Kiro
 > Crew's claude-agent-acp path. A re-fetch must preserve them. Upstream's own
 > table now carries `_session/terminate`, so that row is no longer local-only.
-> Two wire names are corrected locally against what Kiro Crew sends and reads:
+> Two wire names are corrected locally against what Sao Khuê sends and reads:
 > session updates arrive as the `session/update` notification, and
 > `session/prompt` carries its content blocks in `params.prompt`.
 
@@ -232,7 +232,7 @@ Sending the wrong shape yields `-32602 Invalid params` or `-32601 Method not fou
 These defaults name ONE file per machine. A process that starts while that
 file is over 10 MiB unlinks it, and every running process keeps writing into
 its own unlinked inode until it exits -- on Linux into a RAM-backed tmpfs.
-On Linux and macOS, Kiro Crew therefore sets `KIRO_CHAT_LOG_FILE` on every
+On Linux and macOS, Sao Khuê therefore sets `KIRO_CHAT_LOG_FILE` on every
 kiro-cli it spawns to `<scratch dir>/kiro-log/kiro-chat.log`, the process's
 own scratch directory under `~/.kiro/crew/scratch/` (`mcp.log` and `lsp.log`
 land beside it). The directory is reclaimed with the process by the scratch

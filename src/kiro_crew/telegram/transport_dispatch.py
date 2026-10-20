@@ -296,7 +296,7 @@ _FAILURE_REASON_MAX_CHARS = 500
 def _user_safe_failure_reason(exc: BaseException) -> str | None:
     """A bounded, user-safe reason for a failed turn, or None for the generic text.
 
-    A private-memory refusal or a backend failure Kiro Crew worded for a person
+    A private-memory refusal or a backend failure Sao Khuê worded for a person
     (``is_user_worded_failure``) yields a reason: its message is already
     user-facing and actionable (e.g. names the models the account does
     include), and the generic "please try again" placeholder would be actively

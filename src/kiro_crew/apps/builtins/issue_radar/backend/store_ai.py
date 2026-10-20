@@ -542,7 +542,7 @@ def drop_tagging_suggestions(
 
 # ── investigation records (the "Investigate" button) ─────────────────────────
 #
-# Clicking "Investigate" on an issue opens a Kiro Crew chat session, seeds it
+# Clicking "Investigate" on an issue opens a Sao Khuê chat session, seeds it
 # with an investigation prompt, and files it into a per-repo "Issue Radar -
 # <repo>" chat folder. There is NO shared, git-backed,
 # CLI-driven ledger; instead each investigated issue gets ONE small local

@@ -1,7 +1,7 @@
 """The debug MCP server — five questions about a running gateway, asked of the
 process that owns the answer.
 
-Debugging Kiro Crew without this means an agent writes ad-hoc shell: grep the
+Debugging Sao Khuê without this means an agent writes ad-hoc shell: grep the
 gateway log, cat the autonudge registry, stat ``.env``, run ``ps``, read
 ``/proc``. That fails in four ways this server is shaped around.
 
@@ -143,7 +143,7 @@ def _tool_definitions() -> list[dict[str, Any]]:
     Advertised UNCONDITIONALLY, including while the recorder is off and while the
     diag modules are absent. An agent must learn a subsystem's state from a
     refusal that says what to do about it, not from a tool that is not there: a
-    missing tool reads as "Kiro Crew cannot do this", which is a different and
+    missing tool reads as "Sao Khuê cannot do this", which is a different and
     wrong conclusion.
     """
     return [
@@ -397,7 +397,7 @@ def _proxy_error(payload: dict[str, Any], *, fallback: str) -> str:
     tell them apart. The diag gap is relayed VERBATIM under
     :data:`DIAG_UNAVAILABLE_CODE`, because "wait for a build" is a different action
     from anything else on this list. A transport failure has no code of its own and
-    becomes ``unavailable``: the distinction that matters is "Kiro Crew said no"
+    becomes ``unavailable``: the distinction that matters is "Sao Khuê said no"
     versus "nothing answered".
     """
     message = str(payload.get("error") or fallback)

@@ -1,8 +1,8 @@
 # KiroCrewWebsite AutoSDE Rules
 #
-# This package is the KiroCrew dashboard frontend (React + TypeScript).
+# This package is the SaoKhue dashboard frontend (React + TypeScript).
 # Backend-only rules (Python security, hooks.py, SEL audit, etc.) live in
-# the KiroCrew package's AUTOSDE.yaml and are not duplicated here.
+# the SaoKhue package's AUTOSDE.yaml and are not duplicated here.
 #
 # Every file-pattern below is relative to website/ (so "src/**/*.tsx" means
 # website/src/**/*.tsx), matching the website/ working directory the
@@ -15,7 +15,7 @@ custom-rules:
       - "src/**/*.tsx"
       - "src/**/*.ts"
     rule: |
-      Enforce KiroCrew frontend security controls based on real vulnerabilities
+      Enforce SaoKhue frontend security controls based on real vulnerabilities
       found in this codebase.
 
       - Never write HTML into the DOM with `.innerHTML = ...` / `+=` (dot or
@@ -45,7 +45,7 @@ custom-rules:
       check-added: true
       check-removed: false
     rule: |
-      KiroCrew's typography scale has a minimum usable text size of 10px.
+      SaoKhue's typography scale has a minimum usable text size of 10px.
       Single-digit px values (`text-[0px]` through `text-[9px]`, including
       decimals like `text-[9.5px]`), and the same sizes written as an inline
       `fontSize` or in rem, are not accessible and must not be introduced.
@@ -398,7 +398,7 @@ custom-rules:
       cause stale data bugs when multiple components read the same endpoint, and miss
       automatic background refetching. React Query centralizes server state with deduped
       requests, stale-while-revalidate caching, and optimistic update rollback — all of
-      which the KiroCrew dashboard relies on for real-time consistency across tabs.
+      which the SaoKhue dashboard relies on for real-time consistency across tabs.
 
       Required patterns:
       - `useQuery({ queryKey: [...], queryFn: ... })` for reads
@@ -428,7 +428,7 @@ custom-rules:
       lifecycles — removed DOM elements just vanish. Framer Motion's `AnimatePresence`
       keeps exiting elements in the DOM until their exit animation completes, which is
       critical for the sidebar collapse, panel open/close, and list reorder animations
-      throughout the KiroCrew dashboard. Mixing animation systems also makes motion
+      throughout the SaoKhue dashboard. Mixing animation systems also makes motion
       timing inconsistent and harder to maintain.
 
       Tailwind utilities are fine for:
@@ -531,7 +531,7 @@ custom-rules:
       automatically.
 
       Reference: an accessibility audit identified ~81 instances of inaccessible
-      clickable divs in the KiroCrew dashboard.
+      clickable divs in the SaoKhue dashboard.
 
       Bad:
       ```tsx
@@ -590,7 +590,7 @@ custom-rules:
       Do NOT use emoji characters as UI icons or status indicators. Use `lucide-react`
       components instead.
 
-      Why: Kiro Crew's dashboard supports many color themes with CSS custom property
+      Why: Sao Khuê's dashboard supports many color themes with CSS custom property
       design tokens (`--ok`, `--warn`, `--danger`, `--muted`, etc.). Emoji ignore
       `currentColor` and design tokens entirely, so emoji-based status badges and
       buttons render identically across all themes — breaking the visual language.

@@ -168,7 +168,7 @@ ships rather than into an error:
 
 Everything else — static folder preview, the injecting reverse proxy, the overlay,
 and the whole request/queue lifecycle — is platform-neutral. Note that the dev
-script itself is spawned directly, **not** through Kiro Crew's sandbox, on every
+script itself is spawned directly, **not** through Sao Khuê's sandbox, on every
 platform.
 
 ### Windows

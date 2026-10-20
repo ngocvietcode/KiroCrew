@@ -37,7 +37,7 @@ const PROMPT = buildErrorPrompt(
     message:
       "[Errno 16] Device or resource busy: '/home/user/.kiro/crew/scratch/runtime-9796a4b0/remote-default-main-baseline'",
   },
-  'This error just came up in the Kiro Crew dashboard. Diagnose the root cause and fix it.',
+  'This error just came up in the Sao Khuê dashboard. Diagnose the root cause and fix it.',
 )
 
 const renderContent = (content: string, meta: Record<string, unknown> | undefined) =>

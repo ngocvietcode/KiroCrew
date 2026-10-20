@@ -251,9 +251,9 @@ describe("unrecoverableGatewayDialog", () => {
       port: 5476,
       isPrimaryWindow: true,
     });
-    assert.equal(model.title, "Kiro Crew: backend stuck on port 5476");
+    assert.equal(model.title, "Sao Khuê: backend stuck on port 5476");
     assert.equal(model.primaryAction, "quit");
-    assert.equal(model.primaryLabel, "Quit Kiro Crew");
+    assert.equal(model.primaryLabel, "Quit Sao Khuê");
     assert.equal(model.showQuitButton, false);
     assert.equal(model.portConflict, false);
     assert.match(model.message, /Restart your computer/);
@@ -265,11 +265,11 @@ describe("unrecoverableGatewayDialog", () => {
       probeFailed: true,
       isPrimaryWindow: false,
     });
-    assert.equal(model.title, "Kiro Crew: can't verify what's using port 5476");
+    assert.equal(model.title, "Sao Khuê: can't verify what's using port 5476");
     assert.equal(model.primaryAction, "quit");
     assert.equal(model.primaryLabel, "Close");
     assert.equal(model.showQuitButton, false);
-    assert.match(model.message, /Quit and reopen Kiro Crew to try again/);
+    assert.match(model.message, /Quit and reopen Sao Khuê to try again/);
     assert.match(model.message, /If the port is still blocked, restart your computer/);
   });
 
@@ -279,9 +279,9 @@ describe("unrecoverableGatewayDialog", () => {
       variant: "held",
       isPrimaryWindow: true,
     });
-    assert.equal(model.title, "Kiro Crew: port 5476 is in use");
+    assert.equal(model.title, "Sao Khuê: port 5476 is in use");
     assert.equal(model.primaryAction, "quit");
-    assert.equal(model.primaryLabel, "Quit Kiro Crew");
+    assert.equal(model.primaryLabel, "Quit Sao Khuê");
     assert.equal(model.showQuitButton, false);
     assert.match(model.message, /Quit the process using port 5476/);
     assert.doesNotMatch(model.message, /Restart your computer/);

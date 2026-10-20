@@ -240,7 +240,7 @@ prompt and REMOVED only for the work the tool set excludes; the design accepts
 that residue rather than pretending the prompt closes it.
 
 **The conductor's prompt is a source-code string.** It names: who the mate is
-and how it talks to the user; what Kiro Crew can do (render a widget, set a
+and how it talks to the user; what Sao Khuê can do (render a widget, set a
 schedule, keep memory); how to use the work ledger; how to spawn a worker and
 what to put in the brief; and that the conductor never runs a task inline. It
 is not a JSON file and it reads no `~/.kiro/crew/prompt.md` override. The

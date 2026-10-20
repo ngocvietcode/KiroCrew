@@ -2,7 +2,7 @@
 
 // electron-builder's differential-aware NSIS path extracts the complete app
 // archive under $PLUGINSDIR and then CopyFiles the whole tree into $INSTDIR.
-// Kiro Crew's bundled Python backend is thousands of small files, so that
+// Sao Khuê's bundled Python backend is thousands of small files, so that
 // second pass dominates Windows install/update time (and makes Defender scan
 // the payload twice). electron-builder exposes hooks before and after this
 // operation, but none at the publish boundary itself. Keep the dependency pin

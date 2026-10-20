@@ -1,6 +1,6 @@
 """Multi-instance management (the *Instances* feature).
 
-Lets one KiroCrew gateway manage and switch between several remote KiroCrew
+Lets one SaoKhue gateway manage and switch between several remote SaoKhue
 instances over SSH tunnels.
 
 This package is the gateway-side home for the instances registry, the

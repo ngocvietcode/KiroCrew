@@ -9,7 +9,7 @@ can share a store too, which the crew manager says on the field. The
 **Crewmates** page is where you see all of them and talk to each one in a standing
 thread.
 
-Crewmates are the same objects the rest of Kiro Crew calls *crews* or *agents*:
+Crewmates are the same objects the rest of Sao Khuê calls *crews* or *agents*:
 one entry in the `agents` map of `~/.kiro/crew/config.json`. This page is the
 user-facing view of them; [agents.md](agents.md) covers the agent JSON and
 markdown specs a crewmate boots from.
@@ -49,7 +49,7 @@ carries:
   agent sync writes a crewmate per capability, so the roster grows past what you
   drive by hand; the star filter is how you collapse it.
 - **Origin** — *Mine* (you made it, in the crew manager or with `kirocrew agent
-  create`), *Built-in* (ships with Kiro Crew), *From packages* (written by the
+  create`), *Built-in* (ships with Sao Khuê), *From packages* (written by the
   agent sync).
 - **Status** — *Working* (its thread is mid-turn), *Needs you* (parked on an
   approval or a question), *Unread*, *Scheduled check-ins* (running on a
@@ -86,7 +86,7 @@ with four tabs: **Profile**, **Schedules**, **Sessions** (the ones it is driving
 and **Goals**. **Notes** — what it learned, its own standing notes — opens from
 the Profile tab as a read-only page pushed over the card.
 
-A few situations make Kiro Crew refuse to open a thread rather than guess:
+A few situations make Sao Khuê refuse to open a thread rather than guess:
 
 | What you see | What happened |
 |---|---|
@@ -110,7 +110,7 @@ there. When a crewmate suggests a new crewmate, its link opens this same form
 with the suggested name and goal already filled in; nothing is created until
 you press **Create**. Creating opens the new crewmate's chat, and the crewmate
 starts it by introducing itself and asking what you would like it to do (or
-confirming the job you wrote); that opening question comes from Kiro Crew, so no
+confirming the job you wrote); that opening question comes from Sao Khuê, so no
 message appears as if you had typed it. Once you tell it the goal (or confirm
 the one you wrote), it puts the goal on a card for you to press, and after the
 goal is saved it suggests its check-ins. The name is
@@ -224,7 +224,7 @@ A crewmate's **Goals** tab (Profile card) holds what it works toward:
   press it.
 
 The goal is stored in the crewmate's goal record,
-`trust/member-goals/<slug>.json` in Kiro Crew's data folder, apart from its
+`trust/member-goals/<slug>.json` in Sao Khuê's data folder, apart from its
 rules, with the same protection as its rules: the crewmate's file-editing tools
 are refused there, so it changes the goal or its key results only through a card
 you press (a shell command it runs can still reach the folder, as with its
@@ -254,13 +254,13 @@ restore treat it.
 |---|---|
 | Crewmate | A named assistant of yours: template + workspace + memory + model. Picking one runs work as that crewmate, on its memory. |
 | Agent template | A shared spec in `~/.kiro/agents/`. Picking a template runs it on your default crewmate's workspace and memory and creates nothing new. The chat agent picker lists templates separately, under **Custom agents**, for exactly this reason. |
-| Remote crew | Another Kiro Crew gateway this dashboard can reach, under **Settings → Remote Crew**. A different machine, not a different assistant. |
+| Remote crew | Another Sao Khuê gateway this dashboard can reach, under **Settings → Remote Crew**. A different machine, not a different assistant. |
 
 ## Where you can pick a crewmate
 
 The same roster is offered wherever work starts: the agent picker in chat and on
 the welcome screen, the schedule form, the Projects task runner, and an agent
-channel. Kiro Crew remembers the crewmate a session committed to across a
+channel. Sao Khuê remembers the crewmate a session committed to across a
 restart, so a crewmate pick stays a crewmate pick and does not decay into a bare
 template.
 

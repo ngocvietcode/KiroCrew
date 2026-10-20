@@ -1,6 +1,6 @@
 """One-time importer that moves plaintext ``.env`` credentials into the vault.
 
-Kiro Crew keeps credentials as plaintext ``KEY=VALUE`` lines in the data home's
+Sao Khuê keeps credentials as plaintext ``KEY=VALUE`` lines in the data home's
 ``.env`` (``~/.kiro/crew/.env``). The encrypted vault
 (:class:`~kiro_crew.secrets.SecretVault`) supersedes that store, and the
 ``secret://`` resolvers read the secret without ever exposing the plaintext to
@@ -758,7 +758,7 @@ def format_report(report: MigrationReport) -> str:
             lines.append("")
             lines.append("The original values were REWRITTEN in place to secret:// references;")
             lines.append("the plaintext is no longer present for these keys. Any values that")
-            lines.append("Kiro Crew does not recognize as credentials were left untouched. If")
+            lines.append("Sao Khuê does not recognize as credentials were left untouched. If")
             lines.append(f"you keep a backup of {ep}, delete the plaintext copy once verified.")
 
     if report.already_referenced:

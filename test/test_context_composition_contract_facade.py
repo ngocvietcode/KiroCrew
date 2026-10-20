@@ -6,7 +6,7 @@ defined or imported still resolves on it (an imported one as its home module's o
 moved one as its owner's), the frozen public signatures and ``ContextBuilder`` members,
 the owner set and that a fresh import of the facade loads every owner. They pin the
 placement rules that keep a patch on the facade effective once the code has moved: no
-Kiro Crew import at an owner's module scope, no owner importing a sibling's attribute, an
+Sao Khuê import at an owner's module scope, no owner importing a sibling's attribute, an
 acyclic owner graph, the facade logger, and no owner binding or bare-reading a name the
 tests rebind on the facade (that set is derived from the test tree). And for a sample of
 those seams they show a patch on the facade reaching the moved code that reads it. The
@@ -119,7 +119,7 @@ _FACADE_STDLIB = """
 """.split()
 
 
-#: facade name -> (home module, attribute) for each Kiro Crew name it imported.
+#: facade name -> (home module, attribute) for each Sao Khuê name it imported.
 _FACADE_IMPORTS: dict[str, tuple[str, str]] = {
     "ESSENTIAL_MAX_CHARS": ("kiro_crew.member_essential_context", "ESSENTIAL_MAX_CHARS"),
     "FOLDER_STEERING_OMISSION_SOURCE": (
@@ -675,7 +675,7 @@ class TestPlacement:
     """The rules that keep a patch on the facade effective once the code has moved."""
 
     def test_owners_import_no_kiro_crew_module_at_module_scope(self) -> None:
-        """Every Kiro Crew name an owner needs is read through the facade at call
+        """Every Sao Khuê name an owner needs is read through the facade at call
         time, so a patch there reaches it and the facade's import closure is
         unchanged. Sibling owners and ``TYPE_CHECKING`` imports are the exceptions."""
         for stem, source in _owner_sources().items():

@@ -506,7 +506,7 @@ async def test_a_disabled_entry_still_counts_as_a_grant_sharer(
 ) -> None:
     """A switched-off server still owns its grant.
 
-    ``list_servers`` drops disabled entries outside the Kiro Crew scope, so the
+    ``list_servers`` drops disabled entries outside the Sao Khuê scope, so the
     sharing sweep must read the raw specs -- otherwise disabling an entry makes
     its grant deletable, and re-enabling it demands a fresh consent with nothing
     having said so.
@@ -642,7 +642,7 @@ async def test_disconnect_leaves_a_same_named_server_on_another_endpoint_alone(
 async def test_a_custom_agent_config_sharing_the_endpoint_blocks_the_revoke(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Blocker 1: the census must include agent specs Kiro Crew does not own.
+    """Blocker 1: the census must include agent specs Sao Khuê does not own.
 
     Discovery merges only ``kirocrew.json``, so a spec the user wrote by hand is
     invisible to the scope sweep -- while kiro-cli authorizes from it and shares
@@ -1485,7 +1485,7 @@ async def test_a_project_local_agent_spec_is_never_a_purge_target(
 
     A project spec named ``notion`` at the exact endpoint is a SHARER, so it
     blocks the revoke -- but it must never join the scope list the purge is
-    restricted to, because Kiro Crew does not write version-controlled files.
+    restricted to, because Sao Khuê does not write version-controlled files.
     """
     project = _project_spec(monkeypatch, tmp_path, entry=_SLUG, url=_provider_url())
     scopes: list[tuple[str, ...]] = []
@@ -1783,11 +1783,11 @@ async def test_a_deliberately_kept_pair_is_not_reported_as_surviving(
 def test_agent_sources_separate_purge_owned_mirrors_from_user_specs(
     monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path
 ) -> None:
-    """The rendered Kiro Crew agent file is a MIRROR; a user's agent spec is not.
+    """The rendered Sao Khuê agent file is a MIRROR; a user's agent spec is not.
 
     ``_purge_server_config`` strips ``<agents>/kirocrew.json`` itself, so its
     entries are reflections of the scopes being purged rather than independent
-    grant holders. A hand-written ``custom.json`` is the opposite: Kiro Crew
+    grant holders. A hand-written ``custom.json`` is the opposite: Sao Khuê
     never touches it, so its entry keeps its grant and must block a revoke.
     Labelling them identically is what made an ordinary Disconnect see its own
     reflection as a sharer.

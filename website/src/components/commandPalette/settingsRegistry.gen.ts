@@ -1770,7 +1770,7 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "id": "developer.decisions-jev",
     "label": "Decisions (Jev)",
     "labelKey": "pages.developer.featurePreviewsTab.decisions",
-    "description": "A small, fast model makes quick calls for Kiro Crew, such as which of your skills fits your message. Pick the model below. If it is slow or does not answer, the built-in rule decides instead, so your reply is never held up.",
+    "description": "A small, fast model makes quick calls for Sao Khuê, such as which of your skills fits your message. Pick the model below. If it is slow or does not answer, the built-in rule decides instead, so your reply is never held up.",
     "tab": "developer",
     "type": "toggle",
     "occurrence": 1
@@ -1806,7 +1806,7 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "id": "developer.jev-api-key",
     "label": "Jev API key",
     "labelKey": "pages.developer.featurePreviewsTab.decisions_api_key_label",
-    "description": "Kept in this dashboard's secret store on the machine that runs Kiro Crew, never in config.json, and never shown again once you save it.",
+    "description": "Kept in this dashboard's secret store on the machine that runs Sao Khuê, never in config.json, and never shown again once you save it.",
     "tab": "developer",
     "type": "input",
     "occurrence": 1
@@ -1839,10 +1839,10 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "occurrence": 1
   },
   {
-    "id": "developer.run-kas-on-kiro-crew-s-own-engine",
-    "label": "Run KAS on Kiro Crew's own engine",
+    "id": "developer.run-kas-on-sao-khue-s-own-engine",
+    "label": "Run KAS on Sao Khuê's own engine",
     "labelKey": "pages.developer.kasBundleCard.toggle_label",
-    "description": "Uses the KAS engine version this Kiro Crew release was tested with, instead of the Kiro CLI. Applies to every new session on this Kiro Crew, not just this device. Signs in with your Kiro account from Settings → Agent Harness. Takes effect when Kiro Crew restarts.",
+    "description": "Uses the KAS engine version this Sao Khuê release was tested with, instead of the Kiro CLI. Applies to every new session on this Sao Khuê, not just this device. Signs in with your Kiro account from Settings → Agent Harness. Takes effect when Sao Khuê restarts.",
     "tab": "developer",
     "type": "toggle",
     "occurrence": 1
@@ -2003,7 +2003,7 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "id": "display.highlight-recent-sessions",
     "label": "Highlight recent sessions",
     "labelKey": "pages.settings.displayPanel.highlight_recent_sessions",
-    "hint": "Highlight the N most-recently-active sessions with a graded accent stripe (0 = off). Saved to your Kiro Crew config.",
+    "hint": "Highlight the N most-recently-active sessions with a graded accent stripe (0 = off). Saved to your Sao Khuê config.",
     "tab": "display",
     "type": "stepper",
     "occurrence": 1,

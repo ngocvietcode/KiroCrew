@@ -3,10 +3,10 @@
 
 The ordinary MCP probe is intentionally tokenless, so a healthy OAuth provider
 returns a challenge and cannot prove that any tool is usable. This module starts
-one promptless kiro-cli ACP session under the real Kiro Crew agent, then reads
+one promptless kiro-cli ACP session under the real Sao Khuê agent, then reads
 kiro-cli's native ``/mcp`` and ``/tools`` structured results. Kiro-cli owns the
 bearer, performs the provider ``tools/list``, and applies the agent's final tool
-exposure rules; Kiro Crew receives only bounded status and counts.
+exposure rules; Sao Khuê receives only bounded status and counts.
 """
 
 from __future__ import annotations

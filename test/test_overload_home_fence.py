@@ -183,7 +183,7 @@ class TestPrivateWindowDoesNotCostDelegation:
         self, monkeypatch
     ) -> None:
         """Every session spawn now carries its scratch window. A window relaxes
-        a mask owned by Kiro Crew the delegated sandbox never applies, so it must
+        a mask owned by Sao Khuê the delegated sandbox never applies, so it must
         not be read as an extra path policy (which sends Windows to the
         fail-closed no-backend path)."""
         from unittest.mock import MagicMock, patch
@@ -207,7 +207,7 @@ class TestPrivateWindowDoesNotCostDelegation:
 
 
 def _outside_any_sandbox(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Run the routing as a gateway does: not already inside a Kiro Crew sandbox.
+    """Run the routing as a gateway does: not already inside a Sao Khuê sandbox.
 
     ``wrap_argv`` passes argv through untouched -- no launcher, no profile, no
     backend probe -- when the process carries the launcher-only
@@ -267,7 +267,7 @@ class TestThePrivateWindowSurvivesTheRoutingItDependsOn:
             patch("kiro_crew.sel.sel", return_value=MagicMock()),
             patch("kiro_crew.sandbox.detect_backend", return_value="namespace"),
             # A kiro-cli spawn on macOS is handed to kiro-cli's OWN sandbox when the
-            # internal edition's settings ask for it, and then Kiro Crew writes no
+            # internal edition's settings ask for it, and then Sao Khuê writes no
             # launcher at all -- so on a machine carrying that setting this test
             # read `cleanup is None` and failed, while every CI runner passed. The
             # decision is the host's, not this test's subject, so it is pinned:

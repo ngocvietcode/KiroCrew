@@ -7,7 +7,7 @@ project's conventions in prose.
 
 Resolution order (most-specific-wins):
   1. .prepare-pr.toml at the repo root   -> explicit config
-  2. Kiro Crew markers present            -> bundled profiles/kirocrew.json
+  2. Sao Khuê markers present            -> bundled profiles/kirocrew.json
   3. a detectable stack                  -> auto-detected gates + reviewers
      (pyproject / package.json /            globbed from .github/workflows
       Cargo.toml / go.mod / Makefile)
@@ -48,7 +48,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROFILES_DIR = os.path.join(os.path.dirname(HERE), "profiles")
 
-# Files whose combined presence identifies the Kiro Crew repo (or a faithful
+# Files whose combined presence identifies the Sao Khuê repo (or a faithful
 # fork) with a very low false-positive rate. All must be present to match.
 _KIROCREW_MARKERS = (
     "AUTOSDE.yaml",
@@ -298,7 +298,7 @@ class WorktreeReader(TreeReader):
 
 
 def detect_kirocrew(reader: TreeReader) -> bool:
-    """True iff all Kiro Crew marker files are present at the given tree reader."""
+    """True iff all Sao Khuê marker files are present at the given tree reader."""
     return all(reader.has(m) for m in _KIROCREW_MARKERS)
 
 
@@ -356,7 +356,7 @@ def detect_reviewers(reader: TreeReader) -> list[dict]:
 def resolve(root, base_ref=None):
     """Apply the resolution order and return a normalized profile dict.
 
-    With ``base_ref``, EVERY profile input -- the config file, the Kiro Crew
+    With ``base_ref``, EVERY profile input -- the config file, the Sao Khuê
     markers, and gate/reviewer auto-detection -- is read from that pinned ref,
     never the branch checkout, so a branch under review cannot edit its own
     review authority. Without it (standalone CLI use), the working tree is

@@ -676,7 +676,7 @@ class TestAReadBackFailureRefusesTheSession:
                 remedy="reinstall it",
             )
         message = str(excinfo.value)
-        assert "would not reach Kiro Crew's security gate" in message
+        assert "would not reach Sao Khuê's security gate" in message
         assert acp_tool_gate.UNENFORCED_CONTROLS in message
         assert "reinstall it" in message
 

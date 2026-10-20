@@ -1072,7 +1072,7 @@ class TestImportMerge:
         return Path(tmp.name)
 
     def test_import_merge_into_empty(self, patched_config_dir, tmp_path):
-        """Import into a fresh (empty) KiroCrew instance."""
+        """Import into a fresh (empty) SaoKhue instance."""
         zip_path = self._make_export(patched_config_dir)
         try:
             # Target: empty directory

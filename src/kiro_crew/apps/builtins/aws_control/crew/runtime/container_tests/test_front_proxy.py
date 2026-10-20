@@ -1,6 +1,6 @@
 """Tests for the S1 front process against a FAKE backend HTTP surface.
 
-No AWS, no real Kiro Crew boot. The fake backend is a small FastAPI app on real
+No AWS, no real Sao Khuê boot. The fake backend is a small FastAPI app on real
 loopback that records what it received and models the three backend behaviours
 the front must respect: the ``X-Internal-Secret`` grant, the per-slot 409, and an
 SSE turn stream. The front app is driven in-process over ``httpx.ASGITransport``.

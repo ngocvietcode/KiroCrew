@@ -403,7 +403,7 @@
     "signed_in_with": "Sesión iniciada con {{provider}}",
     "skip_to_content": "Saltar al contenido",
     "social_login": "Inicio de sesión social",
-    "star_kirocrew_on_github": "Dale una estrella a Kiro Crew en GitHub",
+    "star_kirocrew_on_github": "Dale una estrella a Sao Khuê en GitHub",
     "star_us": "Danos una estrella",
     "starting_update": "Iniciando la actualización…",
     "syncing_workspace": "Sincronizando el espacio de trabajo",
@@ -483,7 +483,7 @@
     },
     "agentWorlds": {
       "manifest": {
-        "description": "Convierte tus agentes en ejecución en personajes de una escena animada de pixel art, así un vistazo te dice qué tan ocupado está Kiro Crew. Cada agente activo aparece como un sprite que reacciona cuando el trabajo empieza y termina, en escenas temáticas que van de una oficina clásica a una torre del mago o un laboratorio submarino. Ábrelo en su propia ventana para mantenerlo en una segunda pantalla mientras trabajas.",
+        "description": "Convierte tus agentes en ejecución en personajes de una escena animada de pixel art, así un vistazo te dice qué tan ocupado está Sao Khuê. Cada agente activo aparece como un sprite que reacciona cuando el trabajo empieza y termina, en escenas temáticas que van de una oficina clásica a una torre del mago o un laboratorio submarino. Ábrelo en su propia ventana para mantenerlo en una segunda pantalla mientras trabajas.",
         "display_name": "Agent Worlds",
         "highlight_1": "Vista en vivo de qué agentes están en ejecución, como personajes en lugar de una lista",
         "highlight_2": "Escenas temáticas como Oficina, Guarida de pandas, Red neuronal, Torre del mago y Laboratorio submarino",
@@ -1557,7 +1557,7 @@
         "title": "Crew Companion"
       },
       "manifest": {
-        "description": "Un acompañante de escritorio para Kiro Crew que te ayuda a marcar el ritmo de tu día: te recuerda tomar descansos, guarda los recordatorios que creas en lenguaje natural y hace un ejercicio corto de respiración cuando necesitas despejarte. También te avisa cuando una sesión termina, falla o necesita tu aprobación.",
+        "description": "Un acompañante de escritorio para Sao Khuê que te ayuda a marcar el ritmo de tu día: te recuerda tomar descansos, guarda los recordatorios que creas en lenguaje natural y hace un ejercicio corto de respiración cuando necesitas despejarte. También te avisa cuando una sesión termina, falla o necesita tu aprobación.",
         "display_name": "Crew Companion",
         "highlight_1": "Avisos suaves para descansar — agua, estirarse, mirar a lo lejos — en el intervalo que elijas",
         "highlight_2": "Recordatorios que creas en lenguaje natural, como \"toma agua en 20 minutos\"",
@@ -1566,7 +1566,7 @@
         "highlight_5": "Flota en tu escritorio con un avatar intercambiable",
         "page_label": "Crew Companion",
         "use_case_1": "Usa un compañero de escritorio para avisos de descanso, recordatorios en lenguaje sencillo, ejercicios de respiración y notificaciones de sesiones.",
-        "configuration_1": "Usa Kiro Crew Desktop, activa la app y configura en su página el intervalo de descanso y las notificaciones de finalización; los avatares se eligen en la Gallery del compañero."
+        "configuration_1": "Usa Sao Khuê Desktop, activa la app y configura en su página el intervalo de descanso y las notificaciones de finalización; los avatares se eligen en la Gallery del compañero."
       },
       "memories": {
         "days_together_many": "{{count}} días juntos",
@@ -1898,18 +1898,18 @@
     },
     "devFleet": {
       "manifest": {
-        "description": "Un panel de control para trabajar en Kiro Crew mismo. Lista cada worktree de función junto con el estado de su pull request, su número de commits y su uso de disco, y puede levantar cualquiera de ellos como un pod: una instancia de vista previa completa en su propio puerto y con su propio directorio de datos, para que revises un cambio sin terminar sin tocar tu gateway en vivo. También se encarga de las tareas de alrededor — traer main y recompilar, hacer rebase de una rama, transmitir los logs del pod y purgar los worktrees cuyo trabajo ya se integró.",
+        "description": "Un panel de control para trabajar en Sao Khuê mismo. Lista cada worktree de función junto con el estado de su pull request, su número de commits y su uso de disco, y puede levantar cualquiera de ellos como un pod: una instancia de vista previa completa en su propio puerto y con su propio directorio de datos, para que revises un cambio sin terminar sin tocar tu gateway en vivo. También se encarga de las tareas de alrededor — traer main y recompilar, hacer rebase de una rama, transmitir los logs del pod y purgar los worktrees cuyo trabajo ya se integró.",
         "display_name": "Dev Fleet",
         "highlight_1": "Levanta cualquier worktree como un pod aislado en su propio puerto y directorio de datos, sin tocar tu gateway en vivo",
         "highlight_2": "Vista de flota con el estado del PR por rama, el número de commits y el uso de disco",
         "highlight_3": "Sincroniza (trae main y recompila) o haz rebase de una rama sin salir del panel",
         "highlight_4": "\"Purgar fusionados\" se niega a eliminar un worktree con trabajo sin confirmar o sin seguimiento en lugar de descartarlo",
         "highlight_5": "Transmite los logs del pod y genera tokens de acceso al pod desde la interfaz",
-        "highlight_6": "Hecho para quienes desarrollan Kiro Crew mismo — no hace falta para el uso diario",
+        "highlight_6": "Hecho para quienes desarrollan Sao Khuê mismo — no hace falta para el uso diario",
         "highlight_7": "Los pods corren en Linux (systemd --user) y macOS (launchd) — pero el pod de macOS no tiene un límite de memoria/CPU aplicado; Activar prepara el puntero en todas las plataformas, y el reinicio automático requiere una unidad systemd --user o un LaunchAgent de macOS; la vista de flota, el estado del PR, la sincronización, el rebase y la purga funcionan en cualquier plataforma",
         "page_label": "Dev Fleet",
-        "use_case_1": "Gestiona los worktrees de funciones de Kiro Crew y pods de vista previa aislados sin alterar el gateway en producción.",
-        "configuration_1": "Apunta la app a un checkout de Kiro Crew; las acciones de PR necesitan gh autenticado, mientras que los pods requieren systemd --user en Linux o launchd en macOS y deben aprovisionarse primero."
+        "use_case_1": "Gestiona los worktrees de funciones de Sao Khuê y pods de vista previa aislados sin alterar el gateway en producción.",
+        "configuration_1": "Apunta la app a un checkout de Sao Khuê; las acciones de PR necesitan gh autenticado, mientras que los pods requieren systemd --user en Linux o launchd en macOS y deben aprovisionarse primero."
       }
     },
     "designTweak": {
@@ -2081,7 +2081,7 @@
         "truncated": "· truncado"
       },
       "manifest": {
-        "description": "Explora y lee archivos en la máquina que ejecuta Kiro Crew sin salir del panel. Mantén varios archivos abiertos en pestañas, recorre el árbol de directorios con el estado de git de cada archivo al lado, busca una cadena en toda una carpeta y lee el markdown renderizado en lugar del código fuente. Es de solo lectura por diseño: abre y busca archivos, pero nunca los edita, los mueve ni los elimina, y solo puede llegar a tu directorio home, al directorio temporal del sistema y, en Linux y macOS, a los árboles /home, /opt y /workplace.",
+        "description": "Explora y lee archivos en la máquina que ejecuta Sao Khuê sin salir del panel. Mantén varios archivos abiertos en pestañas, recorre el árbol de directorios con el estado de git de cada archivo al lado, busca una cadena en toda una carpeta y lee el markdown renderizado en lugar del código fuente. Es de solo lectura por diseño: abre y busca archivos, pero nunca los edita, los mueve ni los elimina, y solo puede llegar a tu directorio home, al directorio temporal del sistema y, en Linux y macOS, a los árboles /home, /opt y /workplace.",
         "display_name": "Archivos",
         "highlight_1": "Solo lectura: abre y busca archivos, y nunca los escribe, los mueve ni los elimina",
         "highlight_2": "Varios archivos abiertos a la vez en pestañas, con resaltado de sintaxis",
@@ -3420,7 +3420,7 @@
       "manifest": {
         "description": "Un asistente de reuniones con IA. Transcribe una reunión en vivo, mantiene notas estructuradas y diagramas a medida que avanza, extrae tareas y te deja revisarlas antes de registrarlas.",
         "display_name": "Reuniones",
-        "highlight_1": "Transcripción en vivo con el propio motor de voz a texto de Kiro Crew — sin un daemon extra y sin una cuenta en la nube más allá de la que ya usas",
+        "highlight_1": "Transcripción en vivo con el propio motor de voz a texto de Sao Khuê — sin un daemon extra y sin una cuenta en la nube más allá de la que ya usas",
         "highlight_2": "Un equipo de agentes trabaja la reunión en paralelo: notas estructuradas, un diagrama HTML/Mermaid y una lista de tareas",
         "highlight_3": "Corrige una vez los errores recurrentes de voz a texto con un diccionario de tu dominio y todas las reuniones siguientes los transcriben bien",
         "highlight_4": "Revisa las tareas extraídas antes de registrar nada — archiva el ruido y registra el resto",
@@ -3806,7 +3806,7 @@
         "highlight_6": "El núcleo autónomo corre por completo en el mismo proceso — sin una segunda aplicación y sin un entorno de ejecución extra",
         "page_label": "Mochi",
         "use_case_1": "Mantén una mascota de escritorio discreta que conversa, sigue recordatorios y cambios en páginas públicas y se adapta a los eventos del calendario conectado.",
-        "configuration_1": "Usa Kiro Crew Desktop, activa Mochi, elige su aspecto y comportamiento y añade objetivos de seguimiento en el chat o el panel; la planificación según la agenda requiere una herramienta MCP de calendario conectada."
+        "configuration_1": "Usa Sao Khuê Desktop, activa Mochi, elige su aspecto y comportamiento y añade objetivos de seguimiento en el chat o el panel; la planificación según la agenda requiere una herramienta MCP de calendario conectada."
       },
       "menu": {
         "clear_screen": "Limpiar pantalla",
@@ -4262,7 +4262,7 @@
         "highlight_6": "Tiene en cuenta la rotación: el nivel de automatización de guardia se activa y se desactiva por su cuenta",
         "page_label": "Mission Control",
         "use_case_1": "Supervisa señales operativas, investiga incidentes, reutiliza correcciones probadas y entrega un registro de auditoría local completo.",
-        "configuration_1": "Añade proveedores en Ajustes con credenciales de entorno o tokens, conserva Observe para el uso de solo lectura y habilita expresamente las acciones Propose o Act permitidas; la salida a Slack reutiliza una conexión de Kiro Crew existente."
+        "configuration_1": "Añade proveedores en Ajustes con credenciales de entorno o tokens, conserva Observe para el uso de solo lectura y habilita expresamente las acciones Propose o Act permitidas; la salida a Slack reutiliza una conexión de Sao Khuê existente."
       },
       "opsMissionControlPage": {
         "act": "Act",
@@ -4628,7 +4628,7 @@
         "no_source_files": "No hay archivos fuente."
       },
       "manifest": {
-        "description": "Un editor de artículos en LaTeX con vista previa del PDF en vivo y un coautor con IA. Escribe en un editor de panel dividido, pulsa Cmd+S (Ctrl+S en Windows y Linux) para compilar con pdflatex o tectonic, y lee el PDF renderizado junto a tu código fuente. Los errores de compilación se analizan en una lista donde puedes hacer clic para saltar a la línea que los provoca. Clona un artículo existente desde cualquier remoto de git y luego confirma y envía los cambios desde la barra de herramientas. El panel del coautor es una sesión de chat real de Kiro Crew acotada al artículo, así que el agente puede leer y editar tu LaTeX mientras ves cómo se actualiza el PDF.",
+        "description": "Un editor de artículos en LaTeX con vista previa del PDF en vivo y un coautor con IA. Escribe en un editor de panel dividido, pulsa Cmd+S (Ctrl+S en Windows y Linux) para compilar con pdflatex o tectonic, y lee el PDF renderizado junto a tu código fuente. Los errores de compilación se analizan en una lista donde puedes hacer clic para saltar a la línea que los provoca. Clona un artículo existente desde cualquier remoto de git y luego confirma y envía los cambios desde la barra de herramientas. El panel del coautor es una sesión de chat real de Sao Khuê acotada al artículo, así que el agente puede leer y editar tu LaTeX mientras ves cómo se actualiza el PDF.",
         "display_name": "Papyrus",
         "highlight_1": "Editor de LaTeX en panel dividido con una vista previa del PDF en vivo al lado",
         "highlight_2": "Compila al guardar (Cmd+S, o Ctrl+S en Windows y Linux) con pdflatex o tectonic, y ejecuta el ciclo de bibtex por ti",
@@ -5191,7 +5191,7 @@
         }
       },
       "manifest": {
-        "description": "Desarrollo basado en especificaciones dentro de Kiro Crew: convierte una idea de función en Requisitos → Diseño → Tareas con un agente integrado, revisa el markdown en la propia app y luego entrega el plan aprobado a una sesión de ejecución autónoma.",
+        "description": "Desarrollo basado en especificaciones dentro de Sao Khuê: convierte una idea de función en Requisitos → Diseño → Tareas con un agente integrado, revisa el markdown en la propia app y luego entrega el plan aprobado a una sesión de ejecución autónoma.",
         "display_name": "Spec Builder",
         "page_label": "Spec Builder",
         "use_case_1": "Convierte una función, un error o una tarea rápida en requisitos, diseño y pasos de implementación vinculados al repositorio y listos para revisar.",
@@ -5204,7 +5204,7 @@
     },
     "workflows": {
       "manifest": {
-        "description": "Crea, ejecuta y observa flujos de trabajo dinámicos: scripts de Python, normalmente escritos por un agente a partir de un objetivo en lenguaje natural, que guían a varios agentes de Kiro Crew por fases ordenadas. Un script se comprueba contra un conjunto aislado de comandos de flujo de trabajo antes de que se ejecute nada, así los errores salen a la luz sin ejecutarse, y luego la página transmite cada fase y cada evento de los agentes a medida que avanza la ejecución. En un checkout del código fuente hay ejemplos ejecutables para empezar; las instalaciones empaquetadas no incluyen ninguno.",
+        "description": "Crea, ejecuta y observa flujos de trabajo dinámicos: scripts de Python, normalmente escritos por un agente a partir de un objetivo en lenguaje natural, que guían a varios agentes de Sao Khuê por fases ordenadas. Un script se comprueba contra un conjunto aislado de comandos de flujo de trabajo antes de que se ejecute nada, así los errores salen a la luz sin ejecutarse, y luego la página transmite cada fase y cada evento de los agentes a medida que avanza la ejecución. En un checkout del código fuente hay ejemplos ejecutables para empezar; las instalaciones empaquetadas no incluyen ninguno.",
         "display_name": "Flujos de trabajo",
         "highlight_1": "Valida un flujo de trabajo antes de ejecutarlo — los errores salen a la luz sin que se ejecute nada",
         "highlight_2": "Observa la ejecución en vivo, fase por fase, con eventos de avance por agente",
@@ -5376,7 +5376,7 @@
     },
     "awsControl": {
       "manifest": {
-        "description": "Tus cuentas en la nube, en lenguaje claro. Consulta cada cuenta de AWS que Kiro Crew puede usar con un indicador de estado por cuenta y orientación de reconexión adaptada, además de una unidad en la nube respaldada por S3 —archivos, una biblioteca de artefactos en la nube y copias de seguridad— con enlaces para compartir con caducidad. Nada es público salvo que tú lo indiques, y cada servicio de pago solicita tu confirmación antes de poder generarte cargos.",
+        "description": "Tus cuentas en la nube, en lenguaje claro. Consulta cada cuenta de AWS que Sao Khuê puede usar con un indicador de estado por cuenta y orientación de reconexión adaptada, además de una unidad en la nube respaldada por S3 —archivos, una biblioteca de artefactos en la nube y copias de seguridad— con enlaces para compartir con caducidad. Nada es público salvo que tú lo indiques, y cada servicio de pago solicita tu confirmación antes de poder generarte cargos.",
         "display_name": "AWS Control",
         "highlight_1": "Un indicador de estado por cuenta, cada uno con orientación de reconexión adaptada a cómo se autentica el perfil",
         "highlight_2": "Almacenamiento privado, cifrado y con versiones que solo se crea después de que lo confirmes",
@@ -5384,7 +5384,7 @@
         "highlight_4": "Los enlaces para compartir siempre caducan: nada es público salvo que tú lo indiques",
         "highlight_5": "Cada servicio de pago se confirma por cuenta antes de su primer uso, y todo cambio queda registrado",
         "page_label": "AWS Control",
-        "use_case_1": "Consulta cada cuenta de AWS que Kiro Crew puede alcanzar, cuáles están saludables y cuánto te está costando este mes, sin abrir la consola de AWS.",
+        "use_case_1": "Consulta cada cuenta de AWS que Sao Khuê puede alcanzar, cuáles están saludables y cuánto te está costando este mes, sin abrir la consola de AWS.",
         "configuration_1": "Añade una cuenta desde los perfiles que ya están en esta máquina y luego confirma cada servicio de pago una vez por cuenta antes de usarlo."
       },
       "console": {
@@ -8696,7 +8696,7 @@
     },
     "sessionPulseSurveyCard": {
       "dismiss": "Descartar encuesta",
-      "email_disclosure": "Es posible que nos comuniquemos contigo sobre tus comentarios. Tu calificación y cualquier comentario se envían al equipo de Kiro Crew.",
+      "email_disclosure": "Es posible que nos comuniquemos contigo sobre tus comentarios. Tu calificación y cualquier comentario se envían al equipo de Sao Khuê.",
       "email_placeholder": "tu@ejemplo.com (opcional)",
       "email_prompt": "Comparte tu correo electrónico para unirte a nuestro panel de investigación",
       "feedback_question": "¿Tienes comentarios adicionales sobre esta experiencia?",
@@ -17708,7 +17708,7 @@
         "copied": "Copiado",
         "copy_manifest_yaml": "Copiar el YAML del manifiesto",
         "create_slack_app": "Crear app de Slack",
-        "create_the_slack_app_from_the_manifest": "Crea la app de Slack a partir del manifiesto precargado de abajo (incluye Socket Mode y los permisos, con el nombre KiroCrew-{{alias}}). Instálala en tu espacio de trabajo y luego pega aquí el token del bot y el token de nivel de app.",
+        "create_the_slack_app_from_the_manifest": "Crea la app de Slack a partir del manifiesto precargado de abajo (incluye Socket Mode y los permisos, con el nombre SaoKhue-{{alias}}). Instálala en tu espacio de trabajo y luego pega aquí el token del bot y el token de nivel de app.",
         "e0123abc456": "E0123ABC456",
         "enterprise_grid_org_ids_to_allow_starts_with_e_o": "IDs de Slack permitidos: los IDs de organización empiezan por E y los de espacio de trabajo, por T. En Enterprise Grid, incluye el ID E… de la organización y el ID T… de cada espacio de trabajo: los mensajes se comprueban por espacio de trabajo, así que una lista con solo el ID E… rechaza todos los mensajes. Déjalo vacío para permitir todas.",
         "from_oauth_permissions_after_installing_your_sla": "En OAuth & Permissions, después de instalar tu app de Slack (empieza por xoxb-).",
@@ -19323,8 +19323,8 @@
     "dataNeverSentBody": "Indicaciones, respuestas, archivos, credenciales, nombres de host, nombres de usuario ni tu sistema operativo. Tu IP no se almacena.",
     "dataNeverSentTitle": "Nunca se envía",
     "governanceOverrideNote": "La política de seguridad de tu administrador lo desactiva. No se puede cambiar aquí.",
-    "installReceiptBody": "Tras una instalación o actualización correcta desde el catálogo oficial de Kiro Crew, se envía un recibo anónimo. Nunca se informan registros externos, apps locales ni apps autorregistradas.",
-    "installReceiptFields": "slug de la app oficial · token anónimo por app (no vinculable entre apps) · instalación nueva/actualización · versión de Kiro Crew",
+    "installReceiptBody": "Tras una instalación o actualización correcta desde el catálogo oficial de Sao Khuê, se envía un recibo anónimo. Nunca se informan registros externos, apps locales ni apps autorregistradas.",
+    "installReceiptFields": "slug de la app oficial · token anónimo por app (no vinculable entre apps) · instalación nueva/actualización · versión de Sao Khuê",
     "installReceiptTitle": "Recibos de instalación de apps oficiales",
     "localDataBody": "Registros de uso y contexto. Las métricas de rendimiento están desactivadas por defecto.",
     "localDataTitle": "Se queda en tu dispositivo",

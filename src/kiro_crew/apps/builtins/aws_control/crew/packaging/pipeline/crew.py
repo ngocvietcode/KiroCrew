@@ -37,7 +37,7 @@ def _default_config_dir() -> Path:
     override = os.environ.get("KIROCREW_HOME")
     if override:
         return Path(override).expanduser()
-    # The repo's real convention is ~/.kiro/crew, NOT ~/.kirocrew. Kiro Crew's
+    # The repo's real convention is ~/.kiro/crew, NOT ~/.kirocrew. Sao Khuê's
     # config_dir() defaults here (config/paths.py:44 CONFIG_DIR_NAME=".kiro/crew",
     # :93 "default data root: ~/.kiro/crew") and skills live at config_dir()/skills
     # (config/memory_sections.py: "Local ~/.kiro/crew/skills/ takes precedence"). The

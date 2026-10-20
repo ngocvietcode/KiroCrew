@@ -135,7 +135,7 @@ function storedChat(): Record<string, unknown> {
   return JSON.parse(localStorage.getItem(LS_KEY) || '{}')
 }
 
-/** Seed the Kiro Crew config query with a deep-merged override of BASE_MC. */
+/** Seed the Sao Khuê config query with a deep-merged override of BASE_MC. */
 function seedMc(over: {
   session?: Record<string, unknown>
   agent?: Record<string, unknown>

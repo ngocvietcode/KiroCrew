@@ -1,7 +1,7 @@
 ---
 title: Local Notification Bus
 status: partial
-author: KiroCrew contributors
+author: SaoKhue contributors
 created: 2026-07-10
 last-audited: 2026-10-06
 audited-at: 9348a25a34
@@ -21,14 +21,14 @@ superseded-by: []
 > and Phase 5's remaining kind-routing cleanup.
 
 - Status: partial — Phases 1 and 4 are fully on main (bus core + schema v2, inline actions + `group_key` stacking + dock badge). Phase 3 is partial: per-channel mute and priority override plus the priority UX shipped, stored in `~/.kiro/crew/notification_settings.json` (`notifications/settings.py`); per-channel sound was not built, and sound is one client-side setting (see `docs/system-specs/modules/app-notifications.md`). Phase 2's mechanism is complete and now has a shipped in-process producer: `ops-mission-control` declares three channels and pushes through the state-owned bus while applying the same channel and rate-limit guards. The original app-token HTTP producer criterion remains unproven. Phase 5 shipped 2 of 3 (the `send_notification` MCP tool and the TTL sweeper); removing the kind-based routing fallbacks is unstarted — `NotificationDetailPanel.tsx` still branches on `n.kind`. Slack escalation was **withdrawn**, not shipped, and is superseded by `rfc-notification-bridge.md`.
-- Author: KiroCrew contributors
+- Author: SaoKhue contributors
 - Created: 2026-07-10
 - Related: [`rfc-federated-app-platform.md`](rfc-federated-app-platform.md)
   (apps as notification producers)
 
 ## Summary
 
-Evolve KiroCrew's notification system from a hardcoded internal function into a local notification bus modeled on the mobile OS notification pattern (APNs/FCM channels, priorities, inline actions), with the gateway process acting as the on-device push service. Any producer -- gateway internals, cron jobs, subagents, and installed apps -- can publish structured notifications through one entry point, and users control delivery per channel. No cloud infrastructure is involved; all transport is local IPC (HTTP to the gateway, SSE/WebSocket to the dashboard).
+Evolve SaoKhue's notification system from a hardcoded internal function into a local notification bus modeled on the mobile OS notification pattern (APNs/FCM channels, priorities, inline actions), with the gateway process acting as the on-device push service. Any producer -- gateway internals, cron jobs, subagents, and installed apps -- can publish structured notifications through one entry point, and users control delivery per channel. No cloud infrastructure is involved; all transport is local IPC (HTTP to the gateway, SSE/WebSocket to the dashboard).
 
 ## Motivation
 

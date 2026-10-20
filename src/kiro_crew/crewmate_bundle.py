@@ -57,7 +57,7 @@ def crewmate_import_params(bundle: Any) -> dict[str, Any]:
     if type(version) is not int or version < 1:
         raise catalog._fail("invalid_bundle", "'formatVersion' must be a whole number")
     if version not in catalog.CREWMATE_FORMAT_VERSIONS:
-        raise catalog._fail("newer_format", "this file needs a newer Kiro Crew")
+        raise catalog._fail("newer_format", "this file needs a newer Sao Khuê")
     agent = _bundle_part(bundle, "agent", dict, required=True)
     grant = sorted(set(agent) & {"allowedTools", "autoApprove", "permissions"})
     if grant:

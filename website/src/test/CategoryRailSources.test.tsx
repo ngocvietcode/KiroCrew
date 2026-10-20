@@ -28,24 +28,24 @@ function renderRail(sources: SourceRow[]) {
 describe('CategoryRail SOURCES review tier', () => {
   it('marks a curated source as reviewed by the team', () => {
     renderRail([CURATED])
-    expect(screen.getByLabelText('Reviewed by the Kiro Crew team')).toBeInTheDocument()
-    expect(screen.getByTitle('Reviewed by the Kiro Crew team')).toBeInTheDocument()
+    expect(screen.getByLabelText('Reviewed by the Sao Khuê team')).toBeInTheDocument()
+    expect(screen.getByTitle('Reviewed by the Sao Khuê team')).toBeInTheDocument()
   })
 
   it('marks a community source as not vetted', () => {
     renderRail([COMMUNITY])
     expect(
-      screen.getByLabelText('Community-listed, not vetted by the Kiro Crew team'),
+      screen.getByLabelText('Community-listed, not vetted by the Sao Khuê team'),
     ).toBeInTheDocument()
     expect(
-      screen.getByTitle('Community-listed, not vetted by the Kiro Crew team'),
+      screen.getByTitle('Community-listed, not vetted by the Sao Khuê team'),
     ).toBeInTheDocument()
   })
 
   it('does not read a community source as first-party or reviewed', () => {
     renderRail([COMMUNITY])
     expect(screen.queryByLabelText('First-party')).toBeNull()
-    expect(screen.queryByLabelText('Reviewed by the Kiro Crew team')).toBeNull()
+    expect(screen.queryByLabelText('Reviewed by the Sao Khuê team')).toBeNull()
   })
 
   it('shows the community tier as VISIBLE text, not only on hover', () => {
@@ -72,11 +72,11 @@ describe('CategoryRail SOURCES review tier', () => {
 
   it('keeps the first-party check off a curated registry', () => {
     // `BadgeCheck` means built-in. Giving it to a curated external registry too
-    // blurred two different claims — shipped with Kiro Crew, versus reviewed by
+    // blurred two different claims — shipped with Sao Khuê, versus reviewed by
     // its team — so curated takes the card's shield instead.
     renderRail([BUILTIN, CURATED])
     expect(screen.getByLabelText('First-party')).toBeInTheDocument()
-    expect(screen.getByLabelText('Reviewed by the Kiro Crew team')).toBeInTheDocument()
+    expect(screen.getByLabelText('Reviewed by the Sao Khuê team')).toBeInTheDocument()
   })
 
   it('claims nothing for a source with no review tier', () => {
@@ -84,7 +84,7 @@ describe('CategoryRail SOURCES review tier', () => {
     // over-claim this change removes.
     renderRail([PLAIN])
     expect(screen.getByText('My registry')).toBeInTheDocument()
-    expect(screen.queryByTitle(/Kiro Crew team/)).toBeNull()
+    expect(screen.queryByTitle(/Sao Khuê team/)).toBeNull()
   })
 
   it('shows the display label, not the registry id', () => {
@@ -109,5 +109,5 @@ it('exposes a long source name on hover without hiding the review explanation', 
   const label = 'A very long community apps registry name that does not fit the rail'
   renderRail([{ ...COMMUNITY, label }])
   expect(screen.getByTitle(label)).toHaveTextContent(label)
-  expect(screen.getByTitle('Community-listed, not vetted by the Kiro Crew team')).toBeVisible()
+  expect(screen.getByTitle('Community-listed, not vetted by the Sao Khuê team')).toBeVisible()
 })

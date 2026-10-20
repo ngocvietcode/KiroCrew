@@ -267,7 +267,7 @@ def test_full_flag_runs_the_budgeted_auto_with_a_capped_env(gate, monkeypatch) -
 
 
 def test_an_inherited_tighter_cap_is_never_raised(gate, monkeypatch) -> None:
-    """Kiro Crew seeds PYTEST_XDIST_AUTO_NUM_WORKERS at every agent spawn; the
+    """Sao Khuê seeds PYTEST_XDIST_AUTO_NUM_WORKERS at every agent spawn; the
     gate must not hand a run more workers than its parent asked for."""
     monkeypatch.setenv("PYTEST_XDIST_AUTO_NUM_WORKERS", "1")
     assert gate.pytest_worker_env()["PYTEST_XDIST_AUTO_NUM_WORKERS"] == "1"

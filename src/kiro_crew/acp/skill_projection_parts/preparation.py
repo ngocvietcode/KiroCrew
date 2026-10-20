@@ -163,7 +163,7 @@ def _warn_ceiling_fallback_once(directory: Path, count: int) -> None:
         "new spawns no longer create skill views and fall back to authored agents until the "
         "count drops (sessions already projecting keep refreshing their own view). The count "
         "is every such file in the directory -- kiro-cli reads them "
-        "all at startup regardless of which Kiro Crew home wrote them -- so a backlog another "
+        "all at startup regardless of which Sao Khuê home wrote them -- so a backlog another "
         "home leaked trips this too, and this gateway cannot drain that home's files. Run "
         "`kirocrew doctor`: it names any foreign-home share and the remedy (stop every "
         "gateway using this agents directory, then move the files out). A gateway restart "

@@ -1,4 +1,4 @@
-"""Reference backend handler for KiroCrew One-Click Deploy.
+"""Reference backend handler for SaoKhue One-Click Deploy.
 
 Copy this as your app's `api/index.py` starting point. It runs on AWS Lambda
 behind an API Gateway HTTP API (payload format 2.0), served at /<slug>/api/*.

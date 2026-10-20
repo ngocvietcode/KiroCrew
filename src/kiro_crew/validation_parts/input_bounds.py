@@ -82,7 +82,7 @@ BROADCAST_TARGET_ALLOWANCE_SECS = 5.0
 # derived from measurement: the client budget must EXCEED the sequential delivery
 # bound, never merely equal it, so the per-target report still reaches the caller.
 BROADCAST_RESPONSE_MARGIN_SECS = 10.0
-# Longest backend-authored ACP session id Kiro Crew RETAINS in a store of its
+# Longest backend-authored ACP session id Sao Khuê RETAINS in a store of its
 # own: the native-child rosters and a created slot's frozen creator id (held in
 # memory only, never written to the transcript), and through it the crew log's
 # ``parent.sid`` citation. One
@@ -328,7 +328,7 @@ SLACK_THREAD_TS_RE = re.compile(r"^[0-9]{10,}\.[0-9]{6,}$")
 
 
 def infer_use_case(session_key: str) -> str:
-    """Map a Kiro Crew session_key to a categorical useCase label.
+    """Map a Sao Khuê session_key to a categorical useCase label.
 
     Returns ``"unknown"`` for unrecognized shapes — never raises. Pure string
     matching on the session key; lives here next to ``SLACK_THREAD_TS_RE`` so

@@ -5,8 +5,8 @@ review bot, a ticket system, or a shell script POSTs a message to
 `/api/hooks/agent`; the gateway runs one agent turn in an ephemeral session and
 delivers the answer to your notifications, not back over the HTTP connection.
 
-This is the inbound counterpart to cron jobs: cron fires on a schedule Kiro Crew
-owns, a webhook fires when something outside Kiro Crew decides it is time.
+This is the inbound counterpart to cron jobs: cron fires on a schedule Sao Khuê
+owns, a webhook fires when something outside Sao Khuê decides it is time.
 
 ## The Webhooks page is preview-gated
 
@@ -182,7 +182,7 @@ breaking the others.
   calling.
 - A legacy single token set as `hooks.webhook_token` in `config.json` continues
   to work, and appears in the list as a read-only entry. To remove it, delete
-  the key from the config file — Kiro Crew does not rewrite your config for you.
+  the key from the config file — Sao Khuê does not rewrite your config for you.
 - Webhooks are **disabled by default**: with no token configured, every request
   is a 401. There is no unauthenticated mode.
 - A source that keeps presenting bad tokens is throttled — 10 failures in a

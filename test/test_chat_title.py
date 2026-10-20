@@ -322,7 +322,7 @@ def test_refusal_reply_is_rejected_as_prose():
         "Unable to retrieve the blog post",
         "Here's a title for your conversation",
         "It looks like you shared a link",
-        "Kiro Crew launch blog. Review requested",
+        "Sao Khuê launch blog. Review requested",
         "A very long reply that keeps going and going well past any real session title length",
     ],
 )
@@ -333,7 +333,7 @@ def test_prose_replies_rejected(reply):
 @pytest.mark.parametrize(
     "reply",
     [
-        "Kiro Crew launch blog",
+        "Sao Khuê launch blog",
         "Node.js upgrade plan",
         "Ship v1.2 to prod",
         "Fix title generation bug",
@@ -386,14 +386,14 @@ async def test_generate_title_keeps_real_reply(monkeypatch):
     """Revert guard: the same path must still return a well-formed title."""
 
     async def _fake_oneliner(*_a, **_kw):
-        return "Kiro Crew launch blog"
+        return "Sao Khuê launch blog"
 
     monkeypatch.setattr(chat_title, "run_bg_oneliner", _fake_oneliner)
     title = await chat_title._generate_title_via_kiro(
         SimpleNamespace(sessions=SimpleNamespace()),
         [{"role": "user", "content": "this is the launch blog https://example.com/Intro"}],
     )
-    assert title == "Kiro Crew launch blog"
+    assert title == "Sao Khuê launch blog"
 
 
 @pytest.mark.asyncio
@@ -528,9 +528,7 @@ async def test_ui_language_is_read_off_the_event_loop(monkeypatch):
 
     monkeypatch.setattr(chat_title, "_ui_language", _record)
     monkeypatch.setattr(chat_title, "run_bg_oneliner", _fake_oneliner)
-    await chat_title._generate_title_via_kiro(
-        SimpleNamespace(sessions=SimpleNamespace()), _msgs()
-    )
+    await chat_title._generate_title_via_kiro(SimpleNamespace(sessions=SimpleNamespace()), _msgs())
     assert seen["thread"] != loop_thread
 
 
@@ -584,7 +582,7 @@ def test_unspaced_script_titles_accepted(reply):
 @pytest.mark.parametrize(
     "raw,expected",
     [
-        ('"Kiro Crew launch blog"', "Kiro Crew launch blog"),
+        ('"Sao Khuê launch blog"', "Sao Khuê launch blog"),
         ("「修复会话标题语言」", "修复会话标题语言"),
         ("“修复会话标题语言”", "修复会话标题语言"),
         ("修复会话标题语言。", "修复会话标题语言"),
@@ -598,10 +596,10 @@ def test_clean_title_strips_full_width_wrappers(raw, expected):
 def test_reveal_prefixes_unchanged_for_spaced_titles():
     """Revert guard on the animation: latin titles still step one word at a
     time, and the caller still owns the final push."""
-    assert chat_title._title_reveal_prefixes("Kiro Crew launch blog") == [
-        "Kiro",
-        "Kiro Crew",
-        "Kiro Crew launch",
+    assert chat_title._title_reveal_prefixes("Sao Khuê launch blog") == [
+        "Sao",
+        "Sao Khuê",
+        "Sao Khuê launch",
     ]
     assert chat_title._title_reveal_prefixes("Standalone") == []
 
@@ -810,9 +808,7 @@ def test_refresh_prompt_also_explains_a_shortened_line():
     refresh transcript carries a marker its instructions never explain, while
     the initial prompt stays correct.
     """
-    prompt = _build_refresh_prompt(
-        [{"role": "user", "content": _MIDWORD_UNIT * 40}], "Old title"
-    )
+    prompt = _build_refresh_prompt([{"role": "user", "content": _MIDWORD_UNIT * 40}], "Old title")
     assert prompt is not None
     assert _excerpt_of(prompt).endswith(_TITLE_TRUNCATION_MARKER)
     assert _TITLE_TRUNCATION_NOTE.strip() in _head_of(prompt)
@@ -826,9 +822,7 @@ def test_refresh_note_precedes_the_keep_contract():
     Break-arm: move the {truncation} slot after the KEEP block -> the ordering
     flips and the note interposes between the contract and the transcript.
     """
-    prompt = _build_refresh_prompt(
-        [{"role": "user", "content": _MIDWORD_UNIT * 40}], "Old title"
-    )
+    prompt = _build_refresh_prompt([{"role": "user", "content": _MIDWORD_UNIT * 40}], "Old title")
     assert prompt is not None
     head = _head_of(prompt)
     assert head.index(_TITLE_TRUNCATION_NOTE.strip()) < head.index("exactly KEEP")
@@ -919,7 +913,9 @@ class TestSlotTitleRouteRefusalCodes:
 # ASCII; the runtime values are the Hangul sentences.
 
 # "haedang lingkeue jeopgeunhal su eopseumnida" -- "I cannot access that link"
-_KO_REFUSAL_SHORT = "\ud574\ub2f9 \ub9c1\ud06c\uc5d0 \uc811\uadfc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4"
+_KO_REFUSAL_SHORT = (
+    "\ud574\ub2f9 \ub9c1\ud06c\uc5d0 \uc811\uadfc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4"
+)
 # "joesonghajiman ... eopseumnida" -- "Sorry, I cannot open the external link,
 # so I cannot tell what the conversation is about"
 _KO_REFUSAL_LONG = (

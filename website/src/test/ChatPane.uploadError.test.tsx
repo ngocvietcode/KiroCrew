@@ -170,7 +170,7 @@ describe('ChatPane upload — a refused upload is surfaced, not silent (#5707)',
 
     // The gateway served 100 MB, the true ceiling for a document, so the
     // message can state it, and names the way to get the file in anyway.
-    await waitFor(() => expect(screen.getByText(/File too large: huge\.png \(max 100 MB\)\. To share it anyway, type @ followed by its location on the computer running Kiro Crew, for example @~\/Downloads\/huge\.png\./)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/File too large: huge\.png \(max 100 MB\)\. To share it anyway, type @ followed by its location on the computer running Sao Khuê, for example @~\/Downloads\/huge\.png\./)).toBeInTheDocument())
     expect(api.uploadFiles).not.toHaveBeenCalled()
     unmount()
 

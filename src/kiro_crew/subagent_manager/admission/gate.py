@@ -451,7 +451,7 @@ class _GateMixin(ManagerComponent):
 
         # --- Parent agent spec: ``toolsSettings.subagent.availableAgents`` ---
         # kiro-cli's own allowlist of what THIS agent may spawn, honoured here
-        # because Kiro Crew's sub-agents bypass kiro-cli's built-in ``subagent``
+        # because Sao Khuê's sub-agents bypass kiro-cli's built-in ``subagent``
         # tool. Checked against the EFFECTIVE child template (explicit,
         # inherited, or a member's), so ``crew=`` cannot route around it, and
         # only when the parent's spec declares the key -- omitted is "allow

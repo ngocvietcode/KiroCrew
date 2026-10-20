@@ -23,7 +23,7 @@ Code facts are measured at `1ad2d6d05f`.
 
 ## Summary
 
-On the `claude` backend, Claude Code can start a turn by itself after the dashboard turn ends: a `run_in_background` command exits, the model gets a task notification, and it answers. claude-agent-acp writes that turn to stdout. Kiro Crew has no turn open, so nobody reads it, and the next user message reads it as its own: the old reply and tool rows show under the new message, stamped late, with no notification.
+On the `claude` backend, Claude Code can start a turn by itself after the dashboard turn ends: a `run_in_background` command exits, the model gets a task notification, and it answers. claude-agent-acp writes that turn to stdout. Sao Khuê has no turn open, so nobody reads it, and the next user message reads it as its own: the old reply and tool rows show under the new message, stamped late, with no notification.
 
 This RFC adds an **agent-started turn**: a reader that watches stdout between turns, and a turn with no prompt that runs through the same `_run_chat` and the same `_dispatch_events` read loop as a user turn. The agent's reply becomes its own assistant message, saved and redacted like any other, with the normal end-of-turn notification.
 
@@ -135,7 +135,7 @@ Per decision 3 (recommended: queue), a message sent while the agent-started turn
 
 ### 7. Cancel and interrupt
 
-Stop on an agent-started turn sends `session/cancel` for the session, as Stop on a user turn does, then runs the normal cancel grace window (`acp-client.md`, "Cancel Grace Window"). Phase 0 found that the adapter honours that cancel: the cycle stops and still ends with its origin `usage_update`, so the turn ends on its normal end condition. If a cancel is ignored, the grace window ends the Kiro Crew turn locally, and frames that arrive afterwards start a new agent-started turn instead of leaking into the next user turn.
+Stop on an agent-started turn sends `session/cancel` for the session, as Stop on a user turn does, then runs the normal cancel grace window (`acp-client.md`, "Cancel Grace Window"). Phase 0 found that the adapter honours that cancel: the cycle stops and still ends with its origin `usage_update`, so the turn ends on its normal end condition. If a cancel is ignored, the grace window ends the Sao Khuê turn locally, and frames that arrive afterwards start a new agent-started turn instead of leaking into the next user turn.
 
 ### 8. What stays
 

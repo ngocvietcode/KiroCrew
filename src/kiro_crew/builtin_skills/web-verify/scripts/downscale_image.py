@@ -35,7 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from PIL import Image
 else:
     # Optional at import time, not inside the function: a missing Pillow is a
-    # RECOVERABLE state here (main re-execs under Kiro Crew's venv, which has
+    # RECOVERABLE state here (main re-execs under Sao Khuê's venv, which has
     # it), so the module must still import under an interpreter without it.
     try:
         from PIL import Image
@@ -65,7 +65,7 @@ MAX_DECODE_PIXELS = 512_000_000
 def bundled_python() -> str | None:
     """Path to an interpreter that has Pillow, or ``None``.
 
-    Kiro Crew's own venv ships Pillow (``prompt_blocks`` depends on it), and the
+    Sao Khuê's own venv ships Pillow (``prompt_blocks`` depends on it), and the
     ``kirocrew`` console script lives in that venv's script directory — so the
     interpreter is its SIBLING. That holds on every platform without special
     casing the directory name: POSIX puts both in ``bin/``, Windows puts both in
@@ -89,14 +89,14 @@ def _reexec_with_pillow(argv: list[str]) -> int:
         print(
             "downscale: Pillow is unavailable in "
             f"{sys.executable} and the re-exec already happened; install Pillow "
-            "or run this under Kiro Crew's venv interpreter.",
+            "or run this under Sao Khuê's venv interpreter.",
             file=sys.stderr,
         )
         return 1
     interpreter = bundled_python()
     if not interpreter:
         print(
-            "downscale: Pillow is unavailable and no Kiro Crew venv interpreter "
+            "downscale: Pillow is unavailable and no Sao Khuê venv interpreter "
             "was found next to the 'kirocrew' launcher. Install Pillow into "
             f"{sys.executable}, or pass the image through another resizer.",
             file=sys.stderr,

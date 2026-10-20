@@ -331,7 +331,7 @@ export default function McpToolsPanel({
       )}
       {extraServers.length > 0 && (
         // Session truth the configured list structurally cannot show: the backend
-        // starts the agent spec's own servers as well as the ones Kiro Crew
+        // starts the agent spec's own servers as well as the ones Sao Khuê
         // injects on the wire, so dropping these would leave the same blind spot
         // pointing the other way.
         //

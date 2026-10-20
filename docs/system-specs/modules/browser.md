@@ -3,7 +3,7 @@
 Website browsing has two agent paths. In the desktop app, the `browser` MCP
 tool drives the Browser panel's native embedded Chromium view. When no native
 panel serves the session, or `dashboard.use_builtin_browser` is off, the tool
-directs the agent to the `playwright-cli` shell path. Kiro Crew owns the CLI
+directs the agent to the `playwright-cli` shell path. Sao Khuê owns the CLI
 install flow, snapshot directory, command bus, and dashboard surfaces.
 
 ### Architecture
@@ -482,7 +482,7 @@ rename/removal therefore logs a warning and fails back instead of silently
 returning sockets to scratch. The source verdict is cached by path, mtime, and
 size so an upgrade invalidates it.
 
-Kiro-Crew-owned lifecycle directories are created
+SaoKhue-owned lifecycle directories are created
 owner-only and then restricted with the fail-loud platform helper before their
 environment variables are exported. A crash can leave a small per-session
 registry/socket namespace behind. Reclaiming the daemon does not delete that
@@ -575,12 +575,12 @@ the settings panel cannot report success while the credential remains active.
 
 ### Launch config
 
-Kiro Crew installs, gates on, and offers downloads for **Chromium**:
+Sao Khuê installs, gates on, and offers downloads for **Chromium**:
 `install-browser` fetches the Chromium build, `browser_ok` is
 `browsers_present()["chromium"]`, and `attach --extension` supports that family
 alone. The CLI's own default is a different browser — the branded Chrome
 *channel*, an OS-level install at a path like `/opt/google/chrome/chrome` that
-Kiro Crew never provisions and cannot install without root. So on a host that did
+Sao Khuê never provisions and cannot install without root. So on a host that did
 everything the product asked, the first browse fails with
 
 ```
@@ -603,7 +603,7 @@ only the file works for a whole session:
 The last one is the mechanism used, and for the same reason as
 [snapshot retention](#snapshot-retention): the agent runs the CLI as a shell
 command, so an inherited environment variable is the only channel that reaches an
-invocation Kiro Crew never constructs. The config is written under the data home
+invocation Sao Khuê never constructs. The config is written under the data home
 at a fixed absolute path, independent of whichever working directory a turn ran in.
 
 The schema is **nested** under a `browser` key — `{"browser": {"browserName":
@@ -620,7 +620,7 @@ security boundary, so no generated default removes it. A host that cannot run it
 a container lacking the kernel permissions, where the failure is
 `No usable sandbox!` — needs an operator decision rather than a default that
 quietly drops the boundary for every host. That is what the escape hatch is for:
-when `PLAYWRIGHT_MCP_CONFIG` is **already set** in the environment, Kiro Crew adds
+when `PLAYWRIGHT_MCP_CONFIG` is **already set** in the environment, Sao Khuê adds
 nothing and the operator's file wins entirely. Naming a config is how an operator
 selects a different engine, pins an `executablePath`, or accepts the sandbox
 trade-off on a host that requires it.

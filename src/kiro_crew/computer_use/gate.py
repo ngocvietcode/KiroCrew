@@ -17,7 +17,7 @@ Where the real protections live now, none of which is in this file:
   (``enable_state``), which ``security._SENSITIVE_HOME_DIRS`` fences the agent away
   from. That is what keeps "the agent cannot turn on its own desktop automation"
   true, and it is checked at the dispatch chokepoint in :mod:`tools`;
-* **KiroCrew's own window** is refused by :mod:`policy`, because driving our own
+* **SaoKhue's own window** is refused by :mod:`policy`, because driving our own
   Settings UI would route around the keystone above;
 * **password fields** are never read and never photographed (``ElementRec.secure``
   → the renderer emits a placeholder, and a window holding one gets no screenshot

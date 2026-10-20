@@ -8,7 +8,7 @@ publish to. Write permission is the gh ``viewerPermission`` answer plus a
 dry-run transport probe of the remote; either can exit 30.
 
 Portable: stdlib only; shells out to git/gh via argument lists (no shell
-pipelines), so it runs on macOS, Linux, and Windows wherever Kiro Crew's
+pipelines), so it runs on macOS, Linux, and Windows wherever Sao Khuê's
 python3 plus git/gh are available.
 
 Usage:  python3 preflight.py

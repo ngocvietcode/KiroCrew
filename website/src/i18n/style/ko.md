@@ -79,7 +79,7 @@ translation shows first.
   a numeral (`N개`) and a 하다/되다 conjugation on a Latin stem (`POST할 수 있습니다`)
   all bind the same way.
 - **A Latin run and the Hangul that follows it take a space** when that Hangul is
-  a noun rather than a 조사: `MCP 서버`, `Git 저장소`, `Kiro Crew 실행`. Never
+  a noun rather than a 조사: `MCP 서버`, `Git 저장소`, `Sao Khuê 실행`. Never
   `MCP서버`. A 단위명사 after a numeral is the documented exception and stays
   closed up (`3개`, `2번`).
 
@@ -108,7 +108,7 @@ Prefer restructuring over the parenthesis where the sentence allows it
 
 **A fragment must not OPEN with a 조사.** Where a component renders
 `<operand> <fragment>` it always puts a space between the two, so a value
-beginning with a particle draws it detached from its noun — `Kiro Crew 을(를)
+beginning with a particle draws it detached from its noun — `Sao Khuê 을(를)
 제거하고`. That is an orthography error, and the space is not the catalog's to
 remove. Omit the particle (`Issue Radar에서 제거하고`), or lead with an em dash
 where omission alone would be ambiguous (`— 게이트웨이 호스트에서 인증되지
@@ -150,7 +150,7 @@ free-slot row is review-only, so a legitimate `열기` ("Open a file") is never 
 
 Product names stay in Latin script. The canonical list in `glossary.json` includes
 `KiroCrew`, `Kiro`, `Slack`, `Discord`, `MCP`, `GitHub`, `Playwright`, and others. The
-prose brand `Kiro Crew` also remains unchanged.
+prose brand `Sao Khuê` also remains unchanged.
 
 Also stays in English: AWS service names, key legends (Enter, Shift, ⌘),
 `main`/`origin`/`HEAD`, paths, filenames, config keys, and `cron` (the syntax —

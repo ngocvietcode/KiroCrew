@@ -163,7 +163,7 @@ async def _pcm_via_ffmpeg(audio_path: str, timeout_secs: int) -> np.ndarray | No
     ffmpeg_bin = await _resolve_ffmpeg_for_execution()
     if not ffmpeg_bin:
         logger.error(
-            "the audio decoder is unavailable for %s; reinstall the Kiro Crew "
+            "the audio decoder is unavailable for %s; reinstall the Sao Khuê "
             "desktop app or install system FFmpeg for a source install",
             audio_path,
         )

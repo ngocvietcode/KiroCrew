@@ -1,6 +1,6 @@
 """Cloud provisioning API handlers — owner-only, user-initiated launch control.
 
-Backs the ``/api/cloud/*`` routes that let the dashboard provision a Kiro Crew
+Backs the ``/api/cloud/*`` routes that let the dashboard provision a Sao Khuê
 instance in the user's own AWS account (the same flow as ``kirocrew cloud`` in a
 terminal, driven as a durable background job — see :mod:`cloud.launch_job`).
 

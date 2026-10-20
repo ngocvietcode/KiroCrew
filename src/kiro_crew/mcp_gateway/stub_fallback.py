@@ -323,7 +323,7 @@ def _fallback_spawn_child(argv: list[str], exec_env: dict[str, str]) -> NoReturn
 def _fallback_target_is_own_control_plane(
     args: argparse.Namespace, target_args: list[str], exec_env: Mapping[str, str]
 ) -> bool:
-    """Whether the process this fallback is about to exec is Kiro Crew's own control plane.
+    """Whether the process this fallback is about to exec is Sao Khuê's own control plane.
 
     Delegates to the check gatewayd runs before it hands a pooled backend the
     session token (``_spawns_own_control_plane``): the server name must be a
@@ -333,7 +333,7 @@ def _fallback_target_is_own_control_plane(
     never trusted.
 
     The env it judges is the one the child really gets, with exactly one
-    allowance: Kiro Crew's own UTF-8 pinning (``platform_compat._UTF8_PROCESS_ENV``)
+    allowance: Sao Khuê's own UTF-8 pinning (``platform_compat._UTF8_PROCESS_ENV``)
     is dropped when its value is the pinned one. The runtime sets those two
     ``PYTHON*`` keys on every process it starts, so they reach this stub from
     kiro-cli, and gatewayd likewise applies them only after its verdict. Any
@@ -481,7 +481,7 @@ def fallback_exec(args: argparse.Namespace) -> None:
     exec_env.update(declared_env)
     # The token is a bearer name for this session's identity. A third-party
     # server binary must never inherit it: on a later gateway start it could
-    # register with it and be answered as this session. Kiro Crew's OWN control
+    # register with it and be answered as this session. Sao Khuê's OWN control
     # plane is the opposite case: the token exists for it, and without it every
     # tool call that reads the session's policy is refused identity_unattested
     # wherever the kernel peer check cannot name the session (a runtime hosting

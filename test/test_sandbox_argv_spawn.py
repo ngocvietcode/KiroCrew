@@ -371,7 +371,7 @@ class TestSandboxExecArgv:
         """The seatbelt wrap must mark the tree, mirroring the Linux launcher.
 
         Without this marker an in-sandbox ``wrap_argv`` call cannot tell that
-        Kiro Crew's own sandbox already confines it, tries to nest, and gets EPERM
+        Sao Khuê's own sandbox already confines it, tries to nest, and gets EPERM
         — which then fail-closes every app-backend and MCP spawn. The marker must
         land AFTER the ``-u`` flags (an assignment, not something ``-u`` can drop)
         and BEFORE ``sandbox-exec``.
@@ -413,8 +413,8 @@ class TestSandboxExecArgv:
     @patch.dict(os.environ, {"PYTHONPATH": "/opt/kirocrew/site-packages", "PYTHONHOME": "/opt/py"})
     def test_strips_python_env_when_requested(self):
         # A foreign Python subprocess (kiro-cli's MCP servers, e.g. ord-mcp) must
-        # NOT inherit Kiro Crew's PYTHONPATH/PYTHONHOME, or it prepends Kiro Crew's
-        # site-packages to sys.path and imports Kiro Crew's fastmcp/cryptography
+        # NOT inherit Sao Khuê's PYTHONPATH/PYTHONHOME, or it prepends Sao Khuê's
+        # site-packages to sys.path and imports Sao Khuê's fastmcp/cryptography
         # instead of its own. strip_python_env=True unsets them.
         argv, profile_path = sandbox_exec_argv(["kiro-cli", "acp"], "strict", strip_python_env=True)
         try:
@@ -426,7 +426,7 @@ class TestSandboxExecArgv:
 
     @patch.dict(os.environ, {"PYTHONPATH": "/opt/kirocrew/site-packages", "PYTHONHOME": "/opt/py"})
     def test_preserves_python_env_by_default(self):
-        # Kiro Crew's OWN sandboxed Python subprocesses (cron scripts, app
+        # Sao Khuê's OWN sandboxed Python subprocesses (cron scripts, app
         # backends, code-review workers) import kiro_crew via PYTHONPATH, so it
         # must be preserved when strip_python_env is not set (regression guard).
         argv, profile_path = sandbox_exec_argv(["python3", "worker.py"], "standard")

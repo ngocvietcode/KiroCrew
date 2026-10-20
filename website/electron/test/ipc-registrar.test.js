@@ -250,7 +250,7 @@ function harness({
   };
   const electron = {
     app: {
-      name: "Kiro Crew Test",
+      name: "Sao Khuê Test",
       isPackaged: true,
       getVersion: () => "9.8.7",
       focus: (...args) => appCalls.push(["focus", ...args]),

@@ -1,6 +1,6 @@
 # Cross-platform: route POSIX calls through `platform_compat`
 
-Kiro Crew runs on macOS, Linux (x86_64 and ARM), and Windows (native). `fcntl`,
+Sao Khuê runs on macOS, Linux (x86_64 and ARM), and Windows (native). `fcntl`,
 `termios`, `resource` and `pty` do not exist on Windows, and
 **`os.kill(pid, 0)` TERMINATES the target there**: it is not a liveness probe.
 
@@ -139,7 +139,7 @@ produces exactly those silent failures, which is why the helper is named per cal
 | Take a variable out of the environment for descendants while this process's own exec successor still gets it (the managed-service launch marker) | `keep_for_reexec(name, value)` after popping it; `kept_for_reexec()` reads what is held. Only the two reexec seams restore it, so a child spawned meanwhile does not inherit it, and if `execv` raises, `os.environ` keeps it until the process exits | re-setting it in `os.environ` by hand before an exec (every child spawned in between inherits it); an exec outside the two reexec seams (the successor loses it) |
 | End the process at once, other than the gateway's own final exit | `hard_exit(code)`: cancels a managed-venv apply in flight, then `os._exit` (the second-signal force exit, the owner's `/kirocrew restart`) | a bare `os._exit` (a managed-venv apply in flight keeps writing its tree after the process that supervised it is gone) |
 | Stop a managed-venv apply at every exec, hard exit or shutdown | `cancel_wheel_applies_in_flight(reason)`: looks `kiro_crew.platform.wheel_apply` up in `sys.modules` (never imports it) and calls its `cancel_wheel_applies(reason)` when loaded; both exec seams and `hard_exit` call it, and a shutdown that wants the apply stopped before its own teardown calls it itself. Synchronous, quick, safe to call twice; a cancel that raises never stops the exit | an `atexit` handler (an exec and `os._exit` both skip it); a general exit-hook registry (it had one registrant, so it abstracted over nothing) |
-| Launch a Kiro Crew-owned Python child | `isolated_python_argv(*args, executable=...)`; it adds `-s` for the bundle and parents whose user site is already unavailable, unless the option prefix carries `-s` or stronger `-I`. A self-launch through `-m kiro_crew...` also passes `-P` (safe path: the cwd is not on `sys.path`), pinned by `test/test_stdlib_shadow.py` | a raw `[sys.executable, ...]`, or an ad hoc `PYTHONNOUSERSITE` env that another spawn path can omit |
+| Launch a Sao Khuê-owned Python child | `isolated_python_argv(*args, executable=...)`; it adds `-s` for the bundle and parents whose user site is already unavailable, unless the option prefix carries `-s` or stronger `-I`. A self-launch through `-m kiro_crew...` also passes `-P` (safe path: the cwd is not on `sys.path`), pinned by `test/test_stdlib_shadow.py` | a raw `[sys.executable, ...]`, or an ad hoc `PYTHONNOUSERSITE` env that another spawn path can omit |
 | Replace the current process with another program (a supervised service body) | spawn a child, record its pid + `process_start_time`, and `wait()` on it under `IS_WINDOWS` (see `pod.windows.supervise_gateway`) | `os.execve` (on Windows this SPAWNS and terminates the caller, so the pid changes and the service manager sees the unit exit while the real program keeps running orphaned) |
 | Make `print()` reach a non-terminal stdout as it is printed (the gateway's status lines under a service manager) | `ensure_line_buffered_stdout()` once at gateway start, before the first status print: a stdout that is not a tty is reconfigured to `line_buffering=True`; a tty is left untouched (already line-buffered), and a stream with no `reconfigure` (absent, closed, a `StringIO`, a plain object a launcher left behind) is left as it is. `sys.stderr` needs nothing: CPython line-buffers it on every attachment. Independent of `ensure_utf8_console()`, which keeps the encoding job and runs first. Contract: [cli](../modules/cli.md#gateway-stdout-is-line-buffered-off-a-terminal) | `flush=True` on each `print()` (every new print has to remember it); `PYTHONUNBUFFERED=1` in a generated unit (reaches that one launcher and no installed unit, launchd agent, Desktop supervisor or detached gateway); turning the prints into `logging` records (changes what the log carries) |
 | Open an exact Windows process object for later tree discovery/termination | `open_process_termination_handle(pid, expected_token)` validates the opened handle's creation identity before returning it (caller closes with `close_process_handle`); combine with `descendant_termination_handles` so the anchored root and each retained child receive a final post-exit snapshot | opening by PID and checking the token beforehand (PID reuse can occur between those operations) |
@@ -201,7 +201,7 @@ so neither can drift without a red test.
 
 ## Internal Python child user-site isolation
 
-Every Kiro Crew-owned Python service, helper, and runtime dependency installer that
+Every Sao Khuê-owned Python service, helper, and runtime dependency installer that
 can run under the bundled interpreter routes argv through `isolated_python_argv`.
 The helper adds `-s` for the bundle and for parents whose user site is already
 unavailable, removing the interpreter's user-site directory without dropping
@@ -209,7 +209,7 @@ unavailable, removing the interpreter's user-site directory without dropping
 self-launch additionally passes `-P`, so the cwd is not imported from. A caller
 that already carries `-I` stays unchanged; `-I` is stronger because it also ignores
 Python environment variables and the cwd. A non-bundled parent that currently allows
-the user site preserves that policy because Kiro Crew itself may be installed there.
+the user site preserves that policy because Sao Khuê itself may be installed there.
 
 A module-style child that imports `kiro_crew` from the parent's own user site
 keeps the parent's user-site policy. Isolation is forced only when the parent's
@@ -274,7 +274,7 @@ install; one path marker shared by both variables would have vouched for theirs 
 the variable equals its own marker. A successor inherits a variable and its marker
 together, so it reads its predecessor's export as what it is; an operator sets the
 variable alone, so theirs never matches. **Nothing else is provenance** — not the path's
-shape, and not the directory it lies in, Kiro Crew's own install trees included. An
+shape, and not the directory it lies in, Sao Khuê's own install trees included. An
 operator who set `SSL_CERT_FILE` to a certifi bundle of their own (`$(python -m certifi)`,
 or one they appended a private CA to) holds a working policy while the file exists and a
 fail-closed one once it does not — every handshake fails until they repair the pin, as
@@ -291,7 +291,7 @@ The one value this leaves unrecognised, by design, is a predecessor's export fro
 the provenance existed**: it reads as an operator's and is kept. While its file exists it
 works (the managed-venv update engine keeps the current tree and the previous one, so a
 predecessor's bundle survives one update and is pruned after the next); once that tree is gone the successor fails closed, and the
-existing missing-file `WARNING` names the file and the way out — "if an earlier Kiro Crew
+existing missing-file `WARNING` names the file and the way out — "if an earlier Sao Khuê
 install exported this value, start it from a clean environment". The producing case is
 narrow and one-time: an installer re-run deletes the retired `<data home>/venv` under a
 running gateway (`cli.sh` retires it without stopping the service), and the operator then
@@ -312,7 +312,7 @@ because this runs in the prelude before logging is configured and the last-resor
 drops everything below WARNING. `LLAMA_CPP_LIB_PATH` answers that same constraint the
 other way round: its prelude records the removal silently, and the embedding loader emits
 the one INFO line later, once logging is in place. Not on Windows: the prelude
-exports nothing there, so no Kiro Crew process can have left a value behind, and whatever
+exports nothing there, so no Sao Khuê process can have left a value behind, and whatever
 is set is an operator's. `test/test_ssl_certs.py::TestInheritedInstallPinnedBundle` pins
 the rule, including the two-bootstrap restart with the first run's environment carried
 into the second against a pruned bundle, a dead pin without provenance kept even inside a

@@ -76,7 +76,7 @@ def _wait_for_pids_exit(pids: list[int], timeout: float) -> list[int]:
     which is why restart does its own bounded wait.
 
     Pid reuse is possible but fails SAFE: the caller classifies the pids as
-    Kiro Crew gateways once, before the stop, and a pid recycled onto an unrelated
+    Sao Khuê gateways once, before the stop, and a pid recycled onto an unrelated
     process only makes this wait time out. That produces a loud refusal, never a
     premature "the incumbent is gone" all-clear. Re-classifying inside the loop
     would invert that -- a recycled pid would read as "not a gateway" and let the
@@ -106,11 +106,11 @@ def _incumbent_from_lock_holder(port: int, *, shutdown_acknowledged: bool) -> li
     ladder as the port-lookup path.
 
     *shutdown_acknowledged* says whether ``_stop`` returned, i.e. a gateway
-    accepted the authenticated shutdown. Only then is a live Kiro Crew holder
+    accepted the authenticated shutdown. Only then is a live Sao Khuê holder
     the exiting incumbent, and only then is it returned as ``[holder_pid]`` to
     be waited on. Returns ``[]`` when the lock is free or its recorded holder
     is dead (nothing left to outwait). Every other live holder -- a foreign
-    process, or a Kiro Crew gateway that did not acknowledge the shutdown
+    process, or a Sao Khuê gateway that did not acknowledge the shutdown
     (``_stop`` has already refused it) -- is refused through
     :func:`_refuse_lock_holder` with a ``denied`` event: the lock names the
     pid but never makes it safe to signal or to spawn against. An
@@ -683,7 +683,7 @@ _RESTART_AUDIT_KIND = {
 
 
 def _restart(cli_port: int | None = None) -> None:
-    """Restart a running Kiro Crew gateway.
+    """Restart a running Sao Khuê gateway.
 
     Service-aware, mirroring :func:`_stop`:
 

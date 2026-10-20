@@ -530,7 +530,7 @@ def _resolve_cron_agent(
 
     A cron bound to a Slack channel carries that channel's agent
     ALIAS (e.g. ``in-3d``) in ``job.agent_id`` / ``agent_sequence``.
-    kiro-cli only accepts a materialized agent MODE, not a Kiro Crew
+    kiro-cli only accepts a materialized agent MODE, not a Sao Khuê
     alias, so dispatching the alias verbatim fails closed with
     "Agent mode 'in-3d' is not available … its ~/.kiro/agents/
     in-3d.json is likely missing". The dashboard chat path already
@@ -642,7 +642,7 @@ def _resolve_cron_agent(
                 )
                 return None, None, None
         # For a non-member (template/legacy) execution there is no
-        # identity to pin to: ONLY collapse a real Kiro Crew alias.
+        # identity to pin to: ONLY collapse a real Sao Khuê alias.
         # resolve_agent_bindings falls back to the default agent for
         # an unknown name, so resolving unconditionally would rewrite
         # a legitimate kiro mode (e.g. 'kirocrew-lite') into the
@@ -859,8 +859,8 @@ def _announce_cron_quarantine(self: GatewayOrchestrator) -> None:
         "cron",
         "Scheduled tasks could not be read",
         "The schedule file was not a readable schedule (invalid JSON, or no jobs "
-        f"list), so Kiro Crew moved it to {moved} and started with no scheduled "
-        "tasks. Nothing was deleted. To restore: fix that copy, stop Kiro Crew, "
+        f"list), so Sao Khuê moved it to {moved} and started with no scheduled "
+        "tasks. Nothing was deleted. To restore: fix that copy, stop Sao Khuê, "
         f"move it back to {data_home() / 'crons.json'}, and start again. "
         "`kirocrew doctor` shows the same steps.",
     )

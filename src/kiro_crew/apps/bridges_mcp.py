@@ -70,7 +70,7 @@ def _pin_host_cli_command(app_name: str, cfg: dict[str, Any]) -> dict[str, Any]:
     CLI by name makes kiro-cli spawn it via a PATH lookup, which is wrong in two
     ways that both fail silently:
 
-    * the launcher on PATH may belong to a DIFFERENT Kiro Crew install, so the
+    * the launcher on PATH may belong to a DIFFERENT Sao Khuê install, so the
       server reads a different data home than the gateway that registered it and
       reports the app as not installed;
     * that launcher may simply be broken (a stale wrapper whose interpreter is
@@ -90,7 +90,7 @@ def _pin_host_cli_command(app_name: str, cfg: dict[str, Any]) -> dict[str, Any]:
     existing = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = f"{pkg_parent}{os.pathsep}{existing}" if existing else pkg_parent
     env.setdefault("KIROCREW_HOME", str(app_dir(app_name).parent.parent))
-    # ``-P``: the MCP host spawns this server with a cwd Kiro Crew does not
+    # ``-P``: the MCP host spawns this server with a cwd Sao Khuê does not
     # choose; keeping it off sys.path is the same guarantee the launchers give.
     argv = platform_compat.isolated_python_argv(
         "-P",
@@ -372,7 +372,7 @@ def resolve_stdio_command(cfg: dict, app_root: Path | None = None) -> dict:
         base = base[:-4]
     if base in _BARE_PYTHON:
         if _targets_gateway_module(cfg):
-            # The server runs Kiro Crew's OWN code (``-m kiro_crew...``). App
+            # The server runs Sao Khuê's OWN code (``-m kiro_crew...``). App
             # venvs are created WITHOUT --system-site-packages, so kiro_crew is
             # not importable there and the venv interpreter would die on
             # import; and even a venv that pip-installed its own kiro_crew is a
@@ -925,7 +925,7 @@ def _maybe_provision_backendless_deps(app_name: str, manifest: "AppManifest") ->
 def _register_mcp_servers(
     app_name: str, manifest: AppManifest, live_port: int | None = None
 ) -> list[str]:
-    """Register app-provided MCP servers into Kiro Crew's agent config.
+    """Register app-provided MCP servers into Sao Khuê's agent config.
 
     Uses ``{app_name}:{server_name}`` namespace to avoid collisions. HTTP MCP urls have
     their port rewritten to the backend's live allocated port (see
@@ -1194,7 +1194,7 @@ def _scrub_legacy_shared_mcp(app_name: str) -> int:
             return 0
         # Hold the shared file's own lock across read+remove+write: this file can
         # be written concurrently (Kiro IDE, another kiro-cli agent, another
-        # Kiro Crew process), and an unlocked stale read-modify-write here would
+        # Sao Khuê process), and an unlocked stale read-modify-write here would
         # clobber a server another writer added between our read and our atomic
         # rename. It is a DIFFERENT sidecar than _mcp_lock's default (that guards
         # kirocrew.json), so pass the legacy path explicitly.

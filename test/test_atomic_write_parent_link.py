@@ -33,7 +33,7 @@ requires_symlinks = pytest.mark.skipif(
 
 @pytest.fixture
 def owned_home(tmp_path, monkeypatch):
-    """A Kiro Crew data home under *tmp_path*, so the walk has a trust anchor."""
+    """A Sao Khuê data home under *tmp_path*, so the walk has a trust anchor."""
     home = tmp_path / "datahome"
     home.mkdir()
     monkeypatch.setenv("KIROCREW_HOME", str(home))
@@ -200,7 +200,7 @@ def test_warn_policy_does_not_downgrade_the_refusal(owned_home, tmp_path):
 
 @requires_symlinks
 def test_outside_owned_roots_still_refuses_the_planted_chain(tmp_path, monkeypatch):
-    """A destination outside every Kiro Crew root keeps a best-effort check.
+    """A destination outside every Sao Khuê root keeps a best-effort check.
 
     There the walk stops at the first ancestor that already exists, because
     everything below that is a directory the write would create itself. A link

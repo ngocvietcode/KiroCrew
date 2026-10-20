@@ -269,10 +269,10 @@ class TestAHandWrittenGrantIsUserInput:
 
 
 class TestTheNameAloneIsNotOwnership:
-    """A global entry under an opt-in name is never Kiro Crew's to delete.
+    """A global entry under an opt-in name is never Sao Khuê's to delete.
 
     ``clean_stale_managed_mcp`` reclaims entries an OLDER INSTALL METHOD wrote
-    to the user's global ``mcp.json``. No version of Kiro Crew ever writes an
+    to the user's global ``mcp.json``. No version of Sao Khuê ever writes an
     opt-in server there — hand-editing is the only way it is granted — so no
     legitimate residue can exist under that name, and anything found there is
     the user's own. Not purged, and not purged "if it looks like ours" either:

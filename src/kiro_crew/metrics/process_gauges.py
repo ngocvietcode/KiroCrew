@@ -32,7 +32,7 @@ name                                             kind        source
 ===============================================  ==========  ====================
 
 The last four report a monotonic PROCESS-LIFETIME total and were observable
-COUNTERS until they were the only cumulative series Kiro Crew exported. One
+COUNTERS until they were the only cumulative series Sao Khuê exported. One
 cumulative series is enough to force every consumer into stateful whole-hour
 aggregation — a cumulative counter's hourly increment is last-minus-first across
 the entire hour, per host and per process lifetime — while every other instrument

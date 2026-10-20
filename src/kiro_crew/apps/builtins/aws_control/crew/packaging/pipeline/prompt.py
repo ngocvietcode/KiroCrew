@@ -371,7 +371,7 @@ def _refuse_share_reached_through_ancestors(hop: Path) -> None:
 def _inline_prompt(spec: dict, crew_name: str, agents_dir: Path, notes: list[str]) -> None:
     """Inline a ``file://`` prompt as literal text; refuse a missing persona.
 
-    Kiro Crew writes an installed agent's prompt as ``file://<absolute host
+    Sao Khuê writes an installed agent's prompt as ``file://<absolute host
     path>`` (``kiro_crew/agent.py:2166``). That path does not exist in the
     container, so a naively copied spec produces a crew that answers as nobody --
     and kiro-cli tolerates an empty prompt, so the failure is silent. A

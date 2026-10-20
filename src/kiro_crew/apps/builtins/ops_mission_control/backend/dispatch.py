@@ -637,7 +637,7 @@ async def run_cycle(
     simply finds nothing left to claim.
 
     ``slack_client`` is the gateway's live Slack client, passed in by the caller
-    (Kiro Crew has no global state accessor). None simply means the pin board is
+    (Sao Khuê has no global state accessor). None simply means the pin board is
     not mirrored this cycle.
 
     ``state`` is the gateway's ``DashboardState``, threaded in for the same reason and

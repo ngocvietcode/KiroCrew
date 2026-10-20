@@ -1645,7 +1645,7 @@ class TestTrustBoundary:
         exactly what happened before this test existed.
         """
         rows = reg._apply_trust_fields(
-            [{"name": "demo-app", "_catalog": True, "_index_author": "Kiro Crew"}]
+            [{"name": "demo-app", "_catalog": True, "_index_author": "Sao Khuê"}]
         )
         assert rows[0]["verified"] is False
         assert rows[0]["provenance"] == "official"
@@ -1653,7 +1653,7 @@ class TestTrustBoundary:
     def test_a_seed_row_with_a_first_party_author_still_earns_the_badge(self):
         """The refusal above must be scoped to catalog rows, not a blanket change."""
         rows = reg._apply_trust_fields(
-            [{"name": "demo-app", "_index_author": "Kiro Crew"}]
+            [{"name": "demo-app", "_index_author": "Sao Khuê"}]
         )
         assert rows[0]["verified"] is True
 

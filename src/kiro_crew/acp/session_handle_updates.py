@@ -162,9 +162,9 @@ def _emit_tool_interrupted_sel(self: AcpSessionHandle, site: str) -> None:
     """Emit a SEL audit + WARNING when kiro-cli's security filter cancels tools.
 
     Mirrors AcpClient._emit_tool_interrupted_sel: a permission decision
-    Kiro Crew observes but does not control (kiro-cli denied tool execution).
+    Sao Khuê observes but does not control (kiro-cli denied tool execution).
     Best-effort — a failed audit must not break the turn. This handle has no
-    Kiro Crew session_key, so the ACP sessionId is recorded in metadata for
+    Sao Khuê session_key, so the ACP sessionId is recorded in metadata for
     correlation.
     """
     logger.warning("kiro-cli cancelled tool use(s) [site=%s session=%s]", site, self._session_id)

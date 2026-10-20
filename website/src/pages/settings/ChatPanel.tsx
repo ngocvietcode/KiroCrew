@@ -100,7 +100,7 @@ export function ChatPanel({ basePath }: { basePath?: string } = {}) {
     fvFetchMut, fv, featureVideoLine, dashMut, defaultModeMut,
   } = useChatPanelDashboard({ qc, setPathSaveError, clearOwnPathError, overlay })
 
-  // ── KiroCrew config (server-side) ──
+  // ── SaoKhue config (server-side) ──
   const mcQ = useQuery<KirocrewConfigShape>({
     queryKey: ['kirocrewConfig'],
     queryFn: () => api.kirocrewConfig(),

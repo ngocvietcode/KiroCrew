@@ -1,7 +1,7 @@
 /**
  * Telemetry shim (no-op).
  *
- * The public KiroCrew build ships with telemetry disabled. These functions
+ * The public SaoKhue build ships with telemetry disabled. These functions
  * preserve the original API surface (initRum, recordEvent, recordSessionStart,
  * getRum) so existing call sites keep working, but do nothing. No data is
  * collected and no external client is loaded.

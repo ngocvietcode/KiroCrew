@@ -1,7 +1,7 @@
 """A stdio MCP server exposing the run's state as read-only agent tools.
 
 Why stdio and not HTTP: the upstream app ran as its own process on an allocated
-port and served MCP over that port. A Kiro Crew builtin runs IN-PROCESS inside the
+port and served MCP over that port. A Sao Khuê builtin runs IN-PROCESS inside the
 gateway, so it has no backend port of its own — and the app bridge deliberately
 SKIPS a URL-based MCP entry when there is no live backend port, precisely so a
 dead default-port URL cannot poison every session's provider config. A command

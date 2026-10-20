@@ -18,7 +18,7 @@ export default function CodeReviewSagePage() {
 
   return (
     // `relative` so the modal's `absolute inset-0` backdrop covers the app area
-    // rather than the whole Kiro Crew window — the workspace blurs behind it.
+    // rather than the whole Sao Khuê window — the workspace blurs behind it.
     <div className="relative h-full">
       <SageProvider initialRunId={initialRunId}>
         <Workspace />

@@ -57,8 +57,8 @@ from kiro_crew.testing.wait import await_until
 
 _SRC = pathlib.Path(__file__).resolve().parents[1] / "src/kiro_crew"
 _GENERIC = "User denied tool execution"
-_TAG = "[Kiro Crew host notice]"
-_POLICY_CLAUSE = "blocked by a Kiro Crew safety policy"
+_TAG = "[Sao Khuê host notice]"
+_POLICY_CLAUSE = "blocked by a Sao Khuê safety policy"
 _SURFACE_CLAUSE = "tool policy of the surface"
 _HOOK_ERROR_CLAUSE = "PreToolUse hook raised"
 _UNDELIVERABLE_CLAUSE = "approval prompt could not be delivered"

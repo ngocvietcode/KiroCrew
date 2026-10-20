@@ -3,7 +3,7 @@
 Backend auth can't be baked into user-data (it needs a human to approve in a
 browser and, possibly, to buy a Kiro subscription). We drive it after the box is
 up: run ``kiro-cli login`` on the instance over SSM, scrape the device-code URL
-+ code, and open that URL in the user's *local* browser. KiroCrew stores **no**
++ code, and open that URL in the user's *local* browser. SaoKhue stores **no**
 Kiro credentials — they live in kiro-cli's own store on the instance.
 
 Two remote-login shapes:
@@ -567,7 +567,7 @@ def social_login_hint(prompt: Optional[LoginPrompt]) -> str:
     ports = ", ".join(str(p) for p in (prompt.ports if prompt else [])) or "the printed port"
     return (
         "For Google/GitHub sign-in, kiro-cli needs a forwarded callback port. "
-        f"KiroCrew could not automate the SSM port-forward for {ports}; "
+        f"SaoKhue could not automate the SSM port-forward for {ports}; "
         "run `kirocrew cloud connect` and retry sign-in from the instance."
     )
 

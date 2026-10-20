@@ -812,8 +812,8 @@ def _notify_nudge_expired(self: GatewayOrchestrator, loop: NudgeLoop) -> bool:
                         "Start a new watch from an active conversation."
                     ),
                     MONITOR_STOP_UNSUPPORTED_VERSION: (
-                        "This watch was created by a newer Kiro Crew version. "
-                        "Update Kiro Crew to inspect or restart it."
+                        "This watch was created by a newer Sao Khuê version. "
+                        "Update Sao Khuê to inspect or restart it."
                     ),
                     MONITOR_STOP_INVALID_RECORD: (
                         "The saved monitor record is invalid. "

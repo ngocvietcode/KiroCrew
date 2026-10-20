@@ -5,7 +5,7 @@ this channel stream, does it render buttons, can it take a file, how long a repl
 fits, and how long an approval prompt waits. Read it before you pick a channel,
 or when a channel behaves differently from the one you are used to.
 
-A ✅ means Kiro Crew supports that behaviour on that channel today, not that the
+A ✅ means Sao Khuê supports that behaviour on that channel today, not that the
 platform could support it.
 
 ## The matrix
@@ -66,7 +66,7 @@ refused or dropped, and a multi-part reply stops instead of posting the rest
 after a hole. WeCom's unprompted send and Feishu's reply carry no id at all, and
 iMessage's bridge reports one only best-effort, so on those three an empty id is
 the SUCCESS value and a real failure raises instead.
-Kiro Crew reads the declaration wherever it has to judge delivery — a
+Sao Khuê reads the declaration wherever it has to judge delivery — a
 dashboard-addressed send, an owner DM, a quoted inbound copy — so a ❌ here is a
 different convention, not a missing capability.
 
@@ -152,10 +152,10 @@ default), `sms`, or `auto`. It is one channel-wide setting, not a per-conversati
 one — every outbound reply uses it, whichever service the incoming message
 arrived over. Any other value falls back to `imessage` when the config loads.
 
-On the default, Kiro Crew names no service on the send at all, so the bridge uses
+On the default, Sao Khuê names no service on the send at all, so the bridge uses
 iMessage and the SMS path is never exercised. `sms` and `auto` are passed through
 to the `imsg` bridge verbatim, and the bridge decides from there: `auto` is its
-own per-send fallback to SMS when it cannot deliver over iMessage. Kiro Crew does
+own per-send fallback to SMS when it cannot deliver over iMessage. Sao Khuê does
 not probe the handle, so it cannot tell you in advance which service a given
 number will get, and the reply carries no marker saying which one was used.
 

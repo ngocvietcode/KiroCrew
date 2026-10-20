@@ -227,7 +227,7 @@ ENV_WINDOW_SECS = "KIROCREW_CHANNEL_TURN_WINDOW_SECS"
 #: loop resume itself.
 REFUSAL_TEXT = (
     "This conversation hit its turn limit and is paused, so no further "
-    "messages here will be answered. Reset the conversation from the Kiro Crew "
+    "messages here will be answered. Reset the conversation from the Sao Khuê "
     "dashboard to continue."
 )
 

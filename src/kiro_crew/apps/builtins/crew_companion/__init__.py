@@ -19,7 +19,7 @@ Architecture — three parts, no separate application:
   a second language would re-earn every bug they took ten review rounds to remove.
 * ``website/electron/crew-companion/`` owns the window layer — the transparent,
   always-on-top overlay the companion is drawn in. Those need Electron
-  main-process APIs, so they live in Kiro Crew's existing shell rather than
+  main-process APIs, so they live in Sao Khuê's existing shell rather than
   shipping a second Electron runtime.
 
 NO SEPARATE PROCESS, AND WHY IT MATTERS

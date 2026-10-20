@@ -175,7 +175,7 @@ STOPPED_TEXT = "Stopped."
 STOP_NOTHING_RUNNING_TEXT = "Nothing was running; queue cleared."
 STATUS_UNAVAILABLE_TEXT = "Couldn't read the runtime status."
 
-_HELP_HEADER = "Kiro Crew on WhatsApp"
+_HELP_HEADER = "Sao Khuê on WhatsApp"
 _HELP_COMMANDS_LABEL = "Commands:"
 # States the whole-message rule because it is not guessable: a message that
 # merely starts with a command reaches the model instead, which otherwise reads

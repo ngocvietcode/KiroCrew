@@ -1,4 +1,4 @@
-"""Reusable Block Kit builders for KiroCrew slash commands.
+"""Reusable Block Kit builders for SaoKhue slash commands.
 
 All functions return raw Block Kit dicts (no slack_sdk dependency).
 Action IDs follow the mc_<command>_<action>[_<id>] convention.

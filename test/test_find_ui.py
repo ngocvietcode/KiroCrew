@@ -92,7 +92,7 @@ def test_the_sidebar_toggle_is_a_conditional_step_with_its_own_qualifications() 
 
 
 def test_a_legacy_page_title_finds_its_explicit_canonical_location() -> None:
-    top = _top(ui_index.find_ui("kiro crew agents", "en"))  # brand-ok: user query
+    top = _top(ui_index.find_ui("sao khuê agents", "en"))
     assert top["id"] == "tab.capabilities.crews"
     assert top["placements"][0]["route"] == "/capabilities?tab=crews"
     remote = _top(ui_index.find_ui("remote crew", "en"))

@@ -70,7 +70,7 @@ Every failure is a typed code, never a traceback.
 
 The tools are advertised whether or not the flag is on. An agent must learn the
 flag state from `crew_log_disabled`, which says how to switch it on; a missing tool
-would instead read as "Kiro Crew cannot do this at all".
+would instead read as "Sao Khuê cannot do this at all".
 
 ## Who may read what
 

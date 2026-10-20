@@ -265,7 +265,7 @@ async function main() {
   // the accented "CREW" from the nav brand and renders a "Message Kiro…"
   // composer — wrong chrome in every frame of the recording.
   const fixedApi = makeFixedApi(PROJECT)
-  fixedApi.set('/api/dashboard/branding', { bot_name: 'Kiro Crew', avatar: '/logo.png' })
+  fixedApi.set('/api/dashboard/branding', { bot_name: 'Sao Khuê', avatar: '/logo.png' })
 
   /**
    * Mount one scene: stub the API around `waitState`, boot the SPA, then push the

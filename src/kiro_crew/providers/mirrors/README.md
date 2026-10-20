@@ -1,7 +1,7 @@
 # Agent-config mirrors
 
 One agent spec (`~/.kiro/agents/<name>.json`) is the single source of truth for
-every backend Kiro Crew drives. No two backends read it the same way. A **mirror**
+every backend Sao Khuê drives. No two backends read it the same way. A **mirror**
 projects that spec onto one backend's native configuration.
 
 Design and rationale: `docs/request-for-change/rfc-agent-config-mirror.md`.

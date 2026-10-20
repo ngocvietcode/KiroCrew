@@ -1,4 +1,4 @@
-"""kirocrew-client — async Python client for the KiroCrew Gateway.
+"""kirocrew-client — async Python client for the SaoKhue Gateway.
 
 Usage::
 

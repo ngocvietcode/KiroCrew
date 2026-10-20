@@ -5,7 +5,7 @@ Nothing else in the package shells out to ``aws`` directly. This mirrors
 ``deploy_web/engine.py`` and gives the module the same testability: unit tests
 monkeypatch this one function.
 
-Credentials are resolved by the ``aws`` CLI's own provider chain — KiroCrew
+Credentials are resolved by the ``aws`` CLI's own provider chain — SaoKhue
 passes only ``--profile <name>`` (and never a raw key). The argv is always a
 fixed list (no shell), and the invocation is routed through the OS-level sandbox
 (:func:`kiro_crew.sandbox.wrap_argv`, ``mode="standard"``) exactly like the

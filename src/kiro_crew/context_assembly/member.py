@@ -108,7 +108,7 @@ def _fit_folder_steering_into_envelope(
         dropped = len(candidates) - len(fitted)
         if not dropped and not ceilings:
             return fitted
-        # Imported at call time, like every Kiro Crew name an owner reads. Each pass
+        # Imported at call time, like every Sao Khuê name an owner reads. Each pass
         # gives back one more document, and the last pass is the one the envelope
         # carries, so a later record replaces this one.
         from kiro_crew import context_omissions
@@ -306,7 +306,7 @@ _MEMBER_BRIEFING_ITEM_UNAVAILABLE = """
 # rather than degrading the feature, on an unattended cycle where nobody is reading.
 #
 # It is spelled here rather than read from ``agent_files.DASHBOARD_MANAGER_AGENT_NAME``
-# because an owner in this package imports no Kiro Crew module at module scope
+# because an owner in this package imports no Sao Khuê module at module scope
 # (``TestPlacement``), and this text is a module-level constant. So the duplication is
 # guarded by a TEST instead of by construction:
 # ``test_dashboard_manager_agent.py::test_the_base_prompt_names_the_agent_the_installer_writes``

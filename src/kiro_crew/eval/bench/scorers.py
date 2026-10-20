@@ -46,7 +46,7 @@ from .corpus import CAT_UNKNOWN, BenchQuery
 # stemmer is not a cosmetic simplification: it costs real F1 on singular/plural
 # and tense mismatches ("dogs" vs "dog"), so it is ported rather than skipped.
 #
-# nltk is not a Kiro Crew dependency and will not become one for a benchmark, so
+# nltk is not a Sao Khuê dependency and will not become one for a benchmark, so
 # this uses snowballstemmer's "porter" algorithm, which is already a hard install
 # dependency of the package (setup.cfg: snowballstemmer>=1.0). See the DIVERGENCE
 # note in the module docstring of test_bench_scorers.py: snowballstemmer's

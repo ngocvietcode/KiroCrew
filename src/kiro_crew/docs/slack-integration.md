@@ -1,6 +1,6 @@
 # Slack Integration
 
-Kiro Crew connects to Slack via Socket Mode. You interact with it through DMs
+Sao Khuê connects to Slack via Socket Mode. You interact with it through DMs
 or in channels where the bot is present.
 
 ## Activation Modes
@@ -88,7 +88,7 @@ Available to all allowed users (no `!` prefix needed):
 
 ## Tool Approval Flow
 
-When Kiro Crew needs to run a tool (file write, bash command, etc.):
+When Sao Khuê needs to run a tool (file write, bash command, etc.):
 
 1. **Auto mode** (`!yolo on`): silently approves everything
 2. **Interactive mode** (default): posts Approve / Trust session / Reject buttons
@@ -102,7 +102,7 @@ place resolves both.
 
 ## Emergency Stop
 
-When Kiro Crew is executing and you need to halt it immediately, type `!stop`
+When Sao Khuê is executing and you need to halt it immediately, type `!stop`
 in the thread where the agent is running.
 
 `!stop` is intercepted before the per-session semaphore in the Slack event
@@ -184,13 +184,13 @@ Off by default. Applies to the next new session with no restart.
 
 ## OPTIONS Buttons
 
-When Kiro Crew presents choices, they render as interactive Block Kit buttons.
+When Sao Khuê presents choices, they render as interactive Block Kit buttons.
 Click a button to send that choice back to the conversation. You can select
 multiple options before submitting.
 
 ## Access control
 
-Kiro Crew on Slack answers the bot owner (`KIROCREW_OWNER_ID`) and nobody else.
+Sao Khuê on Slack answers the bot owner (`KIROCREW_OWNER_ID`) and nobody else.
 Multi-user access is disabled because an allowed user would act under the owner's
 system identity — the owner's file permissions and cloud credentials — with no scope
 limit and no expiry. `!allowlist`, `/kirocrew @user` and `slack.allowed_users` are all
@@ -223,7 +223,7 @@ bot posts publicly.
 
 ## Setting Up Your Slack App
 
-Kiro Crew connects to Slack as a Socket Mode app that you create and install in
+Sao Khuê connects to Slack as a Socket Mode app that you create and install in
 your own workspace.
 
 1. **Create a Slack app** at https://api.slack.com/apps and enable **Socket Mode**. Generate an app-level token (`xapp-`) with the `connections:write` scope.

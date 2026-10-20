@@ -103,7 +103,7 @@ function Harness() {
         history={[]}
         historyHasMore={false}
         defaultAgent="kirocrew"
-        installedAgents={[{ name: 'kirocrew', description: 'Kiro Crew' }]}
+        installedAgents={[{ name: 'kirocrew', description: 'Sao Khuê' }]}
       />
     </div>
   )

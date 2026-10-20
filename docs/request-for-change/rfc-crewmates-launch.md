@@ -29,7 +29,7 @@ superseded-by: []
 
 ## 1. Summary
 
-Kiro Crew has three things a person can shape and talk to, and until now the
+Sao Khuê has three things a person can shape and talk to, and until now the
 product called them by overlapping names: an *agent* was sometimes the thing
 you chat with, sometimes the template it was made from, and sometimes the
 persistent teammate with its own memory. The launch review fixed one
@@ -179,7 +179,7 @@ Decided:
 - No user-facing step. A one-time migration runs at gateway startup: a
   crewmate that an earlier sync generated (empty `member_id`, the shared
   `default` store, bound to an installed spec of the person's own or of a
-  package — never one of the runtime's own agents (a Kiro Crew-owned spec, or
+  package — never one of the runtime's own agents (a Sao Khuê-owned spec, or
   a row stamped `kirocrew`), a private copy, or a spec that is no longer
   installed) and that was never chatted with is removed from
   the roster. Only the config row goes; the agent file and any transcript

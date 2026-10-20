@@ -109,13 +109,13 @@ _dropped_inherited_unreported = False
 
 
 def _is_bundled_libs_dir(value: str) -> bool:
-    """Whether *value* names SOME Kiro Crew install's bundled native-libs directory.
+    """Whether *value* names SOME Sao Khuê install's bundled native-libs directory.
 
     Some install's, not only this one's: the shape is
     ``.../kiro_crew/_vendor/llama_cpp_libs/<platform>`` for a platform this
-    package ships libs for. Kiro Crew never documents setting the override to a
+    package ships libs for. Sao Khuê never documents setting the override to a
     bundled directory, so a process that finds one in ``LLAMA_CPP_LIB_PATH``
-    inherited it from a Kiro Crew process: an ancestor whose loader leaves the
+    inherited it from a Sao Khuê process: an ancestor whose loader leaves the
     variable in the environment every child and every in-app-restart successor
     receives. It names THAT process's install, which need not be this one and
     may have been removed by an upgrade since.
@@ -142,7 +142,7 @@ def operator_lib_path_override() -> str | None:
     """The operator's ``LLAMA_CPP_LIB_PATH``, or None when there is none.
 
     None when the variable is unset or empty, and when it holds a bundled
-    directory (:func:`_is_bundled_libs_dir`): that is Kiro Crew's own value,
+    directory (:func:`_is_bundled_libs_dir`): that is Sao Khuê's own value,
     inherited from another of its processes, not an operator asking for a
     different runtime. The loader and ``kirocrew doctor`` both read the
     override through this, so the two never disagree about which directory

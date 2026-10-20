@@ -361,7 +361,7 @@ file; its `description` also records that path as a JSON string (`... of
 below find the checkout again. Derived from the live base spec on every turn — project scope first, the
 way kiro-cli resolves `--agent` — off the event loop, written atomically and
 only when the content changed; a runtime resource, never hand-edited. The
-file's `description` starts with the owner marker `Kiro Crew derived read-only
+file's `description` starts with the owner marker `Sao Khuê derived read-only
 spec`, and the derived name must resolve to that file and nothing else:
 publication refuses a project-scope spec that declares or is named like the
 derived agent (kiro-cli would load it first), a second user-scope spec
@@ -912,10 +912,10 @@ exists this file does not claim one.
 - Context injection: sidecar storage on the parent ``_ChatSlot``
   (per-slot ``_side: SideState | None``) — keeps side messages reachable
   to the side handler without touching the main agent's context builder.
-- Build strategy: native KiroCrew implementation reusing only the
+- Build strategy: native SaoKhue implementation reusing only the
   upstream wire format for the ``chat.side_result`` event.
 - Memory mode: side conversations are born ephemeral and never write to
-  vector store, learn store, KiroCrew session JSONL, or the consolidation
+  vector store, learn store, SaoKhue session JSONL, or the consolidation
   pipeline. Tool calls run under `ToolApprovalPolicy.READ_ONLY`: only a call
   the hook gate's read-only classifier proves read-only executes, and every
   other call — `learn_add` and any other write tool included — is rejected.

@@ -1,8 +1,8 @@
 #!/bin/sh
-# KiroCrew first-time setup script (public build)
+# SaoKhue first-time setup script (public build)
 # Usage: source setup.sh   (bash or zsh), or: bash setup.sh
 #
-# Sets up KiroCrew using only public tooling:
+# Sets up SaoKhue using only public tooling:
 #   1. Node.js (via ensure-node.sh)
 #   2. Optional tools (git-lfs, ffmpeg for voice)
 #   3. Optional ACP adapter + Kiro CLI prerequisite disclosure
@@ -22,7 +22,7 @@ cd "$_kirocrew_dir" || return 1
 
 ACP_NPM_PKG="@agentclientprotocol/claude-agent-acp"
 
-echo "👻 KiroCrew Setup"
+echo "👻 SaoKhue Setup"
 echo ""
 
 # ── Ensure PATH includes common install locations ──
@@ -276,7 +276,7 @@ _add_to_rc() {
         echo "  ✅ Already in $_rc"
         return
     fi
-    # Remove any old KiroCrew PATH entry and replace with current
+    # Remove any old SaoKhue PATH entry and replace with current
     if grep -qF "KiroCrew" "$_rc" 2>/dev/null; then
         sed -i.bak '/# KiroCrew/d;/KiroCrew.*bin/d;/\.local\/bin/d' "$_rc"
         rm -f "${_rc}.bak"
@@ -286,7 +286,7 @@ _add_to_rc() {
     case "${_answer:-Y}" in
         [Yy]*)
             echo "" >> "$_rc"
-            echo "# KiroCrew" >> "$_rc"
+            echo "# SaoKhue" >> "$_rc"
             echo "$_path_line" >> "$_rc"
             echo "  ✅ Added to $_rc"
             ;;

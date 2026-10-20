@@ -57,7 +57,7 @@ async def api_kirocrew_agent_resolved_model(request: web.Request) -> web.Respons
 
     Serves the one backend resolver so the dashboard's model chip does not have
     to re-derive the precedence client-side (and drift from it). ``agent`` is a
-    Kiro Crew agent name; omitted falls back to the configured default agent.
+    Sao Khuê agent name; omitted falls back to the configured default agent.
     ``app`` names the app that owns the session, so the answer includes that
     app's own model setting the way the session start does; a value that is not
     an app name is ignored. ``model`` is "" when every tier defers to the
@@ -191,7 +191,7 @@ async def _mark_first_greeting_owed(name: str, cfg: object) -> None:
 
 
 async def api_kirocrew_agents_create(request: web.Request) -> web.Response:
-    """POST /api/agents — create a new Kiro Crew agent.
+    """POST /api/agents — create a new Sao Khuê agent.
 
     Wrapped in the UI-guide commit hook: when the owner's tab names a guide
     waiting on its ``crewmate.create`` step (``X-Guide-*`` headers), the guide is

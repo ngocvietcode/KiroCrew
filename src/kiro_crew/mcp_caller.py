@@ -1,9 +1,9 @@
-"""Caller-identity protocol extension for KiroCrew MCP servers.
+"""Caller-identity protocol extension for SaoKhue MCP servers.
 
 BACKGROUND
 ----------
 The base MCP protocol (Anthropic spec 2024-11-05) models a 1:1 stdio
-transport: one client, one server. When KiroCrew introduces a broker that
+transport: one client, one server. When SaoKhue introduces a broker that
 fans N client sessions into a shared backend, the backend no
 longer has an implicit 1:1 identity — it needs to know *which* client made
 each call so it can:
@@ -66,7 +66,7 @@ This module defines a **namespaced, versioned, typed** protocol extension:
 
 This module is the **single source of truth** for the extension's wire
 format, capability name, and validation rules. mcp_core / mcp_cron and
-any future KiroCrew-owned MCP server must go through this module.
+any future SaoKhue-owned MCP server must go through this module.
 """
 
 from __future__ import annotations
@@ -572,7 +572,7 @@ def _report_co_tenancy(pid: int, tenants: int) -> None:
 
 @dataclass(frozen=True)
 class CallerContext:
-    """Identity of the originating KiroCrew session for a single MCP call.
+    """Identity of the originating SaoKhue session for a single MCP call.
 
     Immutable by design — passing by reference is safe, and tool handlers
     cannot accidentally mutate the caller on their way to downstream code.
@@ -599,14 +599,14 @@ class CallerContext:
     #: the dataclass only blocks attribute *reassignment*, not mutation of
     #: mutable field contents.
     raw: Mapping[str, Any] = field(default_factory=lambda: MappingProxyType({}))
-    #: The signed per-session token gatewayd forwards to Kiro Crew's OWN pooled
+    #: The signed per-session token gatewayd forwards to Sao Khuê's OWN pooled
     #: control-plane backends (``kirocrew-core`` / ``kirocrew-cron``) so their
     #: loopback gateway requests can carry ``X-Session-Token``. gatewayd spawns
     #: a shared backend from its own environment, so the per-session env token
     #: never reaches it. Never forwarded to a third-party backend.
     session_token: str = ""
     #: Why gatewayd withheld ``session_token`` from a backend spawned under one
-    #: of Kiro Crew's OWN server names (the ``_deny_control_plane`` reason:
+    #: of Sao Khuê's OWN server names (the ``_deny_control_plane`` reason:
     #: "spawned '/opt/local/bin/kirocrew' is not the spec's '…'"). Set only
     #: on the frames forwarded to such a denied backend, so its
     #: ``identity_unattested`` refusal can name the cause; the reason otherwise

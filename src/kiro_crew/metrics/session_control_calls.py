@@ -15,7 +15,7 @@ server's tools, and their outcomes into one series.
 **Three closed attributes, no fourth.**
 
 * ``op`` -- the verb, from :data:`SESSION_CONTROL_OPS`. The route table is
-  Kiro Crew's own, so the list is closed by construction rather than by trust;
+  Sao Khuê's own, so the list is closed by construction rather than by trust;
   :func:`classify_op` still folds an unlisted value to ``other`` so a route
   added without a row here cannot mint a series.
 * ``caller`` -- the kind of agent that called, from

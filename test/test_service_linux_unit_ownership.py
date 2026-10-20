@@ -324,7 +324,7 @@ class TestLinuxServiceScopesOwnership:
         into it the way `systemctl --user link /path/kirocrew.service` does: the
         unit directory holds only the symlink. `marked` writes the file the way
         the installer does — the managed-marker line — which is what makes a
-        linked unit Kiro Crew's own."""
+        linked unit Sao Khuê's own."""
         search_dir = tmp_path / ".config" / "systemd" / "user"
         search_dir.mkdir(parents=True)
         source = tmp_path / "operator" / "units" / _UNIT
@@ -371,14 +371,14 @@ class TestLinuxServiceScopesOwnership:
 
         assert ["sudo", "systemctl", "stop", _UNIT] not in run.calls, run.calls
         assert self._no_verb_issued(run), run.calls
-        assert report.system.startswith("left untouched (not installed by Kiro Crew: ")
+        assert report.system.startswith("left untouched (not installed by Sao Khuê: ")
         assert str(vendor) in report.system and str(svc_linux.UNIT_PATH) in report.system
         assert report.unfinished == frozenset() and report.removed == frozenset()
         assert vendor.exists()
         assert rc == 0
         out = capsys.readouterr().out
         assert "No kirocrew service was removed." in out
-        assert "system scope: left untouched (not installed by Kiro Crew" in out
+        assert "system scope: left untouched (not installed by Sao Khuê" in out
 
     def test_the_marker_makes_a_unit_ours_wherever_it_lives(self, tmp_path):
         """The one line every rendered unit carries, `Environment="KIROCREW_SERVICE_MANAGED=1"`,
@@ -435,7 +435,7 @@ class TestLinuxServiceScopesOwnership:
         assert source.exists(), "the operator's linked unit file was deleted"
         assert source.read_text(encoding="utf-8") == contents
         assert link.is_symlink(), "the operator's link entry was removed"
-        assert report.user.startswith("left untouched (not installed by Kiro Crew: ")
+        assert report.user.startswith("left untouched (not installed by Sao Khuê: ")
         assert report.removed == frozenset() and report.unfinished == frozenset()
         assert self._no_verb_issued(run), run.calls
 
@@ -500,7 +500,7 @@ class TestLinuxServiceScopesOwnership:
         assert packaged.exists(), "the operator's lower-priority unit file was deleted"
         assert "distribution's own definition" in packaged.read_text(encoding="utf-8")
         assert own.is_symlink(), "the operator's link at our path was removed"
-        assert report.user.startswith("left untouched (not installed by Kiro Crew: ")
+        assert report.user.startswith("left untouched (not installed by Sao Khuê: ")
         assert report.removed == frozenset() and report.unfinished == frozenset()
         assert self._no_verb_issued(run), run.calls
 
@@ -586,7 +586,7 @@ class TestLinuxServiceScopesOwnership:
 
         ours = Path(svc_linux._installer_unit_path(user=True))
         ours.parent.mkdir(parents=True)
-        ours.write_text("[Unit]\nDescription=Kiro Crew gateway\n", encoding="utf-8")
+        ours.write_text("[Unit]\nDescription=Sao Khuê gateway\n", encoding="utf-8")
         lib_dir = tmp_path / "usr" / "lib" / "systemd" / "user"
         lib_dir.mkdir(parents=True)
         shadowed = lib_dir / _UNIT
@@ -968,7 +968,7 @@ class TestLinuxServiceScopesOwnership:
             report = svc_linux.uninstall()
 
         assert other.exists()
-        assert report.user.startswith("left untouched (not installed by Kiro Crew: ")
+        assert report.user.startswith("left untouched (not installed by Sao Khuê: ")
         assert self._no_verb_issued(run), run.calls
 
     def test_status_names_an_alias_for_what_it_is(self, tmp_path):

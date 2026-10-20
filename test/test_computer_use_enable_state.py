@@ -222,7 +222,7 @@ class TestPolicyConfig:
         # (driving our own Settings UI would route around the keystone that holds
         # the primary enable). The terminal / password-manager / system-settings
         # entries were removed by product decision.
-        ours = AppRef(name="Kiro Crew", pid=1, bundle_id="dev.kiro.crew")
+        ours = AppRef(name="Sao Khuê", pid=1, bundle_id="dev.kiro.crew")
         cfg = PolicyConfig(allowed_apps=("dev.kiro.crew",), extra_denied_apps=())
         # Even an explicit operator allow-list entry cannot lift the built-in floor.
         assert policy.check_app(ours, cfg) is not None

@@ -1,7 +1,7 @@
 ---
 title: Federated App Platform — Dynamic ESM Loading with Import Maps
 status: partial
-author: KiroCrew contributors
+author: SaoKhue contributors
 created: 2026-04-18
 last-audited: 2026-08-03
 audited-at: 0ab6ed48
@@ -21,7 +21,7 @@ superseded-by: []
 > map inside MCP App `srcdoc` iframes is a separate mechanism. Read the remaining
 > phases below as proposals, not descriptions of current behaviour.
 
-**Author:** KiroCrew contributors  
+**Author:** SaoKhue contributors  
 **Date:** 2026-04-18  
 **Status:** partial — Phase 1 is substantially on main (import map, vendored ESM shims, `AppHost.tsx`, `@kirocrew/app-sdk`, static app-UI serving); Phase 3 is half-built (`app init --ui` shipped, `app dev` reinterpreted as a dev-mode toggle, no `kirocrewApp()` Vite plugin, no `app publish`). Unstarted: Phase 2 (Agent Worlds extraction — contradicted by the compiled-in builtin-apps pattern that shipped instead), Phase 1's entire removal table (app backends are alive and load-bearing), Phase 4's bundle+hash+CDN lane, Phase 5's CSP/monitoring. §3.3 and §3.7 are superseded by `rfc-appstore-official-registry.md`; this RFC's loading model is not.
 
@@ -29,25 +29,25 @@ superseded-by: []
 
 ## 1. Problem Statement
 
-KiroCrew's app system today supports installing agent/skill/cron bundles from local directories. The UI side is limited: apps can either host their own HTTP backend (embedded via iframe) or have no visual presence at all. This creates three problems:
+SaoKhue's app system today supports installing agent/skill/cron bundles from local directories. The UI side is limited: apps can either host their own HTTP backend (embedded via iframe) or have no visual presence at all. This creates three problems:
 
-1. **No federated UI loading** — apps cannot contribute React pages that feel native to the KiroCrew dashboard. The iframe approach has well-known UX limitations (scrolling, focus, accessibility, no shared theme/components, double scrollbars).
+1. **No federated UI loading** — apps cannot contribute React pages that feel native to the SaoKhue dashboard. The iframe approach has well-known UX limitations (scrolling, focus, accessibility, no shared theme/components, double scrollbars).
 
-2. **No remote registry** — apps can only be installed from local file paths. There's no way for a developer to publish an app and have other users discover and install it from within KiroCrew.
+2. **No remote registry** — apps can only be installed from local file paths. There's no way for a developer to publish an app and have other users discover and install it from within SaoKhue.
 
-3. **Built-in features that should be apps** — features like Agent Worlds (pixel art scenes), Channels (multi-agent chat), and Schedule (cron UI) are hardcoded into the KiroCrew frontend. They can't be independently versioned, disabled, or replaced. New features require modifying the core codebase.
+3. **Built-in features that should be apps** — features like Agent Worlds (pixel art scenes), Channels (multi-agent chat), and Schedule (cron UI) are hardcoded into the SaoKhue frontend. They can't be independently versioned, disabled, or replaced. New features require modifying the core codebase.
 
 The goal is a platform where:
 - A developer creates a new package, writes a React component, publishes it
-- A user discovers it in KiroCrew's App Store, clicks Install, and gets a new sidebar page
+- A user discovers it in SaoKhue's App Store, clicks Install, and gets a new sidebar page
 - The app looks and feels native — same theme, same components, same React tree
 - No iframes, no Web Components, no separate backend processes
 
 ## 2. Design Principles
 
-1. **Apps are React components.** The contract is: export a default React component. No framework abstraction, no custom rendering layer. App developers use the same React + Tailwind + Lucide stack as KiroCrew core.
+1. **Apps are React components.** The contract is: export a default React component. No framework abstraction, no custom rendering layer. App developers use the same React + Tailwind + Lucide stack as SaoKhue core.
 
-2. **Import maps for shared dependencies.** React, ReactDOM, and KiroCrew's UI library are provided by the host via browser-native [import maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap). Apps externalize these dependencies at build time. Result: tiny app bundles, single React instance, hooks and context work across the boundary.
+2. **Import maps for shared dependencies.** React, ReactDOM, and SaoKhue's UI library are provided by the host via browser-native [import maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap). Apps externalize these dependencies at build time. Result: tiny app bundles, single React instance, hooks and context work across the boundary.
 
 3. **Permission-scoped API surface.** Apps declare which API endpoints and real-time events they need. The SDK provides a fetch wrapper that enforces these permissions client-side. In a future hosted deployment, the server enforces them too.
 
@@ -98,7 +98,7 @@ The goal is a platform where:
 
 ### 3.2 Import Map Strategy
 
-The host's `index.html` declares an import map that maps bare specifiers to vendored ESM bundles served by the KiroCrew backend:
+The host's `index.html` declares an import map that maps bare specifiers to vendored ESM bundles served by the SaoKhue backend:
 
 ```html
 <script type="importmap">
@@ -119,7 +119,7 @@ The host's `index.html` declares an import map that maps bare specifiers to vend
 
 When an app bundle does `import { Card } from '@kirocrew/ui'`, the browser resolves it to the host's vendored copy. No duplicate React instances, no hook violations, no bundle bloat.
 
-The vendored files are generated at KiroCrew build time by extracting ESM builds of each shared dependency. The Vite build already produces these — we just need to copy them to a `/vendor/` static directory.
+The vendored files are generated at SaoKhue build time by extracting ESM builds of each shared dependency. The Vite build already produces these — we just need to copy them to a `/vendor/` static directory.
 
 ### 3.3 App Manifest Schema
 
@@ -167,7 +167,7 @@ Fields:
 | `description` | string | no | One-line description |
 | `author` | string | no | Author alias |
 | `tags` | string[] | no | Searchable tags |
-| `kirocrew` | string | no | Minimum KiroCrew version (semver range) |
+| `kirocrew` | string | no | Minimum SaoKhue version (semver range) |
 | `ui.entry` | string | no | Path to ESM bundle relative to app root |
 | `ui.pages` | Page[] | no | Routes to register in the sidebar |
 | `ui.pages[].route` | string | yes | URL path (e.g. `/worlds`) |
@@ -359,8 +359,8 @@ The registry is a JSON index file hosted on a CDN (or internal S3 bucket). The e
 
 Install flow:
 1. User clicks "Install" in App Store UI (or runs `kirocrew app install agent-worlds`)
-2. KiroCrew downloads `app.json` from `manifestUrl`
-3. KiroCrew downloads `index.mjs` from `bundleUrl`
+2. SaoKhue downloads `app.json` from `manifestUrl`
+3. SaoKhue downloads `index.mjs` from `bundleUrl`
 4. Verifies `bundleHash` matches the downloaded file
 5. Stores both in `~/.kirocrew/apps/agent-worlds/`
 6. Registers agents, skills, crons via existing bridge system
@@ -382,7 +382,7 @@ Install flow:
     installed.json         ← install metadata (version, date, source)
 ```
 
-The KiroCrew backend serves `~/.kirocrew/apps/{name}/ui/*` at `/apps/{name}/ui/*` as static files. The import in `AppHost` resolves to `/apps/agent-worlds/ui/index.mjs`.
+The SaoKhue backend serves `~/.kirocrew/apps/{name}/ui/*` at `/apps/{name}/ui/*` as static files. The import in `AppHost` resolves to `/apps/agent-worlds/ui/index.mjs`.
 
 ## 4. Developer Experience
 
@@ -406,11 +406,11 @@ kirocrew app dev
 ```
 
 1. Starts Vite dev server on port 3001 with HMR
-2. Registers the app with the running KiroCrew instance in dev mode
-3. KiroCrew loads the app from `http://localhost:3001/src/index.tsx` (Vite's native ESM)
-4. Hot module replacement works — edit, save, see changes instantly in KiroCrew
+2. Registers the app with the running SaoKhue instance in dev mode
+3. SaoKhue loads the app from `http://localhost:3001/src/index.tsx` (Vite's native ESM)
+4. Hot module replacement works — edit, save, see changes instantly in SaoKhue
 
-The dev server proxies API calls to the KiroCrew backend, so the app has access to real data.
+The dev server proxies API calls to the SaoKhue backend, so the app has access to real data.
 
 ### 4.3 Build
 
@@ -465,7 +465,7 @@ export default function AgentWorldsApp() {
 ```
 
 The app author doesn't think about:
-- Import maps (handled by KiroCrew host)
+- Import maps (handled by SaoKhue host)
 - Theme integration (CSS custom properties just work)
 - Permission enforcement (SDK handles it)
 - Bundle optimization (React is externalized automatically)
@@ -480,7 +480,7 @@ The app author doesn't think about:
 | Malicious app steals user data | Registry review process + bundle hash pinning |
 | Supply chain tampering after review | Subresource Integrity (hash verification on install) |
 | App accesses unauthorized APIs | Permission-scoped API proxy (client-side now, server-side in hosted mode) |
-| App crashes takes down KiroCrew | ErrorBoundary per app |
+| App crashes takes down SaoKhue | ErrorBoundary per app |
 | App causes memory leak / CPU abuse | Future: runtime monitoring + kill switch |
 | Code injection at network level | CSP headers in hosted mode |
 
@@ -488,7 +488,7 @@ The app author doesn't think about:
 
 | Tier | Trust Level | Example | Verification |
 |------|-------------|---------|--------------|
-| Built-in | Full | Chat, Overview, Settings | Part of KiroCrew core, no dynamic loading |
+| Built-in | Full | Chat, Overview, Settings | Part of SaoKhue core, no dynamic loading |
 | Curated | High | Apps in official registry | Reviewed, signed, hash-pinned |
 | Community | Medium | Apps from community registry | Hash-pinned, permissions displayed at install |
 | Local | User-controlled | `kirocrew app install ./my-app` | No verification, user takes responsibility |
@@ -517,7 +517,7 @@ The app author doesn't think about:
   - Create `KiroCrewApp-AgentWorlds` package
   - Move scene components from `frontend/src/pages/scenes/` to the app
   - Move `WorldsPage.tsx` logic into the app's `index.tsx`
-  - Remove Worlds from KiroCrew core's router and sidebar
+  - Remove Worlds from SaoKhue core's router and sidebar
   - Install the app via `kirocrew app install` — it appears in the sidebar as before
 - Validate the full cycle: scaffold → develop → build → install → render
 
@@ -575,17 +575,17 @@ The following modules are **kept** and enhanced:
 
 3. **Multi-page apps** — An app can declare multiple pages. Should each page be a separate lazy-loaded chunk, or one bundle for all pages? (Proposal: single bundle per app for simplicity. Apps can code-split internally with `React.lazy`.)
 
-4. **App-to-app communication** — Should apps be able to communicate with each other? (Proposal: not in scope. Apps communicate with KiroCrew core via the SDK. If needed later, a pub/sub event bus can be added.)
+4. **App-to-app communication** — Should apps be able to communicate with each other? (Proposal: not in scope. Apps communicate with SaoKhue core via the SDK. If needed later, a pub/sub event bus can be added.)
 
-5. **Offline support** — Installed app bundles are cached locally. Should KiroCrew work fully offline with installed apps? (Proposal: yes — bundles are downloaded at install time, not fetched on every page load.)
+5. **Offline support** — Installed app bundles are cached locally. Should SaoKhue work fully offline with installed apps? (Proposal: yes — bundles are downloaded at install time, not fetched on every page load.)
 
-6. **Version pinning** — When a new version of an app is published, should KiroCrew auto-update or require user action? (Proposal: show "update available" badge, user clicks to update. No auto-update for apps — different from KiroCrew core updates.)
+6. **Version pinning** — When a new version of an app is published, should SaoKhue auto-update or require user action? (Proposal: show "update available" badge, user clicks to update. No auto-update for apps — different from SaoKhue core updates.)
 
-7. **Shared state** — Some apps may want to read KiroCrew's Redux store (e.g. connection status, active slot). Should the SDK expose this? (Proposal: expose read-only selectors for common state like `useConnectionStatus()`, `useActiveSlot()`. Don't expose the full store.)
+7. **Shared state** — Some apps may want to read SaoKhue's Redux store (e.g. connection status, active slot). Should the SDK expose this? (Proposal: expose read-only selectors for common state like `useConnectionStatus()`, `useActiveSlot()`. Don't expose the full store.)
 
 ## 9. Success Criteria
 
 - Phase 1: Agent Worlds renders as a dynamically loaded app with the same UX as the current built-in page. No visual regression. Import map resolves shared dependencies correctly. ErrorBoundary catches app crashes without affecting the host.
 - Phase 2: A developer can scaffold, develop, build, and install an app end-to-end using CLI commands. Hot reload works during development.
 - Phase 3: The App Store Browse tab shows apps from the registry. One-click install works. Bundle hash is verified.
-- Phase 4: At least 3 apps published by different developers. No iframe, no backend process, no build-time coupling to KiroCrew core.
+- Phase 4: At least 3 apps published by different developers. No iframe, no backend process, no build-time coupling to SaoKhue core.

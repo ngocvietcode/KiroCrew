@@ -11,7 +11,7 @@ behind NAT and firewalls with no webhook, public address, or inbound port.
 | **DMs** | Responds to messages from an allow-listed user. No `@mention` needed. |
 | **Approved server threads** | Responds when both the sender's user ID and the exact thread ID are allow-listed. Everyone who can view the thread can read replies and tool output. |
 | **Allowed server channels** | Opt-in. An allow-listed user's message in an allow-listed channel opens a fresh public thread and the turn runs there, never in the shared channel itself. Off unless you add channel IDs. |
-| **Every other server channel** | Ignored, including a channel ID entered in the *thread* allow-list by mistake: Kiro Crew verifies the Discord channel type before running a turn. |
+| **Every other server channel** | Ignored, including a channel ID entered in the *thread* allow-list by mistake: Sao Khuê verifies the Discord channel type before running a turn. |
 | **Unknown users, threads or channels** | Denied. Security-relevant attempts are audited; unrelated guild chatter is discarded silently. Empty user allow-list denies everything; empty thread and channel allow-lists mean DMs only. |
 
 Discord represents threads as specialized guild channels with their own channel
@@ -36,7 +36,7 @@ token only once; treat it like a password.
   privileged intent to deliver guild/thread message text. Presence and Server
   Members intents remain unnecessary.
 
-Kiro Crew requests the guild/message-content Gateway intents when either `allowed_thread_ids` or `allowed_channel_ids` is configured, so DM-only installs keep the narrower intent set.
+Sao Khuê requests the guild/message-content Gateway intents when either `allowed_thread_ids` or `allowed_channel_ids` is configured, so DM-only installs keep the narrower intent set.
 
 ### 3. Install the bot
 
@@ -44,8 +44,8 @@ On **Installation**, enable **Guild Install** and select the **`bot`** and
 **`applications.commands`** OAuth scopes.
 
 `applications.commands` is what makes the `/` command menu appear inside a
-server. Kiro Crew publishes its command set to Discord at startup, so the menu
-is populated for you. The scope is **not** required to use Kiro Crew: every
+server. Sao Khuê publishes its command set to Discord at startup, so the menu
+is populated for you. The scope is **not** required to use Sao Khuê: every
 command is also a `!`-prefixed text command (`!help`), and those are the floor:
 they work in a DM and in an approved thread whether or not the slash menu is
 installed. If you installed the bot before slash commands existed, re-run the
@@ -84,7 +84,7 @@ Enable **Discord Settings → Advanced → Developer Mode**.
 
 Both values are long numeric snowflakes, for example `284102345871466496`.
 
-### 5. Configure Kiro Crew
+### 5. Configure Sao Khuê
 
 In **Settings → Discord**, enable the channel, paste the bot token, add every
 user who may run the agent, and optionally add approved server thread IDs.
@@ -150,10 +150,10 @@ Portal or clear the thread allow-list and restart in DM-only mode.
 - **Two allow-lists for threads.** A server-thread turn runs only when both the
   sender and exact thread are approved. An empty user list denies all traffic;
   an empty thread list preserves DM-only behavior.
-- **Channel-type verification.** Kiro Crew resolves an approved guild channel
+- **Channel-type verification.** Sao Khuê resolves an approved guild channel
   through Discord and accepts only announcement, public, or private thread
   types. Accidentally entering a normal channel ID does not enable it.
-- **Global intent scope.** Enabling any server thread or allowed parent channel turns on Discord's global Message Content intent. Discord then delivers content from every server channel the bot can see; Kiro Crew immediately discards traffic outside approved threads and parent channels and does not audit routine background chatter.
+- **Global intent scope.** Enabling any server thread or allowed parent channel turns on Discord's global Message Content intent. Discord then delivers content from every server channel the bot can see; Sao Khuê immediately discards traffic outside approved threads and parent channels and does not audit routine background chatter.
 - **Shared output warning.** Every member who can view an approved thread can
   read agent replies, tool output, and interactive approvals. Approve only
   threads whose membership and history are appropriate for that disclosure. An
@@ -252,7 +252,7 @@ row carries a **Two-way** or **One-way** tag and offers:
 
 The binding is stored per session and survives a gateway restart. A session can
 only be active in one place at a time — if it is already attached to Slack or
-another channel, Kiro Crew refuses and tells you where it lives, rather than
+another channel, Sao Khuê refuses and tells you where it lives, rather than
 moving it silently.
 
 A dashboard reply mirrored to a Discord DM keeps arriving across gateway
@@ -268,7 +268,7 @@ one for a session that was closed or moved are refused, and the DM says so.
 `!sessions` is **owner-only and requires exactly one entry in
 `discord.allowed_user_ids`**. Session listing and resume can reach any dashboard
 conversation plus this DM's native generations, so with two
-or more allowed users Kiro Crew cannot tell which one owns the workspace and
+or more allowed users Sao Khuê cannot tell which one owns the workspace and
 refuses the command instead of guessing. Incognito and temporary sessions are
 never listed, and session titles plus replayed messages are scrubbed of
 credentials and suspicious URLs before they reach Discord.

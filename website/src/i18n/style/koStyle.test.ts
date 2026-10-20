@@ -233,7 +233,7 @@ describe('ko spacing (style/ko.md §2)', () => {
   it('does not open a fragment with a detached 조사', () => {
     // A fragment is rendered as `<operand> <fragment>` — the component always puts
     // a space between them — so a value that BEGINS with a 조사 draws it separated
-    // from the noun it belongs to: `Kiro Crew 을(를) 제거하고`. In Korean that is an
+    // from the noun it belongs to: `Sao Khuê 을(를) 제거하고`. In Korean that is an
     // orthography error, not a style preference, and the space is not the
     // catalog's to remove. Omitting the particle is the repair the language allows.
     //

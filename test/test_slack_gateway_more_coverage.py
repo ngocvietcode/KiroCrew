@@ -1051,7 +1051,7 @@ class TestNotifyNudgeExpired:
             (
                 MonitorOutcome.BLOCKED,
                 "unsupported_monitor_version",
-                "Update Kiro Crew",
+                "Update Sao Khuê",
                 "reopen",
             ),
             (MonitorOutcome.BLOCKED, "invalid_monitor_record", "record", "reopen"),

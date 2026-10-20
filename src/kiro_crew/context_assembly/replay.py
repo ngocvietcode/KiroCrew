@@ -132,7 +132,7 @@ def build_interrupted_turn_preamble(
     answered it. When the process serving a turn dies mid-answer -- a gateway
     restart, a crash, a recycled runtime -- that turn's request is never written,
     so ``session/load`` brings the conversation back WITHOUT it. A resumed
-    session gets no Kiro Crew replay (the native history is trusted to be
+    session gets no Sao Khuê replay (the native history is trusted to be
     complete), so a Resume pressed on that turn reaches the model as a bare
     "finish the user's most recent request" with the request missing: the model
     answers the turn before it, or reports there is nothing to continue.

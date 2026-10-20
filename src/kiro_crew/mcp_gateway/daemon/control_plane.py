@@ -1,4 +1,4 @@
-"""The token fence: which pooled backend is Kiro Crew's own control plane.
+"""The token fence: which pooled backend is Sao Khuê's own control plane.
 
 A reserved server name earns the per-session ``X-Session-Token`` only when the
 command about to be spawned IS the managed spec's launcher, run with an
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from kiro_crew.mcp_gateway.daemon.identity import _StubConn
 
 
-#: Kiro Crew's own pooled backends handed the per-session token: every managed
+#: Sao Khuê's own pooled backends handed the per-session token: every managed
 #: Crew server, because each reads the session's tool policy through
 #: ``mcp_shared`` and posts back to the gateway for the session it acts on
 #: behalf of, and the gateway reads a declared session key only behind that
@@ -64,7 +64,7 @@ def _spawns_own_control_plane(
     work_dir: str | os.PathLike[str] | None = None,
     denial: list[str] | None = None,
 ) -> bool:
-    """Whether spawning ``command args`` for *server_name* runs Kiro Crew's own control plane.
+    """Whether spawning ``command args`` for *server_name* runs Sao Khuê's own control plane.
 
     ``denial`` collects the reason a reserved name is refused (see
     :func:`_deny_control_plane`); the verdict itself is the return value.
@@ -99,7 +99,7 @@ def _spawns_own_control_plane(
 
     Reads config and the filesystem: call it off the event loop, and BEFORE the
     child is spawned. The spawn site still launches an accepted control plane
-    with ``PYTHONSAFEPATH`` as defense in depth and re-applies Kiro Crew's own
+    with ``PYTHONSAFEPATH`` as defense in depth and re-applies Sao Khuê's own
     UTF-8 pinning (``platform_compat._UTF8_PROCESS_ENV``) to every pooled
     backend once the verdict is fixed, but the verdict never depends on those
     variables or on version-specific interpreter flags.
@@ -188,7 +188,7 @@ def _caller_for_backend(
     conn: Optional["_StubConn"],
 ) -> Optional[CallerContext]:
     """The caller to forward to ``backend``: ``caller`` plus the session token
-    only when ``backend`` is one of Kiro Crew's own control planes.
+    only when ``backend`` is one of Sao Khuê's own control planes.
 
     Those pooled control planes post back to the gateway over loopback and must
     prove the session they act for with ``X-Session-Token``. gatewayd spawned

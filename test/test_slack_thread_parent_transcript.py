@@ -96,7 +96,7 @@ class _Slack(_golden.RecordingSlackClient):
 
 
 def _bot_dm(text: str = _DM) -> dict[str, str]:
-    return {"text": text, "user": "UBOT", "bot_id": "B01", "bot_name": "Kiro Crew"}
+    return {"text": text, "user": "UBOT", "bot_id": "B01", "bot_name": "Sao Khuê"}
 
 
 def _builder(tmp_path, log: ConversationLog) -> ContextBuilder:
@@ -190,7 +190,7 @@ class TestReplyToBotDm:
         rows = log.read_messages(_SESSION)
         assert [r["role"] for r in rows] == ["notice", "user", "assistant"]
         notice = rows[0]
-        assert notice["content"] == f"Thread started by Kiro Crew on Slack:\n{_DM}"
+        assert notice["content"] == f"Thread started by Sao Khuê on Slack:\n{_DM}"
         assert notice.get("cls") == "msg msg-info"
         assert notice.get("source_user") == "B01"
         assert rows[1]["content"] == _REPLY
@@ -229,7 +229,7 @@ class TestReplyToBotDm:
         # Only the notice made it to disk; the next attempt must still hand the
         # parent to the model, and must not add a second row.
         log = ConversationLog(base_dir=tmp_path / "conv")
-        parent = thread_parent.ThreadParent(text=_DM, author="Kiro Crew", author_id="B01")
+        parent = thread_parent.ThreadParent(text=_DM, author="Sao Khuê", author_id="B01")
         asyncio.run(thread_parent.record_thread_parent(log, _SESSION, parent, agent="kirocrew"))
         provider = _Provider()
 
@@ -295,7 +295,7 @@ _CRON_POST = "⏰ *Cron: nightly triage*\n\n3 new issues need an owner: 101, 102
 
 
 def _cron_post() -> dict[str, str]:
-    return {"text": _CRON_POST, "user": "UBOT", "bot_id": "B01", "bot_name": "Kiro Crew"}
+    return {"text": _CRON_POST, "user": "UBOT", "bot_id": "B01", "bot_name": "Sao Khuê"}
 
 
 @pytest.mark.usefixtures("_dispatch_env")
@@ -413,7 +413,7 @@ class TestUntrustedParent:
 
 class TestTranscriptNotice:
     def test_long_parent_is_capped_in_the_row(self):
-        parent = thread_parent.ThreadParent(text="x" * 5000, author="Kiro Crew", author_id="B01")
+        parent = thread_parent.ThreadParent(text="x" * 5000, author="Sao Khuê", author_id="B01")
         body = thread_parent.transcript_notice(parent).split("\n", 1)[1]
         assert body == "x" * thread_parent.PARENT_TEXT_CAP + "… — read the rest in Slack."
 

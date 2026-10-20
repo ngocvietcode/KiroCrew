@@ -36,7 +36,7 @@ async def warm_project_agents_for_spawn(state: Any, cwd: str) -> None:
     since the original spawn (a removed root must not stay warm-able forever),
     so the check is against the CURRENT config on every call. On rejection the
     cwd is simply not warmed and ``spawn()`` refuses it with the real error.
-    The pool cwd is Kiro Crew's own default project dir and needs no allowlist.
+    The pool cwd is Sao Khuê's own default project dir and needs no allowlist.
     Config load + ``validate_cwd`` (realpath/isdir) are blocking filesystem
     work, so the whole check runs on the discovery pool.
     """

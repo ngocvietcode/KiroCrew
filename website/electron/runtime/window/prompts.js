@@ -98,7 +98,7 @@ function createWindowPrompts({
     </style></head><body>
       <label>Gateway port</label>
       <input id="p" type="number" value="7778" min="1" max="65535" autofocus>
-      <div class="hint">Connect to a Kiro Crew gateway running on another port</div>
+      <div class="hint">Connect to a Sao Khuê gateway running on another port</div>
       <div class="row"><button class="ok" onclick="go()">Connect</button>
       <button class="cancel" onclick="window.close()">Cancel</button></div>
       <script>
@@ -166,7 +166,7 @@ function createWindowPrompts({
         .check-row label { margin:0; font-size:12px; }
       </style></head><body>
         <label>Window name</label>
-        <input id="n" value="${esc(currentTitle.replace(/^Kiro ?Crew /g, ""))}" autofocus>
+        <input id="n" value="${esc(currentTitle.replace(/^(?:Sao ?Khu[eê]|Kiro ?Crew) /g, ""))}" autofocus>
         <div class="row"><button class="ok" onclick="go()">Rename</button>
         <button class="cancel" onclick="window.close()">Cancel</button></div>
         <div class="check-row"><input type="checkbox" id="d"><label for="d">Set as default name for :${focusedPort} windows</label></div>

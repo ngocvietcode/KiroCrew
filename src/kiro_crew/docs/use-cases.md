@@ -1,12 +1,12 @@
 # Use Cases & Workflows
 
-Real-world workflows from the Kiro Crew community. These combine Kiro Crew's
+Real-world workflows from the Sao Khuê community. These combine Sao Khuê's
 capabilities — cron jobs, subagents, memory, chat channels, and task runner —
 into end-to-end automation.
 
 ## Backlog Crusher
 
-An example workflow: Kiro Crew works through your issue backlog, picks up tasks,
+An example workflow: Sao Khuê works through your issue backlog, picks up tasks,
 implements them, runs tests, opens pull requests, and handles review comments
 without you driving each step.
 
@@ -49,7 +49,7 @@ The `yolo` approval mode applies to the gateway only (`kirocrew gateway
 
 ## Repetitive Refactors
 
-Automate repetitive cleanup across a codebase. Kiro Crew reads a config or
+Automate repetitive cleanup across a codebase. Sao Khuê reads a config or
 feature-flag list, identifies dead code paths, removes them, and opens pull
 requests.
 
@@ -83,12 +83,12 @@ Fan out research across multiple sources simultaneously:
 
 > "Research EC2 pricing changes across all regions"
 
-Kiro Crew spawns subagents — one per region or source — and synthesizes the
+Sao Khuê spawns subagents — one per region or source — and synthesizes the
 results into a single summary.
 
 ## Auto-Collect Information
 
-Replace manual information-gathering workflows. Use Kiro Crew cron jobs to
+Replace manual information-gathering workflows. Use Sao Khuê cron jobs to
 gather data from your sources and publish to a dashboard or static site.
 
 ## Oncall Automation
@@ -119,5 +119,5 @@ per-agent MCP configuration.
 ## Tips from the Community
 
 - **Unattended overnight runs**: For `kirocrew run`, allowlist the tools the spec needs in `hooks.auto_approve_tools`; for a gateway started with `--approval yolo`, use an isolated `KIROCREW_HOME`. Review the pull requests in the morning.
-- **Workspace isolation**: Use `KIROCREW_HOME` and `KIROCREW_PORT` env vars to run multiple Kiro Crew instances with separate data.
+- **Workspace isolation**: Use `KIROCREW_HOME` and `KIROCREW_PORT` env vars to run multiple Sao Khuê instances with separate data.
 - **Background gateway**: Use a macOS Launch Agent or systemd service to keep the gateway running across reboots (see [Getting Started](getting-started.md)).

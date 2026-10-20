@@ -66,7 +66,7 @@ function configResponse(overrides: Partial<MeetingsConfig> = {}): ConfigResponse
   return { ...REGISTRIES, config: { ...BASE_CONFIG, ...overrides } }
 }
 
-const TERM: DictionaryTerm = { correct: 'Kiro Crew', aliases: ['kiro cru', 'kero crew'] }
+const TERM: DictionaryTerm = { correct: 'Sao Khuê', aliases: ['kiro cru', 'kero crew'] }
 
 function renderView() {
   const notify = vi.fn()
@@ -315,17 +315,17 @@ describe('Meetings SettingsView — speech dictionary', () => {
     const aliases = await screen.findByLabelText('Misheard forms')
     const correct = screen.getByLabelText('Correct term')
     fireEvent.change(aliases, { target: { value: ' kiro cru , , kero crew ' } })
-    fireEvent.change(correct, { target: { value: '  Kiro Crew  ' } })
+    fireEvent.change(correct, { target: { value: '  Sao Khuê  ' } })
     fireEvent.keyDown(correct, { key: 'Enter' })
 
     await waitFor(() =>
-      expect(apiMocks.addTerm).toHaveBeenCalledWith('Kiro Crew', ['kiro cru', 'kero crew']),
+      expect(apiMocks.addTerm).toHaveBeenCalledWith('Sao Khuê', ['kiro cru', 'kero crew']),
     )
     await waitFor(() => expect(aliases).toHaveValue(''))
     expect(correct).toHaveValue('')
     // The response replaced the cached list, so the new row renders.
     expect(
-      await screen.findByRole('button', { name: 'Remove Kiro Crew' }, { timeout: 5_000 }),
+      await screen.findByRole('button', { name: 'Remove Sao Khuê' }, { timeout: 5_000 }),
     ).toBeInTheDocument()
   })
 
@@ -334,7 +334,7 @@ describe('Meetings SettingsView — speech dictionary', () => {
 
     const correct = await screen.findByLabelText('Correct term')
     fireEvent.change(screen.getByLabelText('Misheard forms'), { target: { value: 'kiro cru' } })
-    fireEvent.change(correct, { target: { value: 'Kiro Crew' } })
+    fireEvent.change(correct, { target: { value: 'Sao Khuê' } })
     fireEvent.keyDown(correct, { key: 'a' })
 
     expect(apiMocks.addTerm).not.toHaveBeenCalled()
@@ -347,7 +347,7 @@ describe('Meetings SettingsView — speech dictionary', () => {
     fireEvent.change(await screen.findByLabelText('Misheard forms'), {
       target: { value: 'kiro cru' },
     })
-    fireEvent.change(screen.getByLabelText('Correct term'), { target: { value: 'Kiro Crew' } })
+    fireEvent.change(screen.getByLabelText('Correct term'), { target: { value: 'Sao Khuê' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
 
     await waitFor(
@@ -362,9 +362,9 @@ describe('Meetings SettingsView — speech dictionary', () => {
     renderView()
 
     expect(await screen.findByText('kiro cru, kero crew')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Remove Kiro Crew' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Sao Khuê' }))
 
-    await waitFor(() => expect(apiMocks.removeTerm).toHaveBeenCalledWith('Kiro Crew'))
+    await waitFor(() => expect(apiMocks.removeTerm).toHaveBeenCalledWith('Sao Khuê'))
     expect(await screen.findByTestId('empty-state-title')).toHaveTextContent('No corrections yet')
   })
 })

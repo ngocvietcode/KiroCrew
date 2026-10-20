@@ -307,7 +307,7 @@ export function previewFile(path: string): void {
 
 // The app's dedicated chat slot key. Binding the slot to the app's agent (see
 // ensureSlot) is what stops the ambient dashboard agent from answering here.
-// Slot keys are KiroCrew-internal and never shown to the user.
+// Slot keys are SaoKhue-internal and never shown to the user.
 export const MOCHI_SLOT = 'mochi'
 // The agent kiro-cli must resolve. NOT the same string as the slot: kiro-cli
 // keys agents by the "name" field inside the JSON, not by the namespaced link
@@ -732,7 +732,7 @@ export const onSlotsUpdate = (cb: SlotsListener) => subscribe(slotsListeners, cb
 //
 // In the original standalone app these methods probed a SEPARATE gateway
 // process over the preload's status/retry IPC channels, which drove the main
-// process's GatewayManager.spawn(); the "Start KiroCrew" button launched it. None of that maps onto a builtin: the panel is SERVED BY the gateway, so
+// process's GatewayManager.spawn(); the "Start SaoKhue" button launched it. None of that maps onto a builtin: the panel is SERVED BY the gateway, so
 // if the gateway were down this page could not have loaded at all and even the
 // plain-HTTP calls (the watchlist, pins, history) would fail — there is no
 // separate process to probe or to "start".
@@ -742,7 +742,7 @@ export const onSlotsUpdate = (cb: SlotsListener) => subscribe(slotsListeners, cb
 // slots and context side-channels, and it already reconnects with backoff. So
 // the indicator tracks the socket, and retryConnect() forces an immediate
 // reconnect rather than spawning anything. (The panel relabels the old
-// "Start KiroCrew" button to "Reconnect" — see ChatPanel's banner.)
+// "Start SaoKhue" button to "Reconnect" — see ChatPanel's banner.)
 
 /** Current WebSocket liveness. Kicks off a connect so the answer is meaningful. */
 export function getBackendStatus(): Promise<boolean> {
@@ -779,7 +779,7 @@ export async function retryConnect(): Promise<{ ok: boolean; message?: string }>
  *
  * Upstream Mochi's MAIN process did this (`broadcastToRenderers(IPC.CHAT_MESSAGE,
  * userMsg)` in ipcHandlers), so the vendored ChatPanel never appends optimistically
- * — it waits for the frame. KiroCrew core does NOT echo a normal send over the
+ * — it waits for the frame. SaoKhue core does NOT echo a normal send over the
  * socket, so without this the panel showed only the replies.
  */
 function echoOwnMessage(text: string, screenshot?: string): string {
@@ -1107,7 +1107,7 @@ export const clearChat = newSession
  * Permanently delete the pet's conversation history.
  *
  * NOT `newSession`. Deleting the slot ARCHIVES it (`save_slot_off_loop(...,
- * closed=true)`), so the conversation reappears in KiroCrew's session list with
+ * closed=true)`), so the conversation reappears in SaoKhue's session list with
  * its preview intact — which is what "reset" and the "cannot be undone" dialog
  * both looked like they had failed to do. `DELETE /api/sessions/{key}` is the
  * real erase: it drops the stored session, removes the matching slot, and pushes
@@ -1192,7 +1192,7 @@ export function openAvatars(): void {
   shell?.openAvatars?.()
 }
 
-/** Open the KiroCrew dashboard in the system browser (main supplies the URL). */
+/** Open the SaoKhue dashboard in the system browser (main supplies the URL). */
 export function openDashboard(): void {
   shell?.openDashboard?.()
 }
@@ -1720,7 +1720,7 @@ export function localFileUrl(path: string): string {
 // The original's tunnelStatus / onTunnelStatus / backend-switch methods answered
 // "which gateway am I talking to, and is the tunnel up". As a same-origin builtin
 // there is no separate backend to pick — but "point the pet at a REMOTE
-// KiroCrew" survives as a real feature, and core owns it (/api/instances/*).
+// SaoKhue" survives as a real feature, and core owns it (/api/instances/*).
 // So this is a REUSE, not a deletion: Mochi's `petInstance` setting names an
 // instance, and its liveness is read from core rather than from a tunnel Mochi
 // managed itself.

@@ -478,7 +478,7 @@ async def api_trusted_registry_grant(request: web.Request) -> web.Response:
             return web.json_response(
                 {
                     "error": (
-                        f"{exc} — fix or delete registry_trust.json in the Kiro Crew data folder, "
+                        f"{exc} — fix or delete registry_trust.json in the Sao Khuê data folder, "
                         "then grant again"
                     ),
                     "code": "corrupt",
@@ -567,7 +567,7 @@ async def api_trusted_registry_revoke(request: web.Request) -> web.Response:
             _audit(request, operation=op, outcome="error", resources="corrupt")
             return web.json_response(
                 {
-                    "error": f"{exc} — fix or delete registry_trust.json in the Kiro Crew data folder",
+                    "error": f"{exc} — fix or delete registry_trust.json in the Sao Khuê data folder",
                     "code": "corrupt",
                 },
                 status=500,

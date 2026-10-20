@@ -82,7 +82,7 @@ AGENT_NOT_AVAILABLE_CODE = "agent_not_available"
 
 
 #: Wire code for the refusal ``_validate_agent`` returns when the named agent is
-#: one of Kiro Crew's own generated specs (:func:`is_internal_agent_spec`): the
+#: one of Sao Khuê's own generated specs (:func:`is_internal_agent_spec`): the
 #: file exists, but it is machinery, not a sub-agent. A third refusal kind, so it
 #: carries its own identifier: ``agent_not_found`` would send the caller looking
 #: for a typo in a name it can see on disk. Same single-definition rule as the
@@ -100,9 +100,9 @@ def _internal_agent_refusal(requested: str, available: list[str]) -> str:
     """
     base = readonly_base_name(requested)
     what = (
-        f"the read-only spec Kiro Crew derives from {base!r} for side replies"
+        f"the read-only spec Sao Khuê derives from {base!r} for side replies"
         if base
-        else "a spec Kiro Crew generates for its own use"
+        else "a spec Sao Khuê generates for its own use"
     )
     suggestion = f"; name {base!r} to spawn that agent" if base in available else ""
     return (
@@ -273,7 +273,7 @@ def _validate_agent(requested: str, project_dir: str = "") -> tuple[str, str, st
     if not requested:
         return "", "", ""
     agents = list_agents()
-    # Kiro Crew's own generated specs are on disk but are not sub-agents (see
+    # Sao Khuê's own generated specs are on disk but are not sub-agents (see
     # ``is_internal_agent_spec``): they are neither accepted nor offered. A
     # project agent that declares the same name is the user's own and still wins.
     internal = {a.name for a in agents if is_internal_agent_spec(a)}
@@ -371,7 +371,7 @@ def spawn_allowlist(spec: Mapping[str, Any]) -> tuple[str, ...] | None:
     """The ``toolsSettings.subagent.availableAgents`` globs *spec* declares.
 
     This is kiro-cli's own key, defined for its built-in ``subagent`` tool: "glob
-    patterns for agents this agent can spawn; omit to allow all". Kiro Crew's
+    patterns for agents this agent can spawn; omit to allow all". Sao Khuê's
     sub-agents come through ``spawn_run`` instead, so the same declaration is
     honoured at the spawn gate rather than silently ignored.
 

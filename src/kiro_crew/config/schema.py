@@ -1,4 +1,4 @@
-"""Schema registry for KiroCrew configuration.
+"""Schema registry for SaoKhue configuration.
 
 Generates a nested JSON Schema (Draft-07) from the Python dataclass hierarchy
 and flattens it into a list of ``ConfigEntry`` records for API consumption and

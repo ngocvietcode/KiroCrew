@@ -74,7 +74,7 @@ Say this, filling in nothing you have to guess:
 > recipe from, and the roles the guest registers and runs under. All of them outlive
 > every crew that uses them, and the lane never creates any of them — a resource
 > whose loss is unrecoverable is created deliberately, not as a side effect of a
-> launch. The template ships with Kiro Crew as `kirocrew-microvm-base.yaml`; deploy
+> launch. The template ships with Sao Khuê as `kirocrew-microvm-base.yaml`; deploy
 > it with `aws cloudformation deploy` and keep four outputs: `LaneKmsKeyArn`,
 > `RecipeBucketName`, `ImageBuildRoleArn` and `HybridActivationRoleArn`.
 >

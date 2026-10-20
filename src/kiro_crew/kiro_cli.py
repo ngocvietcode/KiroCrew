@@ -122,7 +122,7 @@ _STATE_DB_TIMEOUT_SECS = 5.0
 #:
 #: kiro-cli validates agent specs with serde ``deny_unknown_fields``, so a release
 #: whose schema lacks the field does not ignore it -- it refuses the WHOLE file,
-#: drops the agent from its table, and every Kiro Crew MCP server is silently
+#: drops the agent from its table, and every Sao Khuê MCP server is silently
 #: absent from the session while ``--agent kirocrew`` resolves to the default
 #: agent. Observed refusing on 2.10.0 and accepting on 2.23.0.
 #:
@@ -217,7 +217,7 @@ def spec_permissions_supported(version: tuple[int, int, int] | None) -> bool:
 
     An unknown version is not "probably new enough": it is False. The two losses
     are not symmetric. Writing the field on a release that refuses it costs the
-    whole spec -- no MCP servers, no tools, no Kiro Crew agent at all.
+    whole spec -- no MCP servers, no tools, no Sao Khuê agent at all.
     Withholding it costs the KAS mode listing for that agent. So the unknown case
     takes the smaller loss.
     """
@@ -348,7 +348,7 @@ def api_key_configured(environ: Mapping[str, str] | None = None) -> bool:
     configured host.
 
     Reads the process environment, which by this point also carries anything the
-    credential loader lifted out of Kiro Crew's ``.env``.
+    credential loader lifted out of Sao Khuê's ``.env``.
     """
     env = environ if environ is not None else os.environ
     return bool((env.get(_API_KEY_ENV) or "").strip())

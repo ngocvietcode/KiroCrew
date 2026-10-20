@@ -26,7 +26,7 @@ from kiro_crew.history import ARCHIVE_DIR_NAME, ARCHIVE_SEGMENT_DELIMITER, SESSI
 logger = logging.getLogger("kiro_crew.session_storage")
 
 # Trash lives under the data home (not beside kiro-cli's store) because it holds
-# Kiro Crew's own staged deletions: it must survive a kiro-cli upgrade, and
+# Sao Khuê's own staged deletions: it must survive a kiro-cli upgrade, and
 # kiro-cli must not mistake a staged file for a session it can resume.
 TRASH_DIR_NAME = "trash"
 TRASH_SESSIONS_LEAF = "sessions"
@@ -233,7 +233,7 @@ def trash_root() -> Path:
 
 
 def _crew_sessions_dir() -> Path:
-    """Kiro Crew's own transcript directory."""
+    """Sao Khuê's own transcript directory."""
     return data_home() / SESSIONS_DIR_NAME
 
 

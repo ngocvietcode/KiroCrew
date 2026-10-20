@@ -1,4 +1,4 @@
-// ChatColumn — the center column. Binds Kiro Crew's native chat renderer
+// ChatColumn — the center column. Binds Sao Khuê's native chat renderer
 // (ChatEmbed → ChatMessageList: markdown, tool cards, options, streaming) to
 // this spec's slot. Uses the new frameless + startAtBottom ChatEmbed props
 // instead of the CSS overrides the external app relied on.

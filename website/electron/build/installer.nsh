@@ -20,7 +20,7 @@
 ; channel's pending update download, its differential baseline, and its window
 ; state. Orphaned bytes are a cost; reaching into a live install is a defect.
 ;
-; The Kiro Crew data home (~/.kiro/crew) is deliberately NOT touched: it holds
+; The Sao Khuê data home (~/.kiro/crew) is deliberately NOT touched: it holds
 ; sessions, memory and the database, is outside the install tree, and survives an
 ; uninstall by design (`nsis.deleteAppDataOnUninstall` stays false for the same
 ; reason). Neither is another product's data, e.g. %LOCALAPPDATA%\Kiro-Cli, which
@@ -284,7 +284,7 @@ FunctionEnd
 ; bypass fire for a directory we do not own. See the Var declaration.
 ;
 ; What remains covered: the loop this fixes needs an update whose install root is
-; already a Kiro Crew install, which is exactly the case the executable check
+; already a Sao Khuê install, which is exactly the case the executable check
 ; admits. An update that cannot prove ownership falls through to the ordinary
 ; fresh-install ownership path instead of adopting the directory.
 ;
@@ -567,7 +567,7 @@ FunctionEnd
 ; wrote without reading its current target. CreateShortCut resets any
 ; arguments, icon or working directory a user edited onto a link, so the
 ; rewrite must never touch a healthy machine: it additionally requires
-; PHYSICAL EVIDENCE OF BIFURCATION -- a sibling Kiro Crew install root in one
+; PHYSICAL EVIDENCE OF BIFURCATION -- a sibling Sao Khuê install root in one
 ; of the two shapes the former collision-nesting produced (this app's
 ; executable directly in $INSTDIR's parent, or in an ${APP_FILENAME} child of
 ; $INSTDIR). $KiroStaleSibling defaults to 0 and only the two existence probes
@@ -665,7 +665,7 @@ FunctionEnd
   StrCpy $KiroVisibleUpdate 0
   ${If} ${isUpdated}
     StrCpy $KiroVisibleUpdate 1
-    ; Older Kiro Crew clients launch every NSIS update with /S. Convert that
+    ; Older Sao Khuê clients launch every NSIS update with /S. Convert that
     ; legacy handoff to the visible, non-interactive update path so users see
     ; progress on the very first upgrade that contains this fix.
     ${If} ${Silent}

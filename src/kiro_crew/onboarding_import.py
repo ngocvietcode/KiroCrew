@@ -9,7 +9,7 @@ and keeps the pieces that must answer for the whole run:
   from each installed source's scan;
 * ``apply_import`` -- the rescan, the per-item dispatch loop, the ledger flush
   discipline, and the result the dashboard reports;
-* the writers into Kiro Crew's own stores: lessons (``_write_instruction``),
+* the writers into Sao Khuê's own stores: lessons (``_write_instruction``),
   memories (``_write_memory``) and schedules (``_write_schedule``).
 
 Owners, bottom up: :mod:`kiro_crew.onboarding_scan` (safe reads and content

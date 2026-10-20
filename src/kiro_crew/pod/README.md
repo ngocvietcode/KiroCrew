@@ -1,6 +1,6 @@
 # `kirocrew pod` — isolated worktree test instances
 
-Spin up a **throwaway, full-stack Kiro Crew gateway** for any feature worktree —
+Spin up a **throwaway, full-stack Sao Khuê gateway** for any feature worktree —
 its own port, its own `KIROCREW_HOME` (own DB / sessions / memory), no Slack
 tunnel, `--no-crons` (unless you pass `--crons`), resource-capped, and reclaimed
 by `pod down`. Test a branch's
@@ -18,7 +18,7 @@ boundary against arbitrary processes already running as the same Unix UID. Such 
 process can modify user-owned pod storage directly; descriptor pinning prevents
 path/symlink substitution from accidentally redirecting an approved operation, but
 it does not add per-pod UIDs or mount isolation. Controller v1 runs pod operations
-host-side (`main/live Kiro Crew -> target test pod`); a pod does not create or control
+host-side (`main/live Sao Khuê -> target test pod`); a pod does not create or control
 a child pod.
 
 ## Interface
@@ -48,7 +48,7 @@ kirocrew pod down   <wt>          # evict → delete its HOME, verified (zero re
 `<wt>` is a friendly worktree name. It is resolved to a checkout **git-natively**:
 `kirocrew pod up <name>` matches a linked worktree by its directory basename, its
 branch (`<name>` or `feat/<name>`), or an exact path — run it from inside any
-Kiro Crew checkout (or set `KIROCREW_POD_REPO`). The resolved path is pinned so the
+Sao Khuê checkout (or set `KIROCREW_POD_REPO`). The resolved path is pinned so the
 pod's gateway boots without re-consulting git.
 
 ## The on-ramp (provisioning)

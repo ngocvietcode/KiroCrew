@@ -273,7 +273,7 @@ class TestUpdateKiroCliPin:
         cli_server._update()
         assert update_checkout.kiro_argvs() == []
         out = capsys.readouterr().out
-        assert "Kiro Crew updated!" in out
+        assert "Sao Khuê updated!" in out
         # An absent backend is not worth a line: it is optional.
         assert "KIROCREW_KIRO_BIN" not in out
 
@@ -297,7 +297,7 @@ class TestUpdateKiroCliPin:
         assert update_checkout.kiro_argvs() == []
         out = capsys.readouterr().out
         assert "KIROCREW_KIRO_BIN" in out
-        assert "Kiro Crew updated!" in out
+        assert "Sao Khuê updated!" in out
 
     @posix_only
     def test_update_never_runs_a_path_shadowed_shim(

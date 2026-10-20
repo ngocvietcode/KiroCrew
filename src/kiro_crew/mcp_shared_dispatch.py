@@ -307,7 +307,7 @@ def _run_stdio_dispatch_loop(
         loop before the worker installs the caller ContextVar, so the resolver
         cannot find the token there; a pooled backend has it nowhere else.
 
-        A server that is not Kiro Crew's own (:func:`serves_managed_tools`) has
+        A server that is not Sao Khuê's own (:func:`serves_managed_tools`) has
         no managed tools for the policy to name, so it is answered "nothing
         excluded" without a read.
         """
@@ -678,7 +678,7 @@ def _run_stdio_dispatch_loop(
                 # with the action that actually recovers it.
                 logger.warning(
                     "%s: the install this process runs from was removed by an "
-                    "update; refusing %s until Kiro Crew is restarted",
+                    "update; refusing %s until Sao Khuê is restarted",
                     server_name,
                     tool_name,
                 )
@@ -689,7 +689,7 @@ def _run_stdio_dispatch_loop(
                         "code": -32000,
                         "message": (
                             f"{server_name} is running from an install that an "
-                            "update removed; restart Kiro Crew (kirocrew restart) "
+                            "update removed; restart Sao Khuê (kirocrew restart) "
                             "to load the current install"
                         ),
                     },

@@ -250,7 +250,7 @@ function BackupRow({
         {kind === 'sessions' && (
           // The archive takes BOTH halves of a session, and the CLI
           // half lives in a directory shared with any kiro-cli chat
-          // started outside Kiro Crew. Say so where the button is:
+          // started outside Sao Khuê. Say so where the button is:
           // the owner is choosing what leaves their machine.
           <div className="text-[12px] text-muted" data-testid="backup-sessions-scope">
             {i18nT('apps.awsControl.console.backup_sessions_scope')}

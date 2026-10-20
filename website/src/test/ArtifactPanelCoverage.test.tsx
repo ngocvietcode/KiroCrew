@@ -8,7 +8,7 @@
  * the submit-to-chat bar, the Escape handling, and the whole fullscreen portal
  * (focus seeding, Tab trap, body-scroll lock). Each is pinned here.
  *
- * Kiro Crew convention: automocked api client + `renderWithProviders` on a real
+ * Sao Khuê convention: automocked api client + `renderWithProviders` on a real
  * route so `useNavigate` runs for real against a sibling route.
  *
  * Three harness substitutions, all deliberate:

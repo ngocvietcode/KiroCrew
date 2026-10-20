@@ -579,7 +579,7 @@ class TestDashboardWriteClear:
         "listed",
         [
             {"error": "dashboard fields failed"},
-            {"error": "Kiro Crew gateway not reachable on 127.0.0.1:1", "refused": True},
+            {"error": "Sao Khuê gateway not reachable on 127.0.0.1:1", "refused": True},
             {},
             {"fields": "not a list"},
         ],

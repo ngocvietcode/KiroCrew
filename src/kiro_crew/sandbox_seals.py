@@ -89,7 +89,7 @@ def _sealable_absent_ceilings() -> tuple[list[str], list[str]]:
         # absent dir would be creatable from inside the sandbox, placing
         # forged specs where the next spawn resolves them.
         #
-        # Gated on ITS OWN parent rather than on the Kiro Crew data home `root`
+        # Gated on ITS OWN parent rather than on the Sao Khuê data home `root`
         # above: this leaf hangs off kiro-cli's home (``KIRO_HOME``, else
         # ``~/.kiro``), a different resolver with a different lifecycle, and
         # ``config_dir()`` mkdirs whatever it returns — so testing `root` here

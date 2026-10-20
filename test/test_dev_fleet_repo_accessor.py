@@ -155,7 +155,7 @@ def test_repo_accessor_surfaces_a_config_parse_failure_over_the_missing_checkout
     checkout — the deliberate behaviour — so ``MAIN_REPO`` stays empty. A message
     attached only to the resolved-but-invalid-path slot would never surface, because
     ``_repo()`` tests ``MAIN_REPO`` for truthiness before it and would raise
-    ``RepoNotConfigured`` ("no Kiro Crew checkout found"), sending the operator to look
+    ``RepoNotConfigured`` ("no Sao Khuê checkout found"), sending the operator to look
     for a checkout that was never the problem. ``_REPO_CFG_UNREADABLE_MSG`` is checked
     BEFORE that gate, so the operator is told which file failed to read or parse.
     """

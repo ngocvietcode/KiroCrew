@@ -2495,7 +2495,7 @@ async def _run_chat(
                         _wsred.reset()
             elif event.kind == EVENT_CLEAR_STATUS:
                 # A confirmed native clear is the one destructive slash command:
-                # replaying the persisted Kiro Crew history afterwards would undo
+                # replaying the persisted Sao Khuê history afterwards would undo
                 # the user's clear. Retire either an unconsumed slash lease or the
                 # consumed-turn marker before any terminal can re-arm it.
                 if _replay_pending or _replay_accepted_this_turn:
@@ -5609,7 +5609,7 @@ async def _run_chat(
             # The provider rejected preserved thinking that is bound to another
             # conversation prefix. Resending the same native conversation repeats
             # the rejection, so this is the image-history recovery's shape: discard
-            # only the resume SID once, replay the turn from Kiro Crew's transcript
+            # only the resume SID once, replay the turn from Sao Khuê's transcript
             # on a fresh conversation, and let the ledger veto the replay on a
             # later Stop, steer, queued follow-up or rebind. A refused rebuild
             # falls through to the terminal error below.
@@ -5683,7 +5683,7 @@ async def _run_chat(
             # image carried by the native conversation. Retrying that same
             # session is deterministic; discard only its resume SID so the
             # dashboard/channel identity and text transcript survive. The fresh
-            # session receives Kiro Crew's bounded text replay, never native
+            # session receives Sao Khuê's bounded text replay, never native
             # binary image blocks. One-shot accounting is shared with the
             # canary-based poison recovery, so a failed fresh attempt cannot
             # enter a discard loop.

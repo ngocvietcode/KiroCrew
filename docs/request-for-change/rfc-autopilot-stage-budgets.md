@@ -2,7 +2,7 @@
 title: Autopilot stage budgets admit work; they do not kill productive turns
 status: superseded
 kind: decision
-author: junjiequ (incident owner; drafted with Kiro Crew)
+author: junjiequ (incident owner; drafted with Sao Khuê)
 created: 2026-09-26
 last-audited: 2026-10-02
 audited-at: 6916ba17f
@@ -431,7 +431,7 @@ workloads vary by orders of magnitude.
 ### Reset the stage clock on every progress event
 
 Rejected. Text tokens, tool starts, file writes, and subagent completions are not
-equivalent progress, and an unhealthy loop can emit them forever. Kiro Crew
+equivalent progress, and an unhealthy loop can emit them forever. Sao Khuê
 already has an evidence-based liveness oracle for this decision.
 
 ### Make the stage timeout an inactivity timer

@@ -493,9 +493,9 @@ def _toolchain_bin(name: str) -> str | None:
       :func:`_build_env` (no credential helpers), and it already executes
       worktree-controlled ``package.json`` scripts -- arbitrary code, by design.
       Requiring a system-owned npm buys nothing there.
-    * Kiro Crew's own supported installer (``install.sh --mise`` /
+    * Sao Khuê's own supported installer (``install.sh --mise`` /
       ``ensure-node.sh``) puts node under ``$HOME``, so ``_trusted_bin`` returned
-      ``None`` for npm on exactly the hosts Kiro Crew set up itself, and Pull+Build
+      ``None`` for npm on exactly the hosts Sao Khuê set up itself, and Pull+Build
       failed with "no trusted executable for 'npm'".
 
     Managed toolchain first, system npm second: a distribution's node can be

@@ -1,6 +1,6 @@
-"""Launching the Kiro Crew backend headless, and knowing when it is ready.
+"""Launching the Sao Khuê backend headless, and knowing when it is ready.
 
-The deployed unit is Kiro Crew's own backend, run in *dashboard mode*, on
+The deployed unit is Sao Khuê's own backend, run in *dashboard mode*, on
 loopback, with no interface served (`docs/system-specs/modules/aws-control.md`,
 "Four processes, one task"). Dashboard mode is
 required and `--no-dashboard` is wrong: the smaller ``_init_api_server`` it
@@ -28,7 +28,7 @@ is not ready, and this check deliberately proves no more than that: a present
 model key is not a working one, so a container can be "ready" here and still
 fail every turn on an invalid key. We do not claim otherwise.
 
-VERIFIED against the installed Kiro Crew (0.3.0) by booting a real
+VERIFIED against the installed Sao Khuê (0.3.0) by booting a real
 backend through this code on an isolated KIROCREW_HOME (port 8803): the argv
 ``python -m kiro_crew gateway --no-crons`` boots dashboard mode; ``KIROCREW_PORT``
 sets the port (dashboard/urls.py:116), ``KIROCREW_BIND`` pins the address
@@ -113,7 +113,7 @@ ENV_KIRO_API_KEY: str = "KIRO_API_KEY"
 # source (paths cited), replacing the earlier laptop guesses.
 ENV_HOME: str = "KIROCREW_HOME"  # config/paths.py:265 config_dir() honours it
 # kiro-cli's own user directory, and the one variable that moves the agent-spec
-# directory Kiro Crew reads and writes (``config/paths.py`` ``kiro_home`` ->
+# directory Sao Khuê reads and writes (``config/paths.py`` ``kiro_home`` ->
 # ``kiro_agents_dir``). Set to ``<data home>/kiro`` so the specs land in a directory
 # this task owns rather than in the process HOME's shared ``~/.kiro/agents``, which a
 # non-default-data-home backend REFUSES to rewrite: without this the default spec is
@@ -127,7 +127,7 @@ ENV_PORT: str = "KIROCREW_PORT"  # dashboard/urls.py:116 overrides the port
 # the base image, and a KIROCREW_BIND typo can only narrow back to loopback.
 ENV_BIND: str = "KIROCREW_BIND"
 # Disable the anonymous beacon. beacon.py:137 reads KIROCREW_TELEMETRY_DISABLED
-# (truthy disables); this is the opt-out Kiro Crew actually honours. The config
+# (truthy disables); this is the opt-out Sao Khuê actually honours. The config
 # key telemetry.beacon_enabled=false the design names is equivalent, but the env
 # form needs no config file and cannot be silently ignored. NOTE: neither this
 # nor the config key stops the boot update check -- that fires regardless (R4)

@@ -352,7 +352,7 @@ class TestNeverFatal(_Env):
 
 class TestSearch(_Env):
     def test_search_is_scoped_to_ledger_rows(self) -> None:
-        """The index is shared with the rest of Kiro Crew; an ops query wants ops
+        """The index is shared with the rest of Sao Khuê; an ops query wants ops
         knowledge, not unrelated conversational memories."""
         store = _FakeStore()
         ledger_index.search_similar(store, "DLQ AccessDenied")

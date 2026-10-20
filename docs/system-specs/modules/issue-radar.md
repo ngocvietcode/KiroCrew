@@ -6,7 +6,7 @@ Issue Radar is an opt-in (`defaultEnabled: false`) built-in app for tracked-item
 and change-request triage across THREE providers — GitHub, GitLab and Azure
 DevOps (see [Providers](#providers)). It connects one or more repos via the
 user's own vendor CLI session (`gh`, `glab` or `az` — no OAuth app, no PAT held
-by Kiro Crew) and provides a 3-column workbench: browse/filter issues (work
+by Sao Khuê) and provides a 3-column workbench: browse/filter issues (work
 items on Azure DevOps), view AI-summarized detail + timeline, apply triage
 actions (label, close/reopen), and record per-issue investigation findings
 in a local ledger. A parallel PULL REQUESTS section reuses the same shape —
@@ -101,7 +101,7 @@ goes to the owner of its responsibility, and an owner never imports the façade.
 | Assignees | a set, capped at 10 | a set (Free keeps only the first) | exactly ONE (`System.AssignedTo`); more than one is REFUSED |
 
 **Every provider is reached by shelling out to its vendor CLI as a raw REST
-passthrough, and Kiro Crew stores NO credential of its own.** `gh api`, `glab api`
+passthrough, and Sao Khuê stores NO credential of its own.** `gh api`, `glab api`
 and `az devops invoke` are each the vendor's own generic REST verb, so the client
 modules speak the provider's REST API directly while the CLI owns the token — an
 authenticated `gh`/`glab` session, an `az login` session, or `AZURE_DEVOPS_EXT_PAT`.
@@ -219,7 +219,7 @@ for the same reason.** GitHub Enterprise Server and Azure DevOps Server are both
 unsupported because neither has a credential path this app's transport can use. For
 Azure the reason is concrete: the `azure-devops` CLI extension does not support
 Azure DevOps Server at all, so a CLI-passthrough client cannot serve it. Supporting
-it would mean raw REST plus a credential Kiro Crew stores itself, which is exactly
+it would mean raw REST plus a credential Sao Khuê stores itself, which is exactly
 the posture stated above. Both providers are therefore listed in
 `_PINNED_HOSTS`, and `azure_client._resolve_host` refuses every host but
 `dev.azure.com` — including an EMPTY one, rather than defaulting, so a call site
@@ -421,7 +421,7 @@ apart.
 
 ## Recording findings
 
-The Investigate / Review buttons open a KiroCrew chat session seeded with a
+The Investigate / Review buttons open a SaoKhue chat session seeded with a
 triage prompt. When the agent concludes it writes its verdict back into the
 item's investigation record — that is what puts a verdict + summary on the
 issue's card instead of leaving it in chat scrollback.

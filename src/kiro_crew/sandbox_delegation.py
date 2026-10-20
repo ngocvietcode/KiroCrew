@@ -39,13 +39,13 @@ logger = logging.getLogger("kiro_crew.sandbox")
 
 # kiro-cli >= 2.13 ships its own internal agent sandbox, toggled by the
 # "sandbox" key in this settings file. On macOS its in-process seatbelt init
-# cannot nest inside Kiro Crew's sandbox-exec wrap — the kernel returns EPERM
+# cannot nest inside Sao Khuê's sandbox-exec wrap — the kernel returns EPERM
 # even under an (allow default) outer profile. Exactly one sandbox layer can be
 # active per spawn, so on macOS the layers are mutually exclusive:
-# kiro's internal sandbox ON  -> Kiro Crew's seatbelt OFF for kiro-cli spawns
-# kiro's internal sandbox OFF -> Kiro Crew's seatbelt ON (unchanged default)
+# kiro's internal sandbox ON  -> Sao Khuê's seatbelt OFF for kiro-cli spawns
+# kiro's internal sandbox OFF -> Sao Khuê's seatbelt ON (unchanged default)
 # (``~/.kiro/settings`` is the kiro-cli backend's own directory, distinct from
-# Kiro Crew's data home ``~/.kiro/crew``; the filename is the literal kiro-cli ships.)
+# Sao Khuê's data home ``~/.kiro/crew``; the filename is the literal kiro-cli ships.)
 _KIRO_INTERNAL_SETTINGS_PATH = "~/.kiro/settings/amazon-internal.json"
 _KIRO_INTERNAL_SANDBOX_KEY = "sandbox"
 
@@ -59,7 +59,7 @@ def kiro_internal_sandbox_enabled() -> bool:
 
     Reads the ``"sandbox"`` key from ``~/.kiro/settings/amazon-internal.json``
     (kiro-cli >= 2.13). Absent file, missing key, or parse failure all return
-    False, which keeps Kiro Crew's own sandbox engaged — failure resolves
+    False, which keeps Sao Khuê's own sandbox engaged — failure resolves
     toward our audited isolation layer, never toward no isolation.
 
     Deliberately uncached: it is one small-file read per spawn, and caching
@@ -78,14 +78,14 @@ def kiro_internal_sandbox_enabled() -> bool:
         data = json.loads(safe_read_file(_KIRO_INTERNAL_SETTINGS_PATH))
         if not isinstance(data, dict):
             # Valid-but-non-object JSON ([], "str", null, 123) must also
-            # resolve toward Kiro Crew's own sandbox, not raise.
+            # resolve toward Sao Khuê's own sandbox, not raise.
             return False
         return bool(data.get(_KIRO_INTERNAL_SANDBOX_KEY, False))
     except (OSError, ValueError, RuntimeError):
         # OSError covers missing file / EACCES / PermissionError (sensitive
         # or symlinked target refused by hooks); ValueError covers JSON
         # decode; RuntimeError covers home-directory resolution failure.
-        # Every failure resolves toward Kiro Crew's own sandbox.
+        # Every failure resolves toward Sao Khuê's own sandbox.
         return False
 
 
@@ -114,7 +114,7 @@ SANDBOX_LAYER_HARNESS = "harness-internal"
 
 def wrapped_by_crew_sandbox(argv: "Sequence[str]") -> bool:
     """Whether *argv* -- as returned by :func:`wrap_argv` -- runs the child
-    through Kiro Crew's OWN sandbox layer.
+    through Sao Khuê's OWN sandbox layer.
 
     Read off the wrapped argv rather than re-deriving the decision from mode +
     platform + settings, because that decision is not a single expression: the
@@ -159,7 +159,7 @@ def sandbox_init_remediation(layer: str, *, corroborated: bool) -> str:
     no-op, whose stderr no child wrote), never from the child's text.
 
     Uncorroborated, the message still names the layer -- that comes from the argv
-    Kiro Crew itself built, not from the child -- and routes the operator to the
+    Sao Khuê itself built, not from the child -- and routes the operator to the
     check that can reach a verdict, which is where the switch lives.
 
     Corroboration exists for Crew's Linux launcher only. On macOS the probe
@@ -177,7 +177,7 @@ def sandbox_init_remediation(layer: str, *, corroborated: bool) -> str:
     if layer == SANDBOX_LAYER_HARNESS:
         # Names NO switch, and *corroborated* cannot change that -- which is the
         # point of reading this branch before that flag. Corroboration re-runs
-        # KIRO CREW'S OWN launcher, so a verdict from it is evidence about Crew's
+        # SAO KHUÊ'S OWN launcher, so a verdict from it is evidence about Crew's
         # layer and says nothing whatever about the harness's internal sandbox.
         # Letting it unlock this switch would be a cross-layer inference: a host
         # that cannot build Crew's namespace would hand the operator the key that
@@ -186,24 +186,24 @@ def sandbox_init_remediation(layer: str, *, corroborated: bool) -> str:
         # isolation is gone. The remaining evidence is the agent's own output, and
         # the agent is the unverified binary that sandbox exists to contain.
         return (
-            "the agent reported its own sandbox refusing, and Kiro Crew did not wrap "
+            "the agent reported its own sandbox refusing, and Sao Khuê did not wrap "
             "this spawn -- so that sandbox is the only isolation this child had. The "
-            "report above is the agent's own output and Kiro Crew has NOT confirmed "
+            "report above is the agent's own output and Sao Khuê has NOT confirmed "
             "it; check the host's sandbox support"
         )
     if not corroborated:
         return (
-            "Kiro Crew wrapped this spawn in its own OS sandbox, but the refusal above "
-            "is the agent's own output and not a verdict on this host -- and Kiro Crew's "
+            "Sao Khuê wrapped this spawn in its own OS sandbox, but the refusal above "
+            "is the agent's own output and not a verdict on this host -- and Sao Khuê's "
             "own trusted sandbox run covers its Linux launcher only, so it has NOT "
             "confirmed the failure here. Check the host's sandbox support before turning "
             "either layer off"
         )
     return (
-        "a trusted launcher run confirms this host refuses Kiro Crew's own OS sandbox: "
+        "a trusted launcher run confirms this host refuses Sao Khuê's own OS sandbox: "
         "run `kirocrew config set agent.sandbox off`, which spawns agents unconfined "
         "WHERE GOVERNANCE PERMITS IT -- a governance floor clamps the mode back up and "
-        "the request has no effect. Where it does take, it removes Kiro Crew's "
+        "the request has no effect. Where it does take, it removes Sao Khuê's "
         "OS-level isolation for EVERY agent process (no credential-path masks, no "
         "data-home seal); each unconfined spawn is recorded in the security event log"
     )
@@ -215,7 +215,7 @@ def delegated_workspace_exposes_sealed_target(
     """Reason a kiro-cli spawn must be refused because its workspace would leave a
     SEALED target writable, or ``None`` when it may proceed.
 
-    One guard over every sealed target. Each seal is a rule of Kiro Crew's OWN
+    One guard over every sealed target. Each seal is a rule of Sao Khuê's OWN
     launcher: the kiro agents tree (:func:`_resolved_kiro_agents_targets`), whose fork
     and template specs decide what the next spawn may do, plus every data-home leaf in
     :data:`_DELEGATED_OVERLAP_LEAF_REASONS`, each with its own stated reason -- for
@@ -230,7 +230,7 @@ def delegated_workspace_exposes_sealed_target(
     and the delegated sandbox treats the workspace as writable — so a workspace
     that IS, CONTAINS or sits INSIDE any target lets the child rewrite it.
     Refusing here, before the spawn, is the only enforcement point left on those
-    paths. Where Kiro Crew's launcher does wrap the child every seal holds
+    paths. Where Sao Khuê's launcher does wrap the child every seal holds
     regardless of workspace, so this returns ``None`` and keeps ``$HOME``-rooted
     workspaces working there.
 
@@ -281,7 +281,7 @@ def delegated_workspace_exposes_sealed_target(
         remedy = f"Choose a workspace that does not contain '{target}'."
         if named is None and target in install_targets:
             named = (
-                "Kiro Crew install directory",
+                "Sao Khuê install directory",
                 "the agent could change the code the gateway runs on its next start",
             )
             remedy = f"Choose a workspace outside '{target}'."
@@ -419,7 +419,7 @@ def _spawns_kiro_cli(argv: list[str]) -> bool:
 
     Only the kiro-cli spawn may delegate isolation to kiro's internal
     sandbox — every other agent-influenced spawn (e.g. an MCP probe or a
-    cron script) has no internal sandbox of its own and MUST keep Kiro Crew's
+    cron script) has no internal sandbox of its own and MUST keep Sao Khuê's
     wrap regardless of the kiro settings file.
     """
     return bool(argv) and Path(argv[0]).name == "kiro-cli"
@@ -436,8 +436,8 @@ def _delegate_to_kiro_internal_sandbox(
 
     This is NOT the forbidden silent unsandboxed fallback: the child still
     runs under kiro-cli's own sandbox. On macOS the delegation is config-driven
-    mutual exclusion with Kiro Crew's seatbelt; on Windows it is restricted to a
-    positive first-party Kiro backend classification because Kiro Crew has no
+    mutual exclusion with Sao Khuê's seatbelt; on Windows it is restricted to a
+    positive first-party Kiro backend classification because Sao Khuê has no
     native OS wrapper there. The decision is deterministic (never a reaction to
     a wrap failure), logged loudly once per process, and every delegated spawn
     is SEL-audited on an audit-or-deny basis. If the audit event cannot be
@@ -471,10 +471,10 @@ def _delegate_to_kiro_internal_sandbox(
             outcome="delegated",
             resources=(
                 "Windows Kiro backend delegation: kiro internal sandbox owns "
-                "this spawn; Kiro Crew has no native Windows sandbox backend"
+                "this spawn; Sao Khuê has no native Windows sandbox backend"
                 if sys.platform == "win32"
                 else "macOS sandbox mutual exclusion: kiro internal sandbox on -> "
-                "Kiro Crew seatbelt off for this kiro-cli spawn"
+                "Sao Khuê seatbelt off for this kiro-cli spawn"
             ),
             # audit-or-deny: written synchronously; a filesystem failure
             # re-raises so an unaudited delegation can never proceed.
@@ -482,12 +482,12 @@ def _delegate_to_kiro_internal_sandbox(
         )
     except Exception:
         # Fail closed (security-controls): a security delegation that cannot
-        # be audited does not happen. The caller continues through Kiro Crew's
+        # be audited does not happen. The caller continues through Sao Khuê's
         # normal policy: macOS gets its seatbelt; Windows, which has no native
         # backend, raises SandboxUnavailableError rather than run unaudited.
         logger.warning(
             "SEL audit failed for sandbox delegation — refusing unaudited "
-            "delegation; falling back to Kiro Crew's sandbox policy",
+            "delegation; falling back to Sao Khuê's sandbox policy",
             exc_info=True,
         )
         return None
@@ -499,7 +499,7 @@ def _delegate_to_kiro_internal_sandbox(
         if sys.platform == "win32":
             logger.warning(
                 "SECURITY: delegating this Windows kiro-cli spawn to kiro-cli's "
-                "internal sandbox and skipping Kiro Crew's OS wrapper. Env scrubbing "
+                "internal sandbox and skipping Sao Khuê's OS wrapper. Env scrubbing "
                 "still applies."
             )
         else:
@@ -510,12 +510,12 @@ def _delegate_to_kiro_internal_sandbox(
             # (TCC) problem and is not one.
             logger.warning(
                 "SECURITY: delegating this macOS kiro-cli spawn to kiro-cli's "
-                "internal sandbox and skipping Kiro Crew's OS wrapper (%s sets "
+                "internal sandbox and skipping Sao Khuê's OS wrapper (%s sets "
                 '"%s": true). Env scrubbing still applies. kiro-cli owns file '
                 "access for these spawns, so a path its own profile does not allow "
                 'fails with "Operation not permitted" regardless of what macOS '
                 "privacy settings grant; set that key to false to hand isolation "
-                "back to Kiro Crew's profile.",
+                "back to Sao Khuê's profile.",
                 _KIRO_INTERNAL_SETTINGS_PATH,
                 _KIRO_INTERNAL_SANDBOX_KEY,
             )

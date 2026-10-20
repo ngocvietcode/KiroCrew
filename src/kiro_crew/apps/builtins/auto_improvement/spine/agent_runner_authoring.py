@@ -109,7 +109,7 @@ def author_bug_fix(
             "Replace <test_path> with the test file (or file::case) you are running.\n"
         )
     prompt = (
-        "You are the implementation step of an autonomous Kiro Crew BUG-fix loop.\n"
+        "You are the implementation step of an autonomous Sao Khuê BUG-fix loop.\n"
         f"Working dir is an isolated git worktree: {worktree}\n"
         "Investigate this candidate defect surface and, ONLY IF a real defect exists, "
         "fix it:\n"

@@ -290,7 +290,7 @@ describe('SkillsTab', () => {
     expect(screen.queryByText('Delete')).not.toBeInTheDocument()
   })
 
-  it('does NOT show Edit/Delete for a Kiro Crew row outside the skills folder (owned: false)', async () => {
+  it('does NOT show Edit/Delete for a Sao Khuê row outside the skills folder (owned: false)', async () => {
     // A skill reached through skills.extra_paths lists as source 'kirocrew',
     // but Edit/Delete write into the skills folder, so the row is read-only.
     mockApi.skills.mockResolvedValue([

@@ -146,7 +146,7 @@ def post_text(pid: int, text: str) -> None:
     Uses ``CGEventKeyboardSetUnicodeString`` with a keycode of 0 rather than a
     per-character keycode lookup: that makes the path layout-independent and able
     to emit characters the US layout cannot reach in one keystroke (verified: a
-    round-trip of ``"Hello, KiroCrew! aA$ 123"`` came back byte-identical). Flags
+    round-trip of ``"Hello, SaoKhue! aA$ 123"`` came back byte-identical). Flags
     are still set explicitly to zero on every event — the unicode payload
     replaces the *keystroke*, not the modifier hygiene.
 

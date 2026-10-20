@@ -622,7 +622,7 @@ class TestSpecCheckReadsThroughTheSensitivePathGate:
         refusal.
 
         The gate is unenforceable only once BOTH routes to it are gone: the
-        import here, and the re-exec under Kiro Crew's own interpreter that
+        import here, and the re-exec under Sao Khuê's own interpreter that
         ``TestSpecCheckRunsWhereTheGateIsImportable`` covers. Both are stubbed
         out, so what this pins is the terminal state rather than the relocation.
         """
@@ -646,7 +646,7 @@ class TestSpecCheckRunsWhereTheGateIsImportable:
     the fail-closed branch stops a healthy install from starting any run at all,
     which is the opposite of what it exists for.
 
-    So the script re-runs itself under Kiro Crew's own interpreter -- the
+    So the script re-runs itself under Sao Khuê's own interpreter -- the
     ``kirocrew`` launcher's sibling -- the way ``web-verify``'s downscale helper
     reaches Pillow. The read gate is never degraded, only relocated to a process
     that has it, and the refusal stays last: a build with no launcher, and a

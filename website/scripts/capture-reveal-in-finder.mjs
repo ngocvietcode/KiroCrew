@@ -38,7 +38,7 @@ const ENTRIES = [
 ]
 
 const CONTENT = [
-  '# Kiro Crew',
+  '# Sao Khuê',
   '',
   'The autonomous agent management layer: persistent memory, scheduled jobs,',
   'background subagents and multi-session orchestration.',

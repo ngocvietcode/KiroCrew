@@ -1,4 +1,4 @@
-"""Regression tests for Round-21 findings (KiroCrew PR #6).
+"""Regression tests for Round-21 findings (SaoKhue PR #6).
 
 F1: the app-arch (CloudFormation stack) reap path verifies the stack's
     kirocrew:site identity tag before deletion, matching the R19 engine-arch

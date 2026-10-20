@@ -2116,7 +2116,7 @@ superseded versions and a pin would break on every security update.
 |---|---|---|
 | Supervisor | process order, the crew bundle install, the container's own config, the restore phase, teardown | no listener; it is the task's init process |
 | Front | receiving a turn, stripping any route prefix, forwarding over loopback | the only listener, port 8080 |
-| Kiro Crew backend | sessions, conversations, transcripts, MCP, subagents, skills, memory | loopback only (`127.0.0.1`, not configurable) |
+| Sao Khuê backend | sessions, conversations, transcripts, MCP, subagents, skills, memory | loopback only (`127.0.0.1`, not configurable) |
 | Backup sidecar | copying transcripts, archived segments and the two authority files to S3 | no listener; started only when a bucket is configured |
 
 Nothing serves a user interface. `config_dir` equals `data_home`: the gateway's
@@ -2155,7 +2155,7 @@ The startup order is a correctness requirement rather than a preference:
    is already serving.
 
 **The task owns its agent-spec directory, and that is what lets the backend write
-it.** `KIRO_HOME` is set to `<data home>/kiro`, so the crew's spec and Kiro Crew's own
+it.** `KIRO_HOME` is set to `<data home>/kiro`, so the crew's spec and Sao Khuê's own
 `kirocrew.json` share one directory under the volume. The default is wrong here and
 fails in a way nothing reports: with `KIRO_HOME` unset the specs resolve to the process
 HOME's `~/.kiro/agents`, which every instance under that `$HOME` shares, and a backend
@@ -2177,7 +2177,7 @@ machine-wide directory as private whenever the data home is an ancestor of it --
 
 Two processes have to agree on that one directory and they reach it by different routes:
 the supervisor's installer mirrors kiro-cli's own `$KIRO_HOME`-or-`~/.kiro` rule from the
-environment (it imports no `kiro_crew`), while the backend goes through Kiro Crew's
+environment (it imports no `kiro_crew`), while the backend goes through Sao Khuê's
 resolver. So the value is exported into the supervisor's environment *and* set on the
 backend's from the settings, and the export then asserts that the installer's resolver
 answers the same path -- a rename on either side fails at boot instead of installing the
@@ -2429,7 +2429,7 @@ The front forwards to the gateway's own `POST /v1/chat/completions` with
 The value it carries is the crew's AGENT ID -- `crew-<crew_name>`, the name inside the
 crew namespace the supervisor installs the crew's spec under -- rather than the bare
 crew name. The bare name resolves to whatever else in the agents directory declares it,
-and for a crew sharing a name with one of Kiro Crew's own derived specs that is the
+and for a crew sharing a name with one of Sao Khuê's own derived specs that is the
 derived spec. The namespace does not leave this process in either direction: a customer
 addresses the crew by its own name, and the front puts that name back into the `model`
 of the completion it returns and of every projected chunk, so a client that reads the
@@ -2515,7 +2515,7 @@ environment.
 
 **The crew's spec is installed inside a namespace the derivation cannot own.** It lands
 at `<kiro agents>/crew-<crew_name>.json` and DECLARES `crew-<crew_name>`; `mcp.json` and
-`skills/` go to the data home unchanged. Kiro Crew derives specs of its own into the same
+`skills/` go to the data home unchanged. Sao Khuê derives specs of its own into the same
 agents directory -- `kirocrew.json`, `kirocrew-lite.json`, and the `kirocrew-worker.json`
 mirror it rebuilds from the default -- and rewrites them without reading who wrote what,
 so a crew occupying one of those names is installed, digest-checked and then replaced

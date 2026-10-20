@@ -1,6 +1,6 @@
-# Kiro Crew Documentation
+# Sao Khuê Documentation
 
-Kiro Crew is a personal, autonomous AI agent that runs locally on your own
+Sao Khuê is a personal, autonomous AI agent that runs locally on your own
 machine. It is powered by kiro-cli (KiroACP) and reaches tools over the Model
 Context Protocol (MCP). Everything below is the reference for the features you
 can reach from the dashboard, the CLI, or a connected messaging channel.
@@ -42,7 +42,7 @@ index, first-time setup, and connecting messaging channels.
 | [Chat Channels](#chat-channels) | DM-based chat with tool approval on ten messaging platforms; the list and per-channel guides are under [Chat Channels](#chat-channels) below |
 | [Agents](agents.md) | Switch between specialized agents per conversation, thread, or cron job |
 | [Crew Members](crew-members.md) | Keep named crewmates — each with its own workspace, memory, template and model — talk to each in a standing thread, and route work to one |
-| [Remote Crew](remote-crew.md) | Reach other machines running their own Kiro Crew gateway from one hub — switch panes, run a session on one, and search every connected machine's history |
+| [Remote Crew](remote-crew.md) | Reach other machines running their own Sao Khuê gateway from one hub — switch panes, run a session on one, and search every connected machine's history |
 | [Skills](skills.md) | Drop-in markdown knowledge packs for domain-specific workflows |
 | [Steering, Prompts & Hooks](steering-and-hooks.md) | Standing markdown conventions the agent reads every session, saved prompts you call up by name, and shell commands that fire on chat lifecycle events |
 | [Dynamic Workflows](workflows.md) | Multi-phase agent orchestration authored from a plain-language goal: watch a run, restart part of it from cache, save it for reuse |
@@ -59,7 +59,7 @@ index, first-time setup, and connecting messaging channels.
 
 | Feature | Description |
 |---------|-------------|
-| [Backup & Restore](snapshot-and-restore.md) | Portable snapshot and restore of Kiro Crew state, for upgrades and machine migration |
+| [Backup & Restore](snapshot-and-restore.md) | Portable snapshot and restore of Sao Khuê state, for upgrades and machine migration |
 | [Knowledge Library](knowledge-library-how-it-works.md) | Semantic search over your own documents, folders, and generated artifacts |
 | [Web Deploy](deploy-web.md) | Publish artifacts to a public HTTPS URL on your own AWS (private S3 + CloudFront + OAC) |
 | [Inbound Webhooks](inbound-webhooks.md) | Let an external system trigger an agent turn over HTTP — named tokens, HMAC request signing, a reversible off switch, ephemeral sessions, `register_hook` resume context |
@@ -80,7 +80,7 @@ documented by their own in-panel help.
 | Tab | Covers | Guide |
 |---|---|---|
 | Overview | Gateway status and the settings you change most | — |
-| Import / Export | Bringing data in from another AI agent, and backing up or restoring Kiro Crew configuration | [Snapshot and restore](snapshot-and-restore.md) |
+| Import / Export | Bringing data in from another AI agent, and backing up or restoring Sao Khuê configuration | [Snapshot and restore](snapshot-and-restore.md) |
 | Agent Harness | Which agent new sessions start | — |
 | Chat | Composer behaviour, queued messages, feature tips | [Feature Tips](feature-tips.md) |
 | Display | Theme, language, and layout | — |
@@ -103,7 +103,7 @@ documented by their own in-panel help.
 
 ## Chat Channels
 
-Besides the dashboard and CLI, Kiro Crew ships channel integrations for
+Besides the dashboard and CLI, Sao Khuê ships channel integrations for
 [Slack](slack-integration.md), [Discord](discord-integration.md),
 [Telegram](telegram-integration.md), [Teams](teams-integration.md),
 [Webex](webex-integration.md), [WeCom](wecom-integration.md),
@@ -141,7 +141,7 @@ gracefully rather than failing the turn.
 - OS-level sandbox for the agent process, layered on top of kiro-cli's own
 - Credential redaction across every LLM output path
 - HMAC-SHA256 signed, IP-pinned dashboard tokens
-- Denied-command rules enforced at Kiro Crew's own PreToolUse gate, with audit
+- Denied-command rules enforced at Sao Khuê's own PreToolUse gate, with audit
   logging, and a refusal that names the sanctioned path instead of only the rule
   ([Blocked commands](blocked-commands.md))
 - Prompt-injection credential-exfiltration protection

@@ -45,7 +45,7 @@ def template_auto_approved_servers(template: str) -> list[str]:
 
     A new crewmate is bound to the template, so it inherits each bare
     ``@server`` grant in the template's ``allowedTools`` (already narrowed by the
-    governance ceiling when the spec was written). Kiro Crew's own managed
+    governance ceiling when the spec was written). Sao Khuê's own managed
     servers are left out: they are the product's own tools, not a connection
     the user installed. Unreadable specs report none.
     """
@@ -252,7 +252,7 @@ def _mcp_scopes(name: str) -> dict[str, str]:
     out: dict[str, str] = {}
     for label, path in _uninstall_scope_files():
         if label == "agent" or label.endswith("Agent"):
-            # A rendered agent file is Kiro Crew's own merge output, rewritten
+            # A rendered agent file is Sao Khuê's own merge output, rewritten
             # on every rebuild; the uninstall strips it with the scopes above.
             continue
         try:

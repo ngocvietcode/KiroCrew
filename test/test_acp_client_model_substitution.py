@@ -21,7 +21,7 @@ class TestSubstitutionAdvisory:
 
     claude-agent-acp returns a JSON-RPC -32603 error frame on session/new (and
     related calls) when admin-tier / headless-tier policy substitutes the
-    requested model for another. The substitute is already live, so Kiro Crew
+    requested model for another. The substitute is already live, so Sao Khuê
     must treat the advisory as a warning and keep the session, NOT raise.
     """
 

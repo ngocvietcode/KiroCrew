@@ -1,5 +1,5 @@
 #!/bin/sh
-# KiroCrew container entrypoint.
+# SaoKhue container entrypoint.
 #
 # Responsibilities (deliberately minimal — real logic lives in the product):
 #

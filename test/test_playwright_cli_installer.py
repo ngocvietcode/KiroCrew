@@ -488,7 +488,7 @@ def test_a_query_string_credential_is_redacted(tmp_path: Path, stubs: Path) -> N
 
 
 def test_the_node_floor_matches_what_the_product_requires_of_this_cli() -> None:
-    """These installers provision the CLI that Kiro Crew's own browsing drives
+    """These installers provision the CLI that Sao Khuê's own browsing drives
     (`browser_cli/install.py`, added when browsing moved off the MCP proxy). If
     they accepted an older Node than the product does, they would install a tool
     that works at the shell and is then refused by the app -- the worst shape of

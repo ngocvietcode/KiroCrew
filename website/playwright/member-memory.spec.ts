@@ -224,13 +224,13 @@ test('private backup staging can be cancelled and a replaced experience can be r
   await expect(restoreBackup).toBeVisible()
   await expect(restoreBackup).toBeDisabled()
   await expect(restoreBackup).toHaveAttribute('aria-expanded', 'true')
-  await expect(page.getByText(/Stage this backup for the next Kiro Crew gateway restart/)).toBeVisible()
+  await expect(page.getByText(/Stage this backup for the next Sao Khuê gateway restart/)).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('member-memory-restore-confirm.png'), fullPage: false, animations: 'disabled' })
   await page.getByRole('button', { name: 'Confirm restore', exact: true }).click()
-  await expect(page.getByText('Restart the Kiro Crew gateway to restore this backup. Current memory stays active until then.', { exact: true })).toBeVisible()
+  await expect(page.getByText('Restart the Sao Khuê gateway to restore this backup. Current memory stays active until then.', { exact: true })).toBeVisible()
   await page.reload()
   await page.getByRole('tab', { name: 'Recovery', exact: true }).click()
-  await expect(page.getByText('Restart the Kiro Crew gateway to restore this backup. Current memory stays active until then.', { exact: true })).toBeVisible()
+  await expect(page.getByText('Restart the Sao Khuê gateway to restore this backup. Current memory stays active until then.', { exact: true })).toBeVisible()
   expect(await rows(request, owner.store)).toEqual(active)
   // With reduced motion the indicator must stay inside the selected tab,
   // including after the restore refresh that previously obscured Profile.

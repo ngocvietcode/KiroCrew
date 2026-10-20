@@ -5,13 +5,13 @@ carry bytes, so the reference is the only thing that would arrive. Both readings
 of an arriving reference are wrong, and both are pinned below:
 
 * the file is still readable -- ``build_prompt_blocks`` inlines it, so a picture
-  Kiro Crew's compaction already dropped rides along at full byte cost on every
+  Sao Khuê's compaction already dropped rides along at full byte cost on every
   cold start, and the markdown is mangled into ``![alt]([image: name])``;
 * the file is absent -- no image block is emitted and the PATH sits in the prose,
   next to the assistant's own description of what the picture showed. That
   dangling reference is what makes a model narrate a screenshot it cannot see.
 
-Kiro Crew's replay is the path an auto-compaction reaches. A failing in-place
+Sao Khuê's replay is the path an auto-compaction reaches. A failing in-place
 ``/compact`` sends ``CompactionCoordinator._recycle_held``, which pops the
 session while leaving ``_suppress_replay`` alone -- ``reset(clear_conversation=
 True)`` arms that flag, a recycle deliberately does not, because a recycle

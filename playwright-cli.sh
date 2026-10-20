@@ -10,7 +10,7 @@
 #   less playwright-cli.sh
 #   sh playwright-cli.sh --version 0.1.18
 #
-# Installs the `@playwright/cli` npm package into Kiro Crew's PRIVATE tools
+# Installs the `@playwright/cli` npm package into Sao Khuê's PRIVATE tools
 # prefix (no sudo, no writes outside $HOME) and writes the pinned wrapper into
 # that same prefix. The gateway resolves only this sealed copy or a vetted
 # system install; it never executes the legacy ~/.local/bin wrapper.
@@ -97,7 +97,7 @@ DOWNLOAD_HOST_FROM_FLAG=0
 ISOLATED_NPMRC=0
 
 # The package itself declares engines.node >= 18, but the floor that matters is
-# the one Kiro Crew's own browsing requires of this CLI: MIN_NODE_MAJOR in
+# the one Sao Khuê's own browsing requires of this CLI: MIN_NODE_MAJOR in
 # src/kiro_crew/browser_cli/install.py, currently 20. Accepting 18 here would
 # install a CLI the product then refuses to drive, leaving the user with a tool
 # that works at the shell and not in the app. A test binds these two numbers
@@ -579,7 +579,7 @@ _try_node() { # candidate node path
 }
 
 # Preference order, most specific first: a Node this installer bootstrapped
-# earlier, then one the caller named, then the toolchain Kiro Crew's own
+# earlier, then one the caller named, then the toolchain Sao Khuê's own
 # ensure-node.sh recorded (so the two installers share a single download), then
 # whatever is on PATH.
 _resolve_node() {

@@ -72,7 +72,7 @@ export interface AppConfig {
     character: string  // default: 'mochiCat'
   }
   llm: {
-    useAgentBackend: boolean  // default: true — reuse KiroCrew's LLM
+    useAgentBackend: boolean  // default: true — reuse SaoKhue's LLM
     customEndpoint?: string
     customApiKey?: string
   }

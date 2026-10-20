@@ -2,7 +2,7 @@
 
 Every foreign agent the engine can read is an adapter module in this package --
 ``codex``, ``claude_code``, ``gemini``, ``openclaw``, ``hermes`` -- plus
-``lineage``, the reader for an install of Kiro Crew's own layout that an
+``lineage``, the reader for an install of Sao Khuê's own layout that an
 edition registers through the ``ImportSourceProvider`` CPP seam. An adapter
 knows ONE layout: where its files are, which configs outrank which, and which
 of its directories have no destination. It reads through
@@ -571,7 +571,7 @@ def _sources() -> dict[str, _Source]:
 
 
 def _managed_mcp_names() -> frozenset[str]:
-    """MCP server names owned by Kiro Crew or by a known foreign agent, casefolded.
+    """MCP server names owned by Sao Khuê or by a known foreign agent, casefolded.
 
     Never imported: the entry points at a runtime the user is migrating away
     from, so carrying it over hands them a server that cannot start. Callers MUST

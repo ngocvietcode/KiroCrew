@@ -77,7 +77,7 @@ describe('rasterFill plate contract', () => {
       name: 'demo-app',
       displayName: 'Demo App',
       description: 'Ships an icon file and no hero art.',
-      author: 'Kiro Crew', // brand-ok: fixture author
+      author: 'Sao Khuê', // brand-ok: fixture author
       version: '1.0.0',
       tags: [],
       installed: false,

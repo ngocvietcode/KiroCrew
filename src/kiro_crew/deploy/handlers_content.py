@@ -396,7 +396,7 @@ def resolve_webapp_public_dir(slug: str, art: Any | None = None) -> Path | None:
             continue
     else:
         raise WebAppRootError(
-            "This app is saved outside the folders Kiro Crew is allowed to "
+            "This app is saved outside the folders Sao Khuê is allowed to "
             "publish from, so it cannot be published from here.",
             f"webapp_metadata.app_dir {app_dir} is outside the allowed local " "roots",
         )

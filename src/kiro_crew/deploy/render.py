@@ -50,7 +50,7 @@ _LINK_RE = re.compile(
 
 
 def _wrap(body: str, title: str) -> str:
-    return _SHELL.format(title=_html.escape(title or "Published with Kiro Crew"), css=_THEME_CSS, body=body)
+    return _SHELL.format(title=_html.escape(title or "Published with Sao Khuê"), css=_THEME_CSS, body=body)
 
 
 def _render_markdown(md: str) -> str:

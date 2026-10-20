@@ -134,7 +134,7 @@ def _reaper_remediation(profile: str, region: str) -> str:
 
     Rendered with the request's real profile/region so the 409 payload is
     directly actionable. Installing the reaper is an operator step by design
-    (the stack creates an IAM role, which Kiro Crew never does itself).
+    (the stack creates an IAM role, which Sao Khuê never does itself).
 
     The script is named by ABSOLUTE path, resolved from the live skills
     directory. ``install-reaper.sh`` is not on anyone's PATH, so a bare name is

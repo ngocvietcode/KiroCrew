@@ -51,7 +51,7 @@ _ALLOWED_HOSTS = frozenset({"petdex.dev", "assets.petdex.dev"})
 _INSTALL_URL = "https://petdex.dev/install/{slug}"
 
 #: petdex serves the install script with a Referer check on the asset URLs.
-_HEADERS = {"Referer": "https://petdex.dev/", "User-Agent": "KiroCrew-Mochi"}
+_HEADERS = {"Referer": "https://petdex.dev/", "User-Agent": "SaoKhue-Mochi"}
 
 #: Byte caps. The script is a few hundred bytes and pet.json ~200; the sheets
 #: observed are 0.4-2.5 MB. These are generous ceilings, not expectations.

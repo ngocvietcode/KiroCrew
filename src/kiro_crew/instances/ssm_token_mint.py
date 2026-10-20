@@ -1,4 +1,4 @@
-"""Mint a remote Kiro Crew dashboard token over AWS SSM (SSM transport).
+"""Mint a remote Sao Khuê dashboard token over AWS SSM (SSM transport).
 
 The SSM-transport sibling of :mod:`kiro_crew.instances.token_mint`. Where the
 SSH transport runs ``kirocrew token`` over ``ssh <host> <command>``, the SSM

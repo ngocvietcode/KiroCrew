@@ -40,7 +40,7 @@ about to land. Cursor Motion is **not** the pointer and is deliberately invisibl
 > Prior art: the tool surface and the per-turn element-index discipline are
 > modelled on the open-source `open-codex-computer-use` MCP contract (MIT),
 > which we probed to validate the shape. No code is derived from it — the driver,
-> the compression pipeline and the security floors are all Kiro Crew's own.
+> the compression pipeline and the security floors are all Sao Khuê's own.
 
 ---
 
@@ -382,7 +382,7 @@ mandatory, not tidiness: an unregistered tool's arguments pass RAW through
 stdio loop and kills the server.
 
 `computer_list_apps` and `computer_get_state` are the observation tools;
-`computer_end_turn` is control-plane (it drops Kiro Crew's *own* cached snapshots
+`computer_end_turn` is control-plane (it drops Sao Khuê's *own* cached snapshots
 and touches no other application, so it is neither observe nor mutate). The
 class labels above are the code-owned `governance._CU_ACTION_CLASSES` table —
 see [governance.md](governance.md).
@@ -657,7 +657,7 @@ and gives a downstream edition one place to reintroduce a decision.
 | Refusal | Where | Why it survived |
 |---|---|---|
 | Feature off | `enable_state` + `tools` step 2 | The keystone is on `security._SENSITIVE_HOME_DIRS`, so the agent can neither read nor write it. This is the whole security model now. |
-| Kiro Crew's own window | `policy.check_app` | Driving our own Settings UI would let the agent click the enable above — a self-escalation loop that would make the keystone pointless. Matched on bundle id, process name **and window title** — see below. |
+| Sao Khuê's own window | `policy.check_app` | Driving our own Settings UI would let the agent click the enable above — a self-escalation loop that would make the keystone pointless. Matched on bundle id, process name **and window title** — see below. |
 | Password fields | `policy.check_input_target` + `render` + `capture_macos` | A privacy floor, not a policy knob: the value is never read, never rendered, and a window holding one is never photographed. |
 | Operator's own app lists | `policy.check_app` | `allowed_apps` / `extra_denied_apps` on the keystone. The operator's choice, not a shipped ceiling. |
 | Stale / drifted element index | `index` + `service.verify_fingerprint` | Correctness, not authorization — acting on a stale index clicks the wrong control. |
@@ -1003,7 +1003,7 @@ exactly as a running app is already evaluated.
 Every other verb resolves an `AppRef` from the window list first, so `policy.check_app`
 sees a bundle id, a process name and a window title. A launch has only the name the
 caller typed, so `tools._dispatch` synthesizes an `AppRef` from it. The self-target
-rule — the one that keeps the agent out of Kiro Crew's own Settings — matches on name
+rule — the one that keeps the agent out of Sao Khuê's own Settings — matches on name
 **substrings**, so it does fire on a name-only ref; a hypothetical denylist entry
 naming only a bundle prefix would not. What closes the rest is a **second**
 `check_app` after the launch, against the identity the OS actually reported: an app
@@ -1428,7 +1428,7 @@ exception.
 `kAXErrorCannotComplete = -25204` for every attribute read. Setting
 `AXManualAccessibility = kCFBooleanTrue` on the app element and waiting ~2s
 unlocked **1431 nodes in 0.07s**. Without this, Slack, VS Code, Obsidian and
-Kiro Crew's own desktop app appear permanently empty. Order of operations:
+Sao Khuê's own desktop app appear permanently empty. Order of operations:
 create the app element, immediately
 `AXUIElementSetMessagingTimeout(app_elem, AX_MESSAGING_TIMEOUT_SECS)` —
 mandatory, because ctypes releases the GIL around the C call and a genuinely hung
@@ -1810,7 +1810,7 @@ touch them. They sit with `_SENSITIVE_HOME_DIRS` and the AKIA redaction:
   it replaces every quoted fragment with `<redacted:policy>`, keeping only the
   actionable "call `computer_get_state` again" half. Without this, provoking a drift
   would be the one path around both the redaction pass and the observation ceiling.
-  Refusals that are 100% Kiro Crew's own static prose (the primary-enable refusal, the
+  Refusals that are 100% Sao Khuê's own static prose (the primary-enable refusal, the
   generic governance denials, the "pass an `element_index`" hint) skip it by
   construction: no desktop text to leak, and redaction could only mangle them.
 - **Per-call SEL audit** — every permitted call emits `log_tool_invocation`, every
@@ -2418,9 +2418,9 @@ tools would let a model launder one per-call gate decision into many.
 | Reference surface | Why not |
 |---|---|
 | ~~`sky_click` (a fifth `click_method`)~~ | **Now ported** — see "`sky_click` — the private path, and why it IS shipped" above. Kept in this table as a pointer, because the reasoning that once excluded it (do not depend on private ABI) still governs how it is contained: quarantined in `macos_skylight.py`, never reachable from `auto`, and fully degrading when a symbol is missing. |
-| `install-codex-mcp`, `install-claude-mcp`, `install-gemini-mcp`, `install-opencode-mcp`, `install-codex-plugin` | N/A by design. Kiro Crew **self-registers**: `kirocrew-computer` is a managed server in `agent.py:_MANAGED_MCP_SERVERS`, auto-written into the agent config and refreshed while preserving user customizations. There is no external host to install into, so an install verb would have nothing to do. |
+| `install-codex-mcp`, `install-claude-mcp`, `install-gemini-mcp`, `install-opencode-mcp`, `install-codex-plugin` | N/A by design. Sao Khuê **self-registers**: `kirocrew-computer` is a managed server in `agent.py:_MANAGED_MCP_SERVERS`, auto-written into the agent config and refreshed while preserving user customizations. There is no external host to install into, so an install verb would have nothing to do. |
 | `snapshot <app>` | covered by `apps` + `computer_get_state`, and a CLI spelling of an LLM-facing capability is exactly what the MCP-first rule asks us not to add. |
-| `turn-ended [--previous-notify]` (a host notify hook) | same intent, different shape: `computer_end_turn` is an MCP tool, so the model drops its own snapshot cache rather than relying on a host lifecycle hook Kiro Crew does not have. |
+| `turn-ended [--previous-notify]` (a host notify hook) | same intent, different shape: `computer_end_turn` is an MCP tool, so the model drops its own snapshot cache rather than relying on a host lifecycle hook Sao Khuê does not have. |
 
 ---
 
@@ -2486,14 +2486,14 @@ ONLY one, and the consequences should be stated rather than discovered:
 * once the operator enables the feature, prompt injection that reaches the agent
   reaches the desktop. There is no per-app, per-action or per-surface ceiling left
   to contain it;
-* the one structural defence is that the agent cannot drive Kiro Crew's own window
+* the one structural defence is that the agent cannot drive Sao Khuê's own window
   (`policy.check_app`), so it cannot click the enable itself. If that entry is ever
   removed, the keystone stops meaning anything. It matches THREE signals, and the
   third is load-bearing: the dashboard is also reachable as a **browser tab**, where
   the app identity is Chrome's or Safari's and a bundle/name rule cannot fire at all
   (reviewer finding). `DeniedApp.title_substrings` matches the resolved window title,
-  as a substring — the tab title takes a badge prefix (`(3) Kiro Crew`) and popouts a
-  `… — Kiro Crew` suffix. And because input is delivered per-PID
+  as a substring — the tab title takes a badge prefix (`(3) Sao Khuê`) and popouts a
+  `… — Sao Khuê` suffix. And because input is delivered per-PID
   (`CGEventPostToPid`), `apps_macos.list_apps` prefers a DENIED title over an
   innocuous one when one process owns several windows: a dashboard in a background
   tab must refuse the whole browser, not just that window.
@@ -2598,7 +2598,7 @@ computer use.
 |---|---|
 | `computer_use/types.py` | Every constant + frozen dataclass; dependency-free and platform-free |
 | `computer_use/keymap.py` | The platform-free spec grammar (`parse_spec()` → `KeySpec`, `KEY_ALIASES` / `MODIFIER_ALIASES` and their canonicalizers) over macOS's Carbon keycodes + CG flag masks (`parse_key()`) |
-| `computer_use/policy.py` | The one retained app refusal (Kiro Crew's own window) + the operator's allow/deny lists, secure-target + text refusals, the click-target/method/button refusals + `resolve_click_method`, `redact_result` |
+| `computer_use/policy.py` | The one retained app refusal (Sao Khuê's own window) + the operator's allow/deny lists, secure-target + text refusals, the click-target/method/button refusals + `resolve_click_method`, `redact_result` |
 | `computer_use/render.py` | Tree/app-list rendering, `fingerprint`, secure placeholder |
 | `computer_use/index.py` | `SnapshotIndex`: TTL, cap, `resolve`, `end_turn`, drift message |
 | `computer_use/enable_state.py` | The keystone primary enable + the operator's app allow/deny lists (read fail-soft to off) |

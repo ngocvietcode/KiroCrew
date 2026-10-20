@@ -1,4 +1,4 @@
-"""Scrub SDK — the app-facing half of Kiro Crew's outbound content controls.
+"""Scrub SDK — the app-facing half of Sao Khuê's outbound content controls.
 
 An app that sends content somewhere the user did not type it — an external
 document store, a ticket, a wiki — needs the same credential and exfiltration

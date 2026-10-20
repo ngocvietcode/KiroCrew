@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────────
-# KiroCrew Installer
+# SaoKhue Installer
 # One-command setup for macOS and Linux. Public build — no Brazil workspace,
 # no internal tooling required. Uses python3/pip (backend) + npm/vite (frontend).
 #
@@ -55,7 +55,7 @@ KIROCREW_APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 # pre-move ~/.kirocrew, which is not the data home).
 KIROCREW_DATA_DIR="${KIROCREW_HOME:-$HOME/.kiro/crew}"
 NODE_VERSION="24"
-# Minimum Node version (major.minor.patch) Kiro Crew supports -- the same
+# Minimum Node version (major.minor.patch) Sao Khuê supports -- the same
 # floor as MIN_NODE_VERSION in src/kiro_crew/constants.py and ensure-node.sh.
 # A full version, not a major: an early 22.x lacks APIs the code needs
 # (worker_threads.markAsUncloneable landed in 22.10.0) and is below the
@@ -170,7 +170,7 @@ echo "  ${DIM}Platform:${RESET}           $(uname -s) $(uname -m)"
 echo ""
 
 if [ ! -f "$KIROCREW_APP_DIR/pyproject.toml" ]; then
-    die "Run this from inside a KiroCrew clone (pyproject.toml not found in $KIROCREW_APP_DIR).
+    die "Run this from inside a SaoKhue clone (pyproject.toml not found in $KIROCREW_APP_DIR).
      git clone https://github.com/kirodotdev/KiroCrew.git && cd kirocrew && bash install.sh"
 fi
 
@@ -635,7 +635,7 @@ else
             | sed 's/.*No matching distribution found for //' | head -n 5 | tr '\n' ' ')"
         _libc="$(getconf GNU_LIBC_VERSION 2>/dev/null || true)"
         die "pip found no prebuilt wheel it may install on this platform ($(uname -s) $(uname -m)${_libc:+, $_libc}) for: ${_missing}
-     Kiro Crew installs prebuilt wheels only and never compiles a dependency. Usually this
+     Sao Khuê installs prebuilt wheels only and never compiles a dependency. Usually this
      means the host is older than the wheels' floor: use a newer Linux (Amazon Linux 2023,
      RHEL/Rocky 8+, Ubuntu 22.04+, Debian 12+) or macOS. It can also mean the package index
      could not be reached or does not carry these releases (see pip's output above). To
@@ -659,7 +659,7 @@ ok "Symlinked kirocrew → ~/.local/bin/kirocrew"
 
 # ── Desktop App (macOS only) ──
 if [ "$(uname)" = "Darwin" ] && has node && [ -d "$KIROCREW_APP_DIR/electron" ]; then
-    printf "\n  Install KiroCrew desktop app to ~/Applications? [Y/n] "
+    printf "\n  Install SaoKhue desktop app to ~/Applications? [Y/n] "
     read -r _install_app < /dev/tty
     case "${_install_app:-Y}" in
         [Yy]*)
@@ -678,7 +678,7 @@ if [ "$(uname)" = "Darwin" ] && has node && [ -d "$KIROCREW_APP_DIR/electron" ];
                     rm -rf "$HOME/Applications/KiroCrew.app" 2>/dev/null
                     cp -R "$_app_src" "$HOME/Applications/KiroCrew.app"
                     ok "KiroCrew.app installed to ~/Applications"
-                    detail "Launch via Spotlight (⌘+Space → KiroCrew) or Finder → ~/Applications"
+                    detail "Launch via Spotlight (⌘+Space → SaoKhue) or Finder → ~/Applications"
                 else
                     warn "Electron build succeeded but .app not found"
                 fi
@@ -703,7 +703,7 @@ export PATH="$HOME/.local/bin:$KIROCREW_APP_DIR/bin:$PATH"
 
 # Persist to shell rc files
 _path_line="export PATH=\"\$HOME/.local/bin:\$PATH\""
-_marker="# KiroCrew"
+_marker="# SaoKhue"
 
 _add_to_rc() {
     local rc="$1"
@@ -819,7 +819,7 @@ detail "Install ollama (https://ollama.com), then: ollama pull qwen3-embedding:0
 
 echo ""
 echo ""
-echo "  ${GREEN}${BOLD}👻 KiroCrew installed successfully!${RESET}"
+echo "  ${GREEN}${BOLD}👻 SaoKhue installed successfully!${RESET}"
 echo ""
 echo "  ${DIM}────────────────────────────────────────${RESET}"
 echo ""

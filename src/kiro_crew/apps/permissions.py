@@ -1,6 +1,6 @@
 """App permissions — validate and enforce declared permissions.
 
-Apps declare permissions in their manifest. KiroCrew validates them at
+Apps declare permissions in their manifest. SaoKhue validates them at
 install time and enforces them at runtime.
 """
 from __future__ import annotations
@@ -56,7 +56,7 @@ def validate_permissions(manifest: AppManifest) -> PermissionCheck:
     # Shared memory warning
     if perms.memory == "shared":
         result.warnings.append(
-            "App requests shared memory access — it can read/write KiroCrew's memory stores"
+            "App requests shared memory access — it can read/write SaoKhue's memory stores"
         )
 
     # Path traversal in any resource paths

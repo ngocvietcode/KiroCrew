@@ -81,7 +81,7 @@ const registryApps = [
   A('taskkeeper', 'TaskKeeper', 'zezhexu', 'Personal task manager — triage Slack and email into actionable tasks with To-Do sync.', ['tasks', 'outlook'], { _registry: REG }),
   A('mimir', 'Mimir', 'zezhexu', 'Unified task aggregation across Taskei, SIM, and Asana.', ['tasks', 'aggregation'], { _registry: REG }),
   A('team-manager', 'Team Manager', 'zezhexu', 'Generate periodic team work reports and compare products with source-cited evidence.', ['reports', 'team'], { _registry: REG }),
-  A('workflows', 'Workflows', 'kirocrew', 'Author, run, and watch dynamic workflows — agent-authored Python scripts that orchestrate KiroCrew agents.', ['workflows', 'automation'], { installed: true, enabled: true }),
+  A('workflows', 'Workflows', 'kirocrew', 'Author, run, and watch dynamic workflows — agent-authored Python scripts that orchestrate SaoKhue agents.', ['workflows', 'automation'], { installed: true, enabled: true }),
   A('code-reviewer', 'Code Reviewer', 'kirocrew', 'Review local git changes with a CRUX-like diff viewer, inline comments, and an IntelliJ-style Git panel.', ['code-review', 'git'], { _registry: REG }),
   A('writing-review', 'WritingReview', 'zezhexu', 'Multi-scanner writing review for documents. Upload a doc, supply audience and tone context, and get findings grouped by scanner.', ['writing', 'review'], { _registry: REG }),
   A('auto-improvement', 'Auto-Improvement', 'zezhexu', 'Analyzes a target codebase, designs a calibrated metric, then runs keep-or-revert performance loops.', ['performance', 'code-quality'], { _registry: REG }),
@@ -178,7 +178,7 @@ await page.route('**/api/**', async route => {
   })
   if (path === '/api/themes') return json(route, { themes: [], installed: [] })
   if (path === '/api/status') return json(route, status)
-  if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Kiro Crew', avatar: '' })
+  if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Sao Khuê', avatar: '' })
   if (path === '/api/theme/boot') return json(route, { mode: 'dark', theme: '' })
   if (path === '/api/notifications') return json(route, { notifications: [], unread: 0 })
   if (path === '/api/chat/slots') return json(route, [])

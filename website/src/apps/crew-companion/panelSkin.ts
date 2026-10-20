@@ -1,10 +1,10 @@
 /**
- * Panel palette — derived from the Kiro Crew theme the user actually picked.
+ * Panel palette — derived from the Sao Khuê theme the user actually picked.
  *
  * This file previously held two hand-written palettes (a cream light one and a dark
  * one) selected by `mode`. That was wrong: `src/shared/themes.ts` already links the
  * dashboard's own stylesheet, sets `data-theme`, and aliases this app's older
- * variable names onto Kiro Crew's — so every other window follows all ~36 themes,
+ * variable names onto Sao Khuê's — so every other window follows all ~36 themes,
  * and only the panel ignored the user's colour choice.
  *
  * So the values here are CSS custom properties, not hex. Each carries the
@@ -81,7 +81,7 @@ export interface PanelSkin {
 }
 
 /**
- * The live skin. Kiro Crew's variable names first, this app's older aliases second,
+ * The live skin. Sao Khuê's variable names first, this app's older aliases second,
  * `kiro-dark` literals last.
  */
 export const THEME_SKIN: PanelSkin = {

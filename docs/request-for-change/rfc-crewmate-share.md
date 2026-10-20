@@ -124,7 +124,7 @@ A `.crewmate` file is a zip. Its entries are flat (no directories) and fixed by 
 Rules on the file:
 
 - Every JSON entry is UTF-8. Every key set is exact: an unknown key refuses the bundle.
-- `formatVersion` is an integer. A reader accepts only versions it knows. A newer version refuses with "this file needs a newer Kiro Crew". Any added field bumps the version, so a reader never guesses at a field it does not know.
+- `formatVersion` is an integer. A reader accepts only versions it knows. A newer version refuses with "this file needs a newer Sao Khuê". Any added field bumps the version, so a reader never guesses at a field it does not know.
 - `agent.json` holds no `prompt` or `tools` content beyond defaults, because the worker base is source-defined (mate-owned config RFC §5.1).
 - Every MCP `env`, `headers` and `oauth.clientSecret` value in `agent.json` is the placeholder `placeholder_mcp_values` writes (`portability.py`). Keys stay so the card can list what the receiver fills in.
 - `agent.json` carries no `allowedTools`, `autoApprove` or `permissions` grant. Export drops them; import refuses a bundle that carries one.

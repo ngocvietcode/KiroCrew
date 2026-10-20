@@ -388,7 +388,7 @@ def open_lock_file(path: "str | os.PathLike[str]", *, create: bool = True) -> It
     the lock itself; this exists so contenders cannot watch it flicker empty.
     """
     if create:
-        # 0o600: a lock file is Kiro Crew's own and nobody else's to open; inside
+        # 0o600: a lock file is Sao Khuê's own and nobody else's to open; inside
         # the data home every file is owner-only (kiro_crew.owner_only_files).
         fd = open_create_or_existing(path, os.O_RDWR, 0o600)
     else:
@@ -539,7 +539,7 @@ def try_acquire_lock_or_raise(fd: int, *, exclusive: bool = False) -> bool:
 
 
 def probe_file_persistence(directory: Path) -> str | None:
-    """Verify that *directory* supports every primitive the Kiro Crew
+    """Verify that *directory* supports every primitive the Sao Khuê
     persistence paths depend on: creating a new file (``tempfile.mkstemp``),
     writing bytes to it, taking an advisory lock (:func:`file_lock`),
     atomically replacing it (``os.replace``), and removing it — the exact

@@ -868,7 +868,7 @@ function initNativeLogging({
     try {
       startCrashReporter({
         // Mandatory, and the reason this is safe to ship on by default:
-        // Kiro Crew does not phone home (website/src/rum.ts is a no-op in the
+        // Sao Khuê does not phone home (website/src/rum.ts is a no-op in the
         // public build), so a dump that left the machine would be a new
         // egress path, not a diagnostic. Dumps stay in the app's own
         // crashDumps directory for the user to hand over deliberately.

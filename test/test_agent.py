@@ -1033,7 +1033,7 @@ class TestKirocrewMcpInvocation:
     def test_falls_back_to_interpreter_module_when_unresolved(
         self, nonbundled_python_without_user_site
     ):
-        """Module fallback excludes the project CWD before importing Kiro Crew."""
+        """Module fallback excludes the project CWD before importing Sao Khuê."""
         from kiro_crew.agent import _kirocrew_mcp_invocation
 
         # Bare "kirocrew" is the unresolved sentinel from _resolve_kirocrew_bin.

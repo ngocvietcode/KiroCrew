@@ -84,7 +84,7 @@ class TestKiroPrerequisiteHandlers:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        # The owner can READ readiness. Neither setup step is a Kiro Crew verb:
+        # The owner can READ readiness. Neither setup step is a Sao Khuê verb:
         # obtaining the CLI and signing in both belong to Kiro CLI, so both
         # routes are absent by construction rather than guarded.
         service = KiroPrerequisiteService(
@@ -813,7 +813,7 @@ class TestKiroPrerequisiteHandlers:
 
 
 class TestKiroCrewNeverSetsUpKiroCli:
-    """Kiro Crew DETECTS Kiro CLI. It never installs it and never signs in.
+    """Sao Khuê DETECTS Kiro CLI. It never installs it and never signs in.
 
     These are contract tests, not behavior tests: they pin the ABSENCE of both
     setup capabilities. The removed install path downloaded a remote shell script

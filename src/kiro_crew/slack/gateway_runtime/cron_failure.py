@@ -250,7 +250,7 @@ async def _alert_cron_failure(
         except Exception:
             logger.debug("Dashboard notify failed in cron run-failure alert path", exc_info=True)
         # Name the machine for the same reason the message path does: a
-        # laptop and a cloud desktop can both run Kiro Crew, and the
+        # laptop and a cloud desktop can both run Sao Khuê, and the
         # alert is the only place the user learns which one failed. Read
         # once, ahead of both delivery legs, so they cannot disagree.
         host = socket.gethostname().split(".")[0]
@@ -424,7 +424,7 @@ async def _cron_single_failure(
     except Exception:
         logger.debug("Dashboard notify failed in cron failure alert path", exc_info=True)
     # Include the machine hostname so multi-gateway setups (e.g. a
-    # laptop + a cloud desktop both running Kiro Crew) can tell which
+    # laptop + a cloud desktop both running Sao Khuê) can tell which
     # machine's session failed. This is framework-level: the ❌ DM
     # can fire before any prompt logic runs (e.g. a session-startup
     # credential failure), so the machine name must come from here,

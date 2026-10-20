@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────────
-# KiroCrew — Minimal OSS Quickstart
+# SaoKhue — Minimal OSS Quickstart
 #
-# The canonical public install. Builds KiroCrew from a local clone using
+# The canonical public install. Builds SaoKhue from a local clone using
 # only public tooling: python3 + pip (backend) and npm + vite (frontend).
 # No Brazil, no Builder Toolbox, no internal registries.
 #
@@ -55,7 +55,7 @@ done
 has node || die "Node.js not found. Install Node.js 22.12+ (24 LTS recommended, https://nodejs.org) and re-run."
 has npm  || die "npm not found. Install Node.js 22.12+ (24 LTS recommended, https://nodejs.org) and re-run."
 
-echo "👻 KiroCrew — minimal install"
+echo "👻 SaoKhue — minimal install"
 echo "  Repo:    $REPO_DIR"
 echo "  Python:  $("$_py" --version 2>&1)"
 echo "  Node:    $(node --version)"
@@ -166,7 +166,7 @@ echo "✓ Symlinked kirocrew → ~/.local/bin/kirocrew"
 echo ""
 
 # ── Done ──
-echo "👻 KiroCrew installed!"
+echo "👻 SaoKhue installed!"
 echo ""
 echo "  Next steps:"
 echo "    1. Default agent: install Kiro CLI from https://kiro.dev/cli/"

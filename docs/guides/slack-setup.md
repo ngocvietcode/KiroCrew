@@ -1,10 +1,10 @@
 # Slack Setup Guide
 
-How to create a Slack app for Kiro Crew and connect it.
+How to create a Slack app for Sao Khuê and connect it.
 
 > **Slack is optional**: If you don't need Slack, skip this entirely. The default `kirocrew setup` configures no messaging channels, and the gateway runs the web dashboard without any. When you are ready to connect Slack, run `kirocrew setup --slack` to enter the tokens created below.
 
-Kiro Crew connects to Slack using **Socket Mode**, so it runs entirely from your own machine over an outbound WebSocket: no public URL, no inbound webhooks, and no hosting required. You just need a Slack workspace where you can install an app.
+Sao Khuê connects to Slack using **Socket Mode**, so it runs entirely from your own machine over an outbound WebSocket: no public URL, no inbound webhooks, and no hosting required. You just need a Slack workspace where you can install an app.
 
 ---
 
@@ -24,7 +24,7 @@ Both paths require a Slack workspace where you can install apps (see [Prerequisi
 ## Prerequisites
 
 - A **Slack workspace** where you have permission to install apps. If you don't have one, create a free workspace at <https://slack.com/get-started>. You can install your own apps in a workspace you own.
-- Python and Kiro Crew installed through a [supported install path](install.md#install-paths), so you can run the `kirocrew` CLI.
+- Python and Sao Khuê installed through a [supported install path](install.md#install-paths), so you can run the `kirocrew` CLI.
 
 > **Tip**: Use a personal or test workspace for your first run. You can always export the app manifest and recreate the app in another workspace later (see [Reusing the App in Another Workspace](#reusing-the-app-in-another-workspace)).
 
@@ -91,7 +91,7 @@ Then:
 
 > **Workspace admin approval?** Some workspaces restrict who can install apps. If your install needs approval, an admin of that workspace must approve it. In a workspace you own, you can self-approve.
 
-### Step 5. Configure Kiro Crew
+### Step 5. Configure Sao Khuê
 
 Run the Slack-specific interactive setup, which prompts for both tokens:
 
@@ -103,13 +103,13 @@ Paste your App Token (`xapp-...`), Bot Token (`xoxb-...`), and your Slack Member
 
 To find your Slack Member ID: open your workspace in Slack → click your profile picture → **Profile** → **⋮** → **Copy member ID**.
 
-> ⚠️ **Your Member ID is per-workspace.** If you install the app in a different workspace, your Member ID changes, so use the ID from the workspace where Kiro Crew is installed.
+> ⚠️ **Your Member ID is per-workspace.** If you install the app in a different workspace, your Member ID changes, so use the ID from the workspace where Sao Khuê is installed.
 
 ### Step 6. Verify & Run
 
 ```bash
 kirocrew doctor    # verify tokens and config
-kirocrew gateway   # start Kiro Crew
+kirocrew gateway   # start Sao Khuê
 ```
 
 Open your workspace in Slack, find your app in the Apps section, and send it a DM. The app only lives in the workspace where you installed it.
@@ -174,7 +174,7 @@ Under **User Token Scopes**, add:
 `im:history`, `im:read`, `mpim:history`, `mpim:read`, `search:read`, and
 `users:read`.
 
-These scopes belong to the installing user's `xoxp-...` token. The Kiro Crew
+These scopes belong to the installing user's `xoxp-...` token. The Sao Khuê
 gateway itself uses the bot token; the user token is for a separately configured
 Slack MCP/search integration that lets an agent search Slack as that user. Store
 and configure that token only in the integration that consumes it.
@@ -238,9 +238,9 @@ the session Resume / End buttons.
 
 > **"Install App" button greyed out?** Use **Features → OAuth & Permissions → Install to Workspace** instead (known Slack UI bug).
 
-### Step 10. Configure Kiro Crew
+### Step 10. Configure Sao Khuê
 
-Same as [Path A, Step 5](#step-5-configure-kiro-crew).
+Same as [Path A, Step 5](#step-5-configure-sao-khuê).
 
 ### Step 11. Verify & Run
 
@@ -270,7 +270,7 @@ chmod 600 ~/.kiro/crew/.env
 
 ### Owner-Only Access
 
-Only the owner (`KIROCREW_OWNER_ID`) can interact with Kiro Crew via Slack.
+Only the owner (`KIROCREW_OWNER_ID`) can interact with Sao Khuê via Slack.
 Multi-user access is disabled at the authorization predicate itself, not by
 configuration: `is_allowed_user` resolves to an owner check, `is_open_channel`
 always returns false, and the channel-join allowlist prompt is a no-op. A
@@ -291,7 +291,7 @@ always returns false, and the channel-join allowlist prompt is a no-op. A
 
 ### Reaction Emojis
 
-Kiro Crew adds phase-aware emoji reactions during message processing (queued → thinking → coding → done). Customize or disable:
+Sao Khuê adds phase-aware emoji reactions during message processing (queued → thinking → coding → done). Customize or disable:
 
 ```json
 {
@@ -374,7 +374,7 @@ instead of a link.
    arrive on loopback. Loopback is not an exemption: a local port forwarder
    (`socat`, `ssh -R`, a helper script) makes remote traffic appear to come from
    `127.0.0.1`, so exempting it would be an auth bypass. The only loopback
-   carve-out is a small set of internal API paths reserved for Kiro Crew's own
+   carve-out is a small set of internal API paths reserved for Sao Khuê's own
    processes (doctor, the MCP servers), and those additionally require a
    matching `X-Internal-Secret` read from `~/.kiro/crew/.local_secret`
 
@@ -391,7 +391,7 @@ the dashboard on:
 }
 ```
 
-From this single URL, Kiro Crew derives:
+From this single URL, Sao Khuê derives:
 - **Port** to bind on (8080 in this example)
 - **Allowed origins** for the CSRF / WebSocket checks
 - **Dashboard link hostname** for `!dashboard` and `/kirocrew dashboard`
@@ -535,7 +535,7 @@ to end just one browser's session, sign out in that browser
 
 > ⚠️ **Prompt injection risk**: an attacker can hide instructions in a webpage or
 > document that trick your agent into running `kirocrew token` and exfiltrating
-> the output. Kiro Crew ships built-in denied-command rules covering that mint,
+> the output. Sao Khuê ships built-in denied-command rules covering that mint,
 > including nested shell payloads and the `kiro-crew` spelling, enforced at the
 > PreToolUse gate (`hooks.py`) rather than injected into any agent config file.
 > They are on by default; leave them on. See

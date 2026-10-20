@@ -397,7 +397,7 @@ describe('memory store picker — restoring a backup', () => {
     // an absent request rather than an absent dialog: a confirmation the
     // mutation does not actually wait for is indistinguishable on screen.
     expect(api.memoryRestoreBackup).not.toHaveBeenCalled()
-    const warning = within(row).getByText(/Stage this backup for the next Kiro Crew gateway restart/)
+    const warning = within(row).getByText(/Stage this backup for the next Sao Khuê gateway restart/)
     expect(warning).toHaveTextContent('Current memory is saved beside the store before restoration.')
 
     fireEvent.click(within(row).getByRole('button', { name: /Confirm restore/ }))

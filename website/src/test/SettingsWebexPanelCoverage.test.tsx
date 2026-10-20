@@ -200,7 +200,7 @@ describe('WebexPanel read-only session', () => {
 
     expect(
       screen.getByText(
-        'Webex settings are managed on the machine running Kiro Crew and are read-only from remote sessions.',
+        'Webex settings are managed on the machine running Sao Khuê and are read-only from remote sessions.',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Save Webex settings' })).not.toBeInTheDocument()

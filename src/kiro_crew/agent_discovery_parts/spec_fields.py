@@ -1,6 +1,6 @@
 """The discovery record, and what one agent spec's fields read as.
 
-``AgentInfo`` with the two discovery scopes and the test for Kiro Crew's own generated
+``AgentInfo`` with the two discovery scopes and the test for Sao Khuê's own generated
 specs, then the field readers: the string and model fields, the skill resources and the
 ``skill://`` URIs they name, and the welcome message a new chat shows.
 
@@ -19,7 +19,7 @@ from kiro_crew.dashboard.side_readonly_spec import is_readonly_spec_description
 
 # Discovery scopes. A ``project`` agent comes from the session's own checkout and
 # SHADOWS a ``global`` agent of the same name, mirroring kiro-cli: it resolves
-# ``--agent`` against ``$PWD/.kiro/agents`` before ``~/.kiro/agents``. Kiro Crew
+# ``--agent`` against ``$PWD/.kiro/agents`` before ``~/.kiro/agents``. Sao Khuê
 # spawns kiro-cli with the session's project dir as cwd, so the shadowing is a
 # property of the backend rather than a policy choice here — surfacing the losing
 # entry as separately selectable would advertise an agent that cannot be reached.
@@ -110,7 +110,7 @@ class AgentInfo:
 
 
 def is_internal_agent_spec(info: object) -> bool:
-    """Whether a discovery row is one of Kiro Crew's own generated specs.
+    """Whether a discovery row is one of Sao Khuê's own generated specs.
 
     Two kinds are published into the user-level agents directory, the only place
     kiro-cli can load them from, and neither is a sub-agent:
@@ -142,7 +142,7 @@ SKILL_URI_PREFIX = "skill://"
 #: The Crew tool that loads a skill a bounded directory lists.
 _SKILL_SEARCH_TOOL = "@kirocrew-core/skill_search"
 
-# Kiro Crew-only spec convention, predating ``.kiro/agents/`` and still used by
+# Sao Khuê-only spec convention, predating ``.kiro/agents/`` and still used by
 # projects driven from Slack. kiro-cli does NOT read this location, so a name
 # declared only here is NOT dispatchable: offering it as an agent would hand
 # kiro-cli a mode it cannot activate. It is therefore excluded from discovery by

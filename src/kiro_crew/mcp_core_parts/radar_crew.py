@@ -44,7 +44,7 @@ _CREW_MAX_EVENTS = 20
 def _crew_machine_markers() -> list[tuple[str, str]]:
     """Strings that identify THIS machine, longest first.
 
-    Longest-first matters: the Kiro Crew home normally sits inside the user's
+    Longest-first matters: the Sao Khuê home normally sits inside the user's
     home, so scrubbing the home first would leave ``<home>/.kiro/crew/...`` —
     still a directory layout — instead of collapsing the whole prefix.
     """

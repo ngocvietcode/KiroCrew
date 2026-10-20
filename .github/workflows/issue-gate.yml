@@ -6,7 +6,7 @@ name: Issue Gate
 # PAUSED. `GATE_ENFORCED` below is "false", so this job logs a notice and
 # passes before it reads anything. The rule below is written out and ready; it
 # is not enforced until the maintainers switch it on. WHY PAUSED: the rule
-# reads labels the Captain (the maintainer-operated Kiro Crew triage crew)
+# reads labels the Captain (the maintainer-operated Sao Khuê triage crew)
 # writes, and the Captain's scheduled scan is not running yet. With no labels
 # arriving, every PR -- forks first -- would sit red on an issue nobody can
 # label. Switching it on is a one-line change: `GATE_ENFORCED: "true"`.

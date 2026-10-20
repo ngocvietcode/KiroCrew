@@ -1,9 +1,9 @@
-"""Sidecar store for KiroCrew's per-agent bookkeeping.
+"""Sidecar store for SaoKhue's per-agent bookkeeping.
 
 kiro-cli validates ``~/.kiro/agents/*.json`` with serde ``deny_unknown_fields``
 and rejects the *entire* spec on any unknown key, then silently falls back to
 the default agent (``--agent <name>`` resolves to default with only a stderr
-"no agent with name X found" line). KiroCrew therefore keeps its private
+"no agent with name X found" line). SaoKhue therefore keeps its private
 per-agent bookkeeping OUT of the kiro spec and in this sidecar, so every spec
 stays schema-valid for kiro-cli.
 
@@ -732,7 +732,7 @@ def lift_and_strip_bookkeeping(config: MutableMapping[str, object], name: str) -
 
     kiro-cli rejects unknown fields on the whole agent spec. Every writer that
     persists a kiro agent JSON must run this so those keys, owned only by
-    Kiro Crew, never land on disk. When the sidecar already holds a value, a
+    Sao Khuê, never land on disk. When the sidecar already holds a value, a
     stale key in *config* is discarded rather than clobbering the
     authoritative sidecar (same rule as ``migrate_agent_specs`` /
     ``_refresh_dynamic_fields`` / the per-agent PATCH handler).

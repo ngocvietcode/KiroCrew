@@ -235,11 +235,11 @@ _DOWNLOAD_BACKOFF_BASE_SECS = 60.0
 _DOWNLOAD_BACKOFF_CAP_SECS = 1800.0
 # Escape hatch for tests/CI: never kick a 610MB model download from a test run.
 _SKIP_DOWNLOAD_ENV = "KIROCREW_SKIP_MODEL_DOWNLOAD"
-# Distribution: public CloudFront CDN in front of Kiro Crew's OWN model bucket
+# Distribution: public CloudFront CDN in front of Sao Khuê's OWN model bucket
 # (kirocrew-models, reachable only through the distribution's OAC — the bucket
 # itself blocks public access). Serving our own copy rather than sharing another
 # project's bucket keeps the download signal attributable: a fetch here is a
-# Kiro Crew first-install, uncontaminated by another product's traffic.
+# Sao Khuê first-install, uncontaminated by another product's traffic.
 # Plain HTTPS, no git access and no cloud SDK required. The
 # sha256 pin above is the trust anchor for every source, so a tampered CDN
 # object can only fail verification. Resolution order: KIROCREW_EMBED_MODEL_URL
@@ -248,7 +248,7 @@ _SKIP_DOWNLOAD_ENV = "KIROCREW_SKIP_MODEL_DOWNLOAD"
 # _GGUF_FILENAME — the sha pin, not the name, is the integrity gate.
 _MODEL_URL_ENV = "KIROCREW_EMBED_MODEL_URL"
 # Custom-model escape hatch: an absolute path to a user-supplied GGUF. When set
-# (env, or the memory.embed_model_path config knob) Kiro Crew runs THAT model and
+# (env, or the memory.embed_model_path config knob) Sao Khuê runs THAT model and
 # never downloads or installs the bundled default — including when the default's
 # pinned version changes. No sha256 pin is applied: the pin is the trust anchor
 # for a NETWORK download, whereas a local file is trusted by provenance (the

@@ -1,4 +1,4 @@
-"""Config validation + the validated-data cache for KiroCrew.
+"""Config validation + the validated-data cache for SaoKhue.
 
 Extracted from ``config/loader.py`` so the schema-driven validation logic and
 the process-global validated-config cache live apart from the config DTO
@@ -52,7 +52,7 @@ from kiro_crew.config.fields import _coerce_bool
 # Crew's own instructions. Private to this module because that warning is the
 # only consumer; a second member is the point at which this wants to become an
 # app-declared registration rather than a longer literal.
-#   * dev_fleet -- ``dev_fleet.repo_path`` names the Kiro Crew checkout Dev Fleet
+#   * dev_fleet -- ``dev_fleet.repo_path`` names the Sao Khuê checkout Dev Fleet
 #     manages; read by apps/builtins/dev_fleet/repository.py::_load_dev_fleet_cfg
 #     and prescribed by the dashboard's "no checkout found" banner.
 _APP_OWNED_TOP_KEYS: frozenset = frozenset({"dev_fleet"})
@@ -575,8 +575,8 @@ def validate_config_data(data: dict) -> dict:
 
     # 1. Detect unrecognized top-level keys. The schema registry models only the
     # config's *sections*, so the keys save() stamps itself are not in it and
-    # must be excluded — otherwise every load of a config Kiro Crew has ever
-    # saved warns about Kiro Crew's own bookkeeping. A section a builtin app owns
+    # must be excluded — otherwise every load of a config Sao Khuê has ever
+    # saved warns about Sao Khuê's own bookkeeping. A section a builtin app owns
     # and reads from the file directly (_APP_OWNED_TOP_KEYS), or that this core
     # writes and reads without a dataclass model (_CORE_OWNED_TOP_KEYS), is not
     # in the registry either and is excluded for the same reason: the product

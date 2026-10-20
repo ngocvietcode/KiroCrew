@@ -86,7 +86,7 @@ def _reserved_name_code(source: Path) -> str:
 
 
 def _check_min_version(min_version: str) -> str | None:
-    """Return error string if current Kiro Crew version is too old, else None."""
+    """Return error string if current Sao Khuê version is too old, else None."""
     from kiro_crew.apps.version import check_min_version
 
     return check_min_version(min_version)
@@ -215,7 +215,7 @@ def gateway_data_dir_obstruction(root: Path) -> str:
             pass  # exists, and cannot be followed to a directory: not one
         shape = "file"
     return (
-        f"`data` in the app tree is a {shape}; Kiro Crew creates the app's data "
+        f"`data` in the app tree is a {shape}; Sao Khuê creates the app's data "
         "directory at that path and cannot install beside it."
     )
 
@@ -256,7 +256,7 @@ def _temp_data_name_obstruction(tmp_data: Path) -> str:
         return ""
     shape = "link" if is_link_or_junction(tmp_data) else "file"
     return (
-        f"{tmp_data} is a {shape}; Kiro Crew keeps the app's data directory at that "
+        f"{tmp_data} is a {shape}; Sao Khuê keeps the app's data directory at that "
         f"name while it replaces the app files and cannot use it -- remove it first"
     )
 

@@ -1,8 +1,8 @@
 # Monitor a pull request
 
-Use a pull-request monitor when you want Kiro Crew to keep checking a GitHub,
+Use a pull-request monitor when you want Sao Khuê to keep checking a GitHub,
 GitLab, Azure DevOps, or Bitbucket Cloud pull request without spending a model
-turn on every poll. Kiro Crew wakes the owning conversation only when a new
+turn on every poll. Sao Khuê wakes the owning conversation only when a new
 revision needs action.
 
 ## Before you start
@@ -27,7 +27,7 @@ advisory findings, another forge, a deployment, a ticket, or a custom objective.
 ## Start the monitor
 
 1. Open the conversation that should own the watch.
-2. Ask Kiro Crew to monitor the full pull-request URL until it is review-ready.
+2. Ask Sao Khuê to monitor the full pull-request URL until it is review-ready.
 3. End the turn after the tool reports that application is pending.
 4. Confirm the active monitor in the dashboard.
 
@@ -55,7 +55,7 @@ be positive.
 
 ## Understand when the agent runs
 
-Kiro Crew probes and compares provider facts before it invokes the conversation:
+Sao Khuê probes and compares provider facts before it invokes the conversation:
 
 | Observation | Agent turns |
 |---|---:|
@@ -66,7 +66,7 @@ Kiro Crew probes and compares provider facts before it invokes the conversation:
 | New actionable fingerprint | At most 1 |
 
 An actionable wake includes a compact summary. The agent can then fetch only the
-logs, comments, or diff needed for that change. Kiro Crew retains accepted
+logs, comments, or diff needed for that change. Sao Khuê retains accepted
 fingerprints across restart, so the same revision is not handled twice.
 
 Terminal success does not wake the conversation. The dashboard instead reports
@@ -99,7 +99,7 @@ to start a new watch.
 
 ## Use a finite legacy loop
 
-For unsupported evidence or targets, ask Kiro Crew to run a same-session goal
+For unsupported evidence or targets, ask Sao Khuê to run a same-session goal
 loop with a positive interval, cycle cap, and runtime limit. Every delivered
 cycle is a full agent turn, extends the conversation, and spends model and tool
 tokens even when nothing changed.

@@ -3,7 +3,7 @@
 ## Overview
 
 `onboarding_import.py` migrates a user's setup from another AI agent into
-Kiro Crew. It runs from the first-run onboarding flow (after the Kiro CLI
+Sao Khuê. It runs from the first-run onboarding flow (after the Kiro CLI
 prerequisite gate, before the theme tour) and from Settings on demand.
 
 When the scan finds nothing to import, the first-run chapter ends by itself and
@@ -14,8 +14,8 @@ host chooses in `website/src/shell/boot/firstRun.tsx` (`keepEmptyImport`) and
 passes it to `AgentImportFlow` as `keepOpenWhenEmpty`.
 
 The module is a **projection**, not a mirror: it reads a foreign layout and
-writes only into Kiro Crew's own containers through Kiro Crew's own APIs. It never
-invents a storage format, never writes a file Kiro Crew does not otherwise read,
+writes only into Sao Khuê's own containers through Sao Khuê's own APIs. It never
+invents a storage format, never writes a file Sao Khuê does not otherwise read,
 and never copies a foreign store verbatim.
 
 Three phases, always in this order:
@@ -47,8 +47,8 @@ the first one a process imports.
 | `onboarding_scan.py` | The scan accumulator (`_Scan`), the candidate item (`_Item`, whose `fingerprint` is the identity the ledger and outcomes key on) and `CATEGORY_IDS`. Also: the never-raising probes (`_exists_safe`, `_is_link_like`, `_stat_kind`); bounded, symlink-safe reads (`_safe_regular_file`, `_walk_files`, `_read_bytes`); the parsers (JSON, JSON5, TOML through the `_toml` tomllib/tomli ladder, and YAML through `_load_no_alias_yaml`); the SQLite snapshot helpers, including the hardlink refusal in `_sqlite_database_is_safe`; and the shared content screens: `_sanitize_text`, `_count_secret_fields`, `_decoded_value_is_unsafe`, and the skill activation screen (`_frontmatter`, `_column0_activation_declared`, `_skill_package`, which refuses `triggers`). It is the only module that calls the credential redactor, so it is the "Onboarding import" row of `security_posture._REDACTION_SINKS`. Category-specific refusals (the MCP field allowlist and URL/argument secret checks, the persona identity guard, schedule semantics) sit with their projection in `onboarding_plan.py`. |
 | `onboarding_plan.py` | The normalized plan. It holds the category projections that turn parsed foreign data into `_Item` payloads through those screens (instructions and the identity guard, memories, database directives, MCP specs, skills, schedules, workspaces, settings). It also holds in-scan dedup (`_deduplicate_items`), the per-source summary, the plan document (`_plan_from_scans`), and the readers `apply_import` uses (`_selected_pairs`, `_plan_roots`, …). |
 | `onboarding_sources/` | The package's `__init__.py` is the registry: the builtin descriptors, `_normalize_source`, the per-context cache behind `_sources()`, root and context resolution (`_source_roots`, `_source_context`), failure-isolated dispatch (`_scan_source`), and the managed / superseded MCP name sets. Each adapter module (`codex`, `claude_code`, `gemini`, `openclaw`, `hermes`, `lineage`) knows one layout. It reads file and database content only through the bounded readers in `onboarding_scan.py` and projects it through `onboarding_plan.py`; path probes (`exists`, `is_file`, `is_dir`, `iterdir`, `glob`) and the `is_sensitive_path` / `contains_injection` screens are called directly. OpenClaw's bespoke root and context rules and the Hermes `%LOCALAPPDATA%` root live in their adapters. |
-| `onboarding_apply.py` | The file-backed half of apply: the ledger (`_load_ledger`, `_record_ledger`, `_write_json`), the conflict strategies and restore copies, and the writers whose destination is a Kiro Crew file (`_write_workspace`, `_write_settings`, `_write_mcp`, `_write_skill`). |
-| `onboarding_import.py` | The facade and the run-level orchestration: `detect_sources`, `preview_import` / `_preview`, `apply_import` (the rescan, the per-item dispatch loop and the ledger flush discipline), `_source_exists`, and the writers into Kiro Crew's own stores: `_write_instruction`, `_write_memory`, `_write_schedule`. |
+| `onboarding_apply.py` | The file-backed half of apply: the ledger (`_load_ledger`, `_record_ledger`, `_write_json`), the conflict strategies and restore copies, and the writers whose destination is a Sao Khuê file (`_write_workspace`, `_write_settings`, `_write_mcp`, `_write_skill`). |
+| `onboarding_import.py` | The facade and the run-level orchestration: `detect_sources`, `preview_import` / `_preview`, `apply_import` (the rescan, the per-item dispatch loop and the ledger flush discipline), `_source_exists`, and the writers into Sao Khuê's own stores: `_write_instruction`, `_write_memory`, `_write_schedule`. |
 
 Placement rules that are load-bearing:
 
@@ -188,17 +188,17 @@ looks like a gap — reopen the decision in this spec first.
 
 | Excluded | Why |
 |----------|-----|
-| **Sessions / conversation transcripts** | Not industry practice — no surveyed agent migrates transcripts. A transcript is a record of a conversation with a *different* model under a *different* system prompt; replayed into Kiro Crew it is misleading context, not useful memory. Reading it also requires hard-coding each source's private JSONL/SQLite schema, which fails **silently** when upstream drifts. Removing it deletes the module's largest and most fragile surface. See [No session import](#no-session-import). |
-| **Persona / `SOUL.md` as a persona** | Kiro Crew's persona surface is theme-pack persona, governed by `capabilities.theme_persona`. Importing a foreign persona document *as a persona* would inject third-party text into the agent's identity through a path that bypasses that gate. The **directive content** of such a file is still migrated — as memory (below) — but its persona role is dropped. |
+| **Sessions / conversation transcripts** | Not industry practice — no surveyed agent migrates transcripts. A transcript is a record of a conversation with a *different* model under a *different* system prompt; replayed into Sao Khuê it is misleading context, not useful memory. Reading it also requires hard-coding each source's private JSONL/SQLite schema, which fails **silently** when upstream drifts. Removing it deletes the module's largest and most fragile surface. See [No session import](#no-session-import). |
+| **Persona / `SOUL.md` as a persona** | Sao Khuê's persona surface is theme-pack persona, governed by `capabilities.theme_persona`. Importing a foreign persona document *as a persona* would inject third-party text into the agent's identity through a path that bypasses that gate. The **directive content** of such a file is still migrated — as memory (below) — but its persona role is dropped. |
 | **Credentials of any kind** | `~/.claude/.credentials.json`, `~/.codex/auth.json`, `.env`, `auth-profiles.json`, gateway tokens, provider API keys. Never read. MCP `env`/`headers` keys matching the secret patterns are stripped and counted into `secret_count`. |
 | **Runtime state** | Subagent records, tool results, checkpoints, hook state, in-flight task state. Not user data. |
-| **Architecture-specific config** | Plugin/hook/binding/agent-list configs, memory-backend selection, provider and model mappings. Kiro Crew is KiroACP-only, so provider/model translation has no destination. |
+| **Architecture-specific config** | Plugin/hook/binding/agent-list configs, memory-backend selection, provider and model mappings. Sao Khuê is KiroACP-only, so provider/model translation has no destination. |
 | **Opaque binary stores** | Foreign SQLite memory stores are reported as `unsupported_memory_database`, never parsed. |
-| **Allow-lists (as opposed to deny-lists)** | A foreign `permissions.allow` *widens* the security boundary. Importing it would let a foreign config grant tool access inside Kiro Crew's own gate. Deny rules only. |
+| **Allow-lists (as opposed to deny-lists)** | A foreign `permissions.allow` *widens* the security boundary. Importing it would let a foreign config grant tool access inside Sao Khuê's own gate. Deny rules only. |
 
 ## Destination mapping: the memory hierarchy
 
-Imported instruction/knowledge content is rewritten into Kiro Crew's existing
+Imported instruction/knowledge content is rewritten into Sao Khuê's existing
 memory tiers. Tier choice is driven by two properties — **context priority**
 (`context_assembly/budget.py` per-section caps) and **durability**.
 
@@ -305,7 +305,7 @@ dropped, a merely *truncated* one is not) and `contains_injection` (dropped as
 
 ### Foreign workspace-scope columns: sentinel vs. real scoping
 
-A foreign memory store may carry a workspace/scope column. Kiro Crew's own memory
+A foreign memory store may carry a workspace/scope column. Sao Khuê's own memory
 tables have none, so a genuinely workspace-scoped row has no faithful destination
 and is reported `scoped_memory_unsupported`.
 
@@ -375,7 +375,7 @@ request carries a strategy; the default is the safest one.
 
 | Strategy | Behavior |
 |----------|----------|
-| `skip` (**default**) | Keep Kiro Crew's existing item untouched; report the incoming one as `conflict`. |
+| `skip` (**default**) | Keep Sao Khuê's existing item untouched; report the incoming one as `conflict`. |
 | `rename` | Import alongside the existing item under a derived non-colliding name. |
 | `overwrite` | Replace the existing item, after writing a restore copy. |
 
@@ -529,7 +529,7 @@ MUST be covered by a fixture-based regression test.
 | `gemini` | `GEMINI_HOME`/`ANTIGRAVITY_HOME` → `~/.gemini` | Four probed config layouts, because Antigravity is closed-source and its subpath has moved between releases: `config/mcp_config.json` (**the live Antigravity path**, confirmed against a real install), `settings.json` (legacy Gemini CLI), `antigravity/mcp_config.json` and `antigravity-cli/settings.json` (older/absent layouts — kept as cheap hedges; `antigravity/` is runtime state, not config). `GEMINI.md` (instructions, hierarchical: root + per workspace); `skills/` only if it is a `SKILL.md` package; per-workspace `.gemini/settings.json` and `.agents/mcp_config.json`. Workspaces come from `config/projects/*.json` — one file per project, folder held as a percent-encoded `file://` URI under `projectResources.resources[].folderUri` — NOT from a `projects` map. That URI is decoded with `urllib.request.url2pathname`, not a bare `unquote`: on Windows the URI is `file:///C:/Users/...` and stripping the scheme alone leaves `/C:/Users/...`, which carries no drive and so is not absolute, which would refuse every workspace as `workspace_not_absolute`; `url2pathname` is the platform-correct inverse (plain unquoting on POSIX, drive reconstruction on Windows). **MCP shape normalization (all three verified against a real install, and required: without them a real Antigravity install imports ZERO of its servers):** `httpUrl`/`serverUrl` → canonical `url`; drop the inert `$typeName` protobuf discriminator (`exa.cascade_plugins_pb.CascadePluginCommandTemplate`) that Antigravity stamps on every stdio entry; drop `env` **only when empty** (the key name matches `_SECRET_KEY_RE`, so an empty map would otherwise score as a credential and refuse the server). A populated `env` is deliberately left untouched and still refused — stripping it would both change how the server runs and hide that secrets were present. `userSettings.themeMode` is not mapped |
 | `openclaw` | `OPENCLAW_STATE_DIR` → `OPENCLAW_HOME`/`<state>` → `~/.openclaw-<profile>` → `~/.openclaw` → `~/.clawdbot` | `openclaw.json` (+ legacy `clawdbot.json`); `SOUL.md`, `MEMORY.md`, `USER.md`, `memory/*.md` under `workspace/` \| `workspace-main/` \| `workspace-<agentId>/`; `skills/`, `.agents/skills/`; `exec-approvals.json` |
 | `hermes` | `HERMES_HOME`/`HERMES_AGENT_HOME`/`HERMES_CONFIG_DIR` → `%LOCALAPPDATA%/hermes` (Windows) → `~/.hermes` | `config.yaml`/`.yml`; `memories/MEMORY.md`, `memories/USER.md`; `SOUL.md`; `skills/` (excl. managed + re-import dirs); `cron/jobs.json`; `memory_store.db` reported unsupported |
-| a registered lineage source | whatever the descriptor declares | Kiro Crew's OWN layout, read by `_scan_lineage_install`: `config.json`, `mcp.json`, `recent_projects.json`, `workspace_dir`/`project_dir` pointers, `workspace/skills`, `workspace/memory`, `crons.json`, and `memory.db` (`semantic_memory` + `episodic_memories`; `workspace_id` holds the sentinel `default`, and `kind='directive'` marks a rule — see the two sections above). Only the canonical `workspace/AGENTS.md` + `workspace/CLAUDE.md` filenames are read, and the same two per configured workspace — that tree holds arbitrary user documents, so a blind `*.md` sweep there is wrong |
+| a registered lineage source | whatever the descriptor declares | Sao Khuê's OWN layout, read by `_scan_lineage_install`: `config.json`, `mcp.json`, `recent_projects.json`, `workspace_dir`/`project_dir` pointers, `workspace/skills`, `workspace/memory`, `crons.json`, and `memory.db` (`semantic_memory` + `episodic_memories`; `workspace_id` holds the sentinel `default`, and `kind='directive'` marks a rule — see the two sections above). Only the canonical `workspace/AGENTS.md` + `workspace/CLAUDE.md` filenames are read, and the same two per configured workspace — that tree holds arbitrary user documents, so a blind `*.md` sweep there is wrong |
 
 ## Registering a source
 
@@ -547,7 +547,7 @@ symlink rejection applying to a registered source exactly as they do to a built-
 one — those gates live inside ten separate read helpers, so a seam that accepted a
 scanner callable would hand an edition the engine's internal accumulator and
 depend on it to re-implement every one of them. A registered source is read as an
-install of **Kiro Crew's own on-disk layout** by `_scan_lineage_install` — a
+install of **Sao Khuê's own on-disk layout** by `_scan_lineage_install` — a
 predecessor, a rename, or a fork, which is the case an edition actually has. A
 genuinely novel foreign format needs a reader added to the core, because only the
 core can read it through the gates; when a second layout exists, naming one
@@ -617,7 +617,7 @@ user is still running.
 Hermes's own import tooling writes foreign skills into
 `skills/claude-code-imports/`, `skills/codex-imports/`, and
 `skills/openclaw-imports/`, and merges foreign `MEMORY.md`/`USER.md` into its
-own. A user who migrated Claude Code → Hermes → Kiro Crew would otherwise import
+own. A user who migrated Claude Code → Hermes → Sao Khuê would otherwise import
 the same skill twice under two different `source_id`s — which **neither** the
 fingerprint (source-scoped) **nor** the destination check (different target dir)
 can catch.

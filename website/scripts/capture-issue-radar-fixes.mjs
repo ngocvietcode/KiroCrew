@@ -101,7 +101,7 @@ await page.route('**/api/**', async route => {
   if (path === '/api/kiro-prerequisite') return json(route, { platform: 'gateway', installed: true, authenticated: true, ready: true, initial_setup_complete: true, can_auto_install: false, can_login: true, repair_required: false, docs_url: '', setup_allowed: false, operation: { status: 'idle', message: '' } })
   if (path === '/api/themes') return json(route, { themes: [], installed: [] })
   if (path === '/api/theme/boot') return json(route, { mode: 'light', theme: '' })
-  if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Kiro Crew', avatar: '' })
+  if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Sao Khuê', avatar: '' })
   if (path === '/api/dashboard/config') return json(route, {})
   if (path === '/api/notifications') return json(route, { notifications: [], unread: 0 })
   if (path === '/api/status') return json(route, { sessions: 0, messages: 0, cron_jobs: 0, subagents: 0, lessons: 0, uptime: 1000, version: '0.1.0' })

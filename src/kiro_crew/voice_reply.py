@@ -1,4 +1,4 @@
-"""Kiro Crew voice reply — generate TTS audio and deliver it to the requesting surface.
+"""Sao Khuê voice reply — generate TTS audio and deliver it to the requesting surface.
 
 Post-response hook: strips markdown, generates audio via the configured
 TTS provider (Amazon Polly or local Piper), then delivers it back to the

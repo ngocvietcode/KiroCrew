@@ -383,7 +383,7 @@ async def api_agent_detail(request: web.Request) -> web.Response:
                             # the request mutates nothing at all.
                             if _declined_foreign_spec_write(f):
                                 raise SharedAgentHomeRefused(
-                                    f"{f} belongs to another Kiro Crew data home"
+                                    f"{f} belongs to another Sao Khuê data home"
                                 )
                             # The pre-lock ambiguity check re-run where it
                             # decides: a second claimant that landed after the
@@ -529,7 +529,7 @@ async def api_agent_detail(request: web.Request) -> web.Response:
                         return web.json_response(
                             {
                                 "error": (
-                                    f"'{name}' is owned by another Kiro Crew data home; "
+                                    f"'{name}' is owned by another Sao Khuê data home; "
                                     "this instance will not rewrite it."
                                 ),
                                 "code": "agent_home_not_owned",

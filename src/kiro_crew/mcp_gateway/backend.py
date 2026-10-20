@@ -141,7 +141,7 @@ class Backend:
     # ``notifications/kirocrew/inflight`` for its parked calls, so the wedge
     # detector holds it to PROGRESS_WEDGE_CEILING_SECS instead of the 3h ceiling.
     reports_inflight: bool = False
-    # True only when the spawn that produced this process was Kiro Crew's own
+    # True only when the spawn that produced this process was Sao Khuê's own
     # packaged control plane -- the resolved command and args matched what the
     # managed spec emits, not merely a reserved server NAME. It gates the one
     # thing a pooled backend is ever handed beyond the caller's identity: the
@@ -582,7 +582,7 @@ async def spawn_backend(
     not gateway-spawned backends. Compensating controls:
 
     1. ``command`` is taken verbatim from ``KIROCREW_MCP_TARGET_<SERVER>`` env
-       vars populated at KiroCrew startup by the rewriter from the user's
+       vars populated at SaoKhue startup by the rewriter from the user's
        own ``~/.kiro/agents/*.json``. Stubs cannot cause gatewayd to spawn
        an arbitrary binary — only pre-approved MCP servers.
     2. ``GatewayManager._scrub_sensitive_env()`` strips AWS / SSH / GPG /
@@ -782,7 +782,7 @@ async def _pump_stderr(reader: asyncio.StreamReader, label: str) -> None:
         # DEBUG intentionally — backend stderr is routinely verbose
         # (tracing/log crate output) and would otherwise flood INFO logs.
         # redact() so a secret printed to stderr (e.g. a token fragment in a
-        # stack trace) does not land verbatim in the KiroCrew log.
+        # stack trace) does not land verbatim in the SaoKhue log.
         logger.debug(
             "backend[%s] stderr: %s",
             label,

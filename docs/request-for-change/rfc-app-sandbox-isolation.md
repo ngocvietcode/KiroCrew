@@ -41,7 +41,7 @@ slots are app-scoped. The residual risk is inside what an app is granted:
   storage, request rate).
 
 We need per-app resource ownership and quotas so one app cannot destroy another
-app's state or degrade the user's Kiro Crew experience.
+app's state or degrade the user's Sao Khuê experience.
 
 ---
 

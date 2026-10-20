@@ -396,7 +396,7 @@ export default function SessionActionsMenu({
       <Item key="copy" onSelect={() => copyLink(slotKey)}>
         <Link2 size={13} className="shrink-0 text-muted" /> {i18nT('components.sessionActionsMenu.copy_link')}
       </Item>,
-      // Copy this session to another Kiro Crew instance. Sits in nav/access
+      // Copy this session to another Sao Khuê instance. Sits in nav/access
       // rather than the tab-modifier group above because it changes nothing
       // about this tab — the peer gets its own copy under its own key.
       // Self-hiding when no instances are configured.

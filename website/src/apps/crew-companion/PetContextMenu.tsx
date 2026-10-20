@@ -8,7 +8,7 @@ import { i18nT } from '../../i18n/t'
 import { petBridge } from './petBridge'
 
 // Same method names as the desktop app's IPC bridge, re-implemented over
-// Kiro Crew's gateway — so everything below is unchanged.
+// Sao Khuê's gateway — so everything below is unchanged.
 const api = petBridge
 
 interface Props {

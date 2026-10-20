@@ -566,7 +566,7 @@ class TestAnExplicitNullIsNotAnAbsentKey:
     tested with ``in`` rather than ``is not None`` -- the two states are
     indistinguishable from the value alone.
 
-    Safe to treat this way because Kiro Crew's own ``to_dict()`` writes concrete
+    Safe to treat this way because Sao Khuê's own ``to_dict()`` writes concrete
     values for every one of these keys (``False`` / ``[]`` / ``"node"``) and
     never ``null``, so no save path can manufacture the degraded state.
     """

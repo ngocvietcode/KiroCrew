@@ -154,7 +154,7 @@ def member_dispatch_session_server(
 #: its own webview (``panel_publish``) and discover what renders it
 #: (``panel_templates``). A SECOND session-level mount beside
 #: :data:`MEMBER_DISPATCH_SERVER` rather than a widening of it, because
-#: assignment in Kiro Crew is per server: the dashboard set is folder
+#: assignment in Sao Khuê is per server: the dashboard set is folder
 #: organization plus session control, publishing a document is neither, and the
 #: two are withdrawn independently (``agent.member_dispatch``,
 #: ``agent.crew_panel``).

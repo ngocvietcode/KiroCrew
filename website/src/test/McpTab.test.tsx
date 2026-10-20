@@ -710,7 +710,7 @@ describe('probe-failure count', () => {
  * This suite pins how the table shows it — present, greyed, badged, its scope
  * toggles inert, one line saying which file to edit, Uninstall still live and
  * honest about what it does — and that nothing changes for enabled rows or for
- * Kiro Crew's own consent-disabled rows (#13075). Which of the two disabled
+ * Sao Khuê's own consent-disabled rows (#13075). Which of the two disabled
  * states a row is in comes from the backend's `disabledIn`, never from
  * `enabled` + `kirocrewManaged`.
  */
@@ -929,7 +929,7 @@ describe('McpTab disabled-in-config rows', () => {
     // badges read identically to a screen reader: two unnamed inert buttons.
     // Not the pending-uninstall wording the same styling means on a staged row.
     const names: string[] = []
-    for (const [scope, label] of [['kirocrew', 'Kiro Crew'], ['kiroGlobal', 'Kiro']] as const) {
+    for (const [scope, label] of [['kirocrew', 'Sao Khuê'], ['kiroGlobal', 'Kiro']] as const) {
       const badge = tr.querySelector<HTMLButtonElement>(`button[data-scope="${scope}"]`)
       expect(badge, scope).not.toBeNull()
       expect(badge).toBeDisabled()
@@ -953,7 +953,7 @@ describe('McpTab disabled-in-config rows', () => {
   })
 
   it('renders a store-managed server that the shared config disables inert, not as a consent row', async () => {
-    // The dual-scope corner: the entry is in Kiro Crew's store (so the row is
+    // The dual-scope corner: the entry is in Sao Khuê's store (so the row is
     // `kirocrewManaged`) but the SHARED config carries the disable. Offering the
     // consent step here would offer a re-enable that cannot land — lifting the
     // store's flag leaves the shared one — so the backend's `disabledIn`
@@ -996,9 +996,9 @@ describe('McpTab disabled-in-config rows', () => {
     expect(within(tr).getByText('Online')).toBeInTheDocument()
   })
 
-  it('keeps the controls on a consent-disabled row from Kiro Crew\u2019s own store', async () => {
-    // A registry install or custom add lands disabled in the Kiro Crew scope
-    // until the user enables it — through the Kiro Crew badge + Apply, in THIS
+  it('keeps the controls on a consent-disabled row from Sao Khuê\u2019s own store', async () => {
+    // A registry install or custom add lands disabled in the Sao Khuê scope
+    // until the user enables it — through the Sao Khuê badge + Apply, in THIS
     // table. That row is disabled too, and counts as such, but it is not
     // "disabled in config" and must keep every control it had.
     mockApi.mcpServers.mockResolvedValue([consentDisabled(), disabledInConfig()])
@@ -1087,7 +1087,7 @@ describe('McpTab badge hints are keyboard/AT-reachable (#8359)', () => {
 })
 
 /**
- * #13076: the Kiro Crew badge IS the per-server enable/disable for Kiro Crew
+ * #13076: the Sao Khuê badge IS the per-server enable/disable for Sao Khuê
  * sessions, but a coloured word did not read as a control. Every scope badge
  * is now a switch: it says its state to assistive tech (role + aria-checked),
  * shows it with a glyph rather than colour alone, and its hover text names
@@ -1109,14 +1109,14 @@ describe('McpTab scope badges are on/off switches (#13076)', () => {
     const kc = switchFor('alpha', 'kirocrew')
     expect(kc).toHaveAttribute('role', 'switch')
     expect(kc).toHaveAttribute('aria-checked', 'true')
-    expect(kc.getAttribute('title')).toBe('Kiro Crew: on (click to turn off, then Apply)')
+    expect(kc.getAttribute('title')).toBe('Sao Khuê: on (click to turn off, then Apply)')
     expect(kc.querySelector('[data-testid="mcp-scope-switch-glyph"]')).toHaveAttribute('data-on', 'true')
-    expect(within(row('alpha')).getByRole('switch', { name: /^Kiro Crew: on/ })).toBe(kc)
+    expect(within(row('alpha')).getByRole('switch', { name: /^Sao Khuê: on/ })).toBe(kc)
 
     fireEvent.click(kc)
     await waitFor(() => expect(switchFor('alpha', 'kirocrew')).toHaveAttribute('aria-checked', 'false'))
     const off = switchFor('alpha', 'kirocrew')
-    expect(off.getAttribute('title')).toBe('Kiro Crew: turns off when you press Apply (click to revert)')
+    expect(off.getAttribute('title')).toBe('Sao Khuê: turns off when you press Apply (click to revert)')
     expect(off.querySelector('[data-testid="mcp-scope-switch-glyph"]')).toHaveAttribute('data-on', 'false')
     expect(screen.getByText(/1 pending change/)).toBeInTheDocument()
   })

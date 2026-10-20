@@ -1,4 +1,4 @@
-"""Classify an assembled agent prompt into the blocks KiroCrew injected.
+"""Classify an assembled agent prompt into the blocks SaoKhue injected.
 
 The assembly in :mod:`kiro_crew.context` appends ~30 separately-sourced strings
 into one prompt. Attributing size back to those sources by instrumenting every

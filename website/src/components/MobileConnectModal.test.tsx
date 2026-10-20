@@ -114,7 +114,7 @@ describe('MobileConnectModal', () => {
   it('an unrecognised kind renders nothing (forward compat with edition methods)', () => {
     mount(['some-enterprise-kind'])
     // Header renders; neither known section's affordance does.
-    expect(screen.getByText('Use Kiro Crew on your phone')).toBeInTheDocument()
+    expect(screen.getByText('Use Sao Khuê on your phone')).toBeInTheDocument()
     expect(screen.queryByText('Show QR code')).not.toBeInTheDocument()
     expect(screen.queryByText('Create sign-in link')).not.toBeInTheDocument()
     expect(mocks.tailnetMobile).not.toHaveBeenCalled()
@@ -253,7 +253,7 @@ describe('MobileConnectModal — edition renderer seam', () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
       mount(['modal_test_throws', 'login_link'])
-      expect(screen.getByText('Use Kiro Crew on your phone')).toBeInTheDocument()
+      expect(screen.getByText('Use Sao Khuê on your phone')).toBeInTheDocument()
       expect(screen.getByText('Create sign-in link')).toBeInTheDocument()
     } finally {
       err.mockRestore()

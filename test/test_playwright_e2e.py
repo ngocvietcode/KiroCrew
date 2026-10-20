@@ -307,7 +307,7 @@ def _resolve_website_dir() -> Path | None:
     in-tree at ``<repo-root>/website``. ``test/`` sits at the repo root, so the
     website is a sibling of this file's parent directory.
     """
-    repo_root = Path(__file__).resolve().parent.parent  # KiroCrew repo root
+    repo_root = Path(__file__).resolve().parent.parent  # SaoKhue repo root
     in_tree = repo_root / _WEBSITE
     return in_tree if (in_tree / "playwright").is_dir() else None
 

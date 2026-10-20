@@ -203,7 +203,7 @@ def _mcp_request(agent: str) -> MagicMock:
 
 @pytest.fixture
 def identity_bindings(monkeypatch):
-    """Bind every Kiro Crew agent name to a same-named kiro agent.
+    """Bind every Sao Khuê agent name to a same-named kiro agent.
 
     Without this the real resolver maps an unknown name onto the ``kirocrew``
     default, so ``/api/mcp/active`` would always take the global-scope branch

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run the KiroCrew gateway from LIVE source. Uses the venv Python (which has
+# Run the SaoKhue gateway from LIVE source. Uses the venv Python (which has
 # all deps) but PYTHONPATH=src so code changes are picked up immediately on
 # restart.
 #
@@ -21,7 +21,7 @@ if [ -z "$RUNTIME_PYTHON" ] || [ ! -x "$RUNTIME_PYTHON" ]; then
     fi
 fi
 if [ ! -x "$RUNTIME_PYTHON" ]; then
-    echo "ERROR: Cannot find the KiroCrew venv Python at $SCRIPT_DIR/.venv/bin/python."
+    echo "ERROR: Cannot find the SaoKhue venv Python at $SCRIPT_DIR/.venv/bin/python."
     echo "Run 'bash minimal_install.sh' once to set up the venv, then try again."
     exit 1
 fi

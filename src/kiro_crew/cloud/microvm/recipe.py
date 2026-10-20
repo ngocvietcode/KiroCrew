@@ -463,7 +463,7 @@ def assemble(
     ``manifest.json`` ``agent.json``        the bundle, at the context root, which is
     ``mcp.json`` ``skills/**``              the layout ``Dockerfile.crew`` asserts
     ``container/**``                        the serving code the base installs
-    ``vendor/<wheel>``                      the Kiro Crew wheel that base installs
+    ``vendor/<wheel>``                      the Sao Khuê wheel that base installs
     ``microvm-ssm-agent.json``              the guest's SSM agent configuration
     ======================================  ==========================================
 
@@ -480,7 +480,7 @@ def assemble(
     check_layout(bundle_dir)
     if not wheel.is_file():
         raise RecipeRefused(
-            f"no Kiro Crew wheel at {wheel}: the base recipe installs it from the build "
+            f"no Sao Khuê wheel at {wheel}: the base recipe installs it from the build "
             "context, so a zip without one builds an image with no serving code"
         )
     try:

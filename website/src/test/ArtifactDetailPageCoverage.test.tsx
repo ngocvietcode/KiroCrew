@@ -10,7 +10,7 @@
  * sync banner. Those are the paths where a silent failure loses a user's work,
  * so each is pinned here together with its error branch.
  *
- * Kiro Crew convention: this suite mirrors `ArtifactDetailPage.test.tsx` —
+ * Sao Khuê convention: this suite mirrors `ArtifactDetailPage.test.tsx` —
  * automocked api client, `renderWithProviders` on the real `/artifacts/:slug`
  * route so `useParams` and `navigate` run for real.
  *
@@ -911,11 +911,11 @@ describe('ArtifactDetailPage — mutation paths', () => {
   })
 
   it('a failed Send to a session create shows the cause on its own line under the title', async () => {
-    vi.mocked(api).createChatSlot = vi.fn().mockRejectedValue(new Error('Kiro Crew is restarting'))
+    vi.mocked(api).createChatSlot = vi.fn().mockRejectedValue(new Error('Sao Khuê is restarting'))
     await mount(mkArtifact())
     fireEvent.click(await findMoreItem('Send to a session'))
     fireEvent.click(await screen.findByRole('menuitem', { name: 'New session' }))
-    const cause = await screen.findByText('Kiro Crew is restarting')
+    const cause = await screen.findByText('Sao Khuê is restarting')
     expect(cause.tagName).toBe('SPAN')
     expect(cause.className).toContain('block')
     expect(cause.closest('[role="alert"]')?.textContent).toContain('Could not start a session')

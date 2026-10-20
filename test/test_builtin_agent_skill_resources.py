@@ -1,8 +1,8 @@
-# Copyright Kiro Crew contributors
+# Copyright Sao Khuê contributors
 # SPDX-License-Identifier: Apache-2.0
 """A generated agent can reach the skills its own prompt tells it to read.
 
-Every spec Kiro Crew generates for itself is a custom template, so under the scoping
+Every spec Sao Khuê generates for itself is a custom template, so under the scoping
 rule it sees exactly its own ``skill://`` resources: with none,
 ``session_skill_globs`` answers ``[]`` and the catalog answers nothing. The
 conductors, the team lead, the dashboard author and the dashboard manager each carry

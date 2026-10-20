@@ -1372,7 +1372,7 @@ class TestMcpToolsRoute:
     async def test_toggle_disabled_in_kiro_global_scope_is_never_probed(self, monkeypatch):
         """The bypass GPT caught: /api/mcp/toggle writes ``disabled: true`` into
         the KIRO-GLOBAL mcp.json, but ``list_servers`` only sets
-        ``McpServerInfo.disabled`` from the Kiro Crew scope. A row introduced by a
+        ``McpServerInfo.disabled`` from the Sao Khuê scope. A row introduced by a
         retained agent entry therefore arrives with ``disabled = False`` even
         though the user switched the server off in the dashboard, so a check that
         reads only the row would spawn it. Row says enabled, scope says disabled

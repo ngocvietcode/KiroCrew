@@ -94,7 +94,7 @@ describe('App Store source filtering', () => {
     fireEvent.keyDown(await sourceButton('Built-in'), { key: ' ' })
     expect(appRows()).toHaveLength(1)
     expect(screen.getByRole('button', { name: 'View details for Epsilon Builtin' })).toBeVisible()
-    fireEvent.click(await sourceButton('Kiro Crew registry'))
+    fireEvent.click(await sourceButton('Sao Khuê registry'))
     expect(appRows()).toHaveLength(1)
     expect(screen.getByRole('button', { name: 'View details for Delta Tool' })).toBeVisible()
   })
@@ -109,11 +109,11 @@ describe('App Store source filtering', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View details for Alpha Tool' }))
     expect(await screen.findByText('Team catalog')).toBeVisible()
     expect(screen.getByText('Source')).toBeVisible()
-    expect(screen.queryByText('Kiro Crew registry')).toBeNull()
+    expect(screen.queryByText('Sao Khuê registry')).toBeNull()
   })
 
   it.each([
-    ['alpha', 'Team catalog'], ['delta', 'Kiro Crew registry'], ['epsilon', 'Built-in · kirocrew'],
+    ['alpha', 'Team catalog'], ['delta', 'Sao Khuê registry'], ['epsilon', 'Built-in · kirocrew'],
   ])('shows source on the uninstalled %s detail page', async (name, label) => {
     mount(`/apps/detail/${name}`)
     expect(await screen.findByText(label)).toBeVisible()
@@ -126,7 +126,7 @@ describe('App Store source filtering', () => {
     })
     mount('/apps/detail/local-tool')
     expect(await screen.findByText('Local install')).toBeVisible()
-    expect(screen.queryByText('Kiro Crew registry')).toBeNull()
+    expect(screen.queryByText('Sao Khuê registry')).toBeNull()
   })
 })
 
@@ -159,7 +159,7 @@ it.each(['alpha', 'delta'])('keeps local install provenance for a same-name cata
   })
   mount(`/apps/detail/${name}`)
   expect(await screen.findByText('Local install')).toBeVisible()
-  expect(screen.queryByText('Kiro Crew registry')).toBeNull()
+  expect(screen.queryByText('Sao Khuê registry')).toBeNull()
   expect(screen.queryByText('Team catalog')).toBeNull()
 })
 
@@ -241,7 +241,7 @@ it.each(['__builtin__', '__core__', 'registry:team-feed'])('isolates an external
   fireEvent.click(await sourceButton('Built-in · kirocrew'))
   expect(appRows()).toHaveLength(1)
   expect(screen.queryByRole('button', { name: 'View details for External App' })).toBeNull()
-  fireEvent.click(await sourceButton('Kiro Crew registry'))
+  fireEvent.click(await sourceButton('Sao Khuê registry'))
   expect(appRows()).toHaveLength(1)
   expect(screen.queryByRole('button', { name: 'View details for External App' })).toBeNull()
 })

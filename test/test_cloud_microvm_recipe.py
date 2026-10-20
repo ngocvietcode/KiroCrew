@@ -73,7 +73,7 @@ def _write_wheel(path: Path, members: dict[str, bytes]) -> Path:
 
 @pytest.fixture()
 def wheel(tmp_path) -> Path:
-    """A stand-in for the Kiro Crew wheel the base recipe installs.
+    """A stand-in for the Sao Khuê wheel the base recipe installs.
 
     A minimal but REAL wheel. It is one of the inputs the base recipe digest covers,
     so a zip assembled without one would be an image with no serving code; and the
@@ -403,7 +403,7 @@ class TestAssemble:
     def test_a_recipe_with_no_wheel_is_refused(self, bundle, tmp_path):
         """The base recipe installs the wheel FROM the build context, so a zip
         without one builds an image with no serving code."""
-        with pytest.raises(RecipeRefused, match="no Kiro Crew wheel"):
+        with pytest.raises(RecipeRefused, match="no Sao Khuê wheel"):
             assemble(
                 bundle_dir=bundle,
                 wheel=tmp_path / "nope.whl",

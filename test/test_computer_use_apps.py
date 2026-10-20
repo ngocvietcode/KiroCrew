@@ -100,7 +100,7 @@ def test_resolve_app_prefers_layer_zero_window_owner_over_decoy_helper(
                 window_id=2,
                 pid=_REAL_CHROME_PID,
                 owner="Google Chrome",
-                title="KiroCrew — GitHub",
+                title="SaoKhue — GitHub",
                 layer=0,
             ),
         ],
@@ -108,7 +108,7 @@ def test_resolve_app_prefers_layer_zero_window_owner_over_decoy_helper(
     app = apps_macos.resolve_app("Google Chrome")
     assert app.pid == _REAL_CHROME_PID
     assert app.window_id == 2
-    assert app.window_title == "KiroCrew — GitHub"
+    assert app.window_title == "SaoKhue — GitHub"
 
 
 def test_list_apps_drops_every_non_zero_layer(monkeypatch: pytest.MonkeyPatch, no_identity):
@@ -636,7 +636,7 @@ if __name__ == "__main__":  # pragma: no cover
 class TestBrowserHostedDashboardIsRefused:
     """The self-target rule must survive the dashboard being a BROWSER TAB.
 
-    KiroCrew's own Settings page is where the computer-use enable lives, and that
+    SaoKhue's own Settings page is where the computer-use enable lives, and that
     enable sits on the keystone precisely so the agent cannot reach it. Driving our
     own window would route around it — which is why ``kirocrew_self`` is the one
     denylist entry the scope change kept.
@@ -656,9 +656,9 @@ class TestBrowserHostedDashboardIsRefused:
     @pytest.mark.parametrize(
         "title",
         [
-            "Kiro Crew",  # the plain tab title
-            "(3) Kiro Crew",  # the unread-badge prefix (App.tsx)
-            "Artifacts — Kiro Crew",  # a popout frame's suffix
+            "Sao Khuê",  # the plain tab title
+            "(3) Sao Khuê",  # the unread-badge prefix (App.tsx)
+            "Artifacts — Sao Khuê",  # a popout frame's suffix
             "kirocrew",  # the no-space spelling
             "KIRO CREW",  # case must not matter
         ],
@@ -678,7 +678,7 @@ class TestBrowserHostedDashboardIsRefused:
         title-only rule would have let the native app through.
         """
         native = AppRef(
-            name="Kiro Crew", pid=1, bundle_id="dev.kiro.crew", window_title="Settings"
+            name="Sao Khuê", pid=1, bundle_id="dev.kiro.crew", window_title="Settings"
         )
         assert policy.check_app(native, PolicyConfig()) is not None
 
@@ -723,10 +723,10 @@ class TestMultiWindowHostPrefersTheDeniedTitle:
     @pytest.mark.parametrize(
         "titles",
         [
-            ("Hacker News", "Kiro Crew"),  # dashboard in a BACKGROUND window
-            ("Kiro Crew", "Hacker News"),  # dashboard first
-            ("", "Kiro Crew"),  # untitled window listed first
-            ("Hacker News", "GitHub", "Kiro Crew"),  # third of three
+            ("Hacker News", "Sao Khuê"),  # dashboard in a BACKGROUND window
+            ("Sao Khuê", "Hacker News"),  # dashboard first
+            ("", "Sao Khuê"),  # untitled window listed first
+            ("Hacker News", "GitHub", "Sao Khuê"),  # third of three
         ],
     )
     def test_any_dashboard_window_refuses_the_whole_process(self, titles, monkeypatch):

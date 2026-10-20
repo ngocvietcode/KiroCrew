@@ -32,7 +32,7 @@ const CARD_WAIT = { selector: '[data-testid="recovery-card"]' }
 const PREFIX = '[Tool blocked — reason sent to the agent]'
 const CAUSE = 'invalid_name'
 const NOTICE = [
-  '[Kiro Crew host notice] The tool call you just made was blocked before it ran.',
+  '[Sao Khuê host notice] The tool call you just made was blocked before it ran.',
   '',
   'Blocked: fs_read_file — the tool name is not one this host exposes.',
   '',

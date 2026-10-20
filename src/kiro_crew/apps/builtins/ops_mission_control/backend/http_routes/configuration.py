@@ -539,7 +539,7 @@ async def _handle_put_settings(request: web.Request, *, _audit: AuditWriter) -> 
 
     # Slack output. A channel ID is not a credential, so it belongs here rather
     # than in the secret store — and this app stores no Slack token at all, it
-    # reuses Kiro Crew's own client (see slack_out for why).
+    # reuses Sao Khuê's own client (see slack_out for why).
     #
     # These three go through the refusal helper even though they do not name
     # `policy_store` here: `slack_out.set_settings` and `ledger_sync.set_settings` reach

@@ -112,7 +112,7 @@ def register(app: web.Application) -> None:
     app.router.add_post("/api/kas-login/cancel", _lazy_kas("api_kas_login_cancel"))
     app.router.add_post("/api/kas-login/logout", _lazy_kas("api_kas_login_logout"))
 
-    # Kiro Crew's own KAS engine bundle (agent.kas_bundle). Lazy for the same
+    # Sao Khuê's own KAS engine bundle (agent.kas_bundle). Lazy for the same
     # boot-path reason as kas_login above.
     def _lazy_kas_bundle(handler_name: str):
         async def _dispatch(request):

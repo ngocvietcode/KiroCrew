@@ -1,6 +1,6 @@
 # Remote Hosts and Mobile Access
 
-Run Kiro Crew on an always-on host (a VPS, a cloud VM, a Linux desktop, a spare
+Run Sao Khuê on an always-on host (a VPS, a cloud VM, a Linux desktop, a spare
 box) so the chat bot, cron jobs, and task runner keep working while your laptop
 sleeps. Then reach the dashboard from wherever you are: an SSH tunnel for a
 laptop, a named HTTPS tunnel for a phone.
@@ -72,7 +72,7 @@ git config --global user.email "you@example.com"
 
 ### Install the agent backend
 
-Kiro Crew drives the `kiro-cli` agent over ACP, and it is the only provider
+Sao Khuê drives the `kiro-cli` agent over ACP, and it is the only provider
 (`agent.provider = acp`). Install `kiro-cli` per its own docs, put it on your
 `PATH`, and log in:
 
@@ -80,7 +80,7 @@ Kiro Crew drives the `kiro-cli` agent over ACP, and it is the only provider
 kiro-cli login
 ```
 
-The credentials Kiro Crew itself reads from `~/.kiro/crew/.env` are chat-platform
+The credentials Sao Khuê itself reads from `~/.kiro/crew/.env` are chat-platform
 and owner-identity credentials (`SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`,
 `KIROCREW_OWNER_ID`, and the equivalents for Discord / Telegram / Teams / WeCom
 / Webex). There is no model API key to configure: `kiro-cli` owns the model
@@ -96,7 +96,7 @@ pairing from **Settings → Channels → WhatsApp**, so reach the remote dashboa
 first (part 2 below) and scan the rotating code from there
 ([whatsapp-integration.md](../../src/kiro_crew/docs/whatsapp-integration.md)).
 
-### Install Kiro Crew
+### Install Sao Khuê
 
 Same two steps as a local machine (Python backend plus the React dashboard
 bundle). See the [install guide](install.md) for the full walkthrough:
@@ -150,7 +150,7 @@ tmux kill-session -t kirocrew
 
 A fresh install starts with no memories, preferences, lessons, or custom agent
 configuration. After installing and running setup on the remote host,
-`scripts/sync-to-remote.sh` copies selected Kiro Crew state from your local
+`scripts/sync-to-remote.sh` copies selected Sao Khuê state from your local
 machine. It does **not** copy `~/.kiro/agents/`; review and recreate any custom
 agent specs separately. Run the helper **from the local machine**:
 
@@ -263,7 +263,7 @@ ssh -fN -L 7779:localhost:7779 user@your-host.example.com   # background
 ```
 
 Pass `-C` to enable SSH transport compression. A hand-rolled tunnel gets no
-compression by default, while Kiro Crew's own tunnel manager turns it on for
+compression by default, while Sao Khuê's own tunnel manager turns it on for
 exactly this traffic (`src/kiro_crew/instances/ssh_tunnel_manager_child_text.py`): the
 forwarded stream carries the dashboard SPA bundle plus all API/WS payloads,
 which are highly compressible, and the gateway does not gzip at the HTTP layer.
@@ -405,7 +405,7 @@ the same and the difference is the whole security story:
   installed but will not be run, and `tailnet up` and `tailnet status` name the
   refused binary. For that setup, publish the dashboard with `tailscale serve`
   yourself, set `dashboard.url` to the exact address your browser opens, and
-  restart Kiro Crew.
+  restart Sao Khuê.
 
   `kirocrew tailnet status` shows the three things that are independently
   required — whether the setting is on, whether a MagicDNS name resolves right
@@ -544,7 +544,7 @@ service installer such as `cloudflared service install`).
 > the gateway ends nothing: cookies are self-contained, signed with the
 > persistent `token_signing.key`, and the revocation generation is reloaded
 > unchanged. **To cut off remote access entirely, also revoke at the provider's
-> auth layer or tear the tunnel down** — logout ends Kiro Crew's sessions, not
+> auth layer or tear the tunnel down** — logout ends Sao Khuê's sessions, not
 > the tunnel itself.
 > Note also that config-write and secret-reveal endpoints refuse requests that
 > carry forwarding headers: `is_direct_local_request()` treats any request
@@ -608,7 +608,7 @@ read-only.
 
 ### Getting a link on your phone
 
-1. In your Kiro Crew DM, send `/kirocrew dashboard` (or `/kirocrew dashboard 6h`).
+1. In your Sao Khuê DM, send `/kirocrew dashboard` (or `/kirocrew dashboard 6h`).
 2. The bot DMs you `https://<tunnel-url>/?token=...`.
 3. Tap it. The link exchanges the token for an access cookie **and** a 30-day
    refresh cookie, so this is not a daily ritual — see
@@ -836,10 +836,10 @@ Opens the tunnel if needed, mints a token on the remote, and opens the browser.
 #!/bin/zsh -e
 # Required parameters:
 # @raycast.schemaVersion 1
-# @raycast.title Open Kiro Crew
+# @raycast.title Open Sao Khuê
 # @raycast.mode compact
 # Optional parameters:
-# @raycast.packageName Kiro Crew Utils
+# @raycast.packageName Sao Khuê Utils
 # Documentation:
 # @raycast.description Get a token and open the dashboard
 REMOTE_HOST="user@your-host.example.com"
@@ -1032,7 +1032,7 @@ KIROCREW_BIN=$(command -v kirocrew 2>/dev/null || echo "$HOME/.local/bin/kirocre
 
 sudo tee /etc/systemd/system/kirocrew.service << EOF
 [Unit]
-Description=Kiro Crew AI Agent Gateway
+Description=Sao Khuê AI Agent Gateway
 After=network-online.target
 Wants=network-online.target
 StartLimitBurst=3

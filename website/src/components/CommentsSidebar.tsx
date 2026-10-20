@@ -193,7 +193,7 @@ export function CommentRow({
     comment.anchor_orphaned ? i18nT(ORPHAN_WARN_KEY) : undefined,
   ].filter(Boolean).join(' · ') || undefined
   // Comments mirrored in from an external publishing provider can't be resolved
-  // or deleted from KiroCrew — those are human-only actions on the provider.
+  // or deleted from SaoKhue — those are human-only actions on the provider.
   // Hide Resolve/Reopen/Delete per-comment (Reply + Review still work). This is
   // origin-driven so a mixed thread (local + provider) hides correctly.
   const isProvider = !!comment.origin && comment.origin !== 'local'

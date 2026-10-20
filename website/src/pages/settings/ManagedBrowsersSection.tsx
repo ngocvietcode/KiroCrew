@@ -34,7 +34,7 @@ const INSTALL_STEP_KEYS = [
 ] as const
 
 /**
- * "Managed browsers on the Kiro Crew host": the Playwright CLI and the browser
+ * "Managed browsers on the Sao Khuê host": the Playwright CLI and the browser
  * builds it downloads, all of which land on the machine running the gateway.
  *
  * The CLI and each engine are separate facts with separate rows. Whether the CLI

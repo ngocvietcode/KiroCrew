@@ -925,7 +925,7 @@ class TestLinuxServiceWritesUtf8:
         encoding must not be left to the host."""
         from kiro_crew.service import linux as svc_linux
 
-        contents = "# Kiro Crew — überschrift\nKIROCREW_PORT=5477\n"
+        contents = "# Sao Khuê — überschrift\nKIROCREW_PORT=5477\n"
         raw = self._capture_staged_bytes(
             lambda c: svc_linux._install_file_via_sudo(c, tmp_path / "env"), contents
         )

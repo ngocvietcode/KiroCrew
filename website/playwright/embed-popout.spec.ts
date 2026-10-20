@@ -89,11 +89,11 @@ test.describe('Popout route tree — /popout/*', () => {
   test('popout artifact shows seeded artifact content', async ({ page, request }) => {
     const slug = await seedArtifact(request, 'popout-content')
     await page.goto(`/popout/artifact/${slug}`, { waitUntil: 'domcontentloaded' })
-    // ArtifactPopoutFrame sets document.title to include "Kiro Crew"
+    // ArtifactPopoutFrame sets document.title to include "Sao Khuê"
     await expect.poll(
       () => page.title(),
       { timeout: 10000 }
-    ).toContain('Kiro Crew')
+    ).toContain('Sao Khuê')
   })
 
   test('popout wildcard redirects SPA navigation back to initial path', async ({ page, request }) => {

@@ -1,6 +1,6 @@
 # Cron Jobs & Scheduling
 
-Kiro Crew can run tasks on a schedule — recurring checks, daily briefings, periodic monitoring, or one-shot reminders.
+Sao Khuê can run tasks on a schedule — recurring checks, daily briefings, periodic monitoring, or one-shot reminders.
 
 ## Creating Cron Jobs
 
@@ -12,7 +12,7 @@ Just ask naturally:
 - "Run a status check every 5 minutes"
 - "Send me a briefing tomorrow at 8am"
 
-Kiro Crew uses the `cron_add` MCP tool to create the job.
+Sao Khuê uses the `cron_add` MCP tool to create the job.
 
 ### Via Dashboard
 
@@ -236,7 +236,7 @@ cron_update(job_id="abc123", clear_skip_dates=true)
 
 ## Execution Jitter
 
-To avoid traffic spikes from thousands of users' jobs all firing at the same instant, Kiro Crew adds a small random delay before executing scheduled jobs:
+To avoid traffic spikes from thousands of users' jobs all firing at the same instant, Sao Khuê adds a small random delay before executing scheduled jobs:
 
 | Schedule frequency | Jitter range |
 |--------------------|-------------|

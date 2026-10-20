@@ -76,8 +76,8 @@ function hasPendingScopeChange(s: McpServer, pending: PendingChange | undefined)
  * why the backend keeps the row and this table shows it inert instead of hiding
  * it. The row says so in words, with the file to edit when the backend names it.
  *
- * A consent-disabled row in Kiro Crew's OWN store is a different state and
- * keeps its controls: the Kiro Crew scope badge + Apply IS the consent step the
+ * A consent-disabled row in Sao Khuê's OWN store is a different state and
+ * keeps its controls: the Sao Khuê scope badge + Apply IS the consent step the
  * install flow points at. The two are told apart by `disabledIn`, which the
  * backend stamps on `GET /api/mcp` and the probe response alike — never by
  * `enabled` + `kirocrewManaged`: a store-managed server that the SHARED config
@@ -231,8 +231,8 @@ function ScopeBadge({
   const pendingRing = pendingChange
     ? 'ring-1 ring-[var(--warn)] ring-offset-1 ring-offset-bg border-dashed'
     : ''
-  // Each badge is an on/off switch for one scope (#13076): the Kiro Crew
-  // badge is the per-server enable/disable for Kiro Crew sessions. A bare
+  // Each badge is an on/off switch for one scope (#13076): the Sao Khuê
+  // badge is the per-server enable/disable for Sao Khuê sessions. A bare
   // coloured word did not read as a control, so it carries switch semantics
   // and a toggle glyph that shows the state without relying on colour.
   // An inert switch (shared-config disable or a staged uninstall) is off
@@ -262,7 +262,7 @@ function ScopeBadge({
  * Badge label for a probe status.
  *
  * `needs_auth` is not a failure. The status probe runs WITHOUT the OAuth token
- * kiro-cli holds (Kiro Crew keeps no credentials), so a remote OAuth server
+ * kiro-cli holds (Sao Khuê keeps no credentials), so a remote OAuth server
  * answers it with 401 while the agent runtime calls the same server fine —
  * reported as "Error / HTTP 401" in #1853.
  *

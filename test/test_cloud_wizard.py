@@ -853,7 +853,7 @@ class TestLaunchResume:
             x == "i-new" for x in calls["login"]
         )  # sign-in + verify both check i-new
         assert save_calls == [("dev", "us-west-2", "kc-new")]
-        assert choices[0][0] == "Existing KiroCrew cloud deployment"
+        assert choices[0][0] == "Existing SaoKhue cloud deployment"
         assert choices[0][1][0][0] == "Keep and resume existing"
         assert choices[0][1][1][0] == "Create a new installation"
         assert "existing stack is unchanged" in capsys.readouterr().out
@@ -913,7 +913,7 @@ class TestLaunchResume:
         assert save_calls == [("dev", "us-west-2", "kc-b")]
         assert choices == [
             (
-                "Existing KiroCrew cloud deployments",
+                "Existing SaoKhue cloud deployments",
                 [
                     ("Keep kc-a", "kirocrew-kc-a"),
                     ("Keep kc-b", "kirocrew-kc-b"),
@@ -942,7 +942,7 @@ class TestLaunchResume:
 
         assert wizard.launch(profile="dev", region="us-west-2", assume_yes=True) == 1
         out = capsys.readouterr().out
-        assert "multiple existing KiroCrew cloud stacks found" in out
+        assert "multiple existing SaoKhue cloud stacks found" in out
         assert "kc-a" in out and "kc-b" in out
 
 

@@ -17,13 +17,13 @@ superseded-by: []
 
 Status: accepted. [#19611](https://github.com/kirodotdev/KiroCrew/pull/19611) was approved and merged on 2026-10-13 by chenmingwei23, and the maintainer iamwhatever records the acceptance here, covering all phases in §1. Nothing built. Every code reference below was read at the commit in `audited-at`. Resource numbers come from one 48-core Linux host running 546 user processes (49.2 GB RSS, 7.27 cores busy); they show where memory goes, not a fleet average.
 
-This document lands on its own, before any implementation, because Phase 1 changes a product default (a default install starts the MCP broker and shares Kiro Crew's own servers) and Phase 3 adds a native package to every supported platform. The First Principles lane reads both decisions from the base branch.
+This document lands on its own, before any implementation, because Phase 1 changes a product default (a default install starts the MCP broker and shares Sao Khuê's own servers) and Phase 3 adds a native package to every supported platform. The First Principles lane reads both decisions from the base branch.
 
 ## 1. Summary
 
 | Phase | What | Language | Why this order |
 |---|---|---|---|
-| 1 | Stub and share all ten managed Kiro Crew MCP servers by default | Python + config | Biggest memory win, no new language, makes stubs the common case |
+| 1 | Stub and share all ten managed Sao Khuê MCP servers by default | Python + config | Biggest memory win, no new language, makes stubs the common case |
 | 2 | Stub handshake carries a protocol range; the daemon owns the generation check and the PoolKey hashes | Python | A non-Python stub cannot pair with gatewayd today |
 | 3 | Rust stub as a standalone binary in a wheel-only `kirocrew-native` package, behind `mcp_gateway.stub_impl=native` | Rust + CI | Each stub drops from ~28 MB to an estimated 3-5 MB |
 | Later | More Rust only where profiling proves it, as PyO3 modules in the same package | Rust | Packaging is a one-time cost; the boundary stays in Python |
@@ -72,7 +72,7 @@ A Rust stub has no Python package to fingerprint. It could reimplement `code_fin
 
 ## 3. Goals and non-goals
 
-Goals: cut per-session memory for Kiro Crew's own MCP servers on every platform; let a non-Python stub pair with gatewayd without copying Python internals; build a native packaging path once and reuse it.
+Goals: cut per-session memory for Sao Khuê's own MCP servers on every platform; let a non-Python stub pair with gatewayd without copying Python internals; build a native packaging path once and reuse it.
 
 Non-goals: rewriting the gateway, gatewayd, the pool, or any security code; reducing process count (one stub per session per server stays); host-specific tuning.
 

@@ -113,12 +113,12 @@ _SANDBOX_MARKERS = (
     "Failed to initialize sandbox.",
 )
 
-#: The remedy for the sandbox case, in the spec's terms: Kiro Crew never drops
+#: The remedy for the sandbox case, in the spec's terms: Sao Khuê never drops
 #: the sandbox by default; the operator names their own config to accept that
 #: trade-off. Appended AFTER the CLI's verbatim text so it cannot be pushed out
 #: of the cap.
 SANDBOX_REMEDY = (
-    "Chromium could not start because this host cannot run its sandbox. Kiro Crew "
+    "Chromium could not start because this host cannot run its sandbox. Sao Khuê "
     "never disables the sandbox by default. To accept that trade-off on this host, "
     "point PLAYWRIGHT_MCP_CONFIG in the gateway's environment at your own "
     'playwright-cli config, for example {"browser": {"browserName": "chromium", '

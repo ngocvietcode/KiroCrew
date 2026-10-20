@@ -227,7 +227,7 @@ class AcpProvider(LLMProvider):
         # consumers (dashboard chat) BEFORE startup; re-applied when
         # _start_kiro_runtime_impl swaps in the real AcpSessionProvider.
         self._child_fidelity_aware: bool = False
-        # Canonical Kiro Crew identity (a cfg.agents key), resolved by the
+        # Canonical Sao Khuê identity (a cfg.agents key), resolved by the
         # factory at provider-creation time — ``agent`` above is the bound kiro
         # template, a different namespace. Threaded into the kiro-shared
         # runtime so per-agent watchdog windows key off the crew, never off a
@@ -235,7 +235,7 @@ class AcpProvider(LLMProvider):
         self._crew_agent: str = crew_agent or ""
         # F2 load-recovery: set True by _start_kiro_runtime_impl when a resume
         # falls back to a FRESH native session (the prior session's lock never
-        # cleared). Signals SessionManager.get_or_create to replay KiroCrew's
+        # cleared). Signals SessionManager.get_or_create to replay SaoKhue's
         # conversation_log into the fresh session on the first prompt so the slot
         # is not context-free.
         self._history_replay_needed: bool = False
@@ -263,7 +263,7 @@ class AcpProvider(LLMProvider):
         # MCP Tool Search toggle (kiro-cli backend only). None = caller did not
         # specify (e.g. claude_code factory), so leave the overlay untouched.
         # True/False = write the kiro settings overlay deterministically so the
-        # KiroCrew toggle is authoritative over any global kiro setting.
+        # SaoKhue toggle is authoritative over any global kiro setting.
         self._tool_search = tool_search
         # None = caller expressed no preference; fall back to kiro-cli's own
         # activation thresholds rather than inventing a product-specific one.

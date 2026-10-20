@@ -241,7 +241,7 @@ def is_reparse_link(path: Path) -> bool:
     report, so a symlink-only guard is bypassable on Windows by the one link type
     a user can create there without elevation. ``resolve()`` follows a junction
     like any other indirection, so every place this module refuses a link at a name
-    KiroCrew owns has to refuse a junction too, or the refusal is POSIX-only.
+    SaoKhue owns has to refuse a junction too, or the refusal is POSIX-only.
 
     Detected WITHOUT depending on ``os.path.isjunction``'s availability: that
     helper only exists on 3.12+, and this project supports 3.10, so keying the
@@ -276,7 +276,7 @@ def safe_project_dir(name: str, root: Path | None = None) -> Path:
     base = projects_dir(root)
     candidate = base / name
     # A LINK at the project entry is illegitimate wherever it points — same
-    # reasoning as `_config_path`: this is a directory KiroCrew owns and creates.
+    # reasoning as `_config_path`: this is a directory SaoKhue owns and creates.
     # Refused before containment is asked about, because a link can satisfy
     # containment while still not being the directory it claims to be.
     #
@@ -401,7 +401,7 @@ def _config_path(project: Path) -> Path | None:
     # IN-PROJECT link satisfies it — so `.papyrus.json -> paper.tex` passed, and
     # `set_main_file` (reached from `resolve_main_file`, i.e. every compile) replaced the
     # user's manuscript with JSON. Containment was never the whole question here: this
-    # file is one KiroCrew owns and writes, so a link at that name is illegitimate
+    # file is one SaoKhue owns and writes, so a link at that name is illegitimate
     # wherever it points.
     #
     # Same reasoning as the generated-artifact guard in `latex`: for a path the app
@@ -494,7 +494,7 @@ def _config_lock(project: Path) -> threading.Lock:
 def _canonical_project_root(project: Path) -> Path:
     """The admission root for a read inside *project*.
 
-    The projects dir (owned by Kiro Crew, resolved for a symlinked ancestor) plus
+    The projects dir (owned by Sao Khuê, resolved for a symlinked ancestor) plus
     the entry name taken LITERALLY. Resolving the entry itself would let a project
     directory swapped for a link redefine its own root.
     """

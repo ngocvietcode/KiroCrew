@@ -53,7 +53,7 @@ const ICONS = {
 const blob = (key) => `/api/apps/blob?repo=${key}&path=icon.svg`
 
 const A = (name, displayName, description, extra = {}) => ({
-  name, displayName, author: 'Kiro Crew', description, tags: ['icons'],
+  name, displayName, author: 'Sao Khuê', description, tags: ['icons'],
   version: '1.0.0', installed: false, updateAvailable: false,
   provenance: 'official', verified: true, ...extra,
 })

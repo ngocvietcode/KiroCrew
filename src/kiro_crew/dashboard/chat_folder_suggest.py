@@ -101,7 +101,7 @@ def _folder_sample_titles(state: DashboardState) -> dict[str, list[str]]:
 
     A chat folder carries no description: ``name`` is its single descriptive
     field (see the create literal in ``chat_folders_records.py``), which is far too thin
-    for a model to file "Fix the render gate flake" under "Kiro Crew › i18n".
+    for a model to file "Fix the render gate flake" under "Sao Khuê › i18n".
     The titles already filed in a folder ARE its description, and
     ``list_sessions()`` yields title + folder_id newest-first in the one scan the
     folder-list endpoint already performs.
@@ -187,7 +187,7 @@ def _build_prompt(
 ) -> str:
     """Render the numbered folder list into the pick prompt.
 
-    ``labels`` are breadcrumbs (``Kiro Crew › feature``) so a nested folder is
+    ``labels`` are breadcrumbs (``Sao Khuê › feature``) so a nested folder is
     distinguishable from a same-named sibling elsewhere in the tree.
     """
     lines = []

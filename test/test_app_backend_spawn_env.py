@@ -23,7 +23,7 @@ from kiro_crew.apps.manager import APP_MANIFEST_FILENAME, install_app
 
 
 class TestBootAdmissionRevet:
-    """start_enabled_app_backends re-vets admission at boot (Kiro Crew parity).
+    """start_enabled_app_backends re-vets admission at boot (Sao Khuê parity).
 
     An app enabled before a policy tightened (banned / now-unsigned) must NOT
     keep running across restarts, but builtins (origin == "builtin") are exempt
@@ -293,7 +293,7 @@ def test_devfleet_repo_env_wins_repo_discovery(monkeypatch, tmp_path):
     assert dfmod._default_main_repo() == "/opt/checkouts/kirocrew"
 
     # Without the override the chain falls through to PROJECT_DIR, which is
-    # adopted only because it carries the Kiro Crew checkout markers.
+    # adopted only because it carries the Sao Khuê checkout markers.
     monkeypatch.delenv("KIROCREW_DEVFLEET_REPO")
     assert dfmod._default_main_repo() == str(proj)
 

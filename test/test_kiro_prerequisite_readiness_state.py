@@ -1192,7 +1192,7 @@ class TestKasRecordsFirstRunSetup:
     async def test_kas_refused_when_an_agent_spec_is_missing(
         self, tmp_path: Path, monkeypatch
     ) -> None:
-        # KAS loads Kiro Crew's agent specs, so a missing spec keeps the gate on
+        # KAS loads Sao Khuê's agent specs, so a missing spec keeps the gate on
         # its repair card (client) and must not write the marker (server).
         service = self._service(tmp_path, monkeypatch, acp_supported=True)
         monkeypatch.setattr(

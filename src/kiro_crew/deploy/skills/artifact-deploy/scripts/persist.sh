@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - promote a deploy to persistent (clears its TTL so
+# SaoKhue One-Click Deploy - promote a deploy to persistent (clears its TTL so
 # the reaper skips it).
 # Usage: persist.sh <slug> [--profile P] [--region R]
 set -euo pipefail

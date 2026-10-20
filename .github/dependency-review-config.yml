@@ -59,7 +59,7 @@ allow-licenses:
 allow-dependencies-licenses:
   # The local decision models' dependency locks
   # (src/kiro_crew/decisions/local_servers/*.requirements.txt). These packages are
-  # NOT Kiro Crew dependencies: the gateway installs them, when an owner picks a
+  # NOT Sao Khuê dependencies: the gateway installs them, when an owner picks a
   # local model, into that model's own environment under the data home, and never
   # imports, links or ships them. Three are flagged for compound expressions whose
   # every part is permissive:

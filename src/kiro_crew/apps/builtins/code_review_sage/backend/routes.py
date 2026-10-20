@@ -472,7 +472,7 @@ async def _run_review_bg(run: dict, changes: list[str]) -> None:
             runtime_error = await asyncio.to_thread(review_pool.runtime_preflight)
             # `begin_batch` is the only thing that can answer the sandbox question,
             # because the delegation decision is made inside the spawn (on Windows
-            # Kiro Crew has no native backend, so a review is confined only when
+            # Sao Khuê has no native backend, so a review is confined only when
             # kiro-cli's own sandbox takes it). A refusal is therefore reported
             # through the SAME channel as a missing kiro-cli — every change fails
             # fast with a reason naming the config key — instead of escaping as an

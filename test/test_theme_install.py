@@ -368,7 +368,7 @@ class TestValidateThemeDir:
 class TestFormatVersion:
     """theme.json ``formatVersion`` gate (arbiter item 1). Checked before any
     other schema error, so a forward-incompatible pack gets an honest 'needs a
-    newer KiroCrew' message rather than an opaque downstream error."""
+    newer SaoKhue' message rather than an opaque downstream error."""
 
     def _fmt_theme(self, tmp_path: Path, fmt: object, *, omit: bool = False) -> Path:
         # _make_theme already writes a valid formatVersion:1 manifest; overwrite
@@ -394,7 +394,7 @@ class TestFormatVersion:
         summary, err = _validate_theme_dir(self._fmt_theme(tmp_path, 2))
         assert summary is None
         assert err is not None
-        assert "requires a newer version of Kiro Crew" in err
+        assert "requires a newer version of Sao Khuê" in err
         assert "formatVersion 2" in err and "supported 1" in err
 
     @pytest.mark.parametrize("bad", ["1", 1.5, None, True])

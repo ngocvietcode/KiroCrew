@@ -12,7 +12,7 @@ export interface Vault {
   external?: boolean
   /** Attached from a repo with no git remote: sync commits locally, never pushes. */
   localOnly?: boolean
-  /** Registered as a Kiro Crew Knowledge source. */
+  /** Registered as a Sao Khuê Knowledge source. */
   knowledge?: boolean
   knowledgeSourceId?: string | null
 }

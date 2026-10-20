@@ -1248,7 +1248,7 @@ _PROJECT_TREE_SKIP_DIRS = frozenset(
         "target",
         ".gradle",
         ".idea",
-        # Kiro Crew state, hidden as in the Open/Browse picker.
+        # Sao Khuê state, hidden as in the Open/Browse picker.
         ".kiro",
         ".kirocrew",
     }

@@ -31,9 +31,9 @@ const REQUIREMENTS = `# Requirements — pluggable ACP backend
 
 ## Glossary
 
-- **ACP**: Agent Client Protocol — the JSON-RPC 2.0 over stdio protocol Kiro Crew
+- **ACP**: Agent Client Protocol — the JSON-RPC 2.0 over stdio protocol Sao Khuê
   speaks to an agent subprocess.
-- **Gateway**: the long-running Kiro Crew process that owns sessions, config,
+- **Gateway**: the long-running Sao Khuê process that owns sessions, config,
   approvals, and the dashboard.
 - **LLMProvider**: the internal provider ABC. \`agent.provider\` selects it and
   stays fixed at \`acp\`; this feature does not add a second LLMProvider.

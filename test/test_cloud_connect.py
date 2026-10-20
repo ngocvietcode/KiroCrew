@@ -594,7 +594,7 @@ class TestRegistryIntegration:
         monkeypatch.setattr(regmod, "InstancesRegistry", lambda *a, **k: reg)
 
         rid = connect.register_instance(
-            "i-0abc1234", name="Kiro Crew Cloud", profile="dev", region="us-west-2"
+            "i-0abc1234", name="Sao Khuê Cloud", profile="dev", region="us-west-2"
         )
         assert rid is not None
         # Registers over the native SSM transport, not the legacy ssh_host path.
@@ -614,13 +614,13 @@ class TestRegistryIntegration:
 
         monkeypatch.setattr(regmod, "InstancesRegistry", lambda *a, **k: reg)
 
-        first = connect.register_instance("i-0abc1234", name="Kiro Crew Cloud")
+        first = connect.register_instance("i-0abc1234", name="Sao Khuê Cloud")
         assert first is not None
         # Simulate persisted per-instance state a re-launch must NOT wipe:
         # customized TTL, an allocated local port, and sticky connect intent.
         reg.update(first, ttl="30m", local_port=5599, was_connected=True)
 
-        second = connect.register_instance("i-0abc1234", name="Kiro Crew Cloud")
+        second = connect.register_instance("i-0abc1234", name="Sao Khuê Cloud")
         # Re-launch updates in place: same id, no duplicate, state preserved.
         assert second == first
         matches = [i for i in reg.list() if i.ssm_target == "i-0abc1234"]
@@ -650,7 +650,7 @@ class TestRegistryIntegration:
         target = "ecs:crews_0123456789abcdef0123456789abcdef_" + "a" * 32 + "-1234567890"
         first = connect.register_instance(
             target,
-            name="Kiro Crew Cloud (t)",
+            name="Sao Khuê Cloud (t)",
             connection_method="fargate",
             provisioner_id="aws_fargate",
         )
@@ -659,7 +659,7 @@ class TestRegistryIntegration:
 
         second = connect.register_instance(
             target,
-            name="Kiro Crew Cloud (t)",
+            name="Sao Khuê Cloud (t)",
             connection_method="fargate",
             provisioner_id="aws_fargate",
         )
@@ -674,7 +674,7 @@ class TestRegistryIntegration:
 
         monkeypatch.setattr(regmod, "InstancesRegistry", lambda *a, **k: reg)
         # An SSM record (ssh_host="") and an SSH record (ssm_target="") coexist.
-        connect.register_instance("i-0abc1234", name="Kiro Crew Cloud")
+        connect.register_instance("i-0abc1234", name="Sao Khuê Cloud")
         reg.add(name="dev-box", ssh_host="dev-box")
 
         # An empty needle must NOT match an empty transport field of either record.
@@ -689,7 +689,7 @@ class TestRegistryIntegration:
 
         monkeypatch.setattr(regmod, "InstancesRegistry", lambda *a, **k: reg)
 
-        connect.register_instance("i-0abc1234", name="Kiro Crew Cloud")
+        connect.register_instance("i-0abc1234", name="Sao Khuê Cloud")
         # Removal matches on ssm_target (the native registration).
         assert connect.unregister_instance("i-0abc1234") is True
         assert not any(i.ssm_target == "i-0abc1234" for i in reg.list())
@@ -699,7 +699,7 @@ class TestRegistryIntegration:
 
         reg = InstancesRegistry(path=tmp_path / "instances.json")
         # A box registered the old way (ssh_host = instance id) still unregisters.
-        reg.add(name="Kiro Crew Cloud", ssh_host="i-0abc")
+        reg.add(name="Sao Khuê Cloud", ssh_host="i-0abc")
         import kiro_crew.instances.registry as regmod
 
         monkeypatch.setattr(regmod, "InstancesRegistry", lambda *a, **k: reg)
@@ -732,7 +732,7 @@ class TestIsLaunchedInstance:
 
     def test_unrelated_target_is_not_launched(self, monkeypatch, tmp_path):
         # A hand-added SSM record whose ssm_target happens to look like an EC2 id
-        # but was never provisioned by a Kiro Crew launch job.
+        # but was never provisioned by a Sao Khuê launch job.
         store = self._store(monkeypatch, tmp_path)
         job = store.create(profile="dev", region="us-west-2", size_key="light")
         job.instance_id = "i-0abc1234"

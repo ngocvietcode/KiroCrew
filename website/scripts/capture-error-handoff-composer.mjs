@@ -39,7 +39,7 @@ mkdirSync(OUT, { recursive: true })
 
 const { BASE, authed } = podInfo(readFileSync)
 const COMPOSER = { name: 'Message input' }
-const REPORT_LEAD = 'This error just came up in the Kiro Crew dashboard.'
+const REPORT_LEAD = 'This error just came up in the Sao Khuê dashboard.'
 
 async function primePod(page) {
   await page.goto(authed('/chat'), { waitUntil: 'domcontentloaded' })

@@ -4,7 +4,7 @@ Status: implemented in `src/kiro_crew/apps/manager_records.py`, `src/kiro_crew/a
 
 ## Overview
 
-Implement the two-phase graceful migration mechanism for builtin apps. Backend changes in Python (KiroCrew gateway), frontend changes in TypeScript/React (KiroCrewWebsite).
+Implement the two-phase graceful migration mechanism for builtin apps. Backend changes in Python (SaoKhue gateway), frontend changes in TypeScript/React (KiroCrewWebsite).
 
 ## Tasks
 

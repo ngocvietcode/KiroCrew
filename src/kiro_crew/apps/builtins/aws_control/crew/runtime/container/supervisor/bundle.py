@@ -1,4 +1,4 @@
-"""Install the crew bundle into the paths Kiro Crew actually reads, or refuse.
+"""Install the crew bundle into the paths Sao Khuê actually reads, or refuse.
 
 The crew rides in the image at ``/app/crew-bundle`` (PACKAGING-CONTRACT.md, T3).
 The previous design uploaded it to S3 and nothing in the container ever read it,
@@ -6,14 +6,14 @@ so ten gates went green while the deployment served a default agent. This module
 closes that by construction: the supervisor installs the bundle BEFORE the
 backend starts, and refuses to boot unless the named crew is the one installed.
 
-WHERE EACH ENTRY GOES -- verified against the Kiro Crew source at
-a Kiro Crew source checkout (0.6.0), not inferred from a plausible
+WHERE EACH ENTRY GOES -- verified against the Sao Khuê source at
+a Sao Khuê source checkout (0.6.0), not inferred from a plausible
 name. ``config_dir()`` and ``data_home()`` resolve to the SAME directory, so a
 ``<home>/config/`` guess would land two of these where nothing reads them:
 
 * ``agent.json`` -> ``<kiro home>/agents/crew-<crew_name>.json``, declaring the name
   ``crew-<crew_name>``. The crew namespace is what keeps the install off the specs
-  Kiro Crew derives into the same directory; see ``common.crew_agent_id`` for why it
+  Sao Khuê derives into the same directory; see ``common.crew_agent_id`` for why it
   covers the declared name as well as the filename.
   ``agent_discovery.list_agents`` is THE reader of installed agent specs, keyed by
   the spec's ``name``, and it reads and JSON-parses every ``<kiro home>/agents/*.json``
@@ -23,7 +23,7 @@ name. ``config_dir()`` and ``data_home()`` resolve to the SAME directory, so a
   (``supervisor.__main__.export_kiro_home``) before calling this module, so the spec
   lands in a directory the task owns, beside the default spec the backend writes
   there. It must NOT land in the process HOME's shared ``~/.kiro/agents``: the
-  backend runs on a non-default data home and Kiro Crew refuses to write the shared
+  backend runs on a non-default data home and Sao Khuê refuses to write the shared
   dir from one, so a spec landing there leaves the backend with no ``kirocrew.json``
   and every turn dies. Resolved here from the environment the way kiro-cli does rather
   than imported, so this module needs no ``kiro_crew`` install (matching the
@@ -36,7 +36,7 @@ name. ``config_dir()`` and ``data_home()`` resolve to the SAME directory, so a
   a source-text guard cannot tell a docstring from a call, and it is right not to
   try.
 
-* ``mcp.json`` -> ``<data home>/mcp.json``. The Kiro Crew-scope MCP config is
+* ``mcp.json`` -> ``<data home>/mcp.json``. The Sao Khuê-scope MCP config is
   ``data_home()/"mcp.json"`` -- the highest-priority source in
   ``mcp_discovery._mcp_sources`` (``mcp_discovery.py:297``,
   ``SCOPE_KIROCREW``) and what ``dashboard/handlers/mcp_config_files.py``
@@ -537,7 +537,7 @@ def _prune_empty_dirs(root: Path) -> None:
 
 
 def install_bundle(settings: Settings, *, agents_dir: Path | None = None) -> dict:
-    """Verify the bundle, then lay it out where Kiro Crew reads it. Fail CLOSED.
+    """Verify the bundle, then lay it out where Sao Khuê reads it. Fail CLOSED.
 
     Called from ``run()`` before the backend starts, alongside ``verify_layout``
     / ``require_model_identity`` / ``verify_sandbox``. Every refusal names the
@@ -650,7 +650,7 @@ def install_bundle(settings: Settings, *, agents_dir: Path | None = None) -> dic
         )
     # The crew's agent id, which is BOTH the filename stem and the spec's declared name
     # from here on (``common.crew_agent_id``). Refused now if it cannot name an agent at
-    # all: the id reaches Kiro Crew's own name grammar on the first turn, and a length
+    # all: the id reaches Sao Khuê's own name grammar on the first turn, and a length
     # that fails it there produces a 400 per request on a task that booted reporting a
     # healthy install. A boot refusal naming the length is the same answer every other
     # check here gives, and it is the only one an operator can act on.
@@ -675,8 +675,8 @@ def install_bundle(settings: Settings, *, agents_dir: Path | None = None) -> dic
     # The installed spec is the bundle's spec with its ``name`` moved into the crew
     # namespace, and nothing else touched. It is the ONE place the bytes are not copied
     # verbatim, and the reason is that the declared name is what dispatches: kiro-cli
-    # and Kiro Crew's dispatchable-agent snapshot both enumerate by it, so a spec still
-    # declaring the bare crew name is reachable under no id at all whenever Kiro Crew's
+    # and Sao Khuê's dispatchable-agent snapshot both enumerate by it, so a spec still
+    # declaring the bare crew name is reachable under no id at all whenever Sao Khuê's
     # own mirror declares that same name.
     #
     # The digest checked above still covers the bundle's own bytes in the image layer,

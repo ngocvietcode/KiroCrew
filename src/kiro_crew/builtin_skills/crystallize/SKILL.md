@@ -71,7 +71,7 @@ a session that touched credentials / sensitive paths. Being asked does not make 
    same limits yourself.
 
 4. **Choose the destination — candidate by default, live only on an explicit
-   request.** First resolve your KiroCrew skills directory — the SAME directory
+   request.** First resolve your SaoKhue skills directory — the SAME directory
    that holds the `auto/` group you inspected in step 2 (honor `$KIROCREW_HOME`
    if set; do **not** assume a literal `~/.kirocrew`, since migrated installs
    live elsewhere).

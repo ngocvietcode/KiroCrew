@@ -1,4 +1,4 @@
-"""App MCP servers land in KiroCrew's agent config, never the shared kiro file.
+"""App MCP servers land in SaoKhue's agent config, never the shared kiro file.
 
 The shared ``~/.kiro/settings/mcp.json`` is read by everything else under
 ``~/.kiro`` — Kiro IDE and any other kiro-cli agent — so registering an app's
@@ -696,7 +696,7 @@ class TestManifestAutoApproveCannotSelfGrantAnExemption:
     block states the rule outright ("DELIBERATELY NO autoApprove KEY, and none may
     ever be added"). App-contributed specs were copied verbatim, so the grant was
     declared by an app MANIFEST — content that can come from outside this repo —
-    rather than by KiroCrew or the user.
+    rather than by SaoKhue or the user.
     """
 
     def test_a_governed_server_loses_autoapprove_but_keeps_its_tools(
@@ -1046,7 +1046,7 @@ class TestAnUngovernedHostDoesNotKeepAutoApprove:
     def test_a_verb_the_spec_declares_survives_without_the_opt_in(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """The floor is user-only: Kiro Crew's own emission is not the hole.
+        """The floor is user-only: Sao Khuê's own emission is not the hole.
 
         A blanket floor would strip a shipped server's own tools, and the operator
         who lost them would set the opt-in to get them back -- which honours their
@@ -1657,7 +1657,7 @@ class TestStripAutoApproveIsAudited:
         assert "@srv" in events[0]["resources"]
 
     def test_a_declared_list_is_not_reported_as_the_owners_decision(self, monkeypatch) -> None:
-        """What a server spec declares is Kiro Crew's own emission, not a choice
+        """What a server spec declares is Sao Khuê's own emission, not a choice
         the owner made, so honouring it is not a grant worth a record."""
         from kiro_crew.platform import governance as gov
 

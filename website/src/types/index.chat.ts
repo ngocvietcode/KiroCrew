@@ -47,10 +47,10 @@ export interface TodoList {
  * - A name absent from every bucket means *no report yet*, never *not mounted*:
  *   the backend's init drain is time bounded and a late frame still arrives.
  * - The buckets are a SUPERSET of `configured`, because the backend also starts
- *   the agent spec's own servers, not just the ones Kiro Crew injects.
+ *   the agent spec's own servers, not just the ones Sao Khuê injects.
  */
 export interface McpSessionReport {
-  /** Server names Kiro Crew put on the wire for this session. */
+  /** Server names Sao Khuê put on the wire for this session. */
   configured: string[]
   /**
    * Agent-spec `@server` tool refs that named no server this session receives.

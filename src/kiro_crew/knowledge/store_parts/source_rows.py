@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("kiro_crew.knowledge.store")
 
 
-# Marker in a source row's properties for a source Kiro Crew created itself rather
+# Marker in a source row's properties for a source Sao Khuê created itself rather
 # than the user registering it by hand. Written today by the aggregate row the
 # agent's "add document" tool owns, and carried by legacy rows the removed folder
 # auto-registration paths left behind. Two readers: the ingestion pipeline, which
@@ -40,7 +40,7 @@ logger = logging.getLogger("kiro_crew.knowledge.store")
 AUTO_ADDED_PROP = "auto_added"
 
 
-# Marker recording that a row Kiro Crew registered itself has been adopted by the
+# Marker recording that a row Sao Khuê registered itself has been adopted by the
 # user (the auto-registration feature that created such rows is gone). Written by
 # `retire_auto_registered_folder` when the scan funnel refuses such a row, and by the
 # confirm and resume endpoints when the user adopts one; its presence is what keeps a
@@ -49,7 +49,7 @@ AUTO_REGISTRATION_RETIRED_PROP = "auto_registration_retired"
 
 
 def is_auto_registered(props: dict) -> bool:
-    """True when *props* belong to a source Kiro Crew registered itself, unadopted.
+    """True when *props* belong to a source Sao Khuê registered itself, unadopted.
 
     Both markers are compared with ``is True`` rather than tested for truthiness.
     ``properties`` is user-editable JSON that also arrives through ``import_bundle``,

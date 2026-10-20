@@ -65,7 +65,7 @@ class SpawnContext:
     """
 
     agent: str
-    """The Kiro Crew agent this process runs. Empty when the host has no notion."""
+    """The Sao Khuê agent this process runs. Empty when the host has no notion."""
 
     work_dir: str | Path | None
     """The cwd the spawn resolves relative paths against.

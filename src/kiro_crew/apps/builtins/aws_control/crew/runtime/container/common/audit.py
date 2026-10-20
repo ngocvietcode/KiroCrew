@@ -7,7 +7,7 @@ is written synchronously and a filesystem failure is re-raised so the caller can
 tool rather than run it unaudited".
 
 Mirrored rather than called, and the reason is the SINK, not importability. The wheel IS
-installed in this image (the base Dockerfile installs Kiro Crew as a real package because
+installed in this image (the base Dockerfile installs Sao Khuê as a real package because
 the backend is RUN as a process), so ``from kiro_crew.sel import sel`` would import. What
 does not survive the move is where that log lives:
 

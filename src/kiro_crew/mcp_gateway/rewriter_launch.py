@@ -94,7 +94,7 @@ _TARGET_ARGS_SEP = "|"
 _TARGET_ARGS_FLAG = "--target-args-b64"
 _TARGET_ARGS_FLAG_LEGACY = "--target-args"
 
-#: The stub is launched as a module by the interpreter running Kiro Crew.
+#: The stub is launched as a module by the interpreter running Sao Khuê.
 #: ``sys.executable`` is baked into the overlay rather than resolved at
 #: launch time because kiro-cli strips env when it spawns MCP
 #: subprocesses, so neither a propagated var nor a ``python3`` on PATH
@@ -245,7 +245,7 @@ def _spec_args(entry: Mapping[str, Any]) -> list[str]:
 
 
 def _managed_invocation(name: str) -> dict[str, Any] | None:
-    """The command/args Kiro Crew itself would launch *name* with, or ``None``.
+    """The command/args Sao Khuê itself would launch *name* with, or ``None``.
 
     ``include_opt_in`` because the question here is what a granted reserved
     name IS, not whether a rebuild would grant it -- the spec already did.
@@ -286,7 +286,7 @@ def _repair_control_plane_entry(
 ) -> dict[str, Any]:
     """Re-derive a reserved ``kirocrew-*`` entry's launch from the managed source.
 
-    A spec's ``command`` for one of Kiro Crew's own servers cannot be authored
+    A spec's ``command`` for one of Sao Khuê's own servers cannot be authored
     correctly by hand: the managed path embeds the data home and the installed
     version (Toolbox: ``~/.toolbox/tools/kirocrew/<ver>/bin/kirocrew``; macOS
     payload: ``.../backend-dist/kirocrew-backend-<arch>/bin/kirocrew``), so the
@@ -310,7 +310,7 @@ def _repair_control_plane_entry(
     entry the spec does not carry is not conjured here, and the restriction
     fields it declares (``_RESERVED_ENTRY_SPEC_KEYS``) carry over. The launch is
     the managed declaration's, a spec ``autoApprove`` is dropped (kiro-cli
-    honours it before Kiro Crew's PreToolUse gate runs), and the declared
+    honours it before Sao Khuê's PreToolUse gate runs), and the declared
     ``env`` is held to the managed-entry ownership rule
     (:func:`_owned_control_plane_env`) before the forwarding rules see it,
     exactly as the disk and ACP consumers of this population do.
@@ -348,7 +348,7 @@ def _repair_control_plane_entry(
     # swapping two keys. Three rounds of review found spec-controlled fields
     # riding into our binary through that copy (a launcher-choosing ``env``, a
     # ``KIROCREW_*`` override, an ``autoApprove`` that kiro-cli honours before
-    # Kiro Crew's PreToolUse gate ever runs), one field per round. The class is
+    # Sao Khuê's PreToolUse gate ever runs), one field per round. The class is
     # the copy, so this is the disk writer's shape instead
     # (``agent._enforce_managed_mcp_ownership``): the launch is ours; the
     # restriction fields kiro-cli reads for the spec's grant carry over
@@ -402,7 +402,7 @@ def _owned_control_plane_env(
     same rule the other two consumers of this population apply --
     ``agent._enforce_managed_mcp_ownership`` for the disk entry and
     ``acp.session_mcp._managed_element_env`` for the ACP element -- in the same
-    order: ``sanitize_spec_env`` drops the loader channels and Kiro Crew's own
+    order: ``sanitize_spec_env`` drops the loader channels and Sao Khuê's own
     reserved namespace (a spec-declared ``KIROCREW_APPROVAL_MODE=auto`` would
     otherwise reach a tokened control plane and let its subagents skip
     approval), then the home-deriving and launcher-exec classes go. What

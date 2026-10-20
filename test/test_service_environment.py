@@ -127,7 +127,7 @@ class TestServiceEnvironment:
         It is the ONLY input DASHBOARD_PORT reads, so a service definition that
         cannot carry it can only ever bind the default 5476 — broken by
         construction on any host where that port is taken, which includes every
-        host running Kiro Crew's own instance tunnel (it pins
+        host running Sao Khuê's own instance tunnel (it pins
         local_port == remote_port).
         """
         monkeypatch.delenv("KIROCREW_PORT", raising=False)

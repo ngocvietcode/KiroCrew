@@ -578,7 +578,7 @@ class TestHeartbeatApproval:
     ) -> None:
         """LLM-originated tool titles MUST be redacted before reaching any
         external surface, including the ``logger.warning`` on the deny path
-        — KiroCrew logs surface in the dashboard. Per security-controls
+        — SaoKhue logs surface in the dashboard. Per security-controls
         guideline: never trust LLM output. (review-bot finding on rev 6.)
         """
         import logging

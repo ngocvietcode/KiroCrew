@@ -64,7 +64,7 @@ const art = (from, to, label) => {
 
 const A = (name, displayName, description, tags, extra = {}) => ({
   name, displayName, description, tags,
-  author: 'Kiro Crew', version: '1.0.0', installed: false, updateAvailable: false,
+  author: 'Sao Khuê', version: '1.0.0', installed: false, updateAvailable: false,
   provenance: 'official', verified: true, ...extra,
 })
 

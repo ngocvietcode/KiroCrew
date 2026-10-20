@@ -665,7 +665,7 @@ class TestAllowedToolsIsReDerivedWhenTheCeilingTightens:
     writers consult the ceiling when they WRITE, and kiro-cli then reads the FILE. So a ceiling
     that comes to deny a tool mid-flight does not narrow a list already on disk, and every
     session started afterwards keeps auto-approving what the fleet now forbids — the tool
-    short-circuits inside the harness and never reaches Kiro Crew's own PreToolUse gate.
+    short-circuits inside the harness and never reaches Sao Khuê's own PreToolUse gate.
     """
 
     @pytest.fixture(autouse=True)

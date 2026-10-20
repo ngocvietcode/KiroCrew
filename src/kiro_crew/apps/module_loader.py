@@ -18,7 +18,7 @@ from kiro_crew.sel import sel
 
 logger = logging.getLogger(__name__)
 
-# Builtin apps ship inside the KiroCrew package and are trusted like core code.
+# Builtin apps ship inside the SaoKhue package and are trusted like core code.
 # Anything loaded from outside this directory is a third-party / operator-installed
 # app whose Python executes in-process with full gateway privileges (CSE SEC-012).
 _BUILTINS_DIR = (Path(__file__).resolve().parent / "builtins")

@@ -14,7 +14,7 @@
  * Scenes, each in light and dark:
  *   1. first paint -- the pre-spawn refusal with 3 components missing
  *   2. one probe later -- two parts landed, "1 component is" repainted in place
- *   3. complete -- "Installation finished — starting Kiro Crew…" (the linger
+ *   3. complete -- "Installation finished — starting Sao Khuê…" (the linger
  *      frame before the dialog closes itself)
  *
  * Usage: node scripts/capture-installing-dialog.mjs [outDir]

@@ -245,7 +245,7 @@ describe('SecretsPanel', () => {
     ]
     mount()
 
-    expect(await screen.findByText('Used automatically by Kiro Crew')).toBeInTheDocument()
+    expect(await screen.findByText('Used automatically by Sao Khuê')).toBeInTheDocument()
     expect(screen.getByText('Jira API token')).toBeInTheDocument()
     expect(screen.getByText(/Authenticates Jira issue lookups/)).toBeInTheDocument()
     expect(screen.getByText('JIRA_API_TOKEN')).toBeInTheDocument()
@@ -478,13 +478,13 @@ describe('SecretsPanel', () => {
     const user = userEvent.setup()
     listManaged = [{ name: 'JIRA_API_TOKEN', kind: 'jira_api_token' }]
     mount()
-    await screen.findByText('Used automatically by Kiro Crew')
+    await screen.findByText('Used automatically by Sao Khuê')
 
     await user.click(screen.getByRole('button', { name: 'Add secret' }))
     await user.type(screen.getByLabelText('Secret name'), 'jira_api_token')
     await user.type(screen.getByLabelText('Secret value'), 'jira-token-value')
 
-    expect(screen.getByText('Saving here updates JIRA_API_TOKEN under Used automatically by Kiro Crew.')).toBeInTheDocument()
+    expect(screen.getByText('Saving here updates JIRA_API_TOKEN under Used automatically by Sao Khuê.')).toBeInTheDocument()
     const save = screen.getByRole('button', { name: 'Save' })
     expect(save).toBeEnabled()
     await user.click(save)

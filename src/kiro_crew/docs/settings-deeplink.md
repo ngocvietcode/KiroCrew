@@ -1,6 +1,6 @@
 # Settings deep links
 
-Ask Kiro Crew where a setting lives and it can answer with a link that opens the
+Ask Sao Khuê where a setting lives and it can answer with a link that opens the
 right Settings tab and flashes the control, instead of describing a path through
 the UI for you to retrace. Every control the dashboard renders is enumerated in
 one generated file, so the answer names a switch that exists rather than one that

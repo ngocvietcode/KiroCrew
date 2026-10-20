@@ -13,7 +13,7 @@ talks to it unchanged. This module owns three things:
 * :func:`endpoint_for`, which builds a preset's endpoint from a port, so no
   caller ever composes a local URL from caller-supplied text;
 * what the gateway needs to RUN a preset itself (:mod:`.local_runtime`): the
-  pinned weight files on Kiro Crew's model CDN, the dependency lock and the
+  pinned weight files on Sao Khuê's model CDN, the dependency lock and the
   launcher, both shipped beside this module in ``local_servers/``.
 
 The quality numbers are the share of Jev's correct answers each model matched on

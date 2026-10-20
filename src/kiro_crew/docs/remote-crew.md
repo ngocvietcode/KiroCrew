@@ -1,6 +1,6 @@
 # Remote Crew
 
-A **Remote Crew** is another machine running its own Kiro Crew gateway — a
+A **Remote Crew** is another machine running its own Sao Khuê gateway — a
 dev box, an EC2 instance, the server in your closet — that this dashboard can
 reach. One dashboard becomes the hub: you switch between your own machine and
 each remote one from a strip in the top header, start a session that runs over
@@ -96,7 +96,7 @@ tunnel is built from — the host, the port, the transport — drops the live tu
 first, so the row comes back offering **Connect** rather than quietly forwarding
 the old port under a new label. Renaming or changing the TTL leaves a working
 pane alone. If you started typing an edit and navigated away, the draft is still
-there when you come back, and Kiro Crew refuses to open a second row's editor
+there when you come back, and Sao Khuê refuses to open a second row's editor
 while it is unsaved rather than throwing your typing away.
 
 ## The switcher strip
@@ -151,7 +151,7 @@ Removing a crew also removes every crew reached through it.
 a crew window. It is a feature preview: turn on **Settings → Developer → Feature
 Previews → Chat on a crew**, then pick it from the new-chat menu and choose one of
 your connected machines. Only connected ones are offered, and creating one fails
-outright when the machine runs a Kiro Crew version too far from yours.
+outright when the machine runs a Sao Khuê version too far from yours.
 
 The window shows the remote's own transcript, running state and pending approval.
 Send, stop, approve, continue, regenerate and rewind call the remote's own routes,
@@ -240,7 +240,7 @@ confused. They are unrelated.
 
 | What you see | What it is | Where it lives |
 |---|---|---|
-| **Kiro Crew** | The product. | Everywhere |
+| **Sao Khuê** | The product. | Everywhere |
 | **Remote Crew** — spelled `instance` in config, routes and code (`instances.json`, `/api/instances`) | Another machine running its own gateway, reached over a tunnel. This page. | Settings → Remote Crew, the header switcher |
 | **Crew Member**, or **crewmate** | A named assistant you keep: its own workspace, memory, agent template and model, with a standing thread. Not a machine. | The Crew Members page — see [crew-members.md](crew-members.md) |
 | **Issue Radar crew** | An automation worker configured on a repository that claims an issue and moves it through the triage phases. Not a machine and not an assistant you chat with. | The Issue Radar Pipeline tab — see [issue-radar-pipeline.md](issue-radar-pipeline.md) |
@@ -286,7 +286,7 @@ reports the first broken link, which is usually the whole answer.
 | `remote_down` | The machine is reachable but no gateway is listening on the port you configured. |
 | `not_connected` | Everything is fine; this instance just has no tunnel yet. Click **Connect**. |
 | `tunnel_down` | The forward died. Reconnect. |
-| An SSH auth error on connect | Re-add your key to `ssh-agent`. Kiro Crew never prompts for a password, so a missing credential fails immediately — and the tunnel heals itself once the key is back. |
+| An SSH auth error on connect | Re-add your key to `ssh-agent`. Sao Khuê never prompts for a password, so a missing credential fails immediately — and the tunnel heals itself once the key is back. |
 | A blank or black pane | The embedded dashboard never announced itself. Use **Retry** on the error panel. |
 | "local port N was taken while connecting" | Something grabbed the port first. Retry, or move `instances.tunnel_base_port` somewhere quieter. |
 | A machine that keeps dropping | The tunnel already healed itself before giving up and running a diagnosis: about two minutes when the tunnel cannot be rebuilt, or roughly attempts × (probe window + backoff), about 16 minutes at the default 8 `instances.max_recovery_attempts`, when the forward re-binds but the far end stays dead. Check the remote gateway and the link itself. |

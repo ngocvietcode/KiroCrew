@@ -1,4 +1,4 @@
-"""Pure filesystem path primitives for KiroCrew configuration.
+"""Pure filesystem path primitives for SaoKhue configuration.
 
 This is a **leaf module**: it depends only on the standard library
 (``os``, ``sys``, ``pathlib``, ``logging``) and imports nothing from
@@ -38,7 +38,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# KiroCrew's data root nests UNDER kiro-cli's own home ``~/.kiro/`` (Labs product
+# SaoKhue's data root nests UNDER kiro-cli's own home ``~/.kiro/`` (Labs product
 # decision: all Kiro-family apps share the ``~/.kiro/`` base so a user has a
 # single place to secure). ``config_dir()`` therefore resolves to
 # ``~/.kiro/crew`` by default. ``CONFIG_DIR_NAME`` is the segment(s) appended to
@@ -56,7 +56,7 @@ LEGACY_CONFIG_DIR_NAME = ".kirocrew"
 # Recovery-pointer breadcrumb written at the TOP-LEVEL home (``~/.kirocrew.breadcrumb``),
 # deliberately OUTSIDE ``~/.kiro/``. The data home now nests under kiro-cli's
 # ``~/.kiro/`` base, so a hypothetical Kiro-family uninstaller that wipes
-# ``~/.kiro/`` would take Kiro Crew's data with it. This tiny, non-secret
+# ``~/.kiro/`` would take Sao Khuê's data with it. This tiny, non-secret
 # pointer survives such a wipe (it lives beside ``~/.kiro``, not inside it) and
 # records where the data
 # home is, so a user/support script can find any surviving data or understand
@@ -149,9 +149,9 @@ def _write_recovery_breadcrumb(data_home: Path) -> None:
     try:
         crumb = Path.home() / RECOVERY_BREADCRUMB_NAME
         content = (
-            "KiroCrew data-home location pointer (safe to delete).\n"
+            "SaoKhue data-home location pointer (safe to delete).\n"
             "\n"
-            "KiroCrew stores its data (config, credentials, history, DBs) at:\n"
+            "SaoKhue stores its data (config, credentials, history, DBs) at:\n"
             f"    {data_home}\n"
             "\n"
             "This pointer lives outside ~/.kiro/ on purpose: if a Kiro-family\n"
@@ -241,7 +241,7 @@ def _is_unsafe_home(p: Path) -> bool:
     The macOS case exists because callers pass an already-``resolve()``d path:
     ``KIRO_HOME=/etc`` arrives here as ``/private/etc``, whose ``parts[:2]`` is
     ``("/", "private")``. A check that knew only the unresolved spelling let it
-    through, and KiroCrew would then create agent JSON inside ``/etc``.
+    through, and SaoKhue would then create agent JSON inside ``/etc``.
 
     Deliberately NOT refusing the whole ``/private`` tree: on macOS
     ``tempfile.gettempdir()`` resolves under ``/private/var/folders/...``, so a
@@ -732,7 +732,7 @@ def shared_kiro_settings_writable() -> bool:
     """False when this process must not write the user's kiro-cli settings.
 
     ``~/.kiro/settings/mcp.json`` belongs to the kiro-cli installation, not to a
-    Kiro Crew data home, so it is resolved from the real home and a throwaway
+    Sao Khuê data home, so it is resolved from the real home and a throwaway
     instance shares it with the operator's live one. A pod is throwaway by
     construction: its home is empty, so any decision it reaches about which MCP
     servers should exist is a decision about a different install. Writing that
@@ -1200,11 +1200,11 @@ def kiro_home() -> Path:
 
     SCOPE CAVEAT — read before setting this. ``KIRO_HOME`` redirects kiro-cli's
     WHOLE user directory (agents, prompts, skills, steering, settings, sessions),
-    but KiroCrew currently resolves the host ``~/.kiro`` for most of those readers
+    but SaoKhue currently resolves the host ``~/.kiro`` for most of those readers
     (session transcripts in ``session_map.py`` / ``acp/*`` / ``providers/acp_*.py``
     / ``dashboard/handlers/usage_sessions.py``, and the ``settings/mcp.json`` registry).
     Setting ``KIRO_HOME`` therefore moves where kiro-cli WRITES sessions without
-    moving where KiroCrew READS them, which breaks session resume. Only the agents
+    moving where SaoKhue READS them, which breaks session resume. Only the agents
     directory follows it today, so this is not yet a supported way to isolate an
     instance. (``build_pod_env()`` does set it, to ``<pod home>/kiro``.) Bringing
     the remaining readers through this resolver is the prerequisite.
@@ -1239,7 +1239,7 @@ def kiro_sessions_dir() -> Path:
 
     Honors ``KIRO_HOME`` for the same reason :func:`kiro_agents_dir` does. This
     matters because ``KIRO_HOME`` is directory-wide: it moves the transcripts too,
-    so an instance that redirects its agent specs and then has KiroCrew read
+    so an instance that redirects its agent specs and then has SaoKhue read
     transcripts from the machine-wide path loses session resume and has its
     mappings pruned. Routing both through the resolver keeps writer and reader in
     agreement.
@@ -1267,7 +1267,7 @@ def kiro_oauth_cache_home() -> Path:
     ``KIRO_HOME`` does not help either: it moves agents/prompts/skills/sessions,
     not ``~/.aws``, which sits outside ``~/.kiro`` entirely.
 
-    ``KIROCREW_OS_HOME`` is therefore an override owned by Kiro Crew, consulted by
+    ``KIROCREW_OS_HOME`` is therefore an override owned by Sao Khuê, consulted by
     :func:`kiro_crew.mcp_grant.kiro_oauth_cache_dir` and set by
     :func:`kiro_crew.pod.runtime.build_pod_env` to a pod-owned directory. Setting
     it repoints where every ``mcp_grant`` caller (mint, status, disconnect,
@@ -1383,11 +1383,11 @@ def project_agents_dir(project_dir: str | Path) -> Path:
 
     kiro-cli resolves ``--agent <name>`` against ``$PWD/.kiro/agents`` before the
     user-level directory, with NO upward walk — invoked from a subdirectory it does
-    not find the repo root's agents. Kiro Crew launches kiro-cli with the session's
+    not find the repo root's agents. Sao Khuê launches kiro-cli with the session's
     project directory as its cwd, so this is exactly the directory the backend
     itself searches for that session.
 
-    Read-only by construction: nothing in Kiro Crew writes here, because the
+    Read-only by construction: nothing in Sao Khuê writes here, because the
     directory belongs to the user's checkout and is typically version-controlled.
     """
     return Path(project_dir) / ".kiro" / "agents"
@@ -1396,8 +1396,8 @@ def project_agents_dir(project_dir: str | Path) -> Path:
 def project_kiro_dir(project_dir: str | Path) -> Path:
     """The ``<project>/.kiro`` directory itself, which also holds agent specs.
 
-    Distinct from :func:`project_agents_dir` because Kiro Crew additionally honors
-    ``<project>/.kiro/*.agent-spec.json`` — a Kiro Crew-only convention that
+    Distinct from :func:`project_agents_dir` because Sao Khuê additionally honors
+    ``<project>/.kiro/*.agent-spec.json`` — a Sao Khuê-only convention that
     predates ``.kiro/agents/`` and remains in use by projects driven from Slack.
     """
     return Path(project_dir) / ".kiro"

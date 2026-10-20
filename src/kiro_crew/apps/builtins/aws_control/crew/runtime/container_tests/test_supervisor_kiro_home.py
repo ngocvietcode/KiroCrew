@@ -3,7 +3,7 @@
 The failure this pins. With no ``KIRO_HOME`` the agent specs
 resolve to the process HOME's ``~/.kiro/agents``, which every instance under that
 ``$HOME`` shares. The backend runs on a non-default data home
-(``KIROCREW_HOME=<data home>``), and Kiro Crew REFUSES to rewrite a shared agents dir
+(``KIROCREW_HOME=<data home>``), and Sao Khuê REFUSES to rewrite a shared agents dir
 from one, because the specs it writes pin the writer's data home into every managed MCP
 server entry and break strict session identity for a default-home gateway. A crew spec
 installed into that shared directory carries no ownership provenance, so the backend
@@ -22,9 +22,9 @@ Two invariants carry the fix, and each gets a test that fails if it breaks:
 
 1. The installer and the backend resolve the SAME directory. They get there by
    different routes -- the installer mirrors kiro-cli's ``$KIRO_HOME`` rule from the
-   environment, the backend goes through Kiro Crew's resolver -- so agreement is a
+   environment, the backend goes through Sao Khuê's resolver -- so agreement is a
    property to prove, not to assume.
-2. That directory is the one Kiro Crew's guard exempts. Asserted against the REAL
+2. That directory is the one Sao Khuê's guard exempts. Asserted against the REAL
    ``isolated_agents_dir`` and the REAL guard, not against a copy of the path, so a
    change to either side of the contract reddens here rather than in production.
 """
@@ -42,7 +42,7 @@ from container.supervisor import bundle as bundle_mod
 
 from ._settings_helper import make_settings
 
-#: The crew this deployment ships. It is also one of the spec names Kiro Crew derives for
+#: The crew this deployment ships. It is also one of the spec names Sao Khuê derives for
 #: itself, which is what puts the installed spec in front of the guard's ownership probe.
 DEPLOYED_CREW = "kirocrew-worker"
 
@@ -50,7 +50,7 @@ DEPLOYED_CREW = "kirocrew-worker"
 def _install_crew_spec(agents_dir, crew: str):
     """Write a crew spec the way the bundle installer does: plain, vouched for by nobody.
 
-    The absence of provenance is the point. Kiro Crew stamps its own data home into every
+    The absence of provenance is the point. Sao Khuê stamps its own data home into every
     managed server entry of a spec it writes, and reads that back to tell its own specs
     from another home's; a bundle spec carries no such entry, so it reads as another
     home's.
@@ -61,7 +61,7 @@ def _install_crew_spec(agents_dir, crew: str):
 
 
 def test_the_kiro_home_is_the_directory_the_guard_exempts(tmp_path):
-    """``Settings.kiro_home`` must land on Kiro Crew's own private-target path.
+    """``Settings.kiro_home`` must land on Sao Khuê's own private-target path.
 
     The exemption is an EXACT match on ``<data home>/kiro/agents`` -- deliberately not
     "anywhere beneath the data home", which would read the machine-wide dir as private.
@@ -225,7 +225,7 @@ def _let_the_real_resolver_answer(monkeypatch, agent_mod) -> None:
 def test_the_guard_stands_aside_for_the_container_layout(tmp_path, monkeypatch):
     """The decisive one: the REAL guard must not decline under the container's env.
 
-    This is the assertion that would have caught the failure. It runs Kiro Crew's own
+    This is the assertion that would have caught the failure. It runs Sao Khuê's own
     ``_decline_shared_agent_home`` with the variables the supervisor sets, against a spec
     file carrying no ownership provenance -- which is what the crew installer writes --
     and requires a verdict of "no decline". The control below runs the same setup on the

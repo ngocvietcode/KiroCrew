@@ -1,6 +1,6 @@
-# API Reference — Kiro Crew Gateway API & Client
+# API Reference — Sao Khuê Gateway API & Client
 
-Reference for the Kiro Crew Gateway HTTP and WebSocket APIs, and how apps consume
+Reference for the Sao Khuê Gateway HTTP and WebSocket APIs, and how apps consume
 them.
 
 How you talk to the Gateway depends on where your code runs:
@@ -15,7 +15,7 @@ How you talk to the Gateway depends on where your code runs:
 - **Python apps / external CLI tools / services** — use the standalone
   `kirocrew-client` package, carried in this repository under
   `packages/kirocrew-client-py/`. It is async (`aiohttp`) and has no dependency on
-  the Kiro Crew main package, but it is not published to PyPI — use it from a source
+  the Sao Khuê main package, but it is not published to PyPI — use it from a source
   checkout. See the [Python Client](#python-client) section.
 - **Node.js / Electron apps** — call the Gateway REST/WS endpoints directly via
   `fetch()` / a WebSocket. Selected endpoint paths are in
@@ -100,7 +100,7 @@ For the full hook list see [getting-started.md](getting-started.md#app-sdk-hooks
 
 ## Embedded Chat
 
-`ChatEmbed` mounts Kiro Crew's native transcript and compact composer for an
+`ChatEmbed` mounts Sao Khuê's native transcript and compact composer for an
 existing session. The required `slotKey` selects the session.
 
 ```tsx
@@ -373,7 +373,7 @@ client does not let an app choose.
 
 ## Native Chat Panel
 
-`ChatPanel` mounts Kiro Crew's native chat experience for an existing session. The required
+`ChatPanel` mounts Sao Khuê's native chat experience for an existing session. The required
 `slotKey` selects the session. By default, the component keeps the standard embedded ChatPage
 behavior. A session the app has just created with `POST /api/chat/slots` can be passed straight
 away: the panel shows it before the dashboard's session list has caught up.
@@ -394,7 +394,7 @@ controls, and it leaves the host page in charge of the browser URL.
 
 | Prop | Type | Required | Purpose |
 |---|---|---|---|
-| `slotKey` | `string` | yes | Select the Kiro Crew session rendered by the panel |
+| `slotKey` | `string` | yes | Select the Sao Khuê session rendered by the panel |
 | `conversationOnly` | `boolean` | no | Hide ChatPage's sessions rail and disable ChatPage URL synchronization |
 
 ## Chat Marker Protocol
@@ -719,7 +719,7 @@ notification of that same job.
 > (`PrWatchProbe`) and `work_ledger` (`WorkLedgerProbe`). Script crons and the
 > in-process autonudge loop both drive it. Treat the shapes below as subject
 > to change: build on them, but expect `Observation` / `Tick` to gain fields,
-> and pin the Kiro Crew version your app was tested against.
+> and pin the Sao Khuê version your app was tested against.
 
 An app that needs to keep an eye on an external thing — a deploy, a ticket, a
 queue depth — should not schedule an **agent** cron to go look. That spends a
@@ -1121,7 +1121,7 @@ Returns `{ ok, appended, visibleDeferred, deliveryConditional, contextSkipped, p
 
 ### Proxy Authentication (Server-side)
 
-Verify that an incoming request was signed by the Kiro Crew Gateway reverse proxy.
+Verify that an incoming request was signed by the Sao Khuê Gateway reverse proxy.
 Use these main-package helpers in Python app backends:
 
 | Function | Returns | Description |
@@ -1540,7 +1540,7 @@ generic set of environment variables. No app-specific variables are ever injecte
 | `KIROCREW_HOME` | yes | The gateway's resolved data home, so the backend reads the same app tree. |
 | `KIROCREW_GATEWAY_ORIGIN` | only with bound-port evidence | The gateway's own origin, `http://<bound host>:<bound port>`, for calling back to the gateway (for example `POST /api/notifications/push`). It is set ONLY from the address the gateway ACTUALLY bound: its exported `KIROCREW_BOUND_PORT` (required to be numeric and in `1..65535`), with the host `127.0.0.1` for loopback and wildcard binds and `[::1]` for an IPv6-loopback bind. A gateway bound to one specific interface omits the variable entirely: backend callbacks carry no `Origin` header, which the gateway's CSRF barrier trusts only from a loopback peer, so a specific-interface origin would have every mutating callback refused. It is never your app's `PORT`, an inherited `KIROCREW_PORT`, a config value, a default, or a request-derived value, so a child can never be pointed at a sibling gateway. Without loopback bound-address evidence the variable is omitted entirely (see below). |
 | `KIROCREW_PROXY_SECRET` | only if a secret exists | The per-app secret used to verify the `X-KiroCrew-Proxy` header (see above). |
-| `KIROCREW_SPAWNED` | yes | `1`: a Kiro Crew gateway spawned this process. |
+| `KIROCREW_SPAWNED` | yes | `1`: a Sao Khuê gateway spawned this process. |
 | `KIROCREW_SPAWN_INSTANCE` | yes | An id unique to this spawn. |
 | `KIROCREW_GATEWAY_ORIGIN_PROOF` | only if a secret exists and the origin is set | `HMAC-SHA256(app_secret, KIROCREW_GATEWAY_ORIGIN)`, hex. Recompute it with your secret to confirm the injected origin was minted by this gateway, rather than an inherited or spoofed env value. Omitted whenever the origin is omitted (nothing to prove) or no secret exists (nothing to key it with). |
 

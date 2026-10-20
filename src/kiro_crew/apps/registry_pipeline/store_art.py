@@ -876,7 +876,7 @@ def _publish_pinned_asset(cache_path: Path, data: bytes) -> None:
     directory between the check and the write makes the copy overwrite an image-named
     file OUTSIDE the cache. This publishes through descriptors that cannot be
     re-pointed: :func:`pinned_fs.open_pinned_descendant_dir` opens :func:`config_dir`
-    (Kiro Crew's owned data home, whose ancestors are not agent-writable) once and
+    (Sao Khuê's owned data home, whose ancestors are not agent-writable) once and
     creates/opens ``cache``, ``blobs`` and each intermediate component with ``dir_fd``
     refusing a link (every component included, so a linked ``cache``/``blobs`` ancestor
     is refused rather than followed out of the data home), and the leaf is written with
@@ -901,7 +901,7 @@ def _publish_pinned_asset(cache_path: Path, data: bytes) -> None:
     rel = cache_path.relative_to(blob_root)
     rel_dir_parts = rel.parts[:-1]
     # The whole chain -- ``cache/blobs`` AND every intermediate below it -- is opened
-    # through ONE pinned walk anchored at :func:`config_dir`, Kiro Crew's owned data
+    # through ONE pinned walk anchored at :func:`config_dir`, Sao Khuê's owned data
     # home, whose ancestors are not agent-writable and so are the trusted anchor the
     # walk starts from. A by-name ``blob_root.mkdir(parents=True)`` before the walk
     # would create/follow ``config_dir()/cache/blobs`` BY NAME first, so a linked

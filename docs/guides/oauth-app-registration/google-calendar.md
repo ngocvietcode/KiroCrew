@@ -1,13 +1,13 @@
-# Register a Google OAuth client for Kiro Crew Connections (Google Calendar)
+# Register a Google OAuth client for Sao Khuê Connections (Google Calendar)
 
-*Who this is for: the person who owns (or can create) a Google Cloud project and wants Kiro Crew agents to list calendars, read events and check free/busy time in a Google Calendar account through Google's remote Calendar MCP server. Expected time: 30–45 minutes of clicking, plus a wait of "a couple of days" for Google to accept you into the Developer Preview Program if you are not already a member.*
+*Who this is for: the person who owns (or can create) a Google Cloud project and wants Sao Khuê agents to list calendars, read events and check free/busy time in a Google Calendar account through Google's remote Calendar MCP server. Expected time: 30–45 minutes of clicking, plus a wait of "a couple of days" for Google to accept you into the Developer Preview Program if you are not already a member.*
 
 **Google Calendar has no Connections entry yet** — see the
 [index](README.md) for the providers pre-registered on this build — so its card
 and its **Connect** button appear once that entry ships. Registering the redirect
 URI below now means it already matches when it does.
 
-Google's Calendar MCP server is a **Developer Preview** feature. Google accepts a plain-http loopback redirect URI, so Kiro Crew's callback works as-is. The Calendar scopes Google lists for the server are all read-only and are not on Google's restricted-scope list, which makes this the lightest of the three Google runbooks on the review side.
+Google's Calendar MCP server is a **Developer Preview** feature. Google accepts a plain-http loopback redirect URI, so Sao Khuê's callback works as-is. The Calendar scopes Google lists for the server are all read-only and are not on Google's restricted-scope list, which makes this the lightest of the three Google runbooks on the review side.
 
 ## Before you start
 
@@ -15,14 +15,14 @@ You need:
 
 - A Google Account that can sign in to the [Google Cloud console](https://console.cloud.google.com/). To pick **Internal** audience (recommended, no verification) the project must belong to a Google Cloud Organization, which means a Google Workspace or Cloud Identity account. A consumer `@gmail.com` account can only pick **External**.
 - Membership in the [Google Workspace Developer Preview Program](https://developers.google.com/workspace/preview). Google states "Access to Google Workspace MCP servers is part of the Public Developer Preview Program." The application form asks for your Google Workspace account and your Google Cloud project number; Google says "The whole process should be done within a couple of days." Google's page does not state whether a consumer `@gmail.com` account is accepted.
-- A running Kiro Crew dashboard where you can open **Settings → OAuth Apps**.
+- A running Sao Khuê dashboard where you can open **Settings → OAuth Apps**.
 - Optional: the `gcloud` CLI. Every step below has a console path too.
 
-Facts about Kiro Crew's side you will need to type exactly:
+Facts about Sao Khuê's side you will need to type exactly:
 
 - Redirect URI for Google Calendar: `http://127.0.0.1:48105/callback`
 - Provider slug for environment variables: `GOOGLE_CALENDAR`
-- MCP endpoint Kiro Crew connects to: `https://calendarmcp.googleapis.com/mcp/v1` (verified against Google's "Configure the Calendar MCP server" page and Google Cloud's MCP supported-products table).
+- MCP endpoint Sao Khuê connects to: `https://calendarmcp.googleapis.com/mcp/v1` (verified against Google's "Configure the Calendar MCP server" page and Google Cloud's MCP supported-products table).
 
 ## 1. Create the app
 
@@ -54,7 +54,7 @@ gcloud services enable calendar-json.googleapis.com calendarmcp.googleapis.com -
 ### 1.4 Configure the Google Auth Platform (OAuth consent screen)
 
 1. Go to **Google Auth Platform → Branding**: [https://console.cloud.google.com/auth/branding](https://console.cloud.google.com/auth/branding). If you see **Google Auth Platform not configured yet**, click **Get Started**.
-2. **App Information**: App name `Kiro Crew Calendar MCP` (Google's own example is `Calendar MCP Server`). **User support email**: pick your address. Click **Next**.
+2. **App Information**: App name `Sao Khuê Calendar MCP` (Google's own example is `Calendar MCP Server`). **User support email**: pick your address. Click **Next**.
 3. **Audience**: select **Internal** if offered; otherwise **External**. Click **Next**.
 4. **Contact Information**: enter an email address. Click **Next**.
 5. **Finish**: tick **I agree to the Google API Services: User Data Policy**, click **Continue**, then **Create**.
@@ -65,22 +65,22 @@ gcloud services enable calendar-json.googleapis.com calendarmcp.googleapis.com -
 
 1. Go to **Google Auth Platform → Clients → Create Client**: [https://console.cloud.google.com/auth/clients/create](https://console.cloud.google.com/auth/clients/create).
 2. **Application type**: **Web application** (see section 2 for why not "Desktop app").
-3. **Name**: `Kiro Crew`.
+3. **Name**: `Sao Khuê`.
 4. Leave **Authorized JavaScript origins** empty.
-5. Under **Authorized redirect URIs** click **+ Add URI** and paste `http://127.0.0.1:48105/callback` exactly. To share one client across Google Drive and Gmail as well, also add `http://127.0.0.1:48103/callback` and `http://127.0.0.1:48104/callback`; one client may carry all three URIs and the same Client ID and secret then go into all three Kiro Crew cards.
+5. Under **Authorized redirect URIs** click **+ Add URI** and paste `http://127.0.0.1:48105/callback` exactly. To share one client across Google Drive and Gmail as well, also add `http://127.0.0.1:48103/callback` and `http://127.0.0.1:48104/callback`; one client may carry all three URIs and the same Client ID and secret then go into all three Sao Khuê cards.
 6. Click **Create**. Copy the **Client ID** (ends in `.apps.googleusercontent.com`) and the **Client secret** now. Google shows the full secret only once; afterwards only the last four characters are displayed. If you lose it, click **Add Secret** on the client page to rotate.
 
 ## 2. Redirect URI
 
 Register exactly `http://127.0.0.1:48105/callback`. Google matches literally: "the `http` or `https` scheme, case, and trailing slash ('/') must all match". No trailing slash, no `localhost` substitution.
 
-Plain http on loopback is allowed by Google's redirect URI validation rules: "Redirect URIs must use the HTTPS scheme, not plain HTTP. Localhost URIs (including localhost IP address URIs) are exempt from this rule." and "Hosts cannot be raw IP addresses. Localhost IP addresses are exempted from this rule." Google's own MCP client guide registers `http://localhost:8787/callback` on a Web application client for Cursor Desktop, the same shape as Kiro Crew's URI.
+Plain http on loopback is allowed by Google's redirect URI validation rules: "Redirect URIs must use the HTTPS scheme, not plain HTTP. Localhost URIs (including localhost IP address URIs) are exempt from this rule." and "Hosts cannot be raw IP addresses. Localhost IP addresses are exempted from this rule." Google's own MCP client guide registers `http://localhost:8787/callback` on a Web application client for Cursor Desktop, the same shape as Sao Khuê's URI.
 
-Why **Web application** rather than **Desktop app**: a Desktop-app client has no redirect URI list ("The console does not require any additional information to create OAuth 2.0 credentials for desktop applications"); Google's installed-app flow expects the app to "start an HTTP listener on a random available port" and documents the loopback form as `http://127.0.0.1:port` with no path. Google's documentation does not state whether a `/callback` path is accepted on a Desktop-app loopback redirect. Kiro Crew uses a fixed port and path, so use the Web application type, where the exact URI is registered and validated. It is also the type every Google MCP-server page uses for third-party clients.
+Why **Web application** rather than **Desktop app**: a Desktop-app client has no redirect URI list ("The console does not require any additional information to create OAuth 2.0 credentials for desktop applications"); Google's installed-app flow expects the app to "start an HTTP listener on a random available port" and documents the loopback form as `http://127.0.0.1:port` with no path. Google's documentation does not state whether a `/callback` path is accepted on a Desktop-app loopback redirect. Sao Khuê uses a fixed port and path, so use the Web application type, where the exact URI is registered and validated. It is also the type every Google MCP-server page uses for third-party clients.
 
-Kiro Crew's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and Google does not require one.
+Sao Khuê's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and Google does not require one.
 
-Remote, tailnet or Docker installs do not need a second redirect URI. After consent, the browser is sent to `http://127.0.0.1:48105/callback?...` on the laptop, where nothing is listening, so the page fails to load. Copy that full URL from the address bar and paste it into the field the Kiro Crew dashboard shows during Connect; the gateway replays it against its own loopback listener and completes the exchange.
+Remote, tailnet or Docker installs do not need a second redirect URI. After consent, the browser is sent to `http://127.0.0.1:48105/callback?...` on the laptop, where nothing is listening, so the page fails to load. Copy that full URL from the address bar and paste it into the field the Sao Khuê dashboard shows during Connect; the gateway replays it against its own loopback listener and completes the exchange.
 
 ## 3. Scopes and permissions
 
@@ -92,7 +92,7 @@ Google's Calendar MCP page tells you to declare exactly three scopes on **Data A
 | `https://www.googleapis.com/auth/calendar.events.readonly` | Not restricted; label not stated | `list_events`, `get_event`, `search_events` |
 | `https://www.googleapis.com/auth/calendar.events.freebusy` | Not restricted; label not stated | `suggest_time` (free/busy lookups) |
 
-Google's page does not map tools to scopes; the mapping above follows the Calendar API scope descriptions. Declaring a scope on Data Access is a ceiling, not a request; what the user actually grants is what Kiro Crew requests at Connect time, and the consent screen lists it.
+Google's page does not map tools to scopes; the mapping above follows the Calendar API scope descriptions. Declaring a scope on Data Access is a ceiling, not a request; what the user actually grants is what Sao Khuê requests at Connect time, and the consent screen lists it.
 
 Two things Google's Calendar MCP page does **not** say:
 
@@ -101,19 +101,19 @@ Two things Google's Calendar MCP page does **not** say:
 
 Class: none of the Calendar scopes appear on Google's "Restricted Scopes" list, so no security assessment is ever required. Calendar scopes that read user data are treated by Google as **sensitive** for verification purposes (Google's own verification example uses a Calendar scope), which means an External app that is published to production needs sensitive-scope verification but not the restricted-scope security assessment.
 
-The client secret: Google's token-exchange reference marks `client_secret` as **Optional**, and "Manage OAuth Clients" calls web server apps "Private Clients" that "can securely store the client secret". In practice a Web application client that omits or mis-types the secret receives `invalid_client`. Kiro Crew sends the secret at token exchange, so enter it.
+The client secret: Google's token-exchange reference marks `client_secret` as **Optional**, and "Manage OAuth Clients" calls web server apps "Private Clients" that "can securely store the client secret". In practice a Web application client that omits or mis-types the secret receives `invalid_client`. Sao Khuê sends the secret at token exchange, so enter it.
 
 ## 4. Review and publishing requirements
 
 - **Internal audience** (Organization project): no Google verification, no unverified-app warning, no 100-user cap. Calendar scopes are not "high-risk" in Google's wording, but a Workspace admin can still restrict third-party or internal app access to Calendar under **Security → API controls**; `admin_policy_enforced` at consent means that restriction is on.
 - **External audience, Testing**: no verification. Limits: 100 test users; "unverified app" warning on every consent; "Authorizations by a test user will expire seven days from the time of consent. If your OAuth client requests an `offline` access type and receives a refresh token, that token will also expire." Plan to click **Connect** again weekly.
-- **External audience, In production**: brand verification (verified homepage domain, privacy policy, demo video showing the consent screen) plus sensitive-scope verification with a scope justification. No security assessment, because no Calendar scope is restricted. Google's Developer Preview terms also forbid shipping preview features to users outside your domain or company before GA. For a personal or team Kiro Crew install, stay in Testing or use Internal.
+- **External audience, In production**: brand verification (verified homepage domain, privacy policy, demo video showing the consent screen) plus sensitive-scope verification with a scope justification. No security assessment, because no Calendar scope is restricted. Google's Developer Preview terms also forbid shipping preview features to users outside your domain or company before GA. For a personal or team Sao Khuê install, stay in Testing or use Internal.
 - Google's generic MCP guide requires the IAM role **MCP Tool User** (`roles/mcp.toolUser`) on the project. The Calendar MCP page does not mention it. If Connect succeeds but tool calls return a permission error, grant it in **IAM & Admin → IAM**.
 - Unused OAuth clients are deleted after six months of inactivity; Google emails 30 days before.
 
-## 5. Enter the credentials in Kiro Crew
+## 5. Enter the credentials in Sao Khuê
 
-1. Open the Kiro Crew dashboard → **Settings → OAuth Apps** → the **Google Calendar** card.
+1. Open the Sao Khuê dashboard → **Settings → OAuth Apps** → the **Google Calendar** card.
 2. Paste the **Client ID** into "Client ID" and the **Client secret** into "Client secret". The card's copy button gives the redirect URI to compare with section 2.
 3. Click **Save**.
 

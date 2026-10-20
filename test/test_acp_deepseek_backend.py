@@ -514,7 +514,7 @@ def test_the_routing_is_a_verified_gate_extension_and_therefore_enforced() -> No
     This harness's sandbox decides an action
     itself, and its own ``session/request_permission`` carries only a
     model-initiated escalation, so there is no SETTING to seed -- which is why this
-    is not ``VERIFIED_SEEDED_SETTINGS``. What makes it routed is a plugin Kiro Crew
+    is not ``VERIFIED_SEEDED_SETTINGS``. What makes it routed is a plugin Sao Khuê
     composes into it, answering the harness's own ``tools/pre-execute`` waterfall,
     and a read-back that confirms the plugin loaded before the first prompt.
     """
@@ -537,7 +537,7 @@ def test_the_gate_is_read_back_through_its_load_marker() -> None:
     there is no registry to ask the way pi is asked. The marker closes the same
     precondition from the other side, and each of its three fields refuses a
     distinct failure: a foreign marker, a stale one, and one written by a plugin
-    that is not Kiro Crew's.
+    that is not Sao Khuê's.
     """
     from kiro_crew import acp_tool_gate as gate
     from kiro_crew.acp_backends import Readback, gate_readback_for

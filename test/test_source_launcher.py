@@ -17,7 +17,7 @@ _POSIX_ONLY = pytest.mark.skipif(os.name != "posix", reason="POSIX shell launche
 
 def _copy_launcher(tmp_path: Path) -> tuple[Path, Path]:
     """Copy the real wrapper into an install root whose path contains spaces."""
-    install_root = tmp_path / "Kiro Crew checkout"
+    install_root = tmp_path / "Sao Khuê checkout"
     launcher = install_root / "bin" / "kirocrew"
     launcher.parent.mkdir(parents=True)
     shutil.copy2(_SOURCE_LAUNCHER, launcher)
@@ -85,6 +85,6 @@ def test_launcher_without_venv_explains_source_install(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 1
-    assert f"Kiro Crew virtual environment not found at {install_root}/.venv" in result.stderr
+    assert f"Sao Khuê virtual environment not found at {install_root}/.venv" in result.stderr
     assert f'cd "{install_root}" && bash minimal_install.sh' in result.stderr
     assert "Source checkouts run from their own Python virtual environment." in result.stderr

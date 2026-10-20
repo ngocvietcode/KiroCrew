@@ -86,7 +86,7 @@ html:lang(ko) {
    foreground/surface tokens rather than invented hex, so the ramp tracks every
    theme and its polarity. Rank 0 is the largest block; --ctx-fgN is the inverse
    mix so a label stays legible at either end. --ctx-hatch marks the portion of
-   the window Kiro Crew did not inject, which is an estimate. */
+   the window Sao Khuê did not inject, which is an estimate. */
 :root{
   --ctx-k1:color-mix(in srgb, var(--text) 60%, var(--card));
   --ctx-k2:color-mix(in srgb, var(--text) 54%, var(--card));

@@ -19,7 +19,7 @@ code path:
 
 Over N spawns, each switching every agent with ``session/set_mode`` through the
 real ``AcpRuntime`` bracket and the real projection, it asserts: zero set_mode
-failures and no fallback, the host always running the view Kiro Crew
+failures and no fallback, the host always running the view Sao Khuê
 published (never a stale one), exactly one alias per agent throughout,
 bounded file counts in the agents directory and its hidden directories, and no
 alias-lock timeout. Each fix, mutated away, fails at least one of these.
@@ -425,7 +425,7 @@ async def _one_spawn(
                 views[name] = mode
                 on_disk = agents / f"{mode}.json"
                 if not broken_watch:
-                    # The host runs exactly the spec on disk -- the view Kiro Crew
+                    # The host runs exactly the spec on disk -- the view Sao Khuê
                     # published, env values included -- never a stale copy.
                     published = _canon(json.loads(on_disk.read_bytes()))
                     assert _canon(spec) == published, f"stale view of {name}"

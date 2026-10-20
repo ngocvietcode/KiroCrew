@@ -62,7 +62,7 @@ type SaveResult = Awaited<ReturnType<typeof api.saveSlackConfig>>
 
 const MANIFEST = {
   alias: 'tester',
-  manifest: 'display_information:\n  name: KiroCrew-tester\n',  // brand-ok: product emits KiroCrew-<alias> (slack-manifest.yaml)
+  manifest: 'display_information:\n  name: SaoKhue-tester\n',
   create_url: 'https://example.invalid/apps/new',
 }
 
@@ -203,7 +203,7 @@ describe('SlackPanel manifest card', () => {
     await hydrated()
 
     expect(screen.getByRole('link', { name: 'Create Slack app' })).toHaveAttribute('href', MANIFEST.create_url)
-    expect(screen.getByText(/named KiroCrew-tester/)).toBeInTheDocument()  // brand-ok: product emits KiroCrew-<alias> (slack-manifest.yaml)
+    expect(screen.getByText(/named SaoKhue-tester/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy manifest YAML' }))
     expect(writeText).toHaveBeenCalledWith(MANIFEST.manifest)
@@ -235,7 +235,7 @@ describe('SlackPanel manifest card', () => {
 
     const copy = screen.getByRole('button', { name: 'Copy manifest YAML' })
     expect(copy).toBeDisabled()
-    expect(screen.getByText(/named KiroCrew-you/)).toBeInTheDocument()  // brand-ok: product emits KiroCrew-<alias> (slack-manifest.yaml)
+    expect(screen.getByText(/named SaoKhue-you/)).toBeInTheDocument()
 
     fireEvent.click(copy)
     expect(writeText).not.toHaveBeenCalled()
@@ -256,7 +256,7 @@ describe('SlackPanel read-only session', () => {
 
     expect(
       screen.getByText(
-        'Slack settings are managed on the machine running Kiro Crew and are read-only from remote sessions.',
+        'Slack settings are managed on the machine running Sao Khuê and are read-only from remote sessions.',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Save Slack settings' })).not.toBeInTheDocument()

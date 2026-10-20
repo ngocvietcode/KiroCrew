@@ -24,7 +24,7 @@ from kiro_crew import pinned_fs, platform_compat
 logger = logging.getLogger(__name__)
 
 CLI_SETTINGS_LOCK_NAME = ".kirocrew-cli-settings.lock"
-_EXCLUDE_COMMENT = "# Kiro Crew session settings (local only)"
+_EXCLUDE_COMMENT = "# Sao Khuê session settings (local only)"
 _READ_LIMIT = 1 << 20
 _EXCLUDE_LINES = (
     "/.kiro/settings/cli.json",

@@ -565,7 +565,7 @@ def _doctor_crash_dumps(issues: list[str]) -> None:
                         "not wedge — past incident, not a current fault"
                     )
                 # 8 lines = preamble + thread header + ~6 frames: enough to
-                # reach past the asyncio plumbing into the Kiro Crew frame
+                # reach past the asyncio plumbing into the Sao Khuê frame
                 # that identifies WHERE the loop wedged.
                 _stack = cli_doctor.dump_first_stack_lines(_latest, max_lines=8)
                 if _stack:

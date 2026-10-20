@@ -39,7 +39,7 @@ const MEMBERS = [
   member('scribe', { display_name: 'Scribe', kiro_agent: 'docs', last_active_ts: now - 90000, last_message: 'Spec updated in the same commit.' }),
 ]
 const DESC = {
-  kiro: 'Frontend crewmate for the Kiro Crew dashboard. Owns the chat surface, the members page and the Glass design language. Reviews every UI PR from a new-user point of view before it ships, and never merges.',
+  kiro: 'Frontend crewmate for the Sao Khuê dashboard. Owns the chat surface, the members page and the Glass design language. Reviews every UI PR from a new-user point of view before it ships, and never merges.',
   atlas: 'Backend crewmate. Owns the gateway, the ACP client and the session store. Keeps the test suite green and the startup path fast.',
   scout: 'Research crewmate. Reads papers, repos and docs, then writes short briefs with sources. Never pushes code.',
   pixel: 'Design crewmate. Turns ideas into mockups rendered with the real theme tokens, and asks you to choose before any code.',

@@ -9,7 +9,7 @@ import type { Element as HastElement, ElementContent } from 'hast'
  * the DOM. Two reasons. Alignment: remark-gfm records column alignment as an
  * `align` property on each cell, and `spa('th', node)` deliberately does not
  * forward it to the DOM, so the rendered `<th>` has no trace of `:---:`. And
- * chrome: Kiro Crew renders inline code as a click-to-copy chip with an icon
+ * chrome: Sao Khuê renders inline code as a click-to-copy chip with an icon
  * and a `role="button"`, so a `textContent` walk would have to know which
  * rendered decorations are content and which are UI. The hast tree is the
  * document as parsed, before any of that.

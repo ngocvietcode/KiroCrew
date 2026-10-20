@@ -5,7 +5,7 @@
  * a cursor-following ghost, drop-onto-cell with a live valid/invalid preview,
  * drag-a-pane's-title-bar to move it (and off the grid to remove it), and
  * grid-dimension steppers. The interaction model is ported from spark-neoframe's
- * `App.tsx`; the LOOK is ported from its `App.css` onto Kiro Crew's theme tokens
+ * `App.tsx`; the LOOK is ported from its `App.css` onto Sao Khuê's theme tokens
  * (`layoutEditor.css`), with a per-element tint like Neo-Frame's chipStyle.
  *
  * Three further interaction layers land as their own small follow-up PRs and are
@@ -53,7 +53,7 @@ import { i18nT } from '../../../i18n/t'
 import { fmtNumber } from '../../../i18n/format'
 import './layoutEditor.css'
 
-/** Per-element glyph + tint + label catalog key, the Kiro Crew analogue of
+/** Per-element glyph + tint + label catalog key, the Sao Khuê analogue of
  *  Neo-Frame's def.icon/def.tint. The label is a catalog key resolved with
  *  `i18nT` at render (a module constant cannot hold a translated literal). */
 const ELEMENT_META: Record<GridItem['element'], { icon: LucideIcon; labelKey: string; tint: string }> = {

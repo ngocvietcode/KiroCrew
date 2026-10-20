@@ -68,7 +68,7 @@ DeepSeek Harness (studied at `packages/core/tools/src/presentation.ts`,
 in the DSH repo) demonstrates the inverted architecture: tools declare a tagged
 render intent (`card: 'diff'`), the backend computes hunks from before/after
 text, the structured payload persists with the session log, and the model
-never writes a diff in prose. Kiro Crew already receives the equivalent
+never writes a diff in prose. Sao Khuê already receives the equivalent
 structured data; it only fails to give it first-class display.
 
 ## 2. Constraint discovered during investigation: messaging surfaces

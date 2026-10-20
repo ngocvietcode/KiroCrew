@@ -51,7 +51,7 @@ _CU_ACTION_CLASSES: Dict[str, Tuple[str, ...]] = {
     # Observation only — no input is synthesized into any window.
     "list_apps": (CU_CLASS_OBSERVE,),
     "get_state": (CU_CLASS_OBSERVE,),
-    # Control plane: drops Kiro Crew's OWN cached snapshots and touches no other
+    # Control plane: drops Sao Khuê's OWN cached snapshots and touches no other
     # application, so it is neither observe nor mutate.  A read-only ceiling that
     # wants the model to be able to release its cache explicitly must therefore
     # allow ``["@observe", "@control"]`` (or leave ``end_turn`` ungated at the

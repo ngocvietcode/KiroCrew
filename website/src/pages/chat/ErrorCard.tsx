@@ -252,7 +252,7 @@ export interface ErrorCardProps {
   onOpenDefaultModel?: () => void
   /**
    * The fix affordance for an `auth_required` row: deep link to the Kiro
-   * sign-in card in Settings, where the user signs in to Kiro Crew's own
+   * sign-in card in Settings, where the user signs in to Sao Khuê's own
    * identity again. Offered INSTEAD of Continue for the same reason as the
    * entitlement actions -- a retry hits the same signed-out wall -- and on
    * EVERY such row, because a lapsed sign-in is settled state the user still

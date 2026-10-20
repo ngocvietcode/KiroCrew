@@ -84,7 +84,7 @@ def _doctor_data_home() -> None:
         # hold it. Never advise deleting it — removing it takes the running
         # interpreter with it (`which kirocrew` may resolve through it).
         print(
-            f"  legacy:      ✅ {legacy} retained to hold a Kiro Crew "
+            f"  legacy:      ✅ {legacy} retained to hold a Sao Khuê "
             f"virtual environment ({', '.join(venvs)})"
         )
         print(
@@ -515,7 +515,7 @@ def _doctor_project(issues: list[str]) -> str:
 
         is_checkout = all((Path(proj) / m).is_dir() for m in _PROJECT_MARKERS)
         if is_checkout:
-            print(f"  source dir:  ✅ {proj} (Kiro Crew source checkout)")
+            print(f"  source dir:  ✅ {proj} (Sao Khuê source checkout)")
         else:
             print(f"  source dir:  ✅ {proj}")
         # A git worktree or submodule stores ``.git`` as a FILE holding a
@@ -529,7 +529,7 @@ def _doctor_project(issues: list[str]) -> str:
             print("  git repo:    ⚠️  not a git repo")
     elif not stale_project:
         print(
-            "  source dir:  ⚠️  not set (set from a Kiro Crew checkout by"
+            "  source dir:  ⚠️  not set (set from a Sao Khuê checkout by"
             " kirocrew setup; not needed for wheel installs)"
         )
     return proj
@@ -633,5 +633,5 @@ def _doctor_tz_data(issues: list[str]) -> None:
         print(f"{render._INDENT}Fix: {cli_doctor.pip_install_command_for('-U', 'tzdata')}")
         print("               then restart the gateway.")
     else:
-        print("               Fix: update Kiro Crew, then restart the gateway.")
+        print("               Fix: update Sao Khuê, then restart the gateway.")
     issues.append("timezone data out of date")

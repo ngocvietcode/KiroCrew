@@ -38,7 +38,7 @@ import { logPageProblems, stubDashboardApi, json } from './lib/stub-dashboard-ap
 const OUT = process.argv[2] || '../temp-screenshots/workflow-stuck-row'
 const SLOT = 'chat-wf'
 const RUN_ID = 'wf_000025'
-const RUN_NAME = 'Kiro Crew perf investigation'
+const RUN_NAME = 'Sao Khuê perf investigation'
 /** Longer than the 15s heal interval, with room for the round-trip. */
 const HEAL_WAIT_MS = 20_000
 
@@ -78,7 +78,7 @@ const row = status => ({
   error: null,
   session_key: `dashboard:${SLOT}`,
   phase: 'synthesize',
-  last_log: 'Starting Kiro Crew performance investigation',
+  last_log: 'Starting Sao Khuê performance investigation',
 })
 
 /**

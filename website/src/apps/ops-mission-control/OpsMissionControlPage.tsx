@@ -214,7 +214,7 @@ const CLOSED_STATUSES: readonly IncidentStatus[] = Object.freeze(['resolved', 'e
  * The postmortem for one closed incident, fetched on expand.
  *
  * Rendered VERBATIM in a `<pre>`, not through MarkdownRenderer. The point of this file is
- * that it goes to somebody who does not run Kiro Crew — a ticket, a review, a colleague — so
+ * that it goes to somebody who does not run Sao Khuê — a ticket, a review, a colleague — so
  * what the operator needs to see is the exact bytes that person will receive. A rendered
  * view would quietly hide the metadata table's pipes and, worse, would make a redaction
  * marker easy to miss.
@@ -285,7 +285,7 @@ function ClosedPostmortem({ incidentId }: { incidentId: string }) {
  * Closed incidents and the artifact each one left behind.
  *
  * Exists because the renderer that writes `incidents/<id>.md` had no reader: the file is
- * this app's only output for someone who does not run Kiro Crew, and until now nothing in
+ * this app's only output for someone who does not run Sao Khuê, and until now nothing in
  * the UI called the route that returns it. `/state` deliberately carries open work only, so
  * a resolved incident vanished from every surface the moment it was resolved.
  */

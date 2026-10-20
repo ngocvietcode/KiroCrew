@@ -381,7 +381,7 @@ _UNRESOLVABLE_REF_OK: frozenset[str] = frozenset(
         "antigravity-cli/settings.json",
         # Hermes Agent (`~/.hermes`, `_scan_hermes`), OpenClaw
         # (`OPENCLAW_STATE_DIR`), and any registered install descended from
-        # Kiro Crew (`_scan_lineage_install`) -- all three name this relative path.
+        # Sao Khuê (`_scan_lineage_install`) -- all three name this relative path.
         "cron/jobs.json",
         #
         #
@@ -2574,7 +2574,7 @@ def _self_test() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Lint the Kiro Crew documentation trees and their indexes."
+        description="Lint the Sao Khuê documentation trees and their indexes."
     )
     parser.add_argument(
         "--test",

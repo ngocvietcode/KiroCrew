@@ -1,4 +1,4 @@
-"""Kiro Crew's pi gate extension, run under Node against a stand-in for pi's extension API.
+"""Sao Khuê's pi gate extension, run under Node against a stand-in for pi's extension API.
 
 The extension carries Crew's MCP servers into a pi session (pi-acp drops the ACP
 array) and refuses any call to a Crew server name that pi resolved to a different
@@ -144,7 +144,7 @@ def _run(
     return result
 
 
-_REFUSED = "not the server Kiro Crew placed"
+_REFUSED = "not the server Sao Khuê placed"
 
 
 def test_the_handoff_servers_are_registered_for_direct_use(node, tmp_path) -> None:

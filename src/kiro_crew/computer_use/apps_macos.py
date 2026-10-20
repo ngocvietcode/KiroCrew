@@ -150,7 +150,7 @@ def list_apps() -> tuple[AppRef, ...]:
             # replace it: input is delivered per-PID (``CGEventPostToPid``), so if
             # ANY window of this process is our own dashboard the whole process must
             # refuse. Keeping the innocuous first window would let a second Chrome
-            # window hosting KiroCrew slip past the title rule entirely.
+            # window hosting SaoKhue slip past the title rule entirely.
             continue
         if existing is not None and not _denied_title(info.title):
             if existing.window_title or not info.title:
@@ -462,7 +462,7 @@ def pid_owns_point(pid: int, x: float, y: float) -> bool:
     is app-scoped (``CGEventPostToPid``), so the resolved app identity IS the
     authorization boundary — ``policy.check_app`` ran the denylist against THAT
     app. Without this check, naming an allowed app and passing coordinates over a
-    denied one (KiroCrew's own window) would sail through: the policy check passes
+    denied one (SaoKhue's own window) would sail through: the policy check passes
     on app A while the click lands on app B.
 
     Topmost, not merely "inside": the window list is front-to-back z-order, so the

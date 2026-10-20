@@ -262,7 +262,7 @@ def remote_established_inodes(proc_root: str, pid: int) -> set[str]:
     """Inodes of ESTABLISHED TCP sockets whose peer is not loopback.
 
     Same source as :func:`established_inodes`. A loopback peer is a local
-    service, most often Kiro Crew's own gateway, which the in-tree MCP servers
+    service, most often Sao Khuê's own gateway, which the in-tree MCP servers
     reach over ``127.0.0.1`` and which a long-blocking tool such as
     ``spawn_sub_agents`` legitimately waits on for its whole run.
     """

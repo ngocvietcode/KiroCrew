@@ -1,4 +1,4 @@
-// The "Review" action: open a KiroCrew chat session seeded with a code-review
+// The "Review" action: open a SaoKhue chat session seeded with a code-review
 // prompt for one PULL REQUEST, filed into the same per-repo chat folder as issue
 // investigations, and linked to a local record so a repeat click RESUMES the same
 // session instead of spawning a duplicate.

@@ -136,7 +136,7 @@ describe('folderSuggestions reducers', () => {
       slot: 'dashboard_chat-1',
       folderId: 'f1',
       folderName: 'feature',
-      breadcrumb: 'Kiro Crew › feature',
+      breadcrumb: 'Sao Khuê › feature',
       ts: 100,
       ...over,
     } as Parameters<typeof setFolderSuggestion>[0])

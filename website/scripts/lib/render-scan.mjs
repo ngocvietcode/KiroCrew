@@ -117,10 +117,10 @@ export function isFiller(s) {
  *     they all render on `/settings?tab=display`, one of the gated surfaces.
  */
 export const ALWAYS_LATIN = [
-  // glossary.json `dnt`, plus the spaced display name `Kiro Crew`, which is NOT a
+  // glossary.json `dnt`, plus the spaced display name `Sao Khuê`, which is NOT a
   // glossary term (see glossary.json) but must still be stripped before leak
   // detection or the `Crew` half orphans as a reportable Latin run.
-  'AWS', 'Discord', 'Docker', 'Git', 'GitHub', 'GitLab', 'JSON', 'Kiro', 'Kiro Crew',
+  'AWS', 'Discord', 'Docker', 'Git', 'GitHub', 'GitLab', 'JSON', 'Kiro', 'Sao Khuê',
   'KiroCrew',
   // Connections launch-set provider brands (registry names; DNT proper nouns).
   // Asana joins because its pre-registered entry is now visible in the gallery

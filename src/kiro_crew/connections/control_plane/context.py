@@ -8,7 +8,7 @@ credential mode THIS call authenticates with.
 
 **No field is a credential VALUE.** This is the load-bearing invariant of the
 whole seam and it follows directly from the subsystem's credential boundary --
-"Kiro Crew never holds a connection's credential" (``connections.md``). A
+"Sao Khuê never holds a connection's credential" (``connections.md``). A
 context object is passed around, logged, and may end up in an error's
 structured detail, so it must not be able to carry a token, a client secret, a
 bearer, or any credential plaintext. ``binding_ref`` names an authorized

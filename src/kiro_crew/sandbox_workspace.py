@@ -82,7 +82,7 @@ def prime_voice_runtime_sandbox_paths() -> str:
         canonical_home = os.path.realpath(lexical_home)
         home_info = os.lstat(canonical_home)
         if not stat.S_ISDIR(home_info.st_mode) or stat.S_ISLNK(home_info.st_mode):
-            raise OSError("Kiro Crew data home does not resolve to a real directory")
+            raise OSError("Sao Khuê data home does not resolve to a real directory")
 
         canonical_run = os.path.join(canonical_home, "run")
         canonical_root = os.path.join(canonical_home, _VOICE_RUNTIME_LEAF)
@@ -269,7 +269,7 @@ def classify_declared_temp_path(path: str) -> "DeclaredTempRefusal | None":
     child under ``work_dir``. Refusing the spelling is the only way to keep one
     decision valid at every spawn boundary.
 
-    Windows: nothing else to refuse, so ``None`` for every absolute path. Kiro Crew has no
+    Windows: nothing else to refuse, so ``None`` for every absolute path. Sao Khuê has no
     native Windows sandbox backend (see the delegation note in
     :func:`wrap_argv`): a probe child there is either not spawned at all or runs
     unsandboxed with a writable ``run``, so a declared temp under it is
@@ -437,7 +437,7 @@ def format_declared_temp_refusals(
     return ", ".join(fields)
 
 
-_VOICE_GUARD_REMEDY = "Pick a project subdirectory that does not contain the Kiro Crew data home."
+_VOICE_GUARD_REMEDY = "Pick a project subdirectory that does not contain the Sao Khuê data home."
 
 _VoiceGuardRelationship = Literal["contains", "inside", "alias", "cannot-verify"]
 
@@ -461,26 +461,26 @@ def _voice_runtime_guard_message(
     """
     if relationship == "contains":
         return (
-            f"macOS agent workspace {workspace_path!r} overlaps Kiro Crew's "
+            f"macOS agent workspace {workspace_path!r} overlaps Sao Khuê's "
             f"protected voice runtime {runtime_path!r}: the workspace contains "
             f"the voice runtime / data home. {_VOICE_GUARD_REMEDY}"
         )
     if relationship == "inside":
         return (
-            f"macOS agent workspace {workspace_path!r} overlaps Kiro Crew's "
+            f"macOS agent workspace {workspace_path!r} overlaps Sao Khuê's "
             f"protected voice runtime {runtime_path!r}: the workspace is the "
             f"voice runtime / data home or lives inside it. {_VOICE_GUARD_REMEDY}"
         )
     if relationship == "alias":
         return (
-            f"macOS agent workspace {workspace_path!r} aliases Kiro Crew's "
+            f"macOS agent workspace {workspace_path!r} aliases Sao Khuê's "
             f"protected voice runtime {runtime_path!r}: by filesystem identity "
             "(a case, normalization, symlink, or firmlink alias) one of these "
             f"paths is the other or an ancestor of the other. {_VOICE_GUARD_REMEDY}"
         )
     return (
         f"cannot verify that macOS agent workspace {workspace_path!r} is "
-        f"separate from Kiro Crew's protected voice runtime {runtime_path!r}: "
+        f"separate from Sao Khuê's protected voice runtime {runtime_path!r}: "
         f"a filesystem check failed on {failed_path!r} ({failure_reason}), "
         "so the guard cannot prove the paths are disjoint and fails closed "
         f"rather than start an agent it cannot isolate. {_VOICE_GUARD_REMEDY}"
@@ -570,7 +570,7 @@ def voice_runtime_workspace_conflict(workspace: str | os.PathLike[str]) -> str |
 def assert_voice_runtime_outside_agent_workspace(workspace: str | os.PathLike[str]) -> None:
     """Fail closed when a macOS agent workspace can reach decoder snapshots.
 
-    Kiro's internal macOS sandbox cannot nest inside Kiro Crew's Seatbelt
+    Kiro's internal macOS sandbox cannot nest inside Sao Khuê's Seatbelt
     profile, so delegated Kiro agents do not inherit our voice-runtime deny
     rules. A workspace that is the voice root, lives below it, or contains it
     would therefore let a same-UID agent replace a verified named Mach-O image

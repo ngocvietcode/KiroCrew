@@ -71,7 +71,7 @@ STEP_CONNECT = "connect"
 
 _STEP_LABELS: tuple = (
     (STEP_PREFLIGHT, "Check your AWS setup"),
-    (STEP_PROVISION, "Create the instance and install Kiro Crew"),
+    (STEP_PROVISION, "Create the instance and install Sao Khuê"),
     (STEP_SIGNIN, "Sign in to Kiro"),
     (STEP_CONNECT, "Connect"),
 )
@@ -524,7 +524,7 @@ class LaunchJobStore:
                     ""
                     if job.signin_detected
                     else (
-                        "Interrupted — Kiro Crew restarted while the Kiro sign-in was "
+                        "Interrupted — Sao Khuê restarted while the Kiro sign-in was "
                         "running. If you already approved the code, check now; "
                         "otherwise get a new one from the crew."
                     )
@@ -537,7 +537,7 @@ class LaunchJobStore:
                     step.state = STEP_FAILED
             job.status = FAILED
             job.error = (
-                "Interrupted — Kiro Crew restarted while this setup was running. "
+                "Interrupted — Sao Khuê restarted while this setup was running. "
                 f"The {_resource_noun(job)} may still exist; check your crews before retrying."
             )
             job.signin = None

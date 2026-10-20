@@ -89,7 +89,7 @@ DISCORD_MAX_FILE_BYTES = 10 * 1024 * 1024
 DISCORD_MAX_FILES_PER_MESSAGE = 10
 DISCORD_MAX_TOTAL_UPLOAD_BYTES = 25 * 1024 * 1024
 
-# Every message body Kiro Crew sends is LLM- or tool-derived text, so no send
+# Every message body Sao Khuê sends is LLM- or tool-derived text, so no send
 # may be allowed to notify anyone. ``parse: []`` is Discord's own suppression:
 # it leaves ``@everyone``, ``@here``, role and user mentions rendering as text
 # while stripping their notification, and it holds for a mention the renderer's

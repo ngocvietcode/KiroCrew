@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - per-app backend (M2.2). API Gateway HTTP API ->
+# SaoKhue One-Click Deploy - per-app backend (M2.2). API Gateway HTTP API ->
 # Lambda, fronted by the shared CloudFront distribution at /<slug>/api/*.
 # The Lambda is invoked only by API Gateway, never through a world-accessible
 # Function URL. Pass --table to also provision a DynamoDB table (stateful apps).

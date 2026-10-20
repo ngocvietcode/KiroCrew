@@ -1,7 +1,7 @@
 """Workflows builtin-app backend.
 
 A small stdlib-only HTTP server exposing the dynamic-workflows engine to the
-dashboard "Workflows" tab. KiroCrew proxies ``/apps/workflows/api/*`` to this
+dashboard "Workflows" tab. SaoKhue proxies ``/apps/workflows/api/*`` to this
 process (the server sees the paths at the root — the prefix is stripped).
 
 Endpoints:

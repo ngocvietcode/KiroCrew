@@ -66,7 +66,7 @@ from kiro_crew.providers.base import (
 )
 
 _GENERIC = "User denied tool execution"
-_TAG = "[Kiro Crew host notice]"
+_TAG = "[Sao Khuê host notice]"
 #: Only the POLICY cause appends class-specific remediation; its guidance line
 #: is the fingerprint that must be absent from every other cause's notice.
 _POLICY_GUIDANCE = "allowed alternative"
@@ -360,7 +360,7 @@ async def test_governance_deny_steers_the_hooks_reason_as_policy(monkeypatch, fa
     res = await _drive(provider)
     assert res.ok is True
     notice = _assert_steered_then_rejected(
-        provider, "Kiro Crew safety policy", "Read ~/.ssh/id_rsa: reads ~/.ssh"
+        provider, "Sao Khuê safety policy", "Read ~/.ssh/id_rsa: reads ~/.ssh"
     )
     assert _SURFACE_CLAUSE not in notice
     # Audit FIRST: the SEL row is on the record before the steer touched the pipe,
@@ -428,7 +428,7 @@ async def test_shell_denylist_refusal_steers_as_policy(monkeypatch, fake_sel):
     )
     await _drive(provider)
     notice = _assert_steered_then_rejected(
-        provider, "Kiro Crew safety policy", "gh pr merge is not permitted"
+        provider, "Sao Khuê safety policy", "gh pr merge is not permitted"
     )
     assert _SURFACE_CLAUSE not in notice
     assert fake_sel.calls[0]["error"] == "shell_denylist"

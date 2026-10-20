@@ -605,7 +605,7 @@ def broadcast_side_result(
     Emits ``{type: "chat.side_result", data: payload}`` to all WS clients.
     The event name and payload shape are reused from the upstream OpenClaw
     `/btw` protocol so a future shared client can interop. ``kind`` is
-    translated from upstream ``"btw"`` to KiroCrew's ``"side"``.
+    translated from upstream ``"btw"`` to SaoKhue's ``"side"``.
 
     The event channel is intentionally separate from ``chat_message`` so
     receivers that don't subscribe to side simply don't see it; this

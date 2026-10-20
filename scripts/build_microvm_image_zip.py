@@ -10,7 +10,7 @@ produce the same bytes. Two assemblers would be two answers to "what is in a cre
 image", and the looser one would be the one that shipped the wrong content.
 
 What this script owns is the one thing a launch does not do: staging the wheel.
-A launch runs from an installed Kiro Crew and the wheel is already beside the
+A launch runs from an installed Sao Khuê and the wheel is already beside the
 recipes; an operator building from a checkout has to make it first.
 """
 
@@ -58,7 +58,7 @@ def _build_env() -> dict[str, str]:
 
 
 def build_wheel(vendor: Path) -> Path:
-    """Build the Kiro Crew wheel the base recipe installs, into ``runtime/vendor``.
+    """Build the Sao Khuê wheel the base recipe installs, into ``runtime/vendor``.
 
     Built REPRODUCIBLY, through :data:`SOURCE_DATE_EPOCH`: the wheel's bytes are
     hashed into the base recipe digest, which is half the image cache's key, so a

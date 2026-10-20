@@ -1,4 +1,4 @@
-"""Secret management for Kiro Crew."""
+"""Secret management for Sao Khuê."""
 
 from kiro_crew.secrets.vault import SecretValue, SecretVault
 

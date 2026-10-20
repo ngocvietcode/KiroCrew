@@ -29,7 +29,7 @@ from kiro_crew.apps.manifest import AppManifest
 #: as `manager.gateway_data_dir_obstruction` spells it -- the transaction must carry it
 #: unchanged, so it is pinned here as text.
 _DATA_IS_A_FILE = (
-    "`data` in the app tree is a file; Kiro Crew creates the app's data directory at "
+    "`data` in the app tree is a file; Sao Khuê creates the app's data directory at "
     "that path and cannot install beside it."
 )
 
@@ -138,7 +138,7 @@ async def test_onInstall_rewriting_the_manifest_loses_the_desktop_requirements_w
 
     assert result["ok"] is False
     assert result["error"] == (
-        "Python apps that require a build step are not supported in Kiro Crew's desktop "
+        "Python apps that require a build step are not supported in Sao Khuê's desktop "
         "build: its bundled interpreter is inside the signed application bundle and cannot "
         "install packages"
     )
@@ -392,7 +392,7 @@ async def test_a_self_managed_entry_keeps_the_desktop_refusal(monkeypatch, tmp_p
     assert build_kwargs and build_kwargs[0]["self_managed"] is True
     assert result["ok"] is False
     assert result["error"] == (
-        "Python apps that require a build step are not supported in Kiro Crew's desktop "
+        "Python apps that require a build step are not supported in Sao Khuê's desktop "
         "build: its bundled interpreter is inside the signed application bundle and cannot "
         "install packages"
     )

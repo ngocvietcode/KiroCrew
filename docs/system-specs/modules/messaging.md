@@ -6,7 +6,7 @@
 
 **Dependency direction is one-way:** `slack` / `dashboard` → `messaging`, never the reverse. The `kiro_crew.messaging` package imports nothing from `kiro_crew.slack` or `kiro_crew.dashboard`; its only first-party dependencies are the shared lower-level helpers — `acp.types` event constants, the `security` redactors (`redact_credentials` / `redact_exfiltration_urls`), `sel` for audit, and, function-locally from `privacy_mode`, `session_map` (the durable flag) and `history` (the transcript header the mode is stamped into). The one pinned exception: `messaging/dispatch.py` imports `kiro_crew.dashboard.session_directive_apply` function-locally, allowlisted in `test_messaging_import_purity.py`.
 
-Slack's transport path is gated behind the `messaging.use_transport` config flag (default `true` in Kiro Crew, so the abstraction is the canonical path); when off, Slack's native `handle_message` path runs instead.
+Slack's transport path is gated behind the `messaging.use_transport` config flag (default `true` in Sao Khuê, so the abstraction is the canonical path); when off, Slack's native `handle_message` path runs instead.
 
 A resumed or linked member conversation retains its canonical execution record
 on every channel: immutable member/store identity, captured provider template and
@@ -970,7 +970,7 @@ both key forms, exact brand spellings, and these negative cases.
 
 ## Config flag & routing
 
-`MessagingConfig.use_transport` (`config/loader.py`, default `True` in Kiro Crew; exposed in `config.json` under `messaging`) is the single switch. `slack/events.py::_route_message` checks `orch._cfg.messaging.use_transport`; when `True` it creates a task on `handle_message_transport` and skips the native `handle_message` monolith. (There is no challenge-redirect in this fork — Slack messages are processed inline.) Approval mode is resolved by `_resolve_approval_mode(orch)` (respects configured mode + operator YOLO/SafetyOverride TTL), and the per-channel `slack.channels.<id>.agent` override is passed through.
+`MessagingConfig.use_transport` (`config/loader.py`, default `True` in Sao Khuê; exposed in `config.json` under `messaging`) is the single switch. `slack/events.py::_route_message` checks `orch._cfg.messaging.use_transport`; when `True` it creates a task on `handle_message_transport` and skips the native `handle_message` monolith. (There is no challenge-redirect in this fork — Slack messages are processed inline.) Approval mode is resolved by `_resolve_approval_mode(orch)` (respects configured mode + operator YOLO/SafetyOverride TTL), and the per-channel `slack.channels.<id>.agent` override is passed through.
 
 ## Live configuration
 
@@ -3602,7 +3602,7 @@ a conversation they are still holding. Existing thread IDs still require a REST 
 Discord type 10/11/12. An approved thread is a shared disclosure
 boundary: every member who can view it can read agent/tool output. Enabling any
 thread also means Discord delivers message content from every server channel
-the bot can see, although Kiro Crew immediately discards traffic outside
+the bot can see, although Sao Khuê immediately discards traffic outside
 approved threads. Bot-authored messages (including our own) are dropped as a
 loop guard. `DISCORD_BOT_TOKEN` is on the sandbox agent env denylist.
 
@@ -6661,7 +6661,7 @@ connection (a daemon thread pushing normalized `LarkInbound` frames into the
 async event loop via `run_coroutine_threadsafe`); outbound is REST reply
 anchored to the inbound `message_id` (via `run_in_executor` so it never
 blocks the event loop). The SDK caches its WebSocket event loop in a module
-global when imported, while Kiro Crew imports it on the gateway loop and runs
+global when imported, while Sao Khuê imports it on the gateway loop and runs
 `ws.Client.start()` in the receiver thread. The receiver therefore owns a
 separate event loop, rebinds the SDK global, and constructs the client there
 before `start()`; otherwise constructor-time helpers remain bound to the gateway

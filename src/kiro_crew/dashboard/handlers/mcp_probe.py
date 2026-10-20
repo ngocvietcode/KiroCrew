@@ -201,7 +201,7 @@ def _record_probe_verdicts(rows: list[dict[str, Any]]) -> None:
 
 
 def _kirocrew_mcp_servers() -> dict[str, Any]:
-    """The Kiro Crew store's ``mcpServers`` map, or ``{}`` when it is not a map.
+    """The Sao Khuê store's ``mcpServers`` map, or ``{}`` when it is not a map.
 
     Blocking file I/O: the request handlers call it through ``asyncio.to_thread``.
     A hand-edited store can hold a list or a string under ``mcpServers``; the
@@ -215,7 +215,7 @@ def _stamp_config_state(d: dict[str, Any], global_mcps: Any, kirocrew_mcps: Any)
     """Stamp the config-derived fields onto one serialized server row.
 
     ``enabled`` folds every place a disable can live -- the Kiro-global
-    ``mcp.json``, the Kiro Crew store, and the row's own aggregate ``disabled``
+    ``mcp.json``, the Sao Khuê store, and the row's own aggregate ``disabled``
     flag (``list_servers`` sets it from every scope) -- and a disabled row reads
     ``status: "disabled"``; ``kirocrewManaged`` says whether the store holds the
     entry, which is what gates the table's Edit action.
@@ -223,7 +223,7 @@ def _stamp_config_state(d: dict[str, Any], global_mcps: Any, kirocrew_mcps: Any)
     ``disabledIn`` says WHICH scope switched the row off, because the table's
     two disabled states need opposite controls and cannot be told apart from
     ``enabled`` + ``kirocrewManaged``: ``"kirocrew"`` is a disable in Kiro
-    Crew's own store, which the Kiro Crew scope badge + Apply lifts (the consent
+    Crew's own store, which the Sao Khuê scope badge + Apply lifts (the consent
     step); ``"shared"`` is a disable in a config this panel does not write for
     enable -- the shared Kiro ``mcp.json`` the IDE edits, or a provider global
     -- so the row is inert here. A row disabled in BOTH reads ``"shared"``:
@@ -409,7 +409,7 @@ async def api_mcp_servers(request: web.Request) -> web.Response:
     """GET /api/mcp — list configured MCP servers with enabled state.
 
     Inventory comes from ``list_servers()``, which merges the agent config's
-    ``mcpServers``, the scope-tagged ``mcp.json`` files (Kiro Crew data home
+    ``mcpServers``, the scope-tagged ``mcp.json`` files (Sao Khuê data home
     and ``~/.kiro/settings/mcp.json``), and provider-global entries. This
     handler describes what the DASHBOARD shows; it makes no claim about which
     of these sources kiro-cli itself loads at session time — that is backend
@@ -468,7 +468,7 @@ async def api_mcp_servers(request: web.Request) -> web.Response:
         global_mcps = data.get("mcpServers", {})
     except (FileNotFoundError, json.JSONDecodeError):
         pass
-    # Kiro Crew-scope entries: disabled state (consent-disabled installs and
+    # Sao Khuê-scope entries: disabled state (consent-disabled installs and
     # custom adds live only here) + which rows the JSON editor can manage.
     # Off the loop, like the probe and probe-cache sites: the helper is blocking
     # file I/O (``read_text`` + ``json.loads``), and this handler runs for every
@@ -571,7 +571,7 @@ async def api_mcp_active(request: web.Request) -> web.Response:
     """
     agent = request.query.get("agent", "")
 
-    # Resolve Kiro Crew agent name → kiro agent name so "default" → "kirocrew"
+    # Resolve Sao Khuê agent name → kiro agent name so "default" → "kirocrew"
     if agent:
         try:
             from kiro_crew.config.loader import KiroCrewConfig, resolve_agent_bindings  # noqa: F811
@@ -592,7 +592,7 @@ async def api_mcp_active(request: web.Request) -> web.Response:
             return web.json_response([])
         return web.json_response([{"name": n, "enabled": True} for n in agent_mcps])
 
-    # Kiro Crew / default: every scope, through the one launch predicate.
+    # Sao Khuê / default: every scope, through the one launch predicate.
     from kiro_crew.mcp_discovery import list_servers  # noqa: F811
 
     global_mcps: dict[str, Any] = {}
@@ -606,7 +606,7 @@ async def api_mcp_active(request: web.Request) -> web.Response:
     result: list[dict] = []
     for s in servers:
         # The launch predicate (fail-closed) over the Kiro-global file AND the
-        # Kiro Crew store, plus the row's own aggregate flag (every scope
+        # Sao Khuê store, plus the row's own aggregate flag (every scope
         # ``list_servers`` read, provider globals included), so this listing and
         # the sessions agree on what is off. Read from the shared file alone, a
         # registry install awaiting consent -- ``disabled: true`` in the store,
@@ -617,7 +617,7 @@ async def api_mcp_active(request: web.Request) -> web.Response:
             or mcp_entry_is_muted(_config_entry_for(kirocrew_mcps, s.name))
         )
         result.append({"name": s.name, "enabled": enabled})
-    # Also include the managed Kiro Crew servers (always enabled). NOTE for
+    # Also include the managed Sao Khuê servers (always enabled). NOTE for
     # ``kirocrew-computer``: "enabled" here means the SERVER is registered, not
     # that computer use is on — the feature's primary enable lives on the keystone
     # (Settings -> Computer Use) and its shim advertises zero tools while off.
@@ -848,7 +848,7 @@ async def api_mcp_quarantine_clear(request: web.Request) -> web.Response:
     fail once, and it would vanish again.
 
     Deliberately does NOT touch ``disabled`` in any config file: this clears only
-    the count Kiro Crew accumulated on its own, so a server the user had switched
+    the count Sao Khuê accumulated on its own, so a server the user had switched
     off by hand stays off. It does not mount or unmount anything either -- the
     server was never unmounted.
     """

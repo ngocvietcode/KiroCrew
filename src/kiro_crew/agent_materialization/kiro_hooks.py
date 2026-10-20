@@ -11,7 +11,7 @@ where the security-posture registry classifies those redaction calls.
 
 The event vocabulary lives here too: :data:`_VALID_HOOK_EVENTS` is the closed set
 kiro-cli loads (a spec carrying any other event key does not load at all). The
-repair of the one legacy key Kiro Crew once serialized into the specs it owns stays
+repair of the one legacy key Sao Khuê once serialized into the specs it owns stays
 :func:`kiro_crew.agent.repair_agent_configs`. The bundled defaults and the default
 hooks directory are read from :mod:`kiro_crew.agent`, where the test suite's
 isolation pins them.
@@ -108,7 +108,7 @@ def _validate_hook_command(command: str, event: str) -> str | None:
     return resolved
 
 
-# Kiro Crew-internal hook keys that must NOT appear in generated kiro-cli agent  # brand-ok
+# Sao Khuê-internal hook keys that must NOT appear in generated kiro-cli agent  # brand-ok
 # specs (kiro-cli rejects unknown keys). Excluded when deriving _VALID_HOOK_EVENTS
 # from bundled defaults below, so an internal key never round-trips as an event.
 _INTERNAL_HOOK_KEYS = frozenset(
@@ -118,7 +118,7 @@ _INTERNAL_HOOK_KEYS = frozenset(
 # Valid kiro-cli hook event names — the UNION of the hardcoded baseline (kiro-cli's
 # known schema) and any event key present in bundled defaults. Used for generated
 # specs and user-input validation; startup repair is ownership-scoped and removes
-# only legacy keys Kiro Crew serialized. A new event added to defaults.json is
+# only legacy keys Sao Khuê serialized. A new event added to defaults.json is
 # automatically accepted without a matching allowlist update.
 _VALID_HOOK_EVENTS = frozenset(
     {"preToolUse", "postToolUse", "userPromptSubmit", "agentSpawn", "stop"}
@@ -131,7 +131,7 @@ _VALID_HOOK_EVENTS = frozenset(
 )
 
 # Hook triggers a Kiro Agent session owns, in the camelCase spelling that side
-# uses. They are authorable in Kiro Crew (``hooks.HOOK_EVENTS_KAS_ONLY`` carries
+# uses. They are authorable in Sao Khuê (``hooks.HOOK_EVENTS_KAS_ONLY`` carries
 # the PascalCase twin the hook store persists) and they are deliberately NOT in
 # ``_VALID_HOOK_EVENTS``, because kiro-cli's ``hooks`` map is a CLOSED enum: a
 # spec carrying one of these keys does not load at all. Measured against
@@ -153,7 +153,7 @@ _CREW_ONLY_HOOK_EVENTS = frozenset(
     }
 )
 
-# Repair is subtractive against the runtime-only key Kiro Crew is known to have
+# Repair is subtractive against the runtime-only key Sao Khuê is known to have
 # serialized into its generated specs. Unknown keys may belong to a newer
 # kiro-cli schema or to the user.
 _LEGACY_KIROCREW_HOOK_KEYS = frozenset({"auto_approve_tools"})
@@ -1103,7 +1103,7 @@ def _merge_kiro_hooks(hooks: dict, user_hooks: dict) -> dict:
     for event, entries in user_hooks.items():
         if event not in _VALID_HOOK_EVENTS:
             # Two different rejections wearing one message is a support cost: a
-            # Kiro-Agent-only trigger is a name Kiro Crew knows and stores, it
+            # Kiro-Agent-only trigger is a name Sao Khuê knows and stores, it
             # just cannot travel in a kiro-cli spec, and reporting it as
             # "unknown" sends the reader hunting a typo that is not there.
             #

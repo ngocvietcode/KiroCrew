@@ -310,7 +310,7 @@ async def _on_tool_result(turn: _ChatTurn, event) -> None:
     # / suggest_followup / ask_question) returns a directive marker
     # instead of resolving its own session identity. Apply it HERE,
     # where slot.key + session_key are the AUTHORITATIVE session for
-    # this turn, then record the applier's real outcome on Kiro Crew's
+    # this turn, then record the applier's real outcome on Sao Khuê's
     # OWN surfaces (transcript / WS / hooks) and drop the marker.
     # NOTE: gateway-off (the default), the MODEL already received the
     # tool's own return over the MCP pipe — this does NOT rewrite the

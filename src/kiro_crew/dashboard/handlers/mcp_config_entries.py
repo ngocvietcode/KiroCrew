@@ -1,7 +1,7 @@
 """Reading and editing one server's entry in each config scope.
 
 Finding a server's spec in any scope, and setting, replacing or removing its entry in the
-Kiro Crew file, a provider global file or an agent file, plus its per-tool overrides.
+Sao Khuê file, a provider global file or an agent file, plus its per-tool overrides.
 
 Part of the ``kiro_crew.dashboard.handlers.mcp`` family: callers and tests reach every
 name here as ``kiro_crew.dashboard.handlers.mcp.<name>``, and a patch there reaches this
@@ -32,7 +32,7 @@ from kiro_crew.mcp_cleanup import mcp_entry_is_muted
 def _find_server_spec_anywhere(name: str) -> dict | None:
     """Locate a server's full spec from any known source.
 
-    Search order matches the Kiro Crew merge: agent config → <data home>/mcp.json
+    Search order matches the Sao Khuê merge: agent config → <data home>/mcp.json
     (``config_dir()/mcp.json``, i.e. ~/.kiro/crew/mcp.json) → kiro global →
     edition-contributed provider scopes.  Returns a shallow copy with
     ``disabled`` stripped (the caller decides whether to disable in its target
@@ -184,7 +184,7 @@ def _get_kirocrew_entry(name: str) -> dict | None:
 
 
 def _replace_kirocrew_spec(name: str, spec: dict) -> bool:
-    """Replace the full spec of an existing Kiro Crew-managed entry.
+    """Replace the full spec of an existing Sao Khuê-managed entry.
 
     Preserves the entry's ``disabled`` state -- editing a spec is not
     consent to run it (mirrors the discover-install consent stance).

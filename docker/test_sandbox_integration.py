@@ -75,7 +75,7 @@ def step1_reproduce_issue():
 
 
 def step2_with_seccomp_profile():
-    """With the Kiro Crew seccomp profile, the inner sandbox should work — for real.
+    """With the Sao Khuê seccomp profile, the inner sandbox should work — for real.
 
     The probe verdict alone is not proof: it used to stop at the two unshares, so
     a container whose runtime AppArmor profile carried ``deny mount`` (Docker on an

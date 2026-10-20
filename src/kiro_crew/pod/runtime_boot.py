@@ -462,7 +462,7 @@ def _probe_pod_child_bootstrap(pod_env: dict[str, str]) -> None:
     * Exited any other way -- could not bootstrap. REFUSED, with the captured
       stderr tail as the recorded reason.
 
-    A missing kiro-cli is NOT a refusal: it is a separate prerequisite Kiro Crew
+    A missing kiro-cli is NOT a refusal: it is a separate prerequisite Sao Khuê
     does not bundle, it has its own message elsewhere, and failing the boot for it
     would break every pod on a host that simply has not installed it.
     """

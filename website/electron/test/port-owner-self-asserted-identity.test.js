@@ -155,7 +155,7 @@ const IDENTITY_SITES = [
     times: 1,
   },
   {
-    what: "unresponsive holder: only a positively local Kiro Crew holder is offered a stop",
+    what: "unresponsive holder: only a positively local Sao Khuê holder is offered a stop",
     code: 'if (localOwner !== "kirocrew" && localOwner !== "service") return "spawn";',
     times: 1,
   },

@@ -4,20 +4,20 @@ Owner: `kiro_crew.apps.plugin_import`. CLI: `kirocrew app import`. Tests:
 `test/test_plugin_import.py`, `test/test_plugin_import_bounds.py` and
 `test/test_plugin_import_refusals.py`.
 
-Converts a manifest-declared plugin package into an installable Kiro Crew app.
+Converts a manifest-declared plugin package into an installable Sao Khuê app.
 The input format is the one Codex reads and the one the published plugin
 directories ship; grok-build's plugin directory bundles the same resource kinds.
-Which foreign kind reaches which Kiro Crew extension point, and why the rest do
+Which foreign kind reaches which Sao Khuê extension point, and why the rest do
 not, is [harness-plugin-mapping.md](harness-plugin-mapping.md) -- this file
 specifies the converter, not the mapping.
 
 ## 1. What it is for
 
-Two claims needed proving before Kiro Crew accepts foreign plugin contributions:
+Two claims needed proving before Sao Khuê accepts foreign plugin contributions:
 that the extension points we already have can receive them, and that conversion
 does not require running foreign code. A converter proves both. It reads JSON
 and copies files; the converter itself has no foreign runtime to supervise. The
-emitted app is an ordinary Kiro Crew app, so a mapped MCP server can be launched
+emitted app is an ordinary Sao Khuê app, so a mapped MCP server can be launched
 after installation under the normal app lifecycle.
 
 It is deliberately not an adapter. A package's in-process code -- tools, hook

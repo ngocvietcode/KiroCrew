@@ -1,6 +1,6 @@
 """What one ACP session's MCP servers actually reported.
 
-Kiro Crew holds two different views of MCP, and reading one as the other is the
+Sao Khuê holds two different views of MCP, and reading one as the other is the
 confusion this module exists to end:
 
 * the **configured** view — what an agent spec on disk declares, and what the
@@ -25,7 +25,7 @@ slow server can report after the drain gives up, and a frame can arrive mid-turn
 another is the failure this whole view is meant to remove.
 
 **Reports are a superset of the roster.** The backend initializes the agent
-spec's own servers as well as the ones Kiro Crew injects on the wire, so a name
+spec's own servers as well as the ones Sao Khuê injects on the wire, so a name
 can be reported without appearing in :attr:`configured`. That is information (it
 is how a spec-declared server proves it started), not an inconsistency.
 
@@ -542,8 +542,8 @@ class McpSessionReport:
     snapshots rather than reordering under the user.
     """
 
-    #: Server names Kiro Crew put on the wire in this session's ``session/new``.
-    #: Empty means Kiro Crew injected none — NOT that the session has none, since
+    #: Server names Sao Khuê put on the wire in this session's ``session/new``.
+    #: Empty means Sao Khuê injected none — NOT that the session has none, since
     #: the backend also starts the agent spec's own servers.
     configured: tuple[str, ...] = ()
     #: Agent-spec ``@server`` refs that named no server in Crew's projection for

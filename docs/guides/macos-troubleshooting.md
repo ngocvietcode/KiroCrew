@@ -59,7 +59,7 @@ appended behind the app's `PATH`, or use the launchd fix below.
 
    Note the scope: the launchd user domain is shared, so every GUI app
    launchd starts for your user afterwards inherits this `PATH` — not just
-   Kiro Crew. You are copying the same value your shells already use, but if
+   Sao Khuê. You are copying the same value your shells already use, but if
    you prefer to keep the change minimal, set a `PATH` that starts with the
    system directories and appends only the directories you need.
 
@@ -113,7 +113,7 @@ app once if a command is still missing.
 ### What the app does with the launchd `PATH`
 
 - Directories read from the launchd domain are **appended after** the app's
-  inherited `PATH`. Inside Kiro Crew they can make a name resolve that
+  inherited `PATH`. Inside Sao Khuê they can make a name resolve that
   resolved nowhere before, but can never shadow a system binary that already
   resolves. (This guarantee is about the app's own merge — the
   `launchctl setenv` step above is governed by whatever ordering you set.)
@@ -181,6 +181,6 @@ has its own guide:
 [endpoint-security-blocking-spawned-tools.md](endpoint-security-blocking-spawned-tools.md).
 In short: it is a false positive on the way the agent spawns tools, the durable
 fix is an exception scoped to the specific detection id and the exact image path
-that was blocked — the Python interpreter Kiro Crew runs under (owned by whoever
+that was blocked — the Python interpreter Sao Khuê runs under (owned by whoever
 administers endpoint security on the device) — and the interim workaround is to
 run `git`/`cr` from your own terminal.

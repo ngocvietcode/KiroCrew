@@ -1,4 +1,4 @@
-"""``kirocrew stop`` and how it recognises a Kiro Crew gateway process.
+"""``kirocrew stop`` and how it recognises a Sao Khuê gateway process.
 
 The command-line classifiers ``_is_kirocrew_process`` and ``_args_look_like_kirocrew`` (a composed
 edition's companion module included) and the desktop launcher's JavaScript copy of their two
@@ -181,7 +181,7 @@ class TestComposedEditionGatewayModule:
     Its launcher execs ``-m <companion module>`` so the composition root is
     entered rather than the core CLI. Keying the classifier on the literal
     ``kiro_crew`` made ``kirocrew stop`` / ``restart`` drop the one listening pid
-    and report "No Kiro Crew gateway currently running on port <p>" on every such
+    and report "No Sao Khuê gateway currently running on port <p>" on every such
     install — the port lookup found the gateway, the classifier rejected it, and
     the graceful-API / lock-owner fallbacks never ran because they are reached
     only when the port lookup itself comes back empty.
@@ -382,7 +382,7 @@ class TestStop:
             with pytest.raises(SystemExit) as exc:
                 _stop(5476)
             assert exc.value.code == 1
-        assert "No Kiro Crew gateway" in capsys.readouterr().out
+        assert "No Sao Khuê gateway" in capsys.readouterr().out
 
     def _tool_absent(self, unpinned_at):
         # The lookup tool reads as unavailable; ``unpinned_at`` is where PATH
@@ -617,7 +617,7 @@ class TestStop:
         mock_stop_service.assert_not_called()
         # And we should have fallen through to the kill path
         # (which exits 1 here because no listener is found on 8089).
-        assert "No Kiro Crew gateway" in capsys.readouterr().out
+        assert "No Sao Khuê gateway" in capsys.readouterr().out
 
     # ---- a listener argv cannot name: the desktop-app spawn shape -----------
 
@@ -888,7 +888,7 @@ class TestStop:
                 _stop(5476)
             assert exc.value.code == 1
         mock_alias.assert_not_called()
-        assert "No Kiro Crew gateway" in capsys.readouterr().out
+        assert "No Sao Khuê gateway" in capsys.readouterr().out
 
 
 class TestWaitForPidsExit:

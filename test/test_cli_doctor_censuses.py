@@ -520,7 +520,7 @@ class TestDoctorSkillViewCensus:
         assert "removed" not in line
         # No lease, no foreign home: neither caveat is printed.
         assert "Lease-named" not in line
-        assert "another Kiro Crew home" not in line
+        assert "another Sao Khuê home" not in line
 
     def test_a_backlog_another_home_owns_is_named_as_not_draining_here(
         self, tmp_path, monkeypatch, capsys
@@ -530,9 +530,9 @@ class TestDoctorSkillViewCensus:
             self._alias(tmp_path, i, home="/some/other/home")
         self._own(tmp_path, 4)
         line = self._line(self._run(tmp_path, monkeypatch, capsys))
-        assert "(0 named by a lease record, 5 not, 4 owned by another Kiro Crew home)" in line
+        assert "(0 named by a lease record, 5 not, 4 owned by another Sao Khuê home)" in line
         assert "reclaims a bounded number of the 1 this home owns" in line
-        assert "The 4 another Kiro Crew home owns never drain here" in line
+        assert "The 4 another Sao Khuê home owns never drain here" in line
         # A second home shares this directory, so the remedy must stop BOTH
         # gateways, not only the one this doctor speaks for.
         assert "with every gateway that uses this agents directory stopped" in line
@@ -548,9 +548,9 @@ class TestDoctorSkillViewCensus:
         theirs = [self._alias(tmp_path, i, home="/some/other/home") for i in range(3)]
         self._lease(tmp_path, theirs)
         line = self._line(self._run(tmp_path, monkeypatch, capsys))
-        assert "(3 named by a lease record, 0 not, 3 owned by another Kiro Crew home)" in line
+        assert "(3 named by a lease record, 0 not, 3 owned by another Sao Khuê home)" in line
         assert "crash-stale" not in line
-        assert "The 3 another Kiro Crew home owns never drain here" in line
+        assert "The 3 another Sao Khuê home owns never drain here" in line
 
     def test_lease_named_aliases_are_described_as_held_not_as_never_draining(
         self, tmp_path, monkeypatch, capsys
@@ -623,7 +623,7 @@ class TestDoctorSkillViewCensus:
         self, tmp_path, monkeypatch, capsys
     ):
         # json.loads raises RecursionError (a RuntimeError) on nesting past the
-        # interpreter limit; a hand-authored file in Kiro Crew's own hidden
+        # interpreter limit; a hand-authored file in Sao Khuê's own hidden
         # directories must read as unreadable, never take the diagnostic down.
         deep = "[" * 100000 + "]" * 100000
         self._own(tmp_path, 1)
@@ -664,7 +664,7 @@ class TestDoctorSkillViewCensus:
         (tmp_path / ".kirocrew-skill-projection-leases").mkdir()
         (tmp_path / ".kirocrew-skill-projection-leases" / "1-bad.json").write_text("?")
         line = self._line(self._run(tmp_path, monkeypatch, capsys))
-        # The side files live under the Kiro Crew data home; the remedy names
+        # The side files live under the Sao Khuê data home; the remedy names
         # those directories by their real path, and the legacy one an older
         # build left beside the aliases, which the reclaim still reads.
         metadata_dir = str(skill_projection._projection_metadata_dir())

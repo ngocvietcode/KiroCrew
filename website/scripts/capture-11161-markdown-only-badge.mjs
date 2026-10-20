@@ -35,7 +35,7 @@ const template = (name, description, markdownOnly = false) => ({
 })
 const catalog = sessionBackend => ({
   agents: [
-    template('kirocrew', 'Primary Kiro Crew agent.'),
+    template('kirocrew', 'Primary Sao Khuê agent.'),
     template('kas-md-probe', 'A minimal markdown-format probe agent.', true),
     template('reviewer', 'Reviews pull requests.'),
   ],

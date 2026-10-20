@@ -1,6 +1,6 @@
 # Context Management
 
-What Kiro Crew puts in front of the model, in what order, and where each piece
+What Sao Khuê puts in front of the model, in what order, and where each piece
 comes from. Six questions, one section each: a fresh main chat session, the
 per-turn additions, a sub-agent, the default agent versus any other agent, a
 crew member's session, and which crew-member private files exist today.
@@ -306,7 +306,7 @@ are LRU-bounded: `_SENT_SKILL_BODY_SESSIONS` (512) sessions and
 on its next match, never drops the skill.
 
 - **Reset.** The record for a session is dropped on a new session, on the first
-  turn after a compaction that armed `needs_reinjection` (Kiro Crew's own, or a
+  turn after a compaction that armed `needs_reinjection` (Sao Khuê's own, or a
   backend compaction the turn's stream reported: the dashboard runner arms it as the
   status arrives, and every other turn loop that consumes the flag passes
   `compacted=True` to `rearm_reinjection` as its turn settles), and when

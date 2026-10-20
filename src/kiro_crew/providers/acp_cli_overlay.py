@@ -44,7 +44,7 @@ logger = logging.getLogger("kiro_crew.providers.acp")
 #: Decoding for the workspace ``cli.json``. The file can be a person's own
 #: workspace settings, and Windows editors save UTF-8 with a byte-order mark,
 #: which ``json.loads`` refuses on decoded text. A refused file reads as empty
-#: here, and the overlay writers then replace it with only Kiro Crew's keys, so
+#: here, and the overlay writers then replace it with only Sao Khuê's keys, so
 #: every reader drops one leading mark. Writers emit plain UTF-8.
 _CLI_JSON_ENCODING = "utf-8-sig"
 
@@ -165,7 +165,7 @@ def _write_tool_search_overlay(
     unconditional deferral.
 
     The flag is written deterministically for BOTH true and false so the
-    Kiro Crew toggle stays authoritative regardless of any value in the user's
+    Sao Khuê toggle stays authoritative regardless of any value in the user's
     global kiro settings, and the thresholds are written EXPLICITLY rather than
     omitted — an earlier build forced them to 0, and leaving that behind would
     silently keep deferral unconditional on an already-configured machine.

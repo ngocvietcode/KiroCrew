@@ -299,7 +299,7 @@ class TestTunnelManager:
 
         result = await mgr.restart_remote("fg")
         assert result["ok"] is False
-        assert "no Kiro Crew gateway" in result["message"]
+        assert "no Sao Khuê gateway" in result["message"]
         assert dispatched == []
 
     def test_resolve_transport_refuses_an_ec2_id_under_fargate(self, tmp_path, monkeypatch):

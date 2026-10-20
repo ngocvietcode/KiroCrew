@@ -28,7 +28,7 @@ superseded-by: []
 
 ## 1. Summary
 
-Telemetry today cannot say how Kiro Crew is actually used. How many sessions a
+Telemetry today cannot say how Sao Khuê is actually used. How many sessions a
 conductor opens against a worker, how many turns each kind of actor causes, how
 deep a session tree gets -- none of it is recorded as a metric. The raw facts are
 already in the crew log: `session/opened` carries the agent name,

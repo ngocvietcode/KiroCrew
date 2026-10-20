@@ -1,5 +1,5 @@
 /**
- * Dev Fleet — worktree management page ported to KiroCrew SPA.
+ * Dev Fleet — worktree management page ported to SaoKhue SPA.
  * Manages git worktrees, pod instances, syncing, pruning, and rebasing.
  *
  * This file is the page's import path. It keeps the page's state, effects and
@@ -1066,7 +1066,7 @@ export default function DevFleetPage() {
   // bundle wrong, so reading those first sends you down the wrong trail.
   const servingReason = fleet?.serving_install_reason || null
   const isDiscoveryError = !fleetError && !!fleet?.error
-  // Its own state, not an error: the backend found no Kiro Crew checkout to
+  // Its own state, not an error: the backend found no Sao Khuê checkout to
   // manage, which on a first run is simply a question nobody has answered yet.
   const needsSetup = !fleetError && !!fleet?.needs_setup
   // Either way the fleet is UNKNOWN, so the same chrome is wrong: counts would

@@ -1,11 +1,11 @@
-"""Dynamic workflows for Kiro Crew — the FROZEN CONTRACT.
+"""Dynamic workflows for Sao Khuê — the FROZEN CONTRACT.
 
 This module defines the interface-first freeze for the dynamic-workflows feature:
 the ``WorkflowContext`` Protocol (the ``ctx`` DSL surface an authored workflow
 script calls) and the run-event types that drive the UI and resume.
 
 The runner, schema enforcement, the Workflows UI app, and the wrappers for the
-ports native to Kiro Crew are all written against this contract — several of them
+ports native to Sao Khuê are all written against this contract — several of them
 without importing it, so nothing but the conformance test catches a drift.
 Changing a signature or event shape here is a re-freeze and must update that test
 (GATE F2 in ``docs/system-specs/modules/workflows.md``).
@@ -166,7 +166,7 @@ class WorkflowContext(Protocol):
 
     budget: Budget
 
-    # --- ports native to Kiro Crew; None when not permitted for this run ---
+    # --- ports native to Sao Khuê; None when not permitted for this run ---
     cron: Optional[CronPort]
     memory: Optional[MemoryPort]
     learn: Optional[LearnPort]

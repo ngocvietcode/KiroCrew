@@ -60,7 +60,7 @@ class SessionConfig:
             "still ends it. On the kiro-cli or KAS backend, a Kiro sign-out from the dashboard "
             "ends it at once, whatever account it signed in with. After any other switch or "
             "sign-out of the Kiro account it signed in with, the next dashboard chat turn ends "
-            "it, and so does the next agent cron run unless Kiro Crew then cannot tell which "
+            "it, and so does the next agent cron run unless Sao Khuê then cannot tell which "
             "account is signed in, as with a social login. A session that "
             "is mid-turn then ends later instead, when its next turn starts or at a later "
             "dashboard chat turn or agent cron run. At most 10 keys are kept.",
@@ -423,7 +423,7 @@ class ResolvedBindings:
     effective_memory_config: dict
     kiro_agent: str
     execution_context: object | None = None
-    # The Kiro Crew agent's own default model, "" when it pins none. Ranks below
+    # The Sao Khuê agent's own default model, "" when it pins none. Ranks below
     # a per-session pick and above the bound kiro agent's pin / the global
     # agent.model fallback. Defaulted so existing keyword constructions and
     # test doubles built before this field stay valid.
@@ -434,7 +434,7 @@ class ResolvedBindings:
     # requested name (chat slots) must not advertise it when this is False.
     # Defaults True so constructions predating this field keep their meaning.
     requested_resolved: bool = True
-    # The Kiro Crew ALIAS whose bindings these are ("" when no alias applied). A
+    # The Sao Khuê ALIAS whose bindings these are ("" when no alias applied). A
     # caller replacing an unhonored request must store THIS, not ``kiro_agent``:
     # the stored value is re-resolved later and an alias is matched first, so a
     # physical kiro agent name that also happens to be an alias key would resolve

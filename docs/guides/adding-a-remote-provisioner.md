@@ -1,6 +1,6 @@
 # Adding a remote-provisioner lane
 
-A **remote instance** registry record names an execution target this gateway can reach through a loopback tunnel. Usually that target runs a complete Kiro Crew gateway; the `fargate` connection method instead reaches a crew container's turn API. A human can type coordinates into **Settings → Remote Crew**, while a **provisioner** can create the target first and register it afterwards.
+A **remote instance** registry record names an execution target this gateway can reach through a loopback tunnel. Usually that target runs a complete Sao Khuê gateway; the `fargate` connection method instead reaches a crew container's turn API. A human can type coordinates into **Settings → Remote Crew**, while a **provisioner** can create the target first and register it afterwards.
 
 The stock build always ships the EC2 provisioner and also exposes the Fargate provisioner when `cloud.json` contains a complete `fargate` block. This guide is for the case where you need another lane — a managed dev-environment service, a fleet API, a different container platform — and it answers three questions in order: how a remote instance is reached today, which parts of that are an interface you may implement, and what a new lane actually has to write.
 
@@ -205,7 +205,7 @@ A lane whose sign-in involves **no remote login** — one that hands the box a c
 |---|---|
 | `ssm` | The machine is an EC2 instance or an SSM-managed instance in an AWS account the user's credentials reach. Buys you no inbound port, no SSH key, and reachability as an IAM decision |
 | `ssh` | Anything else — a container task, a managed environment, a machine outside AWS. Needs a reachable host and a key, but is the only option when there is no SSM agent |
-| `fargate` | An ECS task exposing the Kiro Crew turn API and addressed by an ECS task target. It uses the SSM forwarder but has no dashboard token or remote `kirocrew` process |
+| `fargate` | An ECS task exposing the Sao Khuê turn API and addressed by an ECS task target. It uses the SSM forwarder but has no dashboard token or remote `kirocrew` process |
 
 Set `remote_port` to the port your gateway actually binds. The two ends of one instance must name the same port or the tunnel forwards to nothing.
 
@@ -245,7 +245,7 @@ The RFC's own acceptance conditions are worth copying for any lane: `provision` 
 
 ### Example 2: a managed dev-environment service, reached over SSH
 
-The setup: a service hands out a machine from a prebuilt image that already contains Kiro Crew, reachable over SSH. This is the lane where the seam earns the most, because most of the work is already done by the image.
+The setup: a service hands out a machine from a prebuilt image that already contains Sao Khuê, reachable over SSH. This is the lane where the seam earns the most, because most of the work is already done by the image.
 
 | Method | What it does |
 |---|---|

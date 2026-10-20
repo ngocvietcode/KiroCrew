@@ -679,7 +679,7 @@ class TestProjectConfigIsContained:
         `safe_child` answers "does this resolve inside the project", and an IN-PROJECT
         link satisfies it — so `.papyrus.json -> paper.tex` passed, and `set_main_file`
         (reached from `resolve_main_file`, i.e. every compile) replaced the user's
-        manuscript with JSON. This is a file KiroCrew owns and writes by name, so a link
+        manuscript with JSON. This is a file SaoKhue owns and writes by name, so a link
         at that name is illegitimate wherever it points — same reasoning as the
         generated-artifact guard in `latex`.
         """
@@ -936,7 +936,7 @@ class TestTheWalkAndTheScanRefuseJunctionsToo:
     """Both directory walks must refuse a link through ``is_reparse_link``.
 
     ``is_reparse_link``'s own docstring states the contract: "every place this
-    module refuses a link at a name Kiro Crew owns has to refuse a junction too, or
+    module refuses a link at a name Sao Khuê owns has to refuse a junction too, or
     the refusal is POSIX-only". ``safe_project_dir`` honours it. ``list_files`` and
     ``list_projects`` asked ``is_symlink()``, which does NOT report a Windows
     directory junction -- and a junction is precisely a DIRECTORY link, so it is the

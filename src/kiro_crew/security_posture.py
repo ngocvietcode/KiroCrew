@@ -634,7 +634,7 @@ _REDACTION_SINKS: tuple[tuple[str, str, str], ...] = (
     (
         "Session transfer bundle",
         "dashboard/session_transfer.py",
-        "Transcript content copied to another Kiro Crew instance over an Instances "
+        "Transcript content copied to another Sao Khuê instance over an Instances "
         "tunnel. The bundle LEAVES this host, so it is an output boundary: a "
         "transcript written before the redactors existed (or carried in from a "
         "channel) can still hold a raw credential on disk, and relying on the "
@@ -994,7 +994,7 @@ _REDACTION_SINKS: tuple[tuple[str, str, str], ...] = (
         "Onboarding import",
         "onboarding_scan.py",
         "Text imported from a foreign agent's config (instructions, memories, skills, "
-        "settings and the other import categories) before it enters Kiro Crew.",
+        "settings and the other import categories) before it enters Sao Khuê.",
     ),
     (
         "Discord / Telegram / WeCom / Webex",
@@ -1750,7 +1750,7 @@ _REDACTION_SINKS: tuple[tuple[str, str, str], ...] = (
         "Process-tree diagnostics",
         "diag/procs.py",
         "The command line, working directory and four environment values of every "
-        "process in the Kiro Crew family, rendered into the read-only process view "
+        "process in the Sao Khuê family, rendered into the read-only process view "
         "that answers the dashboard and the debug MCP tool. Every one of those "
         "fields belongs to the process being inspected rather than to this code, so "
         "each passes the shared credential redactor BEFORE it is clipped to its "
@@ -3057,7 +3057,7 @@ _EXFIL_HEURISTICS: tuple[tuple[str, str], ...] = (
 
 
 def _own_namespace_prefixes() -> tuple[str, ...]:
-    """Home-relative prefixes that belong to KiroCrew / kiro-cli itself.
+    """Home-relative prefixes that belong to SaoKhue / kiro-cli itself.
 
     Derived from the crew data-home prefixes, plus the ``.kiro`` parent that
     holds kiro-cli's own state and the gateway's auth staging dir. Used only to
@@ -3077,7 +3077,7 @@ def _sensitive_path_items() -> list[PostureItem]:
         first = entry.split("/", 1)[0]
         if first in own:
             detail = (
-                "Kiro Crew trust root — agent file tools can neither read nor write it; "
+                "Sao Khuê trust root — agent file tools can neither read nor write it; "
                 "shell reach follows its sandbox disposition"
             )
         else:

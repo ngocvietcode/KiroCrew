@@ -183,7 +183,7 @@ class TestConflictStrategies:
                 "resolvable": True,
             }
         ]
-        # Kiro Crew's copy is untouched.
+        # Sao Khuê's copy is untouched.
         assert self._installed(destination) == {"codex/review": "# Original\n"}
 
     def test_rename_installs_alongside_and_reports_the_new_name(self, tmp_path: Path) -> None:

@@ -679,7 +679,7 @@ def test_windows_filter_is_scoped_to_the_test_root(tmp_path, monkeypatch) -> Non
 # reached by ``setup.cfg``'s ``testpaths = ... src/kiro_crew/apps/builtins``. Four
 # of its modules ``import httpx`` (and one ``fastapi``/``uvicorn``) at module top
 # level -- deps that ``container/requirements.txt`` marks "Container runtime only.
-# These must NOT become dependencies of the Kiro Crew app itself", so the app's own
+# These must NOT become dependencies of the Sao Khuê app itself", so the app's own
 # CI env does not carry them. Its conftest therefore sets ``collect_ignore_glob`` to
 # skip the suite when those collection-time deps are absent, rather than raising a
 # ``ModuleNotFoundError`` at collection that cascades every backend shard. These

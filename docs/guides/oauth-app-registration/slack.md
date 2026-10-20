@@ -1,36 +1,36 @@
-# Register a Slack OAuth app for Kiro Crew Connections
+# Register a Slack OAuth app for Sao Khuê Connections
 
-*Who this is for: the person who owns (or can create apps in) the Slack workspace that Kiro Crew should read. You need a browser and a Slack account with permission to install apps in that workspace. Expected time: 20 minutes, plus any wait for a workspace admin to approve the app.*
+*Who this is for: the person who owns (or can create apps in) the Slack workspace that Sao Khuê should read. You need a browser and a Slack account with permission to install apps in that workspace. Expected time: 20 minutes, plus any wait for a workspace admin to approve the app.*
 
 **Slack has no Connections entry yet** — see the
 [index](README.md) for the providers pre-registered on this build — so its card
 and its **Connect** button appear once that entry ships. Registering the redirect
 URI below now means it already matches when it does.
 
-This runbook covers the **Slack MCP server** (`https://mcp.slack.com/mcp`), which lets Kiro Crew search and read Slack on behalf of the signed-in user. It is not the Slack channel bot described in `docs/guides/slack-setup.md`; that is a separate feature with separate tokens. You can reuse one Slack app for both, but this document only covers the MCP side.
+This runbook covers the **Slack MCP server** (`https://mcp.slack.com/mcp`), which lets Sao Khuê search and read Slack on behalf of the signed-in user. It is not the Slack channel bot described in `docs/guides/slack-setup.md`; that is a separate feature with separate tokens. You can reuse one Slack app for both, but this document only covers the MCP side.
 
 ## Before you start
 
 - A Slack workspace where you can create and install apps. If app approval is turned on for the workspace, an admin must approve the app before it can be installed (see section 4).
 - Your Slack workspace must allow the app to use the MCP server. Slack states: "Only directory-published apps or internal apps may use MCP." An app you create in your own workspace and never distribute is an internal app, so a single-workspace install qualifies. Do **not** turn on public distribution: "unlisted apps are prohibited from using MCP."
-- Kiro Crew installed and its dashboard reachable, so you can open **Settings → OAuth Apps**.
+- Sao Khuê installed and its dashboard reachable, so you can open **Settings → OAuth Apps**.
 - Facts you will need to type exactly:
   - Redirect URI: `http://localhost:48106/callback`
   - MCP endpoint: `https://mcp.slack.com/mcp`
-  - Slack does not support Dynamic Client Registration, so the Client ID must be created by hand and entered into Kiro Crew.
-  - The app must have **PKCE** enabled (section 1). Kiro Crew then authenticates as a public client, and the Client secret field in Kiro Crew can stay empty (section 5).
+  - Slack does not support Dynamic Client Registration, so the Client ID must be created by hand and entered into Sao Khuê.
+  - The app must have **PKCE** enabled (section 1). Sao Khuê then authenticates as a public client, and the Client secret field in Sao Khuê can stay empty (section 5).
 
 ## 1. Create the app
 
 1. Open [https://api.slack.com/apps](https://api.slack.com/apps) and sign in to the workspace.
 2. Click **Create New App**.
 3. Choose **From scratch**. (A manifest also works; Slack's own MCP sample uses **From a manifest**. From scratch is simpler because you only need OAuth settings, no bot user, events or interactivity.)
-4. **App Name**: something recognisable, for example `Kiro Crew Connections`. Names must be unique within the workspace.
-5. **Pick a workspace to develop your app in**: select the workspace Kiro Crew should read.
+4. **App Name**: something recognisable, for example `Sao Khuê Connections`. Names must be unique within the workspace.
+5. **Pick a workspace to develop your app in**: select the workspace Sao Khuê should read.
 6. Click **Create App**. You land on **Basic Information**.
 7. Enable MCP for the app: in the left sidebar open the **Agents** section and switch the **Slack Model Context Protocol (MCP) Server** toggle to **On**. Slack's sample-app guide names this exact toggle; if you do not see the Agents section, refresh the page after the app is created.
-8. Enable PKCE: in the left sidebar under **Features**, click **OAuth & Permissions** and turn on the **PKCE** setting. Slack: "For standard (non-directory) apps, you can find the PKCE setting in the app settings under the OAuth & Permissions sidebar section." Do this **before** adding the redirect URL in section 2, because Slack only treats a `localhost` redirect as a desktop redirect "if the app has opted into PKCE". Be aware that this is permanent: "Enabling PKCE marks your app as a public client, which is a one-way operation. It cannot be disabled without contacting Slack support." If you would rather not convert an existing app, create a new one for Kiro Crew.
-9. Back on **Basic Information**, scroll to **App Credentials** and note the **Client ID**. You will paste it into Kiro Crew in section 5. You do not need the **Client Secret** for a PKCE app (section 5 explains why); if you do reveal it, treat it like a password.
+8. Enable PKCE: in the left sidebar under **Features**, click **OAuth & Permissions** and turn on the **PKCE** setting. Slack: "For standard (non-directory) apps, you can find the PKCE setting in the app settings under the OAuth & Permissions sidebar section." Do this **before** adding the redirect URL in section 2, because Slack only treats a `localhost` redirect as a desktop redirect "if the app has opted into PKCE". Be aware that this is permanent: "Enabling PKCE marks your app as a public client, which is a one-way operation. It cannot be disabled without contacting Slack support." If you would rather not convert an existing app, create a new one for Sao Khuê.
+9. Back on **Basic Information**, scroll to **App Credentials** and note the **Client ID**. You will paste it into Sao Khuê in section 5. You do not need the **Client Secret** for a PKCE app (section 5 explains why); if you do reveal it, treat it like a password.
 
 Do not click anything under **Manage Distribution** / **Distribute App**. Activating public distribution turns the app into an "unlisted" distributed app, which Slack bars from MCP.
 
@@ -46,11 +46,11 @@ Do not click anything under **Manage Distribution** / **Distribute App**. Activa
 
 4. Click **Add**, then **Save URLs**.
 
-Kiro Crew registers this provider's callback on the host name `localhost` because that is the only host name Slack exempts from its HTTPS rule. Slack's OAuth guide says: "The `redirect_uri` must use HTTPS. Alternatively, you can configure a Redirect URL in the App Management page under OAuth & Permissions. A Redirect URL must also use HTTPS." Its PKCE guide adds the one carve-out: "Redirects to `localhost` (e.g. `http://localhost:8080/auth`) are treated as desktop redirects if the app has opted into PKCE. If the app has never enabled PKCE, they will be treated like a server redirect." That is why the app must have PKCE enabled, and why the redirect uses `localhost` rather than the `127.0.0.1` literal most other Kiro Crew providers use.
+Sao Khuê registers this provider's callback on the host name `localhost` because that is the only host name Slack exempts from its HTTPS rule. Slack's OAuth guide says: "The `redirect_uri` must use HTTPS. Alternatively, you can configure a Redirect URL in the App Management page under OAuth & Permissions. A Redirect URL must also use HTTPS." Its PKCE guide adds the one carve-out: "Redirects to `localhost` (e.g. `http://localhost:8080/auth`) are treated as desktop redirects if the app has opted into PKCE. If the app has never enabled PKCE, they will be treated like a server redirect." That is why the app must have PKCE enabled, and why the redirect uses `localhost` rather than the `127.0.0.1` literal most other Sao Khuê providers use.
 
-Slack also documents confidential OAuth for MCP clients ("Slack supports confidential OAuth for MCP clients. You'll need to use your app's `client_id` and `client_secret`"), but a confidential client would need an https redirect, which Kiro Crew's loopback listener cannot serve. The PKCE + `localhost` route is the documented alternative.
+Slack also documents confidential OAuth for MCP clients ("Slack supports confidential OAuth for MCP clients. You'll need to use your app's `client_id` and `client_secret`"), but a confidential client would need an https redirect, which Sao Khuê's loopback listener cannot serve. The PKCE + `localhost` route is the documented alternative.
 
-Kiro Crew's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and the port is fixed per provider (Slack is 48106). Remote, tailnet or Docker installs do not need a second redirect URI. After you approve the app, the browser is sent to that loopback URL, which is unreachable from your laptop when the gateway runs elsewhere; copy the full landing URL from the browser's address bar, paste it into the Kiro Crew dashboard when prompted, and the gateway replays it to its own loopback listener.
+Sao Khuê's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and the port is fixed per provider (Slack is 48106). Remote, tailnet or Docker installs do not need a second redirect URI. After you approve the app, the browser is sent to that loopback URL, which is unreachable from your laptop when the gateway runs elsewhere; copy the full landing URL from the browser's address bar, paste it into the Sao Khuê dashboard when prompted, and the gateway replays it to its own loopback listener.
 
 ## 3. Scopes and permissions
 
@@ -77,14 +77,14 @@ Scopes are additive per installation and cannot be removed from an existing toke
 - **Slack Marketplace review is not required** for a single-workspace install. Slack's rule is "Only apps published in the Slack Marketplace and internal apps can use MCP at this time; unlisted apps are prohibited from using MCP." An app created in your workspace and installed only there is an internal app. Marketplace review becomes necessary only if you want to install the same app into other organisations' workspaces.
 - **Workspace admin approval** may be required. Slack's harness guide lists as a prerequisite "Access to a Slack workspace with the MCP integration approved by your workspace admin", and its troubleshooting says to "Verify that your workspace admin has approved the MCP integration for your app." If your workspace uses **Only allow pre-approved apps** (Slack help: *Manage app approval for your workspace*), submit the app for approval from the OAuth & Permissions page's install prompt and wait for an admin.
 - **Enterprise Grid**: Slack's MCP documentation does not state any Grid-specific requirement beyond normal org-level app approval. If your workspace belongs to a Grid org, expect the approval to happen at the org level; Slack's help article *Manage access to the Slack MCP server through your identity provider* describes additional IdP-based controls an org admin may have turned on.
-- **IP allowlist**: if the app has **Allowed IP Address Ranges** configured, Kiro Crew's egress IP must be in it or MCP requests are rejected.
+- **IP allowlist**: if the app has **Allowed IP Address Ranges** configured, Sao Khuê's egress IP must be in it or MCP requests are rejected.
 
-## 5. Enter the credentials in Kiro Crew
+## 5. Enter the credentials in Sao Khuê
 
-1. Open the Kiro Crew dashboard and go to **Settings → OAuth Apps**.
+1. Open the Sao Khuê dashboard and go to **Settings → OAuth Apps**.
 2. Find the **Slack** card.
 3. Paste the **Client ID** from Basic Information → App Credentials into **Client ID**.
-4. Leave **Client secret** empty. Slack's PKCE guide says the client "should call the `oauth.v2.access` API method, but should not include `client_secret` in the parameters. Instead, the client should provide the code and the `code_verifier` secret it created earlier", and that for desktop redirects "Refreshes for those tokens do not require a `client_secret` because they are intended to be used on a public client." Kiro Crew sends the PKCE parameters on every Slack flow. If you do enter a secret, Kiro Crew includes it in the token exchange as well; Slack does not document how it treats a request carrying both, so this runbook recommends the documented shape and leaving the field empty.
+4. Leave **Client secret** empty. Slack's PKCE guide says the client "should call the `oauth.v2.access` API method, but should not include `client_secret` in the parameters. Instead, the client should provide the code and the `code_verifier` secret it created earlier", and that for desktop redirects "Refreshes for those tokens do not require a `client_secret` because they are intended to be used on a public client." Sao Khuê sends the PKCE parameters on every Slack flow. If you do enter a secret, Sao Khuê includes it in the token exchange as well; Slack does not document how it treats a request carrying both, so this runbook recommends the documented shape and leaving the field empty.
 5. Use the card's copy button for the redirect URI to confirm it reads `http://localhost:48106/callback`, matching what you saved in section 2.
 6. Save.
 
@@ -99,7 +99,7 @@ Container or CI alternative: set the environment variable `KIROCREW_CONNECTIONS_
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Slack shows `bad_redirect_uri` | The URI Kiro Crew sent does not match a saved Redirect URL, or PKCE is not enabled on the app so Slack treats `http://localhost` as a server redirect and demands https | Re-check section 2, and confirm the PKCE setting on OAuth & Permissions is on (section 1 step 8) |
+| Slack shows `bad_redirect_uri` | The URI Sao Khuê sent does not match a saved Redirect URL, or PKCE is not enabled on the app so Slack treats `http://localhost` as a server redirect and demands https | Re-check section 2, and confirm the PKCE setting on OAuth & Permissions is on (section 1 step 8) |
 | Slack rejects the authorization because of bot scopes | A Bot Token Scope was added; desktop redirects cannot request bot scopes | Remove all Bot Token Scopes (section 3) and retry |
 | Slack shows `invalid_team_for_non_distributed_app` | You authorised against a different workspace than the one the app was created in | Sign in to the correct workspace and retry; do not enable distribution |
 | Consent page says the app needs admin approval | Workspace has app approval turned on | Ask an admin to approve the request (section 4) |
@@ -111,7 +111,7 @@ To revoke the grant later: in Slack, click your profile picture → **Preference
 
 ## Known limits
 
-- Slack requires https redirect URLs; the only plain-http exception is `localhost` on an app with PKCE enabled. Kiro Crew therefore registers `http://localhost:48106/callback` and the app must stay a PKCE (public) client; PKCE cannot be turned off again without Slack support.
+- Slack requires https redirect URLs; the only plain-http exception is `localhost` on an app with PKCE enabled. Sao Khuê therefore registers `http://localhost:48106/callback` and the app must stay a PKCE (public) client; PKCE cannot be turned off again without Slack support.
 - Tokens issued through a desktop-style (PKCE + `localhost`) redirect are rotating tokens whose refresh tokens expire after 30 days ("if PKCE is enabled, all refresh tokens issued to your app will expire in 30 days instead of lasting indefinitely"). Users must re-consent monthly.
 - Bot scopes cannot be requested through this redirect type; only user scopes work.
 - No Dynamic Client Registration and no SSE transport: "We do not support SSE-based connections or Dynamic Client Registration at this time."

@@ -146,7 +146,7 @@ async def diagnose(self: SshTunnelManager, instance_id: str) -> dict | None:
 
 
 async def restart_remote(self: SshTunnelManager, instance_id: str) -> dict:
-    """Restart the remote Kiro Crew gateway over the instance's transport.
+    """Restart the remote Sao Khuê gateway over the instance's transport.
 
     Uses the remote ``kirocrew restart`` (itself systemd/launchd-aware),
     resolved via the run-marker first (the running gateway's own launcher,
@@ -212,7 +212,7 @@ async def _remote_command_target(
         return {
             "code": "headless",
             "message": (
-                f"a headless crew runs no Kiro Crew gateway to {verb}; "
+                f"a headless crew runs no Sao Khuê gateway to {verb}; "
                 "stop and relaunch it instead"
             ),
         }

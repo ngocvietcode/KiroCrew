@@ -15,7 +15,7 @@ import {
  *
  * Theme manifests carry names, never components or SVG markup. Keeping this a
  * closed map preserves the installed-theme trust boundary while letting packs
- * reuse Kiro Crew's existing carousel animation.
+ * reuse Sao Khuê's existing carousel animation.
  */
 export const THEME_LOADER_ICONS = {
   cloud: Cloud,

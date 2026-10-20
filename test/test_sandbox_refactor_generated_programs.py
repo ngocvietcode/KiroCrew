@@ -44,7 +44,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 #: The launcher docstring line, spelled with the product name in two words.
-_DOC_LINE = '"""Namespace sandbox launcher — spawned by Kiro Crew.'
+_DOC_LINE = '"""Namespace sandbox launcher — spawned by Sao Khuê.'
 
 _UID, _GID = 4242, 4343
 

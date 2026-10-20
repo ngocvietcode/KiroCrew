@@ -12,8 +12,8 @@ name: auth-sign-in-card-signed-out
 tier: smoke
 feature: auth
 user_story: >-
-  As a Kiro Crew operator whose agents will not start, I want the dashboard to show me
-  whether Kiro Crew holds a Kiro identity and how to sign in, so that I can
+  As a Sao Khuê operator whose agents will not start, I want the dashboard to show me
+  whether Sao Khuê holds a Kiro identity and how to sign in, so that I can
   fix the missing sign-in without reading logs.
 docs_url: docs/system-specs/modules/kas-auth.md
 summary: Open Settings > Agent Harness and read the signed-out Kiro sign-in card

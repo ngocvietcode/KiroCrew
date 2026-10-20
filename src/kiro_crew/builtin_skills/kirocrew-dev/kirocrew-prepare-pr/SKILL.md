@@ -1,17 +1,17 @@
 ---
 name: kirocrew-prepare-pr
-description: LOAD THIS FOR EVERY KIRO CREW PR you open or update (Kiro Crew repo only; not other repos or CRs). Runs the whole loop — issue + tier, commit, sync, squash, push, drive CI and AI review to green, fix a red main, arm auto-merge and watch it land (24h). 'push my changes' = prepare-only.
+description: LOAD THIS FOR EVERY SAO KHUÊ PR you open or update (Sao Khuê repo only; not other repos or CRs). Runs the whole loop — issue + tier, commit, sync, squash, push, drive CI and AI review to green, fix a red main, arm auto-merge and watch it land (24h). 'push my changes' = prepare-only.
 always: false
-triggers: prepare pr, prep pr, prepare pull request, ship pr, ship this pr, raise pr, open pr, create pr, update pr, Kiro Crew PR, commit and push, open a pull request, get pr ready, get the pr review ready, review ready pr, make it green, make the pr green, drive pr green, babysit pr, handle review comments, address review comments, fix ci, pr ci failing, main is red, fix merge conflict, rebase pr, poll ci, keep going until green, land it, land pr, land this pr, auto-merge, auto-merge it, enable auto-merge
+triggers: prepare pr, prep pr, prepare pull request, ship pr, ship this pr, raise pr, open pr, create pr, update pr, Sao Khuê PR, commit and push, open a pull request, get pr ready, get the pr review ready, review ready pr, make it green, make the pr green, drive pr green, babysit pr, handle review comments, address review comments, fix ci, pr ci failing, main is red, fix merge conflict, rebase pr, poll ci, keep going until green, land it, land pr, land this pr, auto-merge, auto-merge it, enable auto-merge
 ---
 
 # Prepare PR
 
 Drive the working tree to a **merged PR**: open it review-ready, then keep driving
 until CI and the review bots are satisfied and GitHub lands it. Opening the PR is
-the midpoint, not the end. Every Kiro Crew author — maintainer or outside
+the midpoint, not the end. Every Sao Khuê author — maintainer or outside
 contributor — runs this same loop, so it also states the repository's rules.
-It is for the Kiro Crew repository only: in any other repository, ignore it.
+It is for the Sao Khuê repository only: in any other repository, ignore it.
 
 This file carries only what the loop executes: which script to run and what its
 exit code means. A script's flags live in its usage text, each CI lane's rules in
@@ -37,7 +37,7 @@ make it green" is the full loop. A hold turns off Phase 4's auto-merge, nothing 
 check.** Auto-merge hands the merge to GitHub, which lands it only once the repo's
 own required reviews and checks pass.
 
-## Kiro Crew CI at a glance
+## Sao Khuê CI at a glance
 
 Full detail: `docs/ci/ci-and-reviews.md` and `CONTRIBUTING.md`. CI wins over prose.
 
@@ -128,7 +128,7 @@ a concern gets a reply.
 
 ## Review repair routing
 
-**Kiro Crew PR CI AI comments only**, including fork lanes. These prose family
+**Sao Khuê PR CI AI comments only**, including fork lanes. These prose family
 preferences do not change CI models, profile `reviewers[]`/`model_tier`, or
 Phase 2's read-only local review:
 
@@ -310,7 +310,7 @@ Its resolution order and the keys the JSON always carries: `references/rationale
 branch could drop the lane that reviews it. A ref resolving to nothing is a hard
 error (exit 2). So an **uncommitted `.prepare-pr.toml` edit is ignored**.
 
-- **In Kiro Crew:** the bundled profile supplies Playwright setup, the complete
+- **In Sao Khuê:** the bundled profile supplies Playwright setup, the complete
   gate floor, the CI-mirroring `gpt` and `opus` local reviewers,
   `single_commit = true`, and readiness context `PR Readiness`. Read the model
   IDs from the resolved profile; repair-family preferences above never replace
@@ -319,7 +319,7 @@ error (exit 2). So an **uncommitted `.prepare-pr.toml` edit is ignored**.
 
 **`single_commit` governs history handling in one place.** When `true`, run the
 squash (Phase 1.4) and the post-squash guard (Phase 3.1); when `false`, skip both
-and keep the branch's history. Kiro Crew allows at most **two** commits per PR:
+and keep the branch's history. Sao Khuê allows at most **two** commits per PR:
 squash to one unless a mechanical follow-up is worth keeping separable.
 
 Design + `.prepare-pr.toml` schema: `docs/request-for-change/rfc-prepare-pr-portability.md`.
@@ -406,7 +406,7 @@ full suites are CI's job and the Phase 3 poll is the authority on them.
 
 1. **Run `setup[]` once, then `gates[]` on every pass.** Setup provisions a per-user
    cache; a setup failure is an environment problem to fix or report first. Gates
-   are pure checks: all must exit 0 before review. For Kiro Crew that is the
+   are pure checks: all must exit 0 before review. For Sao Khuê that is the
    related-test runner / isort / flake8 / mypy, plus `tsc -p tsconfig.app.json`
    for frontend changes; `scripts/local-gate.py` runs both surfaces' related sets
    at once. **There is no automatic path to a full local suite**: `local-gate.py
@@ -534,11 +534,11 @@ comes after a record, never instead of one:
    three consecutive green-age re-syncs on one PR, hand it to the user.
 
    Then `python3 $SKILL_DIR/scripts/pr_status.py <pr#> --reviewers <profile reviewer names>`.
-   **Always pin the fleet** (Kiro Crew: `--reviewers gpt,opus`): bare `pr_status.py`
+   **Always pin the fleet** (Sao Khuê: `--reviewers gpt,opus`): bare `pr_status.py`
    runs discovery mode, where a lane that never posted passes silently.
 
    - **0** → answer its punchlines, then Phase 4.
-   - **20** → run `pr_findings.py` and **TRIAGE before re-pushing**. An `unanswered CONCERNS from <LANE>` reason is cleared by POSTING dispositions, not by pushing. `pr_status.py` already reads only the current head's rollup and drops rows a newer run of the same check displaced; never dedupe check rows by name by hand, which drops live rows. **(d) Superseded or unpublished verdict** (`superseded verdict`, `verdict not published, re-run this lane`) → re-run that lane, or override at this head. **(a) CI/build/test failure** → read `gh run view <run-id> --log-failed`. If the same check also fails on main, follow *When main is red*. Otherwise, once you decide to fix, cancel the head's in-flight runs, reproduce the **exact failing node ids** locally, and fix the **root cause**; a flake confirmed and recorded per *Before you rerun a red test* gets `gh run rerun <run-id> --failed` (or `--job <job-id>`) once, never a whole-run replay. **(b) Review finding** → whole-design verdicts first, then the three questions. For Kiro Crew Opus-family or GPT 6.1 findings that need code changes, MUST execute [Review repair routing](#review-repair-routing): delegate the minimal fix and self-review to the model-pinned subagent, then verify in the parent. Otherwise rebut with evidence (never dismiss a CodeQL alert merely to pass), override it per *Overriding a false positive*, or ask a maintainer. **(c) Conflict / behind base** → Phase 1 handles it. Then **loop back to Phase 1** → 2 → 3 carrying those fixes.
+   - **20** → run `pr_findings.py` and **TRIAGE before re-pushing**. An `unanswered CONCERNS from <LANE>` reason is cleared by POSTING dispositions, not by pushing. `pr_status.py` already reads only the current head's rollup and drops rows a newer run of the same check displaced; never dedupe check rows by name by hand, which drops live rows. **(d) Superseded or unpublished verdict** (`superseded verdict`, `verdict not published, re-run this lane`) → re-run that lane, or override at this head. **(a) CI/build/test failure** → read `gh run view <run-id> --log-failed`. If the same check also fails on main, follow *When main is red*. Otherwise, once you decide to fix, cancel the head's in-flight runs, reproduce the **exact failing node ids** locally, and fix the **root cause**; a flake confirmed and recorded per *Before you rerun a red test* gets `gh run rerun <run-id> --failed` (or `--job <job-id>`) once, never a whole-run replay. **(b) Review finding** → whole-design verdicts first, then the three questions. For Sao Khuê Opus-family or GPT 6.1 findings that need code changes, MUST execute [Review repair routing](#review-repair-routing): delegate the minimal fix and self-review to the model-pinned subagent, then verify in the parent. Otherwise rebut with evidence (never dismiss a CodeQL alert merely to pass), override it per *Overriding a false positive*, or ask a maintainer. **(c) Conflict / behind base** → Phase 1 handles it. Then **loop back to Phase 1** → 2 → 3 carrying those fixes.
    - **10** → still running. In a chat slot, load `kirocrew-core::monitor_start`
      through `tool_search`, request a finite same-session loop, then END THE TURN.
      Slot-less subagent, cron, webhook and task-runner turns cannot arm one: use
@@ -551,7 +551,7 @@ comes after a record, never instead of one:
                "green_age 30: re-sync, run the related tests, push, post one "
                "Rebased comment. pr_status 10: stay silent. Exit 20: read "
                "pr_findings.py and triage; a red main follows When main is red; "
-               "Kiro Crew AI repairs MUST follow kirocrew-prepare-pr Review repair routing "
+               "Sao Khuê AI repairs MUST follow kirocrew-prepare-pr Review repair routing "
                "with model-pinned subagents, then parent verification and Phases "
                "1 -> 2 -> 3. Push only if authorized. Exit 0: Phase 4, arm "
                "auto-merge (omit when the merge is on hold), keep watching; "

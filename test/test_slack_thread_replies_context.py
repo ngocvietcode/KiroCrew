@@ -57,7 +57,7 @@ class _ThreadSlack(_golden.RecordingSlackClient):
         return _PARENT
 
     async def fetch_message_detail(self, channel, ts):
-        return {"text": _PARENT, "bot_id": _OWN_BOT, "bot_name": "Kiro Crew"}
+        return {"text": _PARENT, "bot_id": _OWN_BOT, "bot_name": "Sao Khuê"}
 
     async def fetch_thread_replies(
         self, channel, thread_ts, limit=200, warn_on_pagination=True, *, oldest=None, latest=None

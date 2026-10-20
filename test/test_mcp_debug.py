@@ -171,7 +171,7 @@ class TestTheDiagGapIsRelayedVerbatim:
         assert result["error"]["code"] != "unavailable"
 
     def test_tools_are_advertised_even_though_three_cannot_answer(self) -> None:
-        """A missing tool reads as 'Kiro Crew cannot do this', which is wrong."""
+        """A missing tool reads as 'Sao Khuê cannot do this', which is wrong."""
         assert len(server._list_tools()) == 5
 
 

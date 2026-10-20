@@ -106,7 +106,7 @@ this document argues for elsewhere.
     {
       "id": "credential-custody",
       "obligation": "Credential custody: a ConformanceRun binds to an authorized account/tenant via account_binding_ref and never carries a raw credential",
-      "owner": "kiro-cli owns the OAuth chain and token custody; Kiro Crew holds no connection credential",
+      "owner": "kiro-cli owns the OAuth chain and token custody; Sao Khuê holds no connection credential",
       "concrete_dependency": "Custody anchor is merged connections.md, its credential-boundary section: kiro-cli owns the OAuth mint/status/ownership path, the runner never holds a credential, and account_binding_ref is 'never a raw credential' per the manifest — this custody property is established today by that merged section. W01's landed OperationContext now carries binding_ref as the typed, credential-free reference. The concrete runtime interface that resolves that reference to an authorized binding inside kiro-cli is still absent; this slice does NOT assume it and reports the missing resolution path as a named gap rather than inventing one",
       "later_integration_step": "Post-W01 runtime integration resolves binding_ref inside kiro-cli without exposing credential bytes",
       "current_state": "boundary_defined_in_merged_connections_md; typed_binding_reference_landed_in_control_plane; credential_resolution_pending"

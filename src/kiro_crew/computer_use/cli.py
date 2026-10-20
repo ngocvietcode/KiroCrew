@@ -199,7 +199,7 @@ def _cmd_doctor(*, as_json: bool) -> None:
         print()
         print(
             "Note: these permission readings are advisory. macOS attributes a\n"
-            "grant to the process that launched Kiro Crew, so 'missing' does not\n"
+            "grant to the process that launched Sao Khuê, so 'missing' does not\n"
             "always mean unavailable — and computer use is never gated on them."
         )
 

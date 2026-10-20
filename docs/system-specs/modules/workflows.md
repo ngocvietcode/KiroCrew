@@ -3,13 +3,13 @@
 ## Overview
 
 A **dynamic workflow** is one LLM-authored Python module that orchestrates several
-Kiro Crew agents through ordered phases. The module declares a pure-literal `META`
+Sao Khuê agents through ordered phases. The module declares a pure-literal `META`
 dict and a single `async def workflow(ctx)` entrypoint; the engine validates it
 statically, executes it in a restricted namespace under hard ceilings, and streams
 a typed event journal that drives the UI, the chat `workflow_*` MCP tools, and
 resume.
 
-This module also provides Kiro Crew's shared orchestration substrate: run
+This module also provides Sao Khuê's shared orchestration substrate: run
 identity, lifecycle state, event history, exact source, provenance, cancellation
 binding, and the reusable definition library. `RunRegistry.has_pending_work_for`
 provides a session-scoped, in-memory execution/terminal-handoff query for
@@ -304,7 +304,7 @@ same terminal path.
 > early-stop never trips and no `budget_update` event is ever emitted. Wiring
 > per-call token cost into `charge()` is the missing half.
 
-### ports native to Kiro Crew
+### ports native to Sao Khuê
 
 Four Protocols, each `Optional` on `ctx` and `None` when the host did not wire it:
 
@@ -522,7 +522,7 @@ host-surface coverage from the budget lint's positional-only support.
 ## Structured output (`schema=`)
 
 `schema.py` is a dependency-free validator for the JSON-Schema **subset** the DSL
-actually uses. Kiro Crew's provider layer has no native schema enforcement and the
+actually uses. Sao Khuê's provider layer has no native schema enforcement and the
 runtime ships neither `jsonschema` nor a JSON-Schema-consuming pydantic path.
 
 Supported: `type` (`object`, `array`, `string`, `integer`, `number`, `boolean`,
@@ -870,7 +870,7 @@ Every invocation still persists its authored script as part of the run snapshot
 above. Promotion into the reusable library is a separate, explicit user action.
 `WorkflowDefinitionLibrary` stores one JSON record per saved workflow at
 `<KIROCREW_HOME>/workflow_library/<workflow_id>.json`, which is global to the
-Kiro Crew data home and therefore shared by Kiro and adapted harnesses such as
+Sao Khuê data home and therefore shared by Kiro and adapted harnesses such as
 KAS. Unlike run snapshots, definitions do not follow the configurable
 `workflows.dir`: `workflow_library` is a dedicated `_CREW_SECRET_LEAVES`
 directory, so the shared sensitive-path gate blocks agent file tools and shell
@@ -1071,7 +1071,7 @@ See [Atomic run identity allocation](#atomic-run-identity-allocation).
 ### Authoring
 
 `author(intent)` turns a natural-language intent into a validated script using the
-same in-session model plumbing as the rest of Kiro Crew. Session creation has its
+same in-session model plumbing as the rest of Sao Khuê. Session creation has its
 own narrow startup retry: up to three total attempts, each with a fresh isolated
 key and deterministic bounded backoff, only for `AcpRequestTimeout`,
 `AcpRuntimeDead`, or an `AcpError` accepted by the shared transient classifier.
@@ -1588,7 +1588,7 @@ subset has to get right.
 | C2 | Malformed or invalid model output triggers a *bounded* retry (`DEFAULT_SCHEMA_RETRIES = 2`, so at most initial plus 2 attempts), then returns `None` rather than raising or looping. | `test_workflows_schema.py::test_c2_retry_then_success`, `::test_c2_all_malformed_returns_none`, `::test_c2_schema_violation_retried_then_none` | `schema.py` (`run_with_schema`) |
 | C3 | An object that parses as JSON but violates the schema is rejected, not returned: missing `required` key, wrong type, `enum` violation, and `bool` not counting as `integer`. | `test_workflows_schema.py::test_c3_missing_required_rejected`, `::test_c3_wrong_type_rejected`, `::test_c3_enum_violation_rejected`, `::test_c3_bool_is_not_integer` | `schema.py` |
 
-### Group D: Kiro Crew's own `ctx` primitives
+### Group D: Sao Khuê's own `ctx` primitives
 
 Each native primitive delegates to a port injected per run. The gate is the
 *calling convention* (the ctx surface reaches the port with the right arguments),

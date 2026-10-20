@@ -63,7 +63,7 @@ data, or a different agent/model" has existed for a while as **advice**:
   which records in a comment that the single task "is not read as forbidden".
 
 Advice lost. The base kiro-cli prompt tells the model to "delegate to a
-sub-agent" for investigation and to preserve context, and in a Kiro Crew session
+sub-agent" for investigation and to preserve context, and in a Sao Khuê session
 the only tools named sub-agent are the two spawn tools. So a single
 investigation, a single fix, a single review each spawned one sub-agent, on
 every crew host, and the owner re-taught the rule by hand more than once. A rule

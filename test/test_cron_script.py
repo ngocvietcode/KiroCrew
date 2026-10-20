@@ -1226,7 +1226,7 @@ class TestMcpToolClient:
         Neither existing filter stops it: ``_CRON_ENV_DENY`` covers secrets and
         ``KIROCREW_OWNER_ID``, and the loader prefixes cover ``LD_*``/``PYTHON*``.
         And unlike those, the OS sandbox is not a mitigation at all -- confinement
-        bounds what the child may touch, not whose jobs Kiro Crew believes it
+        bounds what the child may touch, not whose jobs Sao Khuê believes it
         owns. Hence the reserved-namespace deny in the shared sanitizer.
         """
         from kiro_crew.cron_script import McpToolClient, _resolve_mcp_server
@@ -1296,7 +1296,7 @@ class TestMcpToolClient:
         (``sh -c 'KIROCREW_SESSION_KEY=... exec kirocrew-cron'``), so it is a
         sibling forgery channel this filter does not close and this test does not
         claim to -- confinement bounds what the child may touch, not whose jobs
-        Kiro Crew believes it owns. Closing it needs consumer-side vouching
+        Sao Khuê believes it owns. Closing it needs consumer-side vouching
         rather than another deny-list; naming the boundary here keeps the
         assertion honest about which half is proven.
         """

@@ -140,7 +140,7 @@ def resume_takes_tool_search_replay(
     transcript through native ``session/load``: the loaded transcript comes back
     without Tool Search's activated schemas, so the next inference cannot invoke
     a tool the loader reports as loaded. The provider rebuilds that registry in a
-    fresh native session and preserves the Kiro Crew conversation with a replay
+    fresh native session and preserves the Sao Khuê conversation with a replay
     instead (``providers.acp_runtime_start._start_kiro_runtime_impl``). A linked channel
     identity (``channel_id``) and every non-dashboard key keep native resume.
 

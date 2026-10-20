@@ -396,7 +396,7 @@ class _SteeringClient(_FakeClient):
 def _notice(client: _SteeringClient) -> str:
     assert [kind for kind, _ in client.trace] == ["steer", "reject"], client.trace
     text = str(client.trace[0][1])
-    assert text.startswith("[Kiro Crew host notice]")
+    assert text.startswith("[Sao Khuê host notice]")
     assert "User denied tool execution" in text
     return text
 
@@ -407,7 +407,7 @@ def _notice(client: _SteeringClient) -> str:
         (None, "tool policy of the surface", "no hook gate"),
         (
             ToolHookResult(action=TOOL_DENY, reason="Blocked by security policy: secrets dir"),
-            "blocked by a Kiro Crew safety policy",
+            "blocked by a Sao Khuê safety policy",
             "secrets dir",
         ),
         (ToolHookResult(action=TOOL_ALLOW), "tool policy of the surface", "no person to approve"),

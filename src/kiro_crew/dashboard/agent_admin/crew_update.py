@@ -101,7 +101,7 @@ async def _apply_member_approval_to_live_thread(request: web.Request, name: str,
 
 
 async def api_kirocrew_agent_update(request: web.Request) -> web.Response:
-    """PUT /api/agents/{name} — update a Kiro Crew agent."""
+    """PUT /api/agents/{name} — update a Sao Khuê agent."""
 
     denied = await _require_owner(request, "agent.update")
     if denied is not None:

@@ -287,7 +287,7 @@ class AgentRunner:
         # such need and runs `--dangerously-skip-permissions`, so it should see no
         # credential dir at all. Verified on this host that "standard" left ~/.aws
         # readable to the child; "strict" hides it (+ .gnupg, gh, gcloud, kube, …).
-        # strip_python_env so the agent's own tooling can't inherit Kiro Crew's interpreter
+        # strip_python_env so the agent's own tooling can't inherit Sao Khuê's interpreter
         # paths and import from this process's tree.
         sandboxed, scrubbed_env, cleanup = sandboxed_spawn_argv(
             list(cmd),
@@ -664,9 +664,9 @@ def _audit_fallback_tool(*, tool: str, detail: str, cwd: str | None) -> None:
 
 
 class SessionAgentRunner:
-    """A backend-AGNOSTIC agent runner that drives a Kiro Crew **provider/session** instead
+    """A backend-AGNOSTIC agent runner that drives a Sao Khuê **provider/session** instead
     of shelling out to ``claude -p`` directly (task #23). The provider is whatever the
-    Kiro Crew config selects (whichever LLM provider backend the user configured), so ANY
+    Sao Khuê config selects (whichever LLM provider backend the user configured), so ANY
     backend can power the autonomous loop — not just a single CLI on PATH.
 
     It matches :class:`AgentRunner`'s surface exactly (``run`` → :class:`AgentResult`,
@@ -707,7 +707,7 @@ class SessionAgentRunner:
         self._total_cost_usd = 0.0
         self._stop_check = stop_check
         self._on_activity = on_activity if callable(on_activity) else None
-        # The Kiro Crew provider factory (``cfg.create_provider_factory()``). Injectable for
+        # The Sao Khuê provider factory (``cfg.create_provider_factory()``). Injectable for
         # tests; resolved lazily from config when None so importing this module never loads
         # the whole config/provider stack.
         self._provider_factory = provider_factory
@@ -718,7 +718,7 @@ class SessionAgentRunner:
 
     @staticmethod
     def available() -> bool:
-        """True iff a Kiro Crew provider factory can be built (a backend is configured).
+        """True iff a Sao Khuê provider factory can be built (a backend is configured).
         Lets the backend prefer this runner; there is no subprocess fallback left, so a
         False here means the backend stays offline."""
         try:
@@ -834,7 +834,7 @@ class SessionAgentRunner:
             )
         if factory is None:
             return AgentResult(
-                ok=False, error="no Kiro Crew provider configured", duration_s=time.monotonic() - t0
+                ok=False, error="no Sao Khuê provider configured", duration_s=time.monotonic() - t0
             )
         try:
             return asyncio.run(

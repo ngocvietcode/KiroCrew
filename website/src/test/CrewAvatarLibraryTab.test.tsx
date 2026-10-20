@@ -49,7 +49,7 @@ import { BUILTIN_PACK_ID } from '../lib/appearancePacks/library'
 const BUILTIN = {
   id: BUILTIN_PACK_ID,
   name: 'Kiro',
-  author: 'Kiro Crew',
+  author: 'Sao Khuê',
   description: 'The default companion.',
   type: 'builtin',
   format: 'svg',
@@ -495,7 +495,7 @@ describe('library pane — delete', () => {
   })
 
   it('shows an author only on a custom pack, never on the built-in', async () => {
-    // "Author: Kiro Crew" on the built-in left the reader unable to tell whether
+    // "Author: Sao Khuê" on the built-in left the reader unable to tell whether
     // that named a person, a team or the app, and the "Built-in" badge already says
     // the useful part.
     mount()

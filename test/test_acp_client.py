@@ -407,7 +407,7 @@ class TestFormatAcpError:
         assert "unavailable on the backend" in out
         assert "'opus'" in out
         assert "model picker" in out
-        # Must NOT point at ~/.claude/settings.json — KiroCrew never reads it;
+        # Must NOT point at ~/.claude/settings.json — SaoKhue never reads it;
         # the model lives in config.json / the agent spec.
         assert "settings.json" not in out
         assert "config.json" in out

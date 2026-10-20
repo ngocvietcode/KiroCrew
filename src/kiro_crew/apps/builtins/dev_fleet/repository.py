@@ -58,7 +58,7 @@ class RepoUnavailable(RuntimeError):
 
 
 class RepoNotConfigured(RepoUnavailable):
-    """No Kiro Crew checkout could be found, so there is no fleet to manage.
+    """No Sao Khuê checkout could be found, so there is no fleet to manage.
 
     Distinct from a discovery FAILURE, where a checkout was named and git could
     not read it: nothing is broken here, the app simply has no checkout to point
@@ -72,7 +72,7 @@ class RepoUnreadable(RepoUnavailable):
     that would name one could not be read or parsed.
 
     Three shapes reach here: git cannot enumerate a named checkout's worktrees;
-    the path is a readable directory that does not carry the Kiro Crew markers; or
+    the path is a readable directory that does not carry the Sao Khuê markers; or
     a present ``config.json`` / ``config.local.json`` could not be read or parsed,
     so no path could be resolved at all. All carry the same consequence as
     RepoNotConfigured for every route except ``/fleet``: the fleet is unknown, so
@@ -85,7 +85,7 @@ class RepoUnreadable(RepoUnavailable):
     """
 
 
-#: Set at startup when the resolved checkout does not carry the Kiro Crew markers,
+#: Set at startup when the resolved checkout does not carry the Sao Khuê markers,
 #: to the message ``_repo()`` raises. Tiers 1-2 (env var, config) are taken
 #: verbatim, so a configured path can be a readable directory that is not this
 #: project; the message is composed on the executor at startup because it embeds
@@ -119,7 +119,7 @@ def _repo() -> str:
     if _REPO_CFG_UNREADABLE_MSG:
         raise RepoUnreadable(_REPO_CFG_UNREADABLE_MSG)
     if not MAIN_REPO:
-        raise RepoNotConfigured("no Kiro Crew checkout found to manage")
+        raise RepoNotConfigured("no Sao Khuê checkout found to manage")
     if _REPO_INVALID_MSG:
         raise RepoUnreadable(_REPO_INVALID_MSG)
     return MAIN_REPO
@@ -140,7 +140,7 @@ def _own_source_checkout() -> str | None:
 
 
 def _is_kirocrew_checkout(path: str) -> bool:
-    """Whether *path* is a Kiro Crew source checkout. Blocking — stats only.
+    """Whether *path* is a Sao Khuê source checkout. Blocking — stats only.
 
     Fail-closed: every marker must be present. ``.git`` alone is not enough
     because adopting an unrelated repository would list ITS worktrees and run
@@ -284,7 +284,7 @@ def _repo_source_hint() -> str:
     if isinstance(configured, str) and configured.strip():
         return "It is set by dev_fleet.repo_path in config.json."
     return (
-        "Point Dev Fleet at your Kiro Crew checkout with the "
+        "Point Dev Fleet at your Sao Khuê checkout with the "
         "KIROCREW_DEVFLEET_REPO environment variable, or with "
         "dev_fleet.repo_path in config.json."
     )
@@ -297,7 +297,7 @@ def _discover_main_repo(configured: str | None = None) -> str:
     it there. Order: the operator's explicit choice, the active project
     directory, the checkout this gateway runs from, then conventional clone
     locations. Every INFERRED candidate must pass the marker test, so the fleet
-    can only ever be pointed at a real Kiro Crew checkout.
+    can only ever be pointed at a real Sao Khuê checkout.
 
     ``""`` means "no checkout found" and is deliberately not a path: inventing
     one made the out-of-the-box dashboard report a checkout as missing that the
@@ -542,7 +542,7 @@ async def ensure_main_repo_discovered() -> None:
                 None
                 if valid
                 else (
-                    f"not a Kiro Crew checkout: {discovered} exists but does not carry the "
+                    f"not a Sao Khuê checkout: {discovered} exists but does not carry the "
                     f"markers (.git, src/kiro_crew/, pyproject.toml). {hint}"
                 )
             )
@@ -1282,7 +1282,7 @@ async def _worktree_porcelain_entries() -> list[dict]:
         # worktrees root yet" empty state. When MAIN_REPO is wrong that empty
         # state is a lie: the fleet is not empty, it is unreadable. Reaching here
         # means a checkout WAS named — discovery only ever adopts a path that
-        # carries the Kiro Crew markers, so an unverifiable one came from the
+        # carries the Sao Khuê markers, so an unverifiable one came from the
         # operator's own env var or config — so name it and raise, and
         # api_dev_fleet_fleet's error path renders the Discovery Error banner.
         # The .git probe is a filesystem stat — on a wedged network mount it

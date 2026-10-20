@@ -1025,7 +1025,7 @@ async def _refusal_fallback_retry(turn) -> bool:
         # on (the retention every Continue relies on), and it tells the
         # model to stop rather than start over when the completed work
         # is not in view, so a session that did not keep the partial
-        # turn fails safe instead of re-running writes. What Kiro Crew
+        # turn fails safe instead of re-running writes. What Sao Khuê
         # itself guarantees is narrower: once a tool ran, the message
         # is never re-sent.
         # Runner text, so the payload says CONTINUATION regardless of

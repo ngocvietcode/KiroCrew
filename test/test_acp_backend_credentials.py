@@ -1,6 +1,6 @@
 """An ACP adapter's OAuth token store is on the sensitive-path floor.
 
-Each adapter owns its own sign-in flow and persists its own tokens. Kiro Crew
+Each adapter owns its own sign-in flow and persists its own tokens. Sao Khuê
 never reads them — it only ever checks that the file EXISTS so it can name the
 right sign-in command — so an agent ``fs_read`` of one buys nothing legitimate
 and would let it impersonate the operator against that vendor.

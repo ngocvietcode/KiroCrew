@@ -22,7 +22,7 @@ from kiro_crew.history import INCOGNITO_MEMORY_MODES
         ("  2  ", 3, 1),
         ("#2", 3, 1),
         ("2.", 3, 1),
-        ("2) Kiro Crew", 3, 1),
+        ("2) Sao Khuê", 3, 1),
         ("2\nbecause it is about i18n", 3, 1),
         ("1", 1, 0),
         # NONE is the explicit escape and must win over anything after it.
@@ -38,7 +38,7 @@ from kiro_crew.history import INCOGNITO_MEMORY_MODES
         ("", 3, None),
         ("   ", 3, None),
         ("the second one", 3, None),
-        ("Kiro Crew", 3, None),
+        ("Sao Khuê", 3, None),
     ],
 )
 def test_parse_choice(reply: str, count: int, expected: int | None) -> None:
@@ -254,10 +254,10 @@ def test_build_prompt_numbers_folders_and_marks_empty_ones() -> None:
     prompt = fs._build_prompt(
         title="Fix the render gate flake",
         message="the artifacts surface keeps failing",
-        labels=["Kiro Crew › i18n", "Errands"],
+        labels=["Sao Khuê › i18n", "Errands"],
         samples=[["Pseudolocale gate", "Catalog sync"], []],
     )
-    assert "1. Kiro Crew › i18n — contains: \"Pseudolocale gate\"; \"Catalog sync\"" in prompt
+    assert "1. Sao Khuê › i18n — contains: \"Pseudolocale gate\"; \"Catalog sync\"" in prompt
     assert "2. Errands — (no sessions yet)" in prompt
     assert "Fix the render gate flake" in prompt
     # The NONE escape must always be offered, or the model is forced to guess.
@@ -324,7 +324,7 @@ def _run(state, slot, *, reply="1", enabled=True):
     return calls
 
 
-_FOLDERS = [{"id": "f1", "name": "Kiro Crew", "order": 0}]
+_FOLDERS = [{"id": "f1", "name": "Sao Khuê", "order": 0}]
 
 
 def test_suggests_and_delivers_to_owner_sockets() -> None:
@@ -336,7 +336,7 @@ def test_suggests_and_delivers_to_owner_sockets() -> None:
     payload = rec.sent[0][1]
     assert payload["slot"] == slot.key
     assert payload["folder_id"] == "f1"
-    assert payload["folder_name"] == "Kiro Crew"
+    assert payload["folder_name"] == "Sao Khuê"
     assert isinstance(payload["ts"], float)
 
 

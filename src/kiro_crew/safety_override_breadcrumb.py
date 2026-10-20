@@ -262,7 +262,7 @@ def _consume_breadcrumb() -> Optional[DroppedGrant]:
     * **The grant had no expiry** (``permanent``). A DECLARED grant is
       re-established from config on this very startup, so it was not lost at
       all; an ``until_shutdown`` grant is already contracted to the operator as
-      "stays on until Kiro Crew restarts", so its ending is the documented
+      "stays on until Sao Khuê restarts", so its ending is the documented
       behaviour rather than news.
     * **The deadline has passed.** The grant would have expired on its own by
       now, so the restart cost the operator nothing.

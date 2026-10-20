@@ -1,7 +1,7 @@
 """The agent-config mirror contract: one declared projection per backend.
 
 One agent spec (``~/.kiro/agents/<name>.json``) is the single source of truth for
-every backend Kiro Crew drives, and no two backends read it the same way. kiro-cli
+every backend Sao Khuê drives, and no two backends read it the same way. kiro-cli
 is handed ``--agent`` and reads the file itself; KAS takes client agents over the
 wire as ``_meta.kiro.customAgents``; claude-agent-acp takes MCP servers as a
 ``session/new`` parameter and other settings from a file it loads on its own.

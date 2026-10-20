@@ -1,4 +1,4 @@
-"""The ACP hooks surface: what Kiro Crew answers, what it runs, and what it refuses.
+"""The ACP hooks surface: what Sao Khuê answers, what it runs, and what it refuses.
 
 Pins what the surface is only correct if it keeps doing:
 
@@ -7,7 +7,7 @@ Pins what the surface is only correct if it keeps doing:
 * a list answer is filtered by trigger and by tool identity through Crew's own
   matcher, and a disabled hook is withheld unless the request asked for it;
 * the handshake does NOT announce the capability, so the backend asks nothing;
-* ``executeHook`` runs only a hook listed for the SAME owning Kiro Crew session,
+* ``executeHook`` runs only a hook listed for the SAME owning Sao Khuê session,
   only its STORED command, and only once the tool gate and the governance switch
   both clear it -- every refusal answered as an error, never as a result.
 
@@ -859,7 +859,7 @@ class TestExecuteHook:
             (
                 9,
                 kas_wire.HOOK_EXECUTE_REFUSED_CODE,
-                "Refused by Kiro Crew: hook id was not listed for this session",
+                "Refused by Sao Khuê: hook id was not listed for this session",
             )
         ]
 
@@ -876,7 +876,7 @@ class TestExecuteHook:
         await _execute(handle, {"hookId": f"crew:script:{created.id}"})
 
         assert [e[2] for e in handle._runtime.errors] == [
-            "Refused by Kiro Crew: no owning Kiro Crew session for this ACP session"
+            "Refused by Sao Khuê: no owning Sao Khuê session for this ACP session"
         ]
 
     @pytest.mark.asyncio
@@ -892,7 +892,7 @@ class TestExecuteHook:
 
         await _execute(handle, {"hookId": f"crew:script:{created.id}"})
 
-        assert [e[2] for e in handle._runtime.errors] == ["Refused by Kiro Crew: hook is disabled"]
+        assert [e[2] for e in handle._runtime.errors] == ["Refused by Sao Khuê: hook is disabled"]
 
     @pytest.mark.asyncio
     async def test_a_hook_removed_after_listing_is_refused(
@@ -907,7 +907,7 @@ class TestExecuteHook:
 
         await _execute(handle, {"hookId": f"crew:script:{created.id}"})
 
-        assert [e[2] for e in handle._runtime.errors] == ["Refused by Kiro Crew: hook not found"]
+        assert [e[2] for e in handle._runtime.errors] == ["Refused by Sao Khuê: hook not found"]
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -936,9 +936,7 @@ class TestExecuteHook:
         await _execute(handle, {"hookId": f"crew:script:{created.id}"})
 
         assert handle._runtime.responses == []
-        assert [e[2] for e in handle._runtime.errors] == [
-            f"Refused by Kiro Crew: {expected.reason}"
-        ]
+        assert [e[2] for e in handle._runtime.errors] == [f"Refused by Sao Khuê: {expected.reason}"]
         # Refused before governance was even asked.
         assert governance_permits == []
 
@@ -961,7 +959,7 @@ class TestExecuteHook:
 
         await _execute(handle, {"hookId": f"crew:script:{created.id}"})
 
-        assert [e[2] for e in handle._runtime.errors] == ["Refused by Kiro Crew: configured deny"]
+        assert [e[2] for e in handle._runtime.errors] == ["Refused by Sao Khuê: configured deny"]
         assert len(seen) == 1
         call = seen[0]
         assert call["tool_name"] == "echo a"
@@ -992,7 +990,7 @@ class TestExecuteHook:
         await _execute(handle, {"hookId": f"crew:script:{created.id}"})
 
         assert [e[2] for e in handle._runtime.errors] == [
-            "Refused by Kiro Crew: Blocked by governance policy: script hooks disabled"
+            "Refused by Sao Khuê: Blocked by governance policy: script hooks disabled"
         ]
         assert asked == ["slot:3"]
         assert audited == [("slot:3", "kas_execute_hook", "denied", "script hooks disabled")]
@@ -1044,7 +1042,7 @@ class TestExecuteHook:
         await _execute(handle, {"hookId": f"crew:script:{created.id}", "userPrompt": "{}"})
 
         assert handle._runtime.errors == [
-            (9, kas_wire.HOOK_EXECUTE_REFUSED_CODE, "Kiro Crew could not run the hook")
+            (9, kas_wire.HOOK_EXECUTE_REFUSED_CODE, "Sao Khuê could not run the hook")
         ]
 
     @pytest.mark.asyncio
@@ -1137,7 +1135,7 @@ class TestExecuteHookReviewFixes:
         await _execute(handle, {"hookId": f"crew:script:{created.id}"})
 
         assert handle._runtime.responses == []
-        assert [e[2] for e in handle._runtime.errors] == ["Kiro Crew could not run the hook"]
+        assert [e[2] for e in handle._runtime.errors] == ["Sao Khuê could not run the hook"]
 
     @pytest.mark.asyncio
     async def test_every_refusal_is_audited_with_its_reason(
@@ -1279,7 +1277,7 @@ class TestExecuteHookReviewFixes:
         await _execute(handle, {"hookId": f"crew:script:{created.id}", "userPrompt": prompt})
 
         assert [e[2] for e in handle._runtime.errors] == [
-            "Refused by Kiro Crew: tool hook request carries no tool call"
+            "Refused by Sao Khuê: tool hook request carries no tool call"
         ]
 
     @pytest.mark.asyncio
@@ -1298,7 +1296,7 @@ class TestExecuteHookReviewFixes:
             (
                 21,
                 kas_wire.HOOK_EXECUTE_REFUSED_CODE,
-                "Refused by Kiro Crew: too many hooks already running",
+                "Refused by Sao Khuê: too many hooks already running",
             )
         ]
         assert [(r["outcome"], r["error"], r["session_key"]) for r in audited] == [

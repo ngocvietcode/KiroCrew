@@ -49,7 +49,7 @@ window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response>
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
   if (!url.includes('/api/')) return realFetch(input, init)
   const body = url.includes('/api/dashboard/branding')
-    ? { bot_name: 'Kiro Crew', avatar: '/logo.png', direct_local: true }
+    ? { bot_name: 'Sao Khuê', avatar: '/logo.png', direct_local: true }
     : url.includes('/api/project/tree')
       ? {
         root: PROJECT_DIR,

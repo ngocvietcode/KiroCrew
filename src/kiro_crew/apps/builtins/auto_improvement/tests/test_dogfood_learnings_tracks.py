@@ -94,7 +94,7 @@ class TestReproTestDirIsRepoAware:
 
     def test_both_dirs_picks_the_DOMINANT_suite(self, tmp_path: Path) -> None:
         """A repo can have both; writing into the minor one puts the repro test outside
-        the suite the gate actually runs (Kiro Crew: 776 under test/ vs 9 under tests/)."""
+        the suite the gate actually runs (Sao Khuê: 776 under test/ vs 9 under tests/)."""
         (tmp_path / "test").mkdir()
         (tmp_path / "tests").mkdir()
         for i in range(5):

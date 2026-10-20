@@ -736,7 +736,7 @@ class RecipientMoved(RuntimeError):
 #: renderer registered under that kind and skips the row when none is.
 #:
 #: The steps are RELABELLED rather than inherited. The built-in wording -- "create
-#: the instance and install Kiro Crew" -- is false on this lane: the crew image is
+#: the instance and install Sao Khuê" -- is false on this lane: the crew image is
 #: already built, nothing is installed at launch, and the step that actually takes
 #: the time is waiting for the guest to enroll itself as a managed node.
 MICROVM_REMOTE_PROVISIONER = RemoteProvisioner(

@@ -1,4 +1,4 @@
-# Kiro Crew behind enterprise MCP governance
+# Sao Khuê behind enterprise MCP governance
 
 Applies when the Kiro account `kiro-cli` is signed in to is an **enterprise**
 account — IAM Identity Center (or an external IdP such as Okta / Entra ID
@@ -8,12 +8,12 @@ organization-level MCP controls and need nothing on this page.
 
 [Central policy distribution](#central-policy-distribution-one-security-policy-every-host),
 at the end of this page, is a separate axis and depends on none of that: it is how
-you hand every host in a fleet the same Kiro Crew `security_policy.json`, and it
+you hand every host in a fleet the same Sao Khuê `security_policy.json`, and it
 works on any account type.
 
 ## The symptom
 
-Kiro Crew starts, the dashboard works, chat works — and a large part of the
+Sao Khuê starts, the dashboard works, chat works — and a large part of the
 product is quietly absent. `spawn_run` does nothing, `cron_add` is unavailable,
 `learn_add` never saves, the knowledge tools are missing, the research agent has
 no tools to work with. Nothing errors. `kirocrew doctor` reports the MCP servers
@@ -22,7 +22,7 @@ healthy.
 That combination — healthy locally, absent in sessions — is the signature of MCP
 governance, because the two checks are measuring different things:
 
-- Kiro Crew's own probe **spawns each server directly** and completes an MCP
+- Sao Khuê's own probe **spawns each server directly** and completes an MCP
   handshake with it. That succeeds regardless of governance.
 - `kiro-cli` applies governance **when it assembles a session**, after reading
   the agent spec. Every server it drops there is dropped silently.
@@ -54,9 +54,9 @@ Two consequences worth internalising:
 
 Registry servers a user installs from Kiro IDE or the Kiro CLI land in
 `~/.kiro/settings/mcp.json` as bare pointers, `{"type": "registry"}` with no
-`command` or `url`. Kiro Crew carries each pointer into the `kirocrew` agent spec
+`command` or `url`. Sao Khuê carries each pointer into the `kirocrew` agent spec
 unchanged, so kiro-cli resolves it there exactly as it does for its own sessions,
-and the dashboard lists it as **Not verified** rather than starting it (Kiro Crew
+and the dashboard lists it as **Not verified** rather than starting it (Sao Khuê
 cannot read the catalog). A pointer goes through the same tool-ref and
 auto-approve rules as any other user server. Sessions on the Claude and KAS
 backends still withhold every marked entry.
@@ -66,14 +66,14 @@ MCP is disabled entirely rather than falling open.
 
 ## Fixing it — two halves, both required
 
-### 1. Declare registry mode on the Kiro Crew side
+### 1. Declare registry mode on the Sao Khuê side
 
 ```bash
 kirocrew config set agent.mcp_registry_mode true
 kirocrew restart
 ```
 
-Kiro Crew then stamps `"type": "registry"` on the servers it manages, so they
+Sao Khuê then stamps `"type": "registry"` on the servers it manages, so they
 survive the registry filter. It is an explicit declaration rather than
 auto-detection on purpose: the client fetches the toggle and the registry URL
 from `GetProfile` at startup and **persists neither**, so nothing on disk
@@ -94,7 +94,7 @@ personal account.
 
 ### 2. Have the administrator allow-list the servers
 
-Kiro Crew needs three servers, and they must appear in the registry file under
+Sao Khuê needs three servers, and they must appear in the registry file under
 **exactly** these names:
 
 | Server | What is lost without it |
@@ -105,11 +105,11 @@ Kiro Crew needs three servers, and they must appear in the registry file under
 
 The registry file format is a subset of the MCP registry standard's server
 schema. Each entry needs a `packages` entry describing how to launch the server,
-and — because all three Kiro Crew servers live behind one package — a
+and — because all three Sao Khuê servers live behind one package — a
 `packageArguments` entry naming the subcommand. For a `pypi` package the client
 derives `uvx <identifier> <packageArguments>`, so an entry without the argument
 launches `uvx kirocrew` with no subcommand, which prints CLI help instead of
-speaking MCP and fails the handshake. Kiro Crew releases are not published to
+speaking MCP and fails the handshake. Sao Khuê releases are not published to
 the public Python Package Index; the `pypi` example below therefore requires
 your organisation to mirror the matching `kirocrew` wheel into the Python index
 that `uvx` uses:
@@ -119,7 +119,7 @@ that `uvx` uses:
   "servers": [
     {
       "name": "kirocrew-core",
-      "description": "Kiro Crew orchestration: subagents, memory, artifacts, monitoring",
+      "description": "Sao Khuê orchestration: subagents, memory, artifacts, monitoring",
       "version": "<fleet version>",
       "packages": [
         {
@@ -132,7 +132,7 @@ that `uvx` uses:
     },
     {
       "name": "kirocrew-cron",
-      "description": "Kiro Crew scheduled jobs",
+      "description": "Sao Khuê scheduled jobs",
       "version": "<fleet version>",
       "packages": [
         {
@@ -145,7 +145,7 @@ that `uvx` uses:
     },
     {
       "name": "kirocrew-computer",
-      "description": "Kiro Crew desktop automation (macOS/Windows, opt-in)",
+      "description": "Sao Khuê desktop automation (macOS/Windows, opt-in)",
       "version": "<fleet version>",
       "packages": [
         {
@@ -160,43 +160,43 @@ that `uvx` uses:
 }
 ```
 
-Set `version` to the Kiro Crew version your fleet runs.
+Set `version` to the Sao Khuê version your fleet runs.
 
 ## Known limitation: the registry launches the server, not your install
 
-Kiro Crew's MCP servers are not standalone tools — they are the gateway's own
+Sao Khuê's MCP servers are not standalone tools — they are the gateway's own
 process, reached through subcommands (`kirocrew mcp-core`, `mcp-cron`,
 `mcp-computer`), and they share the gateway's data home and version.
 
 A registry-type entry hands the launch decision to the catalog: the client
 resolves the package and, when a locally installed server's version differs from
 the registry's, relaunches it at the registry's version. For a `pypi` entry that
-means `uvx` fetching Kiro Crew into its own ephemeral environment from its
+means `uvx` fetching Sao Khuê into its own ephemeral environment from its
 configured Python index. Because the project is not on public PyPI, that route
 works only when your organisation mirrors the wheel and version into an index
 visible to `uvx`. The process serving your MCP tools can then still be a
-*different* Kiro Crew from the gateway serving your dashboard. Your `env`
+*different* Sao Khuê from the gateway serving your dashboard. Your `env`
 overrides (including `KIROCREW_HOME`) do flow through, which keeps the data home
 aligned, but the code does not.
 
 Keep the registry `version` in step with your fleet's installed version. If your
-organisation pins Kiro Crew centrally, that pin now governs the MCP side too.
+organisation pins Sao Khuê centrally, that pin now governs the MCP side too.
 
 ## Known limitation: registry mode cannot work on the KAS backend
 
 Everything above is about Kiro CLI, which reads your agent spec off disk and so
-sees the `"type": "registry"` marker Kiro Crew writes into it. The KAS backend
-(`kiro-agent`) reads no spec: Kiro Crew projects the agent over the wire on
+sees the `"type": "registry"` marker Sao Khuê writes into it. The KAS backend
+(`kiro-agent`) reads no spec: Sao Khuê projects the agent over the wire on
 `session/new`, and that wire schema has no slot for `type`. The marker is dropped
 in transit, the host therefore sees every server as unmarked, and in registry
-access mode it filters all of them out — Kiro Crew's own control plane included.
+access mode it filters all of them out — Sao Khuê's own control plane included.
 
 What you see is a session that starts and chats normally with no MCP tools at
 all: no `spawn_run`, no `cron_add`, no `learn_add`, no artifacts, knowledge or
 monitoring, and no error from the host explaining it. Declaring registry mode
 does not fix it there, because the marker it writes cannot reach the filter.
 
-Kiro Crew makes the failure visible rather than silent. Projecting an agent onto
+Sao Khuê makes the failure visible rather than silent. Projecting an agent onto
 that backend under registry mode logs a warning naming exactly this, and the
 servers your spec declares are withheld with a line each instead of being sent to
 be dropped downstream. Until the wire schema carries `type`:
@@ -209,7 +209,7 @@ be dropped downstream. Until the wire schema carries `type`:
   outside that profile loses nothing by not claiming to be governed.
 
 A muted server is dropped on the same wire for a similar reason: the schema
-accepts `"disabled": true` and then discards it, so Kiro Crew does not declare a
+accepts `"disabled": true` and then discards it, so Sao Khuê does not declare a
 muted server to that backend at all. The mute is honoured; it is simply honoured
 by omission.
 
@@ -217,16 +217,16 @@ by omission.
 
 MCP registry governance requires Kiro CLI **1.23** or later (Kiro IDE 0.11.28).
 Enforcement in the V2 TUI arrived in **2.2.2**, and **2.6.0** made personal
-`mcp.json` servers load alongside registry-managed ones. Kiro Crew's servers
+`mcp.json` servers load alongside registry-managed ones. Sao Khuê's servers
 live in an agent spec (`~/.kiro/agents/kirocrew.json`), not in personal
 `mcp.json`, so that last change does not exempt them.
 
 ## Central policy distribution: one security policy, every host
 
-`security_policy.json` is Kiro Crew's **enterprise ceiling**: the trust-root
+`security_policy.json` is Sao Khuê's **enterprise ceiling**: the trust-root
 document that denies tools, commands, filesystem paths and MCP calls at Kiro
 Crew's own gate, and that the agent can neither read nor rewrite. It is a
-different mechanism from the MCP registry above — it governs Kiro Crew rather
+different mechanism from the MCP registry above — it governs Sao Khuê rather
 than what `kiro-cli` will connect to — and it needs no enterprise Kiro account.
 
 By default it is a local file on each host, which makes every change to it a
@@ -278,7 +278,7 @@ and redefinable by whoever launches the process, and a bootstrap policy file liv
 in a directory the user may own. What they cannot do is loosen the fetched document —
 every local tier only tightens it.
 
-The full order Kiro Crew loads in, highest first:
+The full order Sao Khuê loads in, highest first:
 
 | Tier | Where | Role |
 |---|---|---|
@@ -324,7 +324,7 @@ shows one filled in alongside the rest of a policy. Read the `network.egress` an
 `commands` rows in that example as **egress defense-in-depth, not a bounded
 egress guarantee**: a deny list is a finite set of known patterns and cannot
 enumerate every network-capable tool. Neither row constrains the policy fetch
-itself — that is Kiro Crew reaching for its own ceiling before any agent exists,
+itself — that is Sao Khuê reaching for its own ceiling before any agent exists,
 not a governed tool call, so your source does not need to appear in an egress
 allow-list.
 
@@ -349,7 +349,7 @@ value).
 **Transports.** `https` works anywhere. `file://` must name a **local path** — an
 NFS/SMB share is fine, but mount it and name the mount point, because a
 `file://server/share/...` URL is refused. It must also be **read-only to the account
-Kiro Crew runs as — the file *and* every directory above it**: a source that account can write is one an agent subprocess can
+Sao Khuê runs as — the file *and* every directory above it**: a source that account can write is one an agent subprocess can
 write, and the refresher would install that ceiling without a restart. A `0444` file in a
 writable directory does not count: it can be replaced by unlink-and-recreate. Use a
 root-owned path or a read-only mount; if what you want is a local, editable policy file, that is
@@ -378,7 +378,7 @@ Publish the document, point one host at it, verify, then widen.
 aws s3 cp security_policy.json s3://corp-config/kirocrew/security_policy.json
 
 # 2. Point the host at it, through whatever already sets environment variables
-#    for the Kiro Crew service, then restart it once.
+#    for the Sao Khuê service, then restart it once.
 export KIROCREW_POLICY_URL=https://corp-config.s3.amazonaws.com/kirocrew/security_policy.json
 export KIROCREW_POLICY_REFRESH_SECS=900
 kirocrew restart
@@ -442,7 +442,7 @@ cached copy at all, `on_unavailable` decides:
 
 | `on_unavailable` | Behaviour with no usable cache |
 |---|---|
-| `fail_closed` (**the default**) | **Kiro Crew refuses to start.** A fleet that pointed a host at a central ceiling meant that ceiling to bind, so "we could not reach it" must not read as "run unbounded". |
+| `fail_closed` (**the default**) | **Sao Khuê refuses to start.** A fleet that pointed a host at a central ceiling meant that ceiling to bind, so "we could not reach it" must not read as "run unbounded". |
 | `degrade` | Falls through to the next policy tier (a local `security_policy.json`, or none) and records a governance incident, so the dashboard shows the host as degraded. |
 
 Be clear-eyed about the default: **a host with a cold cache and an unreachable
@@ -547,7 +547,7 @@ that issuer:
 
 So you do not plan around capabilities that are not here:
 
-- **No MDM or directory integration.** Kiro Crew reads an environment variable
+- **No MDM or directory integration.** Sao Khuê reads an environment variable
   and an HTTPS URL. Jamf, Intune, Group Policy, Ansible and friends are how a
   host gets pointed at a source; nothing on this side knows about them.
 - **No fleet-compliance reporting.** There is no console that lists which hosts
@@ -567,7 +567,7 @@ So you do not plan around capabilities that are not here:
 
 ## Related
 
-- [../architecture/mcp.md](../architecture/mcp.md) — how Kiro Crew composes the
+- [../architecture/mcp.md](../architecture/mcp.md) — how Sao Khuê composes the
   agent spec's `mcpServers` map and which files it owns.
 - [../system-specs/modules/governance.md](../system-specs/modules/governance.md)
   — the full `security_policy.json` reference: every governed scope, the

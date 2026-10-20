@@ -1,4 +1,4 @@
-# Container runtime only. These must NOT become dependencies of the Kiro Crew app
+# Container runtime only. These must NOT become dependencies of the Sao Khuê app
 # itself: the app's backend hooks are imported into the owner's gateway process,
 # and adding a web framework to every owner's gateway buys nothing.
 #

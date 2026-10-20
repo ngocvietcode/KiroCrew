@@ -44,7 +44,7 @@ superseded-by: []
 
 ## 1. Problem statement
 
-KiroCrew has 7 chat channels (slack, discord, telegram, webex, wecom, teams, weixin). Each new channel is built by copying the previous one. Measured on main `6298146` (2026-07-28):
+SaoKhue has 7 chat channels (slack, discord, telegram, webex, wecom, teams, weixin). Each new channel is built by copying the previous one. Measured on main `6298146` (2026-07-28):
 
 - **The turn-dispatch skeleton is duplicated 7 times: 3,796 lines total.** After normalizing channel names, `weixin/transport_dispatch.py` and `wecom/transport_dispatch.py` differ on 248 of ~760 combined lines — roughly two-thirds of every non-Slack dispatcher is the same sequence: governance gate → command intercept → busy-steer → session acquire → publish turn identity → build context → `TurnDriver.run` → guarded post-turn (record, persist, threshold notice, SEL audit) → `finally:` close/release. Telegram (1,045 lines) and Discord (803) are larger only because real per-channel features are interleaved with that same skeleton.
 - **Adding a channel means hand-editing 9 core files:** `config/loader.py`, `sandbox_tiers.py`, `slack/gateway.py`, `dashboard/handlers_system.py`, `dashboard/state.py`, `dashboard/server.py`, the governance contract test, `website/src/api/client.ts`, and `ChannelsPanel.tsx` (+ its test). This is not theoretical coupling: when Teams (#572) and WeChat (#627) landed in parallel, these exact files were the merge-conflict set, twice.
@@ -56,7 +56,7 @@ An 8th channel (Feishu) is planned. On the current architecture it is copy #8 of
 ## 2. Design principles
 
 1. **Extract what is measured to be identical; keep per-channel what actually varies.** The shared/pluggable line is drawn from the weixin↔wecom↔teams diffs, not from speculation. Varies: wire protocol, auth shape, event normalization, authorization semantics, rendering strategy. Identical: turn pipeline, lifecycle, registration, credential handling.
-2. **One plugin system, not two.** KiroCrew already has an app platform with dynamic backend loading (`module_loader.py`, namespaced `importlib` loading, SEC-012 trust warning), manifest-declared extension points (`agents`, `skills`, `hooks`, `routes`, `crons`), signing + fleet admission (`signer`/`signature`/`trust_keys`), and a federated frontend plan (rfc-federated-app-platform.md). Channels become a `channels` extension point on that platform.
+2. **One plugin system, not two.** SaoKhue already has an app platform with dynamic backend loading (`module_loader.py`, namespaced `importlib` loading, SEC-012 trust warning), manifest-declared extension points (`agents`, `skills`, `hooks`, `routes`, `crons`), signing + fleet admission (`signer`/`signature`/`trust_keys`), and a federated frontend plan (rfc-federated-app-platform.md). Channels become a `channels` extension point on that platform.
 3. **Contract-first even while everything is builtin.** The interfaces are shaped for dynamic loading from day one, so opening the door later is a discovery change, not a rework.
 4. **Slack is out of scope for the runtime migration.** It predates the transport contract (~11k lines across its own handler/events/interactions path) and works. The only Slack change here is evicting the boot orchestrator.
 5. **Behavior-preserving migration.** Every step is pinned by the existing channel test suites (weixin alone carries 87; the governance contract test pins membership).

@@ -2,7 +2,7 @@
 
 The directive marker (:mod:`kiro_crew.session_directive`) is model-visible text,
 so the consumer may only honour it when the tool CALL it arrived under was
-recorded as an MCP call served by Kiro Crew's own core server. That recording
+recorded as an MCP call served by Sao Khuê's own core server. That recording
 comes from the provider's out-of-band ``_meta.kiro`` channel, which is a
 kiro-cli engine feature: an ACP backend that does not emit it leaves the gate
 with no trusted source, and a gate with no trusted source correctly refuses
@@ -11,7 +11,7 @@ fails closed on that backend, which the gate reports as a diagnostic.
 
 This module is the second delivery path, and it carries the payload OUT OF BAND
 rather than through the model's tool result. The MCP tool, having validated its
-arguments, POSTs them to the gateway over Kiro Crew's own internal API declaring
+arguments, POSTs them to the gateway over Sao Khuê's own internal API declaring
 its ``X-Session-Key``; the gateway parks the record here; the turn's consumer
 claims it. The marker is still emitted (the kiro-cli path is unchanged and
 remains authoritative there), but on a backend without ``_meta.kiro`` the marker
@@ -123,7 +123,7 @@ def publish(session_key: str, kind: str, args: dict[str, Any], input_digest: str
 
     Raises :class:`ValueError` for an unknown *kind*, an empty *session_key* or
     an empty *input_digest* — the caller is the gateway handler, and a request
-    missing any of them did not come from one of Kiro Crew's own directive tools.
+    missing any of them did not come from one of Sao Khuê's own directive tools.
     """
     if kind not in DIRECTIVE_TOOLS:
         raise ValueError(f"unknown directive kind: {kind!r}")

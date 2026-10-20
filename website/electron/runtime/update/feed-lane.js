@@ -13,7 +13,7 @@ const FORCE_EXIT_AFTER_MS = 5 * 1000; // failsafe: guarantee exit after quitAndI
 // the renderer catalogs, like the other update notifications here).
 function gatewayStillRunningNotificationBody(stopCommand) {
   const command = stopCommand || "kirocrew stop";
-  return `The background gateway Kiro Crew started earlier is still running. To install the update, run “${command}” in Terminal, then reopen Kiro Crew. It stops only that gateway; your chats and settings are kept.`;
+  return `The background gateway Sao Khuê started earlier is still running. To install the update, run “${command}” in Terminal, then reopen Sao Khuê. It stops only that gateway; your chats and settings are kept.`;
 }
 
 /**
@@ -305,10 +305,10 @@ function createFeedLane({
     if (osPlatform !== "win32") return;
     try {
       new Notification({
-        title: "Installing Kiro Crew update",
+        title: "Installing Sao Khuê update",
         // Timing and automatic relaunch stay on the installer window that they
         // explain. The toast carries only the unique recovery instruction.
-        body: "If Kiro Crew doesn’t reopen after the installer finishes, open it from the Start menu.",
+        body: "If Sao Khuê doesn’t reopen after the installer finishes, open it from the Start menu.",
       }).show();
     } catch { /* notifications optional */ }
   }
@@ -520,15 +520,15 @@ function createFeedLane({
 
   async function promptInstall(versionName, notes) {
     const handoffDetail = osPlatform === "win32"
-      ? "Installing can take several minutes. Kiro Crew will close, show Windows installation progress, and reopen automatically."
-      : "Installing can take several minutes. Kiro Crew will close and reopen automatically when the update is complete.";
+      ? "Installing can take several minutes. Sao Khuê will close, show Windows installation progress, and reopen automatically."
+      : "Installing can take several minutes. Sao Khuê will close and reopen automatically when the update is complete.";
     const { response } = await dialog.showMessageBox({
       type: "info",
       buttons: ["Install Update & Restart App", "Later"],
       defaultId: 0,
       cancelId: 1,
-      title: "Kiro Crew update ready",
-      message: `Kiro Crew ${versionName || ""} is ready to install.`.trim(),
+      title: "Sao Khuê update ready",
+      message: `Sao Khuê ${versionName || ""} is ready to install.`.trim(),
       detail:
         (notes || "").slice(0, 500) +
         `\n\n${handoffDetail}`,
@@ -540,7 +540,7 @@ function createFeedLane({
       try {
         new Notification({
           title: "Update deferred",
-          body: "Kiro Crew will finish updating the next time you quit.",
+          body: "Sao Khuê will finish updating the next time you quit.",
         }).show();
       } catch { /* notifications optional */ }
     }

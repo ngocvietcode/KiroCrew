@@ -405,7 +405,7 @@ async def _on_tool_call(turn: _ChatTurn, event) -> None:
         # Forgery gate: record the directive-tool name ONLY
         # from the trusted _meta.kiro identity — never the title.
         # The single shared predicate (also used by the messaging
-        # TurnDriver) requires Kiro Crew's OWN core MCP server and a
+        # TurnDriver) requires Sao Khuê's OWN core MCP server and a
         # canonical directive-tool name; a shell tool (no
         # mcp_server_name, canonical tool_name "execute_bash") or a
         # third-party server exposing a same-named tool can never

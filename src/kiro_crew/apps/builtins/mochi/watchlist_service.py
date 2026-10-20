@@ -27,7 +27,7 @@ PORTING NOTES
 -------------
 
 **Async, with the clock still injected.** ``spawn_agent`` is awaited (it will
-be a KiroCrew subagent spawn), so ``guard`` and the spawn path are ``async``.
+be a SaoKhue subagent spawn), so ``guard`` and the spawn path are ``async``.
 Every ``Date.now()`` became a ``now_ms`` parameter; the 5-minute guard
 ``setInterval`` moved out to the owner (call ``await guard(now_ms)`` on the
 :data:`GUARD_INTERVAL_MS` cadence), like ``idle_manager``.

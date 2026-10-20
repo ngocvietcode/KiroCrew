@@ -1,6 +1,6 @@
 # LLM Provider Abstraction
 
-Kiro Crew drives every LLM through one seam: the `LLMProvider` ABC in
+Sao Khuê drives every LLM through one seam: the `LLMProvider` ABC in
 `providers/base.py`. `AcpProvider` (`providers/acp.py`) is the only implementation
 the factory selects; `AcpSessionProvider` (`acp/session_provider.py`) is a second
 concrete subclass, the adapter a shared-runtime session is swapped onto once
@@ -432,7 +432,7 @@ not exhaustive; the `EVENT_*` constants in `acp/types.py` own the kind list:
 | `mcp_server_init_failure` | MCP server OAuth/init failed (has `server_name`, `text`) |
 
 Terminal events also carry `synthetic_completion`. It is false for a provider's
-raw result frame and true when Kiro Crew fabricates a compatibility terminal
+raw result frame and true when Sao Khuê fabricates a compatibility terminal
 because the result frame never arrived; consumers that account completed work
 must require the raw form.
 
@@ -523,7 +523,7 @@ in [agent-host-contract.md](agent-host-contract.md).
 **MCP Tool Search** (kiro-family backends — see https://kiro.dev/docs/cli/mcp/tool-search/): loads MCP tool specs on demand ("search-and-call") instead of sending every tool definition each turn, keeping the context window clear when many MCP servers are configured. Gated by the `agent.tool_search` config toggle (default **on**; auto-surfaces as a Settings toggle since the schema is generated from the dataclass).
 - **kiro-cli (Rust engine):** applied via the **same** workspace `cli.json` overlay used for effort (`<work_dir>/.kiro/settings/cli.json`), written deterministically before every spawn and on each restart by `_write_tool_search_overlay` (called from `AcpProvider.__init__` and `start()`), scoped to `ACP_BACKENDS_TOOL_SEARCH_OVERLAY`. The engine activates deferral only when the agent's `tools` also grants `tool_search`, so on this channel the loader invariant is the engine's. When enabled it writes the flat keys `toolSearch.enabled=true` plus `toolSearch.minPct`/`toolSearch.minTokens`, taken from `agent.tool_search_min_pct` / `agent.tool_search_min_tokens` (defaults `5` / `50000`, mirroring kiro-cli's own thresholds; clamped to 0-100 and >= 0, non-numeric falls back to the default); when disabled it writes `toolSearch.enabled=false` and drops both thresholds.
 - **Why the thresholds are not forced to 0:** deferral costs a round-trip — a deferred tool's spec is absent from the model's tool list, so the first direct call fails with `A tool with the name '<name>' does not exist` and has to be recovered with `tool_search`. That only pays once the specs are genuinely large, which is what the thresholds express (kiro-cli defers when EITHER is exceeded). Setting both to `0` restores unconditional deferral for operators who want it. The thresholds are always written **explicitly** rather than omitted, so a value already in the file is replaced rather than silently kept.
-- Writing both `true` and `false` makes the Kiro Crew toggle authoritative over any value in the user's global `~/.kiro/settings/cli.json`. The write is merge-safe with the effort `chat.modelDefaults` keys in the same file.
+- Writing both `true` and `false` makes the Sao Khuê toggle authoritative over any value in the user's global `~/.kiro/settings/cli.json`. The write is merge-safe with the effort `chat.modelDefaults` keys in the same file.
 - kiro-cli reads workspace settings only from `<cwd>/.kiro/settings/cli.json`, so the overlay cannot move out of the work dir. When the work dir is a git work-tree top, the shared overlay lock adds the overlay and its lock to the repository's local `info/exclude`, keeping the user's `git status` clean (see [acp-client](acp-client.md)); an already-tracked `cli.json` is not hidden.
 - **KAS:** never opens `cli.json`; it reads the setting from the ACP `initialize` request, `clientCapabilities._meta.kiro.settings.toolSearch` — a process-wide channel filled by `AcpRuntime._handshake_client_capabilities`, entered from the spawn path only when the harness answers `client_meta_settings` (the harnesses in `ACP_BACKENDS_CLIENT_META_SETTINGS`; every other host reads its constant with no new step), from the same `agent.tool_search*` values (`agent_sdk/tool_search.py`). KAS defers **every** MCP spec when told to and does not check that a loader is mounted, so the client keeps the invariant: `enabled` is sent as `true` only when the spawn agent's spec grants `tool_search` — named in `tools`, or via `"*"` / `@builtin` — and does not take it back in `excludedTools`; it is sent as an explicit `false` otherwise — never omitted, so a host default cannot flip a session into "deferred, unreachable". The spec judged is the one the KAS projection puts on the wire (`AcpRuntime._projected_spawn_spec`: the freshness gate's snapshot for a derived agent, else `acp/harness/kas.resolve_projected_spec`, the call the projection itself makes, after the same `ensure_agent_materialized` self-heal the projection runs) — so a project checkout's `.kiro/agents` spec is judged exactly when it is the one projected; an unreadable spec grants nothing. The setting is process-wide, so every later `create_session` on a deferral-enabled process judges the payload it is about to send: a projection that grants no loader — another agent, or the same agent whose spec has since lost the grant — is refused with `AcpToolSurfaceBindingError` (an `AcpWorkspaceBindingError`), which the run-runtime caller already answers by giving that session a runtime of its own. The check lives in `AcpRuntime._kas_custom_agents`, the projection seam both `create_session` and `load_session` go through, so a resumed session is judged the same way. It is deliberately one-directional: a process whose handshake sent `enabled: false` may serve a later session whose agent does grant the loader — that session simply runs with full tool specs, today's behaviour and never a loss of tools — whereas the reverse pairing loses every MCP tool, which is the only shape worth a refusal. Every KAS-capable runtime constructor threads the same resolved settings — the foreground provider, its resume-respawn fallback, the companion-runtime kwargs mirror (`session_allocation._collect_parent_runtime_kwargs`, reading the parent's `LLMProvider.tool_search_settings` capability — default `None`, answered by `AcpProvider`; harness-parity H14) and the background runtime (`session_background`) — so no KAS process is left to the host's default. KAS does not honour the two thresholds as an activation floor — deferral there is all-or-nothing, with `toolSearch.neverDefer` as its keep-list — but they are forwarded verbatim so the setting means one thing.
 - **Non-kiro-family backends** — no-op on both channels. `_apply_tool_search_overlay` returns early when the backend does not read the overlay, the handshake channel is filled only for members of `ACP_BACKENDS_CLIENT_META_SETTINGS`, and both are silent when no toggle value was threaded in (`tool_search is None`).
@@ -547,7 +547,7 @@ in [agent-host-contract.md](agent-host-contract.md).
 - `agent.acp_backend` is the harness choice, resolved through `agent_sdk.backends.resolve_selected_backend` (the top-level `acp_backends` module is a re-export shim kept for existing call sites).
 - `create_provider_factory()` returns a `Callable` that builds an `AcpProvider` for the resolved backend.
 
-An agent spec's model is consumed by kiro-cli before Kiro Crew reaches
+An agent spec's model is consumed by kiro-cli before Sao Khuê reaches
 `session/new`, so the live-session entitlement guard cannot diagnose a wrong
 wire spelling at spawn time. Agent create/update validate a pin before
 persisting it: they reuse the role-model validator for advertised ids and
@@ -657,7 +657,7 @@ A transient 5xx that arrives *after* the turn already emitted output (the `_turn
 
 ## Installation
 
-Kiro Crew drives `kiro-cli` over ACP — install it per its own docs, ensure it is
+Sao Khuê drives `kiro-cli` over ACP — install it per its own docs, ensure it is
 on `PATH`, and run `kiro-cli login`. `kirocrew doctor` reports its status.
 
 

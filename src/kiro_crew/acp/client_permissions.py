@@ -126,7 +126,7 @@ async def _apply_session_permission_routing(self: AcpClient) -> None:
 
     Two outcomes, and each is a different verdict on purpose:
 
-    * the option was not advertised -> INDETERMINATE, because Kiro Crew cannot
+    * the option was not advertised -> INDETERMINATE, because Sao Khuê cannot
       tell what the adapter will do, and "cannot tell" must not read as armed;
     * the write was rejected -> BYPASSED, an observed failure rather than an
       unknown.
@@ -139,7 +139,7 @@ async def _apply_session_permission_routing(self: AcpClient) -> None:
     issue = acp_tool_gate.session_config_issue(backend, self._acp_config_options)
     if issue:
         # Not advertised: INDETERMINATE, never BYPASSED. The adapter may well
-        # ask anyway; Kiro Crew simply has no evidence, and the enforcement
+        # ask anyway; Sao Khuê simply has no evidence, and the enforcement
         # treats the two identically while the message stays honest.
         try:
             acp_tool_gate.enforce_runtime_routing(
@@ -354,7 +354,7 @@ def _note_pi_gate_denied(self: AcpClient, request_id: str | int) -> None:
     """Remember that the host DENIED the gate-extension dialog for this request.
 
     pi honours the extension's ``{block: true}`` by not running the call; that
-    link is the adapter's and the harness's, not Kiro Crew's, so it is guarded
+    link is the adapter's and the harness's, not Sao Khuê's, so it is guarded
     in band like the other two: a denied call that later reports ``completed``
     trips :meth:`_tripwire_pi_gate`. No-op for a request no envelope named.
     """
@@ -834,14 +834,14 @@ async def _tripwire_pi_gate(self: AcpClient, msg: JsonRpcMessage) -> None:
         # Third link: pi did not honour the extension's block. The call the host
         # refused ran anyway, which is the outcome the whole chain exists to
         # prevent, so it ends the session the same way an unasked call does.
-        outcome, what = "ran_despite_deny", "after Kiro Crew's gate DENIED it"
+        outcome, what = "ran_despite_deny", "after Sao Khuê's gate DENIED it"
     elif not asked:
-        outcome, what = "ran_without_gate", "without asking Kiro Crew's gate"
+        outcome, what = "ran_without_gate", "without asking Sao Khuê's gate"
     else:
         return
     logger.error(
         "%s gate: tool call %s COMPLETED %s; the session's tool calls are no longer "
-        "governed by Kiro Crew's gate, so the harness is being stopped [session=%s]",
+        "governed by Sao Khuê's gate, so the harness is being stopped [session=%s]",
         acp_tool_gate.label_for(self.backend),
         tool_call_id,
         what,
@@ -1009,7 +1009,7 @@ async def _deny_spec_disabled_tool(self: AcpClient, event: AcpEvent) -> bool:
 async def _reject_unknown_server_request(self: AcpClient, msg: JsonRpcMessage) -> None:
     """Answer an unrecognized server→client request with -32601.
 
-    Kiro Crew implements only ``session/request_permission`` as an inbound
+    Sao Khuê implements only ``session/request_permission`` as an inbound
     server request. Any other request (e.g. ``fs/read_text_file``,
     ``terminal/create``) has no handler, but JSON-RPC requires a response or
     the agent blocks forever. Reply ``Method not found`` so it fails fast.
@@ -1115,7 +1115,7 @@ def _build_permission_event(self: AcpClient, msg: JsonRpcMessage) -> AcpEvent | 
             if self.backend in ACP_BACKENDS_PERMISSION_KIND_FROM_TOOL_CALL
             else None
         ),
-        # Set only for a session running Kiro Crew's gate extension, whose
+        # Set only for a session running Sao Khuê's gate extension, whose
         # dialogs carry the nonce this spawn issued; ``None`` everywhere else,
         # so no other harness's permission frame is ever read as an envelope.
         # Same compatibility shape as the maps above: an instance built without

@@ -186,7 +186,7 @@ _DASHBOARD_HTML_NOT_FOUND = (
     " newly-installed version). It can also mean the web assets were never"
     " built (dev / first-run) &mdash; build the frontend and stage it into"
     " the package before starting the gateway.</p>"
-    "<p><strong>Try restarting Kiro Crew.</strong> The exact restart step"
+    "<p><strong>Try restarting Sao Khuê.</strong> The exact restart step"
     " depends on your environment: if you installed it as a service use"
     " <code>kirocrew restart</code> (systemd / launchd); otherwise"
     " stop the running <code>kirocrew gateway</code> process and start it"
@@ -290,7 +290,7 @@ async def api_branding(request: web.Request) -> web.Response:
     # posture should reuse this flag rather than invent a second home.
     return web.json_response(
         {
-            "bot_name": cfg.dashboard.bot_name or "Kiro Crew",
+            "bot_name": cfg.dashboard.bot_name or "Sao Khuê",
             "avatar": "/logo.png",
             "direct_local": is_direct_local_request(request),
         }

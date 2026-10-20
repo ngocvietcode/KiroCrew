@@ -5,7 +5,7 @@ Status: partially implemented in `src/kiro_crew/hooks.py` and the dashboard appr
 ## Overview
 
 The approval layer is the seam between an autonomous agent and any consequential action.
-It already exists in Kiro Crew as three cooperating pieces:
+It already exists in Sao Khuê as three cooperating pieces:
 
 1. **Enforcement (backend):** `HookManager.on_tool_call` in `src/kiro_crew/hooks.py`
    returns `TOOL_ALLOW` / `TOOL_AUTO_APPROVE` / `TOOL_DENY` at the PreToolUse boundary,
@@ -175,17 +175,17 @@ parallel policy Req 6.1 forbids.
 
 The portable shape is three steps; the table names what an adopter substitutes.
 
-| Step | Portable shape | Kiro Crew binding | AI-SDK binding |
+| Step | Portable shape | Sao Khuê binding | AI-SDK binding |
 |---|---|---|---|
 | Intercept | evaluate the call before it executes | `HookManager.on_tool_call` | a tool with no `execute`, or `prepareStep`/`onStepFinish` interruption |
 | Render | build a card from the invocation state | `ApprovalCard` + `ToolPreviewFrame` | render from `UIToolInvocation` at `input-available` |
 | Resume | apply the decision to the same invocation | `resolveApproval(request_id, action)` | `addToolResult({ toolCallId, output })` + continued stream |
 
 **Explicit boundary (Req 5.3):** the *enforcement* (`on_tool_call`) and the *transport*
-(`resolveApproval` / `approveChatSlot`) are Kiro-Crew-specific — an adopter swaps in their own. The *portable*
+(`resolveApproval` / `approveChatSlot`) are SaoKhue-specific — an adopter swaps in their own. The *portable*
 part is: intercept before execute, render a card from the invocation state, resume the
 same invocation on decision. **The AI-SDK `UIToolInvocation` union is reused as a state
-model, not a transport claim (Req 5.4)** — Kiro Crew's chat transport is markdown +
+model, not a transport claim (Req 5.4)** — Sao Khuê's chat transport is markdown +
 `<mcwidget>` opaque strings (`useBlockAssembler.ts`, `types/index.chat.ts`), not a typed
 `tool-<name>` part stream, exactly as documented for the App Builder Kit tool-view encoding.
 

@@ -88,7 +88,7 @@ def test_stale_package_data_without_a_pip_channel_names_an_update(
     issues: list[str] = []
     install._doctor_tz_data(issues)
     out = capsys.readouterr().out
-    assert "Fix: update Kiro Crew, then restart the gateway." in out
+    assert "Fix: update Sao Khuê, then restart the gateway." in out
     assert "PIP" not in out
     assert issues == ["timezone data out of date"]
 

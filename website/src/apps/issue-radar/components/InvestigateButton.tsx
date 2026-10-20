@@ -1,5 +1,5 @@
 // The "Investigate" control in the issue-detail header. Opens (or resumes) a
-// KiroCrew chat session that investigates this issue — see lib/investigate.ts —
+// SaoKhue chat session that investigates this issue — see lib/investigate.ts —
 // and reflects the issue's saved investigation state (never investigated →
 // "Investigate"; has a session → "Resume" + a status pill). The record is read
 // cache-first; on click we optimistically write the returned record back into

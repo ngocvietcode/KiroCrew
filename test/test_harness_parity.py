@@ -1,6 +1,6 @@
 """Structural pins for the harness-parity invariants.
 
-Kiro Crew drives one first-class harness, ``kiro-cli``, and adapts the others.
+Sao Khuê drives one first-class harness, ``kiro-cli``, and adapts the others.
 Each test here closes one invariant from
 ``docs/system-specs/modules/harness-parity.md`` by its id, so a change that
 degrades the Kiro path goes red here rather than at an operator's first message.
@@ -408,7 +408,7 @@ def test_is_kiro_cli_is_positive(tmp_path) -> None:
 
     assert ACP_BACKENDS_INTERNAL_SANDBOX == frozenset({ACP_BACKEND_KIRO}), (
         "only kiro-cli ships an internal OS sandbox; adding a member here waives "
-        "Kiro Crew's own seatbelt for that harness on macOS"
+        "Sao Khuê's own seatbelt for that harness on macOS"
     )
 
 

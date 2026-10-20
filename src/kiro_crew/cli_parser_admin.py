@@ -1,5 +1,5 @@
 """Argparse definitions for the ``Security and privacy``, ``Move it and back it up`` and
-``Develop Kiro Crew itself`` commands.
+``Develop Sao Khuê itself`` commands.
 
 One registrar per command of those ``cli_help.COMMAND_GROUPS`` sections: secrets,
 security, file-delivery, policy, telemetry, cloud, tailnet, snapshot, restore, pod and
@@ -484,8 +484,8 @@ def register_file_delivery_parser(sub: _Commands) -> None:
 
 
 def register_cloud_parser(sub: _Commands) -> None:
-    # cloud — provision + run Kiro Crew on the user's own AWS EC2 (bring-your-own
-    # AWS; credentials resolved by the aws CLI, never stored by Kiro Crew).
+    # cloud — provision + run Sao Khuê on the user's own AWS EC2 (bring-your-own
+    # AWS; credentials resolved by the aws CLI, never stored by Sao Khuê).
     cloud_parser = cli_help.add_command(
         sub,
         "cloud",
@@ -601,7 +601,7 @@ Examples:
         "crew's identity; sign the crew in with Builder ID unless --identity-provider is given",
     )
 
-    _c_list = cloud_sub.add_parser("list", help="List your Kiro Crew cloud instances")
+    _c_list = cloud_sub.add_parser("list", help="List your Sao Khuê cloud instances")
     _cloud_creds_opts(_c_list)
 
     _c_status = cloud_sub.add_parser("status", help="Show one instance's state")

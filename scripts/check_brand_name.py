@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """check_brand_name.py — gate the product name's spelling on lines a change adds.
 
-The product is **Kiro Crew**: two words, a space between them, capital ``K``.
+The product is **Sao Khuê**: two words, a space between them, with its
+diacritic; the joined form, where one is wanted, is ``SaoKhue``. The upstream
+name **Kiro Crew** in prose -- spaced, joined or lowercased -- is what this gate
+reports, so the old display name cannot come back on an added line.
 Everything else in the tree — the GitHub repo ``kirodotdev/KiroCrew``, the
 ``kirocrew`` CLI, the ``kiro_crew`` Python package, ``KIROCREW_*`` environment
 variables, the ``KiroCrew.dmg`` artifact — is an *identifier*, and identifiers
@@ -104,7 +107,7 @@ CONCATENATED = re.compile(
 # token rather than the two-word brand.
 UNCAPITALISED = re.compile(r"(?<![A-Za-z0-9_./\\-])kiro crew(?![A-Za-z0-9_])")
 
-CORRECT = "Kiro Crew"
+CORRECT = "Sao Khuê"
 
 # ---------------------------------------------------------------------------
 # Structural exemptions — places the concatenated spelling is the true name
@@ -807,8 +810,8 @@ def report(violations: Iterable[Violation], *, enforcing: bool, base: str | None
             "fenced/inline code in markdown. For anything else that genuinely needs the "
             "joined form, add a 'brand-ok' comment on the line."
             "\n\nOne case wants a reword rather than a substitution: a hyphenated compound. "
-            "'KiroCrew-owned' does not become 'Kiro Crew-owned' — hyphenating an open "
-            "two-word name reads wrong. Write 'owned by Kiro Crew' instead."
+            "'KiroCrew-owned' does not become 'Sao Khuê-owned' — hyphenating an open "
+            "two-word name reads wrong. Write 'owned by Sao Khuê' instead."
         )
     return 1 if enforcing else 0
 

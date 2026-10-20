@@ -194,7 +194,7 @@ class KiroCrewConfig:
     instances: InstancesConfig = field(
         default_factory=InstancesConfig,
         metadata=_meta(
-            "Instances", "Multi-instance management — manage/switch remote Kiro Crews over SSH."
+            "Instances", "Multi-instance management — manage/switch remote Sao Khuês over SSH."
         ),
     )
     heartbeat: HeartbeatConfig = field(
@@ -357,11 +357,11 @@ class KiroCrewConfig:
     )
     agents: dict[str, KiroCrewAgentConfig] = field(
         default_factory=dict,
-        metadata=_meta("Agents", "Named Kiro Crew agent definitions."),
+        metadata=_meta("Agents", "Named Sao Khuê agent definitions."),
     )
     default_agent: str = field(
         default="",
-        metadata=_meta("Default Agent", "Active Kiro Crew agent name from the agents section."),
+        metadata=_meta("Default Agent", "Active Sao Khuê agent name from the agents section."),
     )
     workspaces: dict[str, WorkspaceConfig] = field(
         default_factory=dict,
@@ -402,7 +402,7 @@ class KiroCrewConfig:
     #: reachable at all; it also stops ``validation`` reporting the operator's
     #: own documented setting as an "unrecognized top-level key".
     #:
-    #: Parsed through ``_safe_bool`` and defaulting False: a value Kiro Crew
+    #: Parsed through ``_safe_bool`` and defaulting False: a value Sao Khuê
     #: cannot read must mean "keep the held surface hidden", never the reverse
     #: (same posture as ``computer_use.cursor_motion``). The frontend predicate
     #: is a strict ``=== true``, so coercing e.g. the string ``"true"`` would
@@ -694,7 +694,7 @@ class KiroCrewConfig:
         # ``telegram.accounts`` is deprecated and inert. It is kept on disk ONLY
         # so an operator's named-account tokens survive the next save(); an
         # empty map protects nothing, and writing it back materializes a
-        # deprecated key into every config Kiro Crew has ever saved -- which
+        # deprecated key into every config Sao Khuê has ever saved -- which
         # validation then announces as a deprecation on every launch, to an
         # operator who never wrote it. Emit the map only when it holds accounts.
         _tg_section = d.get("telegram")
@@ -1237,7 +1237,7 @@ class KiroCrewConfig:
     def create_provider_factory(self) -> Callable:
         """Return a factory that creates LLMProvider instances from config.
 
-        Kiro Crew is KiroACP-only: the sole provider is the ACP adapter driving
+        Sao Khuê is KiroACP-only: the sole provider is the ACP adapter driving
         the kiro-cli backend. The factory accepts an optional ``session_key`` to
         create a per-session subdirectory under ``workspace_root()``.
         """
@@ -1312,7 +1312,7 @@ class KiroCrewConfig:
             crew_agent = resolve_crew_identity(self, agent, crew_agent)
             # Resolve the model, highest tier first:
             #   1. model_override — the caller's explicit pick. The dashboard
-            #      passes the slot's own model, else the Kiro Crew agent's
+            #      passes the slot's own model, else the Sao Khuê agent's
             #      configured default (see chat_runner._run_chat).
             #   2. the bound kiro agent's own pinned model, for a named agent.
             #      Custom agents MUST resolve here because the ACP

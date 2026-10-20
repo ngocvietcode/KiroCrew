@@ -34,7 +34,7 @@ from kiro_crew.service.common import systemd_quote
 
 _UNIT_TEMPLATE = """\
 [Unit]
-Description=KiroCrew pod (%i) — isolated worktree gateway, throwaway
+Description=SaoKhue pod (%i) — isolated worktree gateway, throwaway
 # Multi-active: many run at once, one per worktree, each on its own port + own
 # KIROCREW_HOME. Orthogonal to the live gateway; refuses to bind the live port.
 
@@ -206,7 +206,7 @@ def install_dropin(cfg: PodConfig, name: str, checkout: Path) -> Path:
 
 
 def remove_dropin(cfg: PodConfig, name: str) -> bool:
-    """Delete only Kiro Crew's drop-in. True when its file and empty dir are gone.
+    """Delete only Sao Khuê's drop-in. True when its file and empty dir are gone.
 
     A foreign drop-in keeps the directory alive. The POSIX path addresses the
     managed filename relative to a pinned directory descriptor, so a planted
@@ -331,7 +331,7 @@ def unit_is_current(cfg: PodConfig) -> bool:
     (:func:`unit_exec_ok`), the unit still carries a directive this build has
     REMOVED, or it is missing one this build now REQUIRES. All three matter on
     UPGRADE — the unit is written once by ``pod install``, so without these checks
-    a machine that installed an older Kiro Crew would keep the old definition, and
+    a machine that installed an older Sao Khuê would keep the old definition, and
     keep the defect, until someone happened to reinstall by hand.
     """
     if not unit_exec_ok(cfg):

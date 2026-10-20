@@ -1,23 +1,23 @@
-# Register a Box OAuth app for Kiro Crew Connections
+# Register a Box OAuth app for Sao Khuê Connections
 
-*Who this is for: a Box Admin or Co-Admin of the Box enterprise whose files Kiro Crew should read, or the person who can ask one to click through the Admin Console with them. You need a browser and a Box account that can open the Admin Console. Expected time: 15 minutes if you are the admin; longer if you have to wait for one.*
+*Who this is for: a Box Admin or Co-Admin of the Box enterprise whose files Sao Khuê should read, or the person who can ask one to click through the Admin Console with them. You need a browser and a Box account that can open the Admin Console. Expected time: 15 minutes if you are the admin; longer if you have to wait for one.*
 
 **Box has no Connections entry yet** — see the
 [index](README.md) for the providers pre-registered on this build — so its card
 and its **Connect** button appear once that entry ships. Registering the redirect
 URI below now means it already matches when it does.
 
-This runbook covers the **Box MCP server** (`https://mcp.box.com`), Box's hosted Model Context Protocol endpoint. It lets Kiro Crew search, read and (if you allow it) write Box files as the signed-in Box user. Box's own documentation says the credentials for a custom client come from the **Admin Console**, not from the Developer Console app you may already know; the difference matters and is explained in section 1.
+This runbook covers the **Box MCP server** (`https://mcp.box.com`), Box's hosted Model Context Protocol endpoint. It lets Sao Khuê search, read and (if you allow it) write Box files as the signed-in Box user. Box's own documentation says the credentials for a custom client come from the **Admin Console**, not from the Developer Console app you may already know; the difference matters and is explained in section 1.
 
 ## Before you start
 
 - A Box account that is an **Admin or Co-Admin** of the enterprise. Box's setup guide for custom MCP clients starts with "Sign in to the Box Admin Console" and every step after that is an admin action. A plain managed user cannot complete this runbook alone.
 - Box states the MCP server is "available on all Box plans", but two of its tool groups need extra enablement or licences: AI tools need Box AI turned on for the enterprise (**Admin Console → Box AI → Settings → Enable AI API**), and Doc Gen tools need an Enterprise Advanced licence. Box's documentation does not state whether a free developer account exposes the Box MCP server in its Admin Console; if you only have a developer account, expect to check for the entry in step 2 of section 1 before going further.
-- Kiro Crew installed and its dashboard reachable, so you can open **Settings → OAuth Apps**.
+- Sao Khuê installed and its dashboard reachable, so you can open **Settings → OAuth Apps**.
 - Facts you will need to type exactly:
   - Redirect URI: `http://127.0.0.1:48108/callback`
   - MCP endpoint: `https://mcp.box.com`
-  - Box does not support Dynamic Client Registration. Box's support article says: "Note that the Box MCP Server currently does not support Dynamic Client Registration." The Client ID and Client secret must therefore be created by hand and pasted into Kiro Crew.
+  - Box does not support Dynamic Client Registration. Box's support article says: "Note that the Box MCP Server currently does not support Dynamic Client Registration." The Client ID and Client secret must therefore be created by hand and pasted into Sao Khuê.
 
 ## 1. Create the app
 
@@ -28,8 +28,8 @@ Box has two places that mint OAuth client credentials. The **Developer Console**
 3. Find **Custom Box MCP Server**. Either open the **Categories** filter and choose **MCP**, or type `Box MCP` in the search field at the top of the page. If the entry is not there, your enterprise or plan does not show the MCP server yet; stop and contact Box support.
 4. Hover over **Custom Box MCP Server** and click **Configure**.
 5. Scroll to the **Additional Configuration** section and click **+ Add Integration Credentials**.
-6. Enter a name for the credentials, for example `Kiro Crew Connections`, and click **Save**.
-7. Expand the details of the entry you just created. Box shows a generated **Client ID** and **Client Secret**. Copy both now; you will paste them into Kiro Crew in section 5. Treat the client secret like a password.
+6. Enter a name for the credentials, for example `Sao Khuê Connections`, and click **Save**.
+7. Expand the details of the entry you just created. Box shows a generated **Client ID** and **Client Secret**. Copy both now; you will paste them into Sao Khuê in section 5. Treat the client secret like a password.
 8. Stay on this screen for sections 2 and 3, which fill in the remaining fields of the same entry.
 
 Box adds the entry as a platform app under **Platform → Platform Apps** in the Admin Console, which is where you later disable or delete it. Box notes: "the Integration's availability status does not affect the availability status of its Integration Credentials platform apps", so the credentials have their own on/off switch there.
@@ -49,7 +49,7 @@ If you cannot reach the Admin Console and want to try the generic path anyway, t
 
 Box accepts a plain-HTTP loopback redirect. Its OAuth setup guide states: "These must be valid URIs that are HTTPS, or a less secure HTTP for localhost or loopback address." The same guide says matching is exact except for the port: "Localhost and loopback address redirect URIs will be permitted to redirect to any port, but the scheme, domain, path and query parameters must match one of the configured URIs." That sentence is written for the Developer Console field; Box's MCP documentation does not separately state the validation rules for the Admin Console **Redirect URI** field, but the credentials are stored as a platform app, so expect the same rule. If the field rejects the value, record the exact error in the Known limits section and stop.
 
-Kiro Crew's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and the port is fixed per provider (Box is 48108). Remote, tailnet or Docker installs do not need a second redirect URI. After you approve the app, the browser is sent to that loopback URL, which is unreachable from your laptop when the gateway runs elsewhere; copy the full landing URL from the browser's address bar, paste it into the Kiro Crew dashboard when prompted, and the gateway replays it to its own loopback listener.
+Sao Khuê's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and the port is fixed per provider (Box is 48108). Remote, tailnet or Docker installs do not need a second redirect URI. After you approve the app, the browser is sent to that loopback URL, which is unreachable from your laptop when the gateway runs elsewhere; copy the full landing URL from the browser's address bar, paste it into the Sao Khuê dashboard when prompted, and the gateway replays it to its own loopback listener.
 
 ## 3. Scopes and permissions
 
@@ -67,12 +67,12 @@ Click **Save** after ticking the scopes. Individual MCP tools can additionally b
 
 - **No Box review or marketplace listing** is needed. The Integration Credentials you created are private to your enterprise.
 - **Admin approval is built in**: only an Admin or Co-Admin can create the credentials, so there is no separate "submit for approval" step. If you took the Developer Console route instead, Box's rule applies: "Unpublished applications using [OAuth 2.0] authentication may require enablement by a Box Admin or Co-Admin", and the admin enables the app by Client ID under **Platform → Platform Apps**.
-- **Pricing**: Box states API calls are free only for "an app published in the Box Integrations Center" used with your own Box login. Kiro Crew's credentials are "additional integration credentials from the Box MCP Server", which Box lists among the charged cases (1 API call per tool invocation, plus AI Units for AI tools). Check your plan's API allowance.
+- **Pricing**: Box states API calls are free only for "an app published in the Box Integrations Center" used with your own Box login. Sao Khuê's credentials are "additional integration credentials from the Box MCP Server", which Box lists among the charged cases (1 API call per tool invocation, plus AI Units for AI tools). Check your plan's API allowance.
 - **Re-authorization**: if you change scopes later, Box requires the app to be re-authorized before the change takes effect; users will be asked to click Connect again.
 
-## 5. Enter the credentials in Kiro Crew
+## 5. Enter the credentials in Sao Khuê
 
-1. Open the Kiro Crew dashboard and go to **Settings → OAuth Apps**.
+1. Open the Sao Khuê dashboard and go to **Settings → OAuth Apps**.
 2. Find the **Box** card.
 3. Paste the **Client ID** from section 1 into the **Client ID** field.
 4. Paste the **Client Secret** into the **Client secret** field. Box requires the secret at token exchange: its authorization-server metadata lists only `client_secret_basic` and `client_secret_post` as token endpoint authentication methods, and its token endpoint documentation sends `client_secret` on every `authorization_code` request. A public (secret-less) PKCE client is not documented.
@@ -83,7 +83,7 @@ Container or CI alternative: set the environment variables `KIROCREW_CONNECTIONS
 
 ## 6. Verify the connection
 
-1. Open **Capabilities → Connections** in the Kiro Crew dashboard. The Box card should now read **Connect** instead of **Needs configuration**.
+1. Open **Capabilities → Connections** in the Sao Khuê dashboard. The Box card should now read **Connect** instead of **Needs configuration**.
 2. Click **Connect**. A browser tab opens on `https://account.box.com/api/oauth2/authorize` showing Box's consent page for the app name you chose in section 1, with the scopes from section 3.
 3. Sign in with your Box account if asked, then click **Grant access to Box**.
 4. The browser lands on `http://127.0.0.1:48108/callback?...`. On a local install this completes automatically. On a remote install, copy the landing URL from the address bar and paste it into the dashboard when prompted.
@@ -98,12 +98,12 @@ Container or CI alternative: set the environment variables `KIROCREW_CONNECTIONS
 - **Confidential client only**: the client secret is mandatory at token exchange. Box's metadata advertises PKCE (`code_challenge_methods_supported: ["S256"]`), but no secret-less `none` method, so PKCE is an addition, not a replacement.
 - **No Dynamic Client Registration**: quoted in Before you start. `POST https://api.box.com/oauth2/register` does not exist.
 - **Issuer string discrepancy**: the MCP server's protected-resource metadata (`https://mcp.box.com/.well-known/oauth-protected-resource`) lists `"authorization_servers": ["https://api.box.com/"]` with a trailing slash, while the authorization-server metadata it points to (`https://api.box.com/.well-known/oauth-authorization-server`, also mirrored at `https://account.box.com/.well-known/oauth-authorization-server`) declares `"issuer": "https://api.box.com"` without one. A client that compares issuer strings strictly will see a mismatch. `https://mcp.box.com/.well-known/oauth-authorization-server` itself answers 401.
-- **Endpoints**: authorize `https://account.box.com/api/oauth2/authorize`; token `https://api.box.com/oauth2/token`; revoke `https://api.box.com/oauth2/revoke` (POST with `client_id`, `client_secret`, `token`). To cut off Kiro Crew entirely, disable or delete the Integration Credentials entry under **Admin Console → Platform → Platform Apps**.
+- **Endpoints**: authorize `https://account.box.com/api/oauth2/authorize`; token `https://api.box.com/oauth2/token`; revoke `https://api.box.com/oauth2/revoke` (POST with `client_id`, `client_secret`, `token`). To cut off Sao Khuê entirely, disable or delete the Integration Credentials entry under **Admin Console → Platform → Platform Apps**.
 - **Tool availability depends on plan and admin toggles**: AI tools need Box AI enabled and an AI-enabled plan; Doc Gen needs Enterprise Advanced; some tools are off by default. Clients cache the tool list, so after an admin change disconnect and reconnect.
 - **Metered**: custom Integration Credentials are a charged API-call case in Box's pricing table.
-- **Token lifetimes**: Box access tokens expire after 60 minutes, refresh tokens "after 60 days or 1 use", and authorization codes after 30 seconds. Kiro Crew must refresh on schedule; a connection left idle for more than 60 days needs a fresh Connect.
-- **Narrowing at authorize time**: Box lets the authorization URL carry a `scope` parameter that further restricts the token below the scopes ticked in section 3 ("When the scope parameter is omitted the application will use the scopes that were set when the application was created"). If Kiro Crew sends no `scope` parameter, the ticked scopes are what the token gets.
-- **Legacy self-hosted server**: Box marks the open-source self-hosted Box MCP server "deprecated. Do not start new work on it." Kiro Crew uses the hosted endpoint only.
+- **Token lifetimes**: Box access tokens expire after 60 minutes, refresh tokens "after 60 days or 1 use", and authorization codes after 30 seconds. Sao Khuê must refresh on schedule; a connection left idle for more than 60 days needs a fresh Connect.
+- **Narrowing at authorize time**: Box lets the authorization URL carry a `scope` parameter that further restricts the token below the scopes ticked in section 3 ("When the scope parameter is omitted the application will use the scopes that were set when the application was created"). If Sao Khuê sends no `scope` parameter, the ticked scopes are what the token gets.
+- **Legacy self-hosted server**: Box marks the open-source self-hosted Box MCP server "deprecated. Do not start new work on it." Sao Khuê uses the hosted endpoint only.
 
 ## Sources
 

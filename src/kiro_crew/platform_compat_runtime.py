@@ -1,4 +1,4 @@
-"""The interpreter and process image Kiro Crew runs as.
+"""The interpreter and process image Sao Khuê runs as.
 
 The UTF-8 environment and console, the re-exec and exit seams, the process alarm
 and the boot and awake clocks, the open-file limit, ``strftime``, interpreter
@@ -50,11 +50,11 @@ def _ensure_utf8_process_environment() -> None:
 
     ``sys.stdout.reconfigure`` can repair the current process, but Windows
     implements ``os.execv`` by creating a successor process.  Its standard
-    streams are constructed before Kiro Crew code runs, so the encoding must be
+    streams are constructed before Sao Khuê code runs, so the encoding must be
     present in the environment at interpreter startup.  POSIX ``execv`` keeps
     the current environment, where an inherited ``PYTHONIOENCODING`` can also
     override the platform's normal UTF-8 defaults.  Overwrite inherited settings
-    deliberately: Kiro Crew's process tree emits Unicode as part of its normal
+    deliberately: Sao Khuê's process tree emits Unicode as part of its normal
     protocols and boot output.
     """
     os.environ.update(_UTF8_PROCESS_ENV)
@@ -380,16 +380,16 @@ def isolated_python_argv(
     executable: str | os.PathLike[str] | None = None,
     force_isolation: bool = False,
 ) -> list[str]:
-    """Argv for a Kiro Crew-owned Python child with bundle-safe user-site policy.
+    """Argv for a Sao Khuê-owned Python child with bundle-safe user-site policy.
 
     ``-s`` is the narrow control: it removes the user site while preserving
     ``PYTHONPATH``, the working-directory import path, and every other
     environment setting internal app and MCP launchers rely on. A caller that
     already chose ``-I`` keeps that stronger contract unchanged. Non-bundled
     parents that currently allow the user site preserve that policy because
-    Kiro Crew itself may have been installed there. Only callers that supply
+    Sao Khuê itself may have been installed there. Only callers that supply
     the child's import path through ``PYTHONPATH`` or a script/entry path may
-    set ``force_isolation``. This helper is for Kiro Crew-owned processes and
+    set ``force_isolation``. This helper is for Sao Khuê-owned processes and
     installers, not user scripts or project tools.
     """
     resolved = os.fspath(executable or sys.executable)
@@ -411,9 +411,9 @@ def isolated_python_argv(
 
 
 def ensure_utf8_console() -> None:
-    """Keep Kiro Crew's process tree UTF-8 and repair current Windows streams.
+    """Keep Sao Khuê's process tree UTF-8 and repair current Windows streams.
 
-    Kiro Crew prints non-ASCII glyphs throughout its CLI/gateway output. On
+    Sao Khuê prints non-ASCII glyphs throughout its CLI/gateway output. On
     Windows the default console code page is cp1252, and when stdout is a pipe
     (e.g. the gateway launched detached with redirected output, or under the
     KiroCrewHub client) Python encodes prints as cp1252 — so the FIRST non-ASCII
@@ -538,7 +538,7 @@ def find_python_interpreter(reject: Optional[Callable[[str], bool]] = None) -> s
     single unusable interpreter does not short-circuit the whole search.
 
     Returns the interpreter path, or None when none is usable. Callers that just
-    need *an* interpreter to re-exec Kiro Crew itself should prefer
+    need *an* interpreter to re-exec Sao Khuê itself should prefer
     ``sys.executable``; this is for finding a SEPARATE system python (e.g. STT /
     whisper installs that must not land in the gateway's venv).
     """

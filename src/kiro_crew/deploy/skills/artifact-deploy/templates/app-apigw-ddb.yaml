@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  KiroCrew One-Click Deploy - per-app STATEFUL backend (API Gateway HTTP API ->
+  SaoKhue One-Click Deploy - per-app STATEFUL backend (API Gateway HTTP API ->
   Lambda -> DynamoDB). The Lambda is invoked only by API Gateway (scoped resource
   policy), never through a world-accessible Function URL. The Lambda role is
   least-privilege: CloudWatch Logs + CRUD on ONLY its own table. One stack per

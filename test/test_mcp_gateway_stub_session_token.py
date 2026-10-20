@@ -206,12 +206,12 @@ def _capture_fallback_env(monkeypatch: pytest.MonkeyPatch, args: Any) -> dict[st
 def test_the_fallback_keeps_the_token_for_a_vetted_control_plane(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """Kiro Crew's own control plane is what the token exists for. Without it a
+    """Sao Khuê's own control plane is what the token exists for. Without it a
     fallback kirocrew-core refuses every call identity_unattested wherever the
     kernel peer check cannot name the session (a runtime hosting several
     sessions, a TCP connection). It is kept only when gatewayd's own vetting
     accepts the target, and that vetting judges the env the child really gets,
-    minus the token and minus Kiro Crew's pinned UTF-8 keys."""
+    minus the token and minus Sao Khuê's pinned UTF-8 keys."""
     monkeypatch.setenv(STUB_SESSION_TOKEN_ENV, TOKEN_A)
     for key, value in platform_compat._UTF8_PROCESS_ENV.items():
         monkeypatch.setenv(key, value)
@@ -523,7 +523,7 @@ async def test_the_token_never_reaches_the_prewarm_file(
 
 
 # ---------------------------------------------------------------------------
-# The token reaches Kiro Crew's OWN pooled control planes, and nothing else
+# The token reaches Sao Khuê's OWN pooled control planes, and nothing else
 # ---------------------------------------------------------------------------
 
 
@@ -1162,7 +1162,7 @@ class TestSpawnsOwnControlPlane:
         self, monkeypatch: pytest.MonkeyPatch, server_name: str, command: str, args: list[str]
     ) -> None:
         """The classifier is handed a ``PYTHON*``-free environment and the child
-        still receives Kiro Crew's UTF-8 pair. Re-asserting the pair before the
+        still receives Sao Khuê's UTF-8 pair. Re-asserting the pair before the
         verdict would deny every control plane its own token; dropping it would
         let a pooled interpreter build stdio from a Windows ANSI codepage."""
         from test_mcp_gateway_spawn_gate import _fake_backend, _register_frame

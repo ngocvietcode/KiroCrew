@@ -28,8 +28,8 @@ than this subsystem's OAuth-grant plumbing. Their current contracts include the
 [Microsoft Graph](microsoft-graph-runtime.md), and [Zoom](connector-zoom.md)
 specs.
 
-**Kiro Crew never holds a connection's credential.** kiro-cli owns the OAuth chain
-end to end; Kiro Crew observes grant presence by `stat`, and every rule below follows
+**Sao Khuê never holds a connection's credential.** kiro-cli owns the OAuth chain
+end to end; Sao Khuê observes grant presence by `stat`, and every rule below follows
 from that boundary. The credential-boundary detail lives in
 [`../architecture/design-notes/mcp-oauth-ownership.md`](../../architecture/design-notes/mcp-oauth-ownership.md).
 
@@ -38,7 +38,7 @@ refuses dynamic client registration (`auth.mode: "preregistered"` in the
 registry — GitHub and Asana today) needs an OAuth **app** an operator registered
 in the vendor console, and a confidential app comes with a `client_secret`. That
 secret is the operator's *application* credential, not any user's grant: the
-grant still lives with kiro-cli and nothing here reads it. Kiro Crew keeps the
+grant still lives with kiro-cli and nothing here reads it. Sao Khuê keeps the
 secret in the encrypted vault (`CONNECTIONS_<SLUG>_CLIENT_SECRET`) as the source
 of truth and writes it into the emitted agent spec as `oauth.clientSecret` only
 because that file is the one thing kiro-cli reads — **the same footing the
@@ -140,7 +140,7 @@ Status vocabulary, all judged from local facts:
 | `awaiting_consent` | no grant, but a mint is in flight (`minting`/`waiting`) |
 | `not_connected` | no grant and nothing pending |
 
-`accountLabel` is deliberately **absent**. Kiro Crew never sees a provider
+`accountLabel` is deliberately **absent**. Sao Khuê never sees a provider
 credential, and neither the unauthenticated handshake nor the runtime's
 notifications carry an account identity, so there is nothing truthful to report;
 inventing a label locally would put an unverified identity on the card.
@@ -685,7 +685,7 @@ decided over an incomplete census, or acted on outside the lock that judged it:
   endpoint names. `spec_census` globs the whole agents directory alongside the
   `mcp.json` scopes, precisely because the specs that matter are the ones Kiro
   Crew does *not* own. An agent spec contributes sharers but is never a purge
-  target: Kiro Crew does not own a user's agent file.
+  target: Sao Khuê does not own a user's agent file.
 - **The purge was wider than the judgement.** Ownership was read from the merged
   winner while `_purge_server_config` removed the name from *every* scope, so a
   same-named entry in a lower-priority scope pointing elsewhere was deleted
@@ -823,7 +823,7 @@ those entries are reflections of the scopes this transaction is purging rather
 than independent grant holders — counting them made an ordinary Disconnect see its
 own reflection as a sharer and skip the revoke *every time*, which is the failure
 mode where the feature silently never fires and no census-mocking test can see it.
-A hand-written agent spec is the opposite: Kiro Crew never writes it, so its entry
+A hand-written agent spec is the opposite: Sao Khuê never writes it, so its entry
 keeps its own grant and must be able to block a revoke. The exclusion is scoped to
 the justification — with nothing owned the purge does not run, so a mirrored entry
 is a real holder again and blocks normally.
@@ -873,7 +873,7 @@ every time. L1 sits between: one consent click, then automated.
 
 ### What a green L1 run actually proves
 
-**Kiro Crew holds no token.** kiro-cli owns the OAuth chain and injects the
+**Sao Khuê holds no token.** kiro-cli owns the OAuth chain and injects the
 bearer inside its own process ([mcp-oauth-ownership.md](../../architecture/design-notes/mcp-oauth-ownership.md)),
 so an exchange opened from the harness carries no credential for a managed
 provider, and the live endpoint answers with an OAuth challenge -- exactly as it
@@ -1118,7 +1118,7 @@ callback path is the constant `CALLBACK_PATH = "/callback"`, so
 `registry.redirect_uri(provider)` is the one string both the runbook prints and
 the runtime pins: `http://<host>:<port>/callback`. A shipped `redirect_host` /
 `redirect_port` is immutable: every operator who followed the runbook has
-registered that exact URI in a vendor console Kiro Crew cannot reach, so changing
+registered that exact URI in a vendor console Sao Khuê cannot reach, so changing
 it silently breaks each of their apps until they re-register. Retire a port by
 adding a provider, never by renumbering one;
 `test_connections_registry_auth.py` pins the shipped values so a change fails

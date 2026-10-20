@@ -1,7 +1,7 @@
 "use strict";
 // Decision table for the cross-app gateway ownership guard. The guard's
 // contract: interpose ONLY when both sides are positively identified as
-// different KiroCrew identity families; every ambiguous case preserves the
+// different SaoKhue identity families; every ambiguous case preserves the
 // historical reuse behavior.
 
 const { test } = require("node:test");
@@ -35,7 +35,7 @@ test("same family reuses: nightly shell, nightly gateway (relaunch)", () => {
   assert.equal(d.action, "reuse");
 });
 
-// A local KiroCrew LISTEN owner is what makes an eviction legitimate. Passing
+// A local SaoKhue LISTEN owner is what makes an eviction legitimate. Passing
 // it explicitly in the cross-family cases keeps those tests about FAMILY logic.
 const LOCAL = { localOwner: "kirocrew" };
 
@@ -73,7 +73,7 @@ test("unclassifiable own version never evicts", () => {
 // An `ssh -L 5476:localhost:5476 host` forward makes a REMOTE gateway answer
 // /api/health on localhost with a payload identical to a local install's. Every
 // case below is cross-family (the family logic says "evict") and must still
-// reuse, because the port is not held by a local KiroCrew process.
+// reuse, because the port is not held by a local SaoKhue process.
 const CROSS_FAMILY_HEALTH = { ok: true, app: "kirocrew", version: "0.1.0" };
 const NIGHTLY_SHELL = "0.2.0-nightly.20260722120000";
 
@@ -123,8 +123,8 @@ test("FAMILY_META separates display names from quit-by-name targets", () => {
   // is the only valid AppleScript targeting handle.
   assert.equal(FAMILY_META.prod.appName, "KiroCrew");
   assert.equal(FAMILY_META.nightly.appName, "KiroCrew Nightly");
-  assert.equal(FAMILY_META.prod.displayName, "Kiro Crew");
-  assert.equal(FAMILY_META.nightly.displayName, "Kiro Crew Nightly");
+  assert.equal(FAMILY_META.prod.displayName, "Sao Khuê");
+  assert.equal(FAMILY_META.nightly.displayName, "Sao Khuê Nightly");
 });
 
 test("identity probe targets /api/health, never the /api/status liveness URL", () => {

@@ -317,7 +317,7 @@ class TestResolveClientPortRunMarker:
     A gateway on a non-default port advertises itself by writing
     `<data-home>/run/gateway-<port>.bin`. With nothing configured, a client must
     read that marker instead of assuming 5476 — but only when a verified
-    Kiro Crew gateway process holds the port, and only when exactly one does.
+    Sao Khuê gateway process holds the port, and only when exactly one does.
     """
 
     @pytest.fixture(autouse=True)
@@ -334,7 +334,7 @@ class TestResolveClientPortRunMarker:
         return patch("kiro_crew.cli_server.run_marker.marker_ports", return_value=ports)
 
     def _owned(self, ports):
-        """Pretend a verified Kiro Crew gateway listens on each of *ports*."""
+        """Pretend a verified Sao Khuê gateway listens on each of *ports*."""
         return patch(
             "kiro_crew.cli_server._gateway_owns_port", side_effect=lambda p: p in set(ports)
         )

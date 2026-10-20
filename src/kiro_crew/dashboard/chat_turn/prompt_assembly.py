@@ -52,7 +52,7 @@ async def _session_replay_history(
     asked for a cold start without history.
     """
     compressed: str | None = ""
-    # Provider-agnostic session replay: Kiro Crew's conversation_log
+    # Provider-agnostic session replay: Sao Khuê's conversation_log
     # is the canonical history source. Skip only when the provider
     # successfully resumed its own native session (same provider,
     # full-fidelity history already loaded via ACP session/load).

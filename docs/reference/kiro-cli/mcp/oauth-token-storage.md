@@ -1,15 +1,15 @@
 # kiro-cli MCP OAuth Token Storage
 
-> **Not a mirror.** This page has no upstream published reference: the file layout is read from the `aws/amazon-q-developer-cli` source and the rest from Kiro Crew's own implementation. Preserve it across a re-fetch.
+> **Not a mirror.** This page has no upstream published reference: the file layout is read from the `aws/amazon-q-developer-cli` source and the rest from Sao Khuê's own implementation. Preserve it across a re-fetch.
 
-Where kiro-cli writes MCP OAuth credentials on disk, how Kiro Crew identifies
+Where kiro-cli writes MCP OAuth credentials on disk, how Sao Khuê identifies
 the exact pair without reading token bytes, and how to disconnect safely. The file
 layout is derived from `aws/amazon-q-developer-cli`'s
-`crates/chat-cli/src/mcp_client/oauth_util.rs`; Kiro Crew's current behavior is in
+`crates/chat-cli/src/mcp_client/oauth_util.rs`; Sao Khuê's current behavior is in
 `src/kiro_crew/mcp_grant.py` and `src/kiro_crew/connections/ownership.py`.
 
 > Current supported paths: interactive kiro-cli provides `/mcp logout <server>`,
-> while Kiro Crew's **Settings > Connections > Disconnect** removes configuration
+> while Sao Khuê's **Settings > Connections > Disconnect** removes configuration
 > it owns and, only after a sharer/ownership census, unlinks the server's paired
 > local grant artifacts. Manual file operations are recovery tools, not the normal
 > product workflow.
@@ -124,11 +124,11 @@ operations want different scopes.
 
 ## How to sign out or disconnect
 
-### From Kiro Crew
+### From Sao Khuê
 
 For a registry-backed provider, open **Settings > Connections** and choose
 **Disconnect**. The endpoint cancels an in-flight mint, removes the MCP entries
-Kiro Crew owns, and considers the stored grant in the same locked transaction.
+Sao Khuê owns, and considers the stored grant in the same locked transaction.
 It unlinks both the token and registration artifacts only when its configuration
 census can prove no other server entry shares that artifact key. If a source is
 unreadable, a URL cannot be compared safely, another entry shares the grant, or an
@@ -173,7 +173,7 @@ single-file entries belong to AWS SSO and Kiro identity.
    read the file) can keep using them.
 
 2. **Running sessions may cache credentials and tools.** Removing files on disk
-   does not rewrite an already-running agent process. Kiro Crew's Disconnect
+   does not rewrite an already-running agent process. Sao Khuê's Disconnect
    removes the durable pair and rebuilds owned configuration, but recycle the
    affected session (or restart the gateway when several pooled sessions are
    involved) when the change must take effect immediately.
@@ -189,12 +189,12 @@ single-file entries belong to AWS SSO and Kiro identity.
    than `rm` for production code.
 
 5. **Interactive kiro-cli can reauthenticate in place.** `/mcp auth` and
-   `/mcp logout` provide the supported current-session controls. Kiro Crew's
+   `/mcp logout` provide the supported current-session controls. Sao Khuê's
    Connections surface instead manages its owned config and durable artifact
    pair; use a fresh agent session after that operation so its tool inventory is
    rebuilt.
 
-## How Kiro Crew exposes this
+## How Sao Khuê exposes this
 
 `mcp_grant.py` is the single implementation of the normalized key and paired
 artifact paths. It stats artifacts for presence without opening token bytes and
@@ -214,13 +214,13 @@ revocation remains a separate provider-side action.
 ## Long-term direction
 
 The design doc at `docs/architecture/design-notes/mcp-oauth-ownership.md` argues that
-Kiro Crew should eventually own the OAuth chain end-to-end (token store,
+Sao Khuê should eventually own the OAuth chain end-to-end (token store,
 refresh, sign-out, per-agent identity) once a Kiro SDK exists or we move
 to the Claude Agent SDK. At that point this whole file becomes legacy —
 the question of "where does kiro-cli put its tokens" stops mattering
 because we'd inject pre-authenticated `Authorization` headers into the
 agent config at session-spawn time, and kiro-cli's OAuth path would be
-dead code in the Kiro Crew use case.
+dead code in the Sao Khuê use case.
 
 Until then, keep all cache-key derivation, presence checks, and exact-pair deletion
 in `mcp_grant.py`; callers should use the supported CLI or Connections surfaces

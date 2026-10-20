@@ -1,6 +1,6 @@
 # MCP entry provenance: who may rewrite a shared config entry
 
-Kiro Crew writes MCP server entries into two config files it does not own — the
+Sao Khuê writes MCP server entries into two config files it does not own — the
 kiro-global `~/.kiro/settings/mcp.json` and the Claude Code sidecar `~/.mcp.json`.
 Users hand-edit both, and other tools write the sidecar. Any sync that can
 *update* entries (not just add them) must answer one question per entry:
@@ -14,13 +14,13 @@ write time instead of inferred at read time.
 
 ## The invariant
 
-> An entry in a shared config file is Kiro Crew–managed **iff** it carries our
+> An entry in a shared config file is Sao Khuê–managed **iff** it carries our
 > marker. Name presence in the store is necessary, never sufficient. An
 > unmarked entry is the user's and is never rewritten.
 
 ## The marker
 
-Entries Kiro Crew writes into shared files carry one reserved key:
+Entries Sao Khuê writes into shared files carry one reserved key:
 
     "x-kirocrew": { "managed": true }
 
@@ -141,7 +141,7 @@ second question, in the one file this note calls pure output: **which FIELDS of 
 rendered entry did the rebuild compute?**
 
 `rebuild_agent_config` reads its own previous output back as a merge source, so
-that a field the user set and Kiro Crew never models survives a rebuild. One field
+that a field the user set and Sao Khuê never models survives a rebuild. One field
 in that output is not the user's — the resolved absolute `command`. Reading a
 computed value back as if it were authored is what makes it permanent:
 `_resolve_command` accepts an absolute existing executable without a PATH search,

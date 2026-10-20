@@ -114,7 +114,7 @@ example `工作空间`, `子智能体`, `仪表盘`); the other Avoid entries in
 
 Product names stay in Latin script. The canonical list in `glossary.json` includes
 `KiroCrew`, `Kiro`, `Slack`, `Discord`, `MCP`, `GitHub`, `Playwright`, and others. The
-prose brand `Kiro Crew` also remains unchanged.
+prose brand `Sao Khuê` also remains unchanged.
 
 Also stays in English: AWS service names, key legends (Enter, Shift, ⌘),
 `main`/`origin`/`HEAD`, paths, filenames, config keys, and `cron` (the syntax —

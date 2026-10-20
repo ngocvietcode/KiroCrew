@@ -66,7 +66,7 @@ def register_bench_parser(sub: argparse._SubParsersAction) -> None:
         sub,
         "bench",
         description=(
-            "Measures the Kiro Crew memory layer against published benchmarks. The "
+            "Measures the Sao Khuê memory layer against published benchmarks. The "
             "retrieval ruler is deterministic, so a delta between two commits is "
             "exact and needs a single pass -- unlike an end-to-end answer score, "
             "which is a random variable because sampling cannot be pinned."

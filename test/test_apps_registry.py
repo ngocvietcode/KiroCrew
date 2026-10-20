@@ -550,7 +550,7 @@ class TestApplyTrustFields:
         official published catalog state the org that way. A single-token-only
         comparison silently un-verified every first-party app whose index row
         spelled the org correctly."""
-        entry = {"name": "spec-builder", "_index_author": "Kiro Crew"}
+        entry = {"name": "spec-builder", "_index_author": "Sao Khuê"}
         (out,) = registry._apply_trust_fields([entry])
         assert out["verified"] is True
 
@@ -575,7 +575,7 @@ class TestApplyTrustFields:
     def test_folding_does_not_grant_the_mark_to_an_external_row(self):
         """The fold widens the match, so pin the short-circuit that keeps it
         harmless: a tagged row is unverified BEFORE the author is consulted."""
-        entry = {"name": "app", "_registry": "labs", "_index_author": "Kiro Crew"}
+        entry = {"name": "app", "_registry": "labs", "_index_author": "Sao Khuê"}
         (out,) = registry._apply_trust_fields([entry])
         assert out["provenance"] == "external"
         assert out["verified"] is False
@@ -1298,9 +1298,9 @@ class TestMergeManifestProjectsRegistryKeys:
     def test_index_author_snapshot_survives_the_merge(self):
         """``_apply_trust_fields`` runs AFTER the merge and consumes this key to
         decide the verified mark, so the projection has to carry it through."""
-        entry = {"name": "demo-app", "_index_author": "Kiro Crew"}
+        entry = {"name": "demo-app", "_index_author": "Sao Khuê"}
         out = registry._merge_manifest(entry, self.MANIFEST)
-        assert out["_index_author"] == "Kiro Crew"
+        assert out["_index_author"] == "Sao Khuê"
 
     def test_dark_icon_path_becomes_a_blob_url(self):
         """A raster icon cannot repaint from theme tokens, so an app may ship a

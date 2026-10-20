@@ -999,9 +999,9 @@ def _build_docs_section() -> str:
         return ""
     return (
         "[DOCUMENTATION]\n"
-        f"KiroCrew docs: {_BUNDLED_DOCS_DIR}\n"
+        f"SaoKhue docs: {_BUNDLED_DOCS_DIR}\n"
         "\n"
-        "For KiroCrew behavior, commands, config, or architecture: "
+        "For SaoKhue behavior, commands, config, or architecture: "
         "consult local docs first.\n"
         "When diagnosing issues, run `kirocrew status` or "
         "`kirocrew doctor` yourself when possible.\n"
@@ -1214,7 +1214,7 @@ def build_session_replay(
     pending_messages: list[dict] | None = None,
     current_message: dict | None = None,
 ) -> str | None:
-    """Build session replay from KiroCrew's conversation_log.
+    """Build session replay from SaoKhue's conversation_log.
 
     Keeps as many recent messages as fit within _REPLAY_BUDGET_CHARS,
     prioritizing the most recent exchanges (tail-heavy). Used when a
@@ -1538,7 +1538,7 @@ class ContextBuilder:
             # The joined spelling is the {bot_name} value the prompt
             # substitutes, not prose about the product: respelling it would
             # change what the model is told to answer to.
-            self._bot_name = "KiroCrew" if is_claude_code(provider) else "Kiro"  # brand-ok
+            self._bot_name = "SaoKhue" if is_claude_code(provider) else "Kiro"
         # Register default memory in the workspace cache
         _memory_stores[_DEFAULT_KEY] = self.memory
 

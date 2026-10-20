@@ -1005,7 +1005,7 @@ async def _bang_allowlist(
 ) -> str:
     await slack.post_message(
         channel,
-        "⛔ Multi-user access is disabled for security. Only the owner can use Kiro Crew via Slack.",
+        "⛔ Multi-user access is disabled for security. Only the owner can use Sao Khuê via Slack.",
         reply_ts,
     )
     return ""

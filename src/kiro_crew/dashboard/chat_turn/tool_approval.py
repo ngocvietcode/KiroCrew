@@ -1142,7 +1142,7 @@ async def _on_permission_request(turn: _ChatTurn, event) -> Literal[_Flow.CONTIN
                     refusal_notices=_refusal_notices,
                 )
                 return _Flow.CONTINUE
-        # always=False — Kiro Crew owns trust scope; per-call request_permission
+        # always=False — Sao Khuê owns trust scope; per-call request_permission
         # is required for PreToolUse hooks to run on every tool invocation.
         approval_sent = await client.approve_tool(event.request_id)
         turn.approval_sent = approval_sent

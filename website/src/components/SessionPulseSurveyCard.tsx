@@ -7,10 +7,10 @@ import { useTranslation } from 'react-i18next'
 import { ratingOptions } from './sessionPulseWireValues'
 import { safeGetItem, safeSetItem } from '../utils/safeStorage'
 
-// Kiro Crew is self-hosted, open-source software — every install runs on its
+// Sao Khuê is self-hosted, open-source software — every install runs on its
 // own arbitrary origin, which Aperture's browser-CORS allowlist model (a
 // finite, known set of domains) cannot accommodate. These calls go to the
-// Kiro Crew backend's own same-origin routes instead
+// Sao Khuê backend's own same-origin routes instead
 // (src/kiro_crew/dashboard/handlers/feedback.py), which forward to Aperture
 // server-to-server, where CORS does not apply.
 const FEEDBACK_SUBMIT_URL = '/api/feedback/submit'
@@ -394,7 +394,7 @@ export default function SessionPulseSurveyCard({
                       {/* Data-egress disclosure, promoted to normal weight
                        * directly under the rating (not muted under the email
                        * field): on a self-hosted product a user must see that
-                       * their rating + feedback leave for the Kiro Crew team
+                       * their rating + feedback leave for the Sao Khuê team
                        * BEFORE they submit, not read it as an email-only note. */}
                       <p className="mb-4 text-[12px] text-text">
                         {t('components.sessionPulseSurveyCard.email_disclosure')}

@@ -1264,7 +1264,7 @@ class TestSanitizeSpecEnv:
     def test_python_env_is_dropped(self) -> None:
         """PYTHON* is a launcher-execution channel here, not a server setting.
 
-        Kiro Crew's Linux sandbox launcher is itself a Python process
+        Sao Khuê's Linux sandbox launcher is itself a Python process
         (``[sys.executable, <generated script>, *argv]``), started with the env
         handed to ``Popen`` — so a declared ``PYTHONPATH`` carrying
         ``sitecustomize.py`` executes at interpreter startup, before ``unshare``

@@ -34,7 +34,7 @@ logger = logging.getLogger("kiro_crew.acp.skill_projection")
 
 
 # The projection's SIDE FILES -- the publication lock, the per-process lease
-# records and the ownership sidecars -- live under Kiro Crew's own data home,
+# records and the ownership sidecars -- live under Sao Khuê's own data home,
 # NOT beside the views in the shared ``~/.kiro/agents/`` directory. Only the
 # views themselves must be there (kiro-cli resolves ``--agent <name>`` against
 # that directory by name and knows no other); everything else there is noise the

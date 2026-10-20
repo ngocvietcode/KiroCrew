@@ -10,7 +10,7 @@ to ``wrap_argv``'s Windows delegation predicate::
 ``kiro_internal_sandbox_enabled()`` reads ``~/.kiro/settings/amazon-internal.json``
 and returns False when that file is absent. A fresh Windows install does not have
 it. So delegation stopped, control fell through to backend detection, Windows has
-no Kiro Crew OS sandbox backend, and the no-backend policy fail-closed: the ACP
+no Sao Khuê OS sandbox backend, and the no-backend policy fail-closed: the ACP
 backend never started and the gateway never became usable.
 
 ``test/test_sandbox_argv.py`` already pinned that exact branch and did not catch
@@ -90,7 +90,7 @@ pytestmark = pytest.mark.skipif(
     sys.platform != "win32",
     reason=(
         "the Windows fail-closed sandbox opt-in contract is a win32 host property: "
-        "it depends on there being no Kiro Crew OS sandbox backend and on the real "
+        "it depends on there being no Sao Khuê OS sandbox backend and on the real "
         "absence of ~/.kiro/settings/amazon-internal.json, neither of which a "
         "POSIX host can represent without the platform mocks that let the break through"
     ),

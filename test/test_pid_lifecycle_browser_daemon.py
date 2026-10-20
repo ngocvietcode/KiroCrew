@@ -45,7 +45,7 @@ class TestBrowserDaemonSessionArg:
         assert _browser_daemon_session_arg(_DAEMON_CMDLINE) == b"kc-1a2b3c4d"
 
     def test_rejects_operator_named_session(self) -> None:
-        """Only Kiro-Crew-generated ``kc-<8hex>`` names are ever sweepable."""
+        """Only SaoKhue-generated ``kc-<8hex>`` names are ever sweepable."""
         from kiro_crew.session_pid import _browser_daemon_session_arg
 
         assert _browser_daemon_session_arg(_OPERATOR_DAEMON_CMDLINE) is None

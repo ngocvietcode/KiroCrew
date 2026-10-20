@@ -72,7 +72,7 @@ export function mcpSessionStartedCount(
 /**
  * Servers this session **started** that are NOT in ``names``.
  *
- * The backend starts the agent spec's own servers as well as the ones Kiro Crew
+ * The backend starts the agent spec's own servers as well as the ones Sao Khuê
  * injects on the wire, so the report is a superset of any single configured
  * list. Surfacing the difference is the point: it is session truth that the
  * configured view cannot show.

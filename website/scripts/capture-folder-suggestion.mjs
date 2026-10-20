@@ -69,7 +69,7 @@ const detail = {
 
 /** Folders the recommender would have been shown — also the dropdown's options. */
 const folders = [
-  { id: 'f-kc', name: 'Kiro Crew', order: 0, parent_id: '' },
+  { id: 'f-kc', name: 'Sao Khuê', order: 0, parent_id: '' },
   { id: 'f-i18n', name: 'i18n', order: 1, parent_id: 'f-kc' },
   { id: 'f-errands', name: 'Errands', order: 2, parent_id: '' },
 ]
@@ -180,7 +180,7 @@ async function main() {
 
   const select = () => page.getByTestId('folder-suggestion-select')
 
-  const NESTED = { folderId: 'f-i18n', folderName: 'i18n', breadcrumb: 'Kiro Crew › i18n' }
+  const NESTED = { folderId: 'f-i18n', folderName: 'i18n', breadcrumb: 'Sao Khuê › i18n' }
   const ROOT = { folderId: 'f-errands', folderName: 'Errands', breadcrumb: 'Errands' }
 
   // 1. Nested folder, dark — the common case. The dropdown arrives prefilled
@@ -262,7 +262,7 @@ async function main() {
   await cleanup()
 
   const ok = prefilled === 'f-i18n'
-    && nestedLabel === 'Kiro Crew › i18n'
+    && nestedLabel === 'Sao Khuê › i18n'
     && rootLabel === 'Errands'
     && goneAfterAccept
     && goneAfterPickedAccept

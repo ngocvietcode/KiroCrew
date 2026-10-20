@@ -1,5 +1,5 @@
 /**
- * Order two Kiro Crew version strings, so the shell can tell which changelog
+ * Order two Sao Khuê version strings, so the shell can tell which changelog
  * sections belong to the build the reader is actually running.
  *
  * ## Why the dashboard needs this at all

@@ -1,4 +1,4 @@
-"""Whether the installed ``playwright-cli`` still carries the upstream seams Kiro Crew uses.
+"""Whether the installed ``playwright-cli`` still carries the upstream seams Sao Khuê uses.
 
 Two features depend on hooks in ``playwright-core`` that are upstream layout rather than a
 declared API: the lifecycle environment variables that keep the CLI's sockets out of
@@ -66,7 +66,7 @@ SeamSupport.__module__ = "kiro_crew.browser_cli.install"
 #: launcher source (see :func:`cli_path`), so a version-manager shim there is
 #: refused by design and re-admitting it is not the remedy.
 ATTRIBUTION_REMEDY = (
-    "install the CLI where Kiro Crew resolves it -- the Browser panel's install "
+    "install the CLI where Sao Khuê resolves it -- the Browser panel's install "
     "action, or the standalone installer -- so its @playwright/cli package "
     "directory is attributable"
 )

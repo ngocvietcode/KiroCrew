@@ -1403,9 +1403,9 @@ class ApiVmLauncher(VmLauncher):
 
 
 def _staged_wheel() -> Path:
-    """The Kiro Crew wheel the base recipe installs, as staged beside the recipes.
+    """The Sao Khuê wheel the base recipe installs, as staged beside the recipes.
 
-    Read rather than built. A launch runs from an installed Kiro Crew, so building
+    Read rather than built. A launch runs from an installed Sao Khuê, so building
     a wheel inside a launch would be the launch deciding what version of the
     product the crew runs -- and it would need a build toolchain on the owner's
     machine. ``scripts/build_microvm_image_zip.py`` stages it; a launch that finds
@@ -1415,7 +1415,7 @@ def _staged_wheel() -> Path:
     wheels = sorted(vendor.glob("*.whl"))
     if not wheels:
         raise ValueError(
-            f"no Kiro Crew wheel is staged in {vendor}, so this lane cannot assemble a "
+            f"no Sao Khuê wheel is staged in {vendor}, so this lane cannot assemble a "
             "recipe: the base recipe installs the wheel from the build context. Run "
             "scripts/build_microvm_image_zip.py once to stage it, or pin a prebuilt image "
             "with microvm.image_identifier and microvm.image_version."

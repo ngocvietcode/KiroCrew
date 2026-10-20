@@ -474,7 +474,7 @@ class TestDoctorMcpTools:
 
     def test_only_managed_servers_are_probed(self, tmp_path, capsys):
         """Third-party MCPs in the agent config must not be probed — this
-        keeps doctor output focused on Kiro Crew's own servers and avoids
+        keeps doctor output focused on Sao Khuê's own servers and avoids
         false negatives for optional MCPs."""
         from kiro_crew.cli_doctor import _doctor_mcp_tools
 

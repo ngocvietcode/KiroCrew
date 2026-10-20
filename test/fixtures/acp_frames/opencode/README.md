@@ -22,7 +22,7 @@ local OpenAI-compatible stub instead, and its `_meta.note` lists its reductions.
 
 ## What the permission capture establishes
 
-The permission frame is the one the enforcement story rests on. Kiro Crew's tool
+The permission frame is the one the enforcement story rests on. Sao Khuê's tool
 gate runs only when a harness sends `session/request_permission` for a tool call,
 and OpenCode sends it only while its own `permission` setting says to ask. The
 session's read-back (`acp.harness.opencode._verify_opencode_routing`) proves that setting is in

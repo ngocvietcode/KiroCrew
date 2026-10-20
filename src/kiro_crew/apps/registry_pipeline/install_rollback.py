@@ -80,7 +80,7 @@ async def _unpoison_rejected_checkout(
     with write access to the checkout BEFORE some callers reach this cleanup,
     and can plant a symlink at the manifest path — the subdirectory OR the
     leaf — after an earlier containment check already passed; this restore
-    then runs unsandboxed as the Kiro Crew process, so it must not trust that
+    then runs unsandboxed as the Sao Khuê process, so it must not trust that
     earlier check. Containment of the FULL manifest path is re-verified HERE,
     at the point of the write, against the CURRENT on-disk state: on a
     failure the manifest restore (both the raw-write and the git-checkout

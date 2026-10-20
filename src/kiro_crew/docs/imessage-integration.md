@@ -1,11 +1,11 @@
 # iMessage Integration
 
-Chat with your Kiro Crew agent from the Messages app you already use — from your
+Chat with your Sao Khuê agent from the Messages app you already use — from your
 iPhone, your iPad, your Watch, or the Mac itself. No bot to register, no
 developer portal, no token to paste.
 
 This is the only channel where the transport is your own device and your own
-account. Kiro Crew talks to Messages.app locally, so nothing about the
+account. Sao Khuê talks to Messages.app locally, so nothing about the
 conversation is relayed through a third party. That is the point of the channel,
 not a footnote: hosted services exist that will hand you an iMessage-capable
 number and let any server talk to it over an API, and this integration

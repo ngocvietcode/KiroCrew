@@ -1472,7 +1472,7 @@ class TestToolSearchResumeCompatibility:
     """Dashboard-native ``session/load`` loses deferred-tool activation state.
 
     A dashboard Tool Search session therefore resumes through a fresh native
-    session plus Kiro Crew's conversation-log replay. Operators who disable Tool
+    session plus Sao Khuê's conversation-log replay. Operators who disable Tool
     Search, and every non-dashboard dispatcher, keep native resume.
     """
 
