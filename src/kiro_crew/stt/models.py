@@ -23,7 +23,7 @@ cannot close it because the loader re-opens by name. What closes it is that
 (``security._WRITE_PROTECTED_HOME_PATHS`` for the file tools; the agent's shell is
 confined by the OS sandbox, not by a matcher over command text), so the verified
 bytes are the loaded bytes. Adding a row to :data:`CATALOG` therefore needs no edit
-in ``security``: the directory entry covers any file beneath it. Kiro Crew's own
+in ``security``: the directory entry covers any file beneath it. Sao Khuê's own
 downloader writes here directly and does not route through the tool gate, so a
 first-run fetch and a re-download after a failed check both still work. That is a
 deliberate divergence from ``embeddings.ModelDownloadManager``, which documents the
@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 
 #: Upstream for the ggml conversions of OpenAI's Whisper weights. This is the
 #: canonical publisher that whisper.cpp itself points at. Unlike the embedding
-#: GGUF, Kiro Crew serves no mirror of these, so the pin below is doing the whole
+#: GGUF, Sao Khuê serves no mirror of these, so the pin below is doing the whole
 #: job of establishing what we accept.
 MODELS_BASE_URL = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main"
 

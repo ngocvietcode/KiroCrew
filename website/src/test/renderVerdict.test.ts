@@ -51,7 +51,7 @@ describe('tally', () => {
       { surface: 'chat', locale: 'en-XA', finding: { kind: 'text', signature: 'untranslated-text' } },
       { surface: 'chat', locale: 'de', finding: { kind: 'layout', signature: 'clipped-without-title' } },
       { surface: 'projects', locale: 'de', finding: { kind: 'layout', signature: 'ellipsis-with-flex-parent' } },
-      { surface: 'chat', locale: 'zh-CN', finding: { kind: 'dnt', detail: 'KiroCrew -> 基罗组' } },
+      { surface: 'chat', locale: 'zh-CN', finding: { kind: 'dnt', detail: 'SaoKhue -> 基罗组' } },
     ], SURFACES)
 
     expect(counts.chat).toEqual({ text: 1, layout: 1, latent: 0 })

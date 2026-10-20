@@ -6757,7 +6757,7 @@ class TestOpenTaskSession:
 class TestLoadRecoveryHistoryReplay:
     """F2 load-recovery Phase 2: when a provider signals it fell back to a FRESH
     native session (the prior session's lock never cleared), get_or_create flags
-    the new slot for KiroCrew conversation_log replay on the first prompt so the
+    the new slot for SaoKhue conversation_log replay on the first prompt so the
     slot is not context-free."""
 
     @staticmethod

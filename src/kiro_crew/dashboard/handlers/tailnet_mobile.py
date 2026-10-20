@@ -438,7 +438,7 @@ _QR_REFUSALS: dict[Step, tuple[str, str]] = {
     "restart_gateway": (
         "restart_required",
         "This running server has not loaded its validated tailnet origin yet. "
-        "Restart Kiro Crew, then scan.",
+        "Restart Sao Khuê, then scan.",
     ),
     "publish": (
         "not_published",

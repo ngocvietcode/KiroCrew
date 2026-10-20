@@ -496,9 +496,9 @@ def _teardown(
 
 
 def verify_layout(settings: Settings) -> None:
-    """Refuse to start if the SMC paths disagree with what Kiro Crew resolves.
+    """Refuse to start if the SMC paths disagree with what Sao Khuê resolves.
 
-    Kiro Crew keeps its whole data home under ONE root: ``config_dir()`` equals
+    Sao Khuê keeps its whole data home under ONE root: ``config_dir()`` equals
     the data home equals ``KIROCREW_HOME``, and it writes ``sessions/``,
     ``open_slots.json``, ``session_map.json`` and ``run/gateway-<port>.secret``
     directly under that root (chat_persistence.py:322, run_marker.py, verified by
@@ -507,7 +507,7 @@ def verify_layout(settings: Settings) -> None:
     IS ``settings.data_home``. Two path settings must therefore agree, or the
     deployment comes up looking healthy and loses state silently:
 
-    * ``settings.config_dir`` must equal ``settings.data_home``. Kiro Crew writes
+    * ``settings.config_dir`` must equal ``settings.data_home``. Sao Khuê writes
       ``open_slots.json`` and ``session_map.json`` at the data-home root; if
       ``config_dir`` is a ``/config`` subdir the backend never writes to, the
       deployment comes up looking healthy while the authoritative files are
@@ -523,7 +523,7 @@ def verify_layout(settings: Settings) -> None:
     if settings.config_dir != settings.data_home:
         problems.append(
             f"SMC_CONFIG_DIR ({settings.config_dir}) must equal SMC_DATA_HOME "
-            f"({settings.data_home}): Kiro Crew writes open_slots.json and "
+            f"({settings.data_home}): Sao Khuê writes open_slots.json and "
             f"session_map.json at the data-home root, not a /config subdir."
         )
     expected_run = settings.data_home / "run"
@@ -551,12 +551,12 @@ def verify_layout(settings: Settings) -> None:
     if home_resolved in protected:
         problems.append(
             f"SMC_DATA_HOME ({settings.data_home}) resolves to a default/live "
-            f"Kiro Crew home; --approval yolo is refused there and it would "
+            f"Sao Khuê home; --approval yolo is refused there and it would "
             f"collide with the real gateway (R1). Use an isolated data home."
         )
     if problems:
         raise common.ConfigError(
-            "Container path layout disagrees with Kiro Crew's resolved paths; "
+            "Container path layout disagrees with Sao Khuê's resolved paths; "
             "refusing to start rather than silently lose state:\n  - " + "\n  - ".join(problems)
         )
 
@@ -575,7 +575,7 @@ def export_kiro_home(settings: Settings) -> Path:
     WHY the default is wrong here, which is the whole reason this exists. With no
     ``KIRO_HOME`` the agents directory is the process HOME's ``~/.kiro/agents``, which
     every instance under that ``$HOME`` shares. The backend runs on a non-default data
-    home (``KIROCREW_HOME=<data home>``) and Kiro Crew REFUSES to rewrite a shared
+    home (``KIROCREW_HOME=<data home>``) and Sao Khuê REFUSES to rewrite a shared
     agents dir from one: the specs it writes pin the writer's data home into every
     managed MCP server entry, which fails strict session identity for a default-home
     gateway (kirodotdev/KiroCrew#9690). Measured consequence in the container: the
@@ -638,7 +638,7 @@ def export_kiro_home(settings: Settings) -> Path:
     except OSError as exc:
         raise common.ConfigError(
             f"could not create the task's agent-spec directory {agents} ({exc}). This is "
-            f"where both the crew's spec and Kiro Crew's own default spec must live; "
+            f"where both the crew's spec and Sao Khuê's own default spec must live; "
             f"refusing to start rather than letting the backend fall back to the shared "
             f"agents directory under the process home, which it is not allowed to rewrite "
             f"from a non-default data home and which would kill every turn at "
@@ -660,7 +660,7 @@ def export_kiro_home(settings: Settings) -> Path:
         raise common.ConfigError(
             f"the crew installer resolves the agents directory as {resolved}, but this "
             f"task owns {agents}. The installer reads $KIRO_HOME the way kiro-cli does "
-            f"and the backend reads it through Kiro Crew's own resolver; if the two "
+            f"and the backend reads it through Sao Khuê's own resolver; if the two "
             f"disagree the crew is installed where nothing serves it. Refusing to start."
         )
     log.info("kiro home: %s (agent specs in %s)", settings.kiro_home, agents)
@@ -939,7 +939,7 @@ def run(settings: Settings, *, wait_for_shutdown=None) -> int:
     #    required, or a bundle that is absent or names a different crew.
     verify_layout(settings)
     # Before anything reads or writes an agent spec: give this task its OWN kiro home,
-    # so the crew's spec and Kiro Crew's default spec share one directory that the
+    # so the crew's spec and Sao Khuê's default spec share one directory that the
     # backend is allowed to write. Ahead of `build_backend_env` only for readability --
     # that function takes the value from the settings, not from this export -- but it
     # MUST precede `install_bundle`, which resolves its destination from the environment.
@@ -1015,7 +1015,7 @@ def run(settings: Settings, *, wait_for_shutdown=None) -> int:
     # window is already open.
     make_non_dumpable()
     verify_sandbox(settings, env=env)
-    # Install the crew into the paths Kiro Crew reads BEFORE the backend starts,
+    # Install the crew into the paths Sao Khuê reads BEFORE the backend starts,
     # so "it started" means "the named crew is installed" rather than a default
     # agent. Refuses closed on any mismatch (see bundle.install_bundle).
     bundle_mod.install_bundle(settings)

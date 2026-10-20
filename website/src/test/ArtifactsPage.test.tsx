@@ -32,7 +32,7 @@ vi.mock('../api/client')
 const brandingEnv = vi.hoisted(() => ({ directLocal: false }))
 vi.mock('../hooks/useBranding', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../hooks/useBranding')>()),
-  useBranding: () => ({ botName: 'Kiro Crew', avatar: '/logo.png', directLocal: brandingEnv.directLocal }),
+  useBranding: () => ({ botName: 'Sao Khuê', avatar: '/logo.png', directLocal: brandingEnv.directLocal }),
 }))
 
 // VirtuosoMasonry virtualizes against real layout, which jsdom lacks, so it

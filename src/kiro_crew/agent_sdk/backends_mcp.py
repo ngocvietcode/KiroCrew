@@ -136,7 +136,7 @@ ACP_BACKENDS_SESSION_MCP_ARRAY: FrozenSet[str] = frozenset(
 
 # Backends that load an agent defined as ONE markdown file (YAML frontmatter
 # plus the body as the system prompt) -- the form the v3 engine and Kiro IDE
-# read from ``~/.kiro/agents/<name>.md``. Kiro Crew's own discovery lists that
+# read from ``~/.kiro/agents/<name>.md``. Sao Khuê's own discovery lists that
 # form for every backend (``kiro_crew.agent_spec_format``), so a session can
 # select an agent its HOST cannot load: kiro-cli discovers ``*.json`` only, so a
 # markdown-only agent selected there is not the active mode after

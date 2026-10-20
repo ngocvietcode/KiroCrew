@@ -402,7 +402,7 @@ def _own_mcp_servers(app_name: str) -> dict[str, Any]:
     ``backend.port: "auto"`` carries an illustrative port in its manifest).
 
     Without this, an app that ships its own agent gets a DANGLING tool
-    reference: ``_register_mcp_servers`` writes the server into Kiro Crew's own
+    reference: ``_register_mcp_servers`` writes the server into Sao Khuê's own
     agent config, so ``@<app>:<server>`` in the app agent's ``tools`` pointed at
     a server that agent had never been told about — the app's own MCP simply did
     not load for it, silently.
@@ -851,7 +851,7 @@ def _register_agents(
             # is nothing left to read (see _preserve_user_agent_edits).
             prior_on_disk = _read_agent_config(link_path)
 
-            # Drop a legacy SYMLINK from an older Kiro Crew (which pointed at a file
+            # Drop a legacy SYMLINK from an older Sao Khuê (which pointed at a file
             # inside the app) so the write below lands a real file at this path.
             #
             # NOTHING is unlinked first — not even a legacy symlink. atomic_write does

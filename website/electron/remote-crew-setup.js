@@ -116,7 +116,7 @@ const TUNNEL_OPTION_LABEL = "Keep an SSH tunnel to this crew open";
 /** The hint under that option, worded the same in every form that offers it. */
 function tunnelOptionHint(port) {
   return (
-    "Kiro Crew opens this tunnel itself and reopens it after sleep or a dropped connection. " +
+    "Sao Khuê opens this tunnel itself and reopens it after sleep or a dropped connection. " +
     "Your SSH host must sign in without a password prompt (a key or agent). " +
     `Leave unchecked only if something else, such as a VPN or kubectl port-forward, must keep carrying port ${port}.`
   );

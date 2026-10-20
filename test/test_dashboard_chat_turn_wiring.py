@@ -195,7 +195,7 @@ class TestRuntimeWiringTurn:
             ("manual_resume", True, True),
             ("conn_recover", True, True),
             ("busy_recover", True, True),
-            # A cold start that did NOT natively resume carries the Kiro Crew
+            # A cold start that did NOT natively resume carries the Sao Khuê
             # replay, which already holds the interrupted turn.
             ("manual_resume", False, False),
             # Continue on a turn that ended normally: kiro-cli logged it.

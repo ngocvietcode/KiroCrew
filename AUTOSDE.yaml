@@ -1,4 +1,4 @@
-# Kiro Crew AutoSDE Rules
+# Sao Khuê AutoSDE Rules
 #
 # Root rules cover backend Python plus cross-stack invariants whose file patterns
 # span backend, frontend, and docs. Frontend-only rules live in
@@ -48,7 +48,7 @@ custom-rules:
     file-patterns:
       - "src/kiro_crew/**/*.py"
     rule: |
-      Enforce KiroCrew backend security controls, based on real vulnerabilities
+      Enforce SaoKhue backend security controls, based on real vulnerabilities
       found and fixed in this codebase.
 
       - Never read sensitive credential paths (for example ~/.aws, ~/.ssh,
@@ -541,7 +541,7 @@ custom-rules:
       - "src/kiro_crew/agent_sdk/backends_sessions.py"
       - "src/kiro_crew/agent_sdk/backends_turns.py"
     rule: |
-      Kiro Crew drives ONE first-class agent harness — kiro-cli
+      Sao Khuê drives ONE first-class agent harness — kiro-cli
       (ACP_BACKEND_KIRO, spelled "") — and ADAPTS the others (the
       ACP_BACKEND_CLAUDE seam, KAS, and any bring-your-own harness). An added
       harness may only adapt itself to the seams the Kiro harness already runs
@@ -583,7 +583,7 @@ custom-rules:
         harness's membership must be an explicit decision in the diff. FLAG a
         new predicate that grants a capability to a harness the PR never
         mentions. For is_kiro_cli specifically the failure is OPEN — it makes
-        sandbox.wrap_argv SKIP Kiro Crew's own seatbelt in favour of the
+        sandbox.wrap_argv SKIP Sao Khuê's own seatbelt in favour of the
         harness's internal one — so treat a grant to any non-kiro harness as a
         security finding.
 
@@ -885,7 +885,7 @@ custom-rules:
       Discover page lists), never as a new built-in in this repo. A built-in
       rides the wheel: it grows every user's install footprint, cannot be
       uninstalled (only disabled), and couples the app's release and fix
-      cadence to Kiro Crew releases — the registry exists precisely so an app
+      cadence to Sao Khuê releases — the registry exists precisely so an app
       can be listed, updated, and corrected with a catalog publish instead of
       a client ship.
 

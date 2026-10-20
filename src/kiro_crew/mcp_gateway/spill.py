@@ -167,7 +167,7 @@ def maybe_spill_response(
                 if len(text.encode("utf-8")) > _INLINE_PREFIX_BYTES:
                     truncated = text.encode("utf-8")[:_INLINE_PREFIX_BYTES].decode("utf-8", errors="ignore")
                     marker = (
-                        f"\n\n[KiroCrew: response truncated -- full {total_bytes} bytes "
+                        f"\n\n[SaoKhue: response truncated -- full {total_bytes} bytes "
                         f"at {abs_path}. Read with bash: head/grep/jq.]"
                     )
                     rewritten_content.append({**item, "text": truncated + marker})

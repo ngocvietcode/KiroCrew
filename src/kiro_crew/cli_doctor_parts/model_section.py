@@ -270,8 +270,8 @@ def _doctor_effective_model(cfg: KiroCrewConfig, project_dir: str, issues: list[
     print(f"  tracking:    {tracking} ({render._safe_display(pinned_agent)})")
 
     # kiro-cli resolves --agent against <project>/.kiro/agents FIRST, with no
-    # upward walk, and Kiro Crew's own resolver never reads that directory. So a
-    # project-local spec can decide what actually RUNS while every Kiro Crew
+    # upward walk, and Sao Khuê's own resolver never reads that directory. So a
+    # project-local spec can decide what actually RUNS while every Sao Khuê
     # surface reports something else -- worth naming even though it is rare.
     # *project_dir* is the caller's already-resolved value (env, else the saved
     # project_dir file), so this agrees with the Project section above.

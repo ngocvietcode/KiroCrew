@@ -1,4 +1,4 @@
-"""Kiro Crew's own managed MCP servers as discovery sees them.
+"""Sao Khuê's own managed MCP servers as discovery sees them.
 
 The CLI subcommand and tool module behind each managed server, which of them
 a pooled gateway backend may serve across sessions, the in-process read of a
@@ -136,7 +136,7 @@ def managed_server_is_session_bound(name: str) -> bool:
     ``initialize`` response to read the capability from, and before the first
     probe cycle there is none yet either.
 
-    False for anything not managed by Kiro Crew: a third-party server's identity
+    False for anything not managed by Sao Khuê: a third-party server's identity
     handling is not knowable from here, which is what the pre-flight measures.
     """
     if name not in _MANAGED_SERVER_NAMES:

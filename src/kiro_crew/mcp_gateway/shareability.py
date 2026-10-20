@@ -157,7 +157,7 @@ class ShareEvidence:
     # walk) rather than from the per-call caller block, so one backend can only
     # ever serve one session correctly.
     #
-    # Deliberately NOT "is this one of ours". Kiro Crew's own managed servers
+    # Deliberately NOT "is this one of ours". Sao Khuê's own managed servers
     # differ from each other here: ``kirocrew-core`` advertises the
     # caller-identity extension and consumes the injected caller, while
     # ``kirocrew-cron`` does not and still reads process identity. Keying this on

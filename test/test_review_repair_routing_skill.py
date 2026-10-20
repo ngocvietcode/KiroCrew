@@ -104,7 +104,7 @@ def test_local_review_and_generic_monitoring_keep_their_own_contracts():
     assert "never the repair-family table" in prepare
     assert "do not change CI models, profile `reviewers[]`/`model_tier`" in prepare
     babysit = " ".join(_text(SKILLS / "babysit" / "SKILL.md").split())
-    assert "works without a Kiro Crew checkout or kirocrew-prepare-pr installed" in babysit
+    assert "works without a Sao Khuê checkout or kirocrew-prepare-pr installed" in babysit
     for contract in ("GitLab", "Bitbucket", "Stall tripwire", "not counted AND not reset"):
         assert contract in babysit
     assert "Other-host guidance is not live-verified here" in babysit

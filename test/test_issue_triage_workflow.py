@@ -279,7 +279,7 @@ def _form_body(channel_answer: str | None, *, extra: str = "") -> str:
         # main. The parser under test slices the body by these exact `### `
         # lines, so "correcting" the spelling here would test a body GitHub
         # never produces. Renaming the template's label is a separate change.
-        "### KiroCrew version",  # brand-ok
+        "### SaoKhue version",
         "",
         "0.1.4rc4",
         "",
@@ -323,9 +323,7 @@ def test_step_scripts_are_valid_shell(scripts: dict[str, str]) -> None:
         ("Stable", "channel: stable"),
     ],
 )
-def test_channel_dropdown_answer_becomes_a_label(
-    runner: Runner, answer: str, label: str
-) -> None:
+def test_channel_dropdown_answer_becomes_a_label(runner: Runner, answer: str, label: str) -> None:
     assert runner.channel(body=_form_body(answer)) == label
 
 

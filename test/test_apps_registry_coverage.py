@@ -10,7 +10,7 @@ Every subprocess is faked at this module's own chokepoints
 (``wrap_argv`` / ``cgroup_scope_argv`` / ``create_subprocess_limited``), matching
 the harness already used by ``test_apps_registry.py``, so nothing here spawns
 git, npm, or pip. All filesystem work happens under ``tmp_path`` with
-``_manifest_cache_dir`` redirected, so no test touches the real Kiro Crew home.
+``_manifest_cache_dir`` redirected, so no test touches the real Sao Khuê home.
 
 This module holds the build step: ``_run_app_build``'s command selection and execution.
 The other helpers are covered by its siblings ``test_apps_registry_coverage_gates.py``,

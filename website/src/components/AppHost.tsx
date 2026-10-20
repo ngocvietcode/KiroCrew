@@ -1,5 +1,5 @@
 /**
- * AppHost — dynamically loads and renders a KiroCrew app via ESM import.
+ * AppHost — dynamically loads and renders a SaoKhue app via ESM import.
  *
  * A single component that:
  * 1. Reads the app manifest to get permissions

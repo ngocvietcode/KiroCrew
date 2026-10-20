@@ -251,7 +251,7 @@ _MAX_STEER_MARKER_CHARS = 16_384
 #: ``[steering steer-4a2f: ...]`` is accepted as.
 _STEER_TAIL_PREFIX_RE = re.compile(_STEERING_TAIL_PREFIX_RE.pattern, re.IGNORECASE | re.DOTALL)
 
-# These are KiroCrew-generated status prefixes, not model-authored prose. A
+# These are SaoKhue-generated status prefixes, not model-authored prose. A
 # legacy dashboard transcript can contain the completed summary as an assistant
 # message; after a cold resume that provenance is lost and kiro-cli can echo it
 # back as an ordinary text chunk. The channel boundary is the last layer that
@@ -857,7 +857,7 @@ class TurnDriver:
                 # Forgery gate: record the directive-tool name ONLY from the
                 # trusted ``_meta.kiro`` identity — never the LLM-authored
                 # title. The single shared predicate (also used by the
-                # dashboard consumer in chat_runner) requires Kiro Crew's OWN
+                # dashboard consumer in chat_runner) requires Sao Khuê's OWN
                 # core MCP server and a canonical directive-tool name; a shell
                 # tool (no mcp_server_name, canonical tool_name like
                 # "execute_bash") or a third-party server exposing a same-named

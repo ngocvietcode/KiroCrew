@@ -245,7 +245,7 @@ def application_command_payload() -> list[dict[str, Any]]:
     return rows
 
 
-_HELP_HEADER = "🦞 **Kiro Crew — Discord**"
+_HELP_HEADER = "🦞 **Sao Khuê — Discord**"
 _HELP_FOOTER = (
     "While a reply is running, prefix a message to control it:\n"
     "`!queue <msg>` — answer it after the current turn\n"

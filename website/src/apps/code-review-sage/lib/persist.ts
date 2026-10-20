@@ -3,7 +3,7 @@
 // Two separate concerns, deliberately kept apart:
 //
 //  1. UI STATE (this repo, this review, this tab) — small, and authoritative.
-//     Restoring it means a reload or a trip through another Kiro Crew page lands
+//     Restoring it means a reload or a trip through another Sao Khuê page lands
 //     you back where you were instead of on an empty shell.
 //
 //  2. QUERY SNAPSHOTS — the last successful payload of each list, replayed on

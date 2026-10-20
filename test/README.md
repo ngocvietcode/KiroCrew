@@ -1,6 +1,6 @@
 # Tests
 
-Kiro Crew uses pytest with pytest-asyncio for async tests. Pytest collects both
+Sao Khuê uses pytest with pytest-asyncio for async tests. Pytest collects both
 `test/` and the test suites shipped with builtin apps under
 `src/kiro_crew/apps/builtins/`; `setup.cfg` is the source of truth for collection
 and default options.

@@ -1,4 +1,4 @@
-"""KiroCrew MCP stub — shim between kiro-cli and the gateway daemon.
+"""SaoKhue MCP stub — shim between kiro-cli and the gateway daemon.
 
 The stub is the shim kiro-cli execs in place of the real MCP binary. It
 connects to gatewayd over a unix socket, Registers with a full
@@ -111,7 +111,7 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     argv = expand_stub_flags(sys.argv[1:] if argv is None else argv)
     p = argparse.ArgumentParser(
         prog="kirocrew-mcp-stub",
-        description="KiroCrew MCP shim: proxies kiro-cli stdio to the local gateway",
+        description="SaoKhue MCP shim: proxies kiro-cli stdio to the local gateway",
     )
     p.add_argument("--server", required=True)
     p.add_argument("--agent", required=True)

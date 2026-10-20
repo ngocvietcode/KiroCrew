@@ -4,7 +4,7 @@ The dispatch index (``incidents/index.json``) is the claim ledger: it is what
 makes a firing signal *owned* rather than merely visible. Two properties matter
 and are enforced here rather than by convention:
 
-**Claims are atomic.** Two heartbeats (two Kiro Crew instances, or an overlapping
+**Claims are atomic.** Two heartbeats (two Sao Khuê instances, or an overlapping
 tick) must never both claim the same signal and spawn two investigations of one
 incident. ``claim`` takes an exclusive file lock and does a compare-and-set, so
 exactly one caller wins and the loser skips.
@@ -791,7 +791,7 @@ def write_log(incident: Incident, *, diagnosis: str, actions: str, next_steps: s
     """Write the human-readable investigation log.
 
     Markdown on disk rather than only JSON because these logs are the artifact a
-    human reads at 2am, and the only artifact a reader who does not run Kiro Crew can
+    human reads at 2am, and the only artifact a reader who does not run Sao Khuê can
     be handed — attachable to a ticket, pasteable into a review. The structure mirrors
     a per-incident investigation file.
 

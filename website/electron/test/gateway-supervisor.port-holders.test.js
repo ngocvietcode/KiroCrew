@@ -142,8 +142,8 @@ async function settleWithTimeoutMock(promise) {
 // otherDisplay is FAMILY_META.displayName; otherApp is its appName, the
 // technical Finder/AppleScript target, which is the joined identifier form.
 for (const [label, ownVersion, otherVersion, otherDisplay, otherApp] of [
-  ["production → Nightly", PROD_VERSION, NIGHTLY_VERSION, "Kiro Crew Nightly", "KiroCrew Nightly"],
-  ["Nightly → production", NIGHTLY_VERSION, PROD_VERSION, "Kiro Crew", "KiroCrew"], // brand-ok
+  ["production → Nightly", PROD_VERSION, NIGHTLY_VERSION, "Sao Khuê Nightly", "KiroCrew Nightly"],
+  ["Nightly → production", NIGHTLY_VERSION, PROD_VERSION, "Sao Khuê", "KiroCrew"], // brand-ok
 ]) {
   test(`win32 ${label}: Retry after a manual quit completes the pending launch`, async () => {
     const state = { held: true };
@@ -197,7 +197,7 @@ test("win32 Retry while the port is still held re-prompts, then aborts", async (
   assert.strictEqual(shown.length, 4);
   assert.ok(shown[1].buttons.includes("I quit it — Retry"));
   // A re-prompt that is byte-identical to the first reads as a glitch.
-  assert.ok(shown[0].detail.endsWith(`Quit Kiro Crew Nightly, then choose “I quit it — Retry”.`));
+  assert.ok(shown[0].detail.endsWith(`Quit Sao Khuê Nightly, then choose “I quit it — Retry”.`));
   assert.ok(shown[1].detail.includes("was still running a moment ago"));
   assert.ok(shown[1].detail.includes(shown[1].buttons[0]), "the re-prompt names the button too");
   assert.ok(!shown[1].detail.includes("5476"), "port numbers are not the user's task");
@@ -205,7 +205,7 @@ test("win32 Retry while the port is still held re-prompts, then aborts", async (
   assert.strictEqual(shown[2].detail, shown[1].detail);
   assert.strictEqual(shown[3].type, "error");
   assert.deepStrictEqual(shown[3].buttons, ["OK"]);
-  assert.ok(shown[3].message.includes("Kiro Crew Nightly is still running."));
+  assert.ok(shown[3].message.includes("Sao Khuê Nightly is still running."));
   assert.ok(shown[3].detail.includes("This launch was cancelled."));
   assert.strictEqual(
     logs.filter((line) => line.includes("still holds :5476 after retry")).length,
@@ -291,8 +291,8 @@ test("darwin still offers the automatic quit and takes over itself", async () =>
 
   assert.strictEqual(await supervisor.start(), true);
   assert.strictEqual(shown.length, 1);
-  assert.deepStrictEqual(shown[0].buttons, ["Quit Kiro Crew Nightly & Continue", "Cancel"]);
-  assert.ok(shown[0].detail.endsWith("Quit Kiro Crew Nightly and continue here?"));
+  assert.deepStrictEqual(shown[0].buttons, ["Quit Sao Khuê Nightly & Continue", "Cancel"]);
+  assert.ok(shown[0].detail.endsWith("Quit Sao Khuê Nightly and continue here?"));
   assert.deepStrictEqual(state.quitAttempts, ['-e quit app "KiroCrew Nightly"']);
   assert.ok(logs.some((line) => line === "takeover: KiroCrew Nightly released :5476 — proceeding to spawn"));
   assert.ok(!logs.some((line) => line.includes("canTakeover=false")));

@@ -22,10 +22,10 @@ Where the file lives, and why: kiro-cli discovers its selectable agents ONLY fro
 ``~/.kiro/agents/*.json`` (user scope) and ``$PWD/.kiro/agents/*.json`` (the
 session's project), at process start (``acp/runtime.py``, ``agent.py``
 ``ensure_agent_materialized``). There is no private directory it can be pointed
-at, and the project scope is the user's checkout — a tracked directory Kiro Crew
+at, and the project scope is the user's checkout — a tracked directory Sao Khuê
 must not write into. So the derived spec is published into the user-level kiro
 agent registry, ``~/.kiro/agents/<agent>--readonly.json``, the same directory
-Kiro Crew already owns its managed specs in (``agent_files.py``) and apps
+Sao Khuê already owns its managed specs in (``agent_files.py``) and apps
 publish ``<app>--<agent>.json`` into (``apps/bridges._register_agents``). It is a
 runtime resource: deterministic name, regenerated from the base spec on every
 side turn, written atomically and only when its content changed, never
@@ -72,7 +72,7 @@ READONLY_SUFFIX = "--readonly"
 #: agent and is never overwritten. ``description`` is a first-class kiro-cli spec
 #: field, so the marker survives ``deny_unknown_fields`` where a custom key would
 #: not.
-OWNER_MARKER = "Kiro Crew derived read-only spec"
+OWNER_MARKER = "Sao Khuê derived read-only spec"
 
 #: Keys under ``toolsSettings.<tool>`` that pre-authorize without a prompt:
 #: ``allowedCommands`` / ``allowedPaths`` / ``allowedServices`` …, the
@@ -194,7 +194,7 @@ def unavailable_mode_explanation(agent: str) -> tuple[str, str]:
             "Run `kirocrew setup --agent-only` to materialize the agent config.",
         )
     return (
-        f"{agent!r} is the read-only spec Kiro Crew derives from {base!r} for side "
+        f"{agent!r} is the read-only spec Sao Khuê derives from {base!r} for side "
         "replies: a side turn writes it, `kirocrew setup` does not, and kiro-cli lists "
         "only the agents present when its process started.",
         "A new session starts a kiro-cli that lists it. It is not a sub-agent: to spawn "
@@ -295,7 +295,7 @@ def derive_readonly_spec(
       commands the backend runs with no permission request, several of them fed
       model-controlled input, and the read-only surface executes nothing but
       proven reads. The host's SEL audit already records every side-turn tool
-      decision, so the shipped bash audit hook is not needed here. Kiro Crew's
+      decision, so the shipped bash audit hook is not needed here. Sao Khuê's
       own ``hooks.auto_approve_tools`` grant list goes with it.
 
     ``tools``, ``mcpServers`` (minus ``autoApprove``), ``resources``, ``prompt``,

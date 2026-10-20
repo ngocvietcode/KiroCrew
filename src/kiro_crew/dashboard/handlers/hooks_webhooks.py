@@ -654,7 +654,7 @@ async def api_webhook_test(request: web.Request) -> web.Response:
     message = sanitize_string(str(body.get("message") or "")).strip()
     if not message:
         message = (
-            "This is a Kiro Crew webhook test request. Reply with a one-line "
+            "This is a Sao Khuê webhook test request. Reply with a one-line "
             "confirmation that you received it; no other action is needed."
         )
     agent = body.get("agent") or "kirocrew"

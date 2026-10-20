@@ -68,7 +68,7 @@ Three child roles:
 
 ## Why
 
-Kiro Crew's security posture today is reactive: a deny classifier, a governance ceiling, and human
+Sao Khuê's security posture today is reactive: a deny classifier, a governance ceiling, and human
 review of what lands. Nothing looks for the next hole. The work of looking is fan-out over
 independent surfaces with a high false-positive rate and a hard blast-radius constraint — which is
 the conductor shape exactly: parallel workers, script-computed verification, one adjudicator, human
@@ -176,7 +176,7 @@ sloppy PoC -- an auditor that reaches for `curl`, names a credential path, or wr
 worktree -- and it does not catch an adversarially crafted one, because a `cmd::` proof is an
 arbitrary program and `python -c` with `urllib` names none of the screened words. What bounds that
 case is not this script. It is the two layers the RFC already places around it: the auditor is a
-Kiro Crew session and its PoC is written under the session's own tool gate and, where the host
+Sao Khuê session and its PoC is written under the session's own tool gate and, where the host
 provides one, its sandbox; and the verifier runs as the operator's session, inheriting the same
 containment the operator granted that session. A `cmd::` proof therefore executes with exactly the
 privileges the operator gave the crew, no more. For the dogfood pilot -- the operator auditing the
@@ -190,7 +190,7 @@ first-run `cmd::` proofs; this one does not.
 proof's wall time, and reaps the process it started together with its process group (`killpg` on
 POSIX, `taskkill /T` on Windows), so a helper a proof stood up and never stopped does not outlive the
 verdict. It does not attempt kernel-level isolation.
-Kiro Crew's own namespace sandbox is Linux-only and package-internal, and these scripts are
+Sao Khuê's own namespace sandbox is Linux-only and package-internal, and these scripts are
 standard-library files with no package import, so reaching for it would trade a cross-platform
 verifier for a Linux one. Where those two conflict, cross-platform wins.
 
@@ -265,7 +265,7 @@ answer on the fixer gate, an auditor's policy-block report awaiting a ruling. Ea
 cycle independently of what any probe fired, and an entry clears when the obligation is discharged,
 not when it is decided.
 
-## Pilot: dogfood Kiro Crew
+## Pilot: dogfood Sao Khuê
 
 Round 1 is this repository, two to three auditors, concurrency two to three:
 

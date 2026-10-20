@@ -106,7 +106,7 @@ def _agent_roster_hint() -> str:
         # refusal roster's and a credential-shaped name is rewritten in place
         # rather than re-sorted into a different slot. Names the parent agent's
         # spec forbids spawning are dropped FIRST: advertising them would send
-        # the model straight into the gate's refusal. So are Kiro Crew's own
+        # the model straight into the gate's refusal. So are Sao Khuê's own
         # generated specs (``is_internal_agent_spec``), which the gate refuses.
         names, restricted = _parent_allowlist_filter(
             sorted(

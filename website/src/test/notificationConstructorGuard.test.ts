@@ -92,7 +92,7 @@ describe('page-context Notification construction is best-effort', () => {
     }
     const hook = renderHook(() => {
       useWebSocket()
-      useNativeNotification('Kiro Crew', '/avatar.png')
+      useNativeNotification('Sao Khuê', '/avatar.png')
     }, { wrapper })
     const ws = WS_INSTANCES[0]
     act(() => { ws.simulateOpen() })
@@ -120,7 +120,7 @@ describe('page-context Notification construction is best-effort', () => {
     function wrapper({ children }: { children: React.ReactNode }) {
       return createElement(Provider, { store }, children)
     }
-    renderHook(() => useNativeNotification('Kiro Crew', '/avatar.png'), { wrapper })
+    renderHook(() => useNativeNotification('Sao Khuê', '/avatar.png'), { wrapper })
 
     // A new unacked notification triggers the toast effect; the throw must
     // stay inside it.

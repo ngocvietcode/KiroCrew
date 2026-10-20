@@ -64,7 +64,7 @@ def test_below_the_floor_fails_with_the_exact_version(monkeypatch, version: str)
     # deterministically regardless of the glibc the test host actually ships.
     monkeypatch.setattr(constants, "_host_glibc_version", lambda: (2, 35))
     assert node_too_old_message(parsed) == (
-        f"Node.js {version} is too old: Kiro Crew needs {FLOOR_TEXT} or newer. "
+        f"Node.js {version} is too old: Sao Khuê needs {FLOOR_TEXT} or newer. "
         "Update Node.js: install 24 LTS from https://nodejs.org, or run "
         "`nvm install 24` / `mise use -g node@24`."
     )
@@ -82,7 +82,7 @@ def test_old_glibc_x86_64_with_script_names_the_ensure_node_path(monkeypatch, gl
     monkeypatch.setattr(constants.platform, "machine", lambda: "x86_64")
     monkeypatch.setattr("kiro_crew.env._ensure_node_script", lambda: script_path)
     msg = node_too_old_message((17, 9, 1))
-    assert f"Kiro Crew needs {FLOOR_TEXT} or newer" in msg
+    assert f"Sao Khuê needs {FLOOR_TEXT} or newer" in msg
     # str(Path) is OS-shaped, so assert the form the code actually emits.
     assert f"bash {script_path}" in msg
     assert "glibc-2.17 Node" in msg

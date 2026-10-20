@@ -1,6 +1,6 @@
 """SQLite import shim + FTS5 capability probe.
 
-KiroCrew's memory and knowledge stores require SQLite's FTS5 full-text
+SaoKhue's memory and knowledge stores require SQLite's FTS5 full-text
 extension. We prefer ``pysqlite3`` (which bundles a recent SQLite with FTS5)
 when present, and fall back to the stdlib ``sqlite3``.
 
@@ -230,8 +230,8 @@ __all__ = [
 
 FTS5_UNAVAILABLE_HINT = (
     "SQLite FTS5 full-text extension is not available in this Python's sqlite3 "
-    "build. KiroCrew memory and knowledge search require it.\n"
-    "  - Linux x86_64: pip install pysqlite3-binary (KiroCrew depends on it here).\n"
+    "build. SaoKhue memory and knowledge search require it.\n"
+    "  - Linux x86_64: pip install pysqlite3-binary (SaoKhue depends on it here).\n"
     "  - Linux aarch64 / minimal images: install a python3 whose libsqlite3 was "
     "built with SQLITE_ENABLE_FTS5, or `pip install pysqlite3-binary` if a wheel "
     "exists for your platform.\n"

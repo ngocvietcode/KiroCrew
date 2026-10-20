@@ -40,7 +40,7 @@ def test_windows_admission_rests_on_the_app_contributing_no_host_side_code() -> 
     Enabling this app spawns no process and imports no module on the gateway: the app
     directory carries no Python, and the manifest declares no backend entry point, no
     cron and no agent. There is thus no Windows failure surface to port -- and, since
-    Kiro Crew has no native OS sandbox backend on Windows, nothing here that would
+    Sao Khuê has no native OS sandbox backend on Windows, nothing here that would
     fail-close on ``SandboxUnavailableError`` either.
 
     If a backend ever lands, this test is the place that says the Windows claim must be

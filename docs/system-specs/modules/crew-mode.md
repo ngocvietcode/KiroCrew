@@ -12,7 +12,7 @@ session's topics out to sub-sessions. It is retired — see
 (`/members`, served by `dashboard/handlers/members.py` and `members.py` in the
 table below), where each crew is a standing agent with its own thread.
 
-A crew is not a *Remote Crew* — that is another machine running its own Kiro Crew
+A crew is not a *Remote Crew* — that is another machine running its own Sao Khuê
 gateway, which this one reaches through a tunnel (see [instances.md](instances.md))
 — and not an Issue Radar *crew*, which is that app's own repository work crew
 (see [issue-radar.md](issue-radar.md)).
@@ -209,7 +209,7 @@ on a 290px card), and the toolbar carries, once a second crewmate exists, a
 control's own sentence — to the Default crewmate row, ringed on arrival through
 `useSettingHighlight`'s late-mount anchor `default-crewmate`; and the
 per-binding memory tips stay. The default itself is changed in
-Settings → Developer → Kiro Crew config (`KiroCrewCfgTab`), whose agents table
+Settings → Developer → Sao Khuê config (`KiroCrewCfgTab`), whose agents table
 already badges the default: a "Default crewmate" select, rendered whenever a
 crewmate exists (the roster link deep-links here even with one), calls
 `PUT /api/config/default-agent` and reports a refusal in
@@ -244,7 +244,7 @@ the roster's **default crewmate** (top-level `default_agent`: the badge, the
 undeletable row) and a different setting; a non-alias name in the `member`
 namespace answers `400 default_agent_not_alias` and is never rerouted to the
 template write. `GET` returns both: `default_agent`, the crewmate alias (the
-Kiro Crew config tab's select), and `default_template`, the default custom agent
+Sao Khuê config tab's select), and `default_template`, the default custom agent
 (`default_template(config)`), which the shared `['default-agent']` query reads
 so the Schedule page's agent column and the Worlds agent rail label an
 agent-less job or slot with the template it runs, never the alias. The
@@ -546,7 +546,7 @@ MCP server reaches an already-running chat only after a relaunch.) The MCP serve
 the acronym ("external tool connections"). The Add tool
 input keeps the words "Add tool" visible as its label while open (one control
 in two states, not two controls), is wide enough for its example placeholder (`fs_write or @github/…`)
-and offers a datalist of kiro-cli's native tool names, Kiro Crew's
+and offers a datalist of kiro-cli's native tool names, Sao Khuê's
 background-subagent tools (`@kirocrew-core/spawn_run`, `spawn_list`,
 `spawn_status`, `spawn_steer`, `spawn_continue`, `spawn_release`), plus every name the
 template already grants (offered, not enforced). Until an editable template
@@ -1033,7 +1033,7 @@ removal deletes only from the page's own `caution_text`; and propose a denied-co
 approval or secret change only when the user asked for that exact change. The operating
 contract every session receives (`config/prompt.md`, section `KiroCrew Capabilities`) carries one
 line pointing at these tools.
-In a dashboard turn, a change to Kiro Crew itself that the user asked for (settings,
+In a dashboard turn, a change to Sao Khuê itself that the user asked for (settings,
 schedules, crewmates and their capabilities, templates, MCP servers, connections, secrets,
 app trust, denied-command rules) is preferably offered as a change card, which the user
 confirms; a card is never a way around a denial. Cards do not replace the direct tools:
@@ -1284,7 +1284,7 @@ label in everyday words with no developer terms; says it is the user's first
 crewmate (`FIRST_WELCOME`) -- or, when the roster already holds a crewmate besides
 Mate and `default`, one more teammate on their crew (`FIRST_WELCOME_WITH_CREW`) -- a
 teammate who remembers what they work on together and keeps at it over days; says it
-can help right now with getting Kiro Crew set up, sorting out anything not working in
+can help right now with getting Sao Khuê set up, sorting out anything not working in
 it, or showing the user around (those three only); and finishes by asking what the
 user would like to call it (the name in question is the crewmate's own). The kickoff
 is written as plain principles, and the greeting itself is the model's own words.

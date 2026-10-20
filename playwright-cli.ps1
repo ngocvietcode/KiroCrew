@@ -61,7 +61,7 @@ $WrapperName = "playwright-cli"
 # package 401 as soon as that mirror's token expires.
 $PublicNpmRegistry = "https://registry.npmjs.org/"
 # The floor that matters is not the package's own engines.node (>= 18) but the one
-# Kiro Crew's browsing requires of this CLI: MIN_NODE_MAJOR in
+# Sao Khuê's browsing requires of this CLI: MIN_NODE_MAJOR in
 # src/kiro_crew/browser_cli/install.py. Accepting less would install a CLI the
 # product refuses to drive. A test binds the two together. A bootstrap installs
 # Node 22 LTS.

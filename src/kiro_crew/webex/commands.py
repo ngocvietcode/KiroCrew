@@ -217,7 +217,7 @@ COMMAND_SPEC: tuple[tuple[str, str], ...] = (
     ("help", "Show this command list"),
 )
 
-_HELP_HEADER = "**Kiro Crew — Webex**"
+_HELP_HEADER = "**Sao Khuê — Webex**"
 _HELP_FOOTER = (
     "`/kirocrew dashboard [<N>h|<N>m]` — get a dashboard login link (DM only)\n"
     "\n"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - deploy a whole app (frontend + optional backend)
+# SaoKhue One-Click Deploy - deploy a whole app (frontend + optional backend)
 # in ONE command. Vercel-like convention:
 #   <app_dir>/public/   -> static frontend (index.html at its root)  [fallback: <app_dir> itself]
 #   <app_dir>/api/      -> backend handler (index.py: def handler(event, context))

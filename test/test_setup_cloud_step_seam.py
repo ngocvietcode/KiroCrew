@@ -1,6 +1,6 @@
 """`kirocrew setup`'s cloud step follows the ``remote_provisioners`` seam.
 
-The first-run wizard's last step offers to launch Kiro Crew on EC2 in the user's
+The first-run wizard's last step offers to launch Sao Khuê on EC2 in the user's
 own AWS account. A managed edition that withdraws the built-in ``aws_ec2`` lane
 from the seam (so its dashboard Set-up tab does not offer it) must not have the
 wizard put the same launch in front of its users.

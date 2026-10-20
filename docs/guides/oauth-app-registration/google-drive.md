@@ -1,13 +1,13 @@
-# Register a Google OAuth client for Kiro Crew Connections (Google Drive)
+# Register a Google OAuth client for Sao Khuê Connections (Google Drive)
 
-*Who this is for: the person who owns (or can create) a Google Cloud project and wants Kiro Crew agents to search and read files in a Google Drive account through Google's remote Drive MCP server. Expected time: 30–45 minutes of clicking, plus a wait of "a couple of days" for Google to accept you into the Developer Preview Program if you are not already a member.*
+*Who this is for: the person who owns (or can create) a Google Cloud project and wants Sao Khuê agents to search and read files in a Google Drive account through Google's remote Drive MCP server. Expected time: 30–45 minutes of clicking, plus a wait of "a couple of days" for Google to accept you into the Developer Preview Program if you are not already a member.*
 
 **Google Drive has no Connections entry yet** — see the
 [index](README.md) for the providers pre-registered on this build — so its card
 and its **Connect** button appear once that entry ships. Registering the redirect
 URI below now means it already matches when it does.
 
-Google's Drive MCP server is a **Developer Preview** feature. Google accepts a plain-http loopback redirect URI, so Kiro Crew's callback works as-is; the gating items are program enrollment and OAuth scope class, both covered below.
+Google's Drive MCP server is a **Developer Preview** feature. Google accepts a plain-http loopback redirect URI, so Sao Khuê's callback works as-is; the gating items are program enrollment and OAuth scope class, both covered below.
 
 ## Before you start
 
@@ -15,14 +15,14 @@ You need:
 
 - A Google Account that can sign in to the [Google Cloud console](https://console.cloud.google.com/). To pick **Internal** audience (recommended, no verification) the project must belong to a Google Cloud Organization, which means a Google Workspace or Cloud Identity account. A consumer `@gmail.com` account can only pick **External**.
 - Membership in the [Google Workspace Developer Preview Program](https://developers.google.com/workspace/preview). Google states "Access to Google Workspace MCP servers is part of the Public Developer Preview Program." The application form asks for your Google Workspace account and your Google Cloud project number; Google registers that project and says "The whole process should be done within a couple of days." Google's page does not state whether a consumer `@gmail.com` account is accepted.
-- A running Kiro Crew dashboard where you can open **Settings → OAuth Apps**.
+- A running Sao Khuê dashboard where you can open **Settings → OAuth Apps**.
 - Optional: the `gcloud` CLI, if you prefer commands to console clicks. Every step below has a console path too.
 
-Facts about Kiro Crew's side you will need to type exactly:
+Facts about Sao Khuê's side you will need to type exactly:
 
 - Redirect URI for Google Drive: `http://127.0.0.1:48103/callback`
 - Provider slug for environment variables: `GOOGLE_DRIVE`
-- MCP endpoint Kiro Crew connects to: `https://drivemcp.googleapis.com/mcp/v1` (verified against Google's "Configure the Drive MCP server" page and Google Cloud's MCP supported-products table).
+- MCP endpoint Sao Khuê connects to: `https://drivemcp.googleapis.com/mcp/v1` (verified against Google's "Configure the Drive MCP server" page and Google Cloud's MCP supported-products table).
 
 ## 1. Create the app
 
@@ -54,33 +54,33 @@ gcloud services enable drive.googleapis.com drivemcp.googleapis.com --project=PR
 ### 1.4 Configure the Google Auth Platform (OAuth consent screen)
 
 1. Go to **Google Auth Platform → Branding**: [https://console.cloud.google.com/auth/branding](https://console.cloud.google.com/auth/branding). If you see **Google Auth Platform not configured yet**, click **Get Started**.
-2. **App Information**: App name `Kiro Crew Drive MCP` (any name is fine; Google's own example is `Drive MCP Server`). **User support email**: pick your address. Click **Next**.
+2. **App Information**: App name `Sao Khuê Drive MCP` (any name is fine; Google's own example is `Drive MCP Server`). **User support email**: pick your address. Click **Next**.
 3. **Audience**: select **Internal** if the option is offered. If it is greyed out you are not in an Organization; select **External**. Click **Next**.
 4. **Contact Information**: enter an email address. Click **Next**.
 5. **Finish**: tick **I agree to the Google API Services: User Data Policy**, click **Continue**, then **Create**.
-6. If you chose **External**: open **Audience** ([https://console.cloud.google.com/auth/audience](https://console.cloud.google.com/auth/audience)), under **Test users** click **Add users**, enter the Google Account(s) that will click **Connect** in Kiro Crew, click **Save**. Leave **Publishing status** at **Testing** for now (see section 4).
+6. If you chose **External**: open **Audience** ([https://console.cloud.google.com/auth/audience](https://console.cloud.google.com/auth/audience)), under **Test users** click **Add users**, enter the Google Account(s) that will click **Connect** in Sao Khuê, click **Save**. Leave **Publishing status** at **Testing** for now (see section 4).
 7. Open **Data Access** ([https://console.cloud.google.com/auth/scopes](https://console.cloud.google.com/auth/scopes)) → **Add or Remove Scopes**, and under **Manually add scopes** paste the scopes from section 3, click **Add to Table**, **Update**, then **Save**.
 
 ### 1.5 Create the OAuth client
 
 1. Go to **Google Auth Platform → Clients → Create Client**: [https://console.cloud.google.com/auth/clients/create](https://console.cloud.google.com/auth/clients/create).
 2. **Application type**: **Web application**. (Why not "Desktop app": see section 2.)
-3. **Name**: `Kiro Crew` (or anything).
+3. **Name**: `Sao Khuê` (or anything).
 4. Leave **Authorized JavaScript origins** empty.
-5. Under **Authorized redirect URIs** click **+ Add URI** and paste `http://127.0.0.1:48103/callback` exactly. If you also plan to register Gmail and Google Calendar, add `http://127.0.0.1:48104/callback` and `http://127.0.0.1:48105/callback` to the same client now; one client may carry all three URIs and you then paste the same Client ID and secret into all three Kiro Crew cards.
+5. Under **Authorized redirect URIs** click **+ Add URI** and paste `http://127.0.0.1:48103/callback` exactly. If you also plan to register Gmail and Google Calendar, add `http://127.0.0.1:48104/callback` and `http://127.0.0.1:48105/callback` to the same client now; one client may carry all three URIs and you then paste the same Client ID and secret into all three Sao Khuê cards.
 6. Click **Create**. A dialog shows the **Client ID** (ends in `.apps.googleusercontent.com`) and the **Client secret**. Copy both immediately. Google states the secret "will only be shown after you create the client" and later displays only its last four characters; if you lose it, use **Add Secret** on the client page to rotate.
 
 ## 2. Redirect URI
 
 Register exactly `http://127.0.0.1:48103/callback`. Google matches redirect URIs literally: "the `http` or `https` scheme, case, and trailing slash ('/') must all match", so do not add a trailing slash and do not substitute `localhost`.
 
-Plain http on loopback is allowed. Google's redirect URI validation rules state: "Redirect URIs must use the HTTPS scheme, not plain HTTP. Localhost URIs (including localhost IP address URIs) are exempt from this rule." and "Hosts cannot be raw IP addresses. Localhost IP addresses are exempted from this rule." Google's own MCP client guide registers `http://localhost:8787/callback` on a Web application client for Cursor Desktop, which is the same shape as Kiro Crew's URI.
+Plain http on loopback is allowed. Google's redirect URI validation rules state: "Redirect URIs must use the HTTPS scheme, not plain HTTP. Localhost URIs (including localhost IP address URIs) are exempt from this rule." and "Hosts cannot be raw IP addresses. Localhost IP addresses are exempted from this rule." Google's own MCP client guide registers `http://localhost:8787/callback` on a Web application client for Cursor Desktop, which is the same shape as Sao Khuê's URI.
 
-Why **Web application** rather than **Desktop app**: a Desktop-app client has no redirect URI list at all ("The console does not require any additional information to create OAuth 2.0 credentials for desktop applications"); Google's installed-app flow expects the app to "start an HTTP listener on a random available port" and documents the loopback form as `http://127.0.0.1:port` with no path. Google's documentation does not state whether a `/callback` path is accepted on a Desktop-app loopback redirect. Kiro Crew uses a fixed port and a fixed path, so the Web application type, where you register the exact URI and Google validates against it, is the type whose behaviour is documented. It is also the type every Google MCP-server page uses for third-party clients (Antigravity, Claude, Cursor, ChatGPT).
+Why **Web application** rather than **Desktop app**: a Desktop-app client has no redirect URI list at all ("The console does not require any additional information to create OAuth 2.0 credentials for desktop applications"); Google's installed-app flow expects the app to "start an HTTP listener on a random available port" and documents the loopback form as `http://127.0.0.1:port` with no path. Google's documentation does not state whether a `/callback` path is accepted on a Desktop-app loopback redirect. Sao Khuê uses a fixed port and a fixed path, so the Web application type, where you register the exact URI and Google validates against it, is the type whose behaviour is documented. It is also the type every Google MCP-server page uses for third-party clients (Antigravity, Claude, Cursor, ChatGPT).
 
-Kiro Crew's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and none is needed for Google.
+Sao Khuê's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and none is needed for Google.
 
-Remote, tailnet or Docker installs do not need a second redirect URI. After you approve consent, the browser is sent to `http://127.0.0.1:48103/callback?...` on the laptop, where nothing is listening, so the page fails to load. Copy that full URL from the address bar and paste it into the field the Kiro Crew dashboard shows during Connect; the gateway replays it against its own loopback listener and completes the exchange.
+Remote, tailnet or Docker installs do not need a second redirect URI. After you approve consent, the browser is sent to `http://127.0.0.1:48103/callback?...` on the laptop, where nothing is listening, so the page fails to load. Copy that full URL from the address bar and paste it into the field the Sao Khuê dashboard shows during Connect; the gateway replays it against its own loopback listener and completes the exchange.
 
 ## 3. Scopes and permissions
 
@@ -91,25 +91,25 @@ Google's Drive MCP page tells you to declare exactly two scopes on the **Data Ac
 | `https://www.googleapis.com/auth/drive.readonly` | **Restricted** ("View and download all your Drive files") | `search_files`, `list_recent_files`, `get_file_metadata`, `get_file_permissions`, `read_file_content`, `download_file_content` |
 | `https://www.googleapis.com/auth/drive.file` | **Non-sensitive** (per-file access to files the user opened or created with the app) | `create_file`, `copy_file` |
 
-Google's page does not map tools to scopes; the mapping above follows the Drive API scope descriptions and may be narrower or wider than the server enforces. Declaring a scope on Data Access is a ceiling, not a request; the scopes actually granted are the ones Kiro Crew asks for at Connect time, and the consent screen lists them.
+Google's page does not map tools to scopes; the mapping above follows the Drive API scope descriptions and may be narrower or wider than the server enforces. Declaring a scope on Data Access is a ceiling, not a request; the scopes actually granted are the ones Sao Khuê asks for at Connect time, and the consent screen lists them.
 
 Recommendation: declare `drive.readonly` only if you want agents limited to reading. Add `drive.file` only when you want agents to create or copy files. Google recommends `drive.file` as the non-sensitive default for most Drive apps, but on its own it cannot search or read files the app did not create.
 
 Because `drive.readonly` is **restricted**, it drives the review requirements in section 4. Google also limits restricted Drive scopes to specific app categories ("Backup and sync", "Productivity and education", "Reporting and security") when an app is submitted for verification.
 
-The client secret: Google's token-exchange reference marks `client_secret` as **Optional** for both Web and Desktop clients, and its "Manage OAuth Clients" page says web server applications are "Private Clients" that "can securely store the client secret". In practice a Web application client that omits or mis-types the secret receives `invalid_client` ("The OAuth client secret is incorrect"). Kiro Crew sends the secret at token exchange, so enter it.
+The client secret: Google's token-exchange reference marks `client_secret` as **Optional** for both Web and Desktop clients, and its "Manage OAuth Clients" page says web server applications are "Private Clients" that "can securely store the client secret". In practice a Web application client that omits or mis-types the secret receives `invalid_client` ("The OAuth client secret is incorrect"). Sao Khuê sends the secret at token exchange, so enter it.
 
 ## 4. Review and publishing requirements
 
 - **Internal audience** (Organization project): no Google verification, no unverified-app warning, no 100-user cap. Google notes that "high-risk Gmail and Drive scopes might require additional configuration by your organization's administrators" (Admin console → "Let Internal apps access restricted Google Workspace APIs"). If Connect fails with `admin_policy_enforced`, ask your Workspace admin to trust the client ID.
-- **External audience, publishing status Testing**: no verification needed. Limits: at most 100 test users; every test user sees an "unverified app" warning; "Authorizations by a test user will expire seven days from the time of consent. If your OAuth client requests an `offline` access type and receives a refresh token, that token will also expire." Expect to click **Connect** again in Kiro Crew weekly.
-- **External audience, In production**: because `drive.readonly` is restricted, publishing requires brand verification (verified domain homepage, privacy policy, demo video) plus restricted-scope verification and an annual third-party security assessment (Google's "Security Assessment", sometimes called CASA). Google's Developer Preview terms additionally say preview features "may not be included in public applications prior to the General Availability (GA) announcement". For a personal or team Kiro Crew install, stay in Testing or use Internal.
+- **External audience, publishing status Testing**: no verification needed. Limits: at most 100 test users; every test user sees an "unverified app" warning; "Authorizations by a test user will expire seven days from the time of consent. If your OAuth client requests an `offline` access type and receives a refresh token, that token will also expire." Expect to click **Connect** again in Sao Khuê weekly.
+- **External audience, In production**: because `drive.readonly` is restricted, publishing requires brand verification (verified domain homepage, privacy policy, demo video) plus restricted-scope verification and an annual third-party security assessment (Google's "Security Assessment", sometimes called CASA). Google's Developer Preview terms additionally say preview features "may not be included in public applications prior to the General Availability (GA) announcement". For a personal or team Sao Khuê install, stay in Testing or use Internal.
 - Google's generic MCP guide says callers need the IAM role **MCP Tool User** (`roles/mcp.toolUser`) on the project. The Workspace MCP pages do not mention it. If Connect succeeds but tool calls return a permission error, grant that role to the connecting user in **IAM & Admin → IAM**.
 - Unused OAuth clients are deleted after six months of inactivity; Google emails 30 days before.
 
-## 5. Enter the credentials in Kiro Crew
+## 5. Enter the credentials in Sao Khuê
 
-1. Open the Kiro Crew dashboard → **Settings → OAuth Apps** → the **Google Drive** card.
+1. Open the Sao Khuê dashboard → **Settings → OAuth Apps** → the **Google Drive** card.
 2. Paste the **Client ID** into "Client ID" and the **Client secret** into "Client secret". The card's copy button gives you the redirect URI to double-check against section 2.
 3. Click **Save**.
 

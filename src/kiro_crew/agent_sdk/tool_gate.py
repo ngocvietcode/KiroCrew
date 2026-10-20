@@ -1,4 +1,4 @@
-"""Whether a harness's tool decisions reach Kiro Crew's PreToolUse gate.
+"""Whether a harness's tool decisions reach Sao Khuê's PreToolUse gate.
 
 One place resolves the verdict, so the refusal message, the doctor row and any
 future dashboard surface cannot disagree about why a session was allowed.
@@ -263,7 +263,7 @@ ADAPTER_EXPOSED_CREDENTIAL_LEAVES: dict = {
 
 
 class Verdict(str, Enum):
-    """Whether a harness's tool decisions reach Kiro Crew's gate.
+    """Whether a harness's tool decisions reach Sao Khuê's gate.
 
     ``INDETERMINATE`` is deliberately NOT a synonym for "probably fine". A
     guarantee that lapses whenever a file is unreadable is not a guarantee, so
@@ -509,7 +509,7 @@ def enforce_sandbox_floor(backend: str, mode: str) -> None:
     # Windows, where Crew has no OS sandbox backend to apply the mask.
     if platform_compat.IS_WINDOWS:
         raise ToolGateUnroutable(
-            "{} cannot run on native Windows because Kiro Crew has no supported OS "
+            "{} cannot run on native Windows because Sao Khuê has no supported OS "
             "sandbox backend here to protect credential files; changing agent.sandbox "
             "cannot enable it. Select Kiro CLI in Settings → Agent Harness and start "
             "a new session.".format(label_for(backend))
@@ -621,7 +621,7 @@ def routing_verdict(backend: str) -> tuple:
         )
         return (
             Verdict.ROUTED,
-            f"the client loads Kiro Crew's gate extension into the harness and reads "
+            f"the client loads Sao Khuê's gate extension into the harness and reads "
             f"{where} before the first prompt",
         )
 
@@ -642,7 +642,7 @@ def routing_verdict(backend: str) -> tuple:
 
     return (
         Verdict.INDETERMINATE,
-        "Kiro Crew has not established how this harness routes tool calls",
+        "Sao Khuê has not established how this harness routes tool calls",
     )
 
 
@@ -664,7 +664,7 @@ def remediation_for(backend: str) -> str:
             # the refusal, since the seed already outranks that file.
             return (
                 f"{label_for(backend)} resolved {setting_key} to something other than "
-                f"{value!r} even with Kiro Crew's own setting supplied, so a "
+                f"{value!r} even with Sao Khuê's own setting supplied, so a "
                 f"higher-precedence config source is overriding it. Remove that "
                 f"override to select this harness."
             )
@@ -680,8 +680,8 @@ def remediation_for(backend: str) -> str:
         probe = gate_probe_command_for(backend)
         if probe:
             # The only thing an operator can act on: the harness either did not
-            # start with the extension Kiro Crew passed, or loaded the probe name
-            # from somewhere other than Kiro Crew's own file. Both point
+            # start with the extension Sao Khuê passed, or loaded the probe name
+            # from somewhere other than Sao Khuê's own file. Both point
             # at the harness install or at an extension of the operator's that
             # shadows the probe name. The noun differs per read-back style because
             # what the operator would go and look at differs.
@@ -691,8 +691,8 @@ def remediation_for(backend: str) -> str:
                 else "composes a plugin"
             )
             return (
-                f"{label_for(backend)} did not report Kiro Crew's gate extension as "
-                f"loaded from Kiro Crew's own file. Make sure the harness accepts an "
+                f"{label_for(backend)} did not report Sao Khuê's gate extension as "
+                f"loaded from Sao Khuê's own file. Make sure the harness accepts an "
                 f"extension on its command line, and that nothing of your own "
                 f"{noun} named {probe!r}."
             )
@@ -771,8 +771,8 @@ def seeded_setting_issue(backend: str, observed: object) -> str:
 def gate_extension_issue(backend: str, observed_commands: object, extension_path: str) -> str:
     """Why *backend*'s gate extension is not loaded, from the harness's own command list.
 
-    ``""`` means the harness reported Kiro Crew's probe command, sourced from
-    *extension_path* -- the file Kiro Crew shipped and named on the command line.
+    ``""`` means the harness reported Sao Khuê's probe command, sourced from
+    *extension_path* -- the file Sao Khuê shipped and named on the command line.
 
     *observed_commands* is what the harness's OWN command registry returned when
     asked: a list of entries, each carrying a ``name`` and, for an extension
@@ -803,12 +803,12 @@ def gate_extension_issue(backend: str, observed_commands: object, extension_path
         sources.append(info.get("path") if isinstance(info, dict) else None)
     if not sources:
         return (
-            f"the harness's command registry does not list {probe!r}, so Kiro Crew's "
+            f"the harness's command registry does not list {probe!r}, so Sao Khuê's "
             "gate extension did not load and tools would run unasked"
         )
     if extension_path not in sources:
         return (
-            f"the harness lists {probe!r} but from a file that is not Kiro Crew's "
+            f"the harness lists {probe!r} but from a file that is not Sao Khuê's "
             "gate extension, so the gate that would ask is not the one shipped here"
         )
     return ""
@@ -824,14 +824,14 @@ def gate_marker_issue(
 ) -> str:
     """Why *backend*'s gate plugin is not loaded, from the marker it writes on load.
 
-    ``""`` means the marker is the one Kiro Crew's own plugin wrote in THIS
-    session, from the file Kiro Crew shipped and named in the per-launch patch.
+    ``""`` means the marker is the one Sao Khuê's own plugin wrote in THIS
+    session, from the file Sao Khuê shipped and named in the per-launch patch.
 
     The :data:`~kiro_crew.agent_sdk.backends.Readback.LOAD_MARKER` half of
     :func:`gate_extension_issue`, for a harness that publishes no registry to ask.
     *marker* is the parsed JSON object the plugin wrote; *extension_path* is the
     sealed file the patch named, already brought to the same spelling the plugin
-    reports; *nonce* is the per-session value Kiro Crew put in the child's
+    reports; *nonce* is the per-session value Sao Khuê put in the child's
     environment. Taken as arguments rather than read here for the reason its
     sibling gives: the driver owns the process, this owns the decision.
 
@@ -876,7 +876,7 @@ def gate_marker_issue(
         return "the gate's load marker is missing or could not be read"
     if marker.get("plugin") != probe:
         return (
-            f"the gate's load marker does not name {probe!r}, so Kiro Crew's gate "
+            f"the gate's load marker does not name {probe!r}, so Sao Khuê's gate "
             "plugin did not load and tools would run unasked"
         )
     if marker.get("nonce") != nonce:
@@ -886,7 +886,7 @@ def gate_marker_issue(
         )
     if marker.get("module") != extension_path:
         return (
-            f"the harness reports {probe!r} from a file that is not Kiro Crew's gate "
+            f"the harness reports {probe!r} from a file that is not Sao Khuê's gate "
             "plugin, so the gate that would ask is not the one shipped here"
         )
     if backend == ACP_BACKEND_DEEPSEEK:
@@ -1015,11 +1015,11 @@ def deepseek_read_only_owner_issue(marker: object, gate_module: str) -> str:
     """Why a DeepSeek Harness READ_ONLY turn may not approve its read tools by name, or ``""``.
 
     *marker* is the parsed load marker that :func:`gate_marker_issue` already
-    accepted. *gate_module* is the module path of Kiro Crew's own gate entry, in the
+    accepted. *gate_module* is the module path of Sao Khuê's own gate entry, in the
     same spelling as the marker's entry modules. The allowance needs three facts
     from the marker's ``composition`` snapshot. First, every enabled loader entry
     is stock: a package in dsh's own npm scope that does not host operator code, a
-    loader built-in, or Kiro Crew's gate. A per-agent scope is created after load and is not visible to
+    loader built-in, or Sao Khuê's gate. A per-agent scope is created after load and is not visible to
     the snapshot, so stock-only composition is what leaves no code that could
     register a scoped shadow. Second, each name in
     ``DEEPSEEK_READ_ONLY_TOOLS`` is held by the global layer and by no
@@ -1106,7 +1106,7 @@ def enforce_runtime_routing(
 
     suffix = f" {remedy}" if remedy else ""
     raise ToolGateUnroutable(
-        f"{label_for(backend)} tool calls would not reach Kiro Crew's security gate "
+        f"{label_for(backend)} tool calls would not reach Sao Khuê's security gate "
         f"({reason}), so {UNENFORCED_CONTROLS} would not be consulted for them.{suffix}"
     )
 

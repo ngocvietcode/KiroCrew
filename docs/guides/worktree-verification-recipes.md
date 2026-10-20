@@ -1,6 +1,6 @@
 # Worktree verification recipes
 
-These traces prove a Kiro Crew change against an isolated gateway running the
+These traces prove a Sao Khuê change against an isolated gateway running the
 changed worktree. They do not touch the live gateway or its data home. Run them
 from the worktree root after the normal build and test gates pass.
 
@@ -22,7 +22,7 @@ recipes:
 
 ```bash
 kirocrew pod --help | grep -qw api || {
-  echo "This recipe requires a current Kiro Crew installation with pod api" >&2
+  echo "This recipe requires a current Sao Khuê installation with pod api" >&2
   exit 1
 }
 ```
@@ -78,7 +78,7 @@ PATH_TO_ASSERT=/api/crons
 
 kirocrew pod scenarios
 kirocrew pod --help | grep -qw api || {
-  echo "This recipe requires a current Kiro Crew installation with pod api" >&2
+  echo "This recipe requires a current Sao Khuê installation with pod api" >&2
   exit 1
 }
 

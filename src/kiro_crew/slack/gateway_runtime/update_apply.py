@@ -946,7 +946,7 @@ async def _auto_apply_wheel_update(
         )
         self._notice_wheel_update_once(
             f"reattach:{version}",
-            f"Kiro Crew {version} needs you to apply it",
+            f"Sao Khuê {version} needs you to apply it",
             wheel_apply.userns_reattach_remedy(version),
         )
         if mandatory:
@@ -989,7 +989,7 @@ async def _auto_apply_wheel_update(
             )
             self._notice_wheel_update_once(
                 f"unreachable:{version}",
-                f"Kiro Crew {version} needs the installer to finish",
+                f"Sao Khuê {version} needs the installer to finish",
                 wheel_apply.restart_unreachable_remedy(version, channel),
             )
             if state:
@@ -1008,7 +1008,7 @@ async def _auto_apply_wheel_update(
     elif outcome.status == "incompatible":
         self._notice_wheel_update_once(
             f"incompatible:{version}",
-            f"Kiro Crew {version} cannot be applied automatically",
+            f"Sao Khuê {version} cannot be applied automatically",
             f"{outcome.message}. {wheel_apply.incompatible_remedy(channel)}",
         )
         if state:

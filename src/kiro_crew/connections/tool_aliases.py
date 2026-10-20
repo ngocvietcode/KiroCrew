@@ -111,7 +111,7 @@ inertness); see :func:`kiro_crew.agent._apply_connection_tool_aliases`.
    declaration says "MY tools collide", which is only true of the real provider.
    Eligibility requires the entry's ``url`` to match the registry's pinned
    ``mcp_url``. (The ``x-kirocrew`` provenance marker cannot serve here: by
-   design it appears only in files Kiro Crew does not own, and is stripped on the
+   design it appears only in files Sao Khuê does not own, and is stripped on the
    way into both the store and the rendered spec -- see
    :mod:`kiro_crew.mcp_provenance`.)
 

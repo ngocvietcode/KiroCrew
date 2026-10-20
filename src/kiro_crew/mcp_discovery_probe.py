@@ -261,7 +261,7 @@ async def probe_server(
 
     if server.registry_pointer and not server.command:
         # Nothing local to spawn: kiro-cli resolves this pointer from the admin's
-        # catalog, which Kiro Crew never reads. Reported as ``registry`` -- no
+        # catalog, which Sao Khuê never reads. Reported as ``registry`` -- no
         # verdict, so not cached (a stored tool list survives) and not counted
         # toward quarantine -- instead of an "Error / no command" the user cannot
         # act on. ``kiro-cli mcp list`` is where it is verified.
@@ -376,7 +376,7 @@ async def probe_server(
         # A hostile MCP-config entry names the binary spawned here, so route it
         # through the sandbox chokepoint: OS-level isolation plus a
         # credential-scrubbed environment (on top of the augmented PATH built
-        # above). ``strip_python_env`` keeps Kiro Crew's PYTHONPATH/PYTHONHOME out
+        # above). ``strip_python_env`` keeps Sao Khuê's PYTHONPATH/PYTHONHOME out
         # of a foreign Python MCP server.
         #
         # ``first_party_fixed_argv`` is True ONLY when command+args+env EQUAL
@@ -820,7 +820,7 @@ async def probe_server(
                 _cache_probe(server)
             return server
         #
-        # The wrap is deliberately KEPT rather than skipped for Kiro Crew's own
+        # The wrap is deliberately KEPT rather than skipped for Sao Khuê's own
         # managed servers. "It is our own code" is not the same claim as "the code
         # is unmodified": the package directory is writable by the same uid the
         # agent runs as and is not on the sensitive-path floor, so a prompt-injected
@@ -837,7 +837,7 @@ async def probe_server(
         # limitation apart from a genuine handshake failure without parsing prose.
         server.status = "error"
         server.error = (
-            f"mcp_probe_sandbox_unavailable: Kiro Crew could not probe this server "
+            f"mcp_probe_sandbox_unavailable: Sao Khuê could not probe this server "
             f"because no OS-level sandbox backend is available on this host. The "
             f"server itself may be fine — kiro-cli launches it from the agent "
             f"config without this probe, so its tools can still work in chat. "

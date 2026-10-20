@@ -1,13 +1,13 @@
-"""Kiro Crew CLI — personal AI agent.
+"""Sao Khuê CLI — personal AI agent.
 
 Commands:
     kirocrew chat -m "message"    Send a single message
     kirocrew chat                 Interactive chat mode
-    kirocrew gateway              Start the Kiro Crew server (dashboard + messaging channels)
+    kirocrew gateway              Start the Sao Khuê server (dashboard + messaging channels)
     kirocrew gateway --seed NAME  Populate $KIROCREW_HOME from fixture NAME, then start the gateway
     kirocrew status               Show runtime stats
     kirocrew run TASK.md          Run an autonomous task from a spec file
-    kirocrew update               Update Kiro Crew via git fetch + rebuild
+    kirocrew update               Update Sao Khuê via git fetch + rebuild
     kirocrew cron list|add|remove Manage scheduled jobs
     kirocrew spawn run "task"     Spawn a background subagent
     kirocrew spawn list           List subagents
@@ -222,7 +222,7 @@ def _builtin_mcp_server_available(name: str) -> bool:
 
 def main() -> None:
     """Entry point — parse args and dispatch to the appropriate subcommand."""
-    # On Windows, force stdout/stderr to UTF-8 BEFORE anything prints — KiroCrew's
+    # On Windows, force stdout/stderr to UTF-8 BEFORE anything prints — SaoKhue's
     # non-ASCII output otherwise raises UnicodeEncodeError under the cp1252
     # default when stdout is a pipe (detached gateway, KiroCrewHub client). No-op
     # on POSIX. Must be the first statement: the KIROCREW_PORT error below prints
@@ -276,7 +276,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(
         prog="kirocrew",
-        description="Kiro Crew — personal AI agent",
+        description="Sao Khuê — personal AI agent",
         usage=cli_help.TOP_USAGE,
         epilog=cli_help.render_epilog(),
         formatter_class=argparse.RawDescriptionHelpFormatter,

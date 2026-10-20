@@ -1,7 +1,7 @@
 """Local-first JSONL metric exporter (OSS-clean).
 
 An OpenTelemetry ``MetricExporter`` that appends one JSON line per export cycle
-to ``<dir>/metrics-YYYY-MM-DD-<pid>.jsonl``. This is KiroCrew's default metrics
+to ``<dir>/metrics-YYYY-MM-DD-<pid>.jsonl``. This is SaoKhue's default metrics
 sink: data stays on the local disk (default ``~/.kiro/crew/metrics``) and never
 leaves the host. Remote / OTLP egress is a separate, opt-in exporter (deferred).
 

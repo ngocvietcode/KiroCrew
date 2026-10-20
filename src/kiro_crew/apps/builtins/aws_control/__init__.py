@@ -1,6 +1,6 @@
 """AWS Control — the account portal over the user's own AWS accounts.
 
-One surface answers "which accounts can Kiro Crew use, do their credentials
+One surface answers "which accounts can Sao Khuê use, do their credentials
 still work, and what does that cost" — and later phases grow the S3-backed
 cloud drive (Drive / Library / Backup) plus sharing on the same console.
 Spec: ``docs/system-specs/modules/aws-control.md``.

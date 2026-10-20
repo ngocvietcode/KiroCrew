@@ -1,6 +1,6 @@
 """KAS spawn contract: relay argv, auth owner, sandbox classification, capabilities, demux.
 
-Kiro Crew reaches KAS through kiro-cli's own ACP relay
+Sao Khuê reaches KAS through kiro-cli's own ACP relay
 (``kiro-cli acp --agent-engine v3``) rather than by locating kiro-cli's
 extracted KAS bundle and running ``node acp-server.js`` itself. See
 :mod:`kiro_crew.acp.kas_transport` for why, for the frame-parity measurement
@@ -249,14 +249,14 @@ class TestAuthOwnership:
             sent.append((request_id, code, message))
 
         async def refuse():
-            raise HostAuthCallbackError("not signed in to Kiro Crew")
+            raise HostAuthCallbackError("not signed in to Sao Khuê")
 
         with (
             patch("kiro_crew.acp.harness.kas.answer_get_access_token", side_effect=refuse),
             patch.object(runtime, "send_error", side_effect=record_error),
         ):
             await runtime._answer_get_access_token(8)
-        assert sent == [(8, KAS_AUTH_CALLBACK_ERROR_CODE, "not signed in to Kiro Crew")]
+        assert sent == [(8, KAS_AUTH_CALLBACK_ERROR_CODE, "not signed in to Sao Khuê")]
 
 
 class TestSandboxClassification:

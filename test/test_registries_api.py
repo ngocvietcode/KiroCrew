@@ -1192,7 +1192,7 @@ class TestRegistryLabelAndReview:
                         {
                             "name": "mine",
                             "repo": "MyApps",
-                            "label": "Reviewed by the Kiro Crew team",
+                            "label": "Reviewed by the Sao Khuê team",
                             "review": "curated",
                         }
                     ]

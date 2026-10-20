@@ -1,6 +1,6 @@
 """Tests for ``container.supervisor.process`` -- process-group launch and drain.
 
-These use real OS processes (never a Kiro Crew gateway) so that killpg,
+These use real OS processes (never a Sao Khuê gateway) so that killpg,
 grandchild reaping and SIGKILL escalation are exercised for real.
 """
 

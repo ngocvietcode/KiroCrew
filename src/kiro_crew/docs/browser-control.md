@@ -71,7 +71,7 @@ The page has three sections, one per way the agent can get a browser. They are
 separate setup paths, not a switch: downloading a browser does not select it for
 a session, and nothing attaches to your own browser on its own.
 
-- **Managed browsers on the Kiro Crew host.** Playwright downloads its own
+- **Managed browsers on the Sao Khuê host.** Playwright downloads its own
   Chromium, Firefox and WebKit builds onto the machine the gateway runs on, which
   is not always the machine you are looking at: a Mac viewing a Fedora gateway
   downloads Linux builds onto Fedora. These builds keep their own browsing session

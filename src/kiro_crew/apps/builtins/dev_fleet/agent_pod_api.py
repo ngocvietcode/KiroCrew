@@ -6,7 +6,7 @@ An agent session runs behind a sandbox with its own user namespace. Its shells
 therefore cannot ``connect(2)`` the systemd user-bus socket, and every pod verb
 needs that bus: ``kirocrew pod up`` runs ``systemctl --user daemon-reload`` plus
 ``start``, which fails with a bare ``Permission denied``. Pod-based testing is
-the QA loop for Kiro Crew development, so losing it from agent sessions means a
+the QA loop for Sao Khuê development, so losing it from agent sessions means a
 human has to boot each pod by hand and paste a ``{base_url, token}`` handle into
 the session.
 
@@ -47,7 +47,7 @@ local process holding the internal secret (:func:`_machine_only`).
 There is deliberately NO per-operator opt-in on top of that, and no per-call
 approval. A pod runs the code in a git worktree an agent can write, started by the
 user systemd manager, so it executes outside the agent's sandbox -- but that
-reachability is Kiro Crew's DOCUMENTED posture, not something this module invents:
+reachability is Sao Khuê's DOCUMENTED posture, not something this module invents:
 ``docs/system-specs/modules/security.md``, under "Scoped user-bus locator forward",
 records that sandboxed agent shells legitimately run ``systemctl --user`` and the
 ``kirocrew pod`` CLI, and names the residual in the same paragraph. The builtin
@@ -117,7 +117,7 @@ def _machine_only(
                     "ok": False,
                     "code": "internal_secret_required",
                     "error": (
-                        "pod lifecycle is reachable only by a local Kiro Crew process "
+                        "pod lifecycle is reachable only by a local Sao Khuê process "
                         "holding the internal secret"
                     ),
                 },

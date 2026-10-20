@@ -1,5 +1,5 @@
 /**
- * KasBundleCard — Settings > Developer > Feature Previews: run KAS on Kiro Crew's own engine.
+ * KasBundleCard — Settings > Developer > Feature Previews: run KAS on Sao Khuê's own engine.
  *
  * What is pinned:
  * - the switch can only be turned ON once the pinned engine is installed (an "on"

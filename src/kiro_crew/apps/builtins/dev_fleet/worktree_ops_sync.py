@@ -324,7 +324,7 @@ async def _sync_start_locked() -> dict:
         return {
             "ok": False,
             "error": (
-                "npm not found. Kiro Crew looks for a Node toolchain in "
+                "npm not found. Sao Khuê looks for a Node toolchain in "
                 "<data-home>/node-bin-dir (written by ensure-node.sh), then in "
                 "mise / asdf / nvm / fnm / volta install dirs, then in "
                 f"{runtime._TRUSTED_PATH}. Fix: run `bash ensure-node.sh` in the main "

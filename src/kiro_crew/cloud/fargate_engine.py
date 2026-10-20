@@ -1531,7 +1531,7 @@ class FargateLaunchEngine:
             )
         registered = connect.register_instance(
             target,
-            name=f"Kiro Crew Cloud ({tag})",
+            name=f"Sao Khuê Cloud ({tag})",
             profile=profile,
             region=region,
             remote_port=FRONT_PORT,

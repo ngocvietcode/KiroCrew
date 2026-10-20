@@ -476,7 +476,7 @@ def test_runtime_pids_includes_runtimes_held_only_on_the_manager() -> None:
     Both live ONLY as SessionManager attributes -- so far outside ``_sessions``
     that ``_companion_runtime_pids`` has to shield them from the orphan sweep
     with ``register_protected_pid``. Iterating ``_sessions`` alone omitted a
-    whole runtime each from the host total, understating "Kiro Crew Used" by the
+    whole runtime each from the host total, understating "Sao Khuê Used" by the
     200-400 MB a runtime costs and hiding the very process a user chasing memory
     would want to see.
     """

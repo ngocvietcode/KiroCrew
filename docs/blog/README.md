@@ -1,6 +1,6 @@
 # Blog
 
-Essays about where agent-assisted work is going and why Kiro Crew is built the
+Essays about where agent-assisted work is going and why Sao Khuê is built the
 way it is. These are arguments rather than contracts: nothing here is normative,
 and no code change is required to keep a post true.
 

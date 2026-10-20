@@ -120,7 +120,7 @@ class ChannelAgentPicks(Generic[RouteT]):
 def pickable_agent_names() -> list[str]:
     """The agents a channel ``/agent`` may switch to, sorted.
 
-    Telegram's ``/agent`` picker list, read from its one helper: Kiro Crew's
+    Telegram's ``/agent`` picker list, read from its one helper: Sao Khuê's
     internal agents and app-installed agents are never offered, so a channel
     switch can only reach an agent a person would pick. Reads and parses spec
     files on a cache miss, so callers run it off the loop.

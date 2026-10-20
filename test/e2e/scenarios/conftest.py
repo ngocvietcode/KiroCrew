@@ -276,7 +276,7 @@ class PodClient:
     def health(self) -> int:
         """The pod's OWN health code, via ``pod status --json``.
 
-        Never a bare probe of ``base_url``: every Kiro Crew gateway answers
+        Never a bare probe of ``base_url``: every Sao Khuê gateway answers
         ``/api/health`` identically, so a 200 from that port proves only that
         something is there. ``pod status`` reports -2 when the responder is
         provably another instance.

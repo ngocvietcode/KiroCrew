@@ -245,7 +245,7 @@ def _publish_lib_path_for_import(libs_dir: Path | None) -> None:
     event loop keeps spawning children, and a child spawned in that window
     snapshots ``os.environ`` -- an MCP server, a session, the gateway an in-app
     restart execs into. One carrying its own llama-cpp bindings would dlopen
-    this install's native libs against them; a Kiro Crew successor would read
+    this install's native libs against them; a Sao Khuê successor would read
     the PREVIOUS install's directory as an operator override, skip the
     completeness and CPU gates, and load that install's libs -- or none, once
     an upgrade has removed it, which surfaces as the upstream loader's bare
@@ -267,7 +267,7 @@ def _install_diskcache_stub() -> None:
     """Register a ``diskcache`` stub in ``sys.modules`` if the real one is absent.
 
     ``llama_cpp.llama_cache`` imports ``diskcache`` at module level, but
-    Kiro Crew never constructs a disk-backed LLM state cache (we only use
+    Sao Khuê never constructs a disk-backed LLM state cache (we only use
     embeddings). Registering a stub avoids adding the real dependency to the
     version set while never shadowing an actually-installed diskcache.
     """
@@ -275,7 +275,7 @@ def _install_diskcache_stub() -> None:
         return
     stub = types.ModuleType("diskcache")
 
-    class Cache:  # pragma: no cover - never constructed by Kiro Crew
+    class Cache:  # pragma: no cover - never constructed by Sao Khuê
         def __init__(self, *args: object, **kwargs: object) -> None:
             raise RuntimeError(
                 "diskcache is stubbed out by kiro_crew.embeddings — disk-backed "
@@ -323,7 +323,7 @@ def _log_dropped_inherited_lib_path() -> None:
         return
     if removed:
         logger.info(
-            "Ignoring %s=%s inherited from another Kiro Crew process; "
+            "Ignoring %s=%s inherited from another Sao Khuê process; "
             "this install resolves its own bundled llama.cpp libs",
             _LIB_PATH_ENV,
             removed,
@@ -345,7 +345,7 @@ def _load_llama_class():
     which a child spawned during the import would inherit -- and prepends
     ``_vendor`` to ``sys.path`` so ``import llama_cpp`` resolves to the vendored
     copy. A value already in the environment is honoured as an operator override
-    unless it is a bundled directory inherited from another Kiro Crew process,
+    unless it is a bundled directory inherited from another Sao Khuê process,
     which is ignored without mutating the environment. Never raises -- unsupported
     platforms and import failures degrade to keyword-only memory search.
     """
@@ -401,7 +401,7 @@ def _load_llama_class():
             logger.warning(
                 "Vendored llama.cpp install for %s is incomplete — missing %s in %s. "
                 "This is a packaging defect, not an unsupported platform; reinstall "
-                "Kiro Crew from a current release, or point %s at a complete lib "
+                "Sao Khuê from a current release, or point %s at a complete lib "
                 "directory of your own (a path ending kiro_crew/_vendor/llama_cpp_libs/"
                 "<platform> is read as another install's and ignored). Memory "
                 "falls back to keyword search.",
@@ -424,7 +424,7 @@ def _load_llama_class():
                     "The bundled Windows llama.cpp runtime needs the Microsoft Visual "
                     "C++ 2015-2022 Redistributable (x64); this host is missing %s. "
                     "Install it from https://aka.ms/vs/17/release/vc_redist.x64.exe "
-                    "and restart Kiro Crew. Memory falls back to keyword search until "
+                    "and restart Sao Khuê. Memory falls back to keyword search until "
                     "then. Set %s to use an operator-provided runtime instead.",
                     ", ".join(missing_runtime),
                     _LIB_PATH_ENV,

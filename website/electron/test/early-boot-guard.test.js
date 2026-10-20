@@ -55,7 +55,7 @@ describe("installEarlyBootGuard (unit)", () => {
 
     assert.deepEqual(calls.map((c) => c[0]), ["glog", "showErrorBox", "exit"]);
     const [, title, content] = calls[1];
-    assert.equal(title, "Kiro Crew failed to start");
+    assert.equal(title, "Sao Khuê failed to start");
     assert.ok(content.includes("boom"), "the dialog names the error");
     assert.ok(content.includes(deps.logPath()), "the dialog tells the user where the log is");
     assert.deepEqual(calls[2], ["exit", 1]);
@@ -210,7 +210,7 @@ describe("main.js executes under a stubbed electron (load test)", () => {
     assert.match(run.log, /main\.js:\d+/, "the stack names the main.js call site");
 
     // Dialog before exit: the stub prints both markers to stdout in call order.
-    const box = run.stdout.indexOf("SHOW_ERROR_BOX:Kiro Crew failed to start");
+    const box = run.stdout.indexOf("SHOW_ERROR_BOX:Sao Khuê failed to start");
     const exit = run.stdout.indexOf("APP_EXIT:1");
     assert.notEqual(box, -1, "showErrorBox was called");
     assert.notEqual(exit, -1, "app.exit(1) was called");

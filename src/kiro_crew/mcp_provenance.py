@@ -1,6 +1,6 @@
-"""Authorship marker for MCP entries Kiro Crew writes into shared config files.
+"""Authorship marker for MCP entries Sao Khuê writes into shared config files.
 
-Kiro Crew writes MCP server entries into two files it does not own -- the
+Sao Khuê writes MCP server entries into two files it does not own -- the
 kiro-global ``~/.kiro/settings/mcp.json`` and the Claude Code sidecar
 ``~/.mcp.json`` -- and users hand-edit both. Every write needs an answer to one
 question: did we write this entry?
@@ -327,7 +327,7 @@ def resolve_write(
         return stamp(candidate)
     logger.warning(
         "Declining to rewrite unmarked MCP entry %r in %s: the name is managed but "
-        "the entry carries no Kiro Crew marker, so it reads as hand-authored and is "
+        "the entry carries no Sao Khuê marker, so it reads as hand-authored and is "
         "left as-is",
         name,
         surface,

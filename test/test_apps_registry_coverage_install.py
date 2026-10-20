@@ -228,7 +228,7 @@ class TestInstallFromRegistryRefusals:
         ``app-sources`` is redirected at *tmp_path* as a belt-and-braces guard:
         the refusals all return before the stale-checkout sweep, and this makes
         a future regression fail loudly in the sandbox instead of quietly
-        touching the real Kiro Crew home.
+        touching the real Sao Khuê home.
         """
         monkeypatch.setattr(registry, "sel", lambda: MagicMock())
         monkeypatch.setattr(registry, "_app_sources_dir", lambda: tmp_path / "app-sources")

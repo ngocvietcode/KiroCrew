@@ -3,7 +3,7 @@
  *
  * PORTED from the original src/main/shortcutManager.ts. The original registered
  * four accelerators (screenCapture, voiceInput, toggleWindow, hideAll) from its
- * AppConfig defaults. As a KiroCrew builtin only two of those have a working
+ * AppConfig defaults. As a SaoKhue builtin only two of those have a working
  * surface today, so only those are wired here (see ACCELERATORS); the skipped
  * two are documented at the bottom of this comment so the omission is a
  * decision, not an accident.

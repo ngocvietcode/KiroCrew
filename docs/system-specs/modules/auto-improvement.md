@@ -508,7 +508,7 @@ file such as `~/.probe` for writing.
 So a candidate's own `conftest.py` or reproducing test — code the model wrote, executed by the
 gate — can modify same-user files outside the worktree.
 
-**Kiro Crew's own control files are closed.** The paths in `security.write_protected_home_paths()`
+**Sao Khuê's own control files are closed.** The paths in `security.write_protected_home_paths()`
 are protected by the platform HOOK layer, which a sandboxed subprocess never passes through. So
 `_run` passes the PARENT directory of each write-protected path as `extra_hidden_dirs`,
 bind-mounting an empty dir over it, and the write fails at the kernel; the interpreter and the
@@ -521,14 +521,14 @@ widened to `$HOME`: the interpreter's own stdlib can live there — hiding `~/.l
 `import platform`.
 
 **What remains open**: arbitrary same-user files elsewhere (`~/notes.txt`) are still writable.
-Kiro Crew's own home is sealed per leaf (`sandbox_leaves.py` marks each crew-home leaf hidden,
+Sao Khuê's own home is sealed per leaf (`sandbox_leaves.py` marks each crew-home leaf hidden,
 read-only or visible), but `kiro_crew.sandbox` has no general write confinement for arbitrary
 same-user files, and adding one changes the shared sandbox for every caller. Failing closed at
 `profile._run` until then would disable the entire bug track (no test could run at all).
 
 **Pinned invariants.**
 
-- `_run` masks the PARENT directory of each `write_protected_home_paths()` entry through `extra_hidden_dirs`, so a strict-mode child cannot write Kiro Crew's own control files. (D-53)
+- `_run` masks the PARENT directory of each `write_protected_home_paths()` entry through `extra_hidden_dirs`, so a strict-mode child cannot write Sao Khuê's own control files. (D-53)
 
 ### Why the credential scan resolves its base (and a refused push rolls back)
 
@@ -1339,7 +1339,7 @@ makes them dead weight rather than because they were missed:
 |---|---|
 | `proxy_auth.py`, `middleware.py` | the gateway authenticates same-origin requests; there is no proxy hop to sign |
 | `app.py`, `bin/` launcher | `register_routes(app)` mounts on the gateway's own aiohttp app — no second process, no port |
-| `config.py` | paths come from `store.py`, which reads the Kiro Crew data home |
+| `config.py` | paths come from `store.py`, which reads the Sao Khuê data home |
 
 One transport difference: the upstream served its MCP tools over HTTP on its own
 allocated port. A builtin has no port, and the app bridge deliberately SKIPS a

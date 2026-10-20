@@ -44,7 +44,7 @@ import { AssessmentView } from './McpManagementAssessment'
 /**
  * MCP Management — two decisions, one per layer, and nothing else.
  *
- * Per server (the table): interpose Kiro Crew's stub. That alone is what lets the
+ * Per server (the table): interpose Sao Khuê's stub. That alone is what lets the
  * server render its own UI, and it leaves the backend private to each session —
  * the useful state for a server that holds per-session state.
  *

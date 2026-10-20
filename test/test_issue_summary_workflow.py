@@ -311,7 +311,7 @@ def test_long_closed_issues_are_not_candidates(runner: Runner) -> None:
 
 
 def test_recently_closed_issues_are_candidates(runner: Runner) -> None:
-    """"Already fixed in #N, upgrade" is the most valuable answer this lane has."""
+    """ "Already fixed in #N, upgrade" is the most valuable answer this lane has."""
     body = runner.run(duplicates=(4003,))
     assert body is not None
     assert "#4003" in body
@@ -471,7 +471,7 @@ def test_prompt_reports_whether_the_form_was_used(runner: Runner) -> None:
 
     runner.run(
         body=(
-            "### KiroCrew version\n\n0.2.0\n\n### Release channel\n\nStable\n\n"  # brand-ok: literal form heading
+            "### SaoKhue version\n\n0.2.0\n\n### Release channel\n\nStable\n\n"
             "### What happened\n\nblank screen\n\n### Steps to reproduce\n\nopen settings\n"
         )
     )
@@ -502,7 +502,9 @@ def test_a_non_array_field_does_not_fail_the_step(runner: Runner, bad: object) -
     That would fail the post step and the run, contradicting the degradation
     matrix that promises a malformed verdict posts nothing and exits 0.
     """
-    body = runner.run(model_reply=json.dumps({"tldr": "still fine", "missing": bad, "duplicates": bad}))
+    body = runner.run(
+        model_reply=json.dumps({"tldr": "still fine", "missing": bad, "duplicates": bad})
+    )
     assert body is not None
     assert "still fine" in body
 
@@ -557,6 +559,6 @@ def test_third_party_actions_are_sha_pinned() -> None:
         if not uses or uses.startswith("./"):
             continue
         ref = uses.split("@", 1)[1]
-        assert len(ref) == 40 and all(c in "0123456789abcdef" for c in ref), (
-            f"{uses} must be pinned to a full commit SHA, not a tag"
-        )
+        assert len(ref) == 40 and all(
+            c in "0123456789abcdef" for c in ref
+        ), f"{uses} must be pinned to a full commit SHA, not a tag"

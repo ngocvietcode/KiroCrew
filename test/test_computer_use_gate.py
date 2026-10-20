@@ -15,7 +15,7 @@ a future edit could quietly reintroduce a refusal (or lose the audit):
   operator's only record of what the agent did to their desktop;
 * the observation ceiling is a pass-through, so a renderer cannot lose fields to
   it;
-* the one retained refusal (KiroCrew's own window) lives in ``policy``, NOT here —
+* the one retained refusal (SaoKhue's own window) lives in ``policy``, NOT here —
   asserted so nobody moves it back into the gate.
 """
 
@@ -216,7 +216,7 @@ class TestTheOneRetainedRefusalIsNotHere:
         from kiro_crew.computer_use import policy
         from kiro_crew.computer_use.types import AppRef, PolicyConfig
 
-        ours = AppRef(name="Kiro Crew", pid=1, bundle_id="dev.kiro.crew")
+        ours = AppRef(name="Sao Khuê", pid=1, bundle_id="dev.kiro.crew")
         assert policy.check_app(ours, PolicyConfig()) is not None
         # And the gate itself has no opinion about it.
         assert gate.require_computer_use(TOOL_LIST_APPS, session_key="dashboard:main") is None

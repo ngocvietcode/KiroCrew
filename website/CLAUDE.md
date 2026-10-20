@@ -1,4 +1,4 @@
-# CLAUDE.md — Kiro Crew dashboard (frontend)
+# CLAUDE.md — Sao Khuê dashboard (frontend)
 
 **`website/AGENTS.md` is the single source of truth for frontend work in
 `website/`.** Read it before any UI change; it is imported below so it is always

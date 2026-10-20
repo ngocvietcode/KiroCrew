@@ -1,5 +1,5 @@
 /**
- * InstancesPanel — legacy control plane for remote Kiro Crew instances
+ * InstancesPanel — legacy control plane for remote Sao Khuê instances
  * reachable over SSH tunnels (add / edit / connect / disconnect / diagnose).
  * No longer routed as a settings tab: Settings → Remote Crew renders
  * RemoteCrewPanel, which reuses AddInstanceForm and StatusBadge from this

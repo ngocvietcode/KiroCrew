@@ -357,7 +357,7 @@ class _RunContext:
     """Concrete ``WorkflowContext`` assembled per run (satisfies the frozen Protocol).
 
     Wires ``dsl.parallel/pipeline`` + ``Budget`` + ``AgentCounter`` + ``EventStream``.
-    The ports native to Kiro Crew (cron/memory/learn/knowledge) are None unless the host
+    The ports native to Sao Khuê (cron/memory/learn/knowledge) are None unless the host
     wired them; ``agent`` delegates to the injected ``agent_fn``.
     """
 
@@ -394,7 +394,7 @@ class _RunContext:
         # when the run was not launched from a nudge-able session.
         self._session_key = session_key
 
-        # Ports native to Kiro Crew — injected per run; None when the host did
+        # Ports native to Sao Khuê — injected per run; None when the host did
         # not grant/wire them (the frozen contract allows None, like AppContext).
         ports = ports or {}
         self.cron = ports.get("cron")
@@ -685,7 +685,7 @@ class _RunContext:
         self._record(self._stream.log(self.now, message=message))
         return _NoOpContextManager()
 
-    # --- ports native to Kiro Crew: delegate to injected port fns; clear error if a
+    # --- ports native to Sao Khuê: delegate to injected port fns; clear error if a
     #     workflow uses a primitive the host did not wire/permit for this run. ---
     def nudge(self, *, idle_secs: int, message: str, max_cycles: int = 0) -> "_NoOpContextManager":
         if self._nudge_fn is None:

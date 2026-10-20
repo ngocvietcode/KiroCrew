@@ -270,7 +270,7 @@ def test_manifest_endpoint_renders_alias_and_url(monkeypatch) -> None:
     req = make_mocked_request("GET", "/api/slack/manifest?alias=myteam")
     body = json.loads(asyncio.run(mod.api_slack_manifest(req)).text)
     assert body["alias"] == "myteam"
-    assert "KiroCrew-myteam" in body["manifest"]
+    assert "SaoKhue-myteam" in body["manifest"]
 
 
 def test_manifest_endpoint_rejects_bad_alias() -> None:

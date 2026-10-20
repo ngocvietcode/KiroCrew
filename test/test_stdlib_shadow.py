@@ -417,7 +417,7 @@ class TestLaunchersPassSafePath:
         assert '"-s", "-P", "-m", "kiro_crew", "gateway"' in smoke
 
     def test_every_self_launch_enters_the_module_with_safe_path(self) -> None:
-        """Every place Kiro Crew spawns or execs ITSELF through `-m kiro_crew...`
+        """Every place Sao Khuê spawns or execs ITSELF through `-m kiro_crew...`
         passes `-P`: the launchers, the restart re-exec, the pod unit, the
         dev-fleet CLI, the jail re-exec, the setup respawn, the test harness, the
         container supervisor, the MCP gatewayd and the computer-use overlay. A

@@ -125,7 +125,7 @@ def _enrich_with_install_status(
     """Add ``installed``, ``installedVersion``, ``enabled``, ``updateAvailable``.
 
     *detected* is a set of app names that were found via ``detectInstalled``
-    shell commands (installed outside Kiro Crew's app manager).
+    shell commands (installed outside Sao Khuê's app manager).
     """
     detected = detected or set()
     for entry in entries:
@@ -167,10 +167,11 @@ def _enrich_with_install_status(
 #: Index-declared author spellings that name US, folded by ``_fold_author``.
 #
 # The product name is two words, so the bundled catalog and the official
-# published catalog both state ``Kiro Crew``; the historical bundled spelling
-# was the single token ``kirocrew``. Both are us, so both mint the mark.
+# published catalog both state ``Sao Khuê``; the historical bundled spelling
+# was the single token ``kirocrew``, and this fork displays itself as
+# ``Sao Khuê`` (joined ``SaoKhue``). All are us, so all mint the mark.
 FIRST_PARTY_AUTHORS: frozenset[str] = frozenset(
-    {"kirocrew", "kiro crew"}  # brand-ok: folded values, lower-cased by contract
+    {"sao khuê", "saokhue", "kirocrew", "kiro crew"}  # brand-ok: folded values
 )
 
 
@@ -659,7 +660,7 @@ async def list_registry() -> list[dict[str, Any]]:
     2. Load external registries from user config
     3. Fetch each app's app.json (cached, 24h TTL) for display info
     4. Run detectInstalled commands for external installs
-    5. Enrich with install status from Kiro Crew's app manager
+    5. Enrich with install status from Sao Khuê's app manager
     6. Stamp server-computed trust fields (``provenance``/``verified``) and
        strip ``featured`` from external rows — see ``_apply_trust_fields``
     """

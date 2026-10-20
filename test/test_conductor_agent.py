@@ -1109,7 +1109,7 @@ class TestAcceptEvaluatorInvariant:
 
     This is the property three review rounds converged on: constraining a
     spec-supplied argv (allowlist, basename check) never closes the class,
-    because the script runs as an approved wrapper and Kiro Crew's
+    because the script runs as an approved wrapper and Sao Khuê's
     denied-command floor cannot see the argv it receives on stdin. The fix was
     to stop accepting one at all.
     """

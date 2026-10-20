@@ -1,4 +1,4 @@
-"""Supervise the KiroCrew MCP gateway subprocess.
+"""Supervise the SaoKhue MCP gateway subprocess.
 
 Lifecycle:
 
@@ -7,9 +7,9 @@ Lifecycle:
    then round-trip one ping/pong to confirm the daemon is serving.
 2. Background watchdog — detect exit and respawn with exponential backoff.
 3. :meth:`GatewayManager.shutdown` — SIGTERM → SIGKILL the daemon on
-   KiroCrew shutdown.
+   SaoKhue shutdown.
 
-Gateway failures are non-fatal for KiroCrew. If the daemon crashes, the
+Gateway failures are non-fatal for SaoKhue. If the daemon crashes, the
 stub's graceful-fallback path exec's the real MCP binary directly, so
 sessions keep working — the only loss is the RAM sharing benefit until
 the daemon recovers.
@@ -756,7 +756,7 @@ class GatewayManager:
         # other adapter failure degrades to no watcher.
         for cred_path in self._credential_watch_paths():
             argv += ["--credential-watch-path", str(cred_path)]
-        # Capture gatewayd stdout/stderr to the canonical KiroCrew log path.
+        # Capture gatewayd stdout/stderr to the canonical SaoKhue log path.
         # This file persists across restarts so operators can diagnose
         # startup failures and stub rejections without attaching a debugger.
         log_path = self._gatewayd_log_path()

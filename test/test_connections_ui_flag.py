@@ -94,7 +94,7 @@ def test_a_non_bool_value_falls_back_to_the_default(tmp_path, monkeypatch):
 
     Pre-launch this pinned fail-CLOSED, because the flag revealed a
     held-for-release surface. Default-on inverts the safety direction: the flag
-    is now an opt-OUT, and the only honest reading of a value Kiro Crew cannot
+    is now an opt-OUT, and the only honest reading of a value Sao Khuê cannot
     parse is the same fallback every other ``_safe_bool`` field takes — the
     default — never a guess at operator intent. An explicit boolean ``false``
     remains the one way to hide the gallery (pinned separately below), and the

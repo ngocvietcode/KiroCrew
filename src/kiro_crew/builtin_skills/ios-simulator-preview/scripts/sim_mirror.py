@@ -2,7 +2,7 @@
 """sim_mirror.py — boot an iOS Simulator and mirror it to a loopback URL.
 
 Wraps `serve-sim` (npm) the way OpenAI Codex's ios-simulator-browser skill
-does, adapted for KiroCrew:
+does, adapted for SaoKhue:
 
   * launches serve-sim fully DETACHED (start_new_session) so it survives the
     agent turn ending (turn-end reaps normal child process groups),
@@ -189,7 +189,7 @@ def create_device() -> dict:
     if not phones:
         die("no iPhone device types installed (install the iOS platform in Xcode)")
     dtype = phones[-1]  # lists run oldest→newest
-    name = f"KiroCrew {dtype['name']}"
+    name = f"SaoKhue {dtype['name']}"
     out = simctl("create", name, dtype["identifier"], runtime["identifier"])
     if out.returncode != 0:
         die(f"simctl create failed: {out.stderr.strip()}")

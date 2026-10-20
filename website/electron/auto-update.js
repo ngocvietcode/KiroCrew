@@ -9,7 +9,7 @@
  * support, and — on macOS — still drives Squirrel.Mac underneath, so the proven
  * atomic bundle swap is unchanged. See docs/guides/windows-install.md and issue #598.
  *
- * The ONE KiroCrew-specific concern vs. a plain Electron app is unchanged: the
+ * The ONE SaoKhue-specific concern vs. a plain Electron app is unchanged: the
  * bundled Python gateway is a long-running child process, so it MUST be stopped
  * gracefully BEFORE the app bundle is swapped — otherwise the swap races a live
  * child and can leave a half-replaced app. That is why autoInstallOnAppQuit is
@@ -699,7 +699,7 @@ function buildFeedBase({ base, channel, variant = "" }) {
  * user with no next step -- the card simply re-offers the same update after
  * relaunch (observed in the field on 0.1.2-nightly.20260729t073648). Reinstalling
  * over the top is the supported recovery and is non-destructive: user data lives
- * in the KiroCrew home directory, never inside the app bundle.
+ * in the SaoKhue home directory, never inside the app bundle.
  *
  * Computed HERE rather than in the renderer because the display-oriented
  * getInfo().platform value is not the updater's routing authority. osPlatform

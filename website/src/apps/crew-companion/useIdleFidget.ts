@@ -7,7 +7,7 @@
  * user left it, so it feels alive without being annoying (matches the calm
  * desktop-pet convention: subtle in-place motion, not wandering).
  *
- * Fully local — never touches Kiro Crew — so it keeps working when offline.
+ * Fully local — never touches Sao Khuê — so it keeps working when offline.
  * Caller gates it via `enabled` (off while dragging, walking, peeking, focusing,
  * or when the quick-menu is open). Much rarer overnight.
  *

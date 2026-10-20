@@ -5,7 +5,7 @@
     "reads the rows directly. Do not widen an auditor's latitude by editing this file:",
     "a widening is a row with a reason and an approver, which is what makes it",
     "attributable and revertible by flipping active rather than by an untracked edit.",
-    "This is the FIRST instance and it is scoped to Kiro Crew itself (the dogfood",
+    "This is the FIRST instance and it is scoped to Sao Khuê itself (the dogfood",
     "pilot). It needs a human review before any auditor runs."
   ],
   "exported_at": "2026-09-07T00:00:00Z",

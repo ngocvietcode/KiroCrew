@@ -819,7 +819,7 @@ class TestCarriedKeyRoundTrip:
 
         Every other non-allowlisted key round-trips, because dropping one would
         silently change behaviour the editor does not own. The marker is the
-        exception: it records that Kiro Crew wrote an entry into a file it does
+        exception: it records that Sao Khuê wrote an entry into a file it does
         NOT own, so it is meaningless in the store, and preserving it here would
         let a hand-edit volunteer the entry for management on a shared surface.
         """
@@ -1206,7 +1206,7 @@ class TestCarriedKeyRoundTrip:
 @pytest.mark.asyncio
 class TestServersListSurfacesCustomAdds:
     """End-to-end within the handler layer: a consent-disabled custom add
-    must appear in ``GET /api/mcp`` as a disabled, KiroCrew-managed row.
+    must appear in ``GET /api/mcp`` as a disabled, SaoKhue-managed row.
 
     Pins the live bug where freshly added (disabled) servers were invisible
     in the table — making the enable/consent action unreachable."""
@@ -1216,7 +1216,7 @@ class TestServersListSurfacesCustomAdds:
     ):
         from kiro_crew.dashboard.handlers import mcp as mcp_mod
 
-        # Route discovery at the sandboxed KiroCrew scope file only.
+        # Route discovery at the sandboxed SaoKhue scope file only.
         monkeypatch.setattr("kiro_crew.mcp_discovery._MCP_JSON_PATHS", (sandbox.kirocrew_json,))
         monkeypatch.setattr("kiro_crew.mcp_discovery._extra_scope_sources", lambda: [])
 

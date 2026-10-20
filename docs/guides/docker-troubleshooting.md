@@ -1,6 +1,6 @@
 # Docker Troubleshooting Guide
 
-Practical solutions for common issues when running Kiro Crew in Docker. For
+Practical solutions for common issues when running Sao Khuê in Docker. For
 general setup and configuration, see [docker.md](docker.md).
 
 ---
@@ -213,7 +213,7 @@ The short version: the sandbox needs `unshare(CLONE_NEWUSER)`,
 inside a container depends on the runtime's seccomp and AppArmor profiles;
 hardened profiles commonly block one of them. The startup probe is the source
 of truth and fails closed when no backend works. Prefer
-[Option A — the shipped seccomp profile](docker.md#option-a--kiro-crew-seccomp-profile-recommended);
+[Option A — the shipped seccomp profile](docker.md#option-a--sao-khuê-seccomp-profile-recommended);
 fall back to [Option B](docker.md#option-b--explicit-unsandboxed-consent)
 only where you cannot set seccomp or AppArmor policy at all (managed
 Kubernetes, some Docker Desktop setups).

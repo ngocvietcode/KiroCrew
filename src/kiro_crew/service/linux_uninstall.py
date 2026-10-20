@@ -1,4 +1,4 @@
-"""``kirocrew service uninstall`` on Linux: which unit is Kiro Crew's, and its teardown.
+"""``kirocrew service uninstall`` on Linux: which unit is Sao Khuê's, and its teardown.
 
 One ownership decision (:func:`_owned_unit`) per scope, and the teardown arms that
 act only on what it claims: stop, disable, verify, remove, ``daemon-reload``
@@ -231,7 +231,7 @@ def _installer_unit_path(*, user: bool) -> str:
 
 @dataclass(frozen=True)
 class OwnedUnit:
-    """A unit Kiro Crew owns in one scope, and what its teardown may touch.
+    """A unit Sao Khuê owns in one scope, and what its teardown may touch.
 
     ``fragment`` is the path the decision was made from — the manager-reported
     ``FragmentPath``, or the installer's own path when the manager has nothing
@@ -260,7 +260,7 @@ class OwnedUnit:
 
 def _owned_unit(fragment: str, *, user: bool) -> OwnedUnit | None:
     """The ONE ownership decision every teardown arm rests on: the unit whose
-    definition sits at ``fragment`` is Kiro Crew's, or ``None`` and nothing —
+    definition sits at ``fragment`` is Sao Khuê's, or ``None`` and nothing —
     not ``stop``, not ``disable``, not an unlink — is done to it.
 
     Three facts decide it, none of them the module's own expectations. The
@@ -325,7 +325,7 @@ def _not_ours(fragment: str, *, user: bool) -> _ScopeTeardown:
     not claim: a finished scope, nothing removed, nothing stopped."""
     own_path = _installer_unit_path(user=user)
     return _ScopeTeardown(
-        f"left untouched (not installed by Kiro Crew: {fragment} is not the unit file written "
+        f"left untouched (not installed by Sao Khuê: {fragment} is not the unit file written "
         f"at {own_path} and carries no {MANAGED_MARKER_LINE} line; manage it with systemctl)"
     )
 
@@ -566,7 +566,7 @@ def uninstall() -> UninstallReport:
     :func:`_owned_unit`: a unit the manager reports under our name whose
     definition is neither the file the installer writes for that scope nor a
     file carrying :data:`MANAGED_MARKER_LINE` is not ours, and the scope reads
-    ``left untouched (not installed by Kiro Crew: …)`` with nothing stopped,
+    ``left untouched (not installed by Sao Khuê: …)`` with nothing stopped,
     disabled or unlinked (exit 0). A unit reached through a link — the fragment
     a symlink, or the installer's own path a symlink to it — loses its link
     entries and keeps its definition; a direct file of ours is unlinked; a mask

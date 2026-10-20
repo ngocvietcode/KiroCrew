@@ -103,9 +103,9 @@ session. Patching each one adds a mirror for one more piece of peer state
 ### 1. Sidebar: one group per machine
 
 Behaviours from herdr's [Connecting machines](https://herdr.dev/docs/connecting-machines),
-mapped to Kiro Crew parts:
+mapped to Sao Khuê parts:
 
-| herdr behaviour | Kiro Crew part |
+| herdr behaviour | Sao Khuê part |
 |---|---|
 | `Local` opens at once, never waits for SSH | Local group renders from local slots; peer groups load from `['instances']` and `/api/instances/{id}/chat-slots` independently (`useSessionSources`). |
 | One collapsible row per machine; collapsing never switches selection | New group header per instance in the chat sidebar; collapse state kept per instance id. |

@@ -1,6 +1,6 @@
 ---
 name: web-browse
-description: Open a REAL external web page in Kiro Crew's Browser panel. Primary path is the `browser` MCP tool (native panel); playwright-cli is the fallback for remote/plain-browser sessions and attached logged-in browsers. Use when the user wants to VIEW or verify a public URL (dev server = web-preview).
+description: Open a REAL external web page in Sao Khuê's Browser panel. Primary path is the `browser` MCP tool (native panel); playwright-cli is the fallback for remote/plain-browser sessions and attached logged-in browsers. Use when the user wants to VIEW or verify a public URL (dev server = web-preview).
 triggers: open this page, show me this site, show me the page, view this url, render this page, look at this website, open in the browser, see what this page looks like, pull up this site, visit this url
 ---
 
@@ -118,7 +118,7 @@ permission, is the thing to get right:
 
 ## Your PROCESS owns its browser, and `attach` binds to it
 
-Kiro Crew sets `PLAYWRIGHT_CLI_SESSION` per process, so bare commands address your
+Sao Khuê sets `PLAYWRIGHT_CLI_SESSION` per process, so bare commands address your
 browser without needing `-s=` to separate unrelated chats.
 
 **Isolation is per session FAMILY, not per agent.** A parent and its subagents

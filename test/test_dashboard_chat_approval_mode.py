@@ -394,7 +394,7 @@ class TestApiChatModeGlobalOverrideScope:
         """`until_shutdown` is permanent but AD HOC, so the scope rule applies.
 
         Classifying it by permanence instead of source would revoke the grant of
-        every operator who picked "until Kiro Crew restarts".
+        every operator who picked "until Sao Khuê restarts".
         """
         monkeypatch.setattr("kiro_crew.dashboard.state.config_dir", lambda: tmp_path)
         from kiro_crew.safety_override import safety_override

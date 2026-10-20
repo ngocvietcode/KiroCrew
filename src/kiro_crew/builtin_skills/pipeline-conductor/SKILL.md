@@ -232,7 +232,7 @@ never relabel it success in the friction report.
 
 ## Startup (once per run)
 
-1. Run the checker through Kiro Crew's runtime interpreter before reading the
+1. Run the checker through Sao Khuê's runtime interpreter before reading the
    spec yourself or doing anything else. On POSIX run
    `"$KIROCREW_RUNTIME_PYTHON" -I -B "<skill-dir>/scripts/spec_check.py" --spec <path>`;
    on PowerShell run
@@ -923,7 +923,7 @@ Fill `{...}` from the spec; keep every clause — each one closes a failure mode
 > PUSH GATE (mandatory, every push): the scripts live in `<gate>` =
 > `<crew-home>/skills/kirocrew-dev/kirocrew-prepare-pr/scripts`, where `<crew-home>` is
 > `KIROCREW_HOME` when set and `$HOME/.kiro/crew` otherwise. Invoke them through
-> Kiro Crew's runtime interpreter the way Startup invokes `spec_check.py`, and
+> Sao Khuê's runtime interpreter the way Startup invokes `spec_check.py`, and
 > quote the resolved path: on POSIX `"$KIROCREW_RUNTIME_PYTHON" -B
 > "<gate>/preflight.py"`, on PowerShell `& $env:KIROCREW_RUNTIME_PYTHON -B
 > "<gate>/preflight.py"`. `-B` preserves the desktop bundle's no-bytecode-write

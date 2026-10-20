@@ -409,7 +409,7 @@ def test_runs_install_code_needs_the_interpreter_and_kiro_crew_argv(
     assert not hashing.runs_install_code(py, ["-m", "some_other_module"])
     assert not hashing.runs_install_code(py, ["-m", "kiro_crewish"])
     assert not hashing.runs_install_code(py, ["--mode", "kiro_crew"])
-    # Nor is Kiro Crew code under a foreign interpreter.
+    # Nor is Sao Khuê code under a foreign interpreter.
     assert not hashing.runs_install_code(str(tmp_path / "x" / "python3"), ["-m", "kiro_crew"])
 
 
@@ -455,7 +455,7 @@ def test_binary_version_carries_the_code_fingerprint_for_the_interpreter_alias(
     assert "+" not in stub.pool_binary_version(str(outside), ["--stdio"])
     assert "code:" not in evaluate._launch_fingerprint(str(outside), ["--stdio"])
     # A third-party app server that merely runs ON the install's interpreter
-    # (``python3 server.py`` rewritten) is not re-keyed by a Kiro Crew release:
+    # (``python3 server.py`` rewritten) is not re-keyed by a Sao Khuê release:
     # its code is the file in argv, which the identity fingerprints itself.
     server = tmp_path / "apps" / "demo" / "server.py"
     server.parent.mkdir(parents=True)

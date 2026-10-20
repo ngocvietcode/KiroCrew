@@ -19,7 +19,7 @@ import { store } from '../store'
 import { api, type DeniedCommandsData } from '../api/client'
 import { SecurityPanel } from '../pages/settings/SecurityPanel'
 
-const FLOOR_TOOLTIP = 'Enforced by an always-on protection built into Kiro Crew'
+const FLOOR_TOOLTIP = 'Enforced by an always-on protection built into Sao Khuê'
 const PINNED_TOOLTIP = "Enforced by your organization's security policy"
 
 const snapshot: DeniedCommandsData = {

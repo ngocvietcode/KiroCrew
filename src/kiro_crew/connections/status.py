@@ -19,7 +19,7 @@ invented at render time. It is stamped once when a provider is first observed to
 hold a grant, kept in a small sidecar, and forgotten the moment the grant is
 gone -- so it self-heals whichever route removed the connection (card Disconnect,
 the MCP Servers table, a hand edit) and a reconnect starts a fresh clock.
-``accountLabel`` is deliberately absent: Kiro Crew never sees a provider
+``accountLabel`` is deliberately absent: Sao Khuê never sees a provider
 credential, so there is no truthful identity to report without runtime support
 the installed kiro-cli does not expose.
 

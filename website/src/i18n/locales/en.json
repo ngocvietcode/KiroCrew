@@ -84,7 +84,7 @@
     },
     "agentWorlds": {
       "manifest": {
-        "description": "Turns your running agents into characters in an animated pixel-art scene, so a glance tells you how busy Kiro Crew is. Each active agent appears as a sprite that reacts as work starts and finishes, across themed scenes from a classic office to a wizard tower or an underwater lab. Pop it out into its own window to keep it on a second screen while you work.",
+        "description": "Turns your running agents into characters in an animated pixel-art scene, so a glance tells you how busy Sao Khuê is. Each active agent appears as a sprite that reacts as work starts and finishes, across themed scenes from a classic office to a wizard tower or an underwater lab. Pop it out into its own window to keep it on a second screen while you work.",
         "display_name": "Agent Worlds",
         "highlight_1": "Live view of which agents are running, as characters rather than a list",
         "highlight_2": "Themed scenes including Office, Panda Den, Neural Net, Wizard Tower, and Deep Lab",
@@ -917,7 +917,7 @@
     },
     "crewCompanion": {
       "manifest": {
-        "description": "A desktop companion for Kiro Crew that helps you pace your day: it nudges you to take breaks, holds the reminders you set in plain language, and runs a short breathing exercise when you need to reset. It also lets you know when a session finishes, fails, or needs your OK.",
+        "description": "A desktop companion for Sao Khuê that helps you pace your day: it nudges you to take breaks, holds the reminders you set in plain language, and runs a short breathing exercise when you need to reset. It also lets you know when a session finishes, fails, or needs your OK.",
         "display_name": "Crew Companion",
         "highlight_1": "Gentle break nudges — water, stretch, look away — on an interval you choose",
         "highlight_2": "Reminders you set in plain language, like “drink water in 20 minutes”",
@@ -926,7 +926,7 @@
         "highlight_5": "Floats on your desktop with a swappable avatar",
         "page_label": "Crew Companion",
         "use_case_1": "Use a desktop companion for break nudges, plain-language reminders, breathing resets, and session notifications.",
-        "configuration_1": "Use Kiro Crew Desktop, enable the app, then set the break interval and completion notifications on its page; avatar choices live in the companion Gallery."
+        "configuration_1": "Use Sao Khuê Desktop, enable the app, then set the break interval and completion notifications on its page; avatar choices live in the companion Gallery."
       }
     },
     "designCritique": {
@@ -1050,18 +1050,18 @@
     },
     "devFleet": {
       "manifest": {
-        "description": "A control panel for working on Kiro Crew itself. Lists every feature worktree alongside its pull request state, commit count, and disk usage, and can bring any of them up as a pod: a complete preview instance on its own port with its own data directory, so you can click through an unfinished change without disturbing your live gateway. It also handles the chores around that — pulling main and rebuilding, rebasing a branch, streaming pod logs, and pruning worktrees whose work has already merged. Enabling it also lets AGENT sessions start and stop pods through the pod tools, which means code from a worktree an agent can write runs outside the agent's sandbox, as you.",
+        "description": "A control panel for working on Sao Khuê itself. Lists every feature worktree alongside its pull request state, commit count, and disk usage, and can bring any of them up as a pod: a complete preview instance on its own port with its own data directory, so you can click through an unfinished change without disturbing your live gateway. It also handles the chores around that — pulling main and rebuilding, rebasing a branch, streaming pod logs, and pruning worktrees whose work has already merged. Enabling it also lets AGENT sessions start and stop pods through the pod tools, which means code from a worktree an agent can write runs outside the agent's sandbox, as you.",
         "display_name": "Dev Fleet",
         "highlight_1": "Bring up any worktree as an isolated pod on its own port and data directory, leaving your live gateway untouched",
         "highlight_2": "Fleet view with per-branch PR status, commit counts, and disk usage",
         "highlight_3": "Sync (pull main and rebuild) or rebase a branch without leaving the dashboard",
         "highlight_4": "'Prune merged' refuses to delete a worktree with uncommitted or untracked work rather than discarding it",
         "highlight_5": "Stream pod logs and mint pod access tokens from the UI",
-        "highlight_6": "Built for people developing Kiro Crew itself — not needed for everyday use",
+        "highlight_6": "Built for people developing Sao Khuê itself — not needed for everyday use",
         "highlight_7": "Pods run on Linux (systemd --user) and macOS (launchd) — but the macOS pod has no enforced memory/CPU ceiling; Make Live stages its pointer on every platform, and automatic restart needs a systemd --user unit or a macOS LaunchAgent; the fleet view, PR status, sync, rebase and prune work on any platform",
         "page_label": "Dev Fleet",
-        "use_case_1": "Operate Kiro Crew feature worktrees and isolated preview pods while keeping the live gateway untouched.",
-        "configuration_1": "Point the app at a Kiro Crew checkout; PR actions need authenticated gh, while pods need systemd --user on Linux or launchd on macOS and must be provisioned first."
+        "use_case_1": "Operate Sao Khuê feature worktrees and isolated preview pods while keeping the live gateway untouched.",
+        "configuration_1": "Point the app at a Sao Khuê checkout; PR actions need authenticated gh, while pods need systemd --user on Linux or launchd on macOS and must be provisioned first."
       }
     },
     "fileExplorer": {
@@ -1088,7 +1088,7 @@
         "truncated": "· truncated"
       },
       "manifest": {
-        "description": "Browse and read files on the machine running Kiro Crew without leaving the dashboard. Keep several files open in tabs, walk the directory tree with each file's git status shown beside it, search a whole folder for a string, and read markdown rendered rather than raw. It is read-only by design: it opens and searches files but never edits, moves, or deletes them, and it can only reach your home directory, the system temp directory, and on Linux and macOS the /home, /opt, and /workplace trees.",
+        "description": "Browse and read files on the machine running Sao Khuê without leaving the dashboard. Keep several files open in tabs, walk the directory tree with each file's git status shown beside it, search a whole folder for a string, and read markdown rendered rather than raw. It is read-only by design: it opens and searches files but never edits, moves, or deletes them, and it can only reach your home directory, the system temp directory, and on Linux and macOS the /home, /opt, and /workplace trees.",
         "display_name": "Files",
         "highlight_1": "Read-only: opens and searches files, and never writes, moves, or deletes them",
         "highlight_2": "Multiple files open at once in tabs, with syntax highlighting",
@@ -1960,7 +1960,7 @@
       "manifest": {
         "description": "An AI meeting assistant. Transcribes a live meeting, keeps structured notes and diagrams as it goes, extracts action items, and lets you review them before filing.",
         "display_name": "Meetings",
-        "highlight_1": "Live transcription through Kiro Crew's own speech-to-text — no extra daemon, no cloud account beyond what you already use",
+        "highlight_1": "Live transcription through Sao Khuê's own speech-to-text — no extra daemon, no cloud account beyond what you already use",
         "highlight_2": "A crew of agents works the meeting in parallel: structured notes, an HTML/Mermaid diagram, and an action-item list",
         "highlight_3": "Correct recurring speech-to-text mistakes once with a domain dictionary and every later meeting gets them right",
         "highlight_4": "Review extracted action items before anything is filed — archive the noise, file the rest",
@@ -2325,7 +2325,7 @@
         "highlight_6": "The autonomous core is fully in-process — no second app, no extra runtime",
         "page_label": "Mochi",
         "use_case_1": "Keep a quiet desktop pet that chats, tracks reminders and public-page changes, and adapts around connected calendar events.",
-        "configuration_1": "Use Kiro Crew Desktop, enable Mochi, choose its appearance and behavior, then add watch targets in chat or on the dashboard; schedule-aware planning requires a connected calendar MCP tool."
+        "configuration_1": "Use Sao Khuê Desktop, enable Mochi, choose its appearance and behavior, then add watch targets in chat or on the dashboard; schedule-aware planning requires a connected calendar MCP tool."
       },
       "menu": {
         "clear_screen": "Clear screen",
@@ -2781,7 +2781,7 @@
         "highlight_6": "Rotation-aware: the on-shift automation tier arms and disarms itself",
         "page_label": "Mission Control",
         "use_case_1": "Watch operational signals, investigate incidents, reuse proven fixes, and hand over a complete local audit trail.",
-        "configuration_1": "Add providers in Settings using environment credentials or provider tokens, keep Observe for read-only use, and explicitly opt into allowed Propose or Act actions; Slack output reuses an existing Kiro Crew connection."
+        "configuration_1": "Add providers in Settings using environment credentials or provider tokens, keep Observe for read-only use, and explicitly opt into allowed Propose or Act actions; Slack output reuses an existing Sao Khuê connection."
       },
       "opsMissionControlPage": {
         "act": "Act",
@@ -3137,7 +3137,7 @@
         "no_source_files": "No source files."
       },
       "manifest": {
-        "description": "A LaTeX paper editor with live PDF preview and an AI co-author. Write in a split-pane editor, press Cmd+S (Ctrl+S on Windows and Linux) to compile with pdflatex or tectonic, and read the rendered PDF beside your source. Compilation errors are parsed into a clickable list that jumps to the offending line. Clone an existing paper from any git remote, then commit and push from the toolbar. The co-author panel is a real Kiro Crew chat session scoped to the paper, so the agent can read and edit your LaTeX while you watch the PDF update.",
+        "description": "A LaTeX paper editor with live PDF preview and an AI co-author. Write in a split-pane editor, press Cmd+S (Ctrl+S on Windows and Linux) to compile with pdflatex or tectonic, and read the rendered PDF beside your source. Compilation errors are parsed into a clickable list that jumps to the offending line. Clone an existing paper from any git remote, then commit and push from the toolbar. The co-author panel is a real Sao Khuê chat session scoped to the paper, so the agent can read and edit your LaTeX while you watch the PDF update.",
         "display_name": "Papyrus",
         "highlight_1": "Split-pane LaTeX editor with a live PDF preview beside it",
         "highlight_2": "Compile on save (Cmd+S, or Ctrl+S on Windows and Linux) via pdflatex or tectonic, with the bibtex cycle run for you",
@@ -3687,7 +3687,7 @@
         }
       },
       "manifest": {
-        "description": "Spec-driven development inside Kiro Crew: turn a feature idea into Requirements → Design → Tasks with an embedded agent, review the markdown in-app, then hand the approved plan off to an autonomous execution session.",
+        "description": "Spec-driven development inside Sao Khuê: turn a feature idea into Requirements → Design → Tasks with an embedded agent, review the markdown in-app, then hand the approved plan off to an autonomous execution session.",
         "display_name": "Spec Builder",
         "page_label": "Spec Builder",
         "use_case_1": "Turn a feature, bug, or quick task into reviewable repository-aware requirements, design, and implementation steps.",
@@ -3700,7 +3700,7 @@
     },
     "workflows": {
       "manifest": {
-        "description": "Author, run, and watch dynamic workflows: Python scripts, usually written for you by an agent from a plain-English goal, that drive several Kiro Crew agents through ordered phases. A script is checked against a sandboxed set of workflow commands before anything runs, so mistakes surface without executing, and the page then streams each phase and agent event as the run progresses. In a source checkout, runnable examples are available to start from; packaged installs ship none.",
+        "description": "Author, run, and watch dynamic workflows: Python scripts, usually written for you by an agent from a plain-English goal, that drive several Sao Khuê agents through ordered phases. A script is checked against a sandboxed set of workflow commands before anything runs, so mistakes surface without executing, and the page then streams each phase and agent event as the run progresses. In a source checkout, runnable examples are available to start from; packaged installs ship none.",
         "display_name": "Workflows",
         "highlight_1": "Validate a workflow before running it — errors surface without anything executing",
         "highlight_2": "Watch the run live, phase by phase, with per-agent progress events",
@@ -3750,7 +3750,7 @@
     },
     "awsControl": {
       "manifest": {
-        "description": "Your cloud accounts, in plain language. See every AWS account Kiro Crew can use with a health light per account and matched reconnect guidance, plus an S3-backed cloud drive — files, a cloud artifact library, and backups — with time-boxed share links. Nothing is public unless you say so, and every paid service asks for your confirmation before it can bill you.",
+        "description": "Your cloud accounts, in plain language. See every AWS account Sao Khuê can use with a health light per account and matched reconnect guidance, plus an S3-backed cloud drive — files, a cloud artifact library, and backups — with time-boxed share links. Nothing is public unless you say so, and every paid service asks for your confirmation before it can bill you.",
         "display_name": "AWS Control",
         "highlight_1": "One health light per account, each with reconnect guidance matched to how the profile authenticates",
         "highlight_2": "Private, encrypted, versioned storage that is created only after you confirm it",
@@ -3758,7 +3758,7 @@
         "highlight_4": "Share links always expire — nothing is public unless you say so",
         "highlight_5": "Every paid service is confirmed per account before its first use, and every change is on the record",
         "page_label": "AWS Control",
-        "use_case_1": "See every AWS account Kiro Crew can reach, which ones are healthy, and what this month is costing you -- without opening the AWS console.",
+        "use_case_1": "See every AWS account Sao Khuê can reach, which ones are healthy, and what this month is costing you -- without opening the AWS console.",
         "configuration_1": "Add an account from the profiles already on this machine, then confirm each paid service once per account before it is first used."
       },
       "console": {
@@ -5327,7 +5327,7 @@
     },
     "sessionPulseSurveyCard": {
       "dismiss": "Dismiss survey",
-      "email_disclosure": "We may want to contact you about your feedback. Your rating and any feedback are sent to the Kiro Crew team.",
+      "email_disclosure": "We may want to contact you about your feedback. Your rating and any feedback are sent to the Sao Khuê team.",
       "email_placeholder": "you@example.com (optional)",
       "email_prompt": "Share your email to join our research panel",
       "feedback_question": "Do you have additional feedback about this experience?",

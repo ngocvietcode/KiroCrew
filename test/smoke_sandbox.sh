@@ -71,7 +71,7 @@ else:
 }
 
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║          KiroCrew Sandbox Security Smoke Test               ║"
+echo "║          SaoKhue Sandbox Security Smoke Test               ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 echo "Account: $ACCOUNT"
@@ -224,7 +224,7 @@ done
 safe_cases=(
     "Successfully refreshed aws credentials for default"
     '{"Account": "123456789012", "Arn": "arn:aws:iam::123:user/dev"}'
-    "Cloning into KiroCrew... remote: Enumerating objects: 1234"
+    "Cloning into SaoKhue... remote: Enumerating objects: 1234"
     "NAME       READY   STATUS    RESTARTS   AGE"
 )
 

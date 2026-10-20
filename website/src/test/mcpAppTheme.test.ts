@@ -171,7 +171,7 @@ describe('mcpAppTheme — key subset and map totality (Properties 1, 2)', () => 
   // EVERY source, in BOTH maps, reads a stored dashboard token. A literal would be
   // a value with no source of truth — nothing could tell an app painting `14px`
   // from what the dashboard actually renders, and the next change to the real
-  // scale would not move it. Kiro Crew stores no typography scale (the only
+  // scale would not move it. Sao Khuê stores no typography scale (the only
   // `--font-*` properties in index.css are the two families), so those protocol
   // keys are OMITTED under SEP-1865's graceful-degradation rule rather than
   // guessed. This fails if a literal source kind is reintroduced.

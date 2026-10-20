@@ -208,12 +208,12 @@ class TestSchemaApiEndpoint:
 
 
 # ---------------------------------------------------------------------------
-# KiroCrew Agent CRUD API tests (Tasks 5.3 + 5.4)
+# SaoKhue Agent CRUD API tests (Tasks 5.3 + 5.4)
 # ---------------------------------------------------------------------------
 
 
 def _make_crud_app() -> web.Application:
-    """Minimal aiohttp app with KiroCrew Agent CRUD endpoints."""
+    """Minimal aiohttp app with SaoKhue Agent CRUD endpoints."""
     from kiro_crew.dashboard.handlers import (
         api_kirocrew_agent_delete,
         api_kirocrew_agent_update,
@@ -256,7 +256,7 @@ def _seed_config() -> dict:
 
 
 class TestAgentCrudProperties:
-    """Property-based tests for KiroCrew Agent CRUD round-trips."""
+    """Property-based tests for SaoKhue Agent CRUD round-trips."""
 
     # Feature: multi-agent-orchestration, Property 8: CRUD create round-trip
     # **Validates: Requirements 4.1, 4.2**
@@ -479,7 +479,7 @@ class TestAgentCrudProperties:
 
 
 class TestAgentCrudEdgeCases:
-    """Unit tests for KiroCrew Agent CRUD error handling."""
+    """Unit tests for SaoKhue Agent CRUD error handling."""
 
     @pytest.mark.asyncio
     async def test_create_duplicate_returns_409(self, tmp_path: Path) -> None:

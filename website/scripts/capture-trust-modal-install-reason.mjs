@@ -88,14 +88,14 @@ const RETRY_INSTRUCTION = `Choose ${RETRY_BUTTON}`
 /** The AFTER copy in the modal: the verb of the action the user pressed to get here
  * (Install -- the build step this refusal names runs at install and nowhere else)
  * and the dialog's assurance, naming the app. */
-const DESKTOP_HEADLINE = `\u201c${DISPLAY}\u201d can't be installed in the desktop version of Kiro Crew, and nothing was changed.`
+const DESKTOP_HEADLINE = `\u201c${DISPLAY}\u201d can't be installed in the desktop version of Sao Khuê, and nothing was changed.`
 /** The AFTER copy on the detail page: the same verb, so a reader who meets the
  * modal's sentence and then this banner behind it is never left wondering whether
  * installing and turning on are two steps. */
-const PAGE_HEADLINE = "This app can't be installed in the desktop version of Kiro Crew."
+const PAGE_HEADLINE = "This app can't be installed in the desktop version of Sao Khuê."
 /** The plain sentence both surfaces share, and the remedy it names as an action. */
 const DESKTOP_HELP = "It needs Python packages the desktop build can't add"
-const GATEWAY_ACTION = 'open Kiro Crew in a web browser instead of the desktop version'
+const GATEWAY_ACTION = 'open Sao Khuê in a web browser instead of the desktop version'
 /** The page's own trailing sentence, in the UX lane's words: what re-enables Install. */
 const RETRY_PATH = 'Once the author ships the packages, dismiss this notice to install again.'
 /** The banner's dismiss control names what dismissing does (it re-enables Install), as
@@ -126,7 +126,7 @@ const DISABLED_TITLE = 'Dismiss the notice above to install again'
 /** The UPDATE path's copy: the verb follows the action the page offers an
  *  installed app -- Update, beside "Installed version" -- on the banner, the way
  *  back to a retry, the dismiss label and the disabled button's title alike. */
-const UPDATE_HEADLINE = "This app can't be updated in the desktop version of Kiro Crew."
+const UPDATE_HEADLINE = "This app can't be updated in the desktop version of Sao Khuê."
 const UPDATE_RETRY_PATH = 'Once the author ships the packages, dismiss this notice to update again.'
 const UPDATE_DISMISS_LABEL = 'Dismiss notice and re-enable Update'
 const UPDATE_DISABLED_TITLE = 'Dismiss the notice above to update again'

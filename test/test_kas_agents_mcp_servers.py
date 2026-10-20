@@ -1,4 +1,4 @@
-"""Kiro Crew agent spec -> KAS ``ClientCustomAgent`` projection: the agent's MCP servers.
+"""Sao Khuê agent spec -> KAS ``ClientCustomAgent`` projection: the agent's MCP servers.
 
 Covers which declared servers, and which fields of each entry, the ``mcpServers``
 block forwards or withholds (credential-bearing ``env`` and ``headers``,

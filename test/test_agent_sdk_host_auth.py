@@ -578,7 +578,7 @@ def test_no_current_driver_implements_the_login_protocol() -> None:
     Every harness shipped today brings its own sign-in, which is the reason the
     protocol is optional rather than a method on the base class. When that stops
     being true, the panel, the doctor row and the remedy string all need an answer
-    for a harness whose login Kiro Crew drives -- and none of them has one yet.
+    for a harness whose login Sao Khuê drives -- and none of them has one yet.
     """
     implementers: list[str] = []
     for source in sorted(SRC.rglob("kiro_crew/**/*.py")):
@@ -598,7 +598,7 @@ def test_no_current_driver_implements_the_login_protocol() -> None:
     assert implementers == [], (
         f"{implementers} now implement AgentInteractiveLogin. That is a real "
         "capability change, not a refactor: the panel, the doctor row and the "
-        "sign-in remedy each need an answer for a harness Kiro Crew logs in itself"
+        "sign-in remedy each need an answer for a harness Sao Khuê logs in itself"
     )
 
 

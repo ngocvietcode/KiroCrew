@@ -186,7 +186,7 @@ describe('SttSettings audio decoder', () => {
     await missingNotice()
     expect(screen.getByText(/sha256 mismatch/i)).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: /let Kiro Crew fix it/i }))
+    fireEvent.click(screen.getByRole('button', { name: /let Sao Khuê fix it/i }))
 
     // Staged for the composer, not sent: the user reads it and presses send.
     const staged = consumeChatHandoff()

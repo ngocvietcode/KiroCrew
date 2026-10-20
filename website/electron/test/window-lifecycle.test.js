@@ -1085,7 +1085,7 @@ function dashboardWindowHarness({ platform, frameless = false } = {}) {
       Menu: { buildFromTemplate: () => ({ popup() {} }) },
       shell: { openExternal(url) { openedExternally.push(url); return Promise.resolve(); } },
       nativeTheme: { shouldUseDarkColors: false, themeSource: "system" },
-      app: { getPath: () => "/virtual/logs", getVersion: () => "0.8.0", name: "Kiro Crew" },
+      app: { getPath: () => "/virtual/logs", getVersion: () => "0.8.0", name: "Sao Khuê" },
     },
     store: { get: (key) => (key === "linuxFrameless" ? frameless : null) },
     platform,
@@ -1148,7 +1148,7 @@ describe("dashboard window wiring order", () => {
     ]);
     assert.deepEqual(onLoad, [
       "view.send:fullscreen-changed",
-      "win.setTitle:Kiro Crew [:5476]",
+      "win.setTitle:Sao Khuê [:5476]",
       "view.insertCSS:#electron-drag-bar {",
       "view.executeJavaScript:if (!document.getElementById('electron-drag-bar')) {",
       "view.executeJavaScript:getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()",
@@ -1167,7 +1167,7 @@ describe("dashboard window wiring order", () => {
       "win.on:system-context-menu",
     ]);
     assert.ok(!wiring.some((entry) => entry.startsWith("win.setWindowButtonPosition")));
-    assert.equal(onLoad[1], "win.setTitle:Kiro Crew", "the default local port is omitted on Windows");
+    assert.equal(onLoad[1], "win.setTitle:Sao Khuê", "the default local port is omitted on Windows");
     assert.equal(onLoad[2], "view.insertCSS:#electron-drag-bar {");
   });
 
@@ -1177,7 +1177,7 @@ describe("dashboard window wiring order", () => {
     assert.ok(!wiring.includes("view.on:zoom-changed"), "zoom tracking is macOS/Windows only");
     assert.deepEqual(onLoad, [
       "view.send:fullscreen-changed",
-      "win.setTitle:Kiro Crew [:5476]",
+      "win.setTitle:Sao Khuê [:5476]",
       "view.insertCSS:#electron-drag-bar {",
       "view.executeJavaScript:if (!document.getElementById('electron-drag-bar')) {",
       "view.insertCSS:#electron-linux-controls {",
@@ -1214,7 +1214,7 @@ describe("dashboard window wiring order", () => {
     const { onLoad } = await wireDashboardWindow(t, { platform: "linux", frameless: false });
     assert.deepEqual(onLoad, [
       "view.send:fullscreen-changed",
-      "win.setTitle:Kiro Crew [:5476]",
+      "win.setTitle:Sao Khuê [:5476]",
       "view.executeJavaScript:getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()",
       "view.executeJavaScript:JSON.stringify({pref: document.documentElement.dataset.modePref || \"\",mode: document.documentElement.dataset.mode || \"\"})",
     ]);
@@ -1508,7 +1508,7 @@ describe("modal prompts", () => {
     const names = [];
     const focused = {
       isDestroyed: () => false,
-      getTitle: () => "Kiro Crew [:5476]",
+      getTitle: () => "Sao Khuê [:5476]",
       _mcBackendUrl: "http://localhost:5476",
       _mcSetCustomName: (name) => names.push(name),
     };

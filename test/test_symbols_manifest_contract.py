@@ -763,8 +763,8 @@ def _ips_report(tmp_path: Path, version: str, uuid: str, arch: str) -> Path:
     Line 1 is a JSON summary header, the remainder is the payload -- which is why
     the script parses `slice(1)` rather than the whole file.
     """
-    path = tmp_path / "Kiro Crew-2026-09-04-120000.ips"
-    header = {"app_name": "Kiro Crew", "timestamp": "2026-09-04 12:00:00.00 +0000"}
+    path = tmp_path / "Sao Khuê-2026-09-04-120000.ips"
+    header = {"app_name": "Sao Khuê", "timestamp": "2026-09-04 12:00:00.00 +0000"}
     payload = {
         "usedImages": [
             {"name": "dyld", "path": "/usr/lib/dyld", "uuid": "0" * 36, "arch": arch},

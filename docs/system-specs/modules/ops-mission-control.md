@@ -161,7 +161,7 @@ End to end: two divergent ledgers → real `git merge` → conflicted file → 4
 ### 2a. Record format version (`LedgerEntry.v`, `LEDGER_RECORD_V1 = 1`)
 
 `ledger.jsonl` is the one artifact that **leaves the machine**: `ledger_sync` git-pushes it
-and teammates on *different Kiro Crew builds* pull it, so an older instance can be handed a
+and teammates on *different Sao Khuê builds* pull it, so an older instance can be handed a
 row a newer one wrote. Without a version stamp there is no way to notice — the reader
 coerces the fields it recognises and defaults the ones it does not, so a row it only partly
 understands reads as fully understood. This is the nearest thing in the app to a
@@ -762,7 +762,7 @@ agent's AWS access here. `agent.sandbox` defaults to `auto`, which engages OS is
 tier, and that tier leaves `~/.aws` visible by design (`_STANDARD_DIRS` does not hide it), and `security.py` blocks
 credential-file *content reads* (`cat`/`grep` on `~/.aws/`) but not AWS CLI invocation.
 The agent's bash children are isolated by **kiro-cli's own** internal sandbox
-(`~/.kiro/settings/amazon-internal.json` → `{"sandbox": true}`), a layer Kiro Crew
+(`~/.kiro/settings/amazon-internal.json` → `{"sandbox": true}`), a layer Sao Khuê
 delegates to rather than controls. Brokering is what makes that irrelevant: the gateway
 holds the credential, so the agent never needs one.
 
@@ -2539,7 +2539,7 @@ composition test pins that no `http_routes` module matches the guard's pattern).
 ### It stores no Slack credential — by design
 
 The app has **no** bot-token field and adds nothing to its keystone secret store.
-Kiro Crew already holds a Slack token for its own gateway, and the live
+Sao Khuê already holds a Slack token for its own gateway, and the live
 `SlackClientOps` is reused. Governance guidance on credential storage puts "prefer
 no secret to rotate" ahead of storing a third-party token, and permits the latter
 only where no such path exists; here one does, so a second copy would be duplicated
@@ -2548,14 +2548,14 @@ for zero capability gain. `test_slack_out.py::TestNoTokenOfItsOwn` pins this aga
 a future "just add a token field" regression.
 
 The consequence is a real dependency rather than a hidden one: with Slack
-unconfigured on Kiro Crew itself, this channel is unavailable, and `status()`
+unconfigured on Sao Khuê itself, this channel is unavailable, and `status()`
 distinguishes the three cases (off / no channel / no host Slack) because each has a
 different fix. The channel ID **is** stored in plain app config — it is not a
 credential.
 
 ### Explicit client, no global
 
-There is no module-level gateway-state accessor in Kiro Crew (state is per
+There is no module-level gateway-state accessor in Sao Khuê (state is per
 `web.Application`), so the client is threaded in from the route layer:
 `_slack_client(request)` (`backend/http_routes/_shared.py`) → `slack_out.client_from_state(...)` →
 `publish/post_detail/publish_all(..., client)`, and `dispatch.run_cycle(
@@ -2684,7 +2684,7 @@ config alone, so it cannot be answered from the unauthenticated config file). Th
 tab's "Desktop notifications" card owns the app-level on/off and lists the DECLARED
 channels with what each fires on.
 
-It deliberately has **no per-channel mute**: Kiro Crew renders that centrally (`GET
+It deliberately has **no per-channel mute**: Sao Khuê renders that centrally (`GET
 /api/notifications/channels` → `pages/settings/NotificationsPanel.tsx`, one row per
 channel with a mute switch and a priority override, grouped under an app-badged header),
 and a second copy would be two controls that can disagree about one stored setting. The
@@ -2799,7 +2799,7 @@ artifact that is blank. `transition` is the only door to a terminal status
 (`sweep_stale` writes only `stale`, and `slot_watch.derive_status` never returns a
 terminal one), so that single call site covers every close there is.
 
-**It is the only thing this app produces for a reader who does not run Kiro Crew** —
+**It is the only thing this app produces for a reader who does not run Sao Khuê** —
 attachable to a ticket, pasteable into a review. Its content is sourced from the
 persisted `Incident` (`diagnosis`, `resolution`), never from the closing call's
 kwargs, so an unrelated later field update cannot blank a finished record. The

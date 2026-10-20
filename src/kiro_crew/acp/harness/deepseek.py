@@ -102,7 +102,7 @@ _DSH_GATE_MARKER_MAX_BYTES = 64 * 1024
 # Same seal, same reason, for the DeepSeek Harness gate plugin. Pinned by
 # ``test_acp_deepseek_backend``, so editing the plugin is a deliberate two-file
 # edit.
-DEEPSEEK_GATE_EXTENSION_SHA256 = "6a9ac9cf23ed7478ec61125840a8aa278690a7021a3b18f29c53681f6cd71ce7"
+DEEPSEEK_GATE_EXTENSION_SHA256 = "5925b6d373475bca30d6a32f057b58c9fc56fa4781b031603558e67a5a5567fe"
 
 # ── deepseek (ACP_BACKEND_DEEPSEEK) ──
 # DeepSeek Harness is a plugin host, and ACP is one of the profiles it boots. So the
@@ -195,7 +195,7 @@ _DEEPSEEK_ENV_CREW_OWNED_NAMES = frozenset(
 
 
 def deepseek_gate_extension_path() -> str:
-    """The absolute path of the gate plugin Kiro Crew ships for the DeepSeek Harness.
+    """The absolute path of the gate plugin Sao Khuê ships for the DeepSeek Harness.
 
     Package data beside :mod:`kiro_crew.agent_sdk`, resolved the same way
     :func:`kiro_crew.acp.harness.pi.pi_gate_extension_path` resolves its sibling.
@@ -341,11 +341,11 @@ def _validate_deepseek_env_mapping(mapping: dict[str, str]) -> None:
             )
         if key.startswith(_DEEPSEEK_ENV_RESERVED_PREFIXES) or key in _DEEPSEEK_ENV_CREW_OWNED_NAMES:
             raise ValueError(
-                f"agent.deepseek_env entry {key!r} names a variable Kiro Crew or the "
+                f"agent.deepseek_env entry {key!r} names a variable Sao Khuê or the "
                 "harness sets on this child itself (the DSH_ and KIROCREW_ namespaces, "
-                "and Kiro Crew's own session credentials), so the mapping would either "
+                "and Sao Khuê's own session credentials), so the mapping would either "
                 "lose the key, overwrite the tool gate's own value, or hand the "
-                "harness's provider a Kiro Crew credential. Choose a provider "
+                "harness's provider a Sao Khuê credential. Choose a provider "
                 "credential name instead, such as DEEPSEEK_API_KEY."
             )
         if not _DEEPSEEK_ENV_CHILD_SCRUB_CLASS.search(key):
@@ -360,7 +360,7 @@ def _validate_deepseek_env_mapping(mapping: dict[str, str]) -> None:
             )
         if any(key.startswith(prefix) for prefix in scrub_prefixes):
             raise ValueError(
-                f"agent.deepseek_env entry {key!r} matches a name prefix Kiro Crew's "
+                f"agent.deepseek_env entry {key!r} matches a name prefix Sao Khuê's "
                 "own agent environment scrub removes before the child starts, so the "
                 "injection would be undone and the harness would start with no key. "
                 "Choose a provider credential name outside that set."

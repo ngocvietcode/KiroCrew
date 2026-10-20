@@ -1319,5 +1319,5 @@ class PrWatchProbe(Probe):
 
 
 if __name__ == "__main__":  # pragma: no cover -- not an entry point
-    print("gh_pr is a Kiro Crew probe module, not a script.")
+    print("gh_pr is a Sao Khuê probe module, not a script.")
     sys.exit(2)

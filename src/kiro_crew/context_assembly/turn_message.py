@@ -451,7 +451,7 @@ def build_message(
 
         # Session replay: inject OUTSIDE the capped session context so it
         # doesn't get truncated at 165K. This is the full conversation
-        # history from Kiro Crew's conversation_log — provider-agnostic.
+        # history from Sao Khuê's conversation_log — provider-agnostic.
         if compressed_history:
             parts.append(
                 "[CONVERSATION HISTORY — recent session replay, tail-heavy, may be truncated]\n"
@@ -620,7 +620,7 @@ def build_message(
     # rebuilt window never received. Clearing the record here, under the
     # same lock, keeps that impossible.
     #
-    # The flag is armed by a fresh session (is_new_session), by Kiro Crew's
+    # The flag is armed by a fresh session (is_new_session), by Sao Khuê's
     # own session_compaction, and by every turn loop that consumes it when
     # the BACKEND reports a completed compaction of its own window during the
     # turn (kiro-cli's _kiro.dev/compaction completing, the claude/codex
@@ -653,7 +653,7 @@ def build_message(
     # Triggers read the person's own request when the caller says what it is
     # (`skill_trigger_text`), the turn text otherwise. Empty means the person
     # wrote nothing this turn -- a runner continuation, the synthesis prompt,
-    # an MCP App's message -- so nothing is matched or selected: Kiro Crew's
+    # an MCP App's message -- so nothing is matched or selected: Sao Khuê's
     # own words ("do NOT restart from scratch") must not load a skill.
     trigger_text = text if skill_trigger_text is None else skill_trigger_text
     if not is_custom and not minimal_context and trigger_text:
@@ -910,7 +910,7 @@ def build_message(
 
     # Injected blocks are not the only source of prior context. A warm
     # provider session can carry its conversation natively while this turn
-    # adds no Kiro Crew blocks at all (ordinary Discord/Telegram/Slack turns
+    # adds no Sao Khuê blocks at all (ordinary Discord/Telegram/Slack turns
     # are the common case). A cold ``session/load`` resume likewise reports
     # ``resumed=True`` even when the provider object itself is new. Both are
     # contextual turns, so generic guidance must precede the request and

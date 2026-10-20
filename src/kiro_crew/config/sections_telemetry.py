@@ -35,7 +35,7 @@ class TelemetryConfig:
         default=False,
         metadata=_meta(
             "Enabled",
-            "Main switch for Kiro Crew metrics telemetry. Off by default: metric "
+            "Main switch for Sao Khuê metrics telemetry. Off by default: metric "
             "call sites are no-ops and nothing is written. When on, a local-first "
             "JSONL sink under ~/.kiro/crew/metrics is enabled (no network egress).",
         ),
@@ -182,7 +182,7 @@ class WakaTimeConfig:
         metadata=_meta(
             "Send coding-activity heartbeats",
             "Send a heartbeat to WakaTime after each agent turn that edited "
-            "files or ran a command, so your Kiro Crew coding time shows up in "
+            "files or ran a command, so your Sao Khuê coding time shows up in "
             "WakaTime alongside your editor. Off by default: sending activity "
             "outward is a separate opt-in from reading your own stats. Requires "
             "the WakaTime integration to be enabled. Covers dashboard chat and "

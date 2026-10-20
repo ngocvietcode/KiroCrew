@@ -7,7 +7,7 @@
  * chrome, different body.
  *
  * They also never navigate anywhere. Earlier versions sent these two links to the
- * Kiro Crew dashboard — a browser tab, then an Electron window — and both were a new
+ * Sao Khuê dashboard — a browser tab, then an Electron window — and both were a new
  * page. Everything here happens in the panel the user already has open.
  */
 import { ArrowLeft, X } from 'lucide-react'

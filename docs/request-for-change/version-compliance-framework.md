@@ -1,8 +1,8 @@
 ---
-title: Version Compliance Framework for Kiro Crew
+title: Version Compliance Framework for Sao Khuê
 kind: framework
 status: draft
-author: Kiro Crew contributors
+author: Sao Khuê contributors
 created: 2026-05-26
 last-audited: 2026-08-03
 audited-at: 0ab6ed48
@@ -12,9 +12,9 @@ tracking-issues: []
 supersedes: []
 superseded-by: []
 ---
-# Version Compliance Framework for Kiro Crew
+# Version Compliance Framework for Sao Khuê
 
-**Author:** Kiro Crew contributors
+**Author:** Sao Khuê contributors
 **Status:** draft framework — platform compliance is now partially implemented through a different architecture. Centrally distributed `security_policy.json` can pin both the update source and `min_version`; `update_governance.update_required()` makes a below-floor update mandatory and overrides `auto_update: false` without refusing startup. A signed release feed can independently carry `min_version`, and the higher active floor is shown to the user. There is still no version-authority service, compliance heartbeat/fleet dashboard, `kirocrew admin set-min-version`, startup version `block` mode, or `--skip-version-check`; `is_toolbox_install()` remains unused by production code. Treat Layers 2–3 and the implementation plan below as historical proposals, not the current platform contract.
 **Framing:** this is a framework/policy recommendation doc, not an RFC — note it has no `RFC:` title prefix and no `rfc-` filename prefix, unlike its ten siblings.
 **Staleness warning:** This document predates the public repo (imported at `64e47961`), and §2 describes the pre-fork managed-distribution model. Current update behavior is implemented by the trust-root update pins and signed release-feed controls; `rfc-update-architecture.md` still cites this framework as its policy ceiling.
@@ -24,7 +24,7 @@ superseded-by: []
 
 ## 1. Problem Statement
 
-Kiro Crew is a security-sensitive agent orchestration platform with shell access, credential
+Sao Khuê is a security-sensitive agent orchestration platform with shell access, credential
 proximity, and persistent sessions. There is currently no mechanism to enforce that all running
 instances are on an approved version. A critical security patch (e.g., a new deny pattern for a
 novel exfiltration vector) has no guaranteed propagation timeline — users can defer updates for
@@ -41,7 +41,7 @@ compliance, or are additional controls needed?
 
 ### 2.1 Distribution: managed distribution tool
 
-Kiro Crew publishes via a managed distribution tool. It provides:
+Sao Khuê publishes via a managed distribution tool. It provides:
 
 | Capability | How It Works | Enforcement Strength |
 |---|---|---|
@@ -55,7 +55,7 @@ Kiro Crew publishes via a managed distribution tool. It provides:
 > The distribution tool does NOT support forced push or emergency propagation. The minimum
 > client-side rollback time is ~24h (next auto-update check).
 
-### 2.2 Existing Update Infrastructure in Kiro Crew
+### 2.2 Existing Update Infrastructure in Sao Khuê
 
 | Component | Mechanism | Limitation |
 |---|---|---|
@@ -80,7 +80,7 @@ them in production use.
 | No push-update capability | Cannot force-update fleet in security emergencies | **High** |
 | 180-day pause window | Users can run vulnerable versions for 6 months | **High** |
 | Non-managed installs bypass entirely | git-clone installs receive zero compliance enforcement | **High** |
-| No startup version gate | Kiro Crew starts and operates regardless of version age | Medium |
+| No startup version gate | Sao Khuê starts and operates regardless of version age | Medium |
 | No fleet visibility | No central telemetry on running versions across the org | Medium |
 | No backend API gate | Backend accepts requests from any client version | Low |
 
@@ -292,6 +292,6 @@ for development use only, gated behind dev-workspace detection.
 
 - an upstream min-version gate
 - the managed distribution mechanism — distribution and recall mechanisms
-- [Kiro Crew Security Deep Dive](../architecture/security-deep-dive.md) — Defense-in-depth architecture
-- [Kiro Crew apps/version.py](../../src/kiro_crew/apps/version.py) — Existing `check_min_version` implementation
+- [Sao Khuê Security Deep Dive](../architecture/security-deep-dive.md) — Defense-in-depth architecture
+- [Sao Khuê apps/version.py](../../src/kiro_crew/apps/version.py) — Existing `check_min_version` implementation
 - YOLO Override Governance (related compliance work)

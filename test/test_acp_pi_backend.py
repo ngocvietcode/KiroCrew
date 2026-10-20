@@ -5,7 +5,7 @@ Three things are pinned here, and they fail apart:
 * **Resolution.** Two components resolved separately -- the ``pi-acp`` adapter on
   the Node-entry ladder and the ``pi`` agent on the plain-binary ladder -- so the
   not-found message names the half that is missing.
-* **The gate launcher.** pi has no permission gate to configure, so Kiro Crew's own
+* **The gate launcher.** pi has no permission gate to configure, so Sao Khuê's own
   extension is loaded into it through a launcher the adapter is told to run in
   place of ``pi``. The launcher forwards every argument and appends the extension
   flag; nothing is written into the work dir or the operator's pi directory.
@@ -884,7 +884,7 @@ class TestTheIssueVocabulary:
         issue = gate_extension_issue(
             ACP_BACKEND_PI, _registry((PROBE, "/srv/pi-extensions/mine.ts")), self.EXT
         )
-        assert issue and "not Kiro Crew's" in issue
+        assert issue and "not Sao Khuê's" in issue
 
     def test_an_unreadable_registry_is_an_issue(self):
         assert gate_extension_issue(ACP_BACKEND_PI, None, self.EXT)

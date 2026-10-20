@@ -195,7 +195,7 @@ async def _spawn(self: AcpClient) -> None:
     self._agent_env_snapshot = None
 
     # Kiro's internal macOS sandbox replaces (rather than nests inside)
-    # Kiro Crew's Seatbelt profile. Refuse a delegated agent workspace that
+    # Sao Khuê's Seatbelt profile. Refuse a delegated agent workspace that
     # can reach the protected named decoder snapshots; otherwise a same-UID
     # agent could replace verified bytes before the decoder spawn opens them.
     if self.backend in ACP_BACKENDS_INTERNAL_SANDBOX:
@@ -287,7 +287,7 @@ async def _spawn(self: AcpClient) -> None:
         except ForkGovernanceUnresolved as exc:
             raise AcpError(str(exc)) from exc
         # The same cwd-first resolution makes a checkout that declares a MANAGED
-        # agent name the spec that runs, whatever Kiro Crew installed under it.
+        # agent name the spec that runs, whatever Sao Khuê installed under it.
         shadowed = await asyncio.to_thread(
             managed_shadow_mod.managed_agent_shadow_refusal, self._agent, self._work_dir
         )
@@ -1121,7 +1121,7 @@ async def _initialize_session(self: AcpClient) -> None:
                 self._reset_state()
             raise
 
-    # 5. Set model — override if Kiro Crew config specifies non-default.
+    # 5. Set model — override if Sao Khuê config specifies non-default.
     await self._apply_startup_model()
 
     # 6. Arm permission routing for harnesses whose asking is a session

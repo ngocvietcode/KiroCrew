@@ -1,6 +1,6 @@
 name: Publish Docker (reusable)
 
-# Reusable workflow: build the multi-arch KiroCrew gateway image from the
+# Reusable workflow: build the multi-arch SaoKhue gateway image from the
 # already-built wheel artifact and publish it to GitHub Container Registry.
 # Called by nightly.yml (channel: nightly) and release.yml (channel:
 # insider | stable) as its own lane BESIDE publish-cli / publish-linux /

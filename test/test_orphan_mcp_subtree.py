@@ -144,7 +144,7 @@ class TestOrphanMcpSubtreeReap:
         """Positive identity per member: no KIROCREW_SPAWNED, no kill."""
         killed = self._run(
             _pairs(_UNMARKED_INTERMEDIATE, _MARKED_LEAF),
-            marked={_ROOT, _MARKED_LEAF},  # intermediate is NOT Kiro-Crew-spawned
+            marked={_ROOT, _MARKED_LEAF},  # intermediate is NOT SaoKhue-spawned
         )
 
         assert _UNMARKED_INTERMEDIATE not in killed
@@ -266,7 +266,7 @@ class TestPidRecycleGuard:
     """A recycled PID must never inherit a doomed descendant's verdict.
 
     The crash this rules out: the root's ``killpg`` reaps a descendant,
-    the kernel hands that PID to a NEW Kiro-Crew-spawned worker, and the stale
+    the kernel hands that PID to a NEW SaoKhue-spawned worker, and the stale
     entry SIGKILLs a live process that passes every other gate.
     """
 

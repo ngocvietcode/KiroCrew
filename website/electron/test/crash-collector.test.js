@@ -312,7 +312,7 @@ describe("isOwnModule", () => {
   });
 
   it("ignores spacing and .exe so one app name serves every platform", () => {
-    assert.equal(isOwnModule(`C:\\Program Files\\${APP}\\${APP}.exe`, "Kiro Crew"), true);
+    assert.equal(isOwnModule(`C:\\Program Files\\${APP}\\${APP}.exe`, "Sao Khuê"), true);
   });
 
   // A `npm start` dev run is where a crash is most likely to be looked at, and it
@@ -356,25 +356,25 @@ describe("isOwnModule", () => {
 
   // Anchoring on the display name alone was the regression that made ownership an
   // enumerated set: on Linux and Windows the binary is `kirocrew-desktop`, which
-  // is neither equal to `Kiro Crew` nor a helper of it. Off darwin a minidump is
+  // is neither equal to `Sao Khuê` nor a helper of it. Off darwin a minidump is
   // the ONLY crash channel, and a dump judged foreign is added to the seen-set —
   // so getting this wrong discarded every Linux crash permanently.
   it("accepts the executable name, which the display name does not imply", () => {
-    assert.equal(isOwnModule(`/opt/${APP}/${EXEC}`, ["Kiro Crew", EXEC]), true);
-    assert.equal(isOwnModule(`C:\\Program Files\\${APP}\\${EXEC}.exe`, ["Kiro Crew", EXEC]), true);
+    assert.equal(isOwnModule(`/opt/${APP}/${EXEC}`, ["Sao Khuê", EXEC]), true);
+    assert.equal(isOwnModule(`C:\\Program Files\\${APP}\\${EXEC}.exe`, ["Sao Khuê", EXEC]), true);
     // The nightly channel renames the binary again, and `kirocrew-desktop-nightly`
     // extends `kirocrewnightly` in no direction at all — which is precisely why
     // the name has to be passed in rather than computed from the display name.
-    assert.equal(isOwnModule(`/opt/${APP}/${NIGHTLY_EXEC}`, ["Kiro Crew Nightly", NIGHTLY_EXEC]), true);
+    assert.equal(isOwnModule(`/opt/${APP}/${NIGHTLY_EXEC}`, ["Sao Khuê Nightly", NIGHTLY_EXEC]), true);
   });
 
   // Enumerated, not widened. Adding a second name must not turn the rule back
   // into a prefix test, or the sibling-channel defect returns through the door
   // that was opened to fix Linux.
   it("still refuses a sibling channel's binary once two names are in play", () => {
-    assert.equal(isOwnModule(`/opt/${APP}/${NIGHTLY_EXEC}`, ["Kiro Crew", EXEC]), false);
-    assert.equal(isOwnModule(`/opt/${APP}/${EXEC}`, ["Kiro Crew Nightly", NIGHTLY_EXEC]), false);
-    assert.equal(isOwnModule(`${EXEC}-helper-x`, ["Kiro Crew", EXEC]), false);
+    assert.equal(isOwnModule(`/opt/${APP}/${NIGHTLY_EXEC}`, ["Sao Khuê", EXEC]), false);
+    assert.equal(isOwnModule(`/opt/${APP}/${EXEC}`, ["Sao Khuê Nightly", NIGHTLY_EXEC]), false);
+    assert.equal(isOwnModule(`${EXEC}-helper-x`, ["Sao Khuê", EXEC]), false);
   });
 
   // The helper arm is a set too, not an open prefix. Our real helpers are the
@@ -452,7 +452,7 @@ describe("classifyMinidump", () => {
 describe("ipsBelongsToApp", () => {
   it("matches our reports by name before anything is opened", () => {
     assert.equal(ipsBelongsToApp(`${APP}-2026-09-03-101530.ips`, APP), true);
-    assert.equal(ipsBelongsToApp(`${APP}-2026-09-03-101530.ips`, "Kiro Crew"), true);
+    assert.equal(ipsBelongsToApp(`${APP}-2026-09-03-101530.ips`, "Sao Khuê"), true);
   });
 
   it("matches our helper processes, which crash under their own names", () => {
@@ -1197,7 +1197,7 @@ describe("collectCrashReports — bounds and failure", () => {
     });
     const scan = collectCrashReports({
       ...withBaseline(fs),
-      appName: "Kiro Crew",
+      appName: "Sao Khuê",
       execName: EXEC,
       diagnosticReportsDir: "", // main.js passes "" off darwin, so dumps are all there is
     });
@@ -1213,7 +1213,7 @@ describe("collectCrashReports — bounds and failure", () => {
       [path.join(PENDING, "ruby.dmp")]: buildMinidump({ moduleName: "/usr/bin/ruby" }),
     });
     const scan = collectCrashReports({
-      ...withBaseline(fs), appName: "Kiro Crew", execName: EXEC, diagnosticReportsDir: "",
+      ...withBaseline(fs), appName: "Sao Khuê", execName: EXEC, diagnosticReportsDir: "",
     });
     assert.deepEqual(scan.newCrashes, []);
     assert.equal(scan.inspected, 1);

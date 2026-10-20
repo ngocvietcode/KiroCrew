@@ -1,30 +1,30 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Kiro Crew. Keep work moving. Runs on your hardware, remembers across sessions, keeps working unattended.">
+  <img src="assets/banner.svg" alt="Sao Khuê. Keep work moving. Runs on your hardware, remembers across sessions, keeps working unattended.">
 </p>
 
-<h1 align="center">Kiro Crew</h1>
+<h1 align="center">Sao Khuê</h1>
 
 <p align="center">
   <strong>A persistent workspace for development work that self-improves and continues beyond one session.</strong>
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/103032" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/103032/daily?language=Python" alt="Kiro Crew on Trendshift" width="250" height="55"></a>
+  <a href="https://trendshift.io/repositories/103032" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/103032/daily?language=Python" alt="Sao Khuê on Trendshift" width="250" height="55"></a>
 </p>
 
 <p align="center">
-  Kiro Crew is an open source development workspace that runs locally or remotely on
+  Sao Khuê is an open source development workspace that runs locally or remotely on
   your hardware. It is persistent, self-learning, and self-evolving. Work with it
   from the desktop app, web dashboard, and CLI, or continue the same work through
   connection tools like Slack and Discord.
   Your multi-step tasks can run unattended, recurring jobs run on your schedule,
-  and heartbeats monitor systems until something needs attention. Kiro Crew Apps
+  and heartbeats monitor systems until something needs attention. Sao Khuê Apps
   tailor that experience to a specific job, combining a purpose-built interface
   with agents, skills, schedules, integrations, and backend services.
 </p>
 
 <p align="center">
-  <a href="https://github.com/kirodotdev/KiroCrew/releases"><img src="https://img.shields.io/badge/Download-macOS%20%7C%20Linux%20%7C%20Windows-2f6feb?style=flat-square" alt="Download Kiro Crew for macOS, Linux, or Windows"></a>
+  <a href="https://github.com/kirodotdev/KiroCrew/releases"><img src="https://img.shields.io/badge/Download-macOS%20%7C%20Linux%20%7C%20Windows-2f6feb?style=flat-square" alt="Download Sao Khuê for macOS, Linux, or Windows"></a>
   <a href="docs/README.md"><img src="https://img.shields.io/badge/Documentation-1f6feb?style=flat-square" alt="Read the documentation"></a>
   <a href="docs/guides/install.md"><img src="https://img.shields.io/badge/Install%20guide-macOS%20%7C%20Linux%20%7C%20Windows-6e7781?style=flat-square" alt="Install guide for macOS, Linux, and Windows"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Contributing-238636?style=flat-square" alt="Contributing guide"></a>
@@ -35,8 +35,8 @@
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
   <a href="#build-from-source">Build from source</a> ·
-  <a href="#why-kiro-crew">Why Kiro Crew</a> ·
-  <a href="#what-kiro-crew-does">Capabilities</a> ·
+  <a href="#why-sao-khuê">Why Sao Khuê</a> ·
+  <a href="#what-sao-khuê-does">Capabilities</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#security-and-control">Security</a> ·
   <a href="#install-configure-and-operate">Install</a> ·
@@ -46,7 +46,7 @@
 
 ## Quick start
 
-You choose how to run Kiro Crew: the desktop app with automatic updates, a
+You choose how to run Sao Khuê: the desktop app with automatic updates, a
 one-line install on your machine or a remote host, the Docker image for
 always-on servers, or a build from source. The default agent runs on
 `kiro-cli`, which you install and sign in to separately. First launch checks
@@ -127,7 +127,7 @@ is supported through a native source install; follow the
 [Windows guide](docs/guides/windows-install.md) instead of the shell steps below.
 
 ```bash
-# 1. Clone and build Kiro Crew
+# 1. Clone and build Sao Khuê
 git clone https://github.com/kirodotdev/KiroCrew.git
 cd KiroCrew
 make build
@@ -139,9 +139,9 @@ kirocrew doctor
 kirocrew gateway
 ```
 
-## Why Kiro Crew
+## Why Sao Khuê
 
-Most agent sessions end when the chat closes. Kiro Crew runs continuously on
+Most agent sessions end when the chat closes. Sao Khuê runs continuously on
 hardware you control and keeps working between conversations.
 
 **Persistent.** Sessions, memory, schedules, and task checkpoints survive
@@ -152,7 +152,7 @@ the terminal.
 Preferences and project context carry into new sessions.
 
 **Self-evolving.** Repeated patterns become reusable skills. Memory, lessons,
-and skills stay visible and editable, so each Kiro Crew grows more tailored to
+and skills stay visible and editable, so each Sao Khuê grows more tailored to
 the person and work around it.
 
 **Runs where you choose.** Your Mac, a local container, or a remote machine
@@ -162,14 +162,14 @@ you control.
 or continue the same work from the CLI and messaging surfaces like Slack and
 Discord.
 
-## What Kiro Crew does
+## What Sao Khuê does
 
 | Capability | What it gives you |
 |---|---|
 | **Persistent sessions** | Run concurrent, isolated conversations, resume them after Gateway restarts, search prior sessions, and carry recent context into new work. |
 | **Self-learning** | Turn corrections and task failures into durable lessons that change later behavior. Lessons can apply globally or carry a `repo_scope` that limits them to one repository; Crew Members keep private lessons in their own memory store. |
 | **Self-evolving skills** | Synthesize reusable skills from repeated patterns, then inspect, refine, or remove them as your work changes. |
-| **Long-running tasks** | Give Kiro Crew a task spec and walk away. It plans steps, executes them, validates results, retries failures, and resumes from checkpoints. *"Implement this migration plan and stop if the tests fail"* runs as a checkpointed task with validation at each step. |
+| **Long-running tasks** | Give Sao Khuê a task spec and walk away. It plans steps, executes them, validates results, retries failures, and resumes from checkpoints. *"Implement this migration plan and stop if the tests fail"* runs as a checkpointed task with validation at each step. |
 | **Unattended autonomy** | Run scheduled agent work or deterministic scripts and commands without a model call. Monitor work until it is done, or react to messaging events and authenticated webhooks without someone at the terminal. *"Every weekday at 9, summarize the open work I should review"* becomes a timezone-aware recurring job delivered to the surface you choose. |
 | **Delegation** | Spawn isolated subagents for parallel work and bring their results back into the parent conversation. *"Research these three options in parallel and recommend one"* fans out to isolated subagents and synthesizes the tradeoffs. |
 | **Work where you choose** | Work directly in the desktop app or web dashboard, or continue through the CLI and any connected messaging surface without moving the agent runtime or its state. |
@@ -178,7 +178,7 @@ Discord.
 | **Visible execution** | Watch tool calls, subagent progress, context usage, approvals, schedules, memory, and logs from the dashboard. |
 | **Defense in depth** | Combine tool approvals, OS sandboxing, sensitive-path checks, credential redaction, deny rules, audit events, and governance profiles. |
 
-You can also paste a screenshot and ask what is causing an error. Kiro Crew sends
+You can also paste a screenshot and ask what is causing an error. Sao Khuê sends
 the image to the active Kiro model and keeps the diagnosis in the conversation
 history.
 
@@ -207,7 +207,7 @@ isolation, and [MCP architecture](docs/architecture/mcp.md) for tool exposure.
 
 ## Security and control
 
-Kiro Crew enforces approvals, OS isolation where available, sensitive-path and
+Sao Khuê enforces approvals, OS isolation where available, sensitive-path and
 credential guards, denied-operation rules, audit records, and an optional
 policy/profile ceiling at the runtime boundary. The dashboard binds to loopback
 by default; any remote exposure requires authenticated configuration.
@@ -255,7 +255,7 @@ levels, diagnostics bundles, and recovery steps.
 
 ## Anonymous usage telemetry
 
-Kiro Crew sends **one anonymous heartbeat per day** so maintainers can see how
+Sao Khuê sends **one anonymous heartbeat per day** so maintainers can see how
 many copies are actively running and which releases, Python minors, and install
 paths still need support. After a successful install or update from the official
 app catalog, it also sends one anonymous per-app receipt. Both signals are
@@ -287,7 +287,7 @@ both — when it is set, the dashboard toggle is disabled and says so.
 | First-send flag | `1` / `0` | First successfully reported install vs returning |
 
 **Official-app install receipts are separate and event-based.** After a
-successful official-catalog install or update, Kiro Crew sends one GET to
+successful official-catalog install or update, Sao Khuê sends one GET to
 `/b/1/install/<app-slug>?t=<token>&k=<fresh|update>&v=<release>` on the same
 telemetry host. The slug is the public catalog identifier. `t` is the first 32
 hex characters of HMAC-SHA256 keyed by an independent local receipt secret over
@@ -307,10 +307,10 @@ instance id is stable, so those attributes all describe the *same* copy and
 together they narrowed the group any one install blends into far more than any
 single field suggests.
 
-We report this as **Daily Active Crews** rather than "users": Kiro Crew has
+We report this as **Daily Active Crews** rather than "users": Sao Khuê has
 no account system of its own, and the Kiro sign-in that `kiro-cli` uses for
 model access is never read or sent. There is no way to resolve a copy to a
-person, so one person running Kiro Crew on three machines counts as three
+person, so one person running Sao Khuê on three machines counts as three
 Crews.
 
 **Never sent:** your prompts, model responses, file contents, file paths, repo
@@ -358,9 +358,9 @@ feature requests; report vulnerabilities privately through
 
 ## Contributors
 
-Kiro Crew was made possible by its internal community, the people who supported the
+Sao Khuê was made possible by its internal community, the people who supported the
 project and shipped its code, together with everyone who has since opened a pull
-request in the open. This is that founding group; as Kiro Crew grows in the open, we
+request in the open. This is that founding group; as Sao Khuê grows in the open, we
 look forward to many more contributors joining them. Thank you to everyone who helped
 make this tool possible:
 
@@ -1233,5 +1233,5 @@ added, corrected, or removed, please open an issue or a pull request.
 
 ## License
 
-Kiro Crew is licensed under the [Apache License 2.0](LICENSE). See
+Sao Khuê is licensed under the [Apache License 2.0](LICENSE). See
 [NOTICE](NOTICE) for attribution information.

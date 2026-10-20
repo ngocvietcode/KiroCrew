@@ -216,7 +216,7 @@ never drift. Notable terminal (non-retryable) classes:
   `ImageValidationError` is terminal and structural. The exception also carries
   the narrower `image_format_unsupported` tag. A current attachment is left in
   place with remove-or-re-encode guidance; a dashboard turn with no new
-  attachments may discard the native resume SID once and retry from Kiro Crew's
+  attachments may discard the native resume SID once and retry from Sao Khuê's
   bounded text transcript, which excludes native binary image blocks.
   "No new attachment" is read as TWO facts, because empty dashboard attachment
   lists do not prove the turn shipped no image: a channel turn (and a dashboard

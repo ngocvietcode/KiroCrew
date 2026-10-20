@@ -333,7 +333,7 @@ class TestRunningFromCheckout:
         assert running_from_checkout(str(tmp_path)) is True
 
     def test_a_different_checkout_is_refused(self, tmp_path, monkeypatch):
-        # The field failure: a real Kiro Crew worktree the process does NOT run
+        # The field failure: a real Sao Khuê worktree the process does NOT run
         # from. Same markers, wrong identity.
         clone = tmp_path / "clone"
         clone.mkdir()

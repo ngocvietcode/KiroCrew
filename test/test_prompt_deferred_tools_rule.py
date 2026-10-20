@@ -1,7 +1,7 @@
 """The shipped system prompts must not promise directly callable MCP tools.
 
 ``agent.tool_search`` ships enabled, and Tool Search's only precondition is one
-configured MCP server -- which a Kiro Crew install always has, because it
+configured MCP server -- which a Sao Khuê install always has, because it
 registers its own managed ``kirocrew-core`` / ``kirocrew-cron``. Every MCP tool
 is therefore deferred: its spec is absent from the model's tool list until
 ``tool_search`` loads it. A prompt that names those tools and says to use them

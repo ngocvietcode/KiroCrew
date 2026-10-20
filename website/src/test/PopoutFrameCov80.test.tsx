@@ -66,7 +66,7 @@ describe('PopoutFrame', () => {
       route: '/popout/chat/x?sid=slot-1',
       store: storeWithSlot('slot-1', 'zz-title'),
     })
-    expect(document.title).toBe('zz-title — Kiro Crew')
+    expect(document.title).toBe('zz-title — Sao Khuê')
   })
 
   it('falls back to a generic label when the slot has no distinct title', () => {
@@ -74,11 +74,11 @@ describe('PopoutFrame', () => {
       route: '/popout/chat/x?sid=slot-1',
       store: storeWithSlot('slot-1', 'slot-1'),
     })
-    expect(document.title).toBe('Session — Kiro Crew')
+    expect(document.title).toBe('Session — Sao Khuê')
   })
 
   it('falls back to a generic label when the slot is unknown', () => {
     renderWithProviders(<PopoutFrame />, { route: '/popout/chat/x?sid=ghost' })
-    expect(document.title).toBe('Session — Kiro Crew')
+    expect(document.title).toBe('Session — Sao Khuê')
   })
 })

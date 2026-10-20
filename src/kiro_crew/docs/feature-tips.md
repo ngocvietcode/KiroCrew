@@ -1,6 +1,6 @@
 # Feature Tips
 
-Kiro Crew surfaces a compact feature tip above the chat composer while a turn is running, pointing at a feature you have not used yet. Tips are personalized from local preferences, active projects, and up to two days of recent history.
+Sao Khuê surfaces a compact feature tip above the chat composer while a turn is running, pointing at a feature you have not used yet. Tips are personalized from local preferences, active projects, and up to two days of recent history.
 
 ## How It Works
 

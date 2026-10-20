@@ -13,7 +13,7 @@
  *
  * Ported from the desktop app's renderer. Two deliberate substitutions: the panel's
  * own `useSkin` theme becomes the dashboard's CSS custom properties (so it inherits
- * all ~36 Kiro Crew themes for free), and `useT` becomes `i18nT`. The companion glyph
+ * all ~36 Sao Khuê themes for free), and `useT` becomes `i18nT`. The companion glyph
  * is a plain inline SVG here rather than the desktop `PetAvatar`, because appearance
  * packs belong to the window layer — the motion is what carries the exercise, and
  * that is fully preserved.

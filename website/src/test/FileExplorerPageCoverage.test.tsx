@@ -58,7 +58,7 @@ vi.mock('../utils/clipboard', () => ({ copyToClipboard: vi.fn() }))
 // gateway machine). Mock it true so the reveal-menu tests can see those items;
 // the remote-hidden case is covered in FilePathMenu.test.tsx.
 vi.mock('../hooks/useBranding', () => ({
-  useBranding: () => ({ botName: 'Kiro Crew', avatar: '/logo.png', directLocal: true }),
+  useBranding: () => ({ botName: 'Sao Khuê', avatar: '/logo.png', directLocal: true }),
 }))
 
 import { fileExplorerApi } from '../apps/file-explorer/api'

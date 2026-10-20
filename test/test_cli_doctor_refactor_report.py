@@ -360,7 +360,7 @@ def host(tmp_path, monkeypatch) -> _Host:
 
 
 _READY = """\
-Kiro Crew Doctor 👻
+Sao Khuê Doctor 👻
 
 Platform
   edition:     ✅ standalone
@@ -378,7 +378,7 @@ Dependencies
                actually ran at install time.
 
 Project
-  source dir:  ✅ <TMP>/checkout (Kiro Crew source checkout)
+  source dir:  ✅ <TMP>/checkout (Sao Khuê source checkout)
   git repo:    ✅
 
 Agent
@@ -470,7 +470,7 @@ Connectivity
   kiro-cli:    ✅ kiro-cli 1.2.3
   gateway:     ⏹  not running
 
-✅ Kiro Crew is ready!
+✅ Sao Khuê is ready!
 """
 
 
@@ -539,7 +539,7 @@ def test_a_start_up_record_of_an_inherited_lib_path_leaves_the_report_unchanged(
 
 
 _BROKEN = """\
-Kiro Crew Doctor 👻
+Sao Khuê Doctor 👻
 
 Platform
   edition:     ❌ composition failed: companion missing
@@ -550,7 +550,7 @@ Dependencies
   <<_doctor_agent_auth>>
   git:         ❌ not found (needed for kirocrew update)
   node:        ❌ v18.19.0 < v20.0.0
-               Fix: Node.js v18.19.0 is too old: Kiro Crew needs v20.0.0 or newer. Update Node.js: install 24 LTS from https://nodejs.org, or run `nvm install 24` / `mise use -g node@24`.
+               Fix: Node.js v18.19.0 is too old: Sao Khuê needs v20.0.0 or newer. Update Node.js: install 24 LTS from https://nodejs.org, or run `nvm install 24` / `mise use -g node@24`.
   browser npm: ⏹ not found (the browser install needs Node.js with npm)
   browser node: ✅ /usr/bin/node
                These rows resolve from this shell's PATH; the gateway logs the npm and Node it
@@ -628,7 +628,7 @@ Vector Memory (in-process embeddings)
   runtime:     ❌ vendored runtime failed to load
                Missing native libs for linux-x86_64: libllama.so, libggml.so
                This install's vendored llama.cpp is incomplete (packaging
-               defect, not an unsupported platform) — reinstall Kiro Crew
+               defect, not an unsupported platform) — reinstall Sao Khuê
                from a current release to restore vector memory.
   faiss:       ⏹ not installed (optional) — episodic recall uses the stdlib fallback; installing faiss-cpu accelerates it
   model:       ❌ custom model unusable — not a GGUF file
@@ -799,7 +799,7 @@ def test_slack_and_cloud_transcription_rows(host, capsys) -> None:
 
 
 _BUNDLE = """\
-Kiro Crew Doctor 👻
+Sao Khuê Doctor 👻
 
 Collecting diagnostics bundle (secrets are redacted)...
 

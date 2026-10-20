@@ -387,7 +387,7 @@ def _report_node(issues: list[str]) -> None:
             print(f"  node:        ✅ {node}")
     else:
         floor = format_node_version(MIN_NODE_VERSION)
-        print(f"  node:        ⚠️  not found (Kiro Crew needs Node v{floor}+)")
+        print(f"  node:        ⚠️  not found (Sao Khuê needs Node v{floor}+)")
         print(
             f"               Fix: install Node.js >= v{floor} (24 LTS recommended) from https://nodejs.org"
         )

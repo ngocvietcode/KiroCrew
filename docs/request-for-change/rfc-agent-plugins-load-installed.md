@@ -14,7 +14,7 @@ superseded-by: []
 
 # RFC: First-class loading of installed Agent Plugins / Kiro Powers
 
-- Proposed capability: Kiro Crew discovers Agent Plugins / Kiro Powers already
+- Proposed capability: Sao Khuê discovers Agent Plugins / Kiro Powers already
   installed on the machine (`~/.kiro/powers/installed/<name>/`), shows each one's
   `mcp.json` servers and `skills/`, and activates them only after an explicit
   enable — plus a view that distinguishes discovered vs enabled and why anything
@@ -38,7 +38,7 @@ superseded-by: []
 
 ## The decision this asks for
 
-A Power installed on the machine should be discoverable by Kiro Crew and, after
+A Power installed on the machine should be discoverable by Sao Khuê and, after
 an explicit enable, contribute its MCP servers and skills — with a surface that
 shows per-Power discovered vs enabled status and the reason for any failure.
 Discovery does not imply activation. The decision a maintainer owns is **that
@@ -51,11 +51,11 @@ calls in the final section.
 
 - A Power installed under `~/.kiro/powers/installed/<name>/` is discoverable, and
   after an explicit enable its `mcp.json` servers and `skills/` become available
-  in Kiro Crew.
+  in Sao Khuê.
 - A dashboard surface shows, per installed Power, what it contributes, whether it
   is discovered vs enabled, and its load status, including the reason for any
   failed or refused entry.
-- The path reuses Kiro Crew's existing MCP-merge and skill-root seams and is
+- The path reuses Sao Khuê's existing MCP-merge and skill-root seams and is
   designed to reuse the MCP-entry URL validator prototyped in the now-closed
   #14169 once that dependency lands. Phase 1 implementation remains blocked
   until then, rather than adding a parallel subsystem.
@@ -74,15 +74,15 @@ calls in the final section.
 ## What exists today, and why a Power is not loaded
 
 An Agent Plugin / Kiro Power on disk carries `plugin.json`, `mcp.json`, and
-`skills/`. Kiro IDE loads it; Kiro Crew does not, by either of its two load
+`skills/`. Kiro IDE loads it; Sao Khuê does not, by either of its two load
 paths:
 
-- **MCP servers.** Kiro Crew pins `includeMcpJson` false in
+- **MCP servers.** Sao Khuê pins `includeMcpJson` false in
   `_refresh_dynamic_fields` (`src/kiro_crew/agent.py`) so kiro-cli does not
-  auto-ingest `~/.kiro/settings/mcp.json`. Kiro Crew instead reads that file
+  auto-ingest `~/.kiro/settings/mcp.json`. Sao Khuê instead reads that file
   itself at spec rebuild and merges it with inline agent `mcpServers`. A
   Power's `mcp.json` is on neither of those two inputs.
-- **Skills.** Skills come from Kiro Crew's own on-disk skill roots. A Power's
+- **Skills.** Skills come from Sao Khuê's own on-disk skill roots. A Power's
   `skills/` directory is not one of them.
 
 The result is duplicate configuration: the same plugin is set up once per client
@@ -209,7 +209,7 @@ the verified activation decision — rather than left open:
   namespace, collisions with user-defined names are structurally avoided; exact
   assign-vs-fill-gap behaviour for the Power source is not treated as already
   settled by a single `setdefault` reading of today's merge.
-- **IDE parity:** the codebase posture is native to Kiro Crew, not wire-parity with
+- **IDE parity:** the codebase posture is native to Sao Khuê, not wire-parity with
   the IDE's `powers.mcpServers` merged-config shape (described in #9212). That
   shape has no reader in the tree. This is distinct from KAS's native
   `includePowers` agent-spec flag, which KAS honours when explicitly set and
@@ -221,7 +221,7 @@ the verified activation decision — rather than left open:
   sole activation route without accounting for KAS's native route and its
   potential to bypass per-Power enablement, integrity, and consent checks or
   register duplicate MCP servers.
-  `harness-parity.md` governs: a foreign plugin model adapts to Kiro Crew's
+  `harness-parity.md` governs: a foreign plugin model adapts to Sao Khuê's
   existing extension points rather than importing another client's wire format.
   A Powers path follows suit.
 
@@ -303,7 +303,7 @@ existing name is not overwritten unexpectedly.
 
 ## Security considerations
 
-Today Kiro Crew has **no** installed-Powers loader, so this section describes a
+Today Sao Khuê has **no** installed-Powers loader, so this section describes a
 **proposed** trust boundary — not a claim that `main` is already exploitable
 through `~/.kiro/powers/installed/`.
 
@@ -368,7 +368,7 @@ open credential/consent question for a Power's _remote_ server remains below.
   apps. This RFC follows that ruling.
 - **Wire-parity with the IDE's `powers.mcpServers` merged-config shape.** Rejected:
   that shape has no reader in the tree, and `harness-parity.md` directs a
-  foreign model to adapt to Kiro Crew's existing seams.
+  foreign model to adapt to Sao Khuê's existing seams.
 - **KAS-native `includePowers` loading.** Not adopted as the proposed first-class
   path: KAS honours this backend-specific flag, but using it alongside the Crew
   loader could create a second route outside Crew's per-Power enablement and
@@ -388,7 +388,7 @@ open credential/consent question for a Power's _remote_ server remains below.
 
 1. **Credential / consent model for plugin-supplied remote (URL) servers?** The primitives exist — installs can land disabled pending consent, the governance ceiling keeps remote calls at the PreToolUse gate, OAuth secrets bind from the vault at write time, and self-managed URLs are preserved (`harness-plugin-mapping.md` §5). With Power-level enablement already proposed as disabled-by-default, open: does a _Power's_ remote server need a further per-server consent step, and who owns its OAuth client?
 
-2. **Discovery scope:** only `~/.kiro/powers/installed/`, or also the IDE clone location `~/.vscode/agent-plugins/github.com/<org>/<repo>/`? There is zero handling of either path today, so this is fully open. (Kiro Crew's onboarding importers do read sibling tools' homes for _import_, but not for live discovery.)
+2. **Discovery scope:** only `~/.kiro/powers/installed/`, or also the IDE clone location `~/.vscode/agent-plugins/github.com/<org>/<repo>/`? There is zero handling of either path today, so this is fully open. (Sao Khuê's onboarding importers do read sibling tools' homes for _import_, but not for live discovery.)
 
 3. **Consent is keyed to a Power slug, not its content — bind it tighter or seal the tree?** Enablement consents to a Power slug, but the `~/.kiro/powers/installed/` tree is not sealed like `~/.kiro/agents/` and `~/.kiro/settings/mcp.json`, and stdio command startup is outside the `PreToolUse` gate. After one-time slug consent, anything that later edits the Power's content — including the agent itself through a shell — could add a stdio server or alter `plugin.json` / `skills/` content that reaches the model without fresh consent.
 
@@ -426,10 +426,10 @@ open credential/consent question for a Power's _remote_ server remains below.
 
 ## Consequences
 
-- A Power installed once is discoverable in Kiro Crew; after explicit enable it
+- A Power installed once is discoverable in Sao Khuê; after explicit enable it
   contributes servers and skills without re-declaring them in
-  `~/.kiro/settings/mcp.json` or a Kiro Crew skill root — so the duplicate-config
-  drift between Kiro IDE and Kiro Crew can go away for that Power without
+  `~/.kiro/settings/mcp.json` or a Sao Khuê skill root — so the duplicate-config
+  drift between Kiro IDE and Sao Khuê can go away for that Power without
   auto-activating every install.
 - Nothing changes for a user who has no installed Powers, or who has installed
   Powers but has not enabled any: discovery alone adds no source to the merge.

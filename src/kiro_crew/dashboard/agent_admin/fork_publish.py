@@ -126,7 +126,7 @@ async def api_agent_fork(request: web.Request) -> web.Response:
         # Bounded to keep the filename (plus a collision suffix) inside the
         # 63-char template-name rule and every filesystem's component limit.
         base = re.sub(r"[^A-Za-z0-9_.-]+", "-", crew)[:48].strip("-.") or "agent"
-        # The specs Kiro Crew itself generates (kirocrew.json, kirocrew-lite.json,
+        # The specs Sao Khuê itself generates (kirocrew.json, kirocrew-lite.json,
         # ...) are rebuilt on boot; a copy landing on one of those stems while
         # the managed file is absent would be overwritten by that rebuild, so
         # they count as taken whether or not the file exists right now. Same

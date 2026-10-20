@@ -11,7 +11,7 @@ That refusal is right. Its VISIBILITY was not:
   else on the host (``cp -al``, rsnapshot, a dotfile manager keeping the pointer as a
   link), so nobody did anything wrong and nobody has a reason to read that log;
 * on the CLI the refusal is not in the ``AcpError`` hierarchy, so ``_stream_and_print``'s
-  handler never saw it and it escaped as a stack trace that reads as a Kiro Crew crash;
+  handler never saw it and it escaped as a stack trace that reads as a Sao Khuê crash;
 * nothing named the condition BEFORE a spawn tried and failed.
 
 So this file pins three surfaces and the one property that keeps them honest: they all

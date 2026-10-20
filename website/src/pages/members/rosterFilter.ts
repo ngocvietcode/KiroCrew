@@ -11,7 +11,7 @@ import { isAssistantMember } from '../../lib/assistantMember'
 import { compareText } from '../../i18n/format'
 
 /** Crew origin. `mine` = crews created in the crew manager (source
- *  'kirocrew'); `builtin` = shipped with Kiro Crew; `package` = written by the
+ *  'kirocrew'); `builtin` = shipped with Sao Khuê; `package` = written by the
  *  agent sync from installed capability packages — on a busy host the large
  *  majority of the roster, and the reason the filter exists. */
 export type MemberSourceFilter = 'all' | 'mine' | 'builtin' | 'package'

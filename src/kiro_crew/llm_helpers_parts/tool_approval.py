@@ -453,7 +453,7 @@ async def _resolve_permission(
         )
         else None
     )
-    # A Kiro Crew core MCP tool listed in ``platform.tool_paths.
+    # A Sao Khuê core MCP tool listed in ``platform.tool_paths.
     # MCP_DOCUMENT_BODY_FIELDS`` (``knowledge_add_document``'s ``content``)
     # stores that field as document text, so the field skips the command-text
     # rules -- the deny list and the argv floor -- that read a page mentioning a
@@ -588,7 +588,7 @@ async def _resolve_permission(
         await _steer_host_deny(
             provider,
             event,
-            "this surface is read-only and the harness composes a plugin Kiro Crew "
+            "this surface is read-only and the harness composes a plugin Sao Khuê "
             "cannot vouch for, so every tool call is refused",
             cause=DENY_CAUSE_SURFACE_POLICY,
         )

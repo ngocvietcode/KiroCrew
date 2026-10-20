@@ -287,7 +287,7 @@ def test_the_credential_list_names_only_variables_the_gateway_reads(tmp_path: Pa
     for name in backend_mod.CHANNEL_CRED_ENV:
         assert name == name.upper(), name
         assert not name.startswith("KIROCREW_"), (
-            f"{name} is a Kiro Crew-namespaced spelling; the gateway reads the channel's "
+            f"{name} is a Sao Khuê-namespaced spelling; the gateway reads the channel's "
             "own variable, so this name strips nothing"
         )
 

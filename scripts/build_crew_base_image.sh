@@ -69,7 +69,7 @@ trap cleanup EXIT
 mkdir -p "${VENDOR_DIR}"
 rm -f "${VENDOR_DIR}"/*.whl
 
-step "Building the Kiro Crew wheel"
+step "Building the Sao Khuê wheel"
 # The dashboard SPA is deliberately NOT built first. This image is headless --
 # the front process forwards a turn to the backend's API over loopback and
 # never serves the interface -- so `make wheel`'s frontend step would add an

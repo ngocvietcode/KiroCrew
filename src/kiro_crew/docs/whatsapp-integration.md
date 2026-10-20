@@ -1,6 +1,6 @@
 # WhatsApp integration
 
-Chat with Kiro Crew on WhatsApp from your own account: scan a QR code once and
+Chat with Sao Khuê on WhatsApp from your own account: scan a QR code once and
 the gateway joins your WhatsApp as a **linked device** — the same mechanism as
 WhatsApp Web. There is no bot account and no Meta Business API: messages the
 agent sends come from *your* number, which is what makes the channel powerful

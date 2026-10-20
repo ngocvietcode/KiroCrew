@@ -1,6 +1,6 @@
-"""KiroCrew pod — isolated, throwaway, full-stack test instances per worktree.
+"""SaoKhue pod — isolated, throwaway, full-stack test instances per worktree.
 
-A *pod* is an ephemeral KiroCrew gateway booted from one feature worktree's own
+A *pod* is an ephemeral SaoKhue gateway booted from one feature worktree's own
 ``.venv``, on its own deterministic port, with its own ``KIROCREW_HOME`` (own DB /
 sessions / memory), no Slack tunnel, ``--no-crons``, resource-capped, and
 reclaimed by ``pod down``. It lets you test a worktree's full stack (backend ``/api/*``

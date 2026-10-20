@@ -173,7 +173,7 @@ export const COLOR_TOKEN_MAP: Record<McpUiColorVariableKey, ColorSource> = {
  * radius note below rejects, and the same reason `--color-background-info` is
  * derived from `--info` instead of stored as a 57th variable.
  *
- * So the protocol keys Kiro Crew has no token for are OMITTED, not guessed:
+ * So the protocol keys Sao Khuê has no token for are OMITTED, not guessed:
  * `--font-weight-*`, every `--font-*-size` / `--font-*-line-height`,
  * `--border-radius-xs`, `--border-radius-full`, `--border-width-regular` and
  * `--shadow-hairline`. The dashboard stores no typography scale at all — the only

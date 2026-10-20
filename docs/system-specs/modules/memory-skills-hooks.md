@@ -846,7 +846,7 @@ previous space must be persisted as NULL rather than committed (the post-swap
 backfill re-embeds the row).
 
 This serialization is **per-process only**. It adds no conflict detection or
-notification, and it does not coordinate across separate Kiro Crew processes
+notification, and it does not coordinate across separate Sao Khuê processes
 (gateway plus a one-shot CLI), so two processes writing the same key remain
 last-write-wins.
 
@@ -2333,7 +2333,7 @@ automatic browser launch still follows successful preparation.
 (or null). Owner-only `POST /api/memory/restore/cancel` with `{store}`, or
 `kirocrew memory restore --store <member-store> --cancel-pending`, revokes a
 not-yet-activated restore without changing live memory or deleting its backup.
-The pending surface names Kiro Crew (the gateway), says that a restart finishes
+The pending surface names Sao Khuê (the gateway), says that a restart finishes
 restoring the backup, and distinguishes the whole memory store from its individual
 memories. It also says that restarting briefly interrupts active conversations
 and scheduled work, and groups the restart link and cancellation action with
@@ -2898,7 +2898,7 @@ alignment requires readiness.
 
 **Download flow** (`ensure_model()` / `start_background_model_download()`):
 - **Salvage fast-path** (`_salvage_legacy_ollama_blob`): before downloading, checks the legacy Ollama blob store (`~/.ollama/models/blobs/sha256-<digest>`, honoring `$OLLAMA_MODELS`) — Ollama stores layer blobs content-addressed and the Ollama-era GGUF is byte-identical, so migrating users skip the 610MB re-download entirely. The copy is sha256-verified like a real download; any failure falls through to the normal download
-- Downloads `qwen3-embedding-0.6b.gguf` (Q8_0 quantized, 610MB) over plain HTTPS from the public Kiro Crew CDN — URL resolution order: `KIROCREW_EMBED_MODEL_URL` env var, then the `memory.embed_model_url` config knob, then the built-in `_DEFAULT_MODEL_URL` CDN constant. No git, no cloud SDK. Streaming sha256 is computed while downloading and byte-level progress (`bytes_downloaded`/`bytes_total`) is written to `status` every ~16MB for the dashboard's determinate progress bar
+- Downloads `qwen3-embedding-0.6b.gguf` (Q8_0 quantized, 610MB) over plain HTTPS from the public Sao Khuê CDN — URL resolution order: `KIROCREW_EMBED_MODEL_URL` env var, then the `memory.embed_model_url` config knob, then the built-in `_DEFAULT_MODEL_URL` CDN constant. No git, no cloud SDK. Streaming sha256 is computed while downloading and byte-level progress (`bytes_downloaded`/`bytes_total`) is written to `status` every ~16MB for the dashboard's determinate progress bar
 - sha256-verifies the file (`06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439` — the trust anchor for every source: a tampered CDN object or mirror can only fail verification); files under `_GGUF_MIN_BYTES` (1MB) are rejected as truncated
 - Installs persistently to `~/.kiro/crew/models/qwen3-embedding-0.6b.gguf` — atomic install: stages into a per-process unique file in the TARGET directory (same filesystem) then `os.replace`, so two concurrent processes (gateway + one-shot CLI) can never interleave writes into a shared staging file
 - **Daemon-thread download** (`_run_download_on_daemon_thread`): the blocking HTTPS transfer runs on a daemon thread (deliberately NOT `run_in_executor` — executor threads are joined at interpreter exit), so Ctrl-C or a finished one-shot CLI is never pinned by an in-flight 610MB transfer
@@ -2925,7 +2925,7 @@ alignment requires readiness.
 |-------|-------|
 | Model | Qwen/Qwen3-Embedding-0.6B (Q8_0 GGUF) |
 | License | Apache-2.0 (on approved list for self-approval) |
-| Source | public Kiro Crew CDN (`_DEFAULT_MODEL_URL`; sha256-pinned; `KIROCREW_EMBED_MODEL_URL` / `memory.embed_model_url` for mirrors) |
+| Source | public Sao Khuê CDN (`_DEFAULT_MODEL_URL`; sha256-pinned; `KIROCREW_EMBED_MODEL_URL` / `memory.embed_model_url` for mirrors) |
 | Runtime | Vendored llama-cpp-python 0.3.34 (MIT license, `kiro_crew/_vendor/`) |
 | Data flow | Text → in-process function call → float vectors (no data leaves machine) |
 | Policy | Self-approvable under a public dataset / ML model policy |
@@ -2935,11 +2935,11 @@ Conditions met for self-approval:
 2. Apache-2.0 license — on approved list
 3. Outputs are float vectors — no excluded categories (health, financial, biometric, PII)
 4. Not recreating training data — generating embeddings, not content
-5. Model weights downloaded from the public Kiro Crew CDN (`_DEFAULT_MODEL_URL`), sha256-pinned and verified at runtime
+5. Model weights downloaded from the public Sao Khuê CDN (`_DEFAULT_MODEL_URL`), sha256-pinned and verified at runtime
 
 ### Why llama.cpp (not TEI)
 
-TEI (Text Embeddings Inference) uses the candle Rust framework with a Metal backend that has an [unmerged memory bug](https://github.com/huggingface/candle/pull/3197) causing unbounded GPU buffer allocation on macOS. The process consumes 4+ GB RAM and never becomes healthy. This affects ALL models on TEI/Metal, not just Qwen3. llama.cpp works correctly on all supported platforms (macOS Metal, Linux CPU) — Kiro Crew vendors it directly via llama-cpp-python, which also removes the external Ollama server the previous design depended on.
+TEI (Text Embeddings Inference) uses the candle Rust framework with a Metal backend that has an [unmerged memory bug](https://github.com/huggingface/candle/pull/3197) causing unbounded GPU buffer allocation on macOS. The process consumes 4+ GB RAM and never becomes healthy. This affects ALL models on TEI/Metal, not just Qwen3. llama.cpp works correctly on all supported platforms (macOS Metal, Linux CPU) — Sao Khuê vendors it directly via llama-cpp-python, which also removes the external Ollama server the previous design depended on.
 
 ### Lessons in Vector Memory
 
@@ -3304,7 +3304,7 @@ of producing a traceback on every idle tick.
 
 ### Cross-Platform
 
-macOS (Apple Silicon and Intel), Linux (x86_64, arm64/Graviton), and Windows supported. All paths use `pathlib.Path`. GGUF model downloaded over sha256-pinned HTTPS from the Kiro Crew CDN. No runtime install step — native llama.cpp libraries are vendored per platform in `_vendor/llama_cpp_libs/` and selected in-process through the `_LIB_PATH_SEAM` module the loader registers in `sys.modules` (`LLAMA_CPP_LIB_PATH` remains the operator's override, never written by the loader) (the old Docker fallback is gone).
+macOS (Apple Silicon and Intel), Linux (x86_64, arm64/Graviton), and Windows supported. All paths use `pathlib.Path`. GGUF model downloaded over sha256-pinned HTTPS from the Sao Khuê CDN. No runtime install step — native llama.cpp libraries are vendored per platform in `_vendor/llama_cpp_libs/` and selected in-process through the `_LIB_PATH_SEAM` module the loader registers in `sys.modules` (`LLAMA_CPP_LIB_PATH` remains the operator's override, never written by the loader) (the old Docker fallback is gone).
 
 Before the vendored runtime becomes usable, `embeddings._load_llama_class()`
 reconfigures llama-cpp-python's import-time stdout/stderr null streams to UTF-8
@@ -3332,9 +3332,9 @@ memory-side invariants the destination writers enforce.
 
 The selectable `memories` category covers durable memories and preferences from
 supported foreign agents. It is not a raw file-copy path. Imported values pass
-through the same Kiro Crew memory writers, key allowlists, per-entry size/count
+through the same Sao Khuê memory writers, key allowlists, per-entry size/count
 limits, injection screening, conflict resolution, deduplication, audit events,
-and active-entry caps described above. Existing Kiro Crew memories/preferences
+and active-entry caps described above. Existing Sao Khuê memories/preferences
 win on conflict; re-applying the same foreign item is idempotent through the
 shared import provenance ledger.
 
@@ -3355,7 +3355,7 @@ copied around those writers.
 User-authored **instruction** documents (`CLAUDE.md`, `AGENTS.md`,
 `~/.claude/rules/*.md`, a workspace's own `CLAUDE.md`) and the directive body of
 a **persona** document (`SOUL.md`) ARE in scope, and are rewritten into
-Kiro Crew's own tiers by the `instructions` category: each directive paragraph
+Sao Khuê's own tiers by the `instructions` category: each directive paragraph
 becomes a `Lesson(category="preference")` in `lessons.jsonl` — the highest-priority
 durable tier — while narrative knowledge continues to go to episodic memory via
 the `memories` category. A **foreign memory row the source types as a
@@ -3365,7 +3365,7 @@ being dropped. Import contributes at most 50 lessons
 (`_MAX_IMPORTED_LESSONS`) because `LessonStore` prunes at 200 (by tier, findings
 first, then unstated rows, then authored rules — each oldest-first); an
 unbounded import would silently evict the user's own accumulated corrections. What is excluded
-is the persona *role*: a foreign persona document never becomes Kiro Crew's
+is the persona *role*: a foreign persona document never becomes Sao Khuê's
 persona (that surface is theme-pack persona, gated by
 `capabilities.theme_persona`), and no foreign text is injected as system-prompt
 identity. Import MUST NOT write `preferences.md` or `projects.md` — the
@@ -4139,7 +4139,7 @@ advice: isolated implementation, test authoring, PR delivery and monitoring belo
 to `kirocrew-worktree-dev`, `writing-tests`, `kirocrew-prepare-pr` and `babysit`
 respectively, so each contract stays single-owned. None of them carries
 `repo_scope`: they load in every session like any other skill, and each one that
-is specific to this repository says so in its description ("Kiro Crew repo
+is specific to this repository says so in its description ("Sao Khuê repo
 only"), so the model decides from the description whether the task is about this
 repository. The dev-fleet app's `pod-e2e` skill follows the same rule.
 
@@ -4277,7 +4277,7 @@ See
 [context management](../../architecture/context-management.md#4-default-agent-vs-other-agents)
 for native view and inherited steering behavior.
 
-**Usage ledger (`skill_usage.py`, `SkillUsageLedger`):** in-memory per-skill hit tally with debounced, atomic persistence to `skill-usage.json` (`SKILL_USAGE_FILENAME`, co-located with the Kiro Crew home). Entries older than a 30-day TTL (`_MAX_AGE_SECS`) are dropped on load/flush so a stale skill stops occupying a top-K slot. Hits are recorded wherever a body reaches the model: the **body-delivery loop** in `context_assembly/turn_message.py` (`ContextBuilder.build_message`; `_record_use`, called only after `load_skill` succeeds and the body is appended to the prompt), `resolve_dollar_skills`, an exact `skill_search` read (below), and direct reads of `SKILL.md` (see **Direct reads**). Since `max_triggered` defaults to 0 the body-delivery recorder is inactive in stock config, so the other three supply the hits unless the trigger matcher is re-enabled (`max_triggered > 0`). A trigger match alone does NOT earn a hit — only actual delivery does, so pointer-only skills and false-positive matches do not inflate the ranking. Best-effort: ledger init failure falls back to recency-only / unweighted ranking without breaking skill loading.
+**Usage ledger (`skill_usage.py`, `SkillUsageLedger`):** in-memory per-skill hit tally with debounced, atomic persistence to `skill-usage.json` (`SKILL_USAGE_FILENAME`, co-located with the Sao Khuê home). Entries older than a 30-day TTL (`_MAX_AGE_SECS`) are dropped on load/flush so a stale skill stops occupying a top-K slot. Hits are recorded wherever a body reaches the model: the **body-delivery loop** in `context_assembly/turn_message.py` (`ContextBuilder.build_message`; `_record_use`, called only after `load_skill` succeeds and the body is appended to the prompt), `resolve_dollar_skills`, an exact `skill_search` read (below), and direct reads of `SKILL.md` (see **Direct reads**). Since `max_triggered` defaults to 0 the body-delivery recorder is inactive in stock config, so the other three supply the hits unless the trigger matcher is re-enabled (`max_triggered > 0`). A trigger match alone does NOT earn a hit — only actual delivery does, so pointer-only skills and false-positive matches do not inflate the ranking. Best-effort: ledger init failure falls back to recency-only / unweighted ranking without breaking skill loading.
 
 **Dollar-load transcript snapshot:** the dashboard chat runner records each
 successful `$skillname` selection as one `system` row with
@@ -4307,7 +4307,7 @@ A signed session resolves its active template and project at the gateway. An
 unreadable or missing custom template fails scope resolution rather than widening
 to the global catalog. A custom template with no mapping has an empty scope; only
 the default `kirocrew` template without mappings gets the global catalog. Every
-spec Kiro Crew generates for itself counts as a custom template under that rule, so
+spec Sao Khuê generates for itself counts as a custom template under that rule, so
 each generated agent whose prompt names a skill carries a `skill://` entry for it,
 written by `agent_materialization/skill_resources.py` from `skills_dir()` at
 install time and merged into whatever `resources` already hold. Without it those
@@ -5003,7 +5003,7 @@ pulls in large unrelated skills often enough that body price per match makes
 measured instance. Per-session body dedup already removes the verbatim resends:
 the first match in a provider session carries the full body, and a later match of
 the same body (same sha256) in that session demotes to the pointer line, re-armed on
-a new session, after Kiro Crew's own compaction, on an agent switch, and when the
+a new session, after Sao Khuê's own compaction, on an agent switch, and when the
 body changes, and rolled back when the turn does not land (see
 [context-management.md § Per-session body dedup](../../architecture/context-management.md#per-session-body-dedup)).
 Opting a skill out reclaims its full size on every match, the first one included.
@@ -5039,7 +5039,7 @@ caches invalidated so the next match sees the change rather than a stale parse.
 default and an absent key is the honest way to say "unchanged". It refuses any
 skill whose file resolves **outside the loader's own skills dir**: `_resolve_path`
 also reaches `skills.extra_paths` and the kiro-cli user/workspace dirs so the
-listing can show those skills, but rewriting a `SKILL.md` Kiro Crew does not own —
+listing can show those skills, but rewriting a `SKILL.md` Sao Khuê does not own —
 possibly not even writable — is a side effect nobody asked for. Ownership is
 checked before the write rather than left to the UI, which does gate on source but
 does not stand between the endpoint and a direct caller. A skill with no
@@ -5078,7 +5078,7 @@ gateway start, so a running gateway keeps counting a key that has been idle for
 longer.
 
 It also carries `owned` — whether the `SKILL.md` sits under the directory
-Kiro Crew owns. A skill reached through `skills.extra_paths` still reports
+Sao Khuê owns. A skill reached through `skills.extra_paths` still reports
 `source: kirocrew`, so source alone cannot gate the toggle; the UI hides the
 control when `owned` is `false` instead of offering one the writer always
 refuses. The listing's check is deliberately syscall-free (a path comparison, no
@@ -5497,7 +5497,7 @@ Auto-sync runs at startup and on demand from the dashboard. `mcp_discovery.py` i
 
 **Probing**: external servers are spawned and must complete both JSON-RPC `initialize` and `tools/list`; managed servers may instead use their in-process declaration. An initialize that answers without a successful tool list is an error, not a usable server. Each result carries `probedAt` (wall-clock) and `probeMode` (`handshake` or `declared`) so the UI can say when and how the status was established. The handshake timeout defaults to 15 seconds and is configurable through `dashboard.mcp_probe_timeout_secs` from 5 to 120 seconds. The stdout buffer is 1 MiB (responses can exceed the default 64 KiB), and subprocess cleanup runs in `finally`. Results are cached in `handlers.py` for 10 minutes; GET `/api/mcp/probe` returns cached results non-blocking, while POST `/api/mcp/probe` forces a fresh probe and updates the cache.
 
-**MCP temp**: the probe and runtime apply one rule through `sandbox.classify_declared_temp_env`. The probe, `gatewayd._spawn`, and `spawn_backend` run that rule off the event loop before honouring a spec-declared `TMPDIR`/`TMP`/`TEMP` (matched case-insensitively). A cleared declaration is re-emitted under canonical uppercase keys with ambient siblings dropped. A refused declaration is dropped as a whole, the managed temp takes over, and one WARNING names each refused key, its path and the cause; the refusals are also carried as `tempRefusals` on the probe row (cached with the probe, so the dashboard panel shows them for the whole TTL) and are cleared on the row and in the cache when a probe is skipped, such as for a disabled or outdated server. `sealed` means the path lies inside `<data home>/run`; the classifier checks the original `realpath`, the lexical spelling, and `(st_dev, st_ino)` identity against the sealed parent. `unclassifiable` means the canonical form cannot be established, or the declaration is relative. Relative values are refused because the daemon would classify them against its cwd while the backend child resolves them against `work_dir`, so one classification cannot describe both paths. A classifier exception refuses every declared key under `check-failed` and names the exception. If managed allocation fails after a refusal, no refused temp value reaches the child. On `win32`, `classify_declared_temp_path` returns `None` without resolving the path because Kiro Crew has no native Windows sandbox backend and nothing seals `run/` there. The probe's managed directory lives under `<data home>/run/mcp-tmp/probe-<id>/tmp`, is carved out of the sandbox seal, and is exported on all three canonical keys. This rule prevents the known sealed-parent conflict. It does not certify that every arbitrarily declared temp directory exists or is writable.
+**MCP temp**: the probe and runtime apply one rule through `sandbox.classify_declared_temp_env`. The probe, `gatewayd._spawn`, and `spawn_backend` run that rule off the event loop before honouring a spec-declared `TMPDIR`/`TMP`/`TEMP` (matched case-insensitively). A cleared declaration is re-emitted under canonical uppercase keys with ambient siblings dropped. A refused declaration is dropped as a whole, the managed temp takes over, and one WARNING names each refused key, its path and the cause; the refusals are also carried as `tempRefusals` on the probe row (cached with the probe, so the dashboard panel shows them for the whole TTL) and are cleared on the row and in the cache when a probe is skipped, such as for a disabled or outdated server. `sealed` means the path lies inside `<data home>/run`; the classifier checks the original `realpath`, the lexical spelling, and `(st_dev, st_ino)` identity against the sealed parent. `unclassifiable` means the canonical form cannot be established, or the declaration is relative. Relative values are refused because the daemon would classify them against its cwd while the backend child resolves them against `work_dir`, so one classification cannot describe both paths. A classifier exception refuses every declared key under `check-failed` and names the exception. If managed allocation fails after a refusal, no refused temp value reaches the child. On `win32`, `classify_declared_temp_path` returns `None` without resolving the path because Sao Khuê has no native Windows sandbox backend and nothing seals `run/` there. The probe's managed directory lives under `<data home>/run/mcp-tmp/probe-<id>/tmp`, is carved out of the sandbox seal, and is exported on all three canonical keys. This rule prevents the known sealed-parent conflict. It does not certify that every arbitrarily declared temp directory exists or is writable.
 
 **Enable/Disable**: `POST /api/mcp/toggle` adds/removes `@name` from `tools` and `allowedTools` arrays in installed config (`~/.kiro/agents/kirocrew.json`). Does NOT modify `agents/defaults.json`. Disabled servers stay in `mcpServers` but kiro-cli won't load their tools.
 
@@ -5516,7 +5516,7 @@ tool/filter, agent/scope, environment, header, credential, token, and cookie
 fields reject the whole server rather than producing a narrowed definition.
 Remote URLs with any query or fragment are rejected, even when the parameter
 name is not credential-like. Secret values themselves are never returned in
-scan/apply output or written to Kiro Crew config. If the destination
+scan/apply output or written to Sao Khuê config. If the destination
 `mcpServers` value already exists but is malformed, import reports a conflict
 and preserves it byte-for-byte. The MCP phase runs outside the dashboard config
 lock because MCP handlers take the MCP file lock before the config lock; this
@@ -5532,12 +5532,12 @@ may be ignored, but nested `tools.include` or `tools.exclude` is tool scoping an
 rejects the entire server.
 
 MCP import is merge-only. Before writing, collision detection canonicalizes
-server aliases and reserves names from every effective source: the Kiro Crew
+server aliases and reserves names from every effective source: the Sao Khuê
 data-home file, Kiro global settings, bundled/project/installed agent config,
 managed servers, and edition-contributed server/scope files. An exact or
 alias-equivalent foreign name is rejected, so a disabled import cannot shadow
 an enabled global or installed server. Existing server definitions win on
-collision, and Kiro Crew-managed servers (including `kirocrew-core` and
+collision, and Sao Khuê-managed servers (including `kirocrew-core` and
 `kirocrew-cron`) are protected from replacement, deletion, or shadowing by an
 imported definition. Malformed effective-source JSON or non-object
 `mcpServers` values contribute no names and cannot abort an import. Repeated
@@ -6402,7 +6402,7 @@ its results also caution that compressing all evidence into facts loses useful
 context, so episodes remain available. [LangChain's memory guide](https://docs.langchain.com/oss/python/concepts/memory)
 describes the collection/update tradeoff. [Mem0](https://arxiv.org/html/2504.19413v1)
 separates extraction from memory updates. These sources inform design choices;
-their reported benchmark gains are not Kiro Crew measurements.
+their reported benchmark gains are not Sao Khuê measurements.
 
 ## Context Builder (`context.py`)
 
@@ -6441,7 +6441,7 @@ importable from `kiro_crew.context`:
 | `member_gates.py` | the member desk and dispatch gates (`_desk_withheld`, `_member_dispatch_held`) and the builder's entry points into `member.py` (`_build_member_section`, `_build_v2_essentials`) |
 
 At module scope an owner imports only its sibling owners and type-checking-only
-names; any other Kiro Crew import is function-local. An owner defines no async function
+names; any other Sao Khuê import is function-local. An owner defines no async function
 and never reads `__file__`: those stay on the facade. Owners read every name callers
 rebind on `kiro_crew.context` through it at call time, so a patch there still
 reaches the moved code; `test/test_context_composition_contract_facade.py` derives that set
@@ -6527,9 +6527,9 @@ remain mandatory. Protected lesson overflow is counted and reported; other prote
 content remains whole. Outer replay retains its separate allowance. Counts are
 characters/UTF-8 bytes, not model token or cost estimates.
 
-Beyond Kiro Crew's own assembly, kiro-cli manages its own context window:
+Beyond Sao Khuê's own assembly, kiro-cli manages its own context window:
 `_kiro.dev/compaction/status` notifications signal that it summarized older turns,
-and Kiro Crew resets its context-usage accounting at that chokepoint. Separately,
+and Sao Khuê resets its context-usage accounting at that chokepoint. Separately,
 `SessionManager` trips a circuit breaker after `_CIRCUIT_BREAKER_THRESHOLD` = 5
 consecutive turn FAILURES for a session key and resets the session; that counter
 tracks failures, not compactions.
@@ -6588,7 +6588,7 @@ A spawning parent decides which of three groups its sub-agent inherits, via `inc
 | `lessons` | `[Learned corrections]` (global + workspace), `[USER PROFILE]` | yes |
 | `project` | `[DOCUMENTATION]` pointer, steering resources (CC backend only), `[PROJECT]` directory line | yes |
 
-The steering row carries a backend caveat: the steering block is injected only on the Claude Code backend (`is_cc`), because on the ACP/kiro backend `kiro-cli --agent` loads the agent's own `resources` natively. `include_project=false` therefore suppresses steering on CC only — an ACP sub-agent still receives it, and nothing in Kiro Crew can prevent that from this call site.
+The steering row carries a backend caveat: the steering block is injected only on the Claude Code backend (`is_cc`), because on the ACP/kiro backend `kiro-cli --agent` loads the agent's own `resources` natively. `include_project=false` therefore suppresses steering on CC only — an ACP sub-agent still receives it, and nothing in Sao Khuê can prevent that from this call site.
 
 conduct is not switchable because it supplies the output contract and capability
 entry points. Default skill discovery is a small name/purpose list plus

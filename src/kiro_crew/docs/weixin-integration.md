@@ -1,6 +1,6 @@
 # WeChat (Weixin) integration
 
-Connect Kiro Crew to **personal WeChat** (微信) through Tencent's **iLink bot API**.
+Connect Sao Khuê to **personal WeChat** (微信) through Tencent's **iLink bot API**.
 Sign-in is a QR scan from the dashboard; messages arrive over HTTP long-poll, so
 no public endpoint, webhook, or tunnel is required.
 
@@ -110,7 +110,7 @@ credential store) and overrides `weixin.token`.
 | Bot ignores DMs | Check `dm_policy` — under `allowlist` the sender must be listed |
 | Group messages ignored | Expected: iLink bot identities do not receive group events |
 | An image, voice note or file isn't read | The message arrived but the file was skipped — the security event log (`~/.kiro/crew/security_events.jsonl`) has a `weixin.attachment_skip` event with the file name and the reason. Video is never read; send a screenshot instead |
-| Startup error about `aiohttp` | `aiohttp` is a core dependency, so the environment is broken; reinstall Kiro Crew |
+| Startup error about `aiohttp` | `aiohttp` is a core dependency, so the environment is broken; reinstall Sao Khuê |
 
 ## Related docs
 

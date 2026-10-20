@@ -3,7 +3,7 @@
 Most Connections providers let kiro-cli register a public OAuth client at
 runtime (RFC 7591), so nothing about the client needs to exist before the first
 Connect. A few (GitHub, Asana, Google, Slack, HubSpot, Box) do not: the
-OPERATOR registers an app in the vendor console and hands Kiro Crew the result.
+OPERATOR registers an app in the vendor console and hands Sao Khuê the result.
 This module is where that result lives and how it reaches the runtime.
 
 Three sources, one precedence
@@ -23,11 +23,11 @@ the secret is a credential and never touches ``config.json``.
 
 What custody this is and is not
 -------------------------------
-The Connections invariant is that Kiro Crew never holds a connection's
+The Connections invariant is that Sao Khuê never holds a connection's
 CREDENTIAL -- the user's OAuth grant, which kiro-cli owns end to end. A client
 secret is a different thing: it is the operator's own APPLICATION credential,
 issued to them by the vendor for the app they registered, and there is no way to
-use a confidential client without presenting it at the token endpoint. Kiro Crew
+use a confidential client without presenting it at the token endpoint. Sao Khuê
 therefore holds it the way it already holds ``headers`` on a remote MCP entry:
 the vault is the source of truth, and the emitted agent spec is a runtime
 PROJECTION that carries the value in plaintext because that file is the only

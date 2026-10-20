@@ -358,7 +358,7 @@ def _user_prompt_dir(scope: str, project_dir: Path | None) -> Path | None:
     "local" resolves against the project supplied by the caller
     (``project_dir``), which ``_prompt_local_project`` resolved on the event loop
     from the request's own slot context — not from the process-wide
-    ``KIROCREW_PROJECT_DIR``, which names the Kiro Crew tree on a source install
+    ``KIROCREW_PROJECT_DIR``, which names the Sao Khuê tree on a source install
     and nothing at all on a wheel. ``_list_aim_prompts`` is handed the SAME
     resolved project, so create and list agree on where "local" is: a created
     local prompt appears in the listing that same request gets, and never in a

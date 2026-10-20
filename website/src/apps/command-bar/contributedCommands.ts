@@ -393,7 +393,7 @@ function readCommand(app: CommandAppRecord, raw: unknown): ContributedCommand | 
   // `displayName` is free text the app chooses. As provenance that makes it unusable in
   // two directions, and the paragraphs above understate both:
   //
-  //   * It can claim to be the host. A manifest saying `displayName: "Kiro Crew"` puts
+  //   * It can claim to be the host. A manifest saying `displayName: "Sao Khuê"` puts
   //     that string where this row states its owner, so the row reads as native and the
   //     reader runs its prompt believing core sent it.
   //   * `||` is not the emptiness test it looks like. `validate()` refuses only a FALSY

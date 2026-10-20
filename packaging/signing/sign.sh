@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sign a KiroCrew .app bundle via the enterprise signing service.
+# Sign a SaoKhue .app bundle via the enterprise signing service.
 #
 # Usage:
 #   bash packaging/signing/sign.sh <app-path> <channel> <version>

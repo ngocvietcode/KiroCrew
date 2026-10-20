@@ -555,7 +555,7 @@ def test_the_dashboard_mode_reruns_under_the_runtime_python(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """A Python that cannot import Kiro Crew hands the run to the one that can, once."""
+    """A Python that cannot import Sao Khuê hands the run to the one that can, once."""
     monkeypatch.setattr(harness, "_host_frame", lambda: None)
     view = tmp_path / "view.html"
     view.write_text('<b data-dashboard-field="n">-</b>', encoding="utf-8")
@@ -583,7 +583,7 @@ def test_the_dashboard_mode_reruns_under_the_runtime_python(
     )
     out.unlink()
     capsys.readouterr()
-    refusal = "frames the page with Kiro Crew's own code"
+    refusal = "frames the page with Sao Khuê's own code"
     monkeypatch.delenv("KIROCREW_RUNTIME_PYTHON")
     assert harness.main(argv) == 2
     assert refusal in capsys.readouterr().err

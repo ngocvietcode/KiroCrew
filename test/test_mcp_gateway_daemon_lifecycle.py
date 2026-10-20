@@ -712,7 +712,7 @@ class TestStubBinaryVersion:
         )
 
     def test_third_party_servers_are_untouched(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """A git pull of Kiro Crew must not cold-start every npx server."""
+        """A git pull of Sao Khuê must not cold-start every npx server."""
         from kiro_crew.mcp_gateway import stub
 
         monkeypatch.setattr(stub, "_binary_version", lambda cmd: "shimhash")

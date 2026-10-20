@@ -1,5 +1,5 @@
 /**
- * @kirocrew/ui — shared component library for KiroCrew apps.
+ * @kirocrew/ui — shared component library for SaoKhue apps.
  *
  * Apps import themed components from this module. In the host app, these
  * resolve to the same components used by core pages. When published as a

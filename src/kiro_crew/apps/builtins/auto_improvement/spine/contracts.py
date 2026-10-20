@@ -70,7 +70,7 @@ class BugReproducingTest:
     spine never parses a test id or a path. ``test_id`` names the single test the
     RED/GREEN gate runs in isolation (it must FAIL on base, PASS on fix). The gate
     is target-agnostic; what a ``test_id`` *means* (a test-runner nodeid, a spec id, …)
-    is the profile's business (05_*.md §1.3 "Kiro Crew-specific vs general").
+    is the profile's business (05_*.md §1.3 "Sao Khuê-specific vs general").
     """
 
     test_id: str = ""  # e.g. "test/test_x.py::test_error_frame_surfaces" (opaque)

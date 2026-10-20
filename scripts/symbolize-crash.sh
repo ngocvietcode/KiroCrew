@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Turn a Kiro Crew crash artifact into readable frames.
+# Turn a Sao Khuê crash artifact into readable frames.
 #
 # The problem this closes: a macOS `.ips` report from a shipped build has
 # `asi: null` and every frame symbol is a NEAREST-NEIGHBOUR GUESS, because the

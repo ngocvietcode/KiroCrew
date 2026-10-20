@@ -12,7 +12,7 @@ and capture work, and all audit happen here. That split is not stylistic:
   fail-open evaluation) without weakening anything below.
 * The refusals that DO hold for computer use are enforced HERE, in band, on the
   dispatch path every caller goes through — the keystone enable, the
-  KiroCrew's-own-window denylist, the secure-field and sensitive-text checks. They
+  SaoKhue's-own-window denylist, the secure-field and sensitive-text checks. They
   only work where the OS-resolved app identity and the addressed element's role are
   known, i.e. in this process.
 
@@ -40,7 +40,7 @@ and capture work, and all audit happen here. That split is not stylistic:
    ``accessibility`` or ``app_post`` click never reaches it at all;
 5. **the always-on target policy (``policy.check_app``) — the real refusal.** The
    built-in denylist floor, which an operator's allow-list can narrow but never
-   widen. This is what stops the agent driving Kiro Crew's own window.
+   widen. This is what stops the agent driving Sao Khuê's own window.
    ``computer_launch_app`` is the one verb whose target is not resolved in step 2 —
    it has no window yet, which is the point of it — so it runs the SAME
    ``check_app`` inside its own branch, against an ``AppRef`` synthesized from the
@@ -207,7 +207,7 @@ _QUOTED_RUN_RE = re.compile(r"\"[^\"]*\"|'[^']*'")
 
 # Tools that address one application and therefore need a resolved OS identity
 # before the gate can bound them. ``computer_list_apps`` enumerates every app (it
-# has no single target) and ``computer_end_turn`` touches KiroCrew's own cache, so
+# has no single target) and ``computer_end_turn`` touches SaoKhue's own cache, so
 # both are queried with ``requires_app_identity=False``.
 _APP_SCOPED_TOOLS: frozenset[str] = frozenset(
     {

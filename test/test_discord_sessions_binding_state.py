@@ -62,7 +62,7 @@ async def _attach(dispatcher: DiscordDispatcher, client: _Client) -> ChannelLink
 
 
 class TestDashboardConnectedConversationResumes:
-    """The reported bug: replying to a message from Kiro Crew forked a new session.
+    """The reported bug: replying to a message from Sao Khuê forked a new session.
 
     A dashboard session connected to a Discord conversation, sent into it, and
     the user replied there. Instead of continuing that session, the reply started

@@ -42,7 +42,7 @@ def versions_compatible(local: str, peer: str) -> bool:
 
 
 def check_min_version(min_version: str) -> str | None:
-    """Return an error string if the current KiroCrew version is too old.
+    """Return an error string if the current SaoKhue version is too old.
 
     Returns ``None`` if the version is sufficient or if parsing fails.
     """
@@ -53,9 +53,9 @@ def check_min_version(min_version: str) -> str | None:
 
         if parse_version(current) < parse_version(min_version):
             return (
-                f"App requires Kiro Crew >= {min_version}, "
+                f"App requires Sao Khuê >= {min_version}, "
                 f"but current version is {current}. "
-                f"Please update Kiro Crew first."
+                f"Please update Sao Khuê first."
             )
     except (ValueError, AttributeError, ImportError):
         pass

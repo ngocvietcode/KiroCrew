@@ -35,7 +35,7 @@ export function AgentStatusBadge({
   probe: AcpBackendProbe
   /** The host sandbox cannot confine this harness (setup gate only). */
   blocked: boolean
-  /** The host sandbox works but is turned off in Kiro Crew's settings (setup gate only). */
+  /** The host sandbox works but is turned off in Sao Khuê's settings (setup gate only). */
   sandboxOff?: boolean
   /** This build never offers the harness (Settings only). */
   notOffered?: boolean

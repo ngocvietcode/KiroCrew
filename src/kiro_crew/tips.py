@@ -54,7 +54,7 @@ _REFRESH_INTERVAL_SECS = 6 * 60 * 60
 _MAX_GENERATED_TIPS = 8
 
 _PROMPT_TEMPLATE = """\
-You are generating personalized feature tips for a developer assistant called Kiro Crew.
+You are generating personalized feature tips for a developer assistant called Sao Khuê.
 
 Based on the user context and the feature catalog below, generate {max_tips} tips \
 for features the user would benefit from but may not know about.
@@ -80,7 +80,7 @@ like the product documentation, not like marketing:
   "Spawn parallel background workers for fan-out research and multi-package work"
   "Persistent preferences, project context, and learned corrections across sessions"
 
-ACTION — every tip must be immediately usable. Many Kiro Crew features are \
+ACTION — every tip must be immediately usable. Many Sao Khuê features are \
 triggered by a keyboard shortcut or a Settings/config toggle, NOT by chatting; \
 when so, name the EXACT key, Settings path, or config command in the body so the \
 reader can act without opening docs. If the feature is invoked by asking the \
@@ -491,7 +491,7 @@ _CURATED_FILE = Path(__file__).resolve().parent / "data" / "tips_curated.json"
 def _load_curated_tips() -> list[dict]:  # type: ignore[type-arg]
     """Load the hand-authored, action-first tips shipped with the package.
 
-    These cover KiroCrew-native features (keyboard shortcuts, Settings toggles,
+    These cover SaoKhue-native features (keyboard shortcuts, Settings toggles,
     config keys) that have no docs/*.md entry and so can never surface through
     the doc-scan catalog. Each entry is validated through the SAME field checks
     as generated tips (the allowlisted fields as strings, with optional fields
@@ -1305,7 +1305,7 @@ async def api_tips_status(request: web.Request) -> web.Response:
 
     Returns JSON: {"enabled_config": <bool>, "opted_out": <bool>, "cadence_hours": <float>}
     - enabled_config: instance-level ``tips_enabled`` config flag.
-    - opted_out: per-instance opt-out flag (KiroCrew is a single-owner
+    - opted_out: per-instance opt-out flag (SaoKhue is a single-owner
       personal gateway; tips state is instance-wide by design) (optout/optin
       feedback actions). Lets the settings UI render the current state.
     - cadence_hours: configured ``tips_cadence_hours`` — lets the client derive

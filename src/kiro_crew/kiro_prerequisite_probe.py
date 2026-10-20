@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("kiro_crew.kiro_prerequisite")
 
 
-# The subcommand Kiro Crew launches every ACP session through (see
+# The subcommand Sao Khuê launches every ACP session through (see
 # ``acp.client.KIRO_CLI_SUBCMD`` / ``acp.runtime.KIRO_CLI_SUBCMD``). Probed by
 # name so the readiness check learns of a rename the same way a spawn would fail.
 _ACP_SUBCOMMAND = "acp"
@@ -511,13 +511,13 @@ async def _probe(self: KiroPrerequisiteService, *, force: bool = False) -> Prere
 
 
 async def _probe_acp_support(self: KiroPrerequisiteService, executable: str) -> bool:
-    """Ask kiro-cli whether it exposes the ``acp`` subcommand Kiro Crew uses.
+    """Ask kiro-cli whether it exposes the ``acp`` subcommand Sao Khuê uses.
 
     Returns ``True`` when the subcommand is present OR when the probe could
     not establish otherwise; ``False`` only on a CLEAN "unknown subcommand"
     rejection.
 
-    Kiro Crew launches every session as ``kiro-cli acp ...`` (see
+    Sao Khuê launches every session as ``kiro-cli acp ...`` (see
     ``acp.client`` / ``acp.runtime``). A CLI too old to have that subcommand
     runs fine and signs in fine, then fails at session-create with an opaque
     ``process exited (rc=None)`` — the same class of silent, hard-to-place
@@ -735,7 +735,7 @@ async def _run_auth_command(
     """Run one Kiro auth command against a sandboxed, trusted executable.
 
     The CLI is trusted because it runs (its install source, owner, and path
-    do not gate sign-in); Kiro Crew is not the authority on where Kiro CLI is
+    do not gate sign-in); Sao Khuê is not the authority on where Kiro CLI is
     installed. The user's installed binary is executed IN PLACE — never a
     private copy: Kiro CLI 2.15+ is a multi-call binary that exec's a sibling
     ``kiro-cli-chat`` resolved relative to its own path, so a copy into a
@@ -763,8 +763,8 @@ async def _run_auth_command(
         # exposes AWS/SSH to it). Device sign-in writes kiro-cli's OWN
         # credential store in its own home; that write is the entire point of
         # delegating sign-in to the CLI, and it targets the same store an ACP
-        # session already reads. Kiro Crew stages nothing and publishes
-        # nothing. Only Kiro Crew's own secret home is hidden, and the user's
+        # session already reads. Sao Khuê stages nothing and publishes
+        # nothing. Only Sao Khuê's own secret home is hidden, and the user's
         # binary runs IN PLACE, exactly as ACP runs it, so a multi-call CLI
         # can still reach its sibling subcommand executable.
         return await self._run(

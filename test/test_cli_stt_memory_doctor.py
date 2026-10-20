@@ -364,7 +364,7 @@ class TestDoctorStt:
         # resolvable-hint tests hold against the resolver's candidate list, so
         # nobody can inline a literal back into the _os_fix_hint call.
         assert _doc._FFMPEG_LINUX_HINT in out
-        assert "reinstall Kiro Crew" not in out
+        assert "reinstall Sao Khuê" not in out
         assert "❌ Fix these issues: " in out
         assert "ffmpeg" in out.split("❌ Fix these issues: ", 1)[1]
         assert code == 1
@@ -393,7 +393,7 @@ class TestDoctorStt:
         )
 
         section = self._stt_section(out)
-        assert "reinstall Kiro Crew (the bundled audio decoder is missing)" in section
+        assert "reinstall Sao Khuê (the bundled audio decoder is missing)" in section
         assert "brew install ffmpeg" not in section
         assert "winget install" not in section
 
@@ -425,7 +425,7 @@ class TestDoctorStt:
 
         section = self._stt_section(out)
         assert "ffmpeg:" in section and "not found" in section
-        assert "reinstall Kiro Crew" not in section
+        assert "reinstall Sao Khuê" not in section
         assert "Fix: " in section
 
     def test_doctor_stt_transcribe_provider(self, tmp_path, capsys, monkeypatch):
@@ -646,7 +646,7 @@ class TestDoctorEmbeddings:
     ):
         """Under LLAMA_CPP_LIB_PATH, point at the override — not a reinstall.
 
-        The libs load from the operator's directory, so "reinstall Kiro Crew"
+        The libs load from the operator's directory, so "reinstall Sao Khuê"
         would send them to replace a package they are deliberately not loading
         from, while saying nothing about the dir that actually failed. Mirrors
         the loader's exemption so the two diagnostics cannot disagree.
@@ -663,7 +663,7 @@ class TestDoctorEmbeddings:
         out = capsys.readouterr().out
         assert "/opt/my-gpu-llama" in out
         assert "Missing native libs" not in out
-        assert "reinstall Kiro Crew" not in out
+        assert "reinstall Sao Khuê" not in out
 
     @pytest.mark.parametrize("value_source", ["environment", "startup-record"])
     def test_doctor_does_not_mistake_an_inherited_bundled_path_for_an_override(
@@ -689,7 +689,7 @@ class TestDoctorEmbeddings:
         assert "Missing native libs for macos_arm64: libllama.dylib" in out
         assert f"LLAMA_CPP_LIB_PATH={inherited}" in out
         if value_source == "startup-record":
-            assert "inherited from another Kiro Crew process and removed at startup" in out
+            assert "inherited from another Sao Khuê process and removed at startup" in out
         else:
             assert "is ignored; this install uses its own bundled tree" in out
         assert "point it at a directory of your own" in out
@@ -702,7 +702,7 @@ class TestDoctorEmbeddings:
 
         The startup record only establishes that the variable was empty and
         removed; a live empty value is simply treated as unset. Neither may
-        claim it came from another Kiro Crew process.
+        claim it came from another Sao Khuê process.
         """
         self._run_doctor(
             tmp_path,
@@ -715,7 +715,7 @@ class TestDoctorEmbeddings:
         out = capsys.readouterr().out
 
         assert "lib path:    ⏹ LLAMA_CPP_LIB_PATH=(empty)" in out
-        assert "inherited from another Kiro Crew process" not in out
+        assert "inherited from another Sao Khuê process" not in out
         if value_source == "startup-record":
             assert "was empty and removed at startup; treated as unset." in out
             assert "is empty, so it is treated as unset." not in out

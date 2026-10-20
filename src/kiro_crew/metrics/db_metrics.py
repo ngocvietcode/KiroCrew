@@ -1,4 +1,4 @@
-"""Per-query timing for KiroCrew's SQLite stores.
+"""Per-query timing for SaoKhue's SQLite stores.
 
 ``kirocrew.db.query.duration`` — a histogram (ms) of how long individual store
 operations take, labelled by which store and which kind of operation.

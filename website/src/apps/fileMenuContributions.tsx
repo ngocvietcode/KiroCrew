@@ -298,7 +298,7 @@ function readItem(app: FileMenuAppRecord, raw: unknown): ContributedFileMenuItem
   // The attribution, and it comes from `name` -- NEVER `displayName`.
   //
   // `displayName` is free text the app chooses, so as provenance it can claim to be
-  // anything, the host included: a manifest saying `displayName: "Kiro Crew"` rendered a
+  // anything, the host included: a manifest saying `displayName: "Sao Khuê"` rendered a
   // row that read as native, and the reader clicked it believing core was handling their
   // file. `name` is the install identity and `KEBAB_RE` constrains it to
   // `[a-z0-9]` plus single hyphens, so it cannot spell a host word with a space or a

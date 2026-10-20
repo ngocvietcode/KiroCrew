@@ -225,7 +225,7 @@ def sel(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
 def _registered_line(frame: dict[str, Any]) -> bytes:
     pool_key = PoolKey.from_register(frame)
     # The daemon stamps its own code generation into the ``registered`` reply so
-    # a Kiro Crew-owned stub can detect a pre-upgrade broker and fall back; the
+    # a Sao Khuê-owned stub can detect a pre-upgrade broker and fall back; the
     # value is whatever ``code_fingerprint()`` reports in this environment, so
     # the contract reproduces it rather than hardcoding a fixed string.
     return (

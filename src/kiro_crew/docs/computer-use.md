@@ -39,7 +39,7 @@ reason instead of a switch, so it cannot be turned on there.
 
 - **Password fields are redacted.** They render as `<secure>` in the outline, and
   a window containing one is not captured as an image.
-- **Kiro Crew's own dashboard is refused** — for reading as well as typing.
+- **Sao Khuê's own dashboard is refused** — for reading as well as typing.
   Driving it would let the agent change its own security settings, including this
   one. On macOS the refusal covers every window of the dashboard's process, not
   just the visible one, and the refusal names the target so it is clear why.

@@ -1,6 +1,6 @@
-"""Ship the local KiroCrew source to the instance via S3 (private-repo safe).
+"""Ship the local SaoKhue source to the instance via S3 (private-repo safe).
 
-The public KiroCrew repo may be private, so the EC2 box can't ``git clone`` it
+The public SaoKhue repo may be private, so the EC2 box can't ``git clone`` it
 anonymously. Instead the launcher packages the *local* checkout into a source
 tarball, uploads it to a launcher-managed S3 bucket, and the instance downloads
 it with its own IAM role (no credentials on the box, no GitHub access needed).
@@ -55,7 +55,7 @@ _STAGING_DIR_LEAF = "cloud-src-staging"
 # Directories never shipped to the box (rebuilt there, irrelevant, or SECRET).
 # The tarfile fallback (used when `git archive` is unavailable) filters by this
 # set, so it MUST cover secret-bearing dirs that `.gitignore` would otherwise
-# keep out of the git-archive path — notably the KiroCrew dev-mode data dir
+# keep out of the git-archive path — notably the SaoKhue dev-mode data dir
 # (contacts, lessons, minted tokens, config) that AGENTS.md places at the repo
 # root.
 _EXCLUDE_DIRS = {
@@ -72,7 +72,7 @@ _EXCLUDE_DIRS = {
     ".testmondata",
     # Secret-bearing / local-only dirs — never ship these off-box.
     # ``.kiro`` is the Kiro-family base (kiro-cli SSO tokens/sessions AND
-    # KiroCrew's own data home ~/.kiro/crew after the data-root move); excluding
+    # SaoKhue's own data home ~/.kiro/crew after the data-root move); excluding
     # the whole ``.kiro`` segment covers both. The legacy ~/.kirocrew stays
     # listed for not-yet-migrated trees.
     ".kiro",
@@ -108,7 +108,7 @@ _EXCLUDE_NAMES = frozenset(
 
 
 def find_repo_root() -> Optional[Path]:
-    """The Kiro Crew source root, or ``None`` when this is not a checkout.
+    """The Sao Khuê source root, or ``None`` when this is not a checkout.
 
     The non-raising half of :func:`repo_root`, for callers that must *decide*
     whether source shipping is possible rather than fail when it is not — e.g. a
@@ -123,7 +123,7 @@ def find_repo_root() -> Optional[Path]:
 
 
 def repo_root() -> Path:
-    """The KiroCrew source root to package (the installed package's repo).
+    """The SaoKhue source root to package (the installed package's repo).
 
     Walks up from this module to the directory that contains ``install.sh`` +
     ``setup.cfg`` (the repo root), so it works from an editable checkout.
@@ -138,7 +138,7 @@ def repo_root() -> Path:
     if found is not None:
         return found
     raise aws.AWSError(
-        "could not locate the KiroCrew source root (no install.sh + setup.cfg "
+        "could not locate the SaoKhue source root (no install.sh + setup.cfg "
         "above this module) — source shipping needs an editable/git checkout. "
         "Run the cloud launcher from a clone, or launch without S3 source "
         "shipping (public git-clone fallback).",
@@ -933,7 +933,7 @@ def ensure_bucket(profile: str, region: str) -> str:
             create += ["--create-bucket-configuration", f"LocationConstraint={region}"]
         aws.checked(create, profile, region, action="s3:CreateBucket")
     # Enforce the public-access block on EVERY path — freshly-created AND reused.
-    # A pre-existing kirocrew-src-* bucket (older KiroCrew version, or one whose
+    # A pre-existing kirocrew-src-* bucket (older SaoKhue version, or one whose
     # BPA was later disabled) could otherwise be publicly reachable while we
     # upload (possibly proprietary) source into it. put-public-access-block is
     # idempotent, so re-asserting it on an already-blocked bucket is a no-op. We
@@ -1024,7 +1024,7 @@ def ensure_instance_boundary(profile: str = "", region: str = "") -> str:
         arn=iam.boundary_arn(account),
         expected=iam.boundary_policy_document(account),
         description=(
-            "Kiro Crew EC2 instance permissions ceiling (SSM core + launcher source read)."
+            "Sao Khuê EC2 instance permissions ceiling (SSM core + launcher source read)."
         ),
         profile=profile,
         region=region,
@@ -1056,7 +1056,7 @@ def ensure_instance_kms_boundary(profile: str = "", region: str = "", create: bo
         arn=iam.kms_boundary_arn(account),
         expected=iam.kms_boundary_policy_document(account),
         description=(
-            "Kiro Crew EC2 instance permissions ceiling (SSM core + launcher source "
+            "Sao Khuê EC2 instance permissions ceiling (SSM core + launcher source "
             "read + KMS for encrypted Session Manager)."
         ),
         profile=profile,
@@ -1088,7 +1088,7 @@ def ensure_crew_boundary(profile: str = "", region: str = "") -> str:
         name=iam.CREW_BOUNDARY_NAME,
         arn=iam.crew_boundary_arn(account),
         expected=iam.crew_boundary_policy_document(),
-        description=("Kiro Crew Fargate crew permissions ceiling (the four SSM channel actions)."),
+        description=("Sao Khuê Fargate crew permissions ceiling (the four SSM channel actions)."),
         profile=profile,
         region=region,
     )
@@ -1115,7 +1115,7 @@ def ensure_crew_exec_boundary(profile: str = "", region: str = "") -> str:
         arn=iam.crew_exec_boundary_arn(account),
         expected=iam.crew_exec_boundary_policy_document(),
         description=(
-            "Kiro Crew Fargate execution-role ceiling (crew secret read, log stream, ECR pull)."
+            "Sao Khuê Fargate execution-role ceiling (crew secret read, log stream, ECR pull)."
         ),
         profile=profile,
         region=region,

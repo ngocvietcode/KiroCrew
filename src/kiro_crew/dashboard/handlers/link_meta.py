@@ -80,7 +80,7 @@ _MAX_ICON_ATTEMPTS = 2
 #: readable-but-plated light one — so it must not cost a second request.
 _MAX_DARK_ICON_ATTEMPTS = 1
 
-_USER_AGENT = "KiroCrew-LinkPreview/1"
+_USER_AGENT = "SaoKhue-LinkPreview/1"
 #: Redirect statuses followed. 300 (multiple choices) is excluded: it has no
 #: single authoritative target.
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})

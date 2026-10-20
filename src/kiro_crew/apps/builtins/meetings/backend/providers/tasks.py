@@ -11,7 +11,7 @@ an ABC (:class:`TaskProvider`), a name-keyed factory registry
 (:func:`register_task_provider`), and a resolver (:func:`get_task_provider`).
 
 **Exactly one implementation ships here** — :class:`LocalTaskProvider`, which
-writes to a KiroCrew-local, app-scoped task ledger. That is deliberate: the
+writes to a SaoKhue-local, app-scoped task ledger. That is deliberate: the
 seam exists so an out-of-repo companion can register a provider for whatever
 tracker an organization actually uses, and the public app is complete without
 one. Nothing in the app branches on a provider name.
@@ -153,7 +153,7 @@ class LocalTaskProvider(TaskProvider):
 
     @property
     def display_name(self) -> str:
-        return "Kiro Crew tasks (local)"
+        return "Sao Khuê tasks (local)"
 
     def _path(self) -> Path:
         return store.data_dir(self._root) / _LEDGER_FILE

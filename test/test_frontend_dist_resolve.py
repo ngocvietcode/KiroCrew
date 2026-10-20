@@ -1435,7 +1435,7 @@ def test_the_stage_command_refuses_a_directory_that_is_not_a_checkout(tmp_path, 
 
     assert frontend.main(["stage", str(website)]) == 1
 
-    assert "is not a Kiro Crew checkout" in capsys.readouterr().out
+    assert "is not a Sao Khuê checkout" in capsys.readouterr().out
     assert sorted(p.relative_to(website) for p in website.rglob("*")) == before
 
 

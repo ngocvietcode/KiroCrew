@@ -349,9 +349,9 @@ def set_repo_permissions(
 #   triage_labels            names of labels that mean "still needs triage"
 #   unlabeled_is_untriaged   also treat issues with no labels as needing triage
 #   good_first_issue_labels  names of labels that mark newcomer-friendly issues
-#   notify_on_new_issue      push a Kiro Crew notification when a new issue opens
+#   notify_on_new_issue      push a Sao Khuê notification when a new issue opens
 #   notify_on_own_pr_ci_failure
-#                            push a Kiro Crew notification when a GitHub Actions
+#                            push a Sao Khuê notification when a GitHub Actions
 #                            run fails on an open pull request the signed-in
 #                            ``gh`` user authored
 #

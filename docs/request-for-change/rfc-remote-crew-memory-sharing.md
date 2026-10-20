@@ -1,5 +1,5 @@
 ---
-title: Opt-in memory sharing between connected Kiro Crew instances
+title: Opt-in memory sharing between connected Sao Khuê instances
 status: draft
 author: djman-aws
 created: 2026-10-16
@@ -12,7 +12,7 @@ supersedes: []
 superseded-by: []
 ---
 
-# RFC: Opt-in memory sharing between connected Kiro Crew instances
+# RFC: Opt-in memory sharing between connected Sao Khuê instances
 
 **Status:** Proposal for maintainer review. This document requests decisions
 on scope, ownership, and memory semantics for [#18593](https://github.com/kirodotdev/KiroCrew/issues/18593).
@@ -23,11 +23,11 @@ It does not record acceptance or an implementation assignment.
 Let one person share selected semantic and episodic memories between their
 laptop and development machines. Sharing is off until the owner chooses the
 participating machines and content, reviews a preview, and enables it.
-One coordinating Kiro Crew instance computes changes; each receiving instance
+One coordinating Sao Khuê instance computes changes; each receiving instance
 authorizes and applies its own writes.
 
-Kiro Crew should own the memory contract, authorization, reconciliation state,
-and write results. The controls belong in Kiro Crew's Remote Crew experience
+Sao Khuê should own the memory contract, authorization, reconciliation state,
+and write results. The controls belong in Sao Khuê's Remote Crew experience
 and should use the project's approved app and dashboard extension boundaries.
 Maintainers must confirm their placement and the sharing contract before
 implementation.
@@ -262,7 +262,7 @@ Named/private stores and excluded categories cannot fall back into the default
 store or a broader export.
 
 Enforce authorized selection and credential screening at source egress, and
-authorization, validation, and write auditing at each receiving Kiro Crew
+authorization, validation, and write auditing at each receiving Sao Khuê
 boundary. Do not forward authentication credentials or use a redacted preview
 to authorize an unredacted payload. Expose no new public listener and treat
 remote memory content as data. Store local synchronization state with the same
@@ -273,14 +273,14 @@ access expectations as the memory it describes.
 | Option | Benefit | Tradeoff |
 |---|---|---|
 | Schedule direct two-way export/import | Uses existing CLI commands and scheduling. | Bulk import counts cannot establish per-record results, and repeated copying does not supply the required identity, conflict, or deletion contract. |
-| Add native Kiro Crew sharing and controls | One authority for memory semantics, integrated with the existing connected-instance experience. | Requires the design and implementation work described here. Recommended for a supported integration. |
+| Add native Sao Khuê sharing and controls | One authority for memory semantics, integrated with the existing connected-instance experience. | Requires the design and implementation work described here. Recommended for a supported integration. |
 | Share a database or synchronize whole data directories | Broad state transfer through existing file tools. | Bypasses selection, live-store ownership, and per-record conflict handling; does not meet this proposal's requirements. |
 
 ## Open questions
 
 Maintainers decide these on the RFC before assigning implementation:
 
-1. Where in Kiro Crew's Remote Crew experience should sharing controls live,
+1. Where in Sao Khuê's Remote Crew experience should sharing controls live,
    using the project's approved app and dashboard extension boundaries?
 2. Is a single-owner, single-coordinator group limited to eligible default stores
    the right first scope? Does the all-members audience match the expected UX?

@@ -416,7 +416,7 @@ class SttConfig:
             "Custom Model File",
             "The file name of a whisper.cpp ggml model (`.bin`) to run INSTEAD of a "
             "catalog model, used when `model` is `custom`. Put the file in the "
-            "speech models folder (`models/whisper` under the Kiro Crew home) "
+            "speech models folder (`models/whisper` under the Sao Khuê home) "
             "first: the path must resolve to a regular file inside that folder, so "
             "`..`, an absolute path elsewhere, and a symlink pointing out of it are "
             "refused. Nothing is downloaded. Both this and the digest must be set; "

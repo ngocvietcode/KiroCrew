@@ -51,7 +51,7 @@ logger = logging.getLogger("kiro_crew.apps.manager")
 # Built-in app registration
 # ---------------------------------------------------------------------------
 
-# Built-in apps are features baked into the Kiro Crew dashboard that we
+# Built-in apps are features baked into the Sao Khuê dashboard that we
 # surface in the App Store as "builtin" entries.  They use the host's
 # React tree directly (no ESM bundle) and their page components resolve
 # through ``BUILTIN_COMPONENT_REGISTRY`` in the frontend.  The registration

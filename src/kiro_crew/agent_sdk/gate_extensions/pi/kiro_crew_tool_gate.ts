@@ -1,5 +1,5 @@
 /**
- * Kiro Crew tool gate for the pi coding agent.
+ * Sao Khuê tool gate for the pi coding agent.
  *
  * pi runs every tool call without asking. pi-acp forwards a pi extension's
  * confirm dialog to the ACP client as `session/request_permission`. This
@@ -8,22 +8,22 @@
  * identity and arguments, so the ACP client decides with the real input in hand
  * and its answer blocks or releases the call.
  *
- * Loaded by Kiro Crew on pi's command line (`--extension <this file>`), never
+ * Loaded by Sao Khuê on pi's command line (`--extension <this file>`), never
  * from the operator's own extension directories, and verified after load through
  * the probe command registered below.
  *
- * The envelope carries a per-session nonce Kiro Crew places in this process's
+ * The envelope carries a per-session nonce Sao Khuê places in this process's
  * environment. The client accepts an envelope only with the nonce it issued, so
  * text that merely LOOKS like an envelope -- a model's tool arguments relayed by
  * some other dialog -- is read as the dialog it is, not as a tool call.
  *
- * It also carries Kiro Crew's MCP servers into the session. pi-acp accepts the
+ * It also carries Sao Khuê's MCP servers into the session. pi-acp accepts the
  * ACP `mcpServers` array and never hands it to pi, so the host writes the same
  * servers to a per-session handoff file in its owner-only artifact directory,
  * sealed with a key only this process's environment carries, and names it there
  * too. This extension reads and opens it once at load,
  * registers each server with pi's built-in MCP support, and refuses any call to
- * a Kiro Crew server name that pi resolved to a different server: a same-named
+ * a Sao Khuê server name that pi resolved to a different server: a same-named
  * entry in pi's own `mcp.json` outranks an extension's registration.
  */
 
@@ -122,7 +122,7 @@ function bound(value: unknown, depth = 0): Bounded {
     if (value.length <= MAX_STRING_CHARS) return { value, truncated: false };
     const omitted = value.length - MAX_STRING_CHARS;
     return {
-      value: `${value.slice(0, MAX_STRING_CHARS)}…[${omitted} chars omitted by the Kiro Crew gate]`,
+      value: `${value.slice(0, MAX_STRING_CHARS)}…[${omitted} chars omitted by the Sao Khuê gate]`,
       truncated: true,
     };
   }
@@ -207,7 +207,7 @@ function readMcpHandoff(): Record<string, Record<string, unknown>> | null {
     return null;
   }
   // Read once. Where the artifact directory is writable to this process the file
-  // goes now; inside Kiro Crew's sandbox that directory is read-only here, and
+  // goes now; inside Sao Khuê's sandbox that directory is read-only here, and
   // the host removes the file once the session is established.
   try {
     unlinkSync(path);
@@ -236,7 +236,7 @@ function readMcpHandoff(): Record<string, Record<string, unknown>> | null {
 /**
  * The server names pi's own `mcp.json` files declare, by `serverKey`, or null when
  * one exists and cannot be read -- which the caller treats as shadowing every
- * Kiro Crew server, since what it declares is unknown.
+ * Sao Khuê server, since what it declares is unknown.
  */
 function fileConfiguredServerKeys(cwd: string): Set<string> | null {
   const agentDir = process.env[AGENT_DIR_ENV] || join(homedir(), ".pi", "agent");
@@ -264,9 +264,9 @@ function fileConfiguredServerKeys(cwd: string): Set<string> | null {
 }
 
 export default function (pi: ExtensionAPI) {
-  // Kiro Crew's servers by name, each with the tool-name prefix pi gives its tools.
+  // Sao Khuê's servers by name, each with the tool-name prefix pi gives its tools.
   const crewServers = new Map<string, string>();
-  // Kiro Crew server names whose tools this session must not run.
+  // Sao Khuê server names whose tools this session must not run.
   const shadowed = new Set<string>();
   const handoff = readMcpHandoff();
   for (const [name, config] of Object.entries(handoff ?? {})) {
@@ -274,7 +274,7 @@ export default function (pi: ExtensionAPI) {
     try {
       pi.registerMcpServer(name, config as never);
     } catch {
-      // Another extension holds the name, or pi refused it: not Kiro Crew's server.
+      // Another extension holds the name, or pi refused it: not Sao Khuê's server.
       shadowed.add(name);
     }
   }
@@ -293,8 +293,8 @@ export default function (pi: ExtensionAPI) {
     }
     if (shadowed.size > 0 && ctx.hasUI) {
       ctx.ui.notify(
-        `Kiro Crew tool gate: pi's own MCP config declares ${[...shadowed].join(", ")}, ` +
-          "which outranks the server Kiro Crew placed, so those tools are refused. " +
+        `Sao Khuê tool gate: pi's own MCP config declares ${[...shadowed].join(", ")}, ` +
+          "which outranks the server Sao Khuê placed, so those tools are refused. " +
           "Rename or remove that entry in pi's mcp.json.",
         "warning",
       );
@@ -302,9 +302,9 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerCommand(PROBE_COMMAND, {
-    description: "Kiro Crew's tool gate is loaded in this session",
+    description: "Sao Khuê's tool gate is loaded in this session",
     handler: async (_args, ctx) => {
-      ctx.ui.notify("Kiro Crew tool gate: active", "info");
+      ctx.ui.notify("Sao Khuê tool gate: active", "info");
     },
   });
 
@@ -318,22 +318,22 @@ export default function (pi: ExtensionAPI) {
         if (spelled.startsWith(crewServers.get(name) ?? mcpToolPrefix(name))) {
           return {
             block: true,
-            reason: `Kiro Crew tool gate: "${name}" is not the server Kiro Crew placed in this session`,
+            reason: `Sao Khuê tool gate: "${name}" is not the server Sao Khuê placed in this session`,
           };
         }
       }
     }
     if (!ctx.hasUI) {
       // No dialog channel means no way to ask, so the call does not run.
-      return { block: true, reason: "Kiro Crew tool gate: no permission channel" };
+      return { block: true, reason: "Sao Khuê tool gate: no permission channel" };
     }
     const message = envelope(event.toolCallId, toolName, event.input);
     if (message === null) {
-      return { block: true, reason: "Kiro Crew tool gate: tool arguments too large to judge" };
+      return { block: true, reason: "Sao Khuê tool gate: tool arguments too large to judge" };
     }
     const allowed = await ctx.ui.confirm(toolName, message);
     if (!allowed) {
-      return { block: true, reason: "Denied by the Kiro Crew tool gate" };
+      return { block: true, reason: "Denied by the Sao Khuê tool gate" };
     }
     return undefined;
   });

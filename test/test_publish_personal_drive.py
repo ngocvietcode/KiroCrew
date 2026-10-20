@@ -627,7 +627,7 @@ def test_externally_disabled_is_reported_on_a_public_publish(monkeypatch, payloa
     _EngineSpy(enabled=False).install(monkeypatch)
     res = _publish(pd.PersonalDriveProvider(), payload)
     assert "DISABLED" in res.notice
-    assert "not a state Kiro Crew sets" in res.notice
+    assert "not a state Sao Khuê sets" in res.notice
 
 
 def test_serving_notice_returns_the_rolling_out_code(monkeypatch):

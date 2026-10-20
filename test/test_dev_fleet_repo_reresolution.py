@@ -141,7 +141,7 @@ class TestTheLatchWaitsForAnAnswerWorthKeeping:
 
         assert repository.MAIN_REPO == malformed
         assert repository._DISCOVERY_DONE is True
-        with pytest.raises(repository.RepoUnreadable, match="not a Kiro Crew checkout"):
+        with pytest.raises(repository.RepoUnreadable, match="not a Sao Khuê checkout"):
             repository._repo()
 
 
@@ -155,7 +155,7 @@ class TestNoVerdictOutlivesTheAttemptThatProducedIt:
         — and ``worktree remove``, ``update-ref -d`` and ``pip install -e`` run
         inside whatever that is.
         """
-        monkeypatch.setattr(repository, "_REPO_INVALID_MSG", "not a Kiro Crew checkout: /gone")
+        monkeypatch.setattr(repository, "_REPO_INVALID_MSG", "not a Sao Khuê checkout: /gone")
         _discovers(monkeypatch, "")
         await repository.ensure_main_repo_discovered()
         assert repository._REPO_INVALID_MSG is None
@@ -378,7 +378,7 @@ class TestACorrectedPathIsNotFrozenBehindTheLatch:
     ) -> None:
         monkeypatch.setattr(repository, "MAIN_REPO", "/somewhere/kirocrw")
         monkeypatch.setattr(
-            repository, "_REPO_INVALID_MSG", "not a Kiro Crew checkout: /somewhere/kirocrw"
+            repository, "_REPO_INVALID_MSG", "not a Sao Khuê checkout: /somewhere/kirocrw"
         )
         monkeypatch.setattr(worktree_ops, "_refresher_task", None)
         monkeypatch.setattr(worktree_ops, "_background_tasks_disabled", lambda: False)
@@ -414,7 +414,7 @@ class TestAConfigReadThatFailedIsNotAConfigChange:
     async def test_a_partial_config_read_does_not_reopen_the_latch(self, monkeypatch) -> None:
         """The whole point: no whole read, no verdict about what the operator wants."""
         monkeypatch.setattr(repository, "_DISCOVERY_DONE", True)
-        monkeypatch.setattr(repository, "_REPO_INVALID_MSG", "not a Kiro Crew checkout")
+        monkeypatch.setattr(repository, "_REPO_INVALID_MSG", "not a Sao Khuê checkout")
         monkeypatch.setattr(repository, "MAIN_REPO", "/opt/typo")
         monkeypatch.setattr(repository, "_LATCHED_CONFIGURED", "/opt/typo")
         monkeypatch.setattr(
@@ -433,7 +433,7 @@ class TestAConfigReadThatFailedIsNotAConfigChange:
         FAILED carries no evidence.
         """
         monkeypatch.setattr(repository, "_DISCOVERY_DONE", True)
-        monkeypatch.setattr(repository, "_REPO_INVALID_MSG", "not a Kiro Crew checkout")
+        monkeypatch.setattr(repository, "_REPO_INVALID_MSG", "not a Sao Khuê checkout")
         monkeypatch.setattr(repository, "MAIN_REPO", "/opt/typo")
         monkeypatch.setattr(repository, "_LATCHED_CONFIGURED", "/opt/typo")
         monkeypatch.setattr(

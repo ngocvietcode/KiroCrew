@@ -433,7 +433,7 @@ class DashboardConfig:
         default=True,
         metadata=_meta(
             "Use Built-in Browser",
-            "When on, the browser tool opens pages in Kiro Crew's built-in panel "
+            "When on, the browser tool opens pages in Sao Khuê's built-in panel "
             "(desktop app only). When off, the agent browses via playwright-cli.",
         ),
     )

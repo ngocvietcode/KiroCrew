@@ -799,7 +799,7 @@ def register_routes(app: web.Application) -> None:
     pipeline_routes.register_routes(app)
 
     # Background new-issue watcher: a single in-process asyncio loop (NOT a cron
-    # job) that polls opted-in repos every ~60s and pushes a KiroCrew
+    # job) that polls opted-in repos every ~60s and pushes a SaoKhue
     # notification when a new issue is opened. register_app_routes runs before
     # runner.setup() freezes the signal lists, so these appends fire (same
     # pattern as code_review_sage's on_cleanup hook); guarded so a hook-append

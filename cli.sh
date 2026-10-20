@@ -1,6 +1,6 @@
 #!/bin/sh
 # ──────────────────────────────────────────────────────────────────────
-# KiroCrew CLI installer (channel / wheel based).
+# SaoKhue CLI installer (channel / wheel based).
 #
 #   curl -fsSL https://download.crew.kiro.dev/cli.sh | sh
 #   curl -fsSL https://download.crew.kiro.dev/cli.sh | sh -s -- --channel nightly
@@ -99,7 +99,7 @@ while [ $# -gt 0 ]; do
     --system-python) MANAGED_PYTHON=0; shift ;;
     -h|--help)
       cat <<'EOF'
-KiroCrew CLI installer (channel / wheel based).
+SaoKhue CLI installer (channel / wheel based).
 
   curl -fsSL https://download.crew.kiro.dev/cli.sh | sh
   curl -fsSL https://download.crew.kiro.dev/cli.sh | sh -s -- --channel nightly
@@ -409,7 +409,7 @@ _report_pip_failure() {
   _missing="$(grep 'No matching distribution found for' "$1" \
     | sed 's/.*No matching distribution found for //' | head -n 5 | tr '\n' ' ')"
   echo "kirocrew-install: pip found no prebuilt wheel it may install on this platform ($(_platform_description)) for: ${_missing:-a required dependency}" >&2
-  echo "kirocrew-install: Kiro Crew installs prebuilt wheels only and never compiles a dependency. Usually this means the host is older than the wheels' floor: the current dependency set needs a newer Linux (Amazon Linux 2023, RHEL/Rocky 8+, Ubuntu 22.04+, Debian 12+) on x86_64/aarch64, or macOS. It can also mean the package index could not be reached or does not carry these releases; pip's output above shows the retries or the versions it saw. To compile on this host instead, install a C/C++ toolchain and the -dev headers the packages above need, then re-run with KIROCREW_ALLOW_SOURCE_BUILDS=1." >&2
+  echo "kirocrew-install: Sao Khuê installs prebuilt wheels only and never compiles a dependency. Usually this means the host is older than the wheels' floor: the current dependency set needs a newer Linux (Amazon Linux 2023, RHEL/Rocky 8+, Ubuntu 22.04+, Debian 12+) on x86_64/aarch64, or macOS. It can also mean the package index could not be reached or does not carry these releases; pip's output above shows the retries or the versions it saw. To compile on this host instead, install a C/C++ toolchain and the -dev headers the packages above need, then re-run with KIROCREW_ALLOW_SOURCE_BUILDS=1." >&2
 }
 
 # Take the install lock held open on fd 9 (the caller has already run
@@ -526,7 +526,7 @@ else err "need sha256sum or shasum to verify the download"; fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT INT TERM
 
-# Kiro Crew needs Python >=3.12 at runtime -- that is what every release
+# Sao Khuê needs Python >=3.12 at runtime -- that is what every release
 # artifact bundles and the only version CI tests, and older published wheels'
 # METADATA claimed a lower floor, so pip would install fine and then crash on
 # first run. Prefer the exact interpreter the project builds and tests on
@@ -764,10 +764,10 @@ if [ -n "$PIN_VERSION" ]; then
     *[!A-Za-z0-9._+]*) err "invalid pinned version '$PIN_VERSION'" ;;
   esac
   MANIFEST_URL="$ARTIFACT_BASE/cli/$CHANNEL_PATH/$PIN_VERSION/cli-manifest.json"
-  echo "Resolving KiroCrew $PIN_VERSION ($CHANNEL channel, pinned) ..."
+  echo "Resolving SaoKhue $PIN_VERSION ($CHANNEL channel, pinned) ..."
 else
   MANIFEST_URL="$FEED_BASE/feed/$CHANNEL_PATH/latest-cli.json"
-  echo "Resolving KiroCrew ($CHANNEL channel) ..."
+  echo "Resolving SaoKhue ($CHANNEL channel) ..."
 fi
 # A pinned miss is policy far more often than it is a broken CDN: releases
 # published before manifest signing was enabled carry no signed manifest and are

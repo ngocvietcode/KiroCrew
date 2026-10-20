@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  KiroCrew One-Click Deploy - in-account scheduled reaper. An EventBridge rule
+  SaoKhue One-Click Deploy - in-account scheduled reaper. An EventBridge rule
   fires a Lambda on a timer; the Lambda deletes expired non-persistent deploys
   (S3 prefix + CloudFront behavior/origin + backend CloudFormation stack). Runs
   entirely in the user's account - no local creds, no human. Install once.
@@ -193,7 +193,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Name: kirocrew-deploy-reaper
-      Description: KiroCrew deploy TTL reaper schedule
+      Description: SaoKhue deploy TTL reaper schedule
       ScheduleExpression: !Ref ScheduleRate
       State: ENABLED
       Targets:

@@ -25,7 +25,7 @@ absolute:
   past a block has broken the rules of engagement, and the finding is void.
 
 The scripts below are the deterministic half of the loop — run them via
-`execute_bash`, through Kiro Crew's runtime interpreter and an absolute path:
+`execute_bash`, through Sao Khuê's runtime interpreter and an absolute path:
 `"$KIROCREW_RUNTIME_PYTHON" -B "<skill-dir>/scripts/<name>.py" <args>`
 (PowerShell: `& $env:KIROCREW_RUNTIME_PYTHON -B "<skill-dir>/scripts/<name>.py"
 <args>`). The files are not executable and a desktop install has no `python3` on

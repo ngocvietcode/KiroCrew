@@ -51,12 +51,12 @@ def _user_agent() -> str:
     """A WakaTime-plugin-style User-Agent.
 
     WakaTime resolves the editor and operating system for its dashboard from
-    this header, not from a heartbeat body field, so identifying Kiro Crew here
+    this header, not from a heartbeat body field, so identifying Sao Khuê here
     is what keeps activity from landing under ``Unknown OS`` / ``Unknown``. The
     shape mirrors the official plugins,
     ``wakatime/<ver> (<os>-<release>) kirocrew/<ver>``, whose leading slot is
-    the wakatime-cli version. Kiro Crew speaks the API directly and bundles no
-    wakatime-cli, so both slots carry Kiro Crew's own package version.
+    the wakatime-cli version. Sao Khuê speaks the API directly and bundles no
+    wakatime-cli, so both slots carry Sao Khuê's own package version.
     """
     try:
         os_name = platform.system() or "unknown"

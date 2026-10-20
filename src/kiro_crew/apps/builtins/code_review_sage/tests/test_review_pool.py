@@ -370,7 +370,7 @@ class TestApprovalAndAudit(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual([kind for kind, _ in trace], ["steer", "reject"])
         notice = trace[0][1]
-        self.assertTrue(notice.startswith("[Kiro Crew host notice]"), notice)
+        self.assertTrue(notice.startswith("[Sao Khuê host notice]"), notice)
         self.assertIn("User denied tool execution", notice)
         self.assertIn("private repo", notice)
 

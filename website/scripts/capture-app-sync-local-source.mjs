@@ -44,7 +44,7 @@ const PATH_APP = {
   lifecycle: 'gateway',
   manifest: {
     name: 'orchestrator-switch', version: '0.1.0', displayName: 'Orchestrator Switch',
-    description: "Toggle Kiro Crew's orchestrator between the Claude Code companion and stock kiro-cli, restart the gateway to apply the flip, and see what is actually configured vs live.",
+    description: "Toggle Sao Khuê's orchestrator between the Claude Code companion and stock kiro-cli, restart the gateway to apply the flip, and see what is actually configured vs live.",
     author: 'kirocrew-claude-companion', tags: ['developer-tools'],
     ui: { pages: [{ route: '/orchestrator-switch', label: 'Orchestrator Switch', icon: 'Boxes' }] },
   },
@@ -127,7 +127,7 @@ await page.route('**/api/**', async route => {
   if (path === '/api/themes') return json(route, { themes: [], installed: [] })
   if (path === '/api/status') return json(route, status)
   if (path === '/api/system') return json(route, { hostname: 'dev-host' })
-  if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Kiro Crew', avatar: '' })
+  if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Sao Khuê', avatar: '' })
   if (path === '/api/theme/boot') return json(route, { mode: 'dark', theme: '' })
   if (path === '/api/notifications') return json(route, { notifications: [], unread: 0 })
   if (path === '/api/chat/slots') return json(route, [])

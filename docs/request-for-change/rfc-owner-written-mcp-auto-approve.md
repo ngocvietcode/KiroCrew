@@ -21,7 +21,7 @@ superseded-by: []
 ## The decision
 
 An `autoApprove` list the owner wrote themselves, in `~/.kiro/settings/mcp.json`
-or directly in an agent file, is KEPT in the agent config Kiro Crew writes. The
+or directly in an agent file, is KEPT in the agent config Sao Khuê writes. The
 setting that decides it, `mcp.honour_auto_approve`, defaults to on. Setting it to
 a real `false` restores the strict floor, where every verb no server spec declares
 is dropped and those tools go back through the approval gate.
@@ -32,7 +32,7 @@ The floor shipped the other way round: any `autoApprove` no managed or edition
 spec declared was dropped on an ungoverned host, and keeping one required finding
 an undocumented config key. The reasoning was sound as far as it went. kiro-cli
 approves an autoApproved MCP tool locally and emits no permission request, so
-`hooks.on_tool_call` never runs and Kiro Crew's own tool gate never sees the call;
+`hooks.on_tool_call` never runs and Sao Khuê's own tool gate never sees the call;
 a verb hand-added to a shared MCP config therefore exempted itself from the gate
 silently, and fail-closed is the right instinct for a gate bypass.
 
@@ -74,7 +74,7 @@ before:
   still survives, and everything else routes through the approval gate. The
   shared config, whose map genuinely mixes the two, names the app's `<app>:`-prefixed
   entries instead, which is exact and closed.
-- An entry Kiro Crew authored in a file it does not own, which carries the
+- An entry Sao Khuê authored in a file it does not own, which carries the
   `x-kirocrew` provenance marker. That is our own emission.
 
 A value that is not a `list[str]` is not honoured either. The floor this replaces
@@ -94,7 +94,7 @@ the enterprise path is untouched by this change, and the change is strictly abou
 the floor an ungoverned host applies to its own owner.
 
 The same reasoning bounds the reverse direction: what a managed or edition spec
-declares is Kiro Crew's own emission rather than the owner's choice, so it is kept
+declares is Sao Khuê's own emission rather than the owner's choice, so it is kept
 either way and is not reported as a grant.
 
 ## Visibility, which is the other half of respecting a choice

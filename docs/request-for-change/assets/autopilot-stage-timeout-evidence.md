@@ -12,7 +12,7 @@ This appendix supports
 [`rfc-autopilot-stage-budgets.md`](../rfc-autopilot-stage-budgets.md) and the
 remaining lifecycle defect tracked by
 [#14058](https://github.com/kirodotdev/KiroCrew/issues/14058). It contains
-sanitized lifecycle evidence from the incident owner's local Kiro Crew records.
+sanitized lifecycle evidence from the incident owner's local Sao Khuê records.
 Raw transcripts are deliberately not committed: they contain unrelated prompts,
 local paths, tool arguments, and project content that are unnecessary to verify
 the defect.
@@ -20,7 +20,7 @@ the defect.
 ## Scope and method
 
 - Evidence collected: 2026-09-26.
-- Code baseline: Kiro Crew `main` at `7f1f4fb1d`.
+- Code baseline: Sao Khuê `main` at `7f1f4fb1d`.
 - Dashboard corpus: the incident owner's `dashboard_*.jsonl` session records.
 - Search signature: exact assistant text matching
   `Stage [0-9]+ timed out after 30m`.
@@ -211,4 +211,4 @@ separate change request.
   made the first incident harder to reconstruct after dashboard ownership was
   lost.
 - It does not claim a particular model caused the defect. The timer and
-  cancellation ownership live in the Kiro Crew host.
+  cancellation ownership live in the Sao Khuê host.

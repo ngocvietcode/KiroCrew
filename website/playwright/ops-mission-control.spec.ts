@@ -718,7 +718,7 @@ test.describe('Ops Mission Control — modes', () => {
     await expect(channel).not.toHaveAttribute('type', 'password')
 
     // ...and there is NO password/secret input anywhere in this card, because the
-    // app reuses Kiro Crew's Slack client and stores no token of its own. If a
+    // app reuses Sao Khuê's Slack client and stores no token of its own. If a
     // future change adds one, this fails — which is the point.
     const card = page.locator('div').filter({ hasText: 'Mirror incidents to Slack' }).last()
     await expect(card.locator('input[type="password"]')).toHaveCount(0)

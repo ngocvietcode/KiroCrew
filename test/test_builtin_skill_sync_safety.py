@@ -1430,7 +1430,7 @@ def _currency(name: str) -> str:
 
 
 class TestContextBudgetSwitchSurvivesUpdate:
-    """The per-skill Context-budget switch must survive a Kiro Crew update.
+    """The per-skill Context-budget switch must survive a Sao Khuê update.
 
     The switch is the one user-mutable setting on a built-in skill: turning it
     off writes ``inject_on_trigger: false`` into the installed SKILL.md

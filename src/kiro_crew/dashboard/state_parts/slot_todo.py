@@ -444,7 +444,7 @@ def todo_recovery_prompt(self: _ChatSlot) -> str:
     """A prompt block that makes a FRESH native session rebuild this list.
 
     kiro-cli keeps the ``todo_list`` tool's state inside one native
-    conversation. Kiro Crew replaces that conversation on an agent switch,
+    conversation. Sao Khuê replaces that conversation on an agent switch,
     a failed ``session/load``, a poisoned-conversation discard and ``/clear``
     -- and keeps the pill's snapshot across all of them. The agent then holds
     an EMPTY list while the pill still shows the old one, and its next

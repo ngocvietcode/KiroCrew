@@ -265,7 +265,7 @@ Priorities: P0 10 · P1 37 · P2 161 · P3 62. Deduped from 387 raw records.
 
 | Priority | Id | User story | Start URL | Seed | Runnable | Steps |
 |---|---|---|---|---|---|---|
-| P2 | `app-agent-worlds-scene` | As a user running several agents, I want an ambient 3D scene of my crew with switchable themes, so that I can see at a glance how busy Kiro Crew is. | `/worlds` | apps-installed | nightly | 3 |
+| P2 | `app-agent-worlds-scene` | As a user running several agents, I want an ambient 3D scene of my crew with switchable themes, so that I can see at a glance how busy Sao Khuê is. | `/worlds` | apps-installed | nightly | 3 |
 
 ## Dev Fleet (`dev-fleet`)
 
@@ -332,7 +332,7 @@ Priorities: P0 10 · P1 37 · P2 161 · P3 62. Deduped from 387 raw records.
 
 | Priority | Id | User story | Start URL | Seed | Runnable | Steps |
 |---|---|---|---|---|---|---|
-| P2 | `settings-instances` | As an operator, I want to register remote Kiro Crew instances and see provisioning lanes, so that I can switch crews from the header. | `/settings/instances` | multi-workspace | nightly | 3 |
+| P2 | `settings-instances` | As an operator, I want to register remote Sao Khuê instances and see provisioning lanes, so that I can switch crews from the header. | `/settings/instances` | multi-workspace | nightly | 3 |
 
 ## Popouts & embeds (`popout`)
 
@@ -347,7 +347,7 @@ Priorities: P0 10 · P1 37 · P2 161 · P3 62. Deduped from 387 raw records.
 
 | Priority | Id | User story | Start URL | Seed | Runnable | Steps |
 |---|---|---|---|---|---|---|
-| P0 | `kas-auth-sign-in-card-signed-out` | As an operator, I want to see whether Kiro Crew holds a Kiro identity and how to sign in, so that I can fix a session that cannot start. | `/settings/agent` | minimal | smoke | 2 |
+| P0 | `kas-auth-sign-in-card-signed-out` | As an operator, I want to see whether Sao Khuê holds a Kiro identity and how to sign in, so that I can fix a session that cannot start. | `/settings/agent` | minimal | smoke | 2 |
 | P1 | `dashboard-token-login-gate` | As an operator, I want the dashboard to refuse unauthenticated visitors and accept my one-time token link, so that only I can drive the gateway. | `/` | minimal | smoke | 3 |
 
 ## Onboarding (`onboarding`)
@@ -432,7 +432,7 @@ Priorities: P0 10 · P1 37 · P2 161 · P3 62. Deduped from 387 raw records.
 |---|---|---|---|---|---|---|
 | P2 | `developer-agent-backend` | As a developer, I want to see which agent harness backend is live, what each harness can and cannot do, and whether Kiro prerequisites are met, so that I know what turns run on before I choose a harness. | `/settings/agent` | minimal | nightly | 3 |
 | P2 | `developer-archive` | As a developer, I want a consolidated session archive browser, so that I can inspect compacted history. | `/developer` | sessions-long-history | nightly | 3 |
-| P2 | `developer-config` | As a developer, I want raw Kiro Crew and agent config editors, so that I can fix a setting no panel exposes. | `/developer` | minimal | nightly | 3 |
+| P2 | `developer-config` | As a developer, I want raw Sao Khuê and agent config editors, so that I can fix a setting no panel exposes. | `/developer` | minimal | nightly | 3 |
 | P2 | `developer-debug-tools` | As a developer, I want diagnostic overlays such as the chat scroll inspector, so that I can debug layout issues. | `/developer` | sessions-a-few | nightly | 3 |
 | P2 | `developer-logs` | As a developer, I want a live gateway log stream with level control, so that I can debug in real time. | `/developer` | minimal | nightly | 3 |
 | P2 | `developer-mcp-pool` | As a developer, I want to see each MCP server's state, opt servers in to stubbing and read the sharing assessment, so that I can manage MCP connections and diagnose tool outages. | `/developer` | connections-two | nightly | 3 |
@@ -504,7 +504,7 @@ Features the lane cannot drive on its target. Listed so the gap is a decision, n
 | excluded | `chat-voice-reply-and-dictation` | voice | Voice reply and dictation | The Electron shell would not add a microphone, an audio sink or a recogniser model to the Xvfb host, so no native lane on this target could observe the behaviour either. The mic button and Read-aloud menu entry renderin… |
 | excluded | `notifications-desktop-alert-toast-opt-in` | notifications | Opt into Desktop alerts and receive an OS toast when a background session finishes | The outcome is an OS-level toast outside the browser viewport and gated on a permission prompt; not pixel-testable on Xvfb. The toggle itself is covered by settings-notifications. |
 | excluded | `notifications-turn-complete-chime-audio` | notifications | Hear the chime when a turn completes | Audio output is not pixel-testable and leaves no visible record; Xvfb has no audio sink. The chime preset control itself is asserted in settings-notifications. |
-| excluded | `chat-remote-bound-session` | remote-instances | Remote-bound session | This is not a missing credential but a missing second live Kiro Crew instance plus a network tunnel, which the Xvfb+fake-ACP, no-network target cannot provide. Only the flag-gated menu entry is renderable (cover that in… |
+| excluded | `chat-remote-bound-session` | remote-instances | Remote-bound session | This is not a missing credential but a missing second live Sao Khuê instance plus a network tunnel, which the Xvfb+fake-ACP, no-network target cannot provide. Only the flag-gated menu entry is renderable (cover that in… |
 | excluded | `standalone-cloud-launch` | remote-instances | Cloud launch | Kept excluded rather than needs-secret: beyond real AWS credentials it provisions billable infrastructure and exposes Stop/Delete-by-tag lifecycle, so it must not run even with secrets. Only the lane selector and IAM po… |
 | excluded | `kas-auth-chat-error-row-sign-in-link` | auth | An auth-required turn renders a 'Sign in to Kiro' error row deep-linking to the card | Excluded: the fake ACP backend cannot emit the AcpAuthRequired vocabulary (only [[ERROR]]), so the row and its deep link are unreachable on the target. Closing that harness gap (an auth-required sentinel) is the prerequ… |
 | excluded | `settings-about-check-for-updates` | settings | Check for updates and install | Network-dependent and restarts the application; not pixel-testable. |

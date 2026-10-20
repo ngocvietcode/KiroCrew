@@ -126,7 +126,7 @@ def _coerce_str_list(value: object) -> List[str]:
 
 
 def canonical_signing_bytes(body: Mapping[str, object]) -> bytes:
-    """The ONE canonicalization every KiroCrew trust-root signature is taken over.
+    """The ONE canonicalization every SaoKhue trust-root signature is taken over.
 
     Sorted keys + compact separators + UTF-8, so the same logical document always
     produces the same bytes regardless of how a signing tool serialized it
@@ -485,7 +485,7 @@ _DEFAULT_POLICY_BODY: Dict[str, object] = {
     "banned": [],
     "capability_ceiling": {},
     "_comment": (
-        "Default permissive admission policy seeded by KiroCrew at first run. "
+        "Default permissive admission policy seeded by SaoKhue at first run. "
         "Deleting this file DISABLES plugin admission (fail-closed): "
         "load_admission_policy() then returns MODE_ENFORCE with an empty allowlist "
         "and the dashboard governance indicator shows Degraded (Disabled is the "

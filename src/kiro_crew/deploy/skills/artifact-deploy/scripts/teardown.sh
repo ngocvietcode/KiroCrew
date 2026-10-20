@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - remove one deployed slug (S3 prefix + invalidation).
+# SaoKhue One-Click Deploy - remove one deployed slug (S3 prefix + invalidation).
 # The shared base stack (bucket + distribution) is left intact.
 #
 # Usage:

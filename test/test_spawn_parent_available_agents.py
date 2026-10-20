@@ -1,9 +1,9 @@
 """The parent agent's ``toolsSettings.subagent.availableAgents`` gates ``spawn_run``.
 
 kiro-cli defines that key for its own built-in ``subagent`` tool: a glob list
-of the agents THIS agent may spawn, and omitting it allows all. Kiro Crew's
+of the agents THIS agent may spawn, and omitting it allows all. Sao Khuê's
 sub-agents come through ``spawn_run`` / ``spawn_sub_agents`` instead, whose
-admission only ever asked "does the target exist" plus Kiro Crew's own
+admission only ever asked "does the target exist" plus Sao Khuê's own
 governance -- so an operator who declared the allowlist on their agent spec
 saw it silently ignored and the spawn tool advertised every installed agent as
 valid.

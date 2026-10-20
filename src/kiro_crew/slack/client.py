@@ -1,4 +1,4 @@
-"""Slack API client abstraction for KiroCrew.
+"""Slack API client abstraction for SaoKhue.
 
 Provides an async interface for Slack Web API operations.
 Uses an ABC so tests can swap in a mock without touching Slack.
@@ -85,7 +85,7 @@ def _refuse_remote_media(blocks: Any) -> None:
 
 
 class SlackClientOps(ABC):
-    """Core Slack operations needed by KiroCrew."""
+    """Core Slack operations needed by SaoKhue."""
 
     @abstractmethod
     async def post_message(

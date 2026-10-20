@@ -1,4 +1,4 @@
-"""Regression tests for Round-20 findings (KiroCrew PR #6).
+"""Regression tests for Round-20 findings (SaoKhue PR #6).
 
 F1: deploy staging goes through _stage_tree_safe (hook-gated, hardlink-rejecting)
     instead of bare shutil.copytree.

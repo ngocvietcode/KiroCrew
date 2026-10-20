@@ -90,7 +90,7 @@ to `IngestLimits.max_text_inject = 50 KiB` (`_clean_text`), and appends
 `teams/attachments.py`, `whatsapp/attachments.py`, `wecom/attachments.py`,
 `weixin/attachments.py`.
 
-So the product question raised in the issue's triage — whether Kiro Crew should
+So the product question raised in the issue's triage — whether Sao Khuê should
 convert documents before the model sees them — was answered when those
 channels shipped. The dashboard is the exception, and the one surface where
 the file is already on local disk, which is what makes a sidecar rather than
@@ -435,7 +435,7 @@ update channel to the agent or a "text pending" message that the agent has to
 poll for, and the race between send and completion is exactly the ambiguity
 the triage comment asked a product owner to remove.
 
-**Teach the agent's `read` tool to parse PDFs.** Out of Kiro Crew's hands;
+**Teach the agent's `read` tool to parse PDFs.** Out of Sao Khuê's hands;
 `read` belongs to kiro-cli.
 
 ## 10. Open questions

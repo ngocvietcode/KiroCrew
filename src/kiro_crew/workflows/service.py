@@ -13,7 +13,7 @@ have a stable target. The gateway constructs ONE ``WorkflowService`` at startup
 app state — exactly like ``state.subagents`` / ``state.sessions``.
 
 ``author`` turns a natural-language intent into a validated workflow script using
-the same in-session model the rest of KiroCrew uses (no new model plumbing). It
+the same in-session model the rest of SaoKhue uses (no new model plumbing). It
 loops up to a few times until the produced script passes ``validate`` — the
 authoring-reliability gates (G1/G2/G3) cover this shape.
 """
@@ -108,7 +108,7 @@ def _author_startup_retryable(exc: BaseException) -> bool:
 
 
 _AUTHOR_SYSTEM = """\
-You are authoring a KiroCrew DYNAMIC WORKFLOW: one Python module that orchestrates
+You are authoring a SaoKhue DYNAMIC WORKFLOW: one Python module that orchestrates
 agents. Reply with ONLY the Python module (no prose, no code fence). It MUST be:
 
   META = {{"name": "<kebab-name>", "description": "<one line>", "phases": [...]}}

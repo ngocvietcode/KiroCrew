@@ -1,7 +1,7 @@
 """deploy-web IAM — least-privilege policy generator + read-only reachability check.
 
 The policy text is *generated for the user to apply themselves* (design §12, Option A);
-KiroCrew never performs an IAM write. Verification is **read-only reachability only**
+SaoKhue never performs an IAM write. Verification is **read-only reachability only**
 (§9.3/Q3): it confirms the profile resolves and the services are reachable — it CANNOT
 confirm create/write perms without writing (CloudFront has no --dry-run), so it is
 labelled "access reachable", and the first real deploy is the true permission test.
@@ -557,7 +557,7 @@ def policy_document(*, include_custom_domain: bool = False, tier: str = "static"
             {
                 # Mutations gated on the kirocrew:managed tag — the
                 # templates tag every AWS::ApiGatewayV2::Api at creation, so
-                # only KiroCrew-created APIs are mutable/deletable. An
+                # only SaoKhue-created APIs are mutable/deletable. An
                 # unrelated production API (no tag) is untouchable even with
                 # its ID in hand. POST is in the gated set (route/
                 # integration creation under an existing API is a mutation).

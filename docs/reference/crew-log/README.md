@@ -1,6 +1,6 @@
 # Crew log reference
 
-**Local page, not a mirror.** This directory is Kiro Crew's own documentation and
+**Local page, not a mirror.** This directory is Sao Khuê's own documentation and
 has no upstream source, so a re-fetch of the `kiro-cli/` mirror must leave it
 alone. It is marked as a named exception in [the Reference index](../README.md).
 

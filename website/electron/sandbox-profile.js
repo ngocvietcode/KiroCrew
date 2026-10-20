@@ -1,5 +1,5 @@
 /**
- * The AppArmor grant a DIRECTLY LAUNCHED Kiro Crew needs, and why the app cannot
+ * The AppArmor grant a DIRECTLY LAUNCHED Sao Khuê needs, and why the app cannot
  * just apply it itself.
  *
  * `kirocrew service install` installs a NAMED AppArmor profile and lets systemd

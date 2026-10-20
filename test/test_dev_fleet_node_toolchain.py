@@ -2,7 +2,7 @@
 
 Two symptoms, one cause. ``_trusted_bin`` fails closed on anything under
 ``$HOME`` — correct for ``git``/``gh``, which run in the credential-bearing
-tier — but Kiro Crew's own installer puts node under ``$HOME``, so:
+tier — but Sao Khuê's own installer puts node under ``$HOME``, so:
 
 * Dev Fleet "Pull + build main" answered ``no trusted executable for 'npm'``;
 * ``kirocrew pod provision`` raised an unhandled ``FileNotFoundError: 'npm'``.
@@ -240,7 +240,7 @@ def test_npm_not_found_message_separates_the_two_remedies():
 
 # --- npm resolution for Pull + build ---
 def test_toolchain_bin_finds_a_home_resident_npm(node_dir):
-    """The exact case _trusted_bin rejects, and the one Kiro Crew's own
+    """The exact case _trusted_bin rejects, and the one Sao Khuê's own
     installer creates."""
     with (
         patch.object(runtime, "find_node_tool", return_value=str(node_dir / "npm")),

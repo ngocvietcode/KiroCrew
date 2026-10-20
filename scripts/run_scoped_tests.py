@@ -203,7 +203,7 @@ def pytest_worker_env(base: dict[str, str] | None = None) -> dict[str, str]:
     gate's bound, unless a tighter one is already there.
 
     A positive ``PYTEST_XDIST_AUTO_NUM_WORKERS`` in the environment is a
-    deliberate cap -- Kiro Crew seeds a memory-aware one at every agent spawn --
+    deliberate cap -- Sao Khuê seeds a memory-aware one at every agent spawn --
     and `xdist_budget.py`'s rule is that an inherited cap must never be raised,
     so the result is the MIN of that and :func:`local_gate_workers`. An unset,
     empty or non-positive value is replaced by the gate's bound.

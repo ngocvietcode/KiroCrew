@@ -50,7 +50,7 @@ const SETTINGS: CrewSettings = {
   schema: 1,
   claim_ttl_hours: 48,
   needs_human_label: 'crew: needs human',
-  commit_trailer: 'Crew: {name} (Kiro Crew Issue Radar)',
+  commit_trailer: 'Crew: {name} (Sao Khuê Issue Radar)',
 }
 
 /** `settings` is passed EXPLICITLY, with no default: a default parameter is used

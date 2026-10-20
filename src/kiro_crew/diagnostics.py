@@ -418,7 +418,7 @@ def _scratch_kiro_chat_logs() -> list[Path]:
     """Per-process kiro-cli chat logs under agent scratch, newest first.
 
     On Linux and macOS ``agent_scratch.scratch_env`` pins the log of every
-    kiro-cli Kiro Crew spawns to ``<scratch root>/<dir>/kiro-log/kiro-chat.log``,
+    kiro-cli Sao Khuê spawns to ``<scratch root>/<dir>/kiro-log/kiro-chat.log``,
     which none of :func:`_kiro_log_dirs`' shared candidates reach. Each directory
     level must pass :func:`_usable_dir` and the log :func:`_usable_log`, so a
     linked scratch dir or ``kiro-log`` is skipped rather than walked out of the

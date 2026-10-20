@@ -266,7 +266,7 @@ class TestBuildHelpText:
         card = build_help_text()
         head = card.split("\n")[0]
         assert head == dc._HELP_HEADER
-        assert "Kiro Crew" in head and "Discord" in head
+        assert "Sao Khuê" in head and "Discord" in head
         assert "\n\nWhile a reply is running" in card
         closing = "Just send a message to chat. Replies stream in real-time."
         assert card.rstrip().endswith(closing)

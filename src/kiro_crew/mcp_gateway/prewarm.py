@@ -1,4 +1,4 @@
-"""Warm-pool prewarming for the KiroCrew MCP gateway.
+"""Warm-pool prewarming for the SaoKhue MCP gateway.
 
 The gateway spawns a backend lazily on a stub's first non-register frame
 (:func:`gatewayd._acquire_backend`). That lazy path costs a full

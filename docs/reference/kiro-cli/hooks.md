@@ -4,7 +4,7 @@ Source: https://kiro.dev/docs/hooks/, plus its `types` and `actions` subpages
 (fetched 2026-09-06; the former `/docs/cli/hooks/` redirects there — hooks are
 documented as one page across every surface).
 
-> **Carries local additions.** Kiro Crew's fail-closed `PreToolUse` exit contract
+> **Carries local additions.** Sao Khuê's fail-closed `PreToolUse` exit contract
 > has no upstream counterpart. A re-fetch must preserve it.
 
 Execute custom commands, or inject an agent prompt, at specific points during

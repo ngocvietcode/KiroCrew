@@ -994,7 +994,7 @@ describe('AgentBackendTab status strip', () => {
     // and "Settings > About" here against "that host" there read as two problems.
     expect(
       panel().getByText(
-        'Claude Code is installed on the gateway host. Press Check again to pick it up. If this line is still here after that, restart Kiro Crew on that host.',
+        'Claude Code is installed on the gateway host. Press Check again to pick it up. If this line is still here after that, restart Sao Khuê on that host.',
       ),
     ).toBeInTheDocument()
     expect(panel().queryByText(/Settings > About/)).toBeNull()

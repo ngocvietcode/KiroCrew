@@ -187,7 +187,7 @@ def _refused_cli_sentence(path: str) -> str:
         return ""
     return (
         f"Tailscale is installed at {path}, but that file or its folder can be "
-        "changed without administrator rights, so Kiro Crew will not run it."
+        "changed without administrator rights, so Sao Khuê will not run it."
     )
 
 

@@ -252,7 +252,7 @@ def builtin_app_host_cli_mcp_launches() -> dict[str, tuple[str, tuple[str, ...]]
     builtin-owned manifest declares as ``command: "kirocrew"`` (the host CLI) with
     a list of string ``args`` and no ``url``. Those are the app servers
     ``bridges._pin_host_cli_command`` pins to this gateway's interpreter, so they
-    are Kiro Crew's own process exactly as the managed ``kirocrew-*`` servers are,
+    are Sao Khuê's own process exactly as the managed ``kirocrew-*`` servers are,
     and the only app servers a per-session identity element may be built for.
 
     The launch comes from the IMMUTABLE manifest, never from the mutable global

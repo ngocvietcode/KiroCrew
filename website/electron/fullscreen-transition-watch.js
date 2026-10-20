@@ -16,7 +16,7 @@
 // resized, and covers every other application on that display. Anything that
 // then hides the real window (hide-to-tray's backstop, a second click on the
 // close control) leaves the user with ONLY the overlay: the "frozen copy of
-// Kiro Crew that blocks my other apps" report.
+// Sao Khuê that blocks my other apps" report.
 //
 // From the main process the overlay is invisible: Electron exposes no handle to
 // AppKit-owned windows, and `isFullScreen()` already reads false because the

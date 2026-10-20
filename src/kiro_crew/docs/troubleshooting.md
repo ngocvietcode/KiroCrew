@@ -141,7 +141,7 @@ from a host shell, or have an administrator run
 lookup answers `Failed to look up user <user>: No such process`. A Cloud Dev
 Desktop reaches the stale case by exporting `DBUS_SESSION_BUS_ADDRESS` from a
 login session whose manager has since stopped. To preview a worktree with no
-systemd at all, use `./dev-backend.sh` from the root of a Kiro Crew source
+systemd at all, use `./dev-backend.sh` from the root of a Sao Khuê source
 checkout; it is a repository script and is not installed with the package.
 
 If doctor reports `session bus: not applicable (no systemd per-user manager on
@@ -157,7 +157,7 @@ Probe and unit operations resolve
 `systemctl` only from trusted system directories and ignore same-named PATH entries. A
 missing trusted executable, missing interpreter, or other failure while executing the
 resolved command is reported as an operational error, not as an absent backend.
-Destructive Dev Fleet cleanup then refuses to remove the worktree. Other Kiro Crew
+Destructive Dev Fleet cleanup then refuses to remove the worktree. Other Sao Khuê
 features do not depend on the pod service manager.
 
 ### MCP tools not working
@@ -216,10 +216,10 @@ A server you installed from your organization's MCP registry (through Kiro IDE o
 the Kiro CLI) shows **Not verified** under Connections → MCP Servers, with no
 command. That is expected. The Kiro CLI wrote it into `~/.kiro/settings/mcp.json`
 as a pointer, `{"type": "registry"}`, and loads the real server from the registry
-when a session starts. Kiro Crew cannot read the registry, so the dashboard does
+when a session starts. Sao Khuê cannot read the registry, so the dashboard does
 not start or check that server itself.
 
-Kiro Crew passes the pointer on to every Kiro CLI session unchanged. To see
+Sao Khuê passes the pointer on to every Kiro CLI session unchanged. To see
 whether it connected, run `kiro-cli mcp list`, or ask an agent to use one of its
 tools. Sessions on the Claude or KAS backends do not load registry servers.
 
@@ -231,7 +231,7 @@ chat. Nothing is wrong with the server. The badge describes what the dashboard
 can see, not what the server can do.
 
 The Kiro CLI runs the OAuth flow and keeps the token in its own credential store;
-Kiro Crew never holds it. The dashboard's status probe therefore connects without a
+Sao Khuê never holds it. The dashboard's status probe therefore connects without a
 token, and the server answers `401`. That single answer covers two situations the
 dashboard cannot tell apart: a server nobody has authorized, and a server already
 authorized through the Kiro CLI. So it reports only what it knows.
@@ -240,7 +240,7 @@ To find out which one you have:
 
 - If an agent can call that server's tools in chat, it is authorized and working.
 - If tool calls fail, use the server in chat once. The Kiro CLI starts the OAuth
-  flow on the `401` and Kiro Crew shows the consent link as a banner; approve it
+  flow on the `401` and Sao Khuê shows the consent link as a banner; approve it
   there and the calls succeed.
 
 A server that is genuinely broken reads **Error** with the reason next to it, not
@@ -254,7 +254,7 @@ kirocrew logs -n 200                     # what did it log before it stopped?
 curl http://localhost:5476/api/status    # is it answering on the expected port?
 ```
 
-If the port is taken by something else, either stop that process or run Kiro Crew
+If the port is taken by something else, either stop that process or run Sao Khuê
 on another port with `KIROCREW_PORT`.
 
 ### Slack not responding
@@ -269,7 +269,7 @@ on another port with `KIROCREW_PORT`.
 
 ### Context window filling up
 
-Kiro Crew auto-compacts at `session.autocompact_pct` context usage (70% by
+Sao Khuê auto-compacts at `session.autocompact_pct` context usage (70% by
 default for a new install — an existing `config.json` keeps whatever value it
 already stores, which for installs created before this default changed is
 `90.0`; check with `kirocrew config get session.autocompact_pct`). The KAS
@@ -284,7 +284,7 @@ setting does not change that. If compaction fires often:
 
 ### Build failures
 
-Building and testing apply to a Kiro Crew source checkout, not to an installed
+Building and testing apply to a Sao Khuê source checkout, not to an installed
 package. The backend's test tools live in the `dev` extra, so a plain
 `pip install -e .` has no `pytest`. Install with `pip install -e ".[dev]"` and run
 the change-scoped gate with `python3 scripts/local-gate.py`; the
@@ -306,7 +306,7 @@ Node must be `>= 22.12`, the floor Vite and Rolldown declare in
 ### Embedding model download failed
 
 The embedding model (about 610 MB) downloads in the background over HTTPS from
-the Kiro Crew CDN on gateway startup and is sha256-verified. A failed download
+the Sao Khuê CDN on gateway startup and is sha256-verified. A failed download
 retries with exponential backoff (up to 6 attempts) and again on every gateway
 start. If it keeps failing:
 
@@ -321,7 +321,7 @@ start. If it keeps failing:
 - Retry from the dashboard Overview → Memory card, or do nothing: it retries on
   the next gateway start
 - Coming from an install that used Ollama for embeddings? The download is
-  usually skipped: Kiro Crew finds the identical model in the local Ollama blob
+  usually skipped: Sao Khuê finds the identical model in the local Ollama blob
   store and copies it (sha256-verified) instead of re-downloading
 
 ### Embeddings not working
@@ -528,7 +528,7 @@ helped by a longer wait: run `kirocrew logs -f` to see its startup.
 
 ### "Refusing to start: the Python standard library is shadowed."
 
-Kiro Crew exits with status 2 when a file or directory on the import path has
+Sao Khuê exits with status 2 when a file or directory on the import path has
 the name of a standard-library module (an `asyncio/` folder or a `queue.py` in
 the directory you launched from, for example). The message names the module,
 where it resolved and which `sys.path` entry provided it. Move or rename that

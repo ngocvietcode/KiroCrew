@@ -1,6 +1,6 @@
 """Instance size tiers for the cloud launcher (constants — no magic numbers).
 
-Kiro Crew uses ~10 GB RAM with spikes beyond that (see
+Sao Khuê uses ~10 GB RAM with spikes beyond that (see
 ``docs/guides/remote-and-mobile.md``), so every tier is **≥16 GB RAM** — 8 GB is
 below the working set and gets OOM-killed under load, so it is not offered.
 
@@ -16,7 +16,7 @@ does not raise it. Effective parallel sub-agents per tier:
   at ~6, so the Power tier is ``m7g.4xlarge`` / 16 vCPU, not a memory-optimized
   shape.)
 
-We default to **arm64 / Graviton** (cheaper per GB; both Kiro Crew and ``kiro-cli``
+We default to **arm64 / Graviton** (cheaper per GB; both Sao Khuê and ``kiro-cli``
 ship aarch64 Linux builds), with an x86_64 lane for users who need it.
 
 Prices are illustrative on-demand USD/hour and are surfaced only as "approximate"

@@ -575,9 +575,9 @@ emitted: besides the external-source label and older clients,
 `appManifest.ts::keysFor` (first-party copy gate) and `pickFeatured`'s
 legacy arm still read it.
 
-## 1. App MCP servers land in Kiro Crew's agent config, never the shared kiro file
+## 1. App MCP servers land in Sao Khuê's agent config, never the shared kiro file
 
-An app's `mcpServers` are written into Kiro Crew's own agent config
+An app's `mcpServers` are written into Sao Khuê's own agent config
 (`<kiro agents dir>/kirocrew.json`, resolved through `config.paths.kiro_agents_dir`
 so test/dev home redirects are honoured), **not** the shared
 `~/.kiro/settings/mcp.json`.
@@ -586,7 +586,7 @@ Why it is a contract and not a detail: the shared file is read by everything els
 living under `~/.kiro` — the Kiro IDE and every other kiro-cli agent — so
 registering an app's servers there leaked that app's private tools into surfaces
 that never installed it, and a dead HTTP entry there broke EVERY kiro session, not
-just the app's. Kiro Crew sessions read only the agent config (`includeMcpJson` is
+just the app's. Sao Khuê sessions read only the agent config (`includeMcpJson` is
 pinned False in `agent.py`), so the narrower target is also sufficient.
 
 **Migration is finished at boot, not at disable.** `reconcile_enabled_app_resources`
@@ -2837,7 +2837,7 @@ display name shown instead of the `name` id. Both are build-only for the same
 reason `owner` is: `GET /api/apps/registries` reports them empty on operator rows
 and the PUT drops them, so a write into `config.json` (sealed read-only against an
 in-sandbox shell, but an ordinary settings file to every other writer) cannot stamp
-a source "Reviewed by the Kiro Crew team". An unrecognised `review` DEGRADES to `""` (no
+a source "Reviewed by the Sao Khuê team". An unrecognised `review` DEGRADES to `""` (no
 claim) and is logged at error level; it never drops the pinned row. This list
 also feeds index fetch, the trusted-host allowlist and install, so dropping would
 let a typo in a display field take a whole registry offline — its apps gone from
@@ -4024,8 +4024,8 @@ records which module owns which part, so a change lands in its owner.
 | Module under `src/kiro_crew/apps/` | Owns |
 |---|---|
 | `bridges.py` | The facade: the only import path and patch surface. It defines nothing and installs `kiro_crew._facade_mirror` over the owners below |
-| `bridges_sources.py` | Which manifest and root an app's executable resources register from (`_registration_source`, `_app_resource_root`), the shared execution decision (`_registration_denied`), namespaced resource and link names, and the kiro-cli agents directory (`KIRO_AGENTS_DIR`, `_kiro_agents_dir`) and Kiro Crew skills directory (`app_skills_dir`) the bridges write into |
-| `bridges_mcp_config.py` | Kiro Crew's own agent config (`kirocrew.json`): its path (`_mcp_json_path`), the cross-process lock (`_mcp_lock`), the unlocked reads and writes made under it, and the writer serialization against backend health transitions (`_health_reconcile_guard`) |
+| `bridges_sources.py` | Which manifest and root an app's executable resources register from (`_registration_source`, `_app_resource_root`), the shared execution decision (`_registration_denied`), namespaced resource and link names, and the kiro-cli agents directory (`KIRO_AGENTS_DIR`, `_kiro_agents_dir`) and Sao Khuê skills directory (`app_skills_dir`) the bridges write into |
+| `bridges_mcp_config.py` | Sao Khuê's own agent config (`kirocrew.json`): its path (`_mcp_json_path`), the cross-process lock (`_mcp_lock`), the unlocked reads and writes made under it, and the writer serialization against backend health transitions (`_health_reconcile_guard`) |
 | `bridges_agents.py` | Materializing an app's agents: the app MCP policy (`_apply_agent_mcp_policy`, `_apply_agent_prompt`), host-managed MCP references, user edits carried across a refresh, shipped agent templates, `_register_agents` / `_deregister_agents` and `purge_uninstalled_agent_residue` |
 | `bridges_skills.py` | `_register_skills`, `_deregister_skills` and the startup `reconcile_app_skills` |
 | `bridges_crons.py` | The app cron manifest (`load_app_cron_defs`), the manifest digest and the resync of a changed job, `register_app_crons_with_service`, deregistration, and the execution-driven disarm and reconcile passes |

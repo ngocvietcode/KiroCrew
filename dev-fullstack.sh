@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start the full KiroCrew dev stack in ONE terminal:
+# Start the full SaoKhue dev stack in ONE terminal:
 #   1. Backend gateway from live source (dev-backend.sh, port 6777, .kirocrew-dev home)
 #   2. Vite dev server (hot reload) proxying to it
 #   3. Mint a dashboard token and print the ready-to-open Vite URL
@@ -26,7 +26,7 @@ if [ -z "$RUNTIME_PYTHON" ] || [ ! -x "$RUNTIME_PYTHON" ]; then
     fi
 fi
 if [ ! -x "$RUNTIME_PYTHON" ]; then
-    echo "[dev] ERROR: cannot find the KiroCrew venv Python at $SCRIPT_DIR/.venv/bin/python."
+    echo "[dev] ERROR: cannot find the SaoKhue venv Python at $SCRIPT_DIR/.venv/bin/python."
     echo "[dev] Run 'bash minimal_install.sh' once to set up the venv, then try again."
     exit 1
 fi

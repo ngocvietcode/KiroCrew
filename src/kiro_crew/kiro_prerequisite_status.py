@@ -171,15 +171,15 @@ def _is_off_path_override(binary: str, environ: Mapping[str, str]) -> bool:
 # seal, and the next app update is what replaces it.
 BUNDLED_CLI_UPDATE_REFUSAL = (
     "This kiro-cli ships inside the desktop app and is updated with the app, "
-    "not on its own. Update Kiro Crew to get a newer kiro-cli."
+    "not on its own. Update Sao Khuê to get a newer kiro-cli."
 )
 # The command that updates the CLI in place. Unlike the install/sign-in steps
-# above, which Kiro Crew only ever NAMES for the user to run, this one IS run on
+# above, which Sao Khuê only ever NAMES for the user to run, this one IS run on
 # the user's behalf (see :meth:`KiroPrerequisiteService.update_cli`): it is the
 # CLI's own self-update subcommand, the same one the auto-update path already
 # invokes, so executing it introduces no new privileged surface — it is not a
 # remote installer script, just the installed binary updating itself. Offered
-# when the installed CLI is too old to expose the ``acp`` subcommand Kiro Crew
+# when the installed CLI is too old to expose the ``acp`` subcommand Sao Khuê
 # drives every session through. A CODE CONSTANT, never a catalog value: a
 # translated command cannot be typed or executed.
 KIRO_CLI_UPDATE_COMMAND = "kiro-cli update"
@@ -229,12 +229,12 @@ class PrerequisiteStatus:
     ready: bool = False
     # Something on the host needs an owner-driven repair before ``ready`` can go
     # true. Only the agent-spec overlay sets it — a missing CLI is NOT a repair
-    # (the user installs it from OFFICIAL_INSTALL_DOCS_URL, which Kiro Crew has no
+    # (the user installs it from OFFICIAL_INSTALL_DOCS_URL, which Sao Khuê has no
     # action for), so a false value here says nothing about ``installed``.
     repair_required: bool = False
     initial_setup_complete: bool = False
     docs_url: str = OFFICIAL_INSTALL_DOCS_URL
-    # What the user runs to sign in. Kiro Crew never runs it for them.
+    # What the user runs to sign in. Sao Khuê never runs it for them.
     login_command: str = KIRO_CLI_LOGIN_COMMAND
     # The organization-SSO alternative, offered next to ``login_command`` so the
     # tier is an explicit choice rather than whichever option the sign-in page
@@ -245,7 +245,7 @@ class PrerequisiteStatus:
     # app's resources rather than the bare name the user's shell would resolve
     # (the bundled copy is not on their PATH).
     bundled_cli: bool = False
-    # Whether the installed CLI exposes the ``acp`` subcommand every Kiro Crew
+    # Whether the installed CLI exposes the ``acp`` subcommand every Sao Khuê
     # session is launched through. Defaults True so nothing regresses when the
     # probe cannot answer (a sandbox refusal, a timeout): those are reported by
     # their own fields, and asserting "too old" off a probe that never ran would
@@ -256,7 +256,7 @@ class PrerequisiteStatus:
     # reinstall: the binary is present and only out of date.
     acp_supported: bool = True
     # What the user's CLI is updated with when ``acp_supported`` is False. Unlike
-    # ``login_command`` (which Kiro Crew only names), this one is also run FOR the
+    # ``login_command`` (which Sao Khuê only names), this one is also run FOR the
     # user by ``update_cli`` — it is the CLI's own in-place self-update. Served in
     # the payload so the UI has one source of truth for the string.
     update_command: str = KIRO_CLI_UPDATE_COMMAND
@@ -323,7 +323,7 @@ class PrerequisiteStatus:
     # The failed probe's exit status, ``None`` when it did not exit (never ran,
     # timed out, sandbox refused) or when it passed.
     probe_status: int | None = None
-    # Kiro Crew's own agent specs (~/.kiro/agents/kirocrew*.json). ``ready``
+    # Sao Khuê's own agent specs (~/.kiro/agents/kirocrew*.json). ``ready``
     # requires these on disk, not merely a viable binary and a good ``whoami``:
     # without them kiro-cli answers every ``session/set_mode`` with
     # "Mode '<name>' not found", so an install missing one cannot run a single
@@ -334,11 +334,11 @@ class PrerequisiteStatus:
     # succeeded. Shown verbatim, untranslated: it names the failing install step,
     # which is the one thing a support conversation actually needs.
     agent_spec_repair_error: str = ""
-    # Kiro Crew's own specs that are PRESENT but which kiro-cli refuses to load.
+    # Sao Khuê's own specs that are PRESENT but which kiro-cli refuses to load.
     # Presence and acceptance are different questions: a spec on disk that the
     # installed kiro-cli rejects is dropped from its agent table entirely, so
     # ``--agent kirocrew`` resolves to the default agent with only a line on
-    # stderr — every Kiro Crew MCP server silently absent from the session. That
+    # stderr — every Sao Khuê MCP server silently absent from the session. That
     # is indistinguishable from a working install to anything that only stats the
     # file, which is why ``missing_agent_specs`` cannot cover it.
     #

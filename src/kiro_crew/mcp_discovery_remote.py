@@ -210,7 +210,7 @@ async def _runtime_grant_present(mcp_url: str, name: str) -> bool | None:
     absent, or unknowable", so the two surfaces cannot disagree about the same
     artifacts, and neither can lose the middle answer.
 
-    The probe holds no token of its own (Kiro Crew stores no credentials), so the
+    The probe holds no token of its own (Sao Khuê stores no credentials), so the
     runtime's own artifacts are the only evidence available, and they are stat-ed
     for presence, never read. ``mcp_grant`` is a leaf module for exactly that
     reason: the derivation is shared with the mint rather than copied, and it
@@ -297,7 +297,7 @@ async def _probe_remote(
                         # 401 (or 403 + WWW-Authenticate). That is the expected
                         # reply, not a fault: the kiro-cli runtime holds the
                         # OAuth token and calls the server fine. The probe never
-                        # sees that token (Kiro Crew keeps no credentials), so
+                        # sees that token (Sao Khuê keeps no credentials), so
                         # report "needs_auth" instead of a misleading error.
                         server.status = "needs_auth"
                         server.error = ""

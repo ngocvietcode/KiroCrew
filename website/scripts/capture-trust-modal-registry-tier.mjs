@@ -42,12 +42,12 @@ const REPO = 'https://git.example.test/community/weather-board.git'
 const REGISTRY = 'community-apps'
 
 const NOT_VETTED = 'Not vetted'
-const LISTING = 'the Kiro Crew team did not vet this listing'
+const LISTING = 'the Sao Khuê team did not vet this listing'
 const CREDENTIALS = 'downloads it with your saved Git sign-in'
 /** Lines of the consent body that must render unchanged at every tier. */
 const KEPT = [
   'has not reviewed its code',
-  'Run its own code inside Kiro Crew',
+  'Run its own code inside Sao Khuê',
   'Trusting the app grants all three',
   'changes nothing: nothing is installed',
   'You can take this back at any time',
@@ -121,7 +121,7 @@ async function frame(context, base, name, tier, expect, theme = 'light') {
   // The source badge names the registry the box names, never the first-party
   // fallback beside a not-vetted warning (#20656).
   // Every frame's app is listed by a third-party registry, whatever its tier.
-  if (text.includes('Kiro Crew registry')) fail('badge shows the first-party fallback for a third-party registry', text)
+  if (text.includes('Sao Khuê registry')) fail('badge shows the first-party fallback for a third-party registry', text)
   if (!(await modal.getByText(REGISTRY, { exact: true }).count())) fail('badge does not name the registry', text)
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
   if (overflow) fail('horizontal overflow', text)

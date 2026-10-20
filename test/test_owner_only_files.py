@@ -1,4 +1,4 @@
-"""Everything Kiro Crew creates in the data home is owner-only: files 0600, directories 0700.
+"""Everything Sao Khuê creates in the data home is owner-only: files 0600, directories 0700.
 
 Every test runs under a ``022`` umask, the usual default, which is the condition
 the defect needed: a file created without an explicit mode lands at ``0644`` and
@@ -8,7 +8,7 @@ to hold on its own (``kiro_crew.owner_only_files`` explains why):
 * creation -- the helpers and the stores that use them create with the mode,
   including SQLite's ``-wal``/``-shm``/``-journal`` sidecars;
 * the root -- the data home itself is ``0700``;
-* the startup sweep -- a fixed list of Kiro Crew's stores is tightened without
+* the startup sweep -- a fixed list of Sao Khuê's stores is tightened without
   following a link, touching a hard-linked file, failing on ``EPERM``/``EROFS``
   or changing anything not on the list, on a worker thread kicked once the
   gateway's listener serves.

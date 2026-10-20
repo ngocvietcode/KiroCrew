@@ -51,14 +51,14 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-# Optional KiroCrew runtime dep (absent when running standalone / in tests).
+# Optional SaoKhue runtime dep (absent when running standalone / in tests).
 # Kept at module top per the imports guideline; guarded at each use site.
 try:
     from kiro_crew.security import redact_credentials, redact_exfiltration_urls  # type: ignore
 except ImportError:  # pragma: no cover - standalone fallback
     redact_credentials = redact_exfiltration_urls = None  # type: ignore
 
-# The shared read-degrade helper is also a Kiro Crew runtime dep. Standalone the
+# The shared read-degrade helper is also a Sao Khuê runtime dep. Standalone the
 # fallback keeps today's silent tolerance so `python3 sage_lib/review_driver.py`
 # still runs; under the gateway the real helper adds the one warning.
 try:
@@ -129,7 +129,7 @@ from sage_lib.worker_response import (  # noqa: E402,F401
 def _redact(text: str) -> str:
     """Scrub credentials + exfiltration URLs from LLM-generated text before it is
     posted to an external surface (the dashboard artifact store). No-op when the
-    KiroCrew redaction lib isn't importable (standalone)."""
+    SaoKhue redaction lib isn't importable (standalone)."""
     if redact_exfiltration_urls is None or redact_credentials is None:
         return text
     return redact_credentials(redact_exfiltration_urls(text)[0])[0]
@@ -696,7 +696,7 @@ def _candidate_ports() -> list[int]:
 
 
 def _probe(base: str, secret: str) -> bool:
-    """True if a KiroCrew gateway is listening at base (any HTTP response, incl.
+    """True if a SaoKhue gateway is listening at base (any HTTP response, incl.
     401/404, means it's there; only connection errors mean it isn't).
 
     Proxy-disabled deliberately: ``_gateway_base`` calls this once per candidate
@@ -765,7 +765,7 @@ def _local_secret(port: int) -> str:
     """
     try:
         # Optional dependency, so function-local: this app also runs STANDALONE,
-        # outside the Kiro Crew package, where this import raises and the
+        # outside the Sao Khuê package, where this import raises and the
         # crew_home() read below is the only resolution available. A module-scope
         # import would make the module itself unimportable there.
         from kiro_crew.config.loader import read_local_secret

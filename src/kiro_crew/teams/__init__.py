@@ -1,4 +1,4 @@
-"""Microsoft Teams channel for KiroCrew via the Bot Framework REST API.
+"""Microsoft Teams channel for SaoKhue via the Bot Framework REST API.
 
 Self-hosted / DM-focused. Inbound activities are POSTed by the Bot Framework to
 a single HTTPS webhook route (``/api/messaging/teams``) registered on the

@@ -259,7 +259,7 @@ class TestUnpoisonRejectedCheckoutRevalidatesSubdirectoryAtWriteTime:
     already made. A build step or ``onInstall`` script — which runs with
     write access to the checkout between some of those gates — can replace
     the subdirectory with a symlink escaping the checkout after that earlier
-    check passed, and this cleanup runs unsandboxed as the Kiro Crew process.
+    check passed, and this cleanup runs unsandboxed as the Sao Khuê process.
     ``_unpoison_rejected_checkout`` must re-verify containment itself, at the
     point of the write, rather than relying on every call site to remember.
     """

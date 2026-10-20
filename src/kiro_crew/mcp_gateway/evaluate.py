@@ -140,7 +140,7 @@ def _launch_fingerprint(command: str, args: list[str]) -> str:
     Non-file arguments (flags, ports, module names) contribute nothing here —
     they are already covered by ``hash_command``, which hashes argv verbatim.
     What this adds is the CONTENT of the files argv points at, which argv itself
-    cannot express, plus the Kiro Crew code fingerprint when the launch runs
+    cannot express, plus the Sao Khuê code fingerprint when the launch runs
     this install's own code (``hashing.runs_install_code``): for such a launch
     the command hash is deliberately the same across releases and argv names no
     file, so the code the release shipped has to enter the identity here.

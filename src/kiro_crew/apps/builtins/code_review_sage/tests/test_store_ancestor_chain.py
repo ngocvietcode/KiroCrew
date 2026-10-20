@@ -12,7 +12,7 @@ guard has two halves, and each test below names which half it exercises:
   which refuses a component swapped after the refusal ran.
 
 The gap between the two halves turns on which NAMES the walk is handed, and gets
-a test for each outcome: closed inside the trees Kiro Crew owns, and open outside
+a test for each outcome: closed inside the trees Sao Khuê owns, and open outside
 them, where a link cannot be told from the operator's own layout.
 """
 
@@ -98,7 +98,7 @@ class TestPlantedLinkRefusedBeforeTheTreeIsBuilt(unittest.TestCase):
         self.assertEqual(first, second)
 
     def test_standalone_without_the_runtime_still_creates_the_chain(self):
-        """``store.py --ensure`` run by a Python without Kiro Crew must not crash."""
+        """``store.py --ensure`` run by a Python without Sao Khuê must not crash."""
         target = self.tmp / "data" / "runs" / "r1" / "report"
 
         with mock.patch.object(store, "_runtime_ensure_directory", None):
@@ -302,7 +302,7 @@ class TestTheWindowBetweenTheRefusalAndTheWalk(unittest.TestCase):
         """With no owned root above it, the chain is resolved whole and followed.
 
         Deliberate, and the same trade the refusal itself makes there: outside the
-        trees Kiro Crew creates, a link is the operator's layout -- a data home on
+        trees Sao Khuê creates, a link is the operator's layout -- a data home on
         another disk, ``/tmp`` itself on macOS -- and refusing every one of them
         would break a caller that passes its own ``root``. Asserted so the
         boundary is a decision on the record rather than a belief.

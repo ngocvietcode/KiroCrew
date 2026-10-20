@@ -742,7 +742,7 @@ class TestFindOrphanMcpCandidates:
         assert result == []
 
     def test_does_not_match_builder_mcp(self) -> None:
-        """builder-mcp is NOT a process Kiro Crew spawns in this public fork.
+        """builder-mcp is NOT a process Sao Khuê spawns in this public fork.
 
         Regression guard: the upstream project's reaper lists ``builder-mcp`` (an
         internal server it manages), but the de-Amazoned fork never spawns

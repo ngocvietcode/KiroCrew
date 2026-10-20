@@ -1,5 +1,5 @@
 /**
- * Coverage for SessionGridView — Kiro Crew's native in-place "terminal split"
+ * Coverage for SessionGridView — Sao Khuê's native in-place "terminal split"
  * chat surface.
  *
  * The view is thin glue over useSessionGrid, and the parts worth pinning down are

@@ -772,7 +772,7 @@ class LedgerEntry:
     #: field in append-only JSONL, and the reason adding this now costs nothing.
     #:
     #: Why it earns a field at all: ``ledger.jsonl`` is the one artifact that LEAVES the
-    #: machine. ``ledger_sync`` git-pushes it and teammates on different Kiro Crew builds
+    #: machine. ``ledger_sync`` git-pushes it and teammates on different Sao Khuê builds
     #: pull it, so an older instance can be handed a row a newer one wrote. Without a
     #: version there is no way to notice: the reader coerces what it recognises, defaults
     #: what it does not, and silently treats a row it only partly understands as fully

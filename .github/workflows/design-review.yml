@@ -447,7 +447,7 @@ jobs:
             the same failure, so readiness already holds); cap at CONCERNS and
             name the re-run.
 
-            REPO CONTEXT: KiroCrew is an open-source AI agent platform (Python
+            REPO CONTEXT: SaoKhue is an open-source AI agent platform (Python
             backend + React/TS dashboard), a de-Amazoned public fork. Do NOT flag
             the absence of Brazil/AUTOSDE build tooling or internal-only infra.
 

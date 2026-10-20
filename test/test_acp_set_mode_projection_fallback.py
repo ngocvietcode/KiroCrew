@@ -464,7 +464,7 @@ async def test_an_in_process_queue_timeout_is_not_blamed_on_another_process(
 
     message = str(refused.value)
     assert "could not be prepared" in message
-    assert "another Kiro Crew process" not in message
+    assert "another Sao Khuê process" not in message
     assert "this gateway" in message
     assert kiro.set_modes == []
     rt.terminate_session.assert_awaited_once_with("s1")
@@ -491,7 +491,7 @@ async def test_a_cross_process_lock_holder_is_still_named(
     monkeypatch.setattr(skill_projection.platform_compat, "file_lock", held_elsewhere)
     rt, kiro = _runtime({FRESH_ALIAS})
 
-    with pytest.raises(AcpRuntimeError, match="held by another Kiro Crew process"):
+    with pytest.raises(AcpRuntimeError, match="held by another Sao Khuê process"):
         await _with_reader(rt, _activate_with_real_preparation(rt))
 
     assert kiro.set_modes == []
@@ -518,7 +518,7 @@ async def test_a_busy_settings_lock_blames_no_process(
 
     message = str(refused.value)
     assert "a lock or file it needs was unavailable" in message
-    assert "another Kiro Crew process" not in message
+    assert "another Sao Khuê process" not in message
     assert "this gateway" not in message
     assert kiro.set_modes == []
 
@@ -547,7 +547,7 @@ async def test_a_bad_alias_lock_file_blames_no_process(
 
     message = str(refused.value)
     assert "a lock or file it needs was unavailable" in message
-    assert "another Kiro Crew process" not in message
+    assert "another Sao Khuê process" not in message
     assert kiro.set_modes == []
 
 
@@ -577,5 +577,5 @@ async def test_a_file_lock_error_that_is_not_a_timeout_blames_no_process(
 
     message = str(refused.value)
     assert "a lock or file it needs was unavailable" in message
-    assert "another Kiro Crew process" not in message
+    assert "another Sao Khuê process" not in message
     assert kiro.set_modes == []

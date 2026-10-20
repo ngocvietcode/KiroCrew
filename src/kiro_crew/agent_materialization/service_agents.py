@@ -1,4 +1,4 @@
-"""The agents Kiro Crew's own services drive: lite, guest, knowledge and research.
+"""The agents Sao Khuê's own services drive: lite, guest, knowledge and research.
 
 ``kirocrew-lite`` is the cheap background helper; ``kirocrew-guest`` is the tool-less
 agent a non-operator channel sender talks to, a trust boundary that mounts nothing;

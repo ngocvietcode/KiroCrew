@@ -113,7 +113,7 @@ off, restart recovery, failed commit, failed read and pre-upgrade retirement.
 
 ## Summary
 
-Every scheduled thing in Kiro Crew today is a **task with an end**. A cron job
+Every scheduled thing in Sao Khuê today is a **task with an end**. A cron job
 runs its prompt and stops. A monitor loop polls until its exit condition and
 calls `autonudge_stop`. A heartbeat entry is dispatched and removed. The system
 has no way to express an agent that is simply *alive* — one that holds a

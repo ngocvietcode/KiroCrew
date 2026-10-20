@@ -267,9 +267,12 @@ const PRIMITIVES = Object.keys(PRIMITIVE_MAP)
  *  here — the exact drift class the gate exists to catch. */
 export const EXTRACTABLE_PRIMITIVE_TAGS: readonly string[] = PRIMITIVES
 
-/** Convert a label to a kebab-case id segment. */
+/** Convert a label to a kebab-case id segment. Diacritics fold onto their base
+ *  letter first, so "Sao Khuê" becomes `sao-khue` rather than losing the letter. */
 function toKebab(s: string): string {
   return s
+    .normalize('NFKD')
+    .replace(/\p{M}+/gu, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
@@ -316,7 +319,7 @@ function extractStringProp(source: string, propName: string): string | undefined
   // duplicates DEFAULT_PRODUCT_NAME in `src/i18n/index.ts`: importing that
   // module here would drag i18next and every catalog into a build-time
   // script for one constant.
-  if (tMatch) return getEnCatalog()[tMatch[1]]?.replaceAll('{{productName}}', 'Kiro Crew')
+  if (tMatch) return getEnCatalog()[tMatch[1]]?.replaceAll('{{productName}}', 'Sao Khuê')
   return undefined
 }
 

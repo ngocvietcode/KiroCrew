@@ -150,7 +150,7 @@ _UNIT = f"{SERVICE_NAME}.service"
 # A unit file the installer wrote: it carries the managed marker `uninstall`
 # decides ownership by, wherever the test puts it.
 _OURS_UNIT_TEXT = (
-    '[Unit]\nDescription=Kiro Crew gateway\n[Service]\nEnvironment="KIROCREW_SERVICE_MANAGED=1"\n'
+    '[Unit]\nDescription=Sao Khuê gateway\n[Service]\nEnvironment="KIROCREW_SERVICE_MANAGED=1"\n'
 )
 
 
@@ -281,7 +281,7 @@ def _fake_systemctl(
                 )
             rc = 0 if props["ActiveState"] == "active" else 3
             block = (
-                f"● {_UNIT} - Kiro Crew gateway ({scope} scope block)\n"
+                f"● {_UNIT} - Sao Khuê gateway ({scope} scope block)\n"
                 f"     Active: {props['ActiveState']} ({props['SubState']})\n"
             )
             return subprocess.CompletedProcess(tokens, rc, block, "")

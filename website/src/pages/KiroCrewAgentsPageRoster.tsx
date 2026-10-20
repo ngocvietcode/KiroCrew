@@ -117,7 +117,7 @@ export function CrewSourceBadge({ source }: { source: string }) {
   return <SourceBadge source={source}>{label}</SourceBadge>
 }
 
-/** Kiro Crew is product-owned; every other source carries useful provenance. */
+/** Sao Khuê is product-owned; every other source carries useful provenance. */
 export function showsCrewSourceBadge(source?: string): source is string {
   return Boolean(source && source !== 'kirocrew')
 }

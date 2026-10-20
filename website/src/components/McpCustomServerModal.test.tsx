@@ -53,7 +53,7 @@ describe('McpCustomServerModal', () => {
     const onClose = vi.fn()
     await addOne(onClose)
     expect(await screen.findByTestId('agent-spec-not-rewritten')).toHaveTextContent(
-      'Saved, but this copy of Kiro Crew could not update the agent config',
+      'Saved, but this copy of Sao Khuê could not update the agent config',
     )
     expect(onClose).not.toHaveBeenCalled()
     // The server is already saved: a second Add would only collide with it.

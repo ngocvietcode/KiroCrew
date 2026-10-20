@@ -1,6 +1,6 @@
 """Atomic file write using unique temp filenames to avoid race conditions.
 
-All atomic-write sites in KiroCrew should use this helper instead of
+All atomic-write sites in SaoKhue should use this helper instead of
 deterministic ``.tmp`` filenames, which cause ENOENT when concurrent
 writers target the same file.
 """
@@ -799,7 +799,7 @@ def _resolved_or_none(path: Path) -> Path | None:
 
 
 def _owned_roots() -> tuple[Path, ...]:
-    """The directory roots Kiro Crew itself creates and owns.
+    """The directory roots Sao Khuê itself creates and owns.
 
     Resolution goes through ``config.paths`` lazily: importing it at module scope
     would tie this leaf helper to the config package, and calling it at import
@@ -834,7 +834,7 @@ def _link_trust_anchor(parent: Path) -> tuple[Path, tuple[str, ...]] | None:
     symlinked ``$HOME`` (``/home/u -> /local/home/u``) or a data home relocated
     onto another disk are both supported, and ``config/loader_document.py`` documents a
     symlinked ``config.json`` as a normal setup. BELOW the anchor every
-    directory is created by Kiro Crew's own ``mkdir`` calls, so a link there was
+    directory is created by Sao Khuê's own ``mkdir`` calls, so a link there was
     planted by something else.
 
     The anchor comes back in *parent*'s own LEXICAL namespace together with the
@@ -906,7 +906,7 @@ def anchored_parent(parent: Path | str) -> str | None:
     here is not ours" starts has one home. At or above the anchor a link is the
     operator's layout -- a symlinked ``$HOME``, a data home on another disk --
     and resolving there is both required and safe; below it every directory is
-    one Kiro Crew created itself.
+    one Sao Khuê created itself.
 
     ``None`` when *parent* is outside every owned root, or the anchor cannot be
     resolved. There is no trusted place to start the walk in either case, so the
@@ -966,7 +966,7 @@ def _refuse_linked_parent(path: Path) -> None:
     parent = path.parent
     split = _link_trust_anchor(parent)
     if split is None:
-        # Outside every directory Kiro Crew creates, a link is indistinguishable
+        # Outside every directory Sao Khuê creates, a link is indistinguishable
         # from the operator's own layout, so the walk stops at the first
         # ancestor that ALREADY exists: everything below that is a directory
         # this write would create itself, so a link there cannot be ours, while
@@ -1369,7 +1369,7 @@ def atomic_write_at(
     to *name* relative to that SAME descriptor, so neither an ancestor swap nor a
     planted final symlink can redirect content to another inode. POSIX-only by
     design: the callers need descriptor-relative traversal, which Windows does
-    not expose and Kiro Crew's pod backend does not use there.
+    not expose and Sao Khuê's pod backend does not use there.
     """
     if not platform_compat.IS_POSIX:
         raise NotImplementedError("descriptor-relative atomic writes require POSIX dir_fd support")

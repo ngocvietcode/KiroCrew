@@ -162,7 +162,7 @@ def test_both_pages_state_the_shipped_count(doc_text: str, index_text: str) -> N
         "and update both pages."
     )
     assert (
-        f"{expected} apps ship inside the Kiro Crew package" in doc_text
+        f"{expected} apps ship inside the Sao Khuê package" in doc_text
     ), f"apps.md's lead paragraph must say {expected!r} — {total} apps ship today."
     assert (
         f"{expected} apps ship in the package" in index_text
@@ -210,7 +210,7 @@ def test_the_page_names_the_apps_that_need_the_desktop_app(doc_text: str) -> Non
         f"the set of desktop-app-only shipped apps changed to {desktop}; update the "
         "desktop-app sentence in apps.md and this expectation"
     )
-    sentence = [ln for ln in doc_text.splitlines() if "need the Kiro Crew **desktop app**" in ln]
+    sentence = [ln for ln in doc_text.splitlines() if "need the Sao Khuê **desktop app**" in ln]
     assert sentence, "apps.md no longer states which shipped apps need the desktop app"
     for name in desktop:
         assert (

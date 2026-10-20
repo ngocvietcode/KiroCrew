@@ -414,7 +414,7 @@ def optional_dep_path(name: str) -> str | None:
     has none of the three.
 
     That order is what keeps ``/deps`` truthful: resolving a system install through
-    the managed probe would report LibreOffice as installed BY Kiro Crew, which the UI
+    the managed probe would report LibreOffice as installed BY Sao Khuê, which the UI
     renders as a claim about the host that this app never made.
 
     Returns ``None`` when the tool is available from no source.

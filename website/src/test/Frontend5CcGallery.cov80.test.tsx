@@ -7,7 +7,7 @@
  * withhold) the host, then import it.
  *
  * The ordering is the contract worth pinning: the theme must be adopted BEFORE
- * the first paint, because the gallery is styled from Kiro Crew's variables and
+ * the first paint, because the gallery is styled from Sao Khuê's variables and
  * painting ahead of them shows fallback colours and then snaps. And with no host
  * element the module must do nothing at all rather than throw during startup.
  */

@@ -242,10 +242,10 @@ class TestListServers:
     def test_list_surfaces_kirocrew_disabled_servers_as_disabled_rows(
         self, tmp_path, monkeypatch
     ) -> None:
-        """KiroCrew-scope disabled entries get a row marked disabled.
+        """SaoKhue-scope disabled entries get a row marked disabled.
 
         Consent-disabled installs/custom adds land with ``disabled: true``
-        in the KiroCrew scope; the table's enable action is the consent
+        in the SaoKhue scope; the table's enable action is the consent
         step, so the row must exist."""
         monkeypatch.setenv("KIROCREW_PROJECT_DIR", str(tmp_path))
         monkeypatch.setattr("kiro_crew.mcp_discovery.Path.home", lambda: tmp_path)
@@ -652,7 +652,7 @@ class TestListServers:
         self, tmp_path, monkeypatch
     ) -> None:
         """Step 3c records WHICH kind of scope muted the row: any scope but the
-        Kiro Crew store is "shared" -- a disable the dashboard cannot lift by
+        Sao Khuê store is "shared" -- a disable the dashboard cannot lift by
         editing the store. The ``GET /api/mcp`` stamping holds only the
         Kiro-global and store maps, so a server disabled in a PROVIDER global and
         in the store is, to it, a store-only disable: without the row's verdict it

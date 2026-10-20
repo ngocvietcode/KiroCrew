@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  KiroCrew One-Click Deploy - per-app backend (M2.1). A Lambda with an AWS_IAM
+  SaoKhue One-Click Deploy - per-app backend (M2.1). A Lambda with an AWS_IAM
   Function URL that is invoked ONLY by the shared CloudFront distribution via
   Origin Access Control (SigV4). There is NO public naked URL - the public entry
   is CloudFront at /<slug>/api/*. One stack per slug: kirocrew-deploy-app-<slug>.

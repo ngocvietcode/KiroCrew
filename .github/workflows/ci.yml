@@ -1722,7 +1722,7 @@ jobs:
         # nothing -- the same failure mode the deselects created.
         run: unshare --mount --map-root-user true
 
-      - name: Verify Kiro Crew's own probe agrees with the kernel
+      - name: Verify Sao Khuê's own probe agrees with the kernel
         # The probe is stricter than the bare `unshare` above: it also performs the
         # launcher's propagation mount inside the new namespace, because a host
         # that grants the namespaces and refuses that mount cannot build the

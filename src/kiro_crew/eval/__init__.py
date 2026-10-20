@@ -1,1 +1,1 @@
-"""KiroCrew multi-session evaluation harness."""
+"""SaoKhue multi-session evaluation harness."""

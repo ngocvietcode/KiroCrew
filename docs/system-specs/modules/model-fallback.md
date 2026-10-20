@@ -2,7 +2,7 @@
 
 `agent.fallback_model` controls an optional retry after an active model exhausts
 its transient-error budget before activity begins. The implementation is
-Kiro Crew-side: `llm_helpers.advance_fallback_candidate` changes the model through
+Sao Khuê-side: `llm_helpers.advance_fallback_candidate` changes the model through
 the substitute `set_model` seam, and `test/test_llm_helpers_fallback_chain.py` pins that a
 successful swap is observable before it is recorded.
 

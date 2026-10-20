@@ -68,7 +68,7 @@ def _markers(ports: list[int]):
 
 
 def _owned(ports: list[int]):
-    """Pretend a verified Kiro Crew gateway listens on each of *ports*."""
+    """Pretend a verified Sao Khuê gateway listens on each of *ports*."""
     return patch("kiro_crew.cli_server._gateway_owns_port", side_effect=lambda p: p in set(ports))
 
 

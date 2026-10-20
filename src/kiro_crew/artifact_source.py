@@ -97,7 +97,7 @@ def project_root_marker(directory: str) -> str | None:
     """
     if os.path.dirname(directory) == directory:
         return None
-    # A HOME directory is never a project root either. KiroCrew's OWN data home
+    # A HOME directory is never a project root either. SaoKhue's OWN data home
     # is ``~/.kiro/crew``, so ``~/.kiro`` exists for every user -- which would
     # make the entire home directory a "project" and turn a loose ``~/notes.md``
     # into a LIVE link whose artifact edits overwrite the original. The same

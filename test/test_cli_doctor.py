@@ -968,7 +968,7 @@ class TestSelectedBackendProjectionRow:
         cli_doctor._doctor_selected_backend_projection(self._cfg("some-harness"))
         out = capsys.readouterr().out
         assert "some-harness" in out
-        assert "none of Kiro Crew's own tools" in out
+        assert "none of Sao Khuê's own tools" in out
         assert "Would need:" in out
         assert "Tracked at:" in out
 
@@ -1016,7 +1016,7 @@ class TestSelectedBackendProjectionRow:
     def test_the_real_pi_declaration_prints_no_channel_row(self, capsys):
         """Read off the SHIPPED declaration: pi's servers arrive, so nothing is said."""
         cli_doctor._doctor_selected_backend_projection(self._cfg("pi"))
-        assert "carries none of Kiro Crew's own tools" not in capsys.readouterr().out
+        assert "carries none of Sao Khuê's own tools" not in capsys.readouterr().out
 
     def test_a_backend_that_does_receive_its_servers_prints_nothing(self, capsys):
         """Silence is the whole point on a stock install.

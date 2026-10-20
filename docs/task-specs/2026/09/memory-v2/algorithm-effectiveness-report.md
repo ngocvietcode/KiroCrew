@@ -176,7 +176,7 @@ python -m kiro_crew.eval.bench.member_v2 --model-path <existing.gguf> --json <re
 
 ### 研究依据与实现选择
 
-[LongMemEval](https://arxiv.org/html/2410.10813v2) 将信息提取、跨会话推理、时间推理、知识更新和拒答分别评测，并研究事实扩展索引与时间过滤。它也指出，把所有经历压成事实会损失上下文。因此本实现保留原始经历，在已有事实旁增加明确身份与有效期。[LangChain 的记忆设计文档](https://docs.langchain.com/oss/python/concepts/memory) 说明了集合式记忆与更新协调的取舍；[Mem0](https://arxiv.org/html/2504.19413v1) 的提取与更新分离提供了参考。这里没有引入图数据库或额外服务，也没有把论文中的收益百分比套用到 Kiro Crew。
+[LongMemEval](https://arxiv.org/html/2410.10813v2) 将信息提取、跨会话推理、时间推理、知识更新和拒答分别评测，并研究事实扩展索引与时间过滤。它也指出，把所有经历压成事实会损失上下文。因此本实现保留原始经历，在已有事实旁增加明确身份与有效期。[LangChain 的记忆设计文档](https://docs.langchain.com/oss/python/concepts/memory) 说明了集合式记忆与更新协调的取舍；[Mem0](https://arxiv.org/html/2504.19413v1) 的提取与更新分离提供了参考。这里没有引入图数据库或额外服务，也没有把论文中的收益百分比套用到 Sao Khuê。
 
 V1 和 V2 各自在本库中增加 `memory_record_meta` 与 `memory_revisions`，保留已有物理表、成员隔离与原始内容。事实身份采用明确的 subject / predicate / scope；类别、来源、观察时间和有效区间帮助区分同一事实的更新与不同实体的相似描述。修订历史保留修改前后内容。
 

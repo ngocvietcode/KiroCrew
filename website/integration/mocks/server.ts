@@ -105,7 +105,7 @@ export const mockMcpServers = [
     disabledTools: ['post_message'],
     command: 'node /path/to/slack-mcp',
     presence: { kirocrew: false, kiroGlobal: false, ccGlobal: false },
-    // Switched off in Kiro Crew's OWN store (presence.kirocrew false is that
+    // Switched off in Sao Khuê's OWN store (presence.kirocrew false is that
     // state), so the row keeps its controls. The backend says which config
     // switched a row off in `disabledIn`; the table renders `shared` inert and
     // `kirocrew` as this consent row.
@@ -135,7 +135,7 @@ export const mockMemoryGraph = {
     { id: 'p1', label: 'Use TypeScript', group: 'preference', title: 'Use TypeScript' },
     { id: 'p2', label: 'Follow Amazon style guide', group: 'preference', title: 'Follow Amazon style guide' },
     { id: 'pr1', label: 'KiroCrew', group: 'project', title: 'KiroCrew' },
-    { id: 'pr2', label: 'KiroCrew: AI-powered assistant', group: 'project', title: 'AI-powered development assistant' },
+    { id: 'pr2', label: 'SaoKhue: AI-powered assistant', group: 'project', title: 'AI-powered development assistant' },
     { id: 's1', label: 'pref.editor', group: 'semantic', title: 'pref.editor = vim' },
     { id: 'l1', label: 'Check CRs before building', group: 'lesson', title: 'Always check for existing open CRs' },
     { id: 'h1', label: '2026-03-25', group: 'history', title: '2026-03-25 work session' },

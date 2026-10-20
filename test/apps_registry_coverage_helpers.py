@@ -22,7 +22,7 @@ from kiro_crew.apps.manifest import AppManifest
 #: as `manager.gateway_data_dir_obstruction` spells it -- the transaction must carry it
 #: unchanged, so it is pinned here as text.
 _DATA_IS_A_FILE = (
-    "`data` in the app tree is a file; Kiro Crew creates the app's data directory at "
+    "`data` in the app tree is a file; Sao Khuê creates the app's data directory at "
     "that path and cannot install beside it."
 )
 

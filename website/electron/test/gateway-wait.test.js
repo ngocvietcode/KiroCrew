@@ -147,7 +147,7 @@ test("waitForGateway aborts when the window is gone", async () => {
 // the backend. Prefixing "could not be launched" would open with failure
 // vocabulary under a title that says the install is still finishing.
 test("describeGatewayFailure: an incomplete bundle passes its message through bare", () => {
-  const msg = "Kiro Crew's bundled Python runtime is still being installed — retry.";
+  const msg = "Sao Khuê's bundled Python runtime is still being installed — retry.";
   assert.strictEqual(describeGatewayFailure({ error: msg, incompleteBundle: true }), msg);
 });
 
@@ -279,9 +279,9 @@ test("describeGatewayFailure: an occupied port is named, not reported as a faile
   // "Stop whatever is on port 5476" is an instruction only a reader who already
   // knows how to find a listener can carry out; for everyone else it is the one
   // exit this state names and it is unusable. So the likeliest occupant is named
-  // -- an orphan from a terminal-started Kiro Crew, which is also what the
+  // -- an orphan from a terminal-started Sao Khuê, which is also what the
   // retired-flag path says produces it -- together with an action anyone can take.
-  assert.match(s, /another Kiro Crew started from a terminal/);
+  assert.match(s, /another Sao Khuê started from a terminal/);
   assert.match(s, /quit that one/);
   assert.doesNotMatch(s, /Stop whatever is on port/);
 });
@@ -293,11 +293,11 @@ test("describeGatewayFailure: a failed local-start attempt is acknowledged, not 
   });
   assert.match(s, /did not finish/);
   assert.match(s, /"Run a local gateway" setting stays on/);
-  // The remedy has to name the control that carries it out. "launching Kiro Crew
+  // The remedy has to name the control that carries it out. "launching Sao Khuê
   // again" left a reader unsure whether Quit was the way to do that, or whether
   // the missing button was an accident.
   assert.match(s, /choose Start Local Gateway to try again/);
-  assert.doesNotMatch(s, /choose Quit and then open Kiro Crew again/);
+  assert.doesNotMatch(s, /choose Quit and then open Sao Khuê again/);
   // The acknowledgement has to LEAD. Every branch shares the crew advice, so a
   // reopened dialog that starts with it repeats three identical sentences and
   // reads as nothing having happened, which buries the one thing that changed.
@@ -503,7 +503,7 @@ test("describeGatewayFailure: a foreign holder asks only for the thing that free
   assert.match(s, /Port 5476/);
   assert.match(s, /served by a program this app did not start/);
   assert.match(s, /no remote crew saved for that port/);
-  // It may BE a Kiro Crew gateway, reached over a tunnel, so saving its address
+  // It may BE a Sao Khuê gateway, reached over a tunnel, so saving its address
   // is the first remedy and must be named -- in words that say what the click
   // commits to, because a reader who cannot tell will not press it.
   assert.match(s, /choose Add Remote Crew and fill in its address/);
@@ -578,7 +578,7 @@ test("tailLines on empty/null input", () => {
 
 test("isPortInUse detects a port-bind failure", () => {
   assert.strictEqual(
-    isPortInUse("17:57:53 ERROR kiro_crew.dashboard.server: Port 7788 already in use -- is another KiroCrew gateway running?"),
+    isPortInUse("17:57:53 ERROR kiro_crew.dashboard.server: Port 7788 already in use -- is another SaoKhue gateway running?"),
     true,
   );
   assert.strictEqual(isPortInUse("OSError: [Errno 48] Address already in use"), true);

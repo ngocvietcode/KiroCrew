@@ -606,7 +606,7 @@ Provider tiers:
    entries (a Jira "space", a Linear team) and item-level pins (one ticket)
    are both just provider config — `items:` narrows scope, it does not change
    the shape.
-3. **Third-party providers**: a Kiro Crew app can contribute a provider the same
+3. **Third-party providers**: a Sao Khuê app can contribute a provider the same
    way apps contribute skills and crons today, and a generic `mcp` provider
    wraps any MCP server as a source (weaker caching/search federation, but an
    escape hatch for long-tail systems).
@@ -878,7 +878,7 @@ An install that never creates a project sees no new behavior.
 
 1. **Third-party provider packaging** (blocks P2): sources are pluggable
    behind the provider SPI — decided. What remains open is how *third-party*
-   providers ship: as Kiro Crew app contributions (like skills/crons today), as
+   providers ship: as Sao Khuê app contributions (like skills/crons today), as
    the generic `mcp` provider only, or both. App-contributed providers get
    full caching/search federation but need a trust story; the `mcp` provider
    is weaker but needs no new packaging surface.

@@ -299,7 +299,7 @@ async def _write_env_or_roll_back(
 def _wide_env_refusal(exc: _loader.EnvFileWideEncodingError) -> web.HTTPConflict:
     """The response for a channel save refused because ``.env`` is wide-encoded."""
     message = (
-        f"{_loader.env_path()} is saved as {exc.wide_encoding}, which Kiro Crew "
+        f"{_loader.env_path()} is saved as {exc.wide_encoding}, which Sao Khuê "
         "cannot read. Re-save it as UTF-8 and save again. The .env was not changed."
     )
     return web.HTTPConflict(

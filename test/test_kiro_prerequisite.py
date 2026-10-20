@@ -630,7 +630,7 @@ class TestKiroPrerequisiteHelpers:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        bundled_dir = tmp_path / "Kiro Crew" / "kiro-cli"
+        bundled_dir = tmp_path / "Sao Khuê" / "kiro-cli"
         binary = bundled_dir / BUNDLED_KIRO_CLI_WINDOWS_ENTRY
         _make_executable(binary)
         monkeypatch.setattr(platform_compat, "IS_WINDOWS", True)

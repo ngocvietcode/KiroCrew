@@ -3,7 +3,7 @@
 The failure this guards is the one the packaging contract was written around: a
 bundle that is built, digested and handed to the task, then never read, so the
 deployment serves a default agent while every gate is green. So the assertions
-here are about WHERE each entry lands (the paths verified against the Kiro Crew
+here are about WHERE each entry lands (the paths verified against the Sao Khuê
 source) and that each refusal actually fires.
 
 Every refusal test is a MUTATION test: it starts from a bundle the installer
@@ -119,7 +119,7 @@ def build_bundle(
     return root
 
 
-# --- happy path: the bundle lands where Kiro Crew reads it ------------------
+# --- happy path: the bundle lands where Sao Khuê reads it ------------------
 
 
 def test_install_lays_the_bundle_out_where_kirocrew_reads(tmp_path):
@@ -130,7 +130,7 @@ def test_install_lays_the_bundle_out_where_kirocrew_reads(tmp_path):
     payload = bundle_mod.install_bundle(settings, agents_dir=agents)
 
     # agent.json -> <kiro agents>/crew-<crew>.json, inside the crew namespace that
-    # keeps the install off the specs Kiro Crew derives. The declared name moves with
+    # keeps the install off the specs Sao Khuê derives. The declared name moves with
     # the filename and is the ONLY field that differs from the source;
     # ``test_supervisor_bundle_crew_namespace.py`` owns that pin.
     agent_dst = agents / "crew-frontdesk.json"

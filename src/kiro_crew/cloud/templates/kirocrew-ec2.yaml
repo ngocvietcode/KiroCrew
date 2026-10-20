@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  KiroCrew self-hosted gateway on a single EC2 instance in the user's own AWS
+  SaoKhue self-hosted gateway on a single EC2 instance in the user's own AWS
   account. Reached over SSM Session Manager (no inbound ports, no SSH key).
   Managed by `kirocrew cloud`. Delete this stack to remove all resources.
 
@@ -78,7 +78,7 @@ Parameters:
     Default: ""
     AllowedPattern: "^$|^[a-z0-9.-]{3,63}$"
     Description: >-
-      S3 bucket holding the KiroCrew source tarball uploaded by the launcher.
+      S3 bucket holding the SaoKhue source tarball uploaded by the launcher.
       When set, the instance downloads the source from S3 (using its IAM role);
       no GitHub access needed. Empty = fall back to a public git clone.
   SourceKey:
@@ -259,7 +259,7 @@ Resources:
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Sub "KiroCrew ${StackTag} - SSM-only (no inbound by default)"
+      GroupDescription: !Sub "SaoKhue ${StackTag} - SSM-only (no inbound by default)"
       VpcId: !Ref VpcId
       SecurityGroupEgress:
         - IpProtocol: "-1"
@@ -281,7 +281,7 @@ Resources:
       CidrIp: !Ref AllowSshCidr
       Description: SSH fallback from the user's CIDR
 
-  # --- The instance. UserData installs KiroCrew + kiro-cli + the systemd service
+  # --- The instance. UserData installs SaoKhue + kiro-cli + the systemd service
   #     and signals the WaitCondition when the gateway is healthy (or fails it
   #     with the tail of the setup log, so the stack rolls back cleanly).
   Instance:
@@ -323,7 +323,7 @@ Resources:
           AssociatePublicIpAddress: !If [WantPublicIp, true, false]
           SubnetId: !Ref SubnetId
           GroupSet: [!Ref InstanceSecurityGroup]
-      # Enforce IMDSv2 (token-required) and a hop limit of 1. KiroCrew runs a
+      # Enforce IMDSv2 (token-required) and a hop limit of 1. SaoKhue runs a
       # prompt-injectable agent that executes arbitrary tools, so an SSRF or
       # injection that reaches 169.254.169.254 must NOT be able to read the
       # instance role's STS credentials via unauthenticated IMDSv1.
@@ -512,7 +512,7 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          # Kiro Crew EC2 bootstrap (cloud-init, first boot, root). EC2 caps
+          # Sao Khue EC2 bootstrap (cloud-init, first boot, root). EC2 caps
           # decoded UserData at 16384 bytes AFTER !Sub expansion, so this
           # script carries only what the instance needs: the rationale for
           # every non-obvious choice lives in the template comments right
@@ -530,7 +530,7 @@ Resources:
             install -m 0700 "$0" "$BOOTSTRAP_SCRIPT"
             cat > /etc/systemd/system/kirocrew-bootstrap.service <<'UNIT'
           [Unit]
-          Description=Kiro Crew resumable bootstrap
+          Description=Sao Khue resumable bootstrap
           After=network-online.target
           Wants=network-online.target
 
@@ -551,7 +551,7 @@ Resources:
           mkdir -p "$BOOTSTRAP_STATE"
           [ -f "$SIGNAL_DONE" ] && exit 0
           exec >>/var/log/kirocrew-setup.log 2>&1
-          echo "=== KiroCrew bootstrap starting $(date -u) ==="
+          echo "=== SaoKhue bootstrap starting $(date -u) ==="
 
           HANDLE="${WaitHandle}"
           LOG=/var/log/kirocrew-setup.log
@@ -664,7 +664,7 @@ Resources:
           sudo -u $RUN_USER bash -lc 'command -v kiro-cli >/dev/null 2>&1 || [ -x "$HOME/.local/bin/kiro-cli" ] || [ -x /usr/local/bin/kiro-cli ]' \
             || fail "kiro-cli did not install (the chat backend would not work)"
 
-          echo "--- fetching + installing KiroCrew ---"
+          echo "--- fetching + installing SaoKhue ---"
           # S3 source preferred, git clone fallback. Values are inlined into a
           # script file to dodge sudo env_reset: see "Source fetch" above.
           cat > /tmp/kcfetch.sh <<KCFETCH
@@ -725,7 +725,7 @@ Resources:
           KIROCREW_BIN=$(sudo -u $RUN_USER bash -lc 'command -v kirocrew || echo $HOME/.local/bin/kirocrew')
           cat > /etc/systemd/system/kirocrew.service <<UNIT
           [Unit]
-          Description=KiroCrew AI Agent Gateway
+          Description=SaoKhue AI Agent Gateway
           After=network-online.target
           Wants=network-online.target
 
@@ -761,7 +761,7 @@ Resources:
           done
           [ "$ok" = "1" ] || fail "gateway did not become healthy within 5 minutes"
 
-          echo "=== KiroCrew bootstrap complete $(date -u) ==="
+          echo "=== SaoKhue bootstrap complete $(date -u) ==="
           signal_ok=0
           for attempt in 1 2 3; do
             if /opt/aws/bin/cfn-signal -e 0 -r "kirocrew healthy" "$HANDLE"; then

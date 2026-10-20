@@ -180,11 +180,11 @@ class AgentConfig:
             "applies to IAM Identity Center and API-key sign-ins). In registry "
             "mode the client connects ONLY to mcpServers entries carrying "
             "'type': \"registry\" that resolve to a catalog entry of the same "
-            "name, so Kiro Crew stamps that marker on the servers it manages. "
+            "name, so Sao Khuê stamps that marker on the servers it manages. "
             "Leave false on a personal account: with no registry configured the "
             "filter inverts and registry-marked entries are the ones dropped. "
             "The administrator must also allow-list, by those exact names, every "
-            "managed kirocrew-* server Kiro Crew mounts: kirocrew-core, "
+            "managed kirocrew-* server Sao Khuê mounts: kirocrew-core, "
             "kirocrew-cron and kirocrew-computer by default, plus any opt-in "
             "server (e.g. kirocrew-dashboard, kirocrew-work) an agent is granted.",
         ),
@@ -243,12 +243,12 @@ class AgentConfig:
     kas_bundle: bool = field(
         default=False,
         metadata=_meta(
-            "KAS: run Kiro Crew's own engine bundle",
+            "KAS: run Sao Khuê's own engine bundle",
             "When true, the 'kas' backend spawns the @kiro/agent build that "
             "'kirocrew kas install' laid down under the data home (engines/kas/) "
             "with its own Node runtime, instead of reaching the engine through "
             "kiro-cli's ACP relay. kiro-cli is not needed on this route, and the "
-            "engine always takes its credential from Kiro Crew's own sign-in "
+            "engine always takes its credential from Sao Khuê's own sign-in "
             "(the dashboard's Sign in), never from kiro-cli's store. A true value "
             "with nothing installed refuses the spawn and names the install command.",
             # The running KAS runtime keeps its process across the switch, so
@@ -280,14 +280,14 @@ class AgentConfig:
             "to a 'secret://<vault name>' reference. The harness resolves a "
             "provider credential from its inherited environment above its own "
             "credential files, so this is how it reaches a hosted model without "
-            "Kiro Crew leaving those files readable inside the sandbox. Store the "
+            "Sao Khuê leaving those files readable inside the sandbox. Store the "
             "key under Settings > Secrets, then map it here, e.g. "
             '{"DEEPSEEK_API_KEY": "secret://my-dsh-key"}. Any provider name the '
             "harness knows works (ANTHROPIC_API_KEY, OPENAI_API_KEY, ...). A "
             "plaintext value is REFUSED at write time -- the config write itself "
             "fails, so no credential is ever stored in config.json -- and so, at "
             "spawn, is a name the harness would forward to its own shell "
-            "children, a name Kiro Crew owns, or one Kiro Crew's agent "
+            "children, a name Sao Khuê owns, or one Sao Khuê's agent "
             "environment scrub strips; the DeepSeek session is refused before it "
             "starts with a message naming the offending key. Empty means no key: "
             "a model served locally on this machine needs none. Ignored by every "
@@ -300,7 +300,7 @@ class AgentConfig:
             "Sweep foreign agent backups",
             "When true, the agents-directory janitor also deletes aged backup "
             "files (*.bak-<digits> / *.json.bak.<digits>, older than 14 days) "
-            "from the shared kiro agents directory. OFF by default: Kiro Crew "
+            "from the shared kiro agents directory. OFF by default: Sao Khuê "
             "does not author those backups, so every one it would delete belongs "
             "to another tool whose retention policy is not ours to decide. The "
             "orphaned atomic-write TEMP sweep (24h) always runs and reclaims most "
@@ -330,10 +330,10 @@ class AgentConfig:
             "for the same reason. Like every value of this key, a change applies "
             "to sessions started after it; a session already running keeps the "
             "tier it was spawned with until it ends. 'strict' changes "
-            "nothing where Kiro Crew applies no sandbox of its own: Windows has "
+            "nothing where Sao Khuê applies no sandbox of its own: Windows has "
             "no OS backend, and a macOS spawn delegated to kiro-cli's internal "
             "sandbox is confined by that profile instead. Set to 'off' to skip "
-            "Kiro Crew's own OS-level sandbox -- delegation to kiro-cli's "
+            "Sao Khuê's own OS-level sandbox -- delegation to kiro-cli's "
             "internal sandbox still fires on macOS if it is enabled, and a "
             "SECURITY warning is logged when neither layer is active.",
             enum=["auto", "strict", "off"],
@@ -469,7 +469,7 @@ class AgentConfig:
             "How long auto-approve (YOLO) lasts when it is enabled AD HOC — from "
             "the dashboard picker, Slack, or the API. Every one of those surfaces "
             "uses this same duration. Accepts 30m / 1h / 6h / 12h / 24h, or "
-            "until_shutdown to keep it on with no timed expiry until Kiro Crew "
+            "until_shutdown to keep it on with no timed expiry until Sao Khuê "
             "restarts. Timed values are capped at 24h. Does NOT apply to a grant "
             "declared via 'dangerously_skip_permissions' above, which persists.",
             enum=["30m", "1h", "6h", "12h", "24h", "until_shutdown"],
@@ -773,7 +773,7 @@ class AgentConfig:
             '{"TOKIO_WORKER_THREADS": "4", "RAYON_NUM_THREADS": "4"}. Only '
             "TOKIO_WORKER_THREADS and RAYON_NUM_THREADS are accepted, each a "
             "decimal integer string from 1 to 1024; any other "
-            "entry is ignored with a warning. Kiro Crew's own agent environment "
+            "entry is ignored with a warning. Sao Khuê's own agent environment "
             "scrub still applies. Every process the agent runs (tools, MCP servers, "
             "your own programs) inherits these variables too. Takes effect on the "
             "next spawn.",
@@ -783,17 +783,17 @@ class AgentConfig:
         default_factory=dict,
         metadata=_meta(
             "Agent Environment Variables",
-            "Environment variables set on every agent process Kiro Crew starts for "
+            "Environment variables set on every agent process Sao Khuê starts for "
             "a chat session, background session or subagent, on every backend, and "
             "therefore inherited by everything that agent runs: shell tool calls, "
             "the MCP servers the agent itself starts, and their children. Not the "
-            "gateway, MCP servers the gateway hosts, or Kiro Crew's own one-shot "
+            "gateway, MCP servers the gateway hosts, or Sao Khuê's own one-shot "
             "helper commands. For non-sensitive configuration such as a proxy, a CA "
             "bundle, an AWS profile or a package registry, e.g. "
             '{"HTTPS_PROXY": "http://proxy.example:3128", "NO_PROXY": '
             '"localhost,127.0.0.1", "AWS_PROFILE": "dev"}. A value set here wins '
             "over the same variable "
-            "in the gateway's own environment; variables Kiro Crew sets for the "
+            "in the gateway's own environment; variables Sao Khuê sets for the "
             "session itself still win over this map, except defaults it fills in "
             "only when a name is unset (agent.child_env_defaults, the pytest-xdist "
             "worker cap), which this map overrides. A name this map refuses is "
@@ -805,7 +805,7 @@ class AgentConfig:
             "or CREDENTIAL (API_KEY, GITHUB_TOKEN, APIKEY), is refused: keep "
             "credentials under Settings > Secrets. GOPRIVATE and "
             "TOKENIZERS_PARALLELISM are not credential names. Also refused: names "
-            "Kiro Crew or the sandbox owns (PATH, HOME, TMPDIR, "
+            "Sao Khuê or the sandbox owns (PATH, HOME, TMPDIR, "
             "DBUS_*_BUS_ADDRESS, KIROCREW_*, KIRO_*, OPENCODE_*, ...); names known "
             "to make a shell, the loader, a runtime or a tool run code the command "
             "did not name (LD_*, DYLD_*, PYTHON*, NODE_OPTIONS, BASH*, SHELLOPTS, "

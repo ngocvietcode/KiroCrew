@@ -133,7 +133,7 @@ def _mcp_names_from_file(path: Path) -> set[str]:
 
 
 def configured_mcp_aliases(*, data_home: Path, user_home: Path) -> set[str]:
-    """Return canonical names reserved by every effective Kiro Crew MCP source."""
+    """Return canonical names reserved by every effective Sao Khuê MCP source."""
     names: set[str] = set()
     agent_servers = _load_agent_config(user_home=user_home).get("mcpServers", {})
     if isinstance(agent_servers, dict):
@@ -236,7 +236,7 @@ def _spec_scopes(spec: dict) -> list[str]:
     non-list or a list with non-string members degrades to "no scopes"
     rather than propagating a bad shape into the agent config.
 
-    Reads kiro-cli's ``oauthScopes`` as well as Kiro Crew's internal ``scopes``:
+    Reads kiro-cli's ``oauthScopes`` as well as Sao Khuê's internal ``scopes``:
     files we emit for kiro-cli carry the former, so a discovery pass that knew
     only the latter would report a scoped server as unscoped.
     """
@@ -383,7 +383,7 @@ def list_servers() -> list[McpServerInfo]:
             elif scope == SCOPE_KIROCREW and disabled and name not in servers:
                 # Consent-disabled entries (registry installs and custom adds
                 # land with ``disabled: true`` until the user enables them)
-                # live ONLY in the Kiro Crew scope. They must still get a row:
+                # live ONLY in the Sao Khuê scope. They must still get a row:
                 # the enable action in this table IS the consent step the
                 # install flow points at — an invisible server can never be
                 # consented to. The row is marked disabled and excluded from
@@ -410,7 +410,7 @@ def list_servers() -> list[McpServerInfo]:
             elif disabled and name not in servers:
                 # Disabled in a SHARED scope (the Kiro-global ``mcp.json`` the IDE
                 # edits, or a provider global) and held by no other source: the
-                # two arms above cover a Kiro Crew store entry and an agent entry
+                # two arms above cover a Sao Khuê store entry and an agent entry
                 # stamped by the toggle, and nothing else ever introduces this
                 # one. Discovery skips disabled entries and the rebuild never adds
                 # a disabled shared server to the agent config, so without this
@@ -436,11 +436,11 @@ def list_servers() -> list[McpServerInfo]:
 
     # 3. Compute per-scope presence.
     #
-    #    MC presence = "will this load in Kiro Crew sessions after the next
+    #    MC presence = "will this load in Sao Khuê sessions after the next
     #    rebuild".  Because ``rebuild_agent_config`` inherits from both
     #    provider globals, a server present in any scope source (or already
     #    in the current merged agent config) counts as MC green unless
-    #    Kiro Crew has an explicit ``disabled: true`` override.
+    #    Sao Khuê has an explicit ``disabled: true`` override.
     #    Kiro/CC presence = raw membership in that provider's global config.
     agent_names = set(agent_cfg.get("mcpServers", {}).keys())
     kirocrew_own = by_source.get(SCOPE_KIROCREW, {})
@@ -486,7 +486,7 @@ def list_servers() -> list[McpServerInfo]:
     servers = canonical_servers
 
     # 3c. Consent is per SCOPE: a ``disabled: true`` ANYWHERE withholds the
-    #     spawn, not only the branch above that INTRODUCES a Kiro-Crew-scope row
+    #     spawn, not only the branch above that INTRODUCES a SaoKhue-scope row
     #     which exists nowhere else. ``/api/mcp/toggle`` writes the flag into the
     #     Kiro-global ``mcp.json``, and a row that step 1 already introduced from
     #     the agent config would otherwise keep ``disabled = False`` and stay

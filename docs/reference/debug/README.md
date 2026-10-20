@@ -1,9 +1,9 @@
 # Debugging a running gateway
 
-**Local page, not a mirror.** This page is Kiro Crew's own documentation and has
+**Local page, not a mirror.** This page is Sao Khuê's own documentation and has
 no upstream source, so a re-fetch of the `kiro-cli/` mirror must leave it alone.
 
-The `kirocrew-debug` MCP server answers five questions about a live Kiro Crew
+The `kirocrew-debug` MCP server answers five questions about a live Sao Khuê
 gateway. Each tool is one question plus a time window, answered by the process that
 owns the truth. Every tool is read-only, and the set is ratcheted to exactly five
 names by `test/test_mcp_debug.py` — a write tool cannot be added without that test
@@ -44,7 +44,7 @@ These are the readings that look like facts and are not. An agent that trusts th
 reaches confident wrong conclusions, which is most of why this server exists.
 
 **Empty placeholder mounts.** The agent sandbox mounts empty, zero-size
-placeholders over Kiro Crew's fenced paths — the crew log, the ledgers, `.env`, the
+placeholders over Sao Khuê's fenced paths — the crew log, the ledgers, `.env`, the
 vault. A shell `ls` there shows 0 entries whatever the host actually holds, and
 they share one mount mtime. Emptiness proves nothing. A zero-byte `.env` seen from a
 sandbox is not a lost credential. Read such a store through a credentialed route —

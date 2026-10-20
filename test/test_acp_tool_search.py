@@ -1,7 +1,7 @@
 """Tests for kiro-cli Tool Search wiring in the ACP provider.
 
 Tool Search (https://kiro.dev/docs/cli/mcp/tool-search/) loads MCP tool specs
-on demand instead of sending every spec each turn. KiroCrew exposes it via the
+on demand instead of sending every spec each turn. SaoKhue exposes it via the
 ``agent.tool_search`` config toggle and applies it by writing the kiro setting
 into the per-session ``<work_dir>/.kiro/settings/cli.json`` overlay — the same
 file used for the effort overlay. These tests cover the overlay writer and the

@@ -1329,7 +1329,7 @@ measures, never above.
   the test can assert afterwards that nothing beneath the file exists.
 
 - **A test that computes a budget pins every reading the caller could have inherited.**
-  Kiro Crew seeds `PYTEST_XDIST_AUTO_NUM_WORKERS` at every agent spawn boundary
+  Sao Khuê seeds `PYTEST_XDIST_AUTO_NUM_WORKERS` at every agent spawn boundary
   (`resource_status.inject_xdist_auto_cap`), so a pytest run started from an agent shell
   carries the spawner's cap. Seven budget tests asserting "a 10-core host gets 10"
   read 7 there and were red for a reason that had nothing to do with the host. Whatever
@@ -1860,7 +1860,7 @@ found these further classes. Each one passed on the host that wrote it.
   postinstall), so four test files raced the network on a fresh checkout. The `test` script
   now preloads `website/electron/test/_preload.cjs`, which sets `ELECTRON_OVERRIDE_DIST_PATH`
   before any source loads. Details: [website/docs/testing.md](../../../website/docs/testing.md).
-- **The basetemp can sit INSIDE a guarded root.** A Kiro Crew agent session sets `TMPDIR`
+- **The basetemp can sit INSIDE a guarded root.** A Sao Khuê agent session sets `TMPDIR`
   to its scratch dir under `~/.kiro/crew/scratch/`, so pytest's basetemp — and every
   correctly pinned home — resolves inside the real `~/.kiro` while touching nothing of the
   operator's. The sessions-dir fence and `test_host_isolation_floor.py`'s guard therefore
@@ -1869,7 +1869,7 @@ found these further classes. Each one passed on the host that wrote it.
   agent-driven run before this.
 
 The third full-run audit ran five backend and five frontend runs on a **macOS** host,
-from inside a Kiro Crew agent session, with the audit hook attributing every write,
+from inside a Sao Khuê agent session, with the audit hook attributing every write,
 spawn, connect and kill to a test and a per-test census of duration, RSS, threads and
 descriptors. Both changes of venue mattered: the two earlier audits ran on Linux, and a
 suite that is clean there had 227 deterministic failures and four 120-second hangs on a
@@ -1890,7 +1890,7 @@ tests; the classes below are what the rest was made of.
   `pytest.MonkeyPatch.context()`.
 - **A pin that lives in `test/conftest.py` is not a floor.** `KIROCREW_PROFILE=standalone`
   was pinned there, so the ~108 modules under `src/kiro_crew/apps/builtins/*/tests/`
-  never saw it. A Kiro Crew agent session exports the enterprise `KIROCREW_PROFILE` to every
+  never saw it. A Sao Khuê agent session exports the enterprise `KIROCREW_PROFILE` to every
   child it spawns; with no companion installed that profile FAILS CLOSED, and 150+
   builtin-app tests were red (every governance-gated route 500, every gated
   notification dropped) while `test/` was green. The pin is a rootdir autouse fixture
@@ -2179,7 +2179,7 @@ added a fourth; each was a real defect:
 ### What the fourth five-run pass found (Linux, 106k tests per run)
 
 Five full backend runs plus five frontend runs on a 32-core Linux host, from inside a
-Kiro Crew agent session, with an in-process audit hook attributing every write, spawn,
+Sao Khuê agent session, with an in-process audit hook attributing every write, spawn,
 connect and kill to a test and a per-test census of duration, RSS, threads and
 descriptors. **Zero flaky tests across 5 × 106,199** — every failure was identical in
 all five runs. That is the headline, and it changes where the value of a pass like this
@@ -4208,7 +4208,7 @@ The knobs, tightest-wins:
 | `-n <N>` on the command line | Bypasses the budget entirely. xdist only calls it for `auto`/`logical`. |
 | `--maxprocesses=<N>` | Clamps *after* the budget, so it can only tighten. |
 | `KIROCREW_MAX_TEST_WORKERS` | Per-run ceiling, default 32. |
-| `PYTEST_XDIST_AUTO_NUM_WORKERS` | xdist's own ceiling. Honoured here, because this hook replaces xdist's default implementation. Kiro Crew seeds it with a memory-aware cap at every agent spawn boundary. |
+| `PYTEST_XDIST_AUTO_NUM_WORKERS` | xdist's own ceiling. Honoured here, because this hook replaces xdist's default implementation. Sao Khuê seeds it with a memory-aware cap at every agent spawn boundary. |
 | `KIROCREW_TEST_SLOT_DIR` | Where the slot locks live. Point it at a throwaway dir to measure without contending with another run. |
 
 If the suite is slow on your machine, the answer is usually not a bigger `-n`: run

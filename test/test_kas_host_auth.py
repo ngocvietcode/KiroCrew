@@ -198,7 +198,7 @@ class TestCallbackAnswer:
     async def test_no_identity_is_a_token_free_error(self, data_home):
         with pytest.raises(HostAuthCallbackError) as excinfo:
             await answer_get_access_token()
-        assert str(excinfo.value) == "not signed in to Kiro Crew"
+        assert str(excinfo.value) == "not signed in to Sao Khuê"
 
     @pytest.mark.asyncio
     async def test_an_ambient_api_key_never_answers_for_the_vault(self, data_home, monkeypatch):
@@ -208,7 +208,7 @@ class TestCallbackAnswer:
         monkeypatch.setenv("KIRO_API_KEY", "ambient-key")
         with pytest.raises(HostAuthCallbackError) as excinfo:
             await answer_get_access_token()
-        assert str(excinfo.value) == "not signed in to Kiro Crew"
+        assert str(excinfo.value) == "not signed in to Sao Khuê"
 
     @pytest.mark.asyncio
     async def test_vault_error_is_categorized_not_echoed(self, data_home, caplog):

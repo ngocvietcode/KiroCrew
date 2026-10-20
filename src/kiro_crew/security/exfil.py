@@ -145,7 +145,7 @@ def _exfil_exempt_hosts() -> frozenset[str]:
     return frozenset(host.lower() for host in _exempt_exact_hosts())
 
 
-# ── Kiro Crew's own Slack app-create deep link ──
+# ── Sao Khuê's own Slack app-create deep link ──
 # ``kirocrew manifest --url`` and ``GET /api/slack/manifest`` both hand the user
 # Slack's new-app deep link carrying the bundled app manifest percent-encoded
 # into ``manifest_yaml``. That payload is ~1.9 KB, so the aggregate query-length

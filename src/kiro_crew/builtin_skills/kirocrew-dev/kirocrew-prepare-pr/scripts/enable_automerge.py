@@ -5,13 +5,13 @@ A thin, idempotent wrapper around ``gh pr merge --auto``: it asks GitHub to
 merge the PR automatically once the REPO'S OWN merge requirements (its required
 reviews + required status checks, as configured in branch protection / rulesets)
 are satisfied. GitHub, not this script, enforces those gates and performs the
-merge. Defaults to squash to match Kiro Crew's single-commit-per-PR invariant.
+merge. Defaults to squash to match Sao Khuê's single-commit-per-PR invariant.
 
 The kirocrew-prepare-pr skill invokes this at Phase 4 of its full loop, unless
 the user put a hold on the merge.
 
 Portable: stdlib only; shells out to gh via argument lists (no shell
-pipelines), so it runs on macOS, Linux, and Windows wherever Kiro Crew's
+pipelines), so it runs on macOS, Linux, and Windows wherever Sao Khuê's
 python3 plus the GitHub CLI are available.
 
 Usage:  python3 enable_automerge.py [pr-number] [method]

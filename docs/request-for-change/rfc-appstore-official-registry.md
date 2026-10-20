@@ -1,7 +1,7 @@
 ---
 title: Official App Registry + Editorial Feed
 status: partial
-author: KiroCrew contributors
+author: SaoKhue contributors
 created: 2026-07-29
 last-audited: 2026-08-19
 audited-at: cdd8b301
@@ -19,11 +19,11 @@ superseded-by: []
 > closed. §4 carries its own revision note naming the four category decisions
 > reversed in the sibling `KiroCrewApps` repo.
 
-**Author:** KiroCrew contributors
+**Author:** SaoKhue contributors
 **Date:** 2026-07-29
 **Status:** partial, **and diverged** — this document's failure mode is the first one the [directory README](README.md) names: *the plan was overtaken.* Rollout step R1 shipped **in the sibling `kirodotdev/KiroCrewApps` repo**, but §4 was reversed on four decisions while it did, so §4 is now a record of what was decided rather than a description of the contract. **Read the note at the head of §4 before trusting anything below about categories.** The schema files in that repository are the current source of truth.
 
-On the Kiro Crew side, R3 and R4 are both started, and neither is finished. The official **fetch** is live and so is editorial-driven Discover (`apps/official_catalog.py`, `apps/official_editorial.py`). The **signature gate is not**: that module's own header lists three deliberate omissions, and the first is "No signature verification" — the `.sig` sidecar is published and nothing checks it, so trust is TLS to our own domain, and the consequence is enforced rather than ignored (a curated author does not mint the verified mark while that holds). **Tombstone resolution is absent** on the same terms: a document carrying a non-empty `removed` or `reinstated` list is refused outright rather than half-resolved. The rail order has its own published document, and the client reads it: `apps/official_category_order.py::load_category_order` fetches it and `GET /api/apps/registry` returns it as `categoryOrder`. The editorial document carries no order.
+On the Sao Khuê side, R3 and R4 are both started, and neither is finished. The official **fetch** is live and so is editorial-driven Discover (`apps/official_catalog.py`, `apps/official_editorial.py`). The **signature gate is not**: that module's own header lists three deliberate omissions, and the first is "No signature verification" — the `.sig` sidecar is published and nothing checks it, so trust is TLS to our own domain, and the consequence is enforced rather than ignored (a curated author does not mint the verified mark while that holds). **Tombstone resolution is absent** on the same terms: a document carrying a non-empty `removed` or `reinstated` list is refused outright rather than half-resolved. The rail order has its own published document, and the client reads it: `apps/official_category_order.py::load_category_order` fetches it and `GET /api/apps/registry` returns it as `categoryOrder`. The editorial document carries no order.
 
 What ships differs from the design below in three places, each marked where it appears. The §3.7 manifest additions (`resources`/`lifecycle` in `app.json`, `platform.externalInstall`, `searchAliases`, structured `author`) are not implemented: install reads `resources` from the registry entry, and an entry's `detectInstalled` still runs as a sandboxed probe. The `_tier` refactor of §6 and §7 step 2 is superseded by server-computed `provenance`. The bundled `app-registry.json` is hand-curated, not generated. Each §9 criterion carries a shipped / not-shipped marker.
 
@@ -31,7 +31,7 @@ What ships differs from the design below in three places, each marked where it a
 
 ## 1. Problem Statement
 
-The App Store's catalog and its merchandising are frozen into each KiroCrew
+The App Store's catalog and its merchandising are frozen into each SaoKhue
 release. Two concrete gaps:
 
 1. **No first-party remote registry.** The curated catalog is the bundled
@@ -58,9 +58,9 @@ release. Two concrete gaps:
 
 ### Goals
 
-- A KiroCrew-owned **official registry** the client pulls at runtime, trusted
+- A SaoKhue-owned **official registry** the client pulls at runtime, trusted
   enough to drive featuring, updatable without an app release.
-- A KiroCrew-owned **editorial feed** describing the Discover page
+- A SaoKhue-owned **editorial feed** describing the Discover page
   declaratively, that is **fail-safe** (degrades gracefully when unreachable or
   malformed) and **schema-versioned** (new layouts reach new clients while old
   clients keep working).
@@ -266,7 +266,7 @@ Notes that make this work in practice:
   doesn't recognize is dropped from the installable set — never partially
   handled. Because dropping an *entry* hides an app (unlike dropping an editorial
   section, which only hides a layout), the UI should surface "N apps require a
-  newer KiroCrew" rather than silently shrinking the catalog.
+  newer SaoKhue" rather than silently shrinking the catalog.
 - **Every new type costs a fetcher + a trust gate**, not just a schema variant.
   Adding one is a client change; the schema slot alone doesn't make it live.
 - **The v1 JSON Schema must model `source` as a *closed* discriminated union** —
@@ -506,7 +506,7 @@ which is itself the finding: they were only ever *derived*.
 | `lifecycle` | same | declared in `app.json` |
 | `detectInstalled` | a **shell command** in the registry, executed on the listing path | replaced by declarative `platform.externalInstall` |
 
-**`resources` / `lifecycle`.** These decide whether KiroCrew copies files and
+**`resources` / `lifecycle`.** These decide whether SaoKhue copies files and
 registers resources or the app self-registers. Their current wiring is thinner
 than it looks:
 
@@ -529,7 +529,7 @@ fetched document and run by the client is the same class of mistake as the
 `delegates[]` list removed in §3.3: the document reaching into client *behavior*
 rather than describing apps. It is also self-evidently app knowledge ("does my
 bundle exist at this path"). The replacement is declarative and evaluated by
-KiroCrew, never by a shell:
+SaoKhue, never by a shell:
 
 ```jsonc
 "platform": {
@@ -550,7 +550,7 @@ fingerprint installed apps. Our `detectInstalled` is that same shape — a probe
 supplied by a third party — and it runs on the *listing* path (for every entry
 that declares one and is not already locally installed), not just at install.
 
-So installed-state resolution becomes: **local receipt** (apps KiroCrew installed
+So installed-state resolution becomes: **local receipt** (apps SaoKhue installed
 — already the source of truth) **∪ declarative probe** (`externalInstall`,
 evaluated natively). Conservative by default: detect and report, never act.
 Homebrew Cask's own history is the caution — a pre-existing-artifact check once
@@ -729,7 +729,7 @@ The official registry needs a tier **between** bundled and user-external:
 | Tier | Source | Featuring / editorial | Clone credentials | Authenticity |
 |------|--------|-----------------------|-------------------|--------------|
 | **Bundled** | compiled `app-registry.json` | honored | ambient (owner-designated) | ships in the wheel |
-| **Official** *(new)* | KiroCrew-owned CDN doc | **honored** (only once the signature verifies) | **credential-free + strict sandbox** | host-pin **and** required detached signature |
+| **Official** *(new)* | SaoKhue-owned CDN doc | **honored** (only once the signature verifies) | **credential-free + strict sandbox** | host-pin **and** required detached signature |
 | **External (user)** | user-configured repos | ignored | credential-free + strict sandbox | none |
 
 Two properties of this table are load-bearing and were nearly got wrong:
@@ -794,7 +794,7 @@ two documents must not be read as using one shared tier vocabulary.
 
 ---
 
-## 6. Client changes (KiroCrew)
+## 6. Client changes (SaoKhue)
 
 - **One authenticated fetcher, one cache dir, one validator** for both docs,
   reusing the manifest-cache machinery (`_manifest_cache_dir()`, atomic writes,
@@ -923,7 +923,7 @@ leaves a stale pointer elsewhere in the document.
    with schema validation in CI (proposed) vs a small authoring tool. Who
    curates, and how often?
 2. **Snapshot-sync mechanism** — build-time generation vs scheduled bot PR into
-   `KiroCrew`. Trade-off: build-time is always fresh but couples the KiroCrew
+   `KiroCrew`. Trade-off: build-time is always fresh but couples the SaoKhue
    build to a `KiroCrewApps` fetch; a bot PR keeps the build hermetic but can
    lag. *(This is why §2's table marks that row open rather than settled.)*
 3. **Schema version scheme** — integer majors (proposed, matches the installed-
@@ -946,7 +946,7 @@ leaves a stale pointer elsewhere in the document.
    per-repository grant look like, who authors it, and is it owner-local config
    rather than anything a fetched index can influence?
 
-7. **Who evaluates `platform.externalInstall`, and when?** "Evaluated by KiroCrew,
+7. **Who evaluates `platform.externalInstall`, and when?** "Evaluated by SaoKhue,
    never by a shell" does not name the evaluating process, the cadence (on browse vs
    on `refresh_registries()`), or the result for a platform the descriptor omits —
    the example covers macOS and Linux, leaving Windows undefined (not-installed vs

@@ -1,6 +1,6 @@
 """Cross-platform Kiro CLI readiness detection.
 
-The public KiroCrew provider is KiroACP-only, so a healthy, authenticated
+The public SaoKhue provider is KiroACP-only, so a healthy, authenticated
 ``kiro-cli`` is a hard runtime prerequisite. This module's job is to answer one
 question about the gateway host: **is there a Kiro CLI that runs, and is it
 signed in?** It answers that by running the CLI's own read-only probes
@@ -14,7 +14,7 @@ taken by the user:
 * signing in — ``kiro-cli login`` (:data:`KIRO_CLI_LOGIN_COMMAND`), run by the
   user wherever they already use the CLI.
 
-Kiro Crew neither installs nor authenticates on the user's behalf, so there is no
+Sao Khuê neither installs nor authenticates on the user's behalf, so there is no
 installer download, no installer execution, and no device-flow spawn. The
 reasons are the same in both cases: the vendor's own tooling does it better and
 stays correct as it changes, owning it here meant owning a large privileged
@@ -27,7 +27,7 @@ What remains is detection, and detection alone: every subprocess this module
 spawns is one of the two read-only probes above, sandboxed, with a fixed argv.
 No command, argument, URL, or filesystem target is accepted from an HTTP
 request, and the dashboard exposes only a ``status`` read plus the agent-spec
-repair write (which touches Kiro Crew's own files, never the CLI).
+repair write (which touches Sao Khuê's own files, never the CLI).
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ from kiro_crew import _facade_mirror
 #   ``kiro_prerequisite_identity_store`` -- Kiro's identity stores: where they are, how they are read, and how they are staged.
 #   ``kiro_prerequisite_identity`` -- Which account the credential sources name, as one fingerprint.
 #   ``kiro_prerequisite_spawn_identity`` -- Which account a spawned child loaded, and how a holder is judged against the live one.
-#   ``kiro_prerequisite_agent_specs`` -- Kiro Crew's own agent specs: presence, acceptance by kiro-cli and KAS, and repair.
+#   ``kiro_prerequisite_agent_specs`` -- Sao Khuê's own agent specs: presence, acceptance by kiro-cli and KAS, and repair.
 #   ``kiro_prerequisite_identity_tracking`` -- The service's account baselines: the retirement baseline, the interim latch, absence runs.
 #   ``kiro_prerequisite_probe`` -- The audited kiro-cli probes, the failed-turn sign-in check and the self-update.
 #   ``kiro_prerequisite_service`` -- The ``KiroPrerequisiteService`` class: its fields, status surface and bindings.

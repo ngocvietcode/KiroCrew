@@ -1823,7 +1823,7 @@ def test_two_event_loops_share_one_writer_and_one_byte_budget(monkeypatch, tmp_p
 def test_the_recording_switch_is_scrubbed_from_agent_children(monkeypatch) -> None:
     """Both spawn paths build the child env through
     ``scrub_agent_subprocess_env``; the switch must not survive it, or a nested
-    Kiro Crew would record into the same per-backend file as this gateway."""
+    Sao Khuê would record into the same per-backend file as this gateway."""
     from kiro_crew.sandbox import scrub_agent_subprocess_env
 
     env = {_frame_record.ENV_RECORD_FRAMES: "/somewhere", "PATH": "/usr/bin"}

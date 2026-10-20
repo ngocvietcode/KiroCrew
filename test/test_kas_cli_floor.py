@@ -147,12 +147,12 @@ class TestBootFloor:
         assert cfg.agent.acp_backend == KIRO
         assert KAS not in registry.selectable_backends()
         assert notice is not None
-        assert "Kiro Crew is using kiro-cli instead" in notice
+        assert "Sao Khuê is using kiro-cli instead" in notice
         assert f"no {KAS_RELAY_ENGINE_FLAG} flag" in notice
         assert notice in caplog.text
 
     def test_bundle_route_never_probes_kiro_cli(self, monkeypatch, pinned_cli, kas_selectable):
-        """agent.kas_bundle spawns Kiro Crew's own engine, so an old kiro-cli on PATH is
+        """agent.kas_bundle spawns Sao Khuê's own engine, so an old kiro-cli on PATH is
         not a fact about this host's KAS; the floor must not move the user off it."""
         calls = _help(monkeypatch, _OLD_HELP)
         cfg = _cfg(KAS)

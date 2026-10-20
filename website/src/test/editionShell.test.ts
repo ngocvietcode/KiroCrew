@@ -12,7 +12,7 @@ import {
 const SHELL = [
   '<html><head>',
   '<meta name="theme-color" content="#0d0f12" />',
-  '<title>Kiro Crew</title>',
+  '<title>Sao Khuê</title>',
   '</head><body></body></html>',
 ].join('\n')
 
@@ -56,11 +56,11 @@ describe('applyBrandingToHtml', () => {
   it('patches the title text', () => {
     const out = applyBrandingToHtml(SHELL, { title: 'Acme Crew' })
     expect(out).toContain('<title>Acme Crew</title>')
-    expect(out).not.toContain('<title>Kiro Crew</title>')
+    expect(out).not.toContain('<title>Sao Khuê</title>')
   })
 
   it('preserves attributes on a future <title> tag', () => {
-    const out = applyBrandingToHtml('<title lang="en">Kiro Crew</title>', { title: 'Acme Crew' })
+    const out = applyBrandingToHtml('<title lang="en">Sao Khuê</title>', { title: 'Acme Crew' })
     expect(out).toBe('<title lang="en">Acme Crew</title>')
   })
 
@@ -174,7 +174,7 @@ describe('verifyOverlayBytes', () => {
     // degrade this check exists to catch.
     const readFile = fakeFs({
       'edition/public/manifest.json': '{"name":"Acme"}',
-      'dist/manifest.json': '{"name":"Kiro Crew"}',
+      'dist/manifest.json': '{"name":"Sao Khuê"}',
     })
     expect(() =>
       verifyOverlayBytes({

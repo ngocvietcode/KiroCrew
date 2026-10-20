@@ -1,11 +1,11 @@
-# Running Kiro Crew in Docker
+# Running Sao Khuê in Docker
 
-The official image runs the Kiro Crew **gateway** — dashboard, channel bots
+The official image runs the Sao Khuê **gateway** — dashboard, channel bots
 (Slack / Discord / Telegram / WeCom / Weixin / Webex), crons, and the kiro-cli
 agent runtime — as a headless container. Microsoft Teams, Feishu, and WhatsApp
 need optional dependencies that the stock image does not install; iMessage
 requires macOS and cannot run in this Linux image. It is the recommended way to
-run Kiro Crew 24/7 on a server or NAS; the strongest fit is the always-on
+run Sao Khuê 24/7 on a server or NAS; the strongest fit is the always-on
 channel bot that does not need a desktop session.
 
 The image is public, so no registry login is needed. Start the gateway:
@@ -176,7 +176,7 @@ the version selector (channel tags track their channel; version tags pin).
   address you browse from. The supported pattern is a TLS reverse proxy
   in front with `dashboard.url` set to its origin, exactly as for a
   non-container deployment.
-- **Sandbox:** on first run the entrypoint probes whether Kiro Crew's inner
+- **Sandbox:** on first run the entrypoint probes whether Sao Khuê's inner
   Linux user-namespace sandbox works under the container runtime's
   seccomp/AppArmor policy. If it does, it seeds `agent.sandbox="auto"` so
   agent commands run namespace-isolated from gateway state, same as a
@@ -192,7 +192,7 @@ the version selector (channel tags track their channel; version tags pin).
 
 ## Sandbox troubleshooting
 
-Kiro Crew runs agent commands inside a Linux user-namespace sandbox that
+Sao Khuê runs agent commands inside a Linux user-namespace sandbox that
 bind-mounts empty dirs over credential paths (`~/.aws`, `~/.ssh`, etc.) so
 the agent subprocess cannot read gateway credentials. Building it takes three
 syscalls in order — `unshare(CLONE_NEWUSER)`, `unshare(CLONE_NEWNS)`, then a
@@ -252,7 +252,7 @@ posture. It prints the standing reminder instead, whenever
 ways to let agent commands through. See
 [Check the startup log](docker-troubleshooting.md#check-the-startup-log).
 
-### Option A — Kiro Crew seccomp profile (recommended)
+### Option A — Sao Khuê seccomp profile (recommended)
 
 The repo ships `docker/seccomp/kirocrew-seccomp.json`: the Docker default
 allow-list extended with unconditional `unshare`, `clone`, and `mount` rules.

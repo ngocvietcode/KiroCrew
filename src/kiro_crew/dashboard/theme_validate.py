@@ -272,7 +272,7 @@ _THEME_CLONE_TIMEOUT_SEC = 30
 
 # Manifest schema version. A pack declares ``formatVersion`` (integer) in
 # theme.json; this is the newest major the installer understands. A pack
-# declaring a higher major is rejected with an honest "needs a newer KiroCrew"
+# declaring a higher major is rejected with an honest "needs a newer SaoKhue"
 # message rather than an opaque schema error (one-way-door schema guard).
 _THEME_FORMAT_VERSION = 1
 
@@ -1249,7 +1249,7 @@ def _validate_theme_dir(
     if not isinstance(manifest, dict):
         return None, "theme.json must be a JSON object"
     # formatVersion FIRST (before any other schema check) so a pack authored
-    # for a newer KiroCrew gets the honest version message, not an opaque
+    # for a newer SaoKhue gets the honest version message, not an opaque
     # downstream schema error. Must be a positive integer; a major above the
     # supported one is a forward-incompatible pack.
     fmt = manifest.get("formatVersion")
@@ -1260,7 +1260,7 @@ def _validate_theme_dir(
         )
     if fmt > _THEME_FORMAT_VERSION:
         return None, (
-            f"this pack requires a newer version of Kiro Crew "
+            f"this pack requires a newer version of Sao Khuê "
             f"(pack formatVersion {fmt}, supported {_THEME_FORMAT_VERSION})"
         )
     if fmt < 1:

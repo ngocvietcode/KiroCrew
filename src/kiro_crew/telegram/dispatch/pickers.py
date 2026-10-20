@@ -5,7 +5,7 @@ it, so a button carries an index into a retained picker table
 (``TelegramDispatcher._model_pickers`` / ``_agent_pickers``), bounded by a TTL and a
 retention cap. A press is consumed before it is applied, so a double press cannot
 apply twice. The keyboards offer only what this session's backend advertised
-(models) and what this machine can load (agents, minus Kiro Crew's own and
+(models) and what this machine can load (agents, minus Sao Khuê's own and
 app-installed ones). ``dispatch/callbacks.py`` routes the press here.
 """
 
@@ -47,10 +47,10 @@ _PICKER_LIMIT = 24
 
 #: An agent kept out of the channel ``/agent`` picker BY DEFAULT: the picker
 #: offers the agents a person driving from Telegram actually chooses between,
-#: not Kiro Crew's own machinery. Two disjoint signals, both authoritative on
+#: not Sao Khuê's own machinery. Two disjoint signals, both authoritative on
 #: their own field rather than on the display name:
 #:
-#: * ``kirocrew_owned`` — the Kiro Crew-generated internal agents (the chat
+#: * ``kirocrew_owned`` — the Sao Khuê-generated internal agents (the chat
 #:   agent, the background/heartbeat/conductor/worker/knowledge specs). This is
 #:   the ``name in OWNED_KIRO_AGENT_FILES`` flag ``list_agents`` already sets, so
 #:   a user's OWN hand-authored ``kirocrew-custom.json`` — which merely shares
@@ -60,7 +60,7 @@ _PICKER_LIMIT = 24
 #:   ``<app>--<agent>.json`` link filename (see ``apps.bridges``/``apps.execution``).
 #:   These belong to an installed app, not to the person picking an agent, so
 #:   they are hidden alongside the internals. The double-dash is a filename
-#:   convention Kiro Crew writes, not a name a user types, so matching the
+#:   convention Sao Khuê writes, not a name a user types, so matching the
 #:   FILENAME (not the possibly-bare declared name) is what identifies them.
 _APP_AGENT_LINK_SEP = "--"
 
@@ -333,7 +333,7 @@ def _installed_agent_names() -> list[str]:
     """Selectable agent names for the picker, user-level scope, sorted.
 
     System and internal agents are excluded (:func:`_agent_is_internal`):
-    the picker offers the agents a person chooses between, so Kiro Crew's own
+    the picker offers the agents a person chooses between, so Sao Khuê's own
     machinery and app-installed agents do not occupy its slots and crowd out
     the user's own agents. The classification is on the roster row's fields,
     not the display name, so a user's own ``kirocrew``-prefixed agent stays.

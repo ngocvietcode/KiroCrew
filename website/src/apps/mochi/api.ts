@@ -291,7 +291,7 @@ export interface MochiSettings {
   /** Cat coat colorway id (cat pack only). Owned by ColorCustomizer. */
   catPreset: string | null
   /**
-   * Whether Mochi may use the MCP servers the user installed in KiroCrew.
+   * Whether Mochi may use the MCP servers the user installed in SaoKhue.
    * Defaults to `false` (access withheld). Editable in the settings panel.
    */
   allowMcpServers: boolean

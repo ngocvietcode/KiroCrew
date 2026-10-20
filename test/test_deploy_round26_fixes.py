@@ -1,4 +1,4 @@
-"""Regression tests for Round-26 findings (KiroCrew PR #6).
+"""Regression tests for Round-26 findings (SaoKhue PR #6).
 
 F1: recall gets the same preview-binding as destroy (R25) — BE verifies
     expected ids at confirm; FE runs the two-call flow.

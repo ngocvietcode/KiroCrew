@@ -1,4 +1,4 @@
-"""KiroCrewClient — async Python client for the KiroCrew Gateway.
+"""KiroCrewClient — async Python client for the SaoKhue Gateway.
 
 Standalone package (no dependency on kiro_crew main package).
 Uses aiohttp for HTTP and WebSocket communication.
@@ -173,7 +173,7 @@ class ContextEntry:
 
 
 class KiroCrewClient:
-    """Async HTTP client for the KiroCrew Gateway.
+    """Async HTTP client for the SaoKhue Gateway.
 
     Usage::
 

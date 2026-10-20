@@ -1,6 +1,6 @@
 # The remote crew deployment image: two processes, one task.
 #
-# What runs here is Kiro Crew's own backend, headless, plus a thin front process.
+# What runs here is Sao Khuê's own backend, headless, plus a thin front process.
 # Headless means no interface is served to anyone, the
 # owner included: the owner's control plane stays on the owner's own machine and
 # no part of it is in this image.
@@ -187,7 +187,7 @@ RUN set -eux; \
 
 WORKDIR /app
 
-# Kiro Crew is installed as a real package because the backend is RUN here, not
+# Sao Khuê is installed as a real package because the backend is RUN here, not
 # imported as a library. scripts/build_crew_base_image.sh builds the wheel from a
 # checkout and stages it in vendor/; the wheel is a build artifact and is not
 # committed.
@@ -197,7 +197,7 @@ COPY container/requirements.txt ./container/requirements.txt
 # Image layers are append-only, so a COPY commits the ~48MB wheel to its own
 # layer and a later `rm` can only stack a whiteout on top: every pull then
 # fetches the wheel and discards it, beside the already-installed copy of the
-# same code. That was measured at 5.7% of the published Kiro Crew image before
+# same code. That was measured at 5.7% of the published Sao Khuê image before
 # #5778 replaced the COPY with this mount there. The mount makes the bytes
 # visible for the duration of this RUN only, which is why no cleanup follows it.
 #
@@ -211,7 +211,7 @@ RUN --mount=type=bind,source=vendor,target=/tmp/wheels \
     pip install --no-cache-dir -r container/requirements.txt /tmp/wheels/*.whl; \
     python -c 'import kiro_crew.cli'
 
-# ONLY the container package. The Kiro Crew app's own backend and UI are in this
+# ONLY the container package. The Sao Khuê app's own backend and UI are in this
 # repository too, and they must never be copied in: that code runs inside the
 # OWNER's gateway with the owner's AWS credentials, and this image is the
 # customer-facing surface. Keeping the COPY narrow is what stops a control-plane
@@ -238,7 +238,7 @@ RUN useradd --create-home --home-dir /var/lib/crew --shell /usr/sbin/nologin cre
 # environment contract.
 #
 # SMC_CONFIG_DIR EQUALS SMC_DATA_HOME, and that is not an oversight. Verified
-# against a running gateway: Kiro Crew's config_dir() and data_home() resolve to
+# against a running gateway: Sao Khuê's config_dir() and data_home() resolve to
 # the same directory, so session_map.json and open_slots.json live at the home
 # root rather than under a config/ subdirectory. Setting them apart puts those two
 # files somewhere the rest of the task does not read, which leaves the transcripts
@@ -259,7 +259,7 @@ ENV HOME=/var/lib/crew \
 # SMC_BACKUP_INTERVAL_SECS (seconds between backup cycles; default 60, zero or less refused).
 USER crew
 
-# 8080 is the front process, the only listener the network reaches. The Kiro Crew
+# 8080 is the front process, the only listener the network reaches. The Sao Khuê
 # backend listens on 8765 bound to 127.0.0.1 and is deliberately NOT exposed;
 # adding it here would defeat the design's only trust boundary.
 EXPOSE 8080

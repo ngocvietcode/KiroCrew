@@ -35,8 +35,8 @@ import tempfile
 from collections.abc import Iterator
 from pathlib import Path
 
-# Canonical KiroCrew data-root accessor. Imported at module top but kept guarded
-# so the store stays importable standalone (outside the KiroCrew runtime) — the
+# Canonical SaoKhue data-root accessor. Imported at module top but kept guarded
+# so the store stays importable standalone (outside the SaoKhue runtime) — the
 # fallback mirrors ``config_dir()``'s default of ``~/.kiro/crew``, honoring
 # ``KIROCREW_HOME`` when it is set.
 try:
@@ -124,12 +124,12 @@ APP_NAME = "code-review-sage"
 
 
 def crew_home() -> Path:
-    """Resolve the active KiroCrew data root.
+    """Resolve the active SaoKhue data root.
 
     Delegates to ``kiro_crew.config.paths.config_dir()`` when the runtime is
     importable (so it follows the ``~/.kiro/crew`` root and honors
     ``KIROCREW_HOME`` uniformly, including the one-time legacy-home migration).
-    Falls back to a standalone resolution when run outside the KiroCrew package.
+    Falls back to a standalone resolution when run outside the SaoKhue package.
     """
     if _config_dir is not None:
         return _config_dir()
@@ -196,11 +196,11 @@ DEFAULT_CONFIG: dict[str, object] = {
 
 
 def app_root() -> Path:
-    """Resolve the installed app root under the KiroCrew home dir.
+    """Resolve the installed app root under the SaoKhue home dir.
 
     Derives from ``crew_home()`` (``config_dir()`` → ``~/.kiro/crew`` by
     default, honoring ``KIROCREW_HOME``); ``crew_home`` keeps a standalone
-    fallback so the store stays importable outside the KiroCrew runtime."""
+    fallback so the store stays importable outside the SaoKhue runtime."""
     return crew_home() / "apps" / APP_NAME
 
 
@@ -217,7 +217,7 @@ def restrict_to_owner(path: str | os.PathLike) -> None:
     ``OSError`` the callers' temp-file cleanup relies on.
 
     The standalone fallback is that bare chmod, matching the guard on
-    ``config_dir`` above: outside the Kiro Crew runtime there is no stdlib way to
+    ``config_dir`` above: outside the Sao Khuê runtime there is no stdlib way to
     set a Windows DACL, and refusing the write would be worse than the POSIX
     behaviour this app has always had.
     """
@@ -298,7 +298,7 @@ _CHAIN_PROBE = ".chain-probe"
 def refuse_linked_parents(path: str | os.PathLike) -> None:
     """Refuse *path* when a link sits on the chain of directories above it.
 
-    A no-op outside the Kiro Crew runtime, like the owner-only lockdown: the
+    A no-op outside the Sao Khuê runtime, like the owner-only lockdown: the
     anchor policy lives in the runtime and there is nothing to anchor against
     without it.
     """
@@ -364,7 +364,7 @@ def pin_record_dir(directory: str | os.PathLike) -> int:
     faithfully -- an attacker's directory, opened one careful ``O_NOFOLLOW`` at a
     time. ``anchored_parent`` gives the shape that works instead: the trust
     anchor resolved, because a link at or above it is the operator's own layout,
-    and every name below it LEXICAL, because that is the stretch Kiro Crew
+    and every name below it LEXICAL, because that is the stretch Sao Khuê
     creates itself and where a link is somebody's plant. A component swapped
     there fails its own open rather than being followed.
 
@@ -373,7 +373,7 @@ def pin_record_dir(directory: str | os.PathLike) -> int:
     trees are that case. The walk then gets the resolved path, which keeps
     out-of-tree roots working at the cost of following a link already on their
     chain -- the same trade the refusal makes there, and for the same reason: a
-    link outside Kiro Crew's own trees is indistinguishable from layout.
+    link outside Sao Khuê's own trees is indistinguishable from layout.
 
     Standalone, with no runtime to borrow the walk from, this is the one by-name
     open it replaces. ``O_CLOEXEC`` is absent from the runtime's flags and not
@@ -691,7 +691,7 @@ def open_append_nolink(path: str | os.PathLike) -> int:
     return fd
 
 
-# Optional Kiro Crew redaction. Lives here rather than in `pipeline` because readers
+# Optional Sao Khuê redaction. Lives here rather than in `pipeline` because readers
 # outside the posting path need it too, and `pipeline` imports `discovery`, so a
 # reader in `discovery` cannot import `pipeline` back.
 try:                                   # pragma: no cover - import shape
@@ -704,7 +704,7 @@ def redact_text(text: str) -> str:
     """Scrub credentials + exfiltration URLs from model-written text.
 
     Applied at every boundary where such text leaves this app -- the code-review
-    system it posts to, and the dashboard it renders in. No-op when the Kiro Crew
+    system it posts to, and the dashboard it renders in. No-op when the Sao Khuê
     redaction lib is not importable (standalone use).
     """
     if redact_exfiltration_urls is None or redact_credentials is None:

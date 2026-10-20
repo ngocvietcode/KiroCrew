@@ -555,7 +555,7 @@ def render_text(findings: Sequence[Finding], payload: dict[str, Any], min_runs: 
         "Below that a verdict is marked low or medium confidence."
     )
     lines.append(
-        "Kiro Crew's own in-code estimate for a minimal-context wake is roughly 200 tokens "
+        "Sao Khuê's own in-code estimate for a minimal-context wake is roughly 200 tokens "
         "against 30,000 to 55,000 for a full one. That range is an estimate written into the "
         "product, not a measurement, so quote it as an estimate."
     )

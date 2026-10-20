@@ -675,13 +675,13 @@ describe('the Slack card', () => {
   it('says needs setup when enabled but not ready, and renders the backend\'s fix', async () => {
     mockApi.state.mockResolvedValue(
       boardState({
-        slack: slack({ enabled: true, detail: "Kiro Crew's Slack is not connected." }),
+        slack: slack({ enabled: true, detail: "Sao Khuê's Slack is not connected." }),
       }),
     )
     renderPanel()
 
     expect(await screen.findByText('needs setup')).toBeInTheDocument()
-    expect(screen.getByText("Kiro Crew's Slack is not connected.")).toBeInTheDocument()
+    expect(screen.getByText("Sao Khuê's Slack is not connected.")).toBeInTheDocument()
   })
 
   it('says active once the backend reports ready, and stays quiet about the fix', async () => {

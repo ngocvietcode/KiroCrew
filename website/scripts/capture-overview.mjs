@@ -38,7 +38,7 @@ const fixedApi = makeFixedApi(PROJECT)
 fixedApi.set('/api/status', status)
 // TWO WORDS, matching the backend default: the nav brand row accents the last
 // word only, so a single-word name renders the mark without its "CREW" half.
-fixedApi.set('/api/dashboard/branding', { bot_name: 'Kiro Crew', avatar: '/logo.png' })
+fixedApi.set('/api/dashboard/branding', { bot_name: 'Sao Khuê', avatar: '/logo.png' })
 
 const browser = await chromium.launch()
 const context = await browser.newContext({

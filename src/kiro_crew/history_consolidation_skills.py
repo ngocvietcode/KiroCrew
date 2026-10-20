@@ -97,7 +97,7 @@ _SENSITIVE_TOOL_PATTERNS: tuple[str, ...] = (
     ".pypirc",
     ".netrc",
     ".git-credentials",
-    # Kiro Crew's own credential file. The data home moved to ~/.kiro/crew, so the
+    # Sao Khuê's own credential file. The data home moved to ~/.kiro/crew, so the
     # LIVE secret is ~/.kiro/crew/.env; cover the pre-move legacy home too
     # (substring match, so bare "/.env"-suffixed forms).
     ".kiro/crew/.env",

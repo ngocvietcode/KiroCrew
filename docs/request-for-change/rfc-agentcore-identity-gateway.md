@@ -31,7 +31,7 @@ a login withhold in `rebuild_agent_config()`, or the
 
 ## Summary
 
-Give each Kiro Crew agent a first-class **Amazon Bedrock AgentCore
+Give each Sao Khuê agent a first-class **Amazon Bedrock AgentCore
 Identity** workload identity, and use **AgentCore Gateway** as the
 outbound token-vending plane for MCP tools. Crew does not implement
 OAuth, RFC 8693, or a token vault. The companion edition registers the
@@ -197,7 +197,7 @@ it calls Identity APIs.
 Operator / channel user
         │  dashboard token, Slack user id, companion SSO JWT
         ▼
-Kiro Crew gateway (local, ACP → kiro-cli)
+Sao Khuê gateway (local, ACP → kiro-cli)
         │
         ├─ AgentIdentityProvider.workload_identity()
         │     standalone AgentCore workload "kirocrew"

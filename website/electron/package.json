@@ -1,7 +1,7 @@
 {
   "name": "kirocrew-desktop",
   "version": "0.11.0",
-  "description": "Kiro Crew \u2014 AI agent desktop app",
+  "description": "Sao Khuê \u2014 AI agent desktop app",
   "homepage": "https://github.com/kirodotdev/KiroCrew",
   "desktopName": "kirocrew-desktop.desktop",
   "main": "main.js",
@@ -46,9 +46,9 @@
       "notarize": false,
       "x64ArchFiles": "{**/backend-dist/**,**/backend-dist/**/.*/**}",
       "extendInfo": {
-        "CFBundleDisplayName": "Kiro Crew",
-        "NSMicrophoneUsageDescription": "Kiro Crew uses the microphone for voice input and dictation in chat. Audio is captured only while you hold or toggle the mic button.",
-        "NSLocalNetworkUsageDescription": "Kiro Crew connects to devices on your local network so agent commands can reach your own servers, NAS, containers, and dev machines. Only the addresses a command names are contacted."
+        "CFBundleDisplayName": "Sao Khuê",
+        "NSMicrophoneUsageDescription": "Sao Khuê uses the microphone for voice input and dictation in chat. Audio is captured only while you hold or toggle the mic button.",
+        "NSLocalNetworkUsageDescription": "Sao Khuê connects to devices on your local network so agent commands can reach your own servers, NAS, containers, and dev machines. Only the addresses a command names are contacted."
       }
     },
     "afterSign": "scripts/notarize.js",
@@ -56,7 +56,7 @@
       "category": "Development",
       "icon": "build/icons",
       "executableName": "kirocrew-desktop",
-      "maintainer": "Kiro Crew Maintainers <maintainers@crew.kiro.dev>",
+      "maintainer": "Sao Khuê Maintainers <maintainers@crew.kiro.dev>",
       "synopsis": "Persistent AI agent workspace with memory, schedules, and unattended work",
       "syncDesktopName": true,
       "target": [
@@ -308,5 +308,5 @@
       "installerHeader": "../../packaging/installer-assets/windows-installer-header.bmp"
     }
   },
-  "author": "Kiro Crew"
+  "author": "Sao Khuê"
 }

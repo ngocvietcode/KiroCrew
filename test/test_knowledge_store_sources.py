@@ -1,6 +1,6 @@
 """Additional KnowledgeStore coverage, folder sources and the watcher loop.
 
-The store's wider surface, the retirement of folders Kiro Crew registered
+The store's wider surface, the retirement of folders Sao Khuê registered
 itself, imported folder sources that wait for confirmation, the watcher's run
 loop and dedup cadence, and ``sync_all`` skipping errored sources.
 The ``store`` fixtures come from ``knowledge_helpers.py``.
@@ -683,7 +683,7 @@ class TestKnowledgeStoreExtended:
 
 
 # ---------------------------------------------------------------------------
-# 7b. Retirement of folders Kiro Crew registered itself
+# 7b. Retirement of folders Sao Khuê registered itself
 # ---------------------------------------------------------------------------
 
 

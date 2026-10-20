@@ -5,7 +5,7 @@ Status: implemented in `src/kiro_crew/pod/` and exposed by `kirocrew pod`.
 ## Overview
 
 `kirocrew pod` gives developers **kubectl-style, throwaway, full-stack test
-instances**, one per feature worktree. A *pod* is an ephemeral KiroCrew gateway
+instances**, one per feature worktree. A *pod* is an ephemeral SaoKhue gateway
 booted from a worktree's **own** `.venv`, on its **own** deterministic port, with
 its **own** `KIROCREW_HOME` (isolated DB / sessions / memory), **no Slack tunnel**,
 `--no-crons`, resource-capped, and `rm -rf`'d on stop.

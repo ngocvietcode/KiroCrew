@@ -1,7 +1,7 @@
 """The retrieval ruler: did the memory layer surface the evidence the question needed?
 
 This is the primary metric of the whole harness, and the reason is determinism.
-Kiro Crew cannot control sampling — ``temperature``, ``top_p`` and ``seed`` are not
+Sao Khuê cannot control sampling — ``temperature``, ``top_p`` and ``seed`` are not
 threaded through the provider stack at all (the only sampling-adjacent knob is
 ``reasoning_effort``), so any end-to-end answer score is a random variable whose
 noise must be beaten down with repetitions. Retrieval has no such problem: the

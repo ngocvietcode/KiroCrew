@@ -194,13 +194,13 @@ class TestExternalClientNote:
 
         note = mcp_shared.external_client_identity_note()
         # What the reader must learn, in the words they will search for.
-        assert "not started by a Kiro Crew session" in note
+        assert "not started by a Sao Khuê session" in note
         assert "not supported" in note
         assert "KIROCREW_SESSION_KEY" in note and "not a credential" in note
         assert "identity_unattested" in note
         assert "learn_list" in note and "local_knowledge_search" in note
         assert "dashboard" in note
-        assert "connect INTO a Kiro Crew session" in note
+        assert "connect INTO a Sao Khuê session" in note
         assert "~/.kiro/settings/mcp.json" in note
         assert "docs/architecture/mcp.md" in note
         # The server name is substituted, so kirocrew-dashboard's refusal
@@ -341,7 +341,7 @@ class TestExternalClientNote:
 
     def test_the_note_names_only_the_refusing_server(self) -> None:
         """The remediation names THAT server, not kirocrew-core; the "leftover"
-        clause appears only for the names Kiro Crew itself once wrote into the
+        clause appears only for the names Sao Khuê itself once wrote into the
         shared config, since an opt-in server found there is the user's own
         wiring; the read-only tools listed are kirocrew-core's alone; and shipped
         text names no pull request, because a plan is not a step."""

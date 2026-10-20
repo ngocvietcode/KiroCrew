@@ -29,7 +29,7 @@ import './petMotion.css'
 import ghostIdleUrl from './assets/kiro_idle.svg'
 import { petBridge } from './petBridge'
 
-// Same method names as the desktop app's IPC bridge, over Kiro Crew's gateway.
+// Same method names as the desktop app's IPC bridge, over Sao Khuê's gateway.
 const api = petBridge
 
 /** The built-in pack id. Only this one gets the live eye overlay. */

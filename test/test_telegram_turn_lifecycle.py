@@ -75,7 +75,7 @@ class TestUserSafeFailureReason:
 
     def test_non_retryable_provider_fallback_returns_none(self) -> None:
         # The formatter's fallback passes the provider's own text through and
-        # still marks it non-retryable; only Kiro Crew's own wording may reach chat.
+        # still marks it non-retryable; only Sao Khuê's own wording may reach chat.
         exc = AcpError("provider said: {'data': 'opaque'}", transient=False)
         assert _user_safe_failure_reason(exc) is None
 

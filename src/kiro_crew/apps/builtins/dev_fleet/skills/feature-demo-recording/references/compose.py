@@ -22,7 +22,7 @@ Two alignment facts that are easy to get wrong and expensive to discover late:
    frames, which a seeking renderer will happily bake in.
 
 brand.json (all optional):
-{ "accent":"#8e48ff", "bg":"#19161d", "outro_eyebrow":"KIRO CREW",
+{ "accent":"#8e48ff", "bg":"#19161d", "outro_eyebrow":"SAO KHUÊ",
   "outro_title_lead":"Command", "outro_title_tail":" Bar",
   "font_stack":"\\"Inter\\",\\"Droid Sans Fallback\\",sans-serif",
   "font_face_local":"Droid Sans Fallback" }

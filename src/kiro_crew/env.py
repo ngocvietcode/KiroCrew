@@ -183,7 +183,7 @@ def register_mcp_path_dirs(*dirs: str) -> tuple[str, ...]:
     """Contribute directories to the MCP binary search path. Returns the accepted ones.
 
     The programmatic half of the seam described above: a downstream build, a
-    packaged distribution, or a host embedding Kiro Crew can name the directories
+    packaged distribution, or a host embedding Sao Khuê can name the directories
     ITS package manager installs MCP launchers into, without forking this module
     and without a per-user config file. Call it during startup, before the first
     session or MCP probe; :func:`augmented_path` reads the registry on every
@@ -336,7 +336,7 @@ _NODE_TREE_DIRS = (
     "{home}/.local/share/node/bin",
 )
 # Standalone trees under the DATA home -- where ``ensure-node.sh`` unpacks the
-# unofficial glibc-2.17 build, i.e. a Node Kiro Crew installed itself. Relative
+# unofficial glibc-2.17 build, i.e. a Node Sao Khuê installed itself. Relative
 # paths, resolved against ``data_home()`` separately from the ``$HOME`` templates
 # above because that call can fail (see :func:`node_bin_dirs`).
 _NODE_TREE_DATA_HOME_DIRS = ("node-glibc217/bin",)
@@ -538,7 +538,7 @@ def node_bin_dirs() -> tuple[str, ...]:
     supported install path -- put node under ``$HOME``. A non-login gateway
     (systemd / launchd) does not inherit those on ``$PATH``, and build callers
     additionally pin PATH to system dirs, so without this the build cannot see
-    the very node Kiro Crew installed for it.
+    the very node Sao Khuê installed for it.
 
     Cached for the process lifetime: the globs must run once, matching
     :func:`node_all_bin_dirs`. A node installed while a long-lived
@@ -881,7 +881,7 @@ def augmented_path(base_path: str = "", *, home: str | None = None) -> str:
     ``home`` pins user-relative candidates for callers already resolving a
     specific account instead of whichever account owns the current process.
 
-    When KiroCrew runs under systemd or another non-login shell the
+    When SaoKhue runs under systemd or another non-login shell the
     inherited ``$PATH`` rarely includes directories like
     ``~/.local/bin``.  Both the MCP-probe code and the kiro-cli
     spawn code need the same augmentation — this helper keeps them in
@@ -1134,7 +1134,7 @@ def resolved_command_casing(path: str | None) -> str:
     their ``shutil.which`` result through this one helper, next to
     :func:`mcp_search_path`, so they agree on WHAT they emit as well as on where
     they look. ``kirocrew restart`` also routes its respawn lookup in
-    ``cli_server`` through it. Other resolvers of Kiro Crew's own binaries stay
+    ``cli_server`` through it. Other resolvers of Sao Khuê's own binaries stay
     outside it: the ``kirocrew`` lookup in ``agent._resolve_kirocrew_bin``, and
     the kiro-cli resolver, whose discovery in ``kiro_cli`` does its own Windows
     ``realpath``. So do the ACP adapter ladders in ``acp.launch`` and
@@ -1211,7 +1211,7 @@ def mcp_runtime_path(base_path: str = "") -> str:
 #
 # * ``LD_*`` / ``DYLD_*`` are dynamic-loader channels honoured by every
 #   ELF/Mach-O binary in the spawn chain, the sandbox wrapper included.
-# * The ``PYTHON`` namespace matters because Kiro Crew's Linux sandbox launcher
+# * The ``PYTHON`` namespace matters because Sao Khuê's Linux sandbox launcher
 #   IS a Python process: ``sandbox.namespace_argv`` returns
 #   ``[sys.executable, "-I", "-S", <generated script>, *argv]`` (sandbox_argv.py), and
 #   that interpreter starts with the env we hand ``Popen``. A declared
@@ -1268,7 +1268,7 @@ _SPEC_ENV_DENIED_PREFIXES: tuple[str, ...] = (
     "PYTHON",
 )
 
-# The env namespace Kiro Crew reserves for ITSELF. A spec-declared ``env`` may
+# The env namespace Sao Khuê reserves for ITSELF. A spec-declared ``env`` may
 # not set any key in it.
 #
 # This is an AUTHORIZATION boundary, and it is a different class from the loader
@@ -1303,7 +1303,7 @@ _SPEC_ENV_DENIED_PREFIXES: tuple[str, ...] = (
 # spec on top (``cron_script._clean_cron_env()``, ``mcp_discovery``'s
 # ``dict(os.environ)``), so a gateway-authored ``KIROCREW_*`` value is INHERITED
 # either way. Denying it here removes only a config file's ability to OVERRIDE
-# one — exactly the capability being abused, and nothing else. Kiro Crew's own
+# one — exactly the capability being abused, and nothing else. Sao Khuê's own
 # spawn paths set these variables directly on the child env
 # (``apps.backend``'s ``KIROCREW_APP_NAME``, the gateway's
 # ``KIROCREW_MCP_TARGET_*``), never by declaring them in an ``mcpServers``
@@ -1340,10 +1340,10 @@ def sanitize_spec_env(pairs: Iterable[tuple[str, str]]) -> dict[str, str]:
 
     * ``_SPEC_ENV_DENIED_PREFIXES`` — loader/interpreter channels that execute
       code in the launcher before confinement exists.
-    * ``_SPEC_ENV_RESERVED_PREFIXES`` — Kiro Crew's own namespace, which carries
+    * ``_SPEC_ENV_RESERVED_PREFIXES`` — Sao Khuê's own namespace, which carries
       the caller identity our authorization checks read. Sandboxing does not
       mitigate this one at all: confinement bounds what the child may touch, not
-      whose jobs Kiro Crew believes the child is entitled to. That is why "the
+      whose jobs Sao Khuê believes the child is entitled to. That is why "the
       command is equally config-authored, and it runs sandboxed" does not settle
       this class the way it settles the command itself. This prefix set is depth,
       not the authorization control, and it cannot be: it stops the ``env`` block

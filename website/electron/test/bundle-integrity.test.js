@@ -517,9 +517,9 @@ describe("describeIncompleteBundle", () => {
     for (const options of [undefined, { autoRetry: true }]) {
       const msg = describeIncompleteBundle(["urllib"], options);
       assert.match(msg, /If the install is still unfinished after five minutes/);
-      assert.match(msg, /quit and reopen Kiro Crew \(the Quit button below\)/);
+      assert.match(msg, /quit and reopen Sao Khuê \(the Quit button below\)/);
       assert.ok(!/restart the app/.test(msg), `names a control the dialog lacks: ${msg}`);
-      assert.match(msg, /reinstall the Kiro Crew app/, "says what 'reinstall' means");
+      assert.match(msg, /reinstall the Sao Khuê app/, "says what 'reinstall' means");
     }
   });
 });
@@ -599,9 +599,9 @@ describe("nextInstallingDialogState", () => {
   it("is complete only for an empty part list, and title and message both say so", () => {
     const state = nextInstallingDialogState([]);
     assert.equal(state.complete, true);
-    assert.equal(state.title, "Kiro Crew — installation finished");
+    assert.equal(state.title, "Sao Khuê — installation finished");
     assert.match(state.message, /Installation finished/);
-    assert.match(state.message, /starting Kiro Crew/i);
+    assert.match(state.message, /starting Sao Khuê/i);
   });
 
   it("carries the falling count while parts remain, in the auto-retry voice", () => {
@@ -637,7 +637,7 @@ describe("nextInstallingDialogState", () => {
       assert.equal(state.complete, false);
       assert.equal(state.title, PRUNED_DIALOG_TITLE);
       assert.equal(state.message, PRUNED_BACKEND_MESSAGE);
-      assert.match(state.message, /^Some of Kiro Crew's app files were removed/);
+      assert.match(state.message, /^Some of Sao Khuê's app files were removed/);
       assert.ok(!/backend|Quit button below/.test(state.message), `developer wording leaked: ${state.message}`);
       assert.ok(!/backend/.test(state.title), `developer wording leaked: ${state.title}`);
       assert.ok(
@@ -646,7 +646,7 @@ describe("nextInstallingDialogState", () => {
       );
       assert.ok(!/being installed|five minutes|few minutes/.test(state.message), `install wait leaked: ${state.message}`);
       assert.ok(!/starts on its own|wait/i.test(state.message), `a second, waiting option leaked: ${state.message}`);
-      assert.match(state.message, /If it still doesn't start after reopening, reinstall Kiro Crew the same way you installed it; your chats and settings are kept\./);
+      assert.match(state.message, /If it still doesn't start after reopening, reinstall Sao Khuê the same way you installed it; your chats and settings are kept\./);
     }
   });
 

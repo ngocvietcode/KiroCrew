@@ -15,7 +15,7 @@ Crew data home, alongside `config.json`.
 `.vault` is registered as a sensitive path, which is a check that runs before the
 verb rather than per tool. That covers a file read, a `cat`, and a scripted
 `python -c "open(...)"` alike — the refusal does not depend on the agent choosing
-a route the policy anticipated. The protection is enforced by Kiro Crew, not by
+a route the policy anticipated. The protection is enforced by Sao Khuê, not by
 the operating system: another program running as you can still open the files.
 
 ## Adding a secret

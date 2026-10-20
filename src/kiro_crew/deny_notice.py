@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 #: cause → (clause completing "The tool call you just made …", what to do next).
 _DENY_CAUSE_TEXT: dict[str, tuple[str, str]] = {
     DENY_CAUSE_POLICY: (
-        "was blocked by a Kiro Crew safety policy",
+        "was blocked by a Sao Khuê safety policy",
         "use an allowed alternative (for a shell command, a read-only variant), use "
         "a different tool, or — if the block is correct and you genuinely cannot "
         "proceed — say so and stop with the reason.",
@@ -192,7 +192,7 @@ def build_refusal_steer_notice(
     # notice exists to do — the model has just been told the user denied this, and
     # every sentence after this one is spent correcting that.
     return (
-        f"[Kiro Crew host notice] The tool call you just made {clause}. "
+        f"[Sao Khuê host notice] The tool call you just made {clause}. "
         "This was NOT a user action — the user did not "
         "cancel, reject, or interrupt anything. The tool result you were handed for "
         "it is generic and wrong about who denied it — on kiro-cli it reads "

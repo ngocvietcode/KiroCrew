@@ -84,7 +84,7 @@ def _report_kas_bundle(issues: list[str]) -> None:
     where = " (built into the app)" if installed.bundled else ""
     print(f"  bundle:      ✅ KAS {installed.version}, Node {installed.node_version or '?'}{where}")
     print(f"  spawn:       {' '.join(kas_bundle.bundle_spawn_argv(installed))}")
-    print("  auth owner:  Kiro Crew vault (the only owner on this route)")
+    print("  auth owner:  Sao Khuê vault (the only owner on this route)")
     try:
         from kiro_crew.auth.bridge import describe_vault_identity, vault_holds_identity
 
@@ -146,7 +146,7 @@ def _report_kas_backend(issues: list[str]) -> None:
     print(
         "  auth owner:  "
         + (
-            "Kiro Crew vault (signed in through Kiro Crew)"
+            "Sao Khuê vault (signed in through Sao Khuê)"
             if host_auth
             else "kiro-cli credential store (--auth-method cli)"
         )
@@ -184,7 +184,7 @@ def _report_kas_backend(issues: list[str]) -> None:
     # kiro-cli's own store otherwise. The detail for each store lives in the
     # sign-in rows and the ``crew vault:`` line rather than being restated here.
     if host_auth:
-        print("  token:       ➖ Kiro Crew vault sign-in (see the auth owner line above)")
+        print("  token:       ➖ Sao Khuê vault sign-in (see the auth owner line above)")
     else:
         from kiro_crew.agent_sdk import entitlement_label
 

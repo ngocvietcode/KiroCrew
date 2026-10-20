@@ -38,7 +38,7 @@ Deleting the directory caused no breakage.
    environments — `uv run`/`uvx` caches, per-task venvs spawned by subagents —
    live at **unique paths**, so each one mints a fresh, never-reused mirror of
    its whole stdlib + site-packages. CPython only ever *adds* to a pycache
-   prefix; nothing in CPython, and (before this fix) nothing in Kiro Crew,
+   prefix; nothing in CPython, and (before this fix) nothing in Sao Khuê,
    ever deleted from it. Heavy subagent use therefore produced multiple GB of
    distinct entries per day.
 
@@ -51,7 +51,7 @@ Deleting the directory caused no breakage.
 - **Close the unbounded input** — `PYTHONPYCACHEPREFIX` joined `PYTHONPATH` /
   `PYTHONHOME` in `sandbox._PYTHON_ENV_PREFIXES`, the set scrubbed on the
   `strip_python_env=True` kiro-cli / agent spawn path (and only there:
-  Kiro Crew's own sandboxed Python children — cron scripts, app backends —
+  Sao Khuê's own sandboxed Python children — cron scripts, app backends —
   keep the prefix so the packaged app's bundle stays clean). Foreign
   interpreters in the agent subtree now write `__pycache__` beside their own
   sources, Python's normal behavior.

@@ -166,7 +166,7 @@ exports.default = async function signWindows(configuration) {
   const filePath = configuration.path
   const fileName = path.basename(filePath)
 
-  // Kiro Crew authenticates this exact upstream executable by pinned size and
+  // Sao Khuê authenticates this exact upstream executable by pinned size and
   // SHA-256 immediately before every spawn. Authenticode appends bytes and
   // would make the signed desktop bundle reject its own decoder. Keep only
   // this one dependency byte-identical; the app, Python runtime, installer and

@@ -1,7 +1,7 @@
 """Phase 6 + 8 — the PreToolUse gate enforces governance, and audits denials.
 
 The headline behavior: a profile (or policy) that excludes an MCP tool causes
-KiroCrew to refuse the call at its own host gate, EVEN IF the kiro agent config
+SaoKhue to refuse the call at its own host gate, EVEN IF the kiro agent config
 granted it.  Plus: a governance deny wins over a user auto-approve, and a deny
 emits a redacted ``governance_decision`` SEL record.
 """

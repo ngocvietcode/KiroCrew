@@ -1,7 +1,7 @@
 """On-disk layout for the app's artifacts and chat-session records.
 
 The upstream app wrote everything under its own host's data directory
-via its own path module. Here the root comes from Kiro Crew's app manager
+via its own path module. Here the root comes from Sao Khuê's app manager
 (``app_data_dir``), so it lands under ``$KIROCREW_HOME/apps/auto-improvement/data``
 and honours a relocated data home.
 

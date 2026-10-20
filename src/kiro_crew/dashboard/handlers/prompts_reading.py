@@ -287,7 +287,7 @@ async def api_prompts(request: web.Request) -> web.Response:
     # state._slots, non-blocking) and capture it into the executor job, so
     # "local" entries come from the requester's own checkout rather than the
     # process-wide KIROCREW_PROJECT_DIR — which on a source install names the
-    # Kiro Crew tree itself and on a wheel install names nothing, so a prompt
+    # Sao Khuê tree itself and on a wheel install names nothing, so a prompt
     # the user authored in their project would never be listed here.
     state: DashboardState = request.app["state"]
     session_key = _read_session_key(request)

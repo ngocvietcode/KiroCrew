@@ -1,7 +1,7 @@
 """The request must ADDRESS a crew, and the container must never substitute one.
 
 This covers the defect that made the first live deployment look healthy while
-serving nobody's crew. The turn probe sent ``{"model": "default"}``; Kiro Crew maps
+serving nobody's crew. The turn probe sent ``{"model": "default"}``; Sao Khuê maps
 ``model`` to an agent name and validates it against a NAME REGEX rather than against
 the agents that exist (``dashboard/openai_compat.py:237``), so the name resolved to
 the installed default and a stock agent answered. Every gate passed, because the
@@ -106,7 +106,7 @@ def test_the_forwarded_model_comes_from_the_deployment_not_the_caller() -> None:
     body, slot_id, stream = _forward_body(payload, "acme-support")
     # The crew's AGENT ID, derived from the deployed name rather than from the payload.
     # The namespace matters because the bare name resolves to whatever else declares
-    # it, which for the crew this deployment ships is Kiro Crew's own worker mirror.
+    # it, which for the crew this deployment ships is Sao Khuê's own worker mirror.
     assert body["model"] == "crew-acme-support"
     assert slot_id == "s"
     assert stream is False
@@ -130,7 +130,7 @@ def test_forwarding_drops_every_field_outside_the_contract() -> None:
 def test_a_near_miss_name_does_not_address_the_crew(hostile: str) -> None:
     """Crew matching is exact. A case- or separator-variant is a different crew.
 
-    Kiro Crew's agent names are case-sensitive, so accepting a variant here would
+    Sao Khuê's agent names are case-sensitive, so accepting a variant here would
     forward a name the deployment did not install and land on the default again.
     """
     crew, refusal = judge_addressed_crew({"model": hostile}, "acme-support")

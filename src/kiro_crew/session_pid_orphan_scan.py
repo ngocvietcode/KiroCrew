@@ -1,4 +1,4 @@
-"""Finding untracked orphans: processes Kiro Crew spawned that no tracking record names.
+"""Finding untracked orphans: processes Sao Khuê spawned that no tracking record names.
 
 The positive-identity predicate of each orphan class (MCP server, unreachable gatewayd,
 browser daemon, work process), the environ markers they read, the reparented-pid walk,
@@ -47,7 +47,7 @@ logger = logging.getLogger("kiro_crew.session_pid")
 
 
 # ── Untracked orphan MCP sweep (defense-in-depth) ──────────
-# Catches MCP subtrees Kiro Crew spawned that escaped PID-file tracking.
+# Catches MCP subtrees Sao Khuê spawned that escaped PID-file tracking.
 # Split into find + kill so the caller can re-verify active PIDs between phases.
 
 _ORPHAN_SWEEP_MAX_KILLS = 30
@@ -119,8 +119,8 @@ _PID_VANISHED_ERRORS = (
 #: ``test_the_mcp_marker_tracks_the_sandbox_artifact_prefix``.
 _SANDBOX_LAUNCHER_MARKER = b"kirocrew_sandbox_"
 
-# Entrypoints that positively identify an MCP/worker process Kiro Crew spawned.
-# Each marker MUST be unique to a process Kiro Crew itself launches — the sweep
+# Entrypoints that positively identify an MCP/worker process Sao Khuê spawned.
+# Each marker MUST be unique to a process Sao Khuê itself launches — the sweep
 # SIGKILLs any user-owned orphan that matches, so a marker naming a server the
 # core does not spawn would reap an unrelated process. The upstream project's
 # reaper also lists an enterprise-only MCP server it manages, but this public
@@ -142,12 +142,12 @@ _GATEWAY_MARKERS = (
     b"kiro_crew.__main__",
 )
 
-# MCP launcher cmdline shapes that carry NO Kiro Crew fingerprint (a user's own
+# MCP launcher cmdline shapes that carry NO Sao Khuê fingerprint (a user's own
 # shell can produce identical cmdlines), so matching them requires the
 # ``KIROCREW_SPAWNED`` environ marker as positive identity — the public fork's
 # only fingerprint-less launcher is the public ``@playwright/mcp`` server, which
 # runs as ``npx @playwright/mcp`` -> node (see ``mcp_playwright_proxy``): neither
-# its argv0 (``npx``/``node``) nor its args mention Kiro Crew, so a grandchild
+# its argv0 (``npx``/``node``) nor its args mention Sao Khuê, so a grandchild
 # escaping the probe/session tree evades the cmdline-fingerprint sweep entirely.
 _MARKED_MCP_LAUNCHER_MARKERS = (
     b"@playwright/mcp",  # ``npx @playwright/mcp`` (npx shim + node server)
@@ -188,7 +188,7 @@ _BROWSER_SESSION_PREFIX = b"kc-"
 
 
 def _is_generated_browser_session(name: bytes) -> bool:
-    """True for a Kiro-Crew-generated ``kc-<8hex>`` session name.
+    """True for a SaoKhue-generated ``kc-<8hex>`` session name.
 
     Mirrors ``browser_cli.launch._session_leaf``. ONLY generated names are
     ever sweepable: an operator who named a session (``default``, ``chrome``,
@@ -283,7 +283,7 @@ def _browser_session_owner_alive(
     """True while any live process OUTSIDE *pid*'s own tree holds *session*.
 
     This is the ownership proof, and it is drawn entirely from the kernel.
-    Kiro Crew injects the generated ``PLAYWRIGHT_CLI_SESSION`` into exactly
+    Sao Khuê injects the generated ``PLAYWRIGHT_CLI_SESSION`` into exactly
     one spawned agent process, so that value in a live process's EXEC-TIME
     environ means the browser still has an owner. Scanning the whole process
     table (not a manager-local set) is what makes a peer gateway sharing this
@@ -407,9 +407,9 @@ def _is_sweepable_orphan_browser_daemon(
        name (:func:`_browser_daemon_session_arg`, NUL-argv only) -- an
        operator-named session is structurally excluded and never signalled;
     2. that same name in the process's exec-time environ, which ties this
-       daemon to a name Kiro Crew itself generated rather than one an agent
+       daemon to a name Sao Khuê itself generated rather than one an agent
        passed with ``-s=``;
-    3. the ``KIROCREW_SPAWNED`` environ marker, proving Kiro Crew spawned the
+    3. the ``KIROCREW_SPAWNED`` environ marker, proving Sao Khuê spawned the
        tree (:func:`_env_has_kirocrew_marker`, Linux-only, fail-closed);
     4. NO live process outside the daemon's own tree still holding that
        session (:func:`_browser_session_owner_alive`);
@@ -554,7 +554,7 @@ def _our_orphan_pids() -> list[int]:
 
 
 def _is_orphan_mcp(cmdline: bytes) -> bool:
-    """True if cmdline matches a Kiro Crew MCP entrypoint (not a peer gateway)."""
+    """True if cmdline matches a Sao Khuê MCP entrypoint (not a peer gateway)."""
     # Exclude peer gateways — they're not orphan MCP targets
     if any(marker in cmdline for marker in _GATEWAY_MARKERS):
         return False
@@ -721,7 +721,7 @@ def _is_sweepable_orphan_mcp(pid: int, cmdline: bytes) -> bool:
     """Positive-identity gate for the orphan sweep (find AND pre-kill re-verify).
 
     Two independent paths:
-    1. cmdline carries a Kiro Crew fingerprint (:func:`_is_orphan_mcp`) —
+    1. cmdline carries a Sao Khuê fingerprint (:func:`_is_orphan_mcp`) —
        the pre-existing behavior, works on Linux and macOS.
     2. cmdline is a fingerprint-less MCP launcher shape AND the process
        environ carries the ``KIROCREW_SPAWNED`` marker (catches escaped
@@ -737,7 +737,7 @@ def _is_sweepable_orphan_mcp(pid: int, cmdline: bytes) -> bool:
 def _gatewayd_socket_arg(cmdline: bytes) -> bytes | None:
     """Extract the ``--socket`` argument from a gatewayd cmdline, or ``None``.
 
-    Accepts the two-token ``--socket <path>`` form (the shape every Kiro Crew
+    Accepts the two-token ``--socket <path>`` form (the shape every Sao Khuê
     spawn site produces) and the argparse-equivalent ``--socket=<path>``.
     NUL-separated argv ONLY: the space-joined ``ps`` fallback (macOS) cannot
     delimit a path containing spaces, and statting a truncated path would
@@ -851,7 +851,7 @@ def _is_agent_runtime_anchor(cmdline: bytes, *, has_kirocrew_marker: bool) -> bo
     fingerprinted MCP workers through :func:`_is_orphan_mcp`, direct managed
     runtimes (``kiro-cli`` / ``kiro-cli-chat`` / ``claude-agent-acp`` /
     ``claude``) by exact argv0 basename, and the existing fingerprint-less MCP
-    launcher shapes only when that member itself carries the Kiro Crew spawn
+    launcher shapes only when that member itself carries the Sao Khuê spawn
     marker. Peer gateway/CLI entrypoints are excluded.
     """
     if not cmdline:
@@ -883,7 +883,7 @@ def _is_sweepable_orphan_work(pid: int, cmdline: bytes, age_seconds: float) -> b
        not sufficient identity.
     2. The ``KIROCREW_SPAWNED`` environ marker (:func:`_env_has_kirocrew_marker`,
        Linux-only, fail-closed elsewhere). The marker is only ever injected
-       into environments Kiro Crew itself spawns (sandbox wrapper, ACP client
+       into environments Sao Khuê itself spawns (sandbox wrapper, ACP client
        and runtime, MCP gateway backend) and is inherited by every descendant,
        so it can never identify a user-launched process.
     3. Reparenting to init/systemd --user — guaranteed by the caller, which

@@ -377,7 +377,7 @@ export default function CrewAvatarLibraryTab({
             />
           )}
           <span className="text-[12px] font-medium leading-tight">{pack.name}</span>
-          {/* Author only on a CUSTOM pack. On the built-in, "Author: Kiro Crew" left the
+          {/* Author only on a CUSTOM pack. On the built-in, "Author: Sao Khuê" left the
               reader unable to tell whether that named a person, a team or the app — and
               the pack already carries a "Built-in" badge that says the useful part. */}
           {pack.author && pack.type === 'custom' && (

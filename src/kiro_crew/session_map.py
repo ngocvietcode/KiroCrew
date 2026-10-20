@@ -125,7 +125,7 @@ MIRROR_OPT_OUT_FLAG = "mirror_opt_out"
 #: it is consumed, by the first cold start that honours it.
 SUPPRESS_REPLAY_FLAG = "suppress_replay"
 
-#: The sid of a fresh native session that still owes its Kiro Crew history: the
+#: The sid of a fresh native session that still owes its Sao Khuê history: the
 #: session was mapped at creation, but no turn has delivered the history to it yet
 #: (``SessionManager.mark_first_turn_history_owed`` writes it, the settle in
 #: ``consume_first_turn_history_owed`` clears it). It is the on-disk copy of that
@@ -1151,7 +1151,7 @@ class SessionMap:
     def mapped_sids_by_key(self) -> dict[str, str]:
         """Session key to kiro-cli session ID, for every entry that has one.
 
-        A session ID present here is one Kiro Crew can still resume. Callers that
+        A session ID present here is one Sao Khuê can still resume. Callers that
         account for or reclaim disk space need both halves of this relation: the
         IDs to exclude from deletion, and the key each ID belongs to so a
         session's transcript can be paired with its replay log. Returning the

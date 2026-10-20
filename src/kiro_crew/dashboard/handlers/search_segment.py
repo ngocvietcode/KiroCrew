@@ -73,7 +73,7 @@ async def api_search_segment(request: web.Request) -> web.Response:
         return _refuse(
             request,
             "internal_secret_required",
-            "only a local Kiro Crew process holding the internal secret may call this",
+            "only a local Sao Khuê process holding the internal secret may call this",
         )
     try:
         body = await request.json()

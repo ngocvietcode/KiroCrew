@@ -82,7 +82,7 @@ the board for automatic claim and handoff.
 The current scaffold also requires a `readlink` implementation that supports
 `-f` (GNU coreutils). Stock macOS `readlink` does not provide that flag.
 
-**Kiro Crew `autonudge_stop` MCP tool** — included with Kiro Crew. Used
+**Sao Khuê `autonudge_stop` MCP tool** — included with Sao Khuê. Used
 by the agent to self-halt when DoD is met; no extra install is required.
 
 ## Run it

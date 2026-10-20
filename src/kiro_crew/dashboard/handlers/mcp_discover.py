@@ -107,7 +107,7 @@ def _derive_install_name(server_id: str) -> str:
 
 
 def _configured_server_names() -> set[str]:
-    """Names of all MCP servers KiroCrew currently knows about.
+    """Names of all MCP servers SaoKhue currently knows about.
 
     Same source as the ``/api/mcp`` list endpoint so the ``installed``
     cross-ref matches what the config table shows.
@@ -165,7 +165,7 @@ async def api_mcp_discover(request: web.Request) -> web.Response:
         query, provider=provider_filter, limit=limit
     )
 
-    # Cross-ref against KiroCrew's configured servers so the UI can badge
+    # Cross-ref against SaoKhue's configured servers so the UI can badge
     # already-installed entries. list_servers() reads config files
     # synchronously — offload it.
     configured = await asyncio.to_thread(_configured_server_names)
@@ -281,7 +281,7 @@ async def api_mcp_discover_install(request: web.Request) -> web.Response:
     """POST /api/mcp/discover/install — body ``{"provider": ..., "id": ...}``.
 
     provider=official: translate the registry entry to an mcp.json spec and
-    write it into the KiroCrew scope enabled=true (reusing the mcp.py write
+    write it into the SaoKhue scope enabled=true (reusing the mcp.py write
     helpers). provider=capability: delegate to the edition manager.
     """
     # Body-scope import, like the sibling gates in this package
@@ -316,7 +316,7 @@ async def api_mcp_discover_install(request: web.Request) -> web.Response:
 
 
 async def _install_from_official(request: web.Request, server_id: str) -> web.Response:
-    """Fetch the registry entry, translate, and write into KiroCrew scope."""
+    """Fetch the registry entry, translate, and write into SaoKhue scope."""
     registry = await asyncio.to_thread(_get_registry)
     provider = registry.get("official")
     if provider is None or not provider.is_available():

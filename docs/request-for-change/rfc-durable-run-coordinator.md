@@ -41,7 +41,7 @@ The existing `SubagentManager` remains the compatibility facade and local
 executor while its scheduling and terminal-finalization responsibilities move
 behind smaller lifecycle boundaries.
 
-This is an evolution of Kiro Crew's current single-node design, not a distributed
+This is an evolution of Sao Khuê's current single-node design, not a distributed
 scheduler rewrite. SQLite is the first coordinator implementation. It gives one
 gateway process a canonical execution ledger and an explicit ownership protocol;
 the interface leaves room for another durable backend later without requiring
@@ -235,7 +235,7 @@ diagnosis.
 
 ### 5.3 Canonical schema
 
-SQLite lives under the Kiro Crew data home beside the existing subagent
+SQLite lives under the Sao Khuê data home beside the existing subagent
 registry. The initial schema has four tables.
 
 #### `runs`
@@ -682,7 +682,7 @@ but payloads stay redacted.
 
 ## 10. Security considerations
 
-- The database is created in a dedicated directory below the Kiro Crew data
+- The database is created in a dedicated directory below the Sao Khuê data
   home. PR 4 adds that directory to `_SENSITIVE_HOME_DIRS` under every known
   data-home prefix, so agent file tools and shell commands cannot read, replace,
   or delete the database, its WAL/SHM files, or migration sidecars. The security
@@ -725,7 +725,7 @@ ladder keeps every cutover observable and reversible.
 
 ### 11.4 Start with a network queue or distributed database
 
-Kiro Crew is presently a personal, single-gateway system. A remote control plane
+Sao Khuê is presently a personal, single-gateway system. A remote control plane
 would add deployment, authentication, partition, and consistency requirements
 before the local lifecycle has one explicit contract. The coordinator port and
 fence fields preserve a future seam without paying that cost now.

@@ -1,4 +1,4 @@
-"""Slack Socket Mode gateway orchestrator for KiroCrew.
+"""Slack Socket Mode gateway orchestrator for SaoKhue.
 
 Manages the lifecycle of all runtime services: session manager, cron
 scheduler, context builder, heartbeat, subagents, task runner, dashboard,

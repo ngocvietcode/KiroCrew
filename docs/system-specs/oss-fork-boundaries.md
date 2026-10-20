@@ -30,7 +30,7 @@ security-path spelling. This file is a standing boundary.
   credential-TTL card's backend route stays as an inert seam: `GET /api/sso-ttl`
   (`handlers_system.api_sso_ttl`) answers the identity seam's status, which is
   unavailable in the public build, and no public frontend calls it.
-- **Other providers.** Kiro Crew is KiroACP-only: `agent.provider` is fixed to `acp`
+- **Other providers.** Sao Khuê is KiroACP-only: `agent.provider` is fixed to `acp`
   (`enum=["acp"]`) and kiro-cli is REQUIRED. A second harness is selected at
   `agent.acp_backend` and adapted, never added as a second `agent.provider` value,
   because a second provider would route around every harness-parity invariant.

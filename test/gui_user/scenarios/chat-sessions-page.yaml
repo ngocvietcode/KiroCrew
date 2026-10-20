@@ -3,7 +3,7 @@
 # "Pinned" group first and then by local day, with a search box and a row of
 # filter chips (All, Unread, one per status tag in use). It has no rail row on
 # purpose, so the harness reaches it by URL. Against `rich`, "Pinned" holds the
-# two pinned sessions -- "Welcome to KiroCrew" and "Fix empty-glob crash in  (brand-ok: fixture title)
+# two pinned sessions -- "Welcome to SaoKhue" and "Fix empty-glob crash in  (brand-ok: fixture title)
 # list_sessions" -- and the unpinned "Triage: cron runs twice per tick" sits
 # under a day group ("Earlier": its last message is dated months back). No
 # seeded session carries a status tag, so the chip row is All and Unread only.

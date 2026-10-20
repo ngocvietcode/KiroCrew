@@ -200,13 +200,13 @@ def test_subagent_isolation_intent():
     """The forgery gate is what structurally prevents a subagent's UNRELATED
     tool result from ever being honored as a directive.
 
-    decode() honors a directive only when expected_tool — the name KiroCrew
+    decode() honors a directive only when expected_tool — the name SaoKhue
     itself recorded for the tool CALL — is in DIRECTIVE_TOOLS AND equals the
     encoded kind. A subagent's tool result flows through the subagent's own
     runner and arrives under whatever tool it actually called; if that tool is
     not a directive tool (or is a different directive tool), the gate returns
     None. There is no /proc walk or session key to spoof — isolation follows
-    from the call->name mapping, which is KiroCrew's own record. This test
+    from the call->name mapping, which is SaoKhue's own record. This test
     asserts that no non-directive expected_tool can decode a genuine directive.
     """
     genuine = sd.encode("monitor_start", {"message": "x"}, "armed")

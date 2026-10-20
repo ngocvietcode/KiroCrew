@@ -97,7 +97,7 @@ const tailnetPinned = {
 
 const fixedApi = makeFixedApi(PROJECT)
 fixedApi.set('/api/status', status)
-fixedApi.set('/api/dashboard/branding', { bot_name: 'Kiro Crew', avatar: '/logo.png' })
+fixedApi.set('/api/dashboard/branding', { bot_name: 'Sao Khuê', avatar: '/logo.png' })
 
 const browser = await chromium.launch()
 

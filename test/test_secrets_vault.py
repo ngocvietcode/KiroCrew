@@ -212,7 +212,7 @@ def test_restrict_to_owner_called_on_read(tmp_path, monkeypatch):
 # GPT 5.6 review flagged (vault.py:217): a prompt-injected agent running as the
 # same UID can `import SecretVault` / `open('.vault/...')` and read plaintext,
 # so "revert until .vault is hidden by every agent OS sandbox". This is a false
-# positive for the Kiro Crew agent path: `.vault` is registered as a keystone
+# positive for the Sao Khuê agent path: `.vault` is registered as a keystone
 # leaf in `security._CREW_SECRET_LEAVES`, expanded into `_SENSITIVE_HOME_DIRS`,
 # and enforced by the verb-independent `is_sensitive_path` backstop that every
 # agent file-access surface (hooks.on_tool_call, validate_file_path, artifacts,

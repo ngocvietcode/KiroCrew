@@ -39,14 +39,14 @@ Do NOT try to install one. Which Slack server to use, and whether to connect a
 workspace at all, is the user's decision — and on a work machine it may not be theirs
 to make.
 
-Installing a Slack server in Kiro Crew is not enough on its own: I only get the
+Installing a Slack server in Sao Khuê is not enough on its own: I only get the
 servers the user adds in MY settings panel, under **MCP Servers**. Every other server
 is switched off for me, so "no Slack tools" may mean "installed but not added here".
 
 Say so and hand it back:
 
 > "I don't have any Slack tools right now. If a Slack MCP server is installed in
-> Kiro Crew, add it under MCP Servers in my settings, and I can read mentions and
+> Sao Khuê, add it under MCP Servers in my settings, and I can read mentions and
 > summarize channels for you."
 
 Then stop. Do not retry, and do not offer again unless the user brings it up.

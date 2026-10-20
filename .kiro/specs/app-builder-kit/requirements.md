@@ -1,10 +1,10 @@
-# Requirements — Kiro Crew App Builder Kit
+# Requirements — Sao Khuê App Builder Kit
 
 Status: historical; the proposed `website/src/kit/` implementation is not present.
 
 ## Introduction
 
-The Kiro Crew dashboard frontend (`website/src/`) already exposes an `app-sdk/` that defines
+The Sao Khuê dashboard frontend (`website/src/`) already exposes an `app-sdk/` that defines
 the app contract (`AppApi`, `useAppApi`, `useTheme`, `useNavigate`, `useNotify`,
 `useAppEvents`, `useChatLauncher`, `ChatPanel`, `messageRenderers`, `protocol/`), with apps
 registered through `apps/builtinRegistry.ts`. However, UI building blocks are not

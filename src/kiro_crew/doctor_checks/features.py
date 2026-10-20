@@ -61,7 +61,7 @@ def _doctor_vector_memory(issues: list[str]) -> None:
 
     # Through the startup leaf's rule for what counts as an override, so the
     # report and the loader cannot disagree about which directory the libs came
-    # from: a bundled directory inherited from another Kiro Crew process is not
+    # from: a bundled directory inherited from another Sao Khuê process is not
     # one. Entry preludes remove that value before doctor runs, so the startup
     # record preserves the raw value for this diagnostic.
     _lib_path_raw = os.environ.get(cli_doctor._LIB_PATH_ENV)
@@ -102,7 +102,7 @@ def _doctor_vector_memory(issues: list[str]) -> None:
         if _absent:
             print(f"               Missing native libs for {_plat_dir}: {', '.join(_absent)}")
             print("               This install's vendored llama.cpp is incomplete (packaging")
-            print("               defect, not an unsupported platform) — reinstall Kiro Crew")
+            print("               defect, not an unsupported platform) — reinstall Sao Khuê")
             print("               from a current release to restore vector memory.")
         elif _lib_path_override:
             print(f"               {cli_doctor._LIB_PATH_ENV} is set — the libs load from")
@@ -112,7 +112,7 @@ def _doctor_vector_memory(issues: list[str]) -> None:
 
     if _lib_path_raw is not None and not _lib_path_override:
         # Set, yet not an override by the shared rule: a bundled directory of
-        # some Kiro Crew install or an empty value. This remains a note rather
+        # some Sao Khuê install or an empty value. This remains a note rather
         # than an issue because this install uses its own bundled tree.
         shown = _lib_path_raw or "(empty)"
         print(f"  lib path:    ⏹ {cli_doctor._LIB_PATH_ENV}={shown}")
@@ -124,7 +124,7 @@ def _doctor_vector_memory(issues: list[str]) -> None:
             else:
                 print("               is empty, so it is treated as unset.")
         elif _lib_path_from_startup_record:
-            print("               inherited from another Kiro Crew process and removed at startup.")
+            print("               inherited from another Sao Khuê process and removed at startup.")
         else:
             print("               is ignored; this install uses its own bundled tree.")
         print("               To override, point it at a directory of your own.")
@@ -234,7 +234,7 @@ def _doctor_speech_to_text(cfg: KiroCrewConfig, issues: list[str]) -> None:
         # that reaches a recogniser without ffmpeg is a 16 kHz mono WAV.
         print(f"  ffmpeg:      {stt_mark} not found")
         if cli_doctor.bundle_carries_decoder():
-            print("               Fix: reinstall Kiro Crew (the bundled audio decoder is missing)")
+            print("               Fix: reinstall Sao Khuê (the bundled audio decoder is missing)")
         else:
             print(
                 "               Fix: "

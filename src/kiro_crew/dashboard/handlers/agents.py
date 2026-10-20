@@ -749,7 +749,7 @@ def _cc_models(request: web.Request, configured_default: str = "") -> list[dict]
     The live backend's advertised set is AUTHORITATIVE when present. It is the
     only source that reflects entitlement: claude-agent-acp captures it at session
     init from what the signed-in account is actually served. The registry is a
-    static catalog of everything KiroCrew knows how to name, so a free-tier user
+    static catalog of everything SaoKhue knows how to name, so a free-tier user
     shown it unfiltered is offered the full flagship list and discovers the truth
     only when a prompt fails.
 
@@ -1608,11 +1608,11 @@ _WINDOWS_RESERVED_NAMES = frozenset(
 )
 
 
-# ── Kiro Crew Agent CRUD API ──
+# ── Sao Khuê Agent CRUD API ──
 
 
 async def api_kirocrew_agents(request: web.Request) -> web.Response:
-    """GET /api/agents — list all Kiro Crew agent definitions, most-used first.
+    """GET /api/agents — list all Sao Khuê agent definitions, most-used first.
 
     Also surfaces the requesting session's project-scope agents
     (``<project>/.kiro/agents``, resolved via ``X-Session-Key``) tagged

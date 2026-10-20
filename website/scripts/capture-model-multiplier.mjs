@@ -123,7 +123,7 @@ async function main() {
       if (path === '/api/auth/me') return json(route, { user: 'owner', app: '' })
       if (path === '/api/themes') return json(route, { themes: [], installed: [] })
       if (path === '/api/theme/boot') return json(route, { mode: theme === 'unpriced' ? 'dark' : theme, theme: '' })
-      if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Kiro Crew', avatar: '' })
+      if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Sao Khuê', avatar: '' })
       if (path === '/api/recent-projects') return json(route, { dirs: [PROJECT] })
       if (path === '/api/chat/nav/resolve-links') return json(route, { summaries: [] })
       if (path === '/api/dashboard/config') {

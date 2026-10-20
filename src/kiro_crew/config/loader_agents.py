@@ -72,7 +72,7 @@ def crew_autocompact_pct(config: "KiroCrewConfig", crew_name: str) -> float | No
 def resolve_crew_identity(
     config: "KiroCrewConfig", agent: str | None, crew_agent: str | None
 ) -> str:
-    """Canonical Kiro Crew identity (a ``config.agents`` key) for a session.
+    """Canonical Sao Khuê identity (a ``config.agents`` key) for a session.
 
     One rule shared by every session-granting path (provider factory, warm-pool
     claim) so cold starts and claims can never disagree. An explicit
@@ -174,7 +174,7 @@ def resolve_agent_bindings(
        case: it is never the ``default`` crewmate.
 
     *project_dir* is the session's active project directory, which widens step 2 to
-    that project's own ``.kiro`` scope. It must be the same directory Kiro Crew
+    that project's own ``.kiro`` scope. It must be the same directory Sao Khuê
     passes as the kiro-cli cwd, so an agent found through it is one the backend
     will genuinely resolve; passing a directory the session does not run in would
     reintroduce the silent-substitution bug this lookup exists to prevent.

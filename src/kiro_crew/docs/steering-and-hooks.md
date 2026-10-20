@@ -40,12 +40,12 @@ resolvable project the Steering files tab offers only the global root, and
 creating a workspace document is refused with `steering_workspace_unavailable`.
 
 The listing is bounded: at most 500 files, 256 KiB per document. Within the
-context Kiro Crew assembles, `_STEERING_CAP` gives steering resources 10% of
+context Sao Khuê assembles, `_STEERING_CAP` gives steering resources 10% of
 the budget base.
 
 ### What a document declares
 
-Steering front matter is Kiro's format, not Kiro Crew's. Four fields matter:
+Steering front matter is Kiro's format, not Sao Khuê's. Four fields matter:
 
 - `inclusion` — one of `always`, `fileMatch`, `manual`, `auto`. Absent or
   misspelled reads as `always`.
@@ -67,7 +67,7 @@ description: How this service names endpoints and shapes errors
 Endpoints are plural nouns. Errors carry a stable `code` field.
 ```
 
-**Kiro Crew reports and edits the declaration; it does not decide delivery from
+**Sao Khuê reports and edits the declaration; it does not decide delivery from
 it.** What a mode causes is kiro-cli's behaviour, it differs from the Kiro IDE,
 and it has changed between releases — so this page does not restate a
 per-version measurement. The one row every measurement agrees on is `manual`:
@@ -108,14 +108,14 @@ Steering that gets followed reads like a rule, not like prose:
 
 ### Where steering sits against memory
 
-Kiro Crew builds a session's context in a fixed order, and its stated
+Sao Khuê builds a session's context in a fixed order, and its stated
 convention is that an earlier layer outranks a later one. Steering resources are
 injected **before** the thread history, before memory, and before lessons. So
 where a steering file and a stored memory disagree, the steering file is the one
 the agent is meant to follow — and `learn_add`'s own guidance is not to save a
 lesson that only duplicates steering.
 
-Kiro Crew does **not** rank the global root against the workspace root. Both are
+Sao Khuê does **not** rank the global root against the workspace root. Both are
 loaded; the order they arrive in, and whether a declared mode withholds one, is
 the harness's decision, not something this product reimplements.
 
@@ -188,7 +188,7 @@ The six do not all sit the same distance from running, and the table says which
 is which. A Kiro Agent asks its client for hooks by trigger name, and the names
 it can ask for are a fixed list — `preTaskExecution` and `postTaskExecution` are
 on it, and the file and manual triggers are not. So two of the six are waiting
-on Kiro Crew answering that request, and the other four are waiting on a Kiro
+on Sao Khuê answering that request, and the other four are waiting on a Kiro
 Agent learning to ask at all. Save one of those four for the record, not for an
 imminent run.
 

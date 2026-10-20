@@ -25,7 +25,7 @@ const darkOnly = {
   name: 'dark-only-app',
   displayName: 'Dark Only',
   description: 'Ships iconPathDark and nothing else.',
-  author: 'Kiro Crew', // brand-ok: fixture author
+  author: 'Sao Khuê', // brand-ok: fixture author
   version: '1.0.0',
   tags: [],
   installed: false,

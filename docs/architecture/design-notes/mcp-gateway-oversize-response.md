@@ -133,9 +133,9 @@ the maintenance workers the orphan sweeps need. Implementation:
 `mcp_gateway/image_budget.py`.
 
 Scope: this seam covers every **brokered MCP server** (the gateway is the one
-hop Kiro Crew owns between an MCP server and kiro-cli's history). Two shapes
+hop Sao Khuê owns between an MCP server and kiro-cli's history). Two shapes
 deliberately stay outside it: images produced by kiro-cli's own built-in
-tools (e.g. its file-read tool in image mode) never transit Kiro Crew and
+tools (e.g. its file-read tool in image mode) never transit Sao Khuê and
 must be capped upstream in kiro-cli; and MCP embedded resources
 (`{"type": "resource", "resource": {"blob": ...}}`) are not rewritten because
 no brokered path renders resource blobs to the model today.

@@ -321,7 +321,7 @@ describe('TailnetMobileCard — untrusted_cli', () => {
   it('expanded, names the binary and links the setting instead of offering a download', async () => {
     window.localStorage.setItem(LS_KEY, '1')
     await mount(refused())
-    expect(screen.getByText('Tailscale is installed, but Kiro Crew will not run it')).toBeInTheDocument()
+    expect(screen.getByText('Tailscale is installed, but Sao Khuê will not run it')).toBeInTheDocument()
     expect(screen.getByText('/opt/homebrew/bin/tailscale')).toBeInTheDocument()
     // The publish the gateway will not run, for the operator to run by hand.
     expect(
@@ -628,7 +628,7 @@ describe('TailnetMobileCard — mutating actions', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Set up & show QR/ }))
 
-    expect(await screen.findByText('Restart Kiro Crew to finish')).toBeInTheDocument()
+    expect(await screen.findByText('Restart Sao Khuê to finish')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Setting up phone access/ })).toBeDisabled()
     finishRestart()
     expect(await screen.findByAltText('QR code linking to this dashboard')).toBeInTheDocument()

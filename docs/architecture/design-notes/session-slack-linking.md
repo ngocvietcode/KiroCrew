@@ -1,6 +1,6 @@
 # Session and Slack Thread Linking
 
-How a Slack thread maps onto a Kiro Crew session, and how messages mirror in both
+How a Slack thread maps onto a Sao Khuê session, and how messages mirror in both
 directions across the two surfaces.
 
 The invariant the whole design serves: **one conversation, one kiro-cli session,

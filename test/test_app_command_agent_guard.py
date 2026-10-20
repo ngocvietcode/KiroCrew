@@ -808,7 +808,7 @@ def test_a_skill_view_shaped_agent_name_is_refused(tmp_path, monkeypatch):
     (agents_dir / f"pr-bulk-ops--{view}.json").write_text(f'{{"name": "{view}"}}')
     monkeypatch.setattr(bridges, "KIRO_AGENTS_DIR", agents_dir)
     refusal = manager.app_command_agent_refusal("pr-bulk-ops", view, None)
-    assert refusal and "a name Kiro Crew reserves" in refusal
+    assert refusal and "a name Sao Khuê reserves" in refusal
 
 
 def test_the_manifest_never_vouches_for_a_skill_view_name(tmp_path):

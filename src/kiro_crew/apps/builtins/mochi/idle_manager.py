@@ -10,7 +10,7 @@ PORTING NOTES
 **The port is the state machine only; the plumbing moved to the owner.** The
 original registered four ``powerMonitor`` listeners and ran a 60s
 ``setInterval`` that polled ``getSystemIdleTime()`` — all Electron main-process
-machinery. In KiroCrew the pet's shell relays power events and idle readings to
+machinery. In SaoKhue the pet's shell relays power events and idle readings to
 the gateway, so the owner calls :meth:`handle_power_event` for each event and
 :meth:`check_idle` on its own ~60s cadence (:data:`IDLE_CHECK_INTERVAL_MS` is
 exported for that loop). ``start()``/``stop()`` were pure timer wiring and have

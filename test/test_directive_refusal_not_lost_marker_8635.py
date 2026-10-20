@@ -76,7 +76,7 @@ def published(monkeypatch) -> list[tuple[str, dict]]:
     and the request carries a real-looking session key. Under this suite the
     gateway refuses it (the conftest ``KIROCREW_HOME`` pin makes the client read a
     different instance credential, so the POST comes back
-    ``this client authenticated against the wrong Kiro Crew instance``), but a
+    ``this client authenticated against the wrong Sao Khuê instance``), but a
     test must not depend on an unrelated guard rejecting traffic it should never
     have generated.
 

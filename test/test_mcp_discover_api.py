@@ -3,7 +3,7 @@
 Covers the wire contract of ``/api/mcp/discover`` (+ ``/detail`` and
 ``/install``): the short-query availability probe, installed cross-ref,
 provider-string redaction, the install write path (spec lands in the
-KiroCrew scope, SEL-logged), and every documented error status.
+SaoKhue scope, SEL-logged), and every documented error status.
 
 Providers are faked end-to-end — no network, no edition capability manager.
 """
@@ -450,7 +450,7 @@ class TestDiscoverInstall:
                 "enabled": False,
                 "agent_spec_rewritten": True,
             }
-            # The translated spec landed in the KiroCrew scope — DISABLED,
+            # The translated spec landed in the SaoKhue scope — DISABLED,
             # because required env is unset: enabling after configuration is
             # the user's informed-consent step (review finding).
             written = json.loads(sandbox.kirocrew_json.read_text(encoding="utf-8"))

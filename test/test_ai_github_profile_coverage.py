@@ -16,7 +16,7 @@ The seams that are deliberately stubbed rather than driven, and why:
   subprocess returns instantly, so the sign of a real delta would be decided by
   scheduler noise. ``_time_once`` itself is driven through the fake ``_run``.
 * ``store.*`` directory helpers -- redirected into ``tmp_path`` so nothing is written
-  to the operator's Kiro Crew data home.
+  to the operator's Sao Khuê data home.
 """
 
 from __future__ import annotations

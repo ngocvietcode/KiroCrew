@@ -1,4 +1,4 @@
-// Demo KiroCrew App — proves the federated loading pipeline works end-to-end.
+// Demo SaoKhue App — proves the federated loading pipeline works end-to-end.
 // This file is loaded dynamically by AppHost via import('/apps/demo-app/ui/index.mjs').
 // It uses the import map to resolve 'react' and '@kirocrew/app-sdk' from the host.
 
@@ -81,7 +81,7 @@ function DemoApp() {
 
     // Footer
     h('div', { className: 'mt-6 text-[12px] text-muted/60 text-center' },
-      'This app was loaded dynamically from /apps/demo-app/ui/index.mjs via the Kiro Crew App Platform.'
+      'This app was loaded dynamically from /apps/demo-app/ui/index.mjs via the Sao Khuê App Platform.'
     ),
   )
 }

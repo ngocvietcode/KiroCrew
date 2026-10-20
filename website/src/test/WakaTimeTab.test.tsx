@@ -118,7 +118,7 @@ describe('WakaTimeTab', () => {
     wakatimeStats.mockResolvedValue({ configured: false })
     mount()
     expect(await screen.findByText(/connect wakatime/i)).toBeInTheDocument()
-    expect(screen.getByText(/Set wakatime.enabled to true in \$KIROCREW_HOME\/config.json.*then.*set the WakaTime API key under Used automatically by Kiro Crew/)).toBeInTheDocument()
+    expect(screen.getByText(/Set wakatime.enabled to true in \$KIROCREW_HOME\/config.json.*then.*set the WakaTime API key under Used automatically by Sao Khuê/)).toBeInTheDocument()
     expect(screen.queryByText(/Add a secret named WAKATIME_API_KEY/)).not.toBeInTheDocument()
   })
 

@@ -208,7 +208,7 @@ test("a gateway is not started on a port a configured crew is on", async () => {
   );
 });
 
-// Something IS answering on the port, and its payload carries no Kiro Crew
+// Something IS answering on the port, and its payload carries no Sao Khuê
 // identity -- the shape decideGatewayAction reuses by design. Whether that
 // responder is a legacy gateway or an unrelated service is exactly what the
 // LISTEN owner decides, so these two tests differ only in the owner probe.
@@ -804,7 +804,7 @@ test("installing dialog retries exactly once when the probe reports complete", a
   // whole frame agrees with it: title swapped, Retry greyed, Quit restated.
   assert.match(dialog.paintedMessages().at(-1), /Installation finished/);
   const chrome = dialog.completionChrome();
-  assert.match(chrome, /"Kiro Crew — installation finished"/, "the title no longer says finishing");
+  assert.match(chrome, /"Sao Khuê — installation finished"/, "the title no longer says finishing");
   assert.match(chrome, /act\('retry'\)"\) \{ b\.disabled = true; b\.textContent = 'Starting…'; \}/,
     "Retry is disabled AND relabelled, so a paler button is not the only cue");
   assert.match(chrome, /Quit anyway/, "Quit names its changed stakes");

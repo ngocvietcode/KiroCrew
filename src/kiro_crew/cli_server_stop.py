@@ -252,7 +252,7 @@ def _stop_expected_pid(port: int, expect_pid: int) -> None:
     """SIGTERM ``expect_pid`` only while it is provably this home's gateway on ``port``.
 
     Three facts are read here, immediately before the signal: ``expect_pid`` is
-    the sole listener on ``port``, it looks like a Kiro Crew gateway, and it is the
+    the sole listener on ``port``, it looks like a Sao Khuê gateway, and it is the
     live holder of this home's ``gateway.lock``. A caller that identified a
     gateway earlier names it by pid, so a listener that replaced it in between
     -- another home's gateway, or a fresh one -- is refused instead of stopped.
@@ -303,7 +303,7 @@ def _stop_expected_pid(port: int, expect_pid: int) -> None:
     try:
         check_listener()
         if not _is_kirocrew_process(expect_pid):
-            refuse("not_kirocrew", f"Pid {expect_pid} does not look like a Kiro Crew gateway.")
+            refuse("not_kirocrew", f"Pid {expect_pid} does not look like a Sao Khuê gateway.")
         try:
             holder = lock_holder(config_dir())
         except LockProbeError as exc:
@@ -385,7 +385,7 @@ def _refuse_service_alias(operation: str, port: int) -> bool:
 
 
 def _stop(cli_port: int | None = None, *, expect_pid: int | None = None) -> None:
-    """Stop a running Kiro Crew gateway.
+    """Stop a running Sao Khuê gateway.
 
     Accepts the raw CLI ``--port`` value (``None`` when not passed).
     Resolution and service-bypass are both derived from this single input:
@@ -488,7 +488,7 @@ def _stop(cli_port: int | None = None, *, expect_pid: int | None = None) -> None
             if _unpinned:
                 print(
                     f"`{_tool}` is installed at {_unpinned}, outside the system directories "
-                    f"Kiro Crew resolves it from, so it cannot look up the gateway process "
+                    f"Sao Khuê resolves it from, so it cannot look up the gateway process "
                     f"on port {port}. Falling back to PATH is deliberately refused: a "
                     f"gateway's PATH can lead with writable directories."
                 )
@@ -505,10 +505,10 @@ def _stop(cli_port: int | None = None, *, expect_pid: int | None = None) -> None
             source="cli",
             resources=f"port={port}",
         )
-        print(f"No Kiro Crew gateway currently running on port {port}.")
+        print(f"No Sao Khuê gateway currently running on port {port}.")
         sys.exit(1)
 
-    # Only kill processes that are actually Kiro Crew gateways.
+    # Only kill processes that are actually Sao Khuê gateways.
     # Note: TOCTOU race exists between this check and the kill — the PID could be
     # recycled. Acceptable risk for an interactive CLI tool with low blast radius.
     unrecognized = [p for p in pids if not _is_kirocrew_process(p)]
@@ -529,7 +529,7 @@ def _stop(cli_port: int | None = None, *, expect_pid: int | None = None) -> None
         # (_verified_loopback_gateway_pids); unproven keeps the refusal below.
         return
     if not pids:
-        # Something holds the port, but nothing on it classifies as a Kiro Crew
+        # Something holds the port, but nothing on it classifies as a Sao Khuê
         # gateway. Reporting "no gateway running" here is misleading — the port
         # is occupied — and it sends ``kirocrew restart`` on to spawn a
         # replacement the KIROCREW_HOME lock then refuses. Name the pids and, when
@@ -563,7 +563,7 @@ def _stop(cli_port: int | None = None, *, expect_pid: int | None = None) -> None
         )
         print(
             f"Port {port} is held by pid {pid_list}{detail}, not recognised as a "
-            f"Kiro Crew gateway. Not stopping it."
+            f"Sao Khuê gateway. Not stopping it."
         )
         sys.exit(1)
 
@@ -636,7 +636,7 @@ def _stop(cli_port: int | None = None, *, expect_pid: int | None = None) -> None
             source="cli",
             resources=f"port={port} reason=process_already_exited",
         )
-        print(f"No Kiro Crew gateway currently running on port {port} (process already exited).")
+        print(f"No Sao Khuê gateway currently running on port {port} (process already exited).")
         sys.exit(1)
 
 
@@ -678,7 +678,7 @@ def _refuse_lock_holder(operation: str, port: int, pid: int) -> NoReturn:
     for "is something running" -- without it ``kirocrew stop`` and ``kirocrew
     restart`` report "nothing running" the same moment ``kirocrew gateway``
     refuses to start for a live pid. It is NOT a path to signal through: a
-    Kiro Crew holder that neither the port nor the API could reach is in a
+    Sao Khuê holder that neither the port nor the API could reach is in a
     state this command cannot verify, and a foreign holder is not this
     command's to stop. Both are refused the same way -- one SEL ``denied``
     event whose reason names the kind of holder, a refusal that names the
@@ -699,14 +699,14 @@ def _refuse_lock_holder(operation: str, port: int, pid: int) -> NoReturn:
     tail = "\n   Not starting a replacement." if operation == "gateway_restart" else ""
     if kirocrew:
         print(
-            f"❌ {lock_path} is held by pid {pid}: a Kiro Crew gateway is running, but "
+            f"❌ {lock_path} is held by pid {pid}: a Sao Khuê gateway is running, but "
             f"the port lookup and the authenticated shutdown could not reach it, so it is "
             f"not signalled from here.\n"
             f"   To stop it manually, run: {manual}{tail}"
         )
     else:
         print(
-            f"❌ {lock_path} is held by pid {pid}, but it does not look like a Kiro Crew "
+            f"❌ {lock_path} is held by pid {pid}, but it does not look like a Sao Khuê "
             f"gateway process — refusing to stop it. If this is wrong, stop it manually: "
             f"{manual}{tail}"
         )

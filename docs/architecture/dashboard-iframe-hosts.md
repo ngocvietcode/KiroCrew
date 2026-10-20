@@ -30,7 +30,7 @@ Trust level and connectedness are **independent**, which is why no host can be r
 - `McpAppFrame` is the **least** privileged (no `allow-same-origin`, no popups) *and* the **most** connected. It is the only host with a live bidirectional bridge, and it is null-origin precisely because it must be. Note this is a deliberate divergence from SEP-1865, which mandates a two-frame *sandbox proxy* whose outer frame carries `allow-same-origin`; the trade and what it costs an app are documented in [MCP Apps](../../src/kiro_crew/docs/mcp-apps.md#deviations-from-sep-1865). Do not "fix" the sandbox attribute to match the spec without reading that section.
 - `WidgetFrame` is closest to `McpAppFrame` on content, but is built on the opposite bridge assumption. Reusing it for an MCP App would mean adopting a host that is designed to distrust exactly the messages the App protocol needs.
 - `InstancesViewport` deliberately has no `sandbox` attribute: it embeds an
-  authenticated remote Kiro Crew dashboard rather than emitted `srcDoc`.
+  authenticated remote Sao Khuê dashboard rather than emitted `srcDoc`.
   Browser origin isolation and the instance connection boundary, not iframe
   sandbox flags, separate it from the local dashboard. Do not reuse that
   posture for untrusted HTML.

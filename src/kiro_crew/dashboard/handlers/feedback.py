@@ -1,6 +1,6 @@
 """Server-side proxy to AWS Aperture's non-console feedback APIs.
 
-Kiro Crew is self-hosted, open-source software: every install runs on its own
+Sao Khuê is self-hosted, open-source software: every install runs on its own
 arbitrary origin (``localhost:5476``, a self-hosted domain, whatever a user
 picks). Aperture's non-console APIs are browser-CORS-gated and allowlist a
 finite, known set of origins — a model that assumes one controlled domain, not
@@ -9,7 +9,7 @@ never reliably reachable for this product, regardless of which domain any one
 install happens to use.
 
 This module moves the two calls the in-app session-pulse survey needs
-(``SessionPulseSurveyCard.tsx``) to the Kiro Crew backend instead: the frontend
+(``SessionPulseSurveyCard.tsx``) to the Sao Khuê backend instead: the frontend
 calls these same-origin routes, and the backend makes the actual Aperture
 request server-to-server, where browser CORS does not apply at all.
 

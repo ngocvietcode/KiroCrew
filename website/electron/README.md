@@ -1,6 +1,6 @@
-# Kiro Crew Desktop (Electron)
+# Sao Khuê Desktop (Electron)
 
-Desktop shell for the Kiro Crew web dashboard on macOS, Linux, and Windows. It
+Desktop shell for the Sao Khuê web dashboard on macOS, Linux, and Windows. It
 automatically starts `kirocrew gateway` and connects to `localhost:5476`.
 
 ## Quick Start
@@ -153,7 +153,7 @@ Notes:
   `KiroCrew Setup <version>.exe` (nightly builds:
   `KiroCrew Nightly Setup <version>.exe`), in `website/electron/dist/`.
 - The pinned electron-builder NSIS template is patched during `npm install` to
-  expose Kiro Crew's staged-payload publish hook. On a normal same-volume
+  expose Sao Khuê's staged-payload publish hook. On a normal same-volume
   per-user install it renames the large `resources` / `locales` trees into place
   and copies only the small root remainder; per-machine installs keep the
   upstream copy path so files inherit the Program Files ACL. Cross-volume or
@@ -165,7 +165,7 @@ Notes:
   every `.py` it imports, which cost a median 12.5 s per cold boot; macOS's
   whole-tree caches stay checked-hash.
 - The native welcome/finish sidebar and the header used on intermediate pages
-  carry the Kiro Crew logo and ghost artwork. The standard NSIS controls and
+  carry the Sao Khuê logo and ghost artwork. The standard NSIS controls and
   localized instructions remain native. Page boundaries use a short Win32
   alpha-blended cross-fade that follows the system client-area animation setting;
   extraction itself stays on the native progress page without timer-driven art.
@@ -327,7 +327,7 @@ Open via **Connection → Open Config File** or the tray menu.
 | "SSH token fetch failed" | Check `ssh -o BatchMode=yes YOUR_HOST true` works from Terminal: the fetch runs ssh non-interactively (`-n`, `BatchMode=yes`), so the host must authenticate without a prompt |
 | "ssh client not found: …" | Install the OpenSSH client. The app takes ssh only from the system directories (`/usr/bin`, `/bin`, `/usr/sbin`, `/sbin`, `/run/current-system/sw/bin`; on Windows the in-box `System32\OpenSSH\ssh.exe`), never from `PATH` |
 | "ssh YOUR_HOST timed out after N s" | Raise `sshTimeoutMs` in the config file; ssh's `ConnectTimeout` is sized from it |
-| "kirocrew binary not found in any of …" | Install Kiro Crew through a [supported install path](../../docs/guides/install.md#install-paths), or set a custom path |
+| "kirocrew binary not found in any of …" | Install Sao Khuê through a [supported install path](../../docs/guides/install.md#install-paths), or set a custom path |
 | "command not found: kiro-cli" | Set Remote PATH to include `~/.toolbox/bin` (default does this) |
 | "command not found: dirname" | Remote PATH missing `/usr/bin` — reset to default or add it |
 | Token fetched but 403 | Restart the remote gateway — `ssh host kirocrew restart` |
@@ -356,7 +356,7 @@ Open via **Connection → Open Config File** or the tray menu.
   (`renderer-exhausted-notice.js`); native because no renderer is left to
   draw an error page. On Windows, when the renderer exited with
   `0x80000003` before any dashboard document had loaded, the dialog's heading
-  names the cause ("Security software is blocking Kiro Crew's window.") and it
+  names the cause ("Security software is blocking Sao Khuê's window.") and it
   explains that Chromium's sandboxed child processes are being blocked on
   the device, names the supported fix (a process exclusion for the
   executable in the software that blocks them) and opens the Windows guide,

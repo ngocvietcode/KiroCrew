@@ -2,7 +2,7 @@
 
 kiro-cli expands ``${VAR}`` in a declared ``env`` map but never in ``args``, so a
 launch path written as ``${HOME}/.local/share/server/index.js`` reaches the child
-literally unless Kiro Crew resolves it: the probe fails, the server is
+literally unless Sao Khuê resolves it: the probe fails, the server is
 quarantined, and the session cannot start it either. These tests pin both launch
 inputs -- the emitted agent spec and the probe's argv -- and that only home and
 login-name variables are ever substituted, so no other variable's value lands on

@@ -20,7 +20,7 @@ export const SETTINGS = {
   schema: 1,
   claim_ttl_hours: 48,
   needs_human_label: 'crew: needs human',
-  commit_trailer: 'Crew: {name} (Kiro Crew Issue Radar)',
+  commit_trailer: 'Crew: {name} (Sao Khuê Issue Radar)',
 }
 
 /** One crew record. `status` is DERIVED BY THE ROUTE (`_crew_status` in

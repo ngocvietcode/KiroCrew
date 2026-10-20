@@ -226,7 +226,7 @@ decide whether an app exists at all before any of this runs.
    allow path is an ordinary prependable cordis waterfall — a plugin can answer
    `allowed-once` before any human UI sees the request, and DSH's own ACP package
    already registers a machine answerer on it. Its one order-proof gate is hardcoded
-   to bypass its own event system. Kiro Crew's admission policy, governance ceiling,
+   to bypass its own event system. Sao Khuê's admission policy, governance ceiling,
    and per-app permission scoping have no expressible home in that model.
 2. **Document `pages[0]`-only as intended and delete `UISidebar`.** Rejected:
    `UISidebar` is already published manifest surface with defaults and a documented

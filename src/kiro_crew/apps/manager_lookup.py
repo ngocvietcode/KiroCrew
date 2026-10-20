@@ -91,7 +91,7 @@ def _app_agent_registration(app_name: str, agent: str) -> tuple[str, tuple[str, 
     screened = _screened_spec_path(path)
     if screened is None:
         return "unverifiable", (
-            f"the agent entry at {path} could not be verified, so Kiro Crew cannot "
+            f"the agent entry at {path} could not be verified, so Sao Khuê cannot "
             "confirm it is the app's agent. Fix or remove that entry, then run the "
             "command again from the command palette.",
         )
@@ -196,7 +196,7 @@ def app_command_agent_refusal(owner: str, agent: str, *projects: str | None) -> 
     if agent.startswith(NATIVE_SKILL_ALIAS_PREFIX):
         return (
             f"{app} can't run: it has a setup problem its author needs to fix "
-            f'(its agent "{agent}" uses a name Kiro Crew reserves). '
+            f'(its agent "{agent}" uses a name Sao Khuê reserves). '
             f"Ask {app}'s author to rename that agent."
         )
     from kiro_crew.apps import bridges  # bridges imports this module

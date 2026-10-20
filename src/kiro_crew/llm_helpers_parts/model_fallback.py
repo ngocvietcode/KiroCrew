@@ -53,7 +53,7 @@ def first_advertised_fallback(advertised: Any, rejected: str | None) -> str | No
 #
 # When the active model's same-model transient budget (_TRANSIENT_RETRIES)
 # exhausts on a throttle/capacity error, an ordered chain of fallback models is
-# tried instead of surfacing the error. This lives entirely on the Kiro Crew
+# tried instead of surfacing the error. This lives entirely on the Sao Khuê
 # side (kiro-cli
 # has no fallback mechanism) and is NEVER silent: every swap is logged at
 # warning, published on the provider (TURN_FALLBACK_ATTR) so the delivering

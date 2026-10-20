@@ -48,7 +48,7 @@ def register(app: web.Application) -> None:
     app.router.add_post("/api/agents/{name}/capabilities/preview", api_member_capabilities)
     app.router.add_post("/api/agents/{name}/capabilities/detach", api_member_capabilities_detach)
     app.router.add_put("/api/agents/{name}/capabilities", api_member_capabilities)
-    # Kiro Crew Agent CRUD
+    # Sao Khuê Agent CRUD
     app.router.add_get("/api/agents", handlers.api_kirocrew_agents)
     app.router.add_get("/api/agents/resolved-model", handlers.api_kirocrew_agent_resolved_model)
     app.router.add_post("/api/agents", handlers.api_kirocrew_agents_create)

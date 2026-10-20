@@ -9,7 +9,7 @@ The blocking condition is not hypothetical. ``FINDINGS.md`` is the campaign
 report an LLM research loop produces, so its size is bounded by the model's
 output rather than by anything this code controls, and ``_handle_action``'s
 fork path reads one and writes it straight back out.
-``RESEARCH_DIR`` lives under the Kiro Crew home, which is
+``RESEARCH_DIR`` lives under the Sao Khuê home, which is
 operator-configurable and may be a synced or network volume.
 ``_poll_workflow_campaign`` is a polling adapter, so its reads and writes recur
 for the life of a campaign. AUTOSDE ``no-blocking-call-on-event-loop`` — which

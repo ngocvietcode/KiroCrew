@@ -37,7 +37,7 @@ superseded-by: []
 
 ## 1. Summary
 
-Kiro Crew runs more and more inference on the user's own machine. Each workload
+Sao Khuê runs more and more inference on the user's own machine. Each workload
 picks its own thread count and its own cadence. None of them knows whether the
 machine is on battery, and on Linux and Windows none can use the GPU or NPU that
 most laptops sold since 2023 carry. On a laptop, a single 40-minute meeting
@@ -58,7 +58,7 @@ help:
    OS speech engine where the platform offers one. A build that fails the
    existing preflight probe lands on layer 1. This layer is a packaging and
    loader change, not a config key.
-3. **A local endpoint for vendor stacks, NPUs included.** Kiro Crew does not
+3. **A local endpoint for vendor stacks, NPUs included.** Sao Khuê does not
    bundle vendor SDKs. It speaks the OpenAI-compatible API to a server on the
    same machine (Lemonade on AMD, an OpenVINO server on Intel, and so on). A
    workload with an in-process engine falls back to it when that server is
@@ -316,7 +316,7 @@ Caveats, which Phase 0 (§5) turns into tested numbers:
 2. A machine with a usable accelerator build uses it. A build that fails, at
    load or in the probe, lands back on the efficient CPU path without user
    action.
-3. NPUs and vendor runtimes are reachable without Kiro Crew bundling or tracking
+3. NPUs and vendor runtimes are reachable without Sao Khuê bundling or tracking
    any vendor SDK.
 4. One battery signal and one setting cover every local workload. Each workload
    decides what "reduced" means for itself.
@@ -421,7 +421,7 @@ On-device NPU support is fragmented. Each vendor has its own SDK and operating
 system coverage, and it changes from release to release. For example, on the
 reference machine Lemonade reports the XDNA2 NPU as available, but its
 whisper.cpp NPU backend as "Requires Windows". Vendor stacks increasingly ship a
-local server that speaks the OpenAI-compatible API, so Kiro Crew should be a
+local server that speaks the OpenAI-compatible API, so Sao Khuê should be a
 client of that API and not an integrator of the SDKs.
 
 - **Provider.** `openai_compat` for each workload that has a standard route:
@@ -638,7 +638,7 @@ returns to zero after the idle timeout with no decision in flight.
 2. **Reduced `audio_ctx` on finals.** Should finals also use a sized window,
    behind a measured word-error-rate gate on real multilingual speech? Phase 1
    keeps finals unchanged until this is answered.
-3. **Who builds and hosts accelerated builds?** Options: Kiro Crew's model CDN
+3. **Who builds and hosts accelerated builds?** Options: Sao Khuê's model CDN
    (already sha256-pinned), upstream `pywhispercpp` release assets, or
    user-built only, with the loader simply detecting them. (Phase 3 is blocked
    on this.)

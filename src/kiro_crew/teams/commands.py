@@ -104,7 +104,7 @@ def parse_directive(text: str) -> tuple[str | None, str]:
     return None, stripped
 
 
-_HELP_HEADER = "**Kiro Crew — Microsoft Teams**"
+_HELP_HEADER = "**Sao Khuê — Microsoft Teams**"
 _HELP_FOOTER = (
     "While a reply is running, prefix a message to control it:\n"
     "- `/queue <message>` — answer it after the current reply\n"

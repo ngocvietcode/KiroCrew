@@ -373,7 +373,7 @@ refusal over some other channel each break one of those three properties.
 `stt.transcribe_vocabulary` names a custom vocabulary the operator already created
 in Amazon Transcribe (empty: none). Both Transcribe paths pass it as
 `VocabularyName`: the live socket and `transcribe._transcribe_aws`, so a voice memo
-hears the same names dictation does. Kiro Crew never creates, uploads or edits a
+hears the same names dictation does. Sao Khuê never creates, uploads or edits a
 vocabulary.
 
 - **One name rule for both writers.** `config.sections.transcribe_vocabulary_name`
@@ -1268,7 +1268,7 @@ writable, so do not mount anything there. The check follows, reads and removes
 nothing; a missing name ends it, and a name that cannot be stat'ed refuses the load.
 Reads stay allowed — the
 weights hold no secret and the settings surface reports what is installed — and
-Kiro Crew's own downloader writes directly without routing through those gates, so a
+Sao Khuê's own downloader writes directly without routing through those gates, so a
 first fetch and a re-download after a failed check both work.
 The same directory holds the embedding GGUF, which the one entry covers.
 

@@ -345,7 +345,7 @@ These are **answers**, not failures. Relay them and adapt; do not loop.
 | `no state for 'X'. Call computer_get_state first.` | you acted without a snapshot | snapshot, then act |
 | `state for 'X' is 214s old. Call computer_get_state again.` | the snapshot expired (90s) | snapshot again |
 | `element_index 7 changed since the last computer_get_state (was 'AXButton "Save"', now 'AXButton "Delete"')` | the UI moved under you — this refusal is what stopped you clicking the wrong thing | snapshot again and re-locate the element by its label, not its old number |
-| `'…' is a blocked target for computer use (…)` | KiroCrew's own dashboard is permanently refused — driving it would let you change your own security settings | do the task another way; tell the user why |
+| `'…' is a blocked target for computer use (…)` | SaoKhue's own dashboard is permanently refused — driving it would let you change your own security settings | do the task another way; tell the user why |
 | `refusing to type this text into 'X': …` | the text looked like a sensitive command or credential | do not rephrase to get around it; explain and stop |
 | `refusing to send input to a secure (password) field …` | the target is a password field | ask the user to type it themselves |
 | `computer use is disabled …` | the primary switch is off | tell the user to enable it in Settings → Computer Use; do not retry |

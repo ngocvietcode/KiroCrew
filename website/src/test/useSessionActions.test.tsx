@@ -467,9 +467,9 @@ describe('useSessionActions', () => {
     const a = renderActions()
     act(() => a.current.duplicate(SLOT))
     await waitFor(() => expect(alertSpy).toHaveBeenCalledTimes(1))
-    // Real i18n string (not mocked): names Kiro Crew, and is NOT the reason template.
+    // Real i18n string (not mocked): names Sao Khuê, and is NOT the reason template.
     expect(alertSpy.mock.calls[0][0]).toBe(
-      "Couldn't duplicate this session. Kiro Crew couldn't be reached. Check your connection and try again.",
+      "Couldn't duplicate this session. Sao Khuê couldn't be reached. Check your connection and try again.",
     )
     expect(alertSpy.mock.calls[0][0]).not.toContain('Failed to fetch')
   })

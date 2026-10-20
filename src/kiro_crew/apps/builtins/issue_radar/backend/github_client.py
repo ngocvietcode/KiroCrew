@@ -1,6 +1,6 @@
 """Issue Radar — GitHub access via the user's existing ``gh`` CLI session.
 
-No GitHub App, no PAT, no KiroCrew-hosted credential storage: every call
+No GitHub App, no PAT, no SaoKhue-hosted credential storage: every call
 shells out to ``gh``, which owns its own token storage/refresh. This module
 only needs to (a) parse a repo URL safely and (b) run ``gh api`` with a list
 argv (never ``shell=True``) so there is no shell-injection surface.

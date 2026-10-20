@@ -3356,7 +3356,7 @@ class TestSandboxDeniedCommands:
 
     Command denial is not injected into the kiro-cli agent spec
     (``config/defaults.json`` does not carry ``deniedCommands``); it is
-    enforced solely at KiroCrew's own ``hooks.py`` PreToolUse gate, whose
+    enforced solely at SaoKhue's own ``hooks.py`` PreToolUse gate, whose
     decision function is ``security.is_denied`` (built-in regex tier + the
     always-on keystone controls for exfiltration / sensitive-path reads).  These
     tests therefore exercise the real gate directly.
@@ -3448,7 +3448,7 @@ class TestKiroCliBundledDeniedCommands:
     Command denial is not injected into the kiro-cli agent spec — the
     bundled ``config/defaults.json`` does not carry ``deniedCommands``.  The
     self-protection kill guard is now a ``BUILTIN_DENIED_RULES`` entry
-    (``self-protection-kill``) enforced at KiroCrew's own ``hooks.py`` PreToolUse
+    (``self-protection-kill``) enforced at SaoKhue's own ``hooks.py`` PreToolUse
     gate, whose decision function is ``security.is_denied``.  These tests
     therefore exercise ``is_denied`` directly (tool-shape agnostic — the same
     gate runs regardless of whether the tool is ``execute_bash`` or ``shell``).
@@ -8486,7 +8486,7 @@ class TestKiroSettingsMcpJsonWriteProtection:
 
     An ``autoApprove`` on an entry there is honoured by default
     (``mcp.honour_auto_approve``), and kiro-cli approves an autoApproved MCP tool
-    locally without emitting a permission request — so those verbs skip Kiro Crew's
+    locally without emitting a permission request — so those verbs skip Sao Khuê's
     tool gate. ``governance._is_owner_written`` admits an entry on its NAME SHAPE,
     not on who wrote the file, so a plainly-named entry an agent appended is
     honoured exactly like one the owner typed. WRITES are refused; tool-path READS
@@ -10098,7 +10098,7 @@ class TestApplyResourceLimits:
 
 
 class TestKiroCrewSlackAppCreateLink:
-    """Kiro Crew's OWN Slack app-create deep link survives the exfil redactor.
+    """Sao Khuê's OWN Slack app-create deep link survives the exfil redactor.
 
     ``kirocrew manifest --url`` and ``GET /api/slack/manifest`` emit
     ``https://api.slack.com/apps?new_app=1&manifest_yaml=<encoded manifest>``.

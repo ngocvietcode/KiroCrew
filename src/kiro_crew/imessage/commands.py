@@ -36,7 +36,7 @@ def parse_command(text: str) -> str | None:
 
 
 HELP_TEXT = (
-    "Kiro Crew commands\n"
+    "Sao Khuê commands\n"
     "/new — start a fresh conversation\n"
     "/compact — compress the conversation context\n"
     "/help — show this help\n\n"

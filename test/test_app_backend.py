@@ -100,7 +100,7 @@ def _sandbox_can_spawn() -> bool:
     collection, before the per-test isolation fixture pins the data home, so a
     bare ``wrap_argv()`` here reads the OPERATOR's real ``~/.kiro/crew/config.json``
     -- and on a Windows or macOS developer machine that file routinely carries
-    ``agent.sandbox_allow_unsandboxed_exec=true`` (the only way Kiro Crew runs
+    ``agent.sandbox_allow_unsandboxed_exec=true`` (the only way Sao Khuê runs
     there). That made the probe answer "can spawn" for a host with no sandbox
     backend at all, and every test it gates then failed closed under the
     fixture's default config, while CI (no operator config) skipped them. The

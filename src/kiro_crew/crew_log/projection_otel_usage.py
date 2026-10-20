@@ -107,7 +107,7 @@ def _agent_kind(raw_agent: str, raw_slot: str) -> str:
     agent name for a slot-key shape is asking the wrong field and can only answer no.
 
     *raw_agent* answers the rest, from :data:`_AGENT_KIND_BY_STEM` (one row per filename
-    in :data:`~kiro_crew.agent_files.OWNED_KIRO_AGENT_FILES`, the files Kiro Crew itself
+    in :data:`~kiro_crew.agent_files.OWNED_KIRO_AGENT_FILES`, the files Sao Khuê itself
     owns) plus the bare literal ``kirocrew``, the emitter's own fallback agent name
     (``kiro_crew.crew_log.emit``'s ``_DEFAULT_AGENT``), which maps to ``default``.
     Everything else -- a third-party agent, a user-authored template -- folds to

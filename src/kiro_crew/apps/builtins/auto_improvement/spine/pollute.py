@@ -22,7 +22,7 @@ block MACHINERY — it is target-agnostic and takes the path set + a boot callab
 inputs. The profile supplies WHICH host paths to snapshot (its env footprint:
 ``isolation.do_not_pollute_paths()``) and the boot callable (how to boot+tear-down the
 measurement runtime). The spine never names a host path (``~/.kiro/agents`` et al. are a
-Kiro Crew property of the target, not the spine; 08_safety §2.1 generalization note).
+Sao Khuê property of the target, not the spine; 08_safety §2.1 generalization note).
 
 The snapshot is content-addressed (a hash of each path's tree), so a write that adds,
 removes, or modifies anything under a snapshotted path is detected as a non-zero diff.
@@ -90,7 +90,7 @@ def _hash_path(path: Path, exclude: frozenset[str] = frozenset()) -> str:
     ``exclude`` is an opaque set of absolute subpaths to SKIP during a directory walk.
     Its sole purpose is to ignore writes the ORCHESTRATOR itself makes inside a snapshot
     root it happens to share with the host (the auto-improvement app's own data dir lives
-    UNDER the Kiro Crew data home, so the host's own log/ledger/activity writes during the boot
+    UNDER the Sao Khuê data home, so the host's own log/ledger/activity writes during the boot
     window would otherwise register as a phantom 'leak'). Everything else under the root
     is still hashed, so a real write by the measured runtime anywhere outside the
     excluded subtree is still caught — the hermeticity guarantee is preserved.

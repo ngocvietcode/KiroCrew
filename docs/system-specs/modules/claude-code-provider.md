@@ -173,7 +173,7 @@ and effort selection, the full `session/request_permission` flow) works. So
 `_session_mcp_servers()` fills it, from `acp/session_mcp.py`:
 
 - **The materialized kiro agent spec is the source.** `~/.kiro/agents/<name>.json`
-  is already the merge point for the dashboard's Kiro Crew scope
+  is already the merge point for the dashboard's Sao Khuê scope
   (`~/.kiro/crew/mcp.json`) and kiro's global `mcp.json`, so a user-installed
   server needs nothing CC-specific. There is no second, CC-shaped registry to keep
   in sync, and the spec is read **per spawn** — installing or toggling a server

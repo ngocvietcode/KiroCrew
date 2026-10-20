@@ -36,7 +36,7 @@ superseded-by: []
 
 ## 1. Summary
 
-Kiro Crew already has an authenticated inbound webhook: `POST /api/hooks/agent`
+Sao Khuê already has an authenticated inbound webhook: `POST /api/hooks/agent`
 takes a caller-shaped `{message, sessionKey}` and runs one agent turn in a
 `hook:*`-keyed session, behind named tokens, optional request signing, a
 per-source throttle, a body cap, a concurrency semaphore, an operator kill
@@ -86,7 +86,7 @@ useful. Both spend most of their turns discovering that nothing changed. A
 timer cannot know whether anything happened; only the turn can, and the turn is
 the expensive part.
 
-The pull side has already been made cheap. `irq.py` — Kiro Crew's interrupt
+The pull side has already been made cheap. `irq.py` — Sao Khuê's interrupt
 controller for script crons — states the thesis in its first line, "cheap
 polling, expensive wakes", and implements it: a probe polls one subject with no
 model call and raises a wake only on an unexpected observation, with

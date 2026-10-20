@@ -1,4 +1,4 @@
-"""KiroCrew One-Click Deploy - in-account reaper Lambda.
+"""SaoKhue One-Click Deploy - in-account reaper Lambda.
 
 Triggered by an EventBridge schedule (see reaper.yaml). Each run scans the
 shared deploy bucket for per-slug `.kirocrew-deploy.json` manifests and, for any

@@ -1,4 +1,4 @@
-# KiroCrew gateway — compose example.
+# SaoKhue gateway — compose example.
 #
 #   docker compose up -d
 #   docker compose exec kirocrew kiro-cli login          # one-time agent login

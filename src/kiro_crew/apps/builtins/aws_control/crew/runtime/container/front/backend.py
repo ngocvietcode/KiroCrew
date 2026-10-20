@@ -1,4 +1,4 @@
-"""Forwarding a turn to the Kiro Crew backend on loopback.
+"""Forwarding a turn to the Sao Khuê backend on loopback.
 
 Everything here follows the backend facts pinned in ``docs/system-specs/modules/aws-control.md``
 ("The loopback hop"):

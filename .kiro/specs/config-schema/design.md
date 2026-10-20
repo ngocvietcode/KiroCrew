@@ -4,7 +4,7 @@ Status: implemented in `src/kiro_crew/config/schema.py`, `src/kiro_crew/config/v
 
 ## Overview
 
-This feature formalizes KiroCrew's configuration by making the Python dataclass hierarchy the single source of truth for all config keys. Today, several keys (`workspaces`, `default_workspace`, `slack.*`) are parsed ad-hoc in `KiroCrewConfig.load()` outside the dataclass structure. This design eliminates that gap by:
+This feature formalizes SaoKhue's configuration by making the Python dataclass hierarchy the single source of truth for all config keys. Today, several keys (`workspaces`, `default_workspace`, `slack.*`) are parsed ad-hoc in `KiroCrewConfig.load()` outside the dataclass structure. This design eliminates that gap by:
 
 1. Adding structured field metadata (`label`, `help`, `tags`, `sensitive`, `deprecated`, `enum`) to every dataclass field.
 2. Introducing `SlackConfig` and `DashboardConfig` dataclasses and pulling workspace fields into `KiroCrewConfig` as proper typed fields.
@@ -78,7 +78,7 @@ graph TD
 
 1. **Three-layer schema (like OpenClaw)**: Python dataclasses → nested JSON Schema → flat entry list. The nested JSON Schema enables `jsonschema.validate()` for runtime validation and `$schema` for editor autocomplete. The flat list enables diff-friendly CI drift detection and dashboard path-based field lookup. This mirrors OpenClaw's Zod → JSON Schema → flat baseline pipeline.
 
-2. **Flat entry format inspired by OpenClaw**: The `ConfigEntry` record mirrors OpenClaw's `config-baseline.json` entry shape (`path`, `type`, `required`, `deprecated`, `sensitive`, `tags`, `label`, `help`, `hasChildren`, `enumValues`, `defaultValue`, `kind`). KiroCrew's config surface is smaller (~50-80 entries today), but the format is compatible for tooling reuse.
+2. **Flat entry format inspired by OpenClaw**: The `ConfigEntry` record mirrors OpenClaw's `config-baseline.json` entry shape (`path`, `type`, `required`, `deprecated`, `sensitive`, `tags`, `label`, `help`, `hasChildren`, `enumValues`, `defaultValue`, `kind`). SaoKhue's config surface is smaller (~50-80 entries today), but the format is compatible for tooling reuse.
 
 3. **Schema built at import time**: Both the JSON Schema and the flat registry are constructed once when `config/schema.py` is imported. No runtime cost per request. Module-level singletons.
 
@@ -483,9 +483,9 @@ The `load()` method reads the same JSON paths as before. The key change is struc
 
 ### OpenClaw Prior Art Reference
 
-The baseline entry format is modeled after OpenClaw's `config-baseline.json` (at `src/KiroCrew/config-baseline.json`). OpenClaw uses a flat `entries` array where each entry has: `path`, `type`, `required`, `deprecated`, `sensitive`, `tags`, `label`, `help`, `hasChildren`, `enumValues`, `defaultValue`, `kind`. KiroCrew adopts the same field set in its `ConfigEntry` dataclass, keeping the format compatible for shared tooling while tailoring the actual entries to KiroCrew's simpler config surface.
+The baseline entry format is modeled after OpenClaw's `config-baseline.json` (at `src/KiroCrew/config-baseline.json`). OpenClaw uses a flat `entries` array where each entry has: `path`, `type`, `required`, `deprecated`, `sensitive`, `tags`, `label`, `help`, `hasChildren`, `enumValues`, `defaultValue`, `kind`. SaoKhue adopts the same field set in its `ConfigEntry` dataclass, keeping the format compatible for shared tooling while tailoring the actual entries to SaoKhue's simpler config surface.
 
-OpenClaw's full config structure (36 top-level keys, ~5518 entries) is documented in `openclaw-config-structure.txt` for reference. KiroCrew currently covers ~8 of those top-level sections. The architecture is designed so new sections (plugins, channels, tools, models, etc.) can be added as the product grows without breaking changes.
+OpenClaw's full config structure (36 top-level keys, ~5518 entries) is documented in `openclaw-config-structure.txt` for reference. SaoKhue currently covers ~8 of those top-level sections. The architecture is designed so new sections (plugins, channels, tools, models, etc.) can be added as the product grows without breaking changes.
 
 ### Design Decisions Summary
 
@@ -499,7 +499,7 @@ Decisions made during the spec session:
 
 4. **Flat baseline for CI drift detection** — `config-baseline.json` committed to git, checked in CI. Same snapshot-test pattern as OpenClaw's `pnpm config:docs:gen --check`.
 
-5. **Dashboard gets schema via REST API** — `GET /api/config/schema` returns the flat `ConfigEntry` list. OpenClaw uses WebSocket RPC (`config.schema`) returning nested JSON Schema + separate `uiHints`. KiroCrew uses REST because the dashboard already uses REST for all data fetching. UI metadata lives in `x-meta` extensions inside the JSON Schema (non-standard but common), avoiding the need for a separate uiHints lookup table.
+5. **Dashboard gets schema via REST API** — `GET /api/config/schema` returns the flat `ConfigEntry` list. OpenClaw uses WebSocket RPC (`config.schema`) returning nested JSON Schema + separate `uiHints`. SaoKhue uses REST because the dashboard already uses REST for all data fetching. UI metadata lives in `x-meta` extensions inside the JSON Schema (non-standard but common), avoiding the need for a separate uiHints lookup table.
 
 6. **No ad-hoc keys** — `workspaces`, `default_workspace`, and `slack.*` are pulled into proper dataclasses (`SlackConfig`, workspace fields on `KiroCrewConfig`). The schema registry derives everything purely from `dataclasses.fields()` recursion.
 

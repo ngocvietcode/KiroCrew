@@ -31,7 +31,7 @@ as a corpus fixture and prints a verdict.
 
 ## What you have to bring
 
-Kiro Crew authenticates none of these harnesses. Each resolves its own provider from
+Sao Khuê authenticates none of these harnesses. Each resolves its own provider from
 its own store, which is why `src/kiro_crew/agent_sdk/backend_install.py` probes no
 credential and why this script cannot either. So the one prerequisite the script cannot
 give you is a harness that can reach a model.
@@ -256,7 +256,7 @@ and the finding in the comment; leave the memberships alone.
 
 Exit 3 means the harness answered an auth or provider error rather than a turn, and the
 script prints that harness's own remedy from `src/kiro_crew/agent_sdk/host_auth.py` —
-the same text the dashboard shows. Nothing in Kiro Crew can sign a harness in for you.
+the same text the dashboard shows. Nothing in Sao Khuê can sign a harness in for you.
 
 The two errors this guide exists because of:
 

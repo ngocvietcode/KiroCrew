@@ -38,7 +38,7 @@ class TestRunChatTransientRetryImageDiscard:
     ):
         """A typed image rejection after a tool result cannot be repaired by
         retrying the native conversation. With no new user attachment, discard
-        the resume SID once and continue from Kiro Crew's text transcript without
+        the resume SID once and continue from Sao Khuê's text transcript without
         replaying the original request or its completed tool side effects."""
         from kiro_crew.dashboard.chat import _run_chat
         from kiro_crew.providers.base import (

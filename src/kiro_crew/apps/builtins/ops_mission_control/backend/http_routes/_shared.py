@@ -142,7 +142,7 @@ def _store_read_refusal(exc: Exception, *, code: str) -> web.Response:
 def _slack_client(request: web.Request) -> Any | None:
     """The gateway's live Slack client, or None when Slack is not configured.
 
-    Passed explicitly into slack_out rather than fetched from a global: Kiro Crew
+    Passed explicitly into slack_out rather than fetched from a global: Sao Khuê
     has no global state accessor, and an explicit dependency is testable.
     """
     return slack_out.client_from_state(request.app.get("state"))

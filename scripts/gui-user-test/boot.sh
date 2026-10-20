@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Boot the GUI user-test target on a CI runner: a private Xvfb display, a seeded
-# Kiro Crew gateway on the packaged fake ACP backend, and a plain Chromium window
+# Sao Khuê gateway on the packaged fake ACP backend, and a plain Chromium window
 # pointed at the dashboard. Nothing here needs kiro-cli, a login, or a pod.
 #
 #   GUI_OUT       directory for logs / pids / target.env      (required)

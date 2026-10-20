@@ -166,7 +166,7 @@ class TestShippedScenarios:
             assert after[1:] == before[1:]  # only the metadata line moved
             meta = ConversationLog(base_dir=sessions).get_metadata(starter.stem)
         assert meta["project"] == str(project)
-        assert meta["title"] == "Welcome to KiroCrew"  # brand-ok: verbatim seeded title
+        assert meta["title"] == "Welcome to SaoKhue"  # brand-ok: verbatim seeded title
         sc = scenarios.load_scenario(SCENARIOS_DIR / "chat-files-side-panel-browse.yaml")
         assert any(meta["title"] in step for step in sc.steps)
 

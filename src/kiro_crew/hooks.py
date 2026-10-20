@@ -1,4 +1,4 @@
-"""Config-driven hook system for KiroCrew's message pipeline.
+"""Config-driven hook system for SaoKhue's message pipeline.
 
 Hooks intercept messages and tool calls based on rules in config.json.
 Supports declarative rules and executable script hooks with timeout/sandboxing.
@@ -355,7 +355,7 @@ HOOK_EVENTS_KAS_ONLY = (
 
 #: The subset a Kiro Agent session actually asks its client for. It requests
 #: hooks by trigger name from a fixed set of seven, and only these two of the six
-#: are in it -- so these wait on Kiro Crew answering that request, while the file
+#: are in it -- so these wait on Sao Khuê answering that request, while the file
 #: and manual triggers are not asked for at all. The dashboard marks the two
 #: groups differently because the distance to running is different, and it reads
 #: the split from here rather than restating it in copy.
@@ -407,7 +407,7 @@ def uncounted_gate():
 #: "User denied tool execution" and the model concludes the user cancelled.
 GATE_CRASH_REASON = (
     "Blocked: the safety check crashed while judging this call ({error}), so the "
-    "call was refused and nothing ran. This is a Kiro Crew bug, not a policy rule "
+    "call was refused and nothing ran. This is a Sao Khuê bug, not a policy rule "
     "and not a user action."
 )
 
@@ -417,7 +417,7 @@ GATE_CRASH_REASON = (
 #: a gate defect rather than a rule the call broke or a user action.
 GATE_TABLE_UNSOUND_REASON = (
     "Blocked: the safety check's tier table failed its own consistency check, so every "
-    "call is refused and nothing ran. This is a Kiro Crew bug, not a policy rule and not "
+    "call is refused and nothing ran. This is a Sao Khuê bug, not a policy rule and not "
     "a user action."
 )
 
@@ -1284,7 +1284,7 @@ _INTERNAL_READ_ALLOWLIST: dict[str, str] = {
     # usage dict returns to the process, and it is run through
     # ``redact_credentials``/``redact_exfiltration_urls`` before caching, so the
     # credential never reaches an LLM/agent surface. The operator already
-    # trusted KiroCrew with the session by running ``kiro-cli login`` outside
+    # trusted SaoKhue with the session by running ``kiro-cli login`` outside
     # any agent loop. (On Linux the live token lives in the kiro-cli SQLite
     # store, which is not a sensitive path; these JSON entries cover the IDE /
     # older kiro-cli cache layout.)

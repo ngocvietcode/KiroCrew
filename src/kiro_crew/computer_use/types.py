@@ -53,7 +53,7 @@ READ_ONLY_TOOLS: frozenset[str] = frozenset({TOOL_LIST_APPS, TOOL_GET_STATE})
 #
 # ``computer_launch_app`` is in this set even though it synthesizes no input, and
 # the reason is the classification's PURPOSE rather than its name: this is the set
-# of verbs that change the world outside Kiro Crew, and starting a process is the
+# of verbs that change the world outside Sao Khuê, and starting a process is the
 # largest such change the tool set can make. Leaving it out would have put the one
 # verb that creates a process on the same footing as reading a tree.
 MUTATING_TOOLS: frozenset[str] = frozenset(
@@ -584,7 +584,7 @@ PERMISSION_UNSUPPORTED = "unsupported"
 ERROR_PREFIX = "Error: "
 REFUSAL_UNSUPPORTED = "computer use is not supported on this platform ({platform}): {reason}"
 REFUSAL_DISABLED = (
-    "computer use is disabled. Enable it in the KiroCrew dashboard under "
+    "computer use is disabled. Enable it in the SaoKhue dashboard under "
     "Settings -> Computer Use; it cannot be enabled by an agent."
 )
 REFUSAL_DENIED_APP = "'{app}' is a blocked target for computer use ({reason})."
@@ -1318,7 +1318,7 @@ class DeniedApp:
     bundle_prefixes: tuple[str, ...] = field(default_factory=tuple)
     name_substrings: tuple[str, ...] = field(default_factory=tuple)
     # Matched against the resolved WINDOW TITLE, not the app identity. Needed
-    # because a host application can display someone else's UI: KiroCrew's own
+    # because a host application can display someone else's UI: SaoKhue's own
     # dashboard served in a browser tab has Chrome's bundle id and Chrome's process
     # name, so a bundle/name rule cannot see it. Only ever used
     # to ADD a refusal — a title match can never lift a bundle match.

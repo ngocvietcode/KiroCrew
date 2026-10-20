@@ -107,11 +107,11 @@ def _is_bash_shell(shell: str) -> bool:
 
 def _pty_child_env(extra: dict[str, str]) -> dict[str, str]:
     """Build the interactive shell's environment: the gateway environment plus
-    *extra*, minus Kiro Crew's own Python startup variables.
+    *extra*, minus Sao Khuê's own Python startup variables.
 
     ``PYTHONPATH``/``PYTHONHOME``/``PYTHONPYCACHEPREFIX`` are searched BEFORE a
     venv's own site-packages, so leaking the gateway's copies makes a user's
-    Python 3.13 venv import Kiro Crew's 3.12 site-packages and its C extensions
+    Python 3.13 venv import Sao Khuê's 3.12 site-packages and its C extensions
     fail to load. The agent surface strips them via
     ``sandbox.scrub_agent_subprocess_env``; this brings the terminal into line.
 
@@ -124,7 +124,7 @@ def _pty_child_env(extra: dict[str, str]) -> dict[str, str]:
     Bash 3.2, which prints a three-line "the default interactive shell is now
     zsh" notice on every interactive start. In this panel that banner is pure
     noise: it lands at the top of the transcript of a terminal the user opened
-    inside Kiro Crew, it says nothing about Kiro Crew, and it repeats on every
+    inside Sao Khuê, it says nothing about Sao Khuê, and it repeats on every
     session. It also precedes the readiness marker, so it is the first thing any
     consumer of the stream has to skip. A user who wants the notice keeps it by
     exporting the variable themselves with an empty value, which this respects:

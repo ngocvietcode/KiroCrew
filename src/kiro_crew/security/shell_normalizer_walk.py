@@ -459,7 +459,7 @@ def _redirect_consumes_next(token: str) -> "tuple[bool, bool]":
 
 # Protected branch names that ``git push`` must never target directly.  A push
 # to any of these (or a bare push, which may resolve to one) is blocked so the
-# change goes through the normal PR/code-review flow.  Kiro Crew (OSS) uses
+# change goes through the normal PR/code-review flow.  Sao Khuê (OSS) uses
 # ``main``; the ``mainline`` and legacy default-branch names are covered for
 # internal/mirror clones.
 #: Shell metacharacters that can be GLUED to a word without whitespace, so they

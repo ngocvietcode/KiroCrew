@@ -710,7 +710,7 @@ def _materialized_kiro_agent(agent_name: str | None, project_dir: str | None = N
     (``<app>--<agent>.json``) while the config inside keeps the app's own bare
     ``name``. Nothing adds them to ``config.agents`` — that mapping is authored
     by setup / the user — so an app agent is resolvable by kiro-cli but is NOT a
-    Kiro Crew alias. Without this lookup :func:`resolve_agent_bindings` would fall
+    Sao Khuê alias. Without this lookup :func:`resolve_agent_bindings` would fall
     all the way back to ``default_agent`` and silently dispatch the DEFAULT kiro
     agent for a session the user explicitly bound to an app's agent: the slot
     still shows the requested name (it is stored verbatim, unvalidated), so the
@@ -746,7 +746,7 @@ def _materialized_kiro_agent(agent_name: str | None, project_dir: str | None = N
 
     *project_dir* adds the session's own ``<project>/.kiro/agents`` scope, which
     kiro-cli searches BEFORE the user-level directory (it resolves ``--agent``
-    against its cwd, and Kiro Crew spawns it with the project dir as cwd). It
+    against its cwd, and Sao Khuê spawns it with the project dir as cwd). It
     deliberately does NOT use the snapshot: that is one process-wide set, while the
     project scope differs per session, so sharing it would leak one checkout's
     agents into another's.
@@ -785,7 +785,7 @@ def _materialized_kiro_agent(agent_name: str | None, project_dir: str | None = N
     return ""
 
 
-# Snapshot of the Kiro Crew agent ALIAS table as ONE immutable
+# Snapshot of the Sao Khuê agent ALIAS table as ONE immutable
 # ``(aliases, default_template, ready)`` triple — the keys of ``config.agents``,
 # the TEMPLATE an unhonored request falls back to (:func:`default_template`, the
 # same answer :func:`resolve_agent_bindings` gives: a session whose name is no
@@ -1060,7 +1060,7 @@ def resolve_effective_agent(agent_name: str | None, project_dir: str | None = No
     if not ready or not fallback_template:
         return ""
     if agent_name in aliases:
-        # A Kiro Crew alias resolves to itself (step 1 of resolve_agent_bindings).
+        # A Sao Khuê alias resolves to itself (step 1 of resolve_agent_bindings).
         return ""
     if not _MATERIALIZED_AGENTS_READY:
         # Cold snapshot: a materialized kiro agent may well declare this name and

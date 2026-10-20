@@ -1,6 +1,6 @@
 # Setting up Remote Crew on an EC2 instance
 
-You run the Kiro Crew gateway on an EC2 box and drive it from your laptop. The
+You run the Sao Khuê gateway on an EC2 box and drive it from your laptop. The
 gateway binds **loopback by default**, so you reach it through a tunnel — either
 an **SSH tunnel** or an **AWS SSM Session Manager** tunnel. (`KIROCREW_BIND` is
 the explicit, container-oriented bind override described in the linked remote
@@ -200,10 +200,10 @@ gateway started from the Dock or Finder has a minimal `PATH`.
 ### Non-fatal warnings you can ignore
 
 - **`ffmpeg: not found`**: only needed for speech-to-text. Install ffmpeg into
-  `/usr/local/bin` (a location Kiro Crew searches; it's not in the AL2023 repos),
+  `/usr/local/bin` (a location Sao Khuê searches; it's not in the AL2023 repos),
   or fetch a decoder from the dashboard Speech-to-Text card
   (Settings → Speech-to-Text, then Download now).
-- **`source dir: not set`** — cosmetic. It is set from a Kiro Crew source
+- **`source dir: not set`** — cosmetic. It is set from a Sao Khuê source
   checkout by `kirocrew setup`; wheel installs do not need it.
 
 ### A warning doctor counts as an issue
@@ -212,7 +212,7 @@ gateway started from the Dock or Finder has a minimal `PATH`.
   runtime couldn't load its shared library on this host. Doctor counts this as an
   issue. Memory keeps working through the keyword-search fallback, without vector
   recall. If doctor also names missing native libs, the install is incomplete:
-  reinstall Kiro Crew from a current release.
+  reinstall Sao Khuê from a current release.
 
 ## Related
 

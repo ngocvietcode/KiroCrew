@@ -65,7 +65,7 @@ const installed = {
   manifest: {
     displayName: 'Demo App',
     description: 'Ships a 512x512 opaque icon file and no hero art.',
-    author: 'Kiro Crew', // brand-ok: fixture author
+    author: 'Sao Khuê', // brand-ok: fixture author
     iconPath: 'assets/icon.webp',
     ui: { pages: [{ route: `/apps/${APP}`, label: 'Demo App' }] },
   },
@@ -77,7 +77,7 @@ const registryRow = {
   name: APP,
   displayName: 'Demo App',
   description: 'Ships a 512x512 opaque icon file and no hero art, so the spotlight draws its plate.',
-  author: 'Kiro Crew', // brand-ok: fixture author
+  author: 'Sao Khuê', // brand-ok: fixture author
   version: '1.0.0',
   tags: ['icons'],
   installed: false,

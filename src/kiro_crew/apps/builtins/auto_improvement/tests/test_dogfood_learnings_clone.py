@@ -40,7 +40,7 @@ class TestRetargetClearsRepoScopedConfig:
     """Found by executing docs/system-specs/modules/auto-improvement.md against a SECOND repository.
 
     ``setup-clone`` rewrote ``clone``/``target_url``/``target_display`` but left
-    ``branch`` untouched, so after retargeting from Kiro Crew to chess_test the config
+    ``branch`` untouched, so after retargeting from Sao Khuê to chess_test the config
     still named ``origin/feat/auto-improvement-app`` — a branch that does not exist in
     the new clone. The picker then showed a value with no matching option, and a run
     would try to check out a missing ref.

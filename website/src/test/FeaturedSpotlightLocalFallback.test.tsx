@@ -176,7 +176,7 @@ describe('FeaturedSpotlight — installed lead swaps to local art on a failed re
       name: 'demo-app',
       displayName: 'Demo App',
       description: 'About demo-app.',
-      author: 'Kiro Crew',
+      author: 'Sao Khuê',
       version: '1.0.0',
       tags: ['agents'],
       installed: true,

@@ -1,7 +1,7 @@
 // The kiro agent FILE's model (~/.kiro/agents/kirocrew.json → e.g.
 // claude-opus-4.8) can differ from the configured default the turn actually
 // runs on (e.g. claude-opus-5). The precedence chain is four tiers deep (the
-// KiroCrew agent's own model, the bound kiro agent's pin, the global fallback,
+// SaoKhue agent's own model, the bound kiro agent's pin, the global fallback,
 // the installed agent file) and ONE backend resolver owns it — resolveModel
 // must delegate rather than keep a second copy that can drift and mismatch.
 
@@ -28,7 +28,7 @@ describe('AcpAdapter.resolveModel — delegates to the backend resolver', () => 
     expect(await new AcpAdapter().resolveModel('oncall')).toBe('claude-opus-5')
   })
 
-  it('passes the KiroCrew agent name through, not a kiro template name', async () => {
+  it('passes the SaoKhue agent name through, not a kiro template name', async () => {
     // Several agents can share one template, so the agent name is the only
     // input that can select a per-agent pin.
     agentResolvedModel.mockResolvedValue({ model: 'claude-opus-5' })

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """check_harness_parity.py — keep the Kiro harness first-class on lines a change adds.
 
-Kiro Crew drives one first-class agent harness, ``kiro-cli``
+Sao Khuê drives one first-class agent harness, ``kiro-cli``
 (``ACP_BACKEND_KIRO``, spelled ``""``), plus adapted ones: the
 ``ACP_BACKEND_CLAUDE`` seam, KAS, and whatever a bring-your-own adapter
 registers next. An added harness may only adapt itself to the seams the Kiro

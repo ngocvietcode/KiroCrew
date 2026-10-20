@@ -125,7 +125,7 @@ export interface Skill {
    *  `deliveries` is. Drives the Skills list's "last used" text and its
    *  Recently used sort. */
   last_used_at?: number | null
-  /** False when the SKILL.md lives outside the directory Kiro Crew owns (e.g. a
+  /** False when the SKILL.md lives outside the directory Sao Khuê owns (e.g. a
    *  `skills.extra_paths` entry). Such a skill is listed but not ours to rewrite,
    *  so the injection toggle must not be offered — the endpoint refuses it. */
   owned?: boolean
@@ -135,7 +135,7 @@ export interface Skill {
   dir?: string
   /** Names of installed agents whose ``resources`` glob matches this skill's
    *  SKILL.md path.  Empty list means no agent loads it via kiro-cli's
-   *  native ``skill://`` loader (it may still load via Kiro Crew text-injection). */
+   *  native ``skill://`` loader (it may still load via Sao Khuê text-injection). */
   loaded_by_agents?: string[]
 }
 
@@ -304,7 +304,7 @@ export interface DiscoveredMcpServer {
   version: string
   /** "" if unknown. */
   repo_url: string
-  /** Cross-referenced against Kiro Crew's configured servers. */
+  /** Cross-referenced against Sao Khuê's configured servers. */
   installed: boolean
   /** Install methods derivable from the entry (capability: ["capability"]). */
   methods: string[]
@@ -422,12 +422,12 @@ export interface McpServer {
   /** Optional status-enrichment fields supplied by newer runtimes. */
   accountLabel?: string
   connectedSince?: string
-  /** True when the entry lives in Kiro Crew's own mcp.json — the scope the
+  /** True when the entry lives in Sao Khuê's own mcp.json — the scope the
    *  Edit JSON action reads and writes (consent-disabled rows included). */
   kirocrewManaged?: boolean
   /** Which config switched the row off, from the backend — never inferred from
-   *  `enabled` + `kirocrewManaged`. `kirocrew`: a disable in Kiro Crew's own
-   *  store, which the Kiro Crew scope badge + Apply lifts (the consent step).
+   *  `enabled` + `kirocrewManaged`. `kirocrew`: a disable in Sao Khuê's own
+   *  store, which the Sao Khuê scope badge + Apply lifts (the consent step).
    *  `shared`: a disable in a config this panel does not write for enable (the
    *  shared Kiro MCP config the IDE edits, or a provider global), so the row is
    *  inert here; a row disabled in both reads `shared`. `null` when enabled. */

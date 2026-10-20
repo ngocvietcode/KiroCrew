@@ -13,14 +13,14 @@ superseded-by: []
 
 # RFC: Remote Instance on Lambda MicroVM
 
-> **Nothing built.** Measured claims about Kiro Crew are read at `fcee47347`.
+> **Nothing built.** Measured claims about Sao Khuê are read at `fcee47347`.
 > AWS behaviour is cited to public documentation. The design restates decisions
-> established by an earlier prototype that ran Kiro Crew's published container
+> established by an earlier prototype that ran Sao Khuê's published container
 > image on Lambda MicroVMs; no code is carried over.
 
 ## Summary
 
-**Bring Lambda MicroVM into Kiro Crew and consolidate it with our existing
+**Bring Lambda MicroVM into Sao Khuê and consolidate it with our existing
 Fargate deployment method.**
 
 A remote crew becomes a MicroVM instead of an ECS task. The lane keeps every

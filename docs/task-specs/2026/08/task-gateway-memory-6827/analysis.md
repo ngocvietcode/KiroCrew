@@ -3,7 +3,7 @@
 > Archived analysis; owning spec: [vendored packages, local divergences from upstream](../../../../../src/kiro_crew/_vendor/README.md#local-divergences-from-upstream-re-apply-on-every-upgrade).
 ## Summary
 
-Issue #6827 reports the Kiro Crew Python Gateway (`python.exe`) climbing from a
+Issue #6827 reports the Sao Khuê Python Gateway (`python.exe`) climbing from a
 ~600 MB baseline to ~3 GB within roughly 10 minutes on a Windows 11 desktop,
 with no user interaction. The environment has 50+ skills, local git-clone
 knowledge sources, Telegram, and RSS enabled.

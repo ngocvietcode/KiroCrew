@@ -492,7 +492,7 @@ def _marked_group_members(
     survives the leader -- but a bare number is what a recycled pid looks like
     too, and ``killpg`` on it would take a stranger's tree. A member that carries
     ``KIROCREW_SPAWNED`` in its exec-time environment is the positive identity
-    that a group is one Kiro Crew spawned; a detached survivor that merely
+    that a group is one Sao Khuê spawned; a detached survivor that merely
     inherited the marker is excluded by the argv identity check, the same pair
     the tracked sweep's systemd arm requires.
 
@@ -763,7 +763,7 @@ def signal_orphaned_spawn_group(
     """Signal a NON-agent-runtime spawn's group members after its leader is gone.
 
     Public entry point onto :func:`_vouch_and_signal_orphaned_group` for a tree
-    that Kiro Crew spawned as its own session leader but which is not an ACP
+    that Sao Khuê spawned as its own session leader but which is not an ACP
     runtime -- today an app backend (``kiro_crew.apps.backend``), whose members are
     whatever the app's manifest runs. Read that function's docstring for the
     reasoning; the single difference in the signalling is that the per-member ARGV
@@ -1298,7 +1298,7 @@ def _sync_kill_provider(provider: object) -> None:
 def _tracked_child_has_runtime_identity(child_pid: int) -> bool:
     """Positive argv identity for the tracked sweep's systemd kill arm.
 
-    True only when the live process looks like something Kiro Crew tracks in
+    True only when the live process looks like something Sao Khuê tracks in
     ``kiro_pids.txt``: a managed agent runtime (:data:`_MANAGED_AGENT_MARKERS`),
     an MCP entrypoint (:func:`_is_orphan_mcp`), or a fingerprint-less MCP
     launcher shape (:func:`_is_marked_mcp_launcher` -- callers pair this arm

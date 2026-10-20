@@ -1677,7 +1677,7 @@ inference is the hazard, and one boolean cannot carry two nested facts.
 
 ## OAuth custody under the Agent SDK
 
-Current behaviour — kiro-cli owning the chain, and Kiro Crew observing grant presence
+Current behaviour — kiro-cli owning the chain, and Sao Khuê observing grant presence
 by `stat` — is specified in
 [`../architecture/design-notes/mcp-oauth-ownership.md`](../architecture/design-notes/mcp-oauth-ownership.md).
 What follows is what this proposal would change.
@@ -1698,19 +1698,19 @@ options = ClaudeAgentOptions(mcp_servers={
 
 The SDK doesn't run OAuth, doesn't handle callbacks, doesn't store anything. Whatever bearer we hand it is what it uses.
 
-That inverts the ownership model: **Kiro Crew owns the OAuth chain end-to-end.**
+That inverts the ownership model: **Sao Khuê owns the OAuth chain end-to-end.**
 
 - The dashboard runs the consent flow (open browser, receive callback, exchange code for token).
-- Kiro Crew stores tokens in its own credential store — keychain on macOS, sealed SQLite on Linux, whatever fits the deployment's security posture.
+- Sao Khuê stores tokens in its own credential store — keychain on macOS, sealed SQLite on Linux, whatever fits the deployment's security posture.
 - Token scoping is up to us: per-user × per-agent × per-server. Two agents in one workspace can hold tokens for two different GitHub accounts.
-- Refresh is a Kiro Crew concern: a background task watches expiry, refreshes, hands the new bearer to the next `query()`.
+- Refresh is a Sao Khuê concern: a background task watches expiry, refreshes, hands the new bearer to the next `query()`.
 - Sign-out is a single dashboard click — delete the row from our store and revoke upstream.
 - Tokens never sit in `agent.json`. The file holds only the **shape** of the MCP server (URL, server-id, scope hints); the bearer is injected at runtime.
-- The dashboard can show "GitHub: connected as octocat, expires in 47 min" because the data lives in Kiro Crew.
+- The dashboard can show "GitHub: connected as octocat, expires in 47 min" because the data lives in Sao Khuê.
 
 ### The custody problem in one sentence
 
-**With kiro-cli, the entire chain — config → OAuth → token storage → header injection — lives inside the CLI process, and Kiro Crew can only observe it through opaque ACP notifications. With the Agent SDK, that chain is Kiro Crew's code, and we can shape it into whatever the product needs.**
+**With kiro-cli, the entire chain — config → OAuth → token storage → header injection — lives inside the CLI process, and Sao Khuê can only observe it through opaque ACP notifications. With the Agent SDK, that chain is Sao Khuê's code, and we can shape it into whatever the product needs.**
 
 ---
 

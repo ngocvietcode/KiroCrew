@@ -11,7 +11,7 @@
 // selected issue — is never disturbed.
 //
 // Scope note: `absolute inset-0`, not `fixed`, so it covers the Issue Radar app
-// area (its `relative` wrapper in IssueRadarPage) rather than the whole KiroCrew
+// area (its `relative` wrapper in IssueRadarPage) rather than the whole SaoKhue
 // window — matching ConnectRepoModal.
 import { useCallback, useRef } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'

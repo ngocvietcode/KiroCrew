@@ -75,7 +75,7 @@ def test_the_install_root_wins_over_the_managed_launcher(
     """Order matters for HONESTY, not just for which binary runs.
 
     ``/deps`` derives its ``managed`` flag from whether the resolved path sits in the
-    app's own bin dir, and that flag is how the UI says "installed by Kiro Crew".
+    app's own bin dir, and that flag is how the UI says "installed by Sao Khuê".
     Resolving a system LibreOffice through the managed probe would make the app claim
     it installed a system package it deliberately refuses to install.
     """

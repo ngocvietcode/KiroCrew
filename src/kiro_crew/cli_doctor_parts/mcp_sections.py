@@ -456,7 +456,7 @@ def _doctor_mcp_governance(
     This exists because the section above cannot detect either failure.
     Governance is enforced inside kiro-cli when it assembles a session: it drops
     every ``mcpServers`` entry whose registry marker does not match the account's
-    access mode. Kiro Crew's own handshake probe spawns each server directly and
+    access mode. Sao Khuê's own handshake probe spawns each server directly and
     therefore still reports it healthy, so an affected host reads green here
     while `spawn_run`, `cron_add` and `learn_add` are absent from every session.
     """

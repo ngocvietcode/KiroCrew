@@ -1,1 +1,1 @@
-"""Slack integration for KiroCrew."""
+"""Slack integration for SaoKhue."""

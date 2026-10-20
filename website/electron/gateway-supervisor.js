@@ -88,12 +88,12 @@ const INSTALLING_STATUS = "Finishing installation…";
 // The splash line behind the pruned-backend dialog: nothing is installing, so
 // it must not say so, and it points at the dialog's Quit, the control that
 // carries the action.
-const PRUNED_STATUS = "Some app files are missing. Use Quit in the dialog, then reopen Kiro Crew.";
+const PRUNED_STATUS = "Some app files are missing. Use Quit in the dialog, then reopen Sao Khuê.";
 // relaunchViaConfirmedSuccessor's splash line defaults to the update wording
 // (successor-handoff.js). The handoff also serves a caller that is not
 // updating anything, and the splash is the only surface the user is looking at
 // while it runs, so the reason is the caller's to name.
-const RESTARTING_FOR_LOCAL_GATEWAY_STATUS = "Restarting Kiro Crew to start a local gateway…";
+const RESTARTING_FOR_LOCAL_GATEWAY_STATUS = "Restarting Sao Khuê to start a local gateway…";
 const POLL_INTERVAL_MS = 500;
 // loadFile query that tells loading.html it is being painted by a reconnect
 // path rather than a cold boot, so it can offer its exit control at once
@@ -568,7 +568,7 @@ function createGatewaySupervisor({
           // Not a gate on the button -- only on the wording. One failed handoff
           // does not establish that a second cannot finish: a successor killed at
           // the readiness deadline can be a transient loss, and the remedy the
-          // old copy offered ("quit and open Kiro Crew again") re-execs the app
+          // old copy offered ("quit and open Sao Khuê again") re-execs the app
           // exactly as the button does, only by hand. So the attempt is
           // acknowledged and the button is offered again.
           localStartFailed: localStartRelaunchFailed,
@@ -1010,7 +1010,7 @@ function createGatewaySupervisor({
       return reconnectExternalGateway(window);
     }
     if (strategy === "reconnect-bounded") {
-      glog("liveness: backend unresponsive on an adopted local Kiro Crew gateway — bounded wait, then respawn");
+      glog("liveness: backend unresponsive on an adopted local Sao Khuê gateway — bounded wait, then respawn");
       if (!window || window.isDestroyed() || quitting()) return;
       return reconnectOrRespawnAdoptedGateway(window);
     }
@@ -1227,25 +1227,25 @@ function createGatewaySupervisor({
           : describeIncompleteBundle([]);
       } else if (localGatewayOff) {
         title = remoteTarget
-          ? `Kiro Crew — nothing answering at ${remoteTarget}:${remoteTargetPort}`
-          : `Kiro Crew — no gateway on port ${PORT}`;
+          ? `Sao Khuê — nothing answering at ${remoteTarget}:${remoteTargetPort}`
+          : `Sao Khuê — no gateway on port ${PORT}`;
         // After a click, the news is what happened to the local start, and the
         // title is what a reader takes in first. Leaving it on the crew made the
         // busy-port and lost-restart dialogs indistinguishable at a glance --
         // same title, same buttons, one word different in the body.
-        if (localStartOutcome) title = `Kiro Crew — ${localStartOutcome}`;
+        if (localStartOutcome) title = `Sao Khuê — ${localStartOutcome}`;
         message = error.message;
       } else if (portConflict) {
-        title = `Kiro Crew — port ${PORT} already in use`;
-        message = `Another Kiro Crew gateway is already using port ${PORT} (it may be wedged). `
+        title = `Sao Khuê — port ${PORT} already in use`;
+        message = `Another Sao Khuê gateway is already using port ${PORT} (it may be wedged). `
           + `Force-stop it and retry, or quit. From a terminal you can also run: `
           + `kirocrew stop --port ${PORT}`;
       } else if (failedToStart) {
-        title = "Kiro Crew — gateway failed to start";
+        title = "Sao Khuê — gateway failed to start";
         message = error.message;
       } else {
-        title = "Kiro Crew — can't reach the gateway";
-        message = "Could not connect to the Kiro Crew backend. Make sure "
+        title = "Sao Khuê — can't reach the gateway";
+        message = "Could not connect to the Sao Khuê backend. Make sure "
           + "'kirocrew gateway' is running, or check kirocrew doctor.";
       }
 

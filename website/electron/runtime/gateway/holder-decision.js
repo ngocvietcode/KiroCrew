@@ -89,7 +89,7 @@ function createHolderDecision({
       const { response } = await dialog.showMessageBox({
         type: "warning",
         message: "The gateway is not responding.",
-        detail: `A Kiro Crew gateway for this data folder is running on port ${PORT} but has not answered for at least ${Math.round(STUCK_GATEWAY_GRACE_MS / 1000)} seconds.\n\nStop and restart stops that gateway and starts a fresh one. Anything the stuck gateway was still doing is stopped with it.${serviceNote ? "\nIf a background service restarts it automatically, Kiro Crew connects to it once it answers." : ""}`,
+        detail: `A Sao Khuê gateway for this data folder is running on port ${PORT} but has not answered for at least ${Math.round(STUCK_GATEWAY_GRACE_MS / 1000)} seconds.\n\nStop and restart stops that gateway and starts a fresh one. Anything the stuck gateway was still doing is stopped with it.${serviceNote ? "\nIf a background service restarts it automatically, Sao Khuê connects to it once it answers." : ""}`,
         buttons: ["Stop and restart", "Quit"],
         defaultId: 0,
         cancelId: 1,
@@ -102,7 +102,7 @@ function createHolderDecision({
       await dialog.showMessageBox({
         type: "warning",
         message: "The gateway is not responding.",
-        detail: `A Kiro Crew gateway for this data folder is running on port ${PORT} but has not answered for at least ${Math.round(STUCK_GATEWAY_GRACE_MS / 1000)} seconds.\n\nTo fix it, quit Kiro Crew.\nRun this command in Terminal:\n${stopCommand}${serviceNote}\nThen reopen Kiro Crew.`,
+        detail: `A Sao Khuê gateway for this data folder is running on port ${PORT} but has not answered for at least ${Math.round(STUCK_GATEWAY_GRACE_MS / 1000)} seconds.\n\nTo fix it, quit Sao Khuê.\nRun this command in Terminal:\n${stopCommand}${serviceNote}\nThen reopen Sao Khuê.`,
         buttons: ["Quit"],
         defaultId: 0,
         cancelId: 0,
@@ -112,7 +112,7 @@ function createHolderDecision({
     const { response } = await dialog.showMessageBox({
       type: "warning",
       message: "The gateway is still running an older version.",
-      detail: `This app is version ${app.getVersion()}. The gateway is still running version ${oldVersion}.\n\nContinue will try to connect to the existing gateway; updated features may be unavailable.\n\nTo finish the update, quit Kiro Crew.\nRun this command in Terminal:\n${stopCommand}${serviceNote}\nThen reopen Kiro Crew.`,
+      detail: `This app is version ${app.getVersion()}. The gateway is still running version ${oldVersion}.\n\nContinue will try to connect to the existing gateway; updated features may be unavailable.\n\nTo finish the update, quit Sao Khuê.\nRun this command in Terminal:\n${stopCommand}${serviceNote}\nThen reopen Sao Khuê.`,
       buttons: ["Continue with existing gateway", "Quit"],
       defaultId: 0,
       cancelId: 0,
@@ -123,7 +123,7 @@ function createHolderDecision({
   /**
    * Launch found the port held but no health answer. Today's answer is to
    * spawn anyway. That stays the answer for every holder except one: a local
-   * Kiro Crew gateway for this app's own data folder that keeps failing its
+   * Sao Khuê gateway for this app's own data folder that keeps failing its
    * health check past the grace window. That one is offered a stop-and-restart.
    *
    * @returns {Promise<"spawn"|"healthy"|"abort"|{stopFailed:number[]}>}
@@ -233,7 +233,7 @@ function createHolderDecision({
       localOwner, bundledGateway,
     });
     // The rule this enforces, as one sentence: adopt a responder on this port
-    // only when the port can be attributed either to us (a Kiro Crew LISTEN
+    // only when the port can be attributed either to us (a Sao Khuê LISTEN
     // owner, or a service-managed one) or to a crew the user configured here.
     //
     // It is deliberately NOT gated on which reuse reason decideGatewayAction

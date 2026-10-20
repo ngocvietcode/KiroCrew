@@ -107,7 +107,7 @@ class TestMemoryGraphNodeExtraction:
         monkeypatch.setattr("kiro_crew.dashboard.state.config_dir", lambda: tmp_path)
         state = self._make_state(
             tmp_path,
-            projects="## KiroCrew\n- Repository: ssh://git.example.com\n- Branch: main",
+            projects="## SaoKhue\n- Repository: ssh://git.example.com\n- Branch: main",
         )
         request = MagicMock()
         request.app = {"state": state}
@@ -117,7 +117,7 @@ class TestMemoryGraphNodeExtraction:
 
         proj_nodes = [n for n in data["nodes"] if n["group"] == "project"]
         assert len(proj_nodes) == 3  # parent + 2 details
-        assert any(n["label"] == "KiroCrew" for n in proj_nodes)
+        assert any(n["label"] == "SaoKhue" for n in proj_nodes)
         # Detail nodes should have edges to parent
         assert len(data["edges"]) == 2
 
@@ -166,7 +166,7 @@ class TestMemoryGraphNodeExtraction:
         vs = MagicMock()
         vs.get_all_semantic.return_value = [
             {"key": "pref.editor", "value_json": '"vim"'},
-            {"key": "project.name", "value_json": '"KiroCrew"'},
+            {"key": "project.name", "value_json": '"SaoKhue"'},
         ]
         vs.get_lessons.return_value = []
         state.context_builder.memory.vector_store = vs
@@ -438,8 +438,8 @@ class TestMemoryGraphEdgeDetection:
         monkeypatch.setattr("kiro_crew.dashboard.state.config_dir", lambda: tmp_path)
         state = self._make_state(
             tmp_path,
-            prefs="- Uses KiroCrew for automation",
-            projects="## KiroCrew\n- Local path: /home/user/kirocrew",
+            prefs="- Uses SaoKhue for automation",
+            projects="## SaoKhue\n- Local path: /home/user/kirocrew",
         )
         request = MagicMock()
         request.app = {"state": state}
@@ -735,7 +735,7 @@ class TestMemoryGraphHTTPIntegration:
         state = self._make_state(
             tmp_path,
             prefs="- Prefers dark mode",
-            projects="## KiroCrew\n- Local path: /home/user/mc",
+            projects="## SaoKhue\n- Local path: /home/user/mc",
             history="# 2026-03-25\n[2026-03-25 10:00] Did some work",
         )
         state.lessons.load_all.return_value = [

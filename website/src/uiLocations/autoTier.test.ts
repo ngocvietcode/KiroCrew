@@ -239,7 +239,7 @@ function build(autoCandidates: Record<string, unknown>[]) {
     previewEnablers: {},
     catalogs: { en: EN, 'zh-CN': ZH },
     locales: ['en', 'zh-CN'],
-    productName: 'Kiro Crew',
+    productName: 'Sao Khuê',
     inputDigest: 'sha256:test',
     routes: ROUTES,
     conditions: UI_CONDITIONS,

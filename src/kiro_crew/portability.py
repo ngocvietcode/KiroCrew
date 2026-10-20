@@ -1,6 +1,6 @@
-"""Portable zip export/import for KiroCrew state (dashboard endpoint).
+"""Portable zip export/import for SaoKhue state (dashboard endpoint).
 
-Creates a zip archive of all KiroCrew settings and memory for download
+Creates a zip archive of all SaoKhue settings and memory for download
 via the dashboard, and restores from uploaded zip archives. Designed to
 work over HTTP for remote users (e.g. Linux Cloud Desktop → macOS browser).
 
@@ -973,7 +973,7 @@ def crew_template_refs(config_path: Path) -> list[tuple[str, str]]:
     The two config-level selectors that also name a template, ``agent.default_agent``
     and ``session.pool_agent``, are listed under those keys in place of a crew name.
     A bundle never carries ``<kiro home>/agents``, so every name listed here must
-    already exist on whichever machine applies the config. The templates Kiro Crew
+    already exist on whichever machine applies the config. The templates Sao Khuê
     writes itself (``OWNED_KIRO_AGENT_FILES``) are left out: every install
     regenerates them. An unreadable, malformed or pathologically nested file
     answers ``[]``: this feeds a warning, never a refusal.
@@ -1107,7 +1107,7 @@ def bundled_agent_templates() -> tuple[list[tuple[str, dict[str, Any]]], int]:
     Starts from the templates this install's crews name (:func:`crew_template_refs`)
     and follows each template's subagent allow lists in turn, visiting every name
     once so a cycle ends the walk. A name is matched against a spec's ``name`` field
-    or file stem, the test the config loader applies. Templates Kiro Crew writes
+    or file stem, the test the config loader applies. Templates Sao Khuê writes
     itself are skipped (every install regenerates them), as are specs reached
     through a link and specs whose stem is not a plain file name.
 
@@ -1217,7 +1217,7 @@ def _archive_agent_templates(
 def _installed_template_names() -> set[str]:
     """Every template name an import must not write over: each file stem in the
     agents directory (parseable or not), each declared ``name``, and the templates
-    Kiro Crew writes itself."""
+    Sao Khuê writes itself."""
     names = set(_MANAGED_TEMPLATES)
     agents = kiro_agents_dir()
     with contextlib.suppress(OSError):

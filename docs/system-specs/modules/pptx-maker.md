@@ -12,7 +12,7 @@ Slide composition and `.pptx` writing are NOT implemented here. They are done by
 [spec-driven-presentation-maker](https://github.com/aws-samples/sample-spec-driven-presentation-maker)
 (AWS Samples, MIT-0), a public open-source engine that is **fetched as a
 sha256-pinned tarball into the app's data dir on first use and never modified**.
-This app supplies the Kiro Crew integration: the agents that drive the engine over
+This app supplies the Sao Khuê integration: the agents that drive the engine over
 MCP, the studio page, and the deck / style / template API.
 
 **Nothing has to be installed by hand.** `pip install kirocrew` is the only
@@ -456,7 +456,7 @@ agent `resource`. The upstream app patched the vendored engine prompt in place o
 every install, which meant an engine upgrade silently reverted the customization.
 Keeping it in a separate file is what lets the engine stay an unmodified,
 replaceable dependency. The file covers: reply in the user's language, how to open
-a session, Kiro Crew's `[OPTIONS: …]` question affordance in place of the engine's
+a session, Sao Khuê's `[OPTIONS: …]` question affordance in place of the engine's
 web-only `hearing` tool, and writing each deliverable incrementally so the studio
 can show it.
 

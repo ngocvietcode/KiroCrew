@@ -3,7 +3,7 @@ sandbox actually writes.
 
 ``_process_userns_vantage_confined`` in :mod:`kiro_crew.doctor_checks.confinement`
 (exposed through the ``cli_doctor`` facade) decides whether the current shell is
-Kiro Crew's own confined agent shell, so diagnostics keep their host-level verdict
+Sao Khuê's own confined agent shell, so diagnostics keep their host-level verdict
 instead of wrongly reporting it. It recognises that shell by the shape of
 ``/proc/self/uid_map`` (one identity entry of length one) plus seccomp filtering.
 

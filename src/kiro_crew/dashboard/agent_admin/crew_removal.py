@@ -278,7 +278,7 @@ def _prune_private_copy_of_deleted_crew(crew: str, bound_template: str) -> bool:
 
 
 async def api_kirocrew_agent_delete(request: web.Request) -> web.Response:
-    """DELETE /api/agents/{name} — delete a Kiro Crew agent."""
+    """DELETE /api/agents/{name} — delete a Sao Khuê agent."""
 
     denied = await _require_owner(request, "agent.delete")
     if denied is not None:

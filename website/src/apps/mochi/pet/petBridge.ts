@@ -436,7 +436,7 @@ export function onConfigUpdated(cb: (cfg: Record<string, unknown>) => void): () 
 }
 
 /**
- * Only one theme exists now (the pet follows KiroCrew's), so there is nothing to
+ * Only one theme exists now (the pet follows SaoKhue's), so there is nothing to
  * push. Kept as a real no-op subscription rather than a missing method, so the
  * ported call site is honest instead of silently swallowed.
  */

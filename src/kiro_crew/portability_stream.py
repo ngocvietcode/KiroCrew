@@ -61,7 +61,7 @@ def create_export_zip(
     memory_only: bool = False,
     include_agent_templates: bool = False,
 ) -> tuple[bytes, dict]:
-    """Create a zip archive of Kiro Crew state. Returns (zip_bytes, manifest_dict).
+    """Create a zip archive of Sao Khuê state. Returns (zip_bytes, manifest_dict).
 
     *include_sessions* adds the dashboard chats (`_write_sessions`). It is off by
     default because a transcript holds everything the agent was shown, so an archive

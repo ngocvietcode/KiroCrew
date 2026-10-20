@@ -87,7 +87,7 @@ class TestDispatcher:
     async def test_help_command(self) -> None:
         d, cli, _ = _dispatcher({"u1"})
         await d.handle_message(self._msg("!help"))
-        assert "Kiro Crew" in cli.sent[-1][0]
+        assert "Sao Khuê" in cli.sent[-1][0]
         assert "!sessions [query]" in cli.sent[-1][0]
 
     @pytest.mark.asyncio
@@ -800,7 +800,7 @@ class TestDispatcher:
         prompt = d.ctx_builder.messages[-1]
         assert prompt.splitlines()[0] == "!help"
         assert prompt.splitlines()[1].endswith(".png")
-        assert "Kiro Crew — Discord" not in "\n".join(text for text, _ in cli.sent)
+        assert "Sao Khuê — Discord" not in "\n".join(text for text, _ in cli.sent)
 
     @pytest.mark.asyncio
     async def test_opaque_attachment_download_is_not_silent(self) -> None:

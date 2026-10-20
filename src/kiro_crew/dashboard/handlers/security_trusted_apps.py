@@ -227,7 +227,7 @@ class TrustSettingOverlayOwned(Exception):
     code on the next load, which is the third variant of "revocation that revokes
     nothing" this feature has had to close. Editing the overlay on the user's behalf
     is not an option either — that file is explicitly user-owned and never written by
-    Kiro Crew — so the caller is told which key and which file to edit.
+    Sao Khuê — so the caller is told which key and which file to edit.
     """
 
     def __init__(self, keys: list[str]) -> None:

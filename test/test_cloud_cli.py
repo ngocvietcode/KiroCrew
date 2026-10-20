@@ -173,7 +173,7 @@ class TestListStatus:
     def test_list_empty(self, monkeypatch, capsys):
         monkeypatch.setattr(ec2, "list_instances", lambda *a, **k: [])
         assert cli_cloud._cloud_list(_args(profile="", region="")) == 0
-        assert "No KiroCrew cloud instances" in capsys.readouterr().out
+        assert "No SaoKhue cloud instances" in capsys.readouterr().out
 
     def test_list_rows(self, monkeypatch, capsys):
         monkeypatch.setattr(

@@ -290,7 +290,7 @@ class TestAgentRegistration:
         assert not link.exists(), "a spec that was never understood must not be materialized"
 
     def test_a_legacy_symlink_is_still_replaced(self, tmp_path, app_env):
-        """A symlink from an older KiroCrew is dropped and replaced with a real file."""
+        """A symlink from an older SaoKhue is dropped and replaced with a real file."""
         src = _make_app_source(tmp_path)
         install_app(src)
         manifest = AppManifest.from_json_file(
@@ -912,7 +912,7 @@ class TestStdioInterpreterResolution:
     def test_a_gateway_module_server_is_pinned_to_the_gateway_interpreter(
         self, tmp_path, app_env, monkeypatch
     ):
-        # A stdio server that runs Kiro Crew's OWN code (`-m kiro_crew...`) must
+        # A stdio server that runs Sao Khuê's OWN code (`-m kiro_crew...`) must
         # run under the gateway's interpreter even when the app has a venv: app
         # venvs are created without --system-site-packages, so kiro_crew is not
         # importable there and the venv interpreter dies on import — silently,

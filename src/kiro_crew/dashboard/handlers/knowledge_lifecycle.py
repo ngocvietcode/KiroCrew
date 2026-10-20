@@ -72,7 +72,7 @@ logger = logging.getLogger("kiro_crew.dashboard.handlers.knowledge")
 
 
 def _create_embedder(app):
-    """Create embedder from Kiro Crew config. Returns None if disabled/unavailable."""
+    """Create embedder from Sao Khuê config. Returns None if disabled/unavailable."""
     cfg_path = config_dir() / "config.json"
     try:
         cfg = json.loads(read_config_text(cfg_path)) if cfg_path.exists() else {}

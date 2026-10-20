@@ -330,7 +330,7 @@ async def test_a_complete_roster_says_the_stall_is_not_in_those_servers():
     """A bare ``4/4 ... reported`` reads as "all MCP is up, so it is an MCP problem".
 
     The count covers only the servers this session put on the wire -- on kiro-cli
-    the broker stubs Kiro Crew injects -- not the agent spec's own servers, and
+    the broker stubs Sao Khuê injects -- not the agent spec's own servers, and
     not the backend's session-start steps after MCP init. A field report was
     triaged as an MCP failure on the strength of that suffix alone. When every
     injected server HAS reported, the text says so and says what it does not

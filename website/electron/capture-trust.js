@@ -1,4 +1,4 @@
-// Who may be granted a screen capture in the Kiro Crew Electron app.
+// Who may be granted a screen capture in the Sao Khuê Electron app.
 //
 // `display-media.js` answers `setDisplayMediaRequestHandler` by picking a
 // whole-screen source and granting it — no per-request confirmation UI on the

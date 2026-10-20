@@ -1,6 +1,6 @@
 # The harness-parity gate
 
-Kiro Crew drives one first-class agent harness — `kiro-cli` — and adapts the
+Sao Khuê drives one first-class agent harness — `kiro-cli` — and adapts the
 others. This gate is the mechanical half of that rule: it reads the lines a
 change ADDS under `src/kiro_crew/` and fails on any that let a harness other
 than Kiro inherit something by default. The invariants it enforces, and the
@@ -34,7 +34,7 @@ no dependency install.
 | `negative-identity` | H5 | `not is_claude_backend`, `not self._is_kas` — harness identity as the absence of another harness |
 | `negative-constant` | H5 | `!= ACP_BACKEND_KAS` and its mirror — an inequality captures every harness added later |
 | `bare-literal` | H8 | `backend == "kas"` — `ACP_BACKEND_KIRO` is the empty string, so only the named constant is legible |
-| `sandbox-delegation` | H7 | `is_kiro_cli=` derived from a negation. This flag makes `wrap_argv` SKIP Kiro Crew's seatbelt, so it fails OPEN |
+| `sandbox-delegation` | H7 | `is_kiro_cli=` derived from a negation. This flag makes `wrap_argv` SKIP Sao Khuê's seatbelt, so it fails OPEN |
 | `vocabulary-home` | H8 | an `ACP_BACKEND_*` identifier or `ACP_BACKENDS_*` set defined outside `agent_sdk/backends.py` and the owners `VOCABULARY_PATHS` lists beside it |
 | `non-kiro-default` | H1 | `default=ACP_BACKEND_KAS` and equivalents — an operator who configures nothing gets Kiro |
 

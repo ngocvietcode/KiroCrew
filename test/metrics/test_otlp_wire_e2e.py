@@ -78,7 +78,7 @@ _REAL = object()
 
 #: Instruments whose reading is a monotonic PROCESS-LIFETIME total (process CPU
 #: and the GC stats). They were observable COUNTERS, which made them the only
-#: CUMULATIVE series Kiro Crew exported; they are observable GAUGES now, so they
+#: CUMULATIVE series Sao Khuê exported; they are observable GAUGES now, so they
 #: must carry NO temporality like every other gauge here. Named separately from
 #: the rest of the roster because they are the ones a regression would flip back.
 _LIFETIME_TOTAL_NAMES = pg.LIFETIME_TOTAL_METRICS
@@ -310,7 +310,7 @@ def test_local_shards_carry_the_process_identity_token(exported):
 
 
 def test_no_instrument_exports_cumulative(exported):
-    """The ratchet: not one Kiro Crew series is CUMULATIVE on either destination.
+    """The ratchet: not one Sao Khuê series is CUMULATIVE on either destination.
 
     One cumulative series is enough to force a consumer into stateful whole-hour
     aggregation — its hourly increment is last-minus-first across the entire

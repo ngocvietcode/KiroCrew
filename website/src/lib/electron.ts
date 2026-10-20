@@ -267,4 +267,4 @@ export function needsDesktopApp(app: {
  * `components.appstore.*.desktop_app_hint` instead; this remains the
  * machine-readable reason string for logs and non-UI callers.
  */
-export const DESKTOP_APP_REQUIRED_LABEL = 'Requires the KiroCrew desktop app'
+export const DESKTOP_APP_REQUIRED_LABEL = 'Requires the SaoKhue desktop app'

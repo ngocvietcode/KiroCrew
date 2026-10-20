@@ -303,7 +303,7 @@ async def api_file_delivery_consent_approve(request: web.Request) -> web.Respons
     # then read the nonce and complete the owner's step-up with no human present.
     # Both must hold, and both fail closed.
     if not await asyncio.to_thread(lambda: credential_mask_applies(configured_sandbox_mode())):
-        # On native Windows there is no Kiro Crew sandbox backend at all, so the
+        # On native Windows there is no Sao Khuê sandbox backend at all, so the
         # mask can NEVER apply here and no `agent.sandbox` value changes that.
         # The generic message's remediation ("set agent.sandbox to 'auto' or
         # 'strict' on a host with a working backend") is unactionable on

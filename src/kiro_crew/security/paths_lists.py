@@ -52,7 +52,7 @@ _SENSITIVE_HOME_DIRS: list[str] = [
     ".netrc",
     ".git-credentials",
     # ACP adapter credential stores. Each adapter owns its own sign-in flow and
-    # persists its own tokens; Kiro Crew never reads them, and only ever checks
+    # persists its own tokens; Sao Khuê never reads them, and only ever checks
     # that the file EXISTS so it can name the right sign-in command. An agent
     # that could ``fs_read`` one could impersonate the operator against that
     # vendor, so they are on the floor "precisely so nothing else does".
@@ -114,8 +114,8 @@ _SENSITIVE_HOME_DIRS: list[str] = [
 ]
 
 
-# ── Kiro Crew's own data-home secrets & governance trust-root ──
-# These leaves live directly under Kiro Crew's data home and must never be
+# ── Sao Khuê's own data-home secrets & governance trust-root ──
+# These leaves live directly under Sao Khuê's data home and must never be
 # readable OR writable through the shared file gate (``is_sensitive_path``):
 #
 #   .env                          channel/API credentials (Slack/Discord/…)
@@ -761,11 +761,11 @@ _CREW_SECRET_LEAVES: list[str] = [
     "pi-gate",
     # Encrypted secret vault directory — denylists the entire subdirectory so
     # the key file, ciphertext store, lock, and atomic-write temp files are all
-    # unreadable to the agent through any Kiro Crew-mediated channel.
+    # unreadable to the agent through any Sao Khuê-mediated channel.
     # The verb-independent sensitive-path backstop covers a scripted
     # ``python -c "open('~/.kiro/crew/.vault/...')"`` too.
     ".vault",
-    # KAS-mode auth token store. In the KAS-embedded runtime Kiro Crew performs the
+    # KAS-mode auth token store. In the KAS-embedded runtime Sao Khuê performs the
     # Kiro OIDC lifecycle itself (there is no kiro-cli), and persists the resulting
     # access/refresh tokens as ``0600`` files under this dir. They are live bearer
     # credentials for the model service, so — like every other credential store —
@@ -918,7 +918,7 @@ _WRITE_PROTECTED_HOME_PATHS: list[str] = [
     # an INPUT TO A SECURITY DECISION: the schema accepts
     # ``launchOptions.chromiumSandbox``, so an agent that could rewrite it would
     # turn the browser sandbox OFF for every later browse, and the change persists
-    # until the next gateway start re-converges the file. Kiro Crew generates it
+    # until the next gateway start re-converges the file. Sao Khuê generates it
     # directly and does NOT route through this gate, so its own write still works.
     # subagents: the canonical run records a cold continuation restores app
     # ownership from. Gateway writers bypass this tool gate; an agent may read a
@@ -1061,7 +1061,7 @@ _WRITE_PROTECTED_HOME_PATHS += [
     # model is persistent and invisible, and for speech it means the user's own words
     # reaching the agent as something they did not say.
     #
-    # Kiro Crew's own downloaders write here directly and do not route through this
+    # Sao Khuê's own downloaders write here directly and do not route through this
     # gate, so first-run fetches, re-downloads after a failed check and the embedding
     # model install all keep working; only the agent's file-edit tool is refused.
     f"{prefix}/models"
@@ -1168,7 +1168,7 @@ _WRITE_PROTECTED_HOME_PATHS += [
     # ``@slug/tool -> alias`` triple the user hand-wrote, together with the fingerprint of
     # the spec currently on disk (the spec is readable, so the fingerprint is computable).
     # The next rebuild then resolves the forgery as its own emission and deletes the user's
-    # alias — laundering the edit through Kiro Crew's own trusted writer, which is what makes
+    # alias — laundering the edit through Sao Khuê's own trusted writer, which is what makes
     # it worse than editing the spec directly: the deletion is performed and persisted by the
     # legitimate owner of that file. The generation fingerprint cannot defend this, because a
     # forger reads the same spec it does.
@@ -1183,7 +1183,7 @@ _WRITE_PROTECTED_HOME_PATHS += [
 
 _WRITE_PROTECTED_HOME_PATHS += [
     # The settings-seed PROVENANCE RECORD (``acp.seed_provenance``), the alias
-    # record's twin one seam over: it is what authorizes Kiro Crew to OVERWRITE and
+    # record's twin one seam over: it is what authorizes Sao Khuê to OVERWRITE and
     # then DELETE ``<work_dir>/.claude/settings.local.json``. The ACP client seeds
     # that file for a claude-agent-acp session and touches only the seed it owns;
     # ownership is this record plus the file on disk still hashing to the digest in
@@ -1251,7 +1251,7 @@ _WRITE_PROTECTED_HOME_PATHS += [
 # unsandboxed on the next start and re-arms on every restart. So the agent's
 # file-edit tool must not be able to author or modify anything under it.
 #
-# WRITE-protection, NOT read+write sensitive: Kiro Crew and kiro-cli both
+# WRITE-protection, NOT read+write sensitive: Sao Khuê and kiro-cli both
 # legitimately READ specs (agent_discovery, session mtime scan, the dashboard MCP
 # rows, kiro-cli's own ``--agent`` resolution), so this stays OFF
 # ``_SENSITIVE_HOME_DIRS`` and reads are unaffected — only the write side is
@@ -1290,7 +1290,7 @@ _WRITE_PROTECTED_HOME_PATHS += [_KIRO_AGENTS_DIR]
 # WRITE-protection, NOT read+write sensitive, as for the agents dir: the registry
 # must stay READABLE (the app MCP-policy merge reads it, ``kirocrew doctor`` reports
 # it, and the deregistration scrub has to find an older build's leaked entries).
-# Kiro Crew's own writers take the advisory lock and ``atomic_write`` the path
+# Sao Khuê's own writers take the advisory lock and ``atomic_write`` the path
 # directly without routing through this gate, so app registration, health-check
 # promotion and that scrub keep working; only the agent's file-edit tool is refused.
 #

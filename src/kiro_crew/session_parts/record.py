@@ -40,7 +40,7 @@ class FirstTurnState(Enum):
     # consumed its own; ``open_task_session``'s cold path instead registers
     # FRESH unconsumed, exactly as it left ``is_new`` armed before).
     NOTHING_ARMED = auto()
-    # Fresh session: the first real turn injects Kiro Crew history.
+    # Fresh session: the first real turn injects Sao Khuê history.
     FRESH = auto()
     # Natively resumed — a speculative resume creator's ACP ``session/load``
     # restored the persisted transcript, so the first real turn must skip
@@ -164,7 +164,7 @@ class _Session:
     # preamble on the next prompt. One-shot: consumers clear after use.
     prev_turn_cancelled: bool = False
     # Set when a provider switch, failed native resume, or Tool Search
-    # compatibility fallback creates a fresh provider that still needs Kiro Crew
+    # compatibility fallback creates a fresh provider that still needs Sao Khuê
     # history. Non-destructive slash commands read without clearing; a confirmed
     # native `/clear` consumes it so replay cannot undo the user's deletion. The
     # first provider event records acceptance only in the dashboard runner's
@@ -177,7 +177,7 @@ class _Session:
     provider_switch_replay: bool = False
     # Carries the FRESH first-turn history debt that ``first_turn`` cannot: the
     # ``first_turn`` observation is a one-shot consumed at claim time, so a turn
-    # that assembled Kiro Crew history and then failed BEFORE the provider
+    # that assembled Sao Khuê history and then failed BEFORE the provider
     # accepted it (a pre-output backend 5xx the transient path re-queues onto the
     # SAME live session) spends the observation while the history never lands —
     # the re-queued turn then reads ``is_new=False`` and sends the replay bare.

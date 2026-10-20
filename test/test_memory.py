@@ -60,9 +60,9 @@ class TestMemoryStore:
 
     def test_projects(self, tmp_path):
         store = MemoryStore(workspace=tmp_path)
-        store.write_projects("Building KiroCrew agent")
+        store.write_projects("Building SaoKhue agent")
         projects = store.read_projects()
-        assert "KiroCrew" in projects
+        assert "SaoKhue" in projects
         assert "Updated:" in projects
 
     def test_daily_history(self, tmp_path):

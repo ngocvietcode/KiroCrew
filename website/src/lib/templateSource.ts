@@ -34,7 +34,7 @@ export interface TemplateProvenance {
 export type TemplateSourceKind = 'builtin' | 'package' | 'custom' | 'private'
 
 export function templateSourceKind(a: TemplateProvenance | undefined): TemplateSourceKind {
-  // Ownership first: Kiro Crew rewrites the files it owns unconditionally, so
+  // Ownership first: Sao Khuê rewrites the files it owns unconditionally, so
   // that fact outranks a filename that also happens to look package-shaped.
   if (a?.kirocrew_owned === true || a?.source === 'kirocrew') return 'builtin'
   if (a?.private_to) return 'private'

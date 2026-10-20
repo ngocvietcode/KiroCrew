@@ -1,4 +1,4 @@
-"""Owner-only modes for the files and directories Kiro Crew keeps in the data home.
+"""Owner-only modes for the files and directories Sao Khuê keeps in the data home.
 
 The data home holds chat transcripts, the knowledge base, logs and configuration.
 Under the usual ``022`` umask a file created without an explicit mode lands at
@@ -18,7 +18,7 @@ three layers that do not depend on each other:
 3. **What already exists.** :func:`tighten_data_home` runs once per gateway
    start, on a worker thread after the dashboard listener is serving, and drops
    group/other bits from the stores an earlier version left behind. It touches
-   only a fixed list of Kiro Crew's own stores (:data:`STARTUP_SWEEP_STORES`)
+   only a fixed list of Sao Khuê's own stores (:data:`STARTUP_SWEEP_STORES`)
    and never walks the rest of the data home, so the user's own work there
    keeps its modes without the sweep having to recognise it.
 
@@ -600,7 +600,7 @@ class _Sweep:
         """Open the directory a store sits in, ``O_NOFOLLOW`` at every level below the home.
 
         None when it is absent, reached through a symlink, another account's, or
-        on another filesystem: a store is looked for only where Kiro Crew keeps
+        on another filesystem: a store is looked for only where Sao Khuê keeps
         it. The directory itself is never changed.
         """
         fd = os.dup(home_fd)
@@ -857,7 +857,7 @@ def tighten_stores_to_owner(
 STARTUP_SWEEP_MAX_SECONDS = 30.0
 STARTUP_SWEEP_MAX_ENTRIES = 1_000_000
 
-#: What the startup sweep repairs: Kiro Crew's own stores, by path relative to
+#: What the startup sweep repairs: Sao Khuê's own stores, by path relative to
 #: the data home (:func:`tighten_stores_to_owner` says how a name is read). Each
 #: is a store that an older version created at the umask default and that holds
 #: something worth keeping private: conversations, memory, knowledge, logs,

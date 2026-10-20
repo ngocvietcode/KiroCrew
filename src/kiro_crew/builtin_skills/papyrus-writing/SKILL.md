@@ -25,7 +25,7 @@ paragraph describing the change.
 The paper lives under the app's own data directory:
 
 ```
-<KiroCrew data home>/apps/papyrus/data/projects/<project>/
+<Sao Khuê data home>/apps/papyrus/data/projects/<project>/
 ```
 
 The data home is `~/.kiro/crew` unless `KIROCREW_HOME` is set. Each project has a
@@ -124,7 +124,7 @@ target venue's current policy, and offer to draft the disclosure statement.
 Keep a SMALL note — your model of the paper — **outside the project's files**, so
 it is never published by the app's Commit-and-push and never touches a
 (possibly hostile) cloned working tree. Store it in the app's own notes area at
-`<KiroCrew data home>/apps/papyrus/data/notes/<project>.md` (the data home is
+`<Sao Khuê data home>/apps/papyrus/data/notes/<project>.md` (the data home is
 `~/.kiro/crew` unless `KIROCREW_HOME` is set). Never write inside `<project-dir>`,
 and never edit the project's `.gitignore`. The note is never compiled, not part of
 the paper, and safe to delete. It captures what the source does not say, plus a

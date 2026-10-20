@@ -4,7 +4,7 @@
 > `src/kiro_crew/auth/` with unit tests. Its runtime consumer is
 > `src/kiro_crew/acp/kas_host_auth.py`: when the vault holds an identity, the KAS
 > backend spawns the relay in `acp --agent-engine v3` mode WITHOUT `--auth-method
-> cli`, so the engine's `_kiro/auth/getAccessToken` request reaches Kiro Crew, and
+> cli`, so the engine's `_kiro/auth/getAccessToken` request reaches Sao Khuê, and
 > `AcpRuntime` answers it from `KasAuthProvider.get_access_token_callback()`. That
 > spawn enters through `kiro-cli-chat` when one sits beside the resolved `kiro-cli`
 > (`kiro_cli.chat_sibling`, consulted by `acp/harness/kas.py` on the Crew-owned
@@ -27,17 +27,17 @@
 
 ## Why this exists
 
-In the kiro-cli runtime, Kiro Crew holds no Kiro credentials of its own: every ACP
+In the kiro-cli runtime, Sao Khuê holds no Kiro credentials of its own: every ACP
 backend delegates auth to the `kiro-cli` process it spawns. In **KAS mode** kiro-cli
 stays the ACP relay, but it does not own the credential: the engine asks the host
-for a token with `_kiro/auth/getAccessToken`, and Kiro Crew answers it from
-`acp/kas_host_auth.py`. So Kiro Crew performs the entire Kiro OIDC lifecycle itself:
+for a token with `_kiro/auth/getAccessToken`, and Sao Khuê answers it from
+`acp/kas_host_auth.py`. So Sao Khuê performs the entire Kiro OIDC lifecycle itself:
 interactive login, token refresh, secure storage, and identity classification.
 
 ## Scope
 
 In scope: obtaining and maintaining a valid Kiro access token for the four identity
-types Kiro supports, across the three Kiro Crew install shapes, and handing it to KAS.
+types Kiro supports, across the three Sao Khuê install shapes, and handing it to KAS.
 
 Out of scope: the KAS runtime itself, model routing, governance evaluation (KAS owns
 that, keyed off the `provider` field this module supplies).
@@ -48,7 +48,7 @@ Confirmed against `@kiro/agent` source (`packages/kiro-agent/src/server/`). KAS
 consumes a token through one of two injection points; both take the same logical
 contract:
 
-1. **Library injection (in-process KAS; unbuilt design).** Kiro Crew does not run KAS
+1. **Library injection (in-process KAS; unbuilt design).** Sao Khuê does not run KAS
    in-process today, so this point is not wired; it records the contract a future
    in-process host would meet. `KiroAgentOptions.authProvider`
    is a required constructor field of type `IAuthProvider`
@@ -88,7 +88,7 @@ Required fields either way: **`accessToken`** + **`expiresAt` (delivered ≥ now
 `provider` drives KAS governance (`governance-service.ts`) and the `X-Kiro-Idp`
 header. Getting it wrong misroutes governance and can fail-closed. Mapping:
 
-| Kiro Crew login | `provider` value | governance-enterprise? | notes |
+| Sao Khuê login | `provider` value | governance-enterprise? | notes |
 |---|---|---|---|
 | AWS Builder ID | `BuilderId` | no | MUST be set; empty → misclassified |
 | Social — Google | `Google` | no | |
@@ -198,7 +198,7 @@ kiro-cli does) or parse the JWT `exp`.
 ### AWS Builder ID / IAM Identity Center — fully independent
 
 Standard AWS SSO-OIDC. **No Kiro-controlled gate.** Runtime dynamic client
-registration (`RegisterClient`, `client_type=public`, `client_name="Kiro Crew"`) →
+registration (`RegisterClient`, `client_type=public`, `client_name="Sao Khuê"`) →
 returns `client_id` + `client_secret`; PKCE authorization-code on an arbitrary loopback
 port (or device code via `StartDeviceAuthorization`); `CreateToken`. Endpoints:
 `https://oidc.<region>.amazonaws.com` (Builder ID region `us-east-1`). Scopes:
@@ -249,7 +249,7 @@ than consumed at the issuer and lost to the hard exit.
 ## Storage
 
 Context: kiro-cli does **not** encrypt its tokens — they live plaintext in a SQLite
-`auth_kv` table protected only by `0600` file perms. Kiro Crew deliberately does
+`auth_kv` table protected only by `0600` file perms. Sao Khuê deliberately does
 better, because it faces a threat kiro-cli does not: its own AI agent reads files on
 the same machine.
 
@@ -312,7 +312,7 @@ auth/
 
 Wiring: the KAS bridge answers `_kiro/auth/getAccessToken` (acp-callback) from
 `KasAuthProvider`. Handing `KasAuthProvider` to `KiroAgentOptions.authProvider` for an
-in-process KAS is unbuilt design. Refresh tokens never leave Kiro Crew; KAS only ever sees an
+in-process KAS is unbuilt design. Refresh tokens never leave Sao Khuê; KAS only ever sees an
 access token.
 
 ## Security invariants
@@ -368,7 +368,7 @@ access token.
   `initialize`, `session/new`, `session/prompt` complete with `stopReason=end_turn`
   and the model's reply (`getAccessToken_calls=1`). The refused path was measured
   the same way: with the host answering every callback `-32000 "not signed in to
-  Kiro Crew"`, the engine does not wedge — `initialize` and `session/new` still
+  Sao Khuê"`, the engine does not wedge — `initialize` and `session/new` still
   complete, it re-asks on each attempt, and `session/prompt` fails `-32000` with its
   own "not signed in … Please sign in and retry" (`ModelRegistryUnauthenticatedError`
   / `TokenExpiredError`), which `acp/transport_errors.py`'s auth-failure vocabulary now

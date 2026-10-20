@@ -13,7 +13,7 @@ superseded-by: []
 ---
 # RFC: Pluggable agent model providers
 
-- Status: draft — **this RFC recommends that Kiro Crew support provider choice
+- Status: draft — **this RFC recommends that Sao Khuê support provider choice
   for the agent model, and asks the maintainers to amend the "Other providers"
   rule in [`docs/system-specs/oss-fork-boundaries.md`](../system-specs/oss-fork-boundaries.md) accordingly.** Harness choice already ships
   through `agent.acp_backend`; this RFC is about the model provider beneath it. No design is proposed here: the shape of
@@ -29,7 +29,7 @@ superseded-by: []
 
 `agent.provider` is fixed to `acp`, so the agent model always arrives through
 kiro-cli. [oss-fork-boundaries](../system-specs/oss-fork-boundaries.md) reinforces
-this under *Never re-add*: "Kiro Crew is KiroACP-only".
+this under *Never re-add*: "Sao Khuê is KiroACP-only".
 
 **This RFC recommends lifting that invariant.** Not because it was wrong when
 written — it fell out of de-Amazoning a single-backend internal package, and was
@@ -71,7 +71,7 @@ the only answer to that, and documentation cannot substitute for it. Today those
 teams have no supported configuration, so they either fork or walk.
 
 **Bedrock is the version of "yes" an organization can already give.** Teams
-evaluating Kiro Crew commonly have Bedrock quota, IAM, VPC endpoints, model
+evaluating Sao Khuê commonly have Bedrock quota, IAM, VPC endpoints, model
 guardrails and consolidated billing in place. Routing agent traffic through
 infrastructure they already govern turns adoption from a procurement question
 into a configuration change. That is a disproportionate adoption unlock for a
@@ -79,7 +79,7 @@ small surface, and it is the single cheapest option to accept.
 
 **Cost shape follows the product's own direction.** Long autonomous runs — crons,
 monitors, sub-agent fan-out — are where routine steps dominate spend, and they
-are exactly the workloads Kiro Crew has been growing toward. `dashboard.tips_model`,
+are exactly the workloads Sao Khuê has been growing toward. `dashboard.tips_model`,
 `skills.judge_model` and the per-role `agent.role_models.<role>` overrides already
 establish that per-role model selection is a shape this project accepts. Provider choice is the same idea one level down.
 

@@ -500,13 +500,13 @@ class TestAgentPicker:
         )
 
     def test_internal_and_app_agents_are_hidden_from_the_picker(self) -> None:
-        """The reported harm: Kiro Crew internals and app agents occupy slots and
+        """The reported harm: Sao Khuê internals and app agents occupy slots and
         push the user's own agents out. Filtering is a property of the roster
         row, so a user's own ``kirocrew``-prefixed agent (not owned) stays."""
         from kiro_crew.telegram import transport_dispatch as td
 
         roster = [
-            # Kiro Crew-generated internals — owned, so hidden regardless of source.
+            # Sao Khuê-generated internals — owned, so hidden regardless of source.
             self._agent("kirocrew", "kirocrew.json", source="kirocrew", owned=True),
             self._agent("kirocrew-heartbeat", "kirocrew-heartbeat.json", owned=True),
             self._agent("kirocrew-worker", "kirocrew-worker.json", owned=True),

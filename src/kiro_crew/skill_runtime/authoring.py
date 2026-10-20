@@ -364,7 +364,7 @@ def set_inject_on_trigger(loader: SkillsLoader, name: str, inject: bool) -> bool
 
     Refuses any skill whose file resolves outside this loader's own skills
     dir. ``_resolve_path`` also reaches ``skills.extra_paths`` and the
-    kiro-cli user/workspace skill dirs — directories Kiro Crew does not own
+    kiro-cli user/workspace skill dirs — directories Sao Khuê does not own
     and may not even be able to write. Rewriting a foreign ``SKILL.md``
     because a dashboard toggle was flipped is a side effect nobody asked
     for, so ownership is checked before the write, not left to the UI (which

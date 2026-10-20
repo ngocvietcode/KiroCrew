@@ -3,7 +3,7 @@
 The sequences here are the ones that broke the previous browser stack: a settings
 change, a gateway restart, and an update. The property under test is the same in
 every case and is stated as a guarantee rather than an implementation detail:
-nothing Kiro Crew does to enable browsing writes, rewrites, or deletes
+nothing Sao Khuê does to enable browsing writes, rewrites, or deletes
 configuration the operator owns.
 """
 
@@ -51,7 +51,7 @@ def _operator_cli_config(home: Path) -> Path:
 class TestOperatorConfigIsNotOurs:
     """The CLI's config file belongs to the operator, so we never write THEIRS.
 
-    Kiro Crew writes its OWN config under the data home and points
+    Sao Khuê writes its OWN config under the data home and points
     ``PLAYWRIGHT_MCP_CONFIG`` at it, which is a different file. Precedence,
     measured against the real CLI, is what keeps that from becoming an override:
     a ``<cwd>/.playwright/cli.config.json`` beats the env-named file, so an
@@ -67,7 +67,7 @@ class TestOperatorConfigIsNotOurs:
         # still fails here:
         #   token.py  -- persists the optional attach token, which has to survive a
         #                restart to be worth configuring.
-        #   launch.py -- generates Kiro Crew's OWN launch config under the data
+        #   launch.py -- generates Sao Khuê's OWN launch config under the data
         #                home, naming the engine the product installs. It never
         #                writes, reads, or supersedes the operator's
         #                .playwright/cli.config.json; see
@@ -93,7 +93,7 @@ class TestOperatorConfigIsNotOurs:
         # And the sanctioned ones must still be there: a token that stopped being
         # persisted would silently stop working across restarts, and a launch config
         # that stopped being written would put browsing back on the CLI's default
-        # browser channel, which Kiro Crew does not install.
+        # browser channel, which Sao Khuê does not install.
         assert any(w.startswith("token.py:") for w in writes), "token.py must persist the token"
         assert any(w.startswith("launch.py:") for w in writes), "launch.py must write the config"
 

@@ -15,7 +15,7 @@ have to be rewritten, or the conversation is over.
 
 Why this is a user-invoked command and not a sweeper
 ----------------------------------------------------
-The files belong to kiro-cli, not to Kiro Crew, and automatically rewriting
+The files belong to kiro-cli, not to Sao Khuê, and automatically rewriting
 another tool's data directory was ruled out. Healing existing damage is an
 explicit action with a visible dry run and a backup sidecar, so the operator
 decides when a transcript is safe to touch. Run it only while the session is

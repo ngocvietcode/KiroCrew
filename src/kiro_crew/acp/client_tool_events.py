@@ -302,8 +302,8 @@ def _emit_tool_interrupted_sel(self: AcpClient, site: str) -> None:
     """Emit a SEL audit event when kiro-cli cancels tool uses via its security filter.
 
     This is a security-relevant permission decision (kiro-cli denied tool execution)
-    that Kiro Crew observes but does not control.  Logged so the audit trail reflects
-    that tools were blocked even though the decision was made outside Kiro Crew.
+    that Sao Khuê observes but does not control.  Logged so the audit trail reflects
+    that tools were blocked even though the decision was made outside Sao Khuê.
     Also emits a single WARNING log line (grep-friendly for on-call) with session
     correlation — covers all three call sites so none of them fire silently.
     """
@@ -363,7 +363,7 @@ def _extract_tool_event(self: AcpClient, msg: JsonRpcMessage) -> AcpEvent | None
         # Build initial tool input string from raw params
         tool_call_id = update.get("toolCallId", "")
         # Start the round-trip clock here rather than at the yield: this is
-        # the first moment Kiro Crew sees the call, and the same id's terminal
+        # the first moment Sao Khuê sees the call, and the same id's terminal
         # status is stamped in _extract_tool_call_update below. Both of this
         # class's message loops reach this method, so instrumenting it covers
         # them without a second call site in each.
@@ -445,7 +445,7 @@ def _extract_tool_event(self: AcpClient, msg: JsonRpcMessage) -> AcpEvent | None
             purpose, _ = redact_exfiltration_urls(purpose)
             purpose, _ = redact_credentials(purpose)
         # Prefer rawInput.description over the SDK-provided title (e.g.
-        # some backends' Bash tool emits "List Kiro Crew ACP module files"
+        # some backends' Bash tool emits "List Sao Khuê ACP module files"
         # alongside `ls <workspace>/...`). For claude-agent-acp this rarely
         # fires here because the initial tool_call has empty rawInput —
         # the refinement path in `_extract_tool_call_refinement` is what
@@ -738,7 +738,7 @@ def _extract_tool_call_refinement(self: AcpClient, msg: JsonRpcMessage) -> AcpEv
         self._tool_call_is_shell[tool_use_id] = _identity.is_shell
     is_shell = self._tool_call_is_shell.get(tool_use_id, False)
     # Prefer rawInput.description over the SDK-supplied title (e.g.
-    # Bash's "List Kiro Crew ACP module files" rather than `ls <workspace>/...`).
+    # Bash's "List Sao Khuê ACP module files" rather than `ls <workspace>/...`).
     # Same helper as `_extract_tool_event` so the rule is consistent.
     # A refinement carrying a title but no rawInput still overwrites the
     # pill, so the command has to be recoverable from the params the initial

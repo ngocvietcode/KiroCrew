@@ -57,7 +57,7 @@ export function effortLabel(level: string): string {
  */
 export const EFFORT_LEVELS = ['', 'low', 'medium', 'high', 'xhigh', 'max'] as const
 
-/** Providers whose backend accepts a reasoning-effort level. KiroCrew is
+/** Providers whose backend accepts a reasoning-effort level. SaoKhue is
  *  KiroACP-only, so this is just 'acp'. */
 export const REASONING_EFFORT_PROVIDERS = new Set(['acp'])
 

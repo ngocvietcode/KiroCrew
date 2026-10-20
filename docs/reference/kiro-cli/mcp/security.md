@@ -16,7 +16,7 @@ restrictions that apply to agent tool calls. A compromised server can therefore
 exfiltrate code and credentials with no further confirmation, and upstream does
 not vet, sandbox or restrict third-party servers.
 
-Kiro Crew's own controls over this are separate and govern here; see
+Sao Khuê's own controls over this are separate and govern here; see
 [security](../../../system-specs/modules/security.md).
 
 ## Best practices

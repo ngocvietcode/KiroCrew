@@ -3,7 +3,7 @@ name: GUI User Test
 # ADVISORY agentic "real user" GUI test lane (tracking: #9578, docs:
 # docs/build/gui-user-test.md). A Claude model on Amazon Bedrock drives a real
 # Chromium window on a private Xvfb display through the mouse and keyboard
-# only -- no DOM, no accessibility tree -- against a seeded Kiro Crew gateway
+# only -- no DOM, no accessibility tree -- against a seeded Sao Khuê gateway
 # running the packaged fake ACP backend. It catches the class of defect the
 # Playwright E2E suite structurally cannot see (a control the DOM calls visible
 # but a person cannot click, a theme that flipped a class name and not the

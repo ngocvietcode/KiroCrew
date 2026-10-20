@@ -1,4 +1,4 @@
-"""Spec Builder — spec-driven development inside Kiro Crew.
+"""Spec Builder — spec-driven development inside Sao Khuê.
 
 Turns a feature idea into three reviewable markdown files
 (Requirements → Design → Tasks) via an embedded per-spec agent, then hands the

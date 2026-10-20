@@ -65,7 +65,7 @@ EXTERNALLY_MANAGED = {
 #: version. So the CLI refuses and the gateway's floor warning points here
 #: instead — one source of words for both, since they describe the same state.
 #:
-#: Kiro Crew is not on PyPI, so a bare ``pip install -U kirocrew`` resolves
+#: Sao Khuê is not on PyPI, so a bare ``pip install -U kirocrew`` resolves
 #: against default PyPI and dead-ends — "no matching distribution", or worse a
 #: third-party squat of the name. The command instead installs the channel's
 #: signed, hash-pinned wheel by direct URL, so pip consults no index for
@@ -236,7 +236,7 @@ def non_managed_pip_update_hint(channel: str | None = None) -> tuple[PipUpgradeH
     """The upgrade hint and the restart command, in order.
 
     ``(upgrade, restart)``: the :class:`PipUpgradeHint` for upgrading in the
-    SAME environment Kiro Crew runs from, then the restart command so the
+    SAME environment Sao Khuê runs from, then the restart command so the
     running process picks the new version up. Returned as a pair rather than a
     joined string so each surface (CLI banner, gateway log line) can frame them
     in its own layout — and so each can branch on whether ``upgrade.command`` is
@@ -246,7 +246,7 @@ def non_managed_pip_update_hint(channel: str | None = None) -> tuple[PipUpgradeH
 
 
 class InstallLayout(NamedTuple):
-    """Describes how this Kiro Crew instance was installed."""
+    """Describes how this Sao Khuê instance was installed."""
 
     kind: str  # "git", "wheel", "dmg", "appimage", "deb", "rpm", "nsis", "docker", or "source"
     proj: str  # KIROCREW_PROJECT_DIR value (may be empty for non-git)

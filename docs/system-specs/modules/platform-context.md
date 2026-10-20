@@ -5,7 +5,7 @@ The `kiro_crew.platform` package defines the **Composed Platform Providers
 edition and an enterprise companion without the core ever importing
 enterprise-specific code.
 
-> Authoring note: Kiro Crew is the public edition of this seam. The daily
+> Authoring note: Sao Khuê is the public edition of this seam. The daily
 > de-branding content sync from the upstream authoring home strips the
 > enterprise-tinted Defaults (e.g. the internal git host, SSO sandbox dirs)
 > down to the public baseline; the enterprise companion re-adds them via overrides.
@@ -16,7 +16,7 @@ enterprise-specific code.
 
 The core defines a set of **extension points** — interfaces where behavior
 differs between editions — and ships a `Default*` adapter for each that
-reproduces today's Kiro Crew behavior. An enterprise companion package (module
+reproduces today's Sao Khuê behavior. An enterprise companion package (module
 separate from `kiro_crew`) depends on the public wheel and supplies enterprise
 adapters for the same interfaces.
 
@@ -1096,9 +1096,9 @@ is byte-identical) with no `CONTRACT_VERSION` bump.
   `safe_context_call`), de-duped by name so an on-disk agent of the same name
   wins. Within the on-disk scan a **project** agent shadows a user-level one of
   the same name (and the shadowing is logged), mirroring kiro-cli — which resolves
-  `--agent` against its cwd first, and which Kiro Crew spawns with the session's
+  `--agent` against its cwd first, and which Sao Khuê spawns with the session's
   project directory as that cwd, so the project entry is the one that would
-  actually run. Kiro Crew's legacy `<project>/.kiro/*.agent-spec.json` convention is
+  actually run. Sao Khuê's legacy `<project>/.kiro/*.agent-spec.json` convention is
   deliberately NOT scanned here (only the Slack handler opts into it): kiro-cli
   cannot activate such a name, and this list is a dispatch surface. Each row is a
   plain dict of `AgentInfo` fields (`name` required;
@@ -1399,7 +1399,7 @@ representative rather than exhaustive.
 - `config.knowledge.doc_ingest_hosts` (list) — SSRF-safe allowlist for the
   server-side fetch path only; empty = deny-by-default. The agent-driven
   `auto_add_documents` path is NOT gated
-  on it: the agent hands over text it already fetched, Kiro Crew fetches nothing.
+  on it: the agent hands over text it already fetched, Sao Khuê fetches nothing.
 - `KiroCrewConfig._extra_sections` (private) — unknown top-level config.json
   sections captured at `load()`, re-emitted by `to_dict()`, so an edition
   section is not dropped on `save()`/PATCH. Excluded from the JSON schema

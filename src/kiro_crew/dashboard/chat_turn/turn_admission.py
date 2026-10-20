@@ -240,7 +240,7 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
     await _begin_local_turn_marker(state, slot, _local_turn_marker_generation)
 
     # Resolve agent bindings early so we pass the correct kiro-cli
-    # agent name (e.g. "kirocrew") instead of the Kiro Crew slot name
+    # agent name (e.g. "kirocrew") instead of the Sao Khuê slot name
     # (e.g. "default") which has no matching ~/.kiro/agents/ config.
     kiro_agent: str | None = None
     turn.kiro_agent = kiro_agent
@@ -250,7 +250,7 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
     turn.private_member = private_member
     execution_context = None
     turn.execution_context = execution_context
-    # The Kiro Crew agent's own default model ("" = inherit). Ranks below the
+    # The Sao Khuê agent's own default model ("" = inherit). Ranks below the
     # slot's explicit pick and above the bound kiro agent's pin / the global
     # agent.model fallback.
     agent_model = ""
@@ -949,7 +949,7 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
         # still owes the member's session-start section. Re-arm only the
         # re-injection.
         state.sessions.mark_needs_reinjection(session_key)
-    # A fresh provider can still owe Kiro Crew history after its one-shot
+    # A fresh provider can still owe Sao Khuê history after its one-shot
     # ``is_new`` observation was consumed by a slash command. Keep that debt
     # separate from provider creation: slash commands bypass ContextBuilder,
     # while the next ordinary prompt must behave as the context-bearing first

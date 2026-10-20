@@ -164,7 +164,7 @@ async def test_a_caller_sensitive_server_is_caught_by_provoking_it(
         pytest.skip(
             "the probe did not spawn anything on this host, so nothing here is "
             "proven. The isolated home does set the unsandboxed opt-in, so the "
-            "blocker is upstream of it — a governance floor above Kiro Crew's own "
+            "blocker is upstream of it — a governance floor above Sao Khuê's own "
             "config, or no usable spawn backend at all"
         )
     if len(seen) == 1 and result.ran is False and result.detail == "timeout":

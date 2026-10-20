@@ -186,7 +186,7 @@ def classify_empty_turn(activity: EmptyTurnActivity) -> str:
     return EMPTY_CAUSE_OTHER
 
 
-# A current-turn blocker the model can only have invented.  Kiro Crew receives
+# A current-turn blocker the model can only have invented.  Sao Khuê receives
 # real tool failures through a refusal/error/result frame; a normal end_turn that
 # follows a successful read/search call carries no runtime signal that tools were
 # disabled.  Match the complete terminal response, not just its prefix: otherwise
@@ -515,7 +515,7 @@ _MANUAL_CONTINUE_MSG = (
 # the fallback model -- is asked to carry on from the completed work, which is
 # what a person gets by pressing Continue. The nudge goes to the SAME harness
 # session the refused turn ran on (the retention every Continue relies on), and
-# Kiro Crew itself never re-sends the message once a tool ran. Unlike
+# Sao Khuê itself never re-sends the message once a tool ran. Unlike
 # ``_MANUAL_RESUME_MSG`` it offers no restart clause: it is sent only when the
 # turn dispatched a tool, so "nothing was done yet" is never true of it, and a
 # model that cannot see the partial turn (a session that did not keep it) is

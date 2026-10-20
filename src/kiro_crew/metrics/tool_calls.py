@@ -81,7 +81,7 @@ TOOL_KIND_MCP = "mcp"
 #: invents. Folding them together is what bounds the series.
 TOOL_KIND_OTHER = "other"
 
-#: The recognised ACP tool kinds, plus Kiro Crew's own ``client_built_in`` (used
+#: The recognised ACP tool kinds, plus Sao Khuê's own ``client_built_in`` (used
 #: when kiro-cli's security filter cancels a tool use). Union of the two sets
 #: ``hooks.py`` maintains for its approval gate, so this allowlist and the gate's
 #: vocabulary cannot silently diverge.

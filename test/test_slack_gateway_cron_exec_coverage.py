@@ -1,4 +1,4 @@
-"""Coverage for the Kiro Crew gateway's deterministic cron-execution paths.
+"""Coverage for the Sao Khuê gateway's deterministic cron-execution paths.
 
 ``test_slack_gateway_cron.py``, ``test_cron_gateway_integration.py`` and
 ``test_cron_gateway_integration_llm.py`` drive the LLM (``message``) arm of

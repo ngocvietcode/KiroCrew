@@ -1,5 +1,5 @@
 # Smoke: the list-shell sidebar read against the fixture built for it. `rich`
-# ships a pinned "Welcome to KiroCrew" session, a "Demos" folder holding two  (brand-ok: fixture title)
+# ships a pinned "Welcome to SaoKhue" session, a "Demos" folder holding two  (brand-ok: fixture title)
 # sessions, and a closed "Research: MCP transport trade-offs" session that the
 # slot cutoff has dropped from the live list but that the Older Sessions pane
 # still shows. The pane is closed by default, so opening it is the one action.
@@ -27,7 +27,7 @@ preconditions:
   members: [nova-sky]
   start_url: /chat
 steps:
-  - You are on the chat page. Look at the left sidebar's session list without clicking anything yet. Note a folder row named "Demos" at the top of the list and, further down and outside the folder, a pinned row titled "Welcome to KiroCrew".  # brand-ok: verbatim seeded session title from the rich fixture
+  - You are on the chat page. Look at the left sidebar's session list without clicking anything yet. Note a folder row named "Demos" at the top of the list and, further down and outside the folder, a pinned row titled "Welcome to SaoKhue".  # brand-ok: verbatim seeded session title from the rich fixture
   - If the "Demos" folder is collapsed, click it once to expand it. Inside it, one session is listed directly and the other sits under a row that reads "Show 1 sleeping session"; click it once so both session titles are readable.
   - At the bottom of the sidebar find the "Older Sessions" row (it has a small clock icon) and click it to open the pane.
   - Wait a second for the list of older sessions to load.
@@ -36,7 +36,7 @@ expectations:
     The "Demos" folder is expanded and holds exactly two sessions, "Fix empty-glob crash in
     list_sessions" and "Triage: cron runs twice per tick"; one of them may be listed under a
     "Hide 1 sleeping session" row inside the folder, which still counts as inside the folder.
-  - The pinned "Welcome to KiroCrew" row is listed outside the folder, below it, in the ungrouped part of the list.  # brand-ok: verbatim seeded session title from the rich fixture
+  - The pinned "Welcome to SaoKhue" row is listed outside the folder, below it, in the ungrouped part of the list.  # brand-ok: verbatim seeded session title from the rich fixture
   - >-
     The "Older Sessions" pane is open and lists a session titled "Research: MCP transport
     trade-offs", which does not appear in the live list above.

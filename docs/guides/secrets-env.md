@@ -1,7 +1,7 @@
 # Passing secrets to MCP servers
 
 MCP servers often need API keys, database passwords, or other secrets at
-runtime. Their specs can live in `~/.kiro/crew/mcp.json` (Kiro Crew scope) or
+runtime. Their specs can live in `~/.kiro/crew/mcp.json` (Sao Khuê scope) or
 `~/.kiro/settings/mcp.json` (Kiro global scope), and either file may be shared or
 copied with an agent configuration. Plain `env` values in those files are not
 protected, so use vault references instead.
@@ -182,7 +182,7 @@ those as written, so a reference such as
 `"headers": { "x-api-key": "secret://MY_TOKEN" }` would reach the server as the
 literal text `secret://MY_TOKEN`.
 
-Kiro Crew does not send it silently:
+Sao Khuê does not send it silently:
 
 - The MCP server probe (the dashboard's MCP server status) reports the server as
   an error naming the header, and does not contact the server.
@@ -209,7 +209,7 @@ The value then lives in `.env` rather than the encrypted vault, with the
 limits described under [What NOT to do](#what-not-to-do).
 
 Other backends (Claude, Codex, OpenCode, Goose, DeepSeek) receive a remote
-server's headers from Kiro Crew as written, and Kiro Crew does not rely on them
+server's headers from Sao Khuê as written, and Sao Khuê does not rely on them
 expanding `${env:}`; the KAS backend does not receive declared headers. On those
 backends there is no documented way to supply a header value from the vault or
 from `.env` yet.
@@ -242,7 +242,7 @@ topologies and resolves the value only on the trusted side of the server spawn.
 ## Non-secret environment for the agent: `agent.env`
 
 `agent.env` in `config.json` sets environment variables on every agent process
-Kiro Crew starts for a chat session, background session or subagent, on every
+Sao Khuê starts for a chat session, background session or subagent, on every
 backend, so shell tool calls and the MCP servers the agent starts inherit them.
 The gateway itself and MCP servers the gateway hosts do not get them. Use it for configuration, never for credentials:
 
@@ -251,8 +251,8 @@ kirocrew config set agent.env '{"HTTPS_PROXY": "http://proxy.example:3128", "NO_
 ```
 
 - A value here wins over the same variable in the gateway's own environment;
-  the variables Kiro Crew sets for the session itself still win over it, except
-  defaults Kiro Crew only fills in when a name is unset (such as
+  the variables Sao Khuê sets for the session itself still win over it, except
+  defaults Sao Khuê only fills in when a name is unset (such as
   `agent.child_env_defaults`), which this map overrides.
 - A name this map refuses is rejected when you save it: `kirocrew config set`
   (and any dashboard write) fails with the key and the reason, and nothing is
@@ -263,7 +263,7 @@ kirocrew config set agent.env '{"HTTPS_PROXY": "http://proxy.example:3128", "NO_
   `PASSWD` or `CREDENTIAL` (`API_KEY`, `GITHUB_TOKEN`, `APIKEY`). A name that only
   contains such a word, such as `GOPRIVATE` or `TOKENIZERS_PARALLELISM`, is
   accepted. Put credentials in the vault and reference them with `secret://`.
-- Names Kiro Crew or the sandbox owns (`PATH`, `HOME`, `TMPDIR`, `KIROCREW_*`,
+- Names Sao Khuê or the sandbox owns (`PATH`, `HOME`, `TMPDIR`, `KIROCREW_*`,
   `KIRO_*`, `OPENCODE_*`, and similar) are refused. So are the names known to
   make a shell, the dynamic loader, a language runtime or a tool the agent runs
   execute code the command did not name: `LD_*`, `DYLD_*`, `PYTHON*`,

@@ -493,7 +493,7 @@ fi
 # ---------------------------------------------------------------- health --
 # Identity-gated, deliberately NOT a bare probe of base_url. A pod's port is
 # derived from its name across 199 slots and can be pinned by hand, so it is
-# routinely held by another pod or by the live gateway -- and every Kiro Crew
+# routinely held by another pod or by the live gateway -- and every Sao Khuê
 # gateway answers /api/health with the same body, so a 200 from that port proves
 # only that SOMETHING is there. `pod status --json` reports the pod's OWN health:
 # the HTTP code when the process a 127.0.0.1 connect reaches is this pod's own

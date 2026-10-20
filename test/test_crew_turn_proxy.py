@@ -367,7 +367,7 @@ class TestTheRowTheLaneWritesResolvesItsOwnRecord:
 class TestTheSecretIsNamedByTheLaneNotTheDisplayName:
     """A crew's display name is a label, and labels are not secret names.
 
-    The Fargate lane registers crews as ``Kiro Crew Cloud (<tag>)``, which is not
+    The Fargate lane registers crews as ``Sao Khuê Cloud (<tag>)``, which is not
     a valid Secrets Manager name at all, so deriving an id from it makes every
     turn report a secret it never looked for. An operator who moved
     ``microvm.secret_path_prefix`` is ignored by a hardcoded path for the same
@@ -393,7 +393,7 @@ class TestTheSecretIsNamedByTheLaneNotTheDisplayName:
         # ``TestTheCredentialIsBoundToTheNodeTheTunnelDials`` for why neither a
         # label nor the row's id can stand in for it.
         class Inst:
-            name = "Kiro Crew Cloud (l2crew)"
+            name = "Sao Khuê Cloud (l2crew)"
             id = "l2crew"
             ssm_target = _REAL_NODE
             connection_method = "ssm"
@@ -412,9 +412,9 @@ class TestTheSecretIsNamedByTheLaneNotTheDisplayName:
         )
 
         class Inst:
-            name = "Kiro Crew Cloud (l2crew)"
+            name = "Sao Khuê Cloud (l2crew)"
 
-        assert "Kiro Crew Cloud" not in control_secret_id(Inst())
+        assert "Sao Khuê Cloud" not in control_secret_id(Inst())
 
     def test_an_instance_with_no_name_resolves_nothing(self, tmp_path, monkeypatch):
         """Reported as a crew that cannot be authenticated to, rather than a
@@ -951,7 +951,7 @@ class TestOnlyTheMicrovmLaneIsServed:
         is not one -- so nothing here resolves a name from the configuration."""
         from types import SimpleNamespace
 
-        inst = SimpleNamespace(name="Kiro Crew Cloud (kc-22d27f)", provisioner_id="aws_fargate")
+        inst = SimpleNamespace(name="Sao Khuê Cloud (kc-22d27f)", provisioner_id="aws_fargate")
         assert mod.served_crew_name(inst) == ""
 
     @pytest.mark.asyncio
@@ -1011,7 +1011,7 @@ class TestControlSecretIdLanePrecedence:
         monkeypatch.setattr("kiro_crew.cloud.microvm.record.CrewStore", lambda *a, **k: store)
 
         inst = SimpleNamespace(
-            name="Kiro Crew Cloud (l2crew)",
+            name="Sao Khuê Cloud (l2crew)",
             provisioner_id="microvm",
             id="l2crew",
             ssm_target=_REAL_NODE,
@@ -1036,7 +1036,7 @@ class TestControlSecretIdLanePrecedence:
         monkeypatch.setattr("kiro_crew.cloud.microvm.record.CrewStore", lambda *a, **k: store)
 
         inst = SimpleNamespace(
-            name="Kiro Crew Cloud (anything-else)",
+            name="Sao Khuê Cloud (anything-else)",
             provisioner_id="microvm",
             id="anything-else",
             connection_method="ssm",
@@ -1204,7 +1204,7 @@ class TestTheCredentialIsBoundToTheNodeTheTunnelDials:
         from kiro_crew.dashboard.handlers_crew_turn import control_secret_id
 
         self._store(tmp_path, monkeypatch)
-        hostile = self._Inst(ssm_target=_OTHER_NODE, name="Kiro Crew Cloud (realcrew)")
+        hostile = self._Inst(ssm_target=_OTHER_NODE, name="Sao Khuê Cloud (realcrew)")
         assert control_secret_id(hostile) == ""
 
     def test_a_relabelled_hostile_row_is_not_told_the_crew_name(self, tmp_path, monkeypatch):

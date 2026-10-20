@@ -25,7 +25,7 @@ from kiro_crew.agent_sdk.backends import agent_process_markers, node_adapter_ent
 logger = logging.getLogger("kiro_crew.session_pid")
 
 
-# Basenames of agent runtimes whose lifecycle Kiro Crew manages through PID-file
+# Basenames of agent runtimes whose lifecycle Sao Khuê manages through PID-file
 # tracking (kiro_pids.txt / kiro_session_pids.txt). Consulted to re-validate tracked
 # PIDs before a kill, and as a NEGATIVE gate in the work-orphan sweep: these
 # runtimes are reclaimed by their own tracked-PID sweep, never by the
@@ -486,7 +486,7 @@ def _cmdline_names_a_harness(cmdline: bytes) -> bool:
 
 
 def _is_managed_agent_process(pid: int) -> bool:
-    """Check if a PID belongs to an agent process managed by Kiro Crew (recycle guard).
+    """Check if a PID belongs to an agent process managed by Sao Khuê (recycle guard).
 
     Tokenized wherever a command line can be read, which is Linux and macOS. Linux uses
     ``_pid_cmdline``'s ``/proc`` read; macOS uses ``platform_compat.process_command_line``,

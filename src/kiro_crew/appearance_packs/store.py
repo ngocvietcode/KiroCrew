@@ -804,7 +804,7 @@ class AppearanceStore:
         return PackMeta(
             id=DEFAULT_PACK,
             name="Kiro",
-            author="Kiro Crew",
+            author="Sao Khuê",
             description="The default companion.",
             type="builtin",
             format="svg",

@@ -841,7 +841,7 @@ class OpencodeLaunch(ProcessAdapter):
         if version_issue:
             # Raised DIRECTLY as the ACP-layer type rather than through
             # ``enforce_runtime_routing``: that wrapper frames every reason as
-            # "tool calls would not reach Kiro Crew's security gate", which this
+            # "tool calls would not reach Sao Khuê's security gate", which this
             # gate has not measured -- no routing read-back ran, only
             # ``--version``. The refusal says what happened: the binary is
             # outside the tested major, and everything below was never measured

@@ -54,7 +54,7 @@ from kiro_crew.providers.base import (
 from kiro_crew.subagent import SubagentInfo, SubagentManager
 
 _GENERIC = "User denied tool execution"
-_TAG = "[Kiro Crew host notice]"
+_TAG = "[Sao Khuê host notice]"
 #: Only the POLICY cause appends class-specific remediation; its guidance line
 #: is the fingerprint that must be absent from every surface-policy notice.
 _POLICY_GUIDANCE = "allowed alternative"

@@ -61,7 +61,7 @@ let failCreate = false
 const extra = async (path, route) => {
   if (path === '/api/artifact-folders') return json(route, { folders: [] }), true
   if (path === '/api/chat/slots' && route.request().method() === 'POST' && failCreate) {
-    return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Kiro Crew is restarting' }) }), true
+    return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Sao Khuê is restarting' }) }), true
   }
   const m = /^\/api\/artifacts\/([^/]+)(\/.*)?$/.exec(path)
   if (!m || decodeURIComponent(m[1]) !== ARTIFACT.slug) return false

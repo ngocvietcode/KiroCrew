@@ -36,7 +36,7 @@ superseded-by: []
 
 ## 1. Problem
 
-One agent spec is the single source of truth for every backend Kiro Crew drives.
+One agent spec is the single source of truth for every backend Sao Khuê drives.
 No backend reads it the same way, and **nothing declares that projecting it is a
 thing a backend author has to do**. The result is three independent
 implementations of one idea, none of them named as such, and the same defect
@@ -380,7 +380,7 @@ changes logic is the shape that makes a mechanical refactor unreviewable, and
 each of these three files is load-bearing for a shipped backend.
 
 PR 4 also fixes documentation that is wrong today independent of this RFC:
-`providers.md` still states that Kiro Crew "drives a single LLM backend:
+`providers.md` still states that Sao Khuê "drives a single LLM backend:
 `kiro-cli` over ACP" and that the Claude seam is dormant and never selected,
 which contradicts both `agent-host-contract.md` and `harness-parity.md` on
 current main. That correction should not wait for this RFC to be accepted.

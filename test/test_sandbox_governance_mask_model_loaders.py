@@ -393,8 +393,8 @@ class TestModelLoaderPaths:
 
         return configure
 
-    # The branches that apply a Kiro Crew seal, and those that apply none (a delegated
-    # Kiro hand-off or an unconfined spawn), where nothing of Kiro Crew's seals models.
+    # The branches that apply a Sao Khuê seal, and those that apply none (a delegated
+    # Kiro hand-off or an unconfined spawn), where nothing of Sao Khuê's seals models.
     _SEALED_BRANCHES = ("namespace", "seatbelt")
     _DELEGATED_BRANCHES = ("darwin-delegated", "windows-delegated", "darwin-off-delegated")
     _UNSEALED_BRANCHES = ("off-linux", "off-nonkiro", "none", "nested", *_DELEGATED_BRANCHES)
@@ -489,7 +489,7 @@ class TestModelLoaderPaths:
     def test_unsealed_branches_do_not_refuse_a_model_alias(
         self, crew, loader_files, tmp_path, wrap_branch, branch, alias_kind
     ):
-        # No Kiro Crew seal: nothing of Kiro Crew's confines a models write, so an
+        # No Sao Khuê seal: nothing of Sao Khuê's confines a models write, so an
         # alias must not newly refuse the spawn (that would brick sandbox-off,
         # no-backend and delegated hosts).
         alias = self._plant(crew, loader_files, tmp_path, alias_kind)
@@ -579,7 +579,7 @@ class TestModelLoaderPaths:
     def test_failed_windows_delegation_fails_closed_without_a_model_check(
         self, crew, wrap_branch, monkeypatch
     ):
-        # Windows has no Kiro Crew backend, so a failed delegation audit falls
+        # Windows has no Sao Khuê backend, so a failed delegation audit falls
         # through to the no-backend policy and fail-closes without a model check.
         from unittest.mock import MagicMock, patch
 
@@ -597,7 +597,7 @@ class TestModelLoaderPaths:
     def test_delegated_hand_off_proceeds_over_a_symlinked_loader_file(
         self, crew, loader_files, tmp_path, wrap_branch, monkeypatch, branch
     ):
-        # A delegated hand-off applies no Kiro Crew seal over models, so a symlinked
+        # A delegated hand-off applies no Sao Khuê seal over models, so a symlinked
         # loader file must not refuse it: the hand-off is audited and the link kept.
         from unittest.mock import MagicMock
 
@@ -883,7 +883,7 @@ class TestTheWhisperLoaderRefusesAnAliasedFile:
         assert path.read_bytes() == payload
 
     @pytest.mark.skipif(
-        sys.platform == "win32", reason="POSIX change times; Windows has no Kiro Crew seal"
+        sys.platform == "win32", reason="POSIX change times; Windows has no Sao Khuê seal"
     )
     @pytest.mark.asyncio
     async def test_a_write_through_a_held_descriptor_mid_hash_refuses_the_load(

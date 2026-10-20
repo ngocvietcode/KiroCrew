@@ -1,4 +1,4 @@
-"""Mint a remote KiroCrew dashboard token over SSH.
+"""Mint a remote SaoKhue dashboard token over SSH.
 
 Build the shell snippet that runs ``kirocrew token`` on the remote desktop and
 parse the JWT out of the URL it prints. Lifting this into the gateway lets the
@@ -72,7 +72,7 @@ _TTL_RE = re.compile(TTL_PATTERN)
 # (also matches https://.../?token=...&foo=bar).
 _TOKEN_RE = re.compile(r"[?&]token=([^\s&]+)")
 
-# Bare Kiro Crew token / JWT shape, for scrubbing a token that reached stdout
+# Bare Sao Khuê token / JWT shape, for scrubbing a token that reached stdout
 # outside a URL before a stdout tail is put into an exception message.
 #
 # The segment count is `{1,4}` REPEATED, not a fixed `head.payload.sig` triple:

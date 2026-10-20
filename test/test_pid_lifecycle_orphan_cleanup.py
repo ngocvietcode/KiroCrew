@@ -285,7 +285,7 @@ class TestCleanupOrphanedMcpServers:
         """A reused PID fails the start-token check and is pruned, never killed.
 
         This is per-process identity, checked before the reparent heuristic:
-        even a PID recycled by another process spawned by Kiro Crew (which
+        even a PID recycled by another process spawned by Sao Khuê (which
         carries the tree-wide KIROCREW_SPAWNED marker and may be init- or
         systemd-parented) has a different start identity, so the sweep prunes
         it without ever reaching the kill arms.

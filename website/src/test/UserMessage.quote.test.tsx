@@ -173,7 +173,7 @@ describe('a row carrying meta.quote', () => {
   it('draws the card and renders the body without the block', () => {
     render(<UserMessage content={content} meta={{ quote }} renderContent={renderContent} />)
     const card = screen.getByTestId('quote-card-sent')
-    expect(card).toHaveTextContent('Kiro Crew')
+    expect(card).toHaveTextContent('Sao Khuê')
     expect(card).toHaveTextContent('Staged files now show as chips.')
     expect(screen.getByTestId('content')).toHaveTextContent('Why chips?')
     expect(screen.getByTestId('content').textContent).not.toContain('>')

@@ -305,7 +305,7 @@ def _build_stub_entry(
     }
     # ``-P`` (``PYTHONSAFEPATH``) keeps the launch cwd off ``sys.path``:
     # kiro-cli starts the stub in the agent's SESSION cwd, a project checkout
-    # Kiro Crew does not control, and a stdlib-named file there (``json.py``,
+    # Sao Khuê does not control, and a stdlib-named file there (``json.py``,
     # ``socket.py``) would otherwise be imported in place of the standard
     # library. The rewrite fingerprint's ``python_isolation_flags`` records the
     # same option prefix, so an overlay written without it is regenerated on

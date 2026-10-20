@@ -1,4 +1,4 @@
-"""KiroCrew — open-source personal AI agent."""
+"""SaoKhue — open-source personal AI agent."""
 
 from __future__ import annotations
 

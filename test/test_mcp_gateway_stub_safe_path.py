@@ -1,7 +1,7 @@
 """The rewritten MCP stub argv keeps the session cwd off ``sys.path``.
 
 kiro-cli launches the overlay's stub entry with the agent's SESSION cwd, which
-is a project checkout Kiro Crew does not control. ``python -m`` puts that cwd
+is a project checkout Sao Khuê does not control. ``python -m`` puts that cwd
 at ``sys.path[0]``, so a stdlib-named file there (``json.py``, ``socket.py``)
 would be imported in place of the standard library by the stub. ``-P``
 (``PYTHONSAFEPATH``) drops that entry; the stub imports only from its install.

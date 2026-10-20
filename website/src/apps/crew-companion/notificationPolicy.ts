@@ -16,7 +16,7 @@
  *   - "Session done" is pure FYI.
  *
  * Ported from the desktop app's `src/shared/notificationPolicy.ts`. The i18n keys
- * are rebased onto Kiro Crew's `apps.crewCompanion.*` namespace; the timings and the
+ * are rebased onto Sao Khuê's `apps.crewCompanion.*` namespace; the timings and the
  * persistent/transient split are unchanged, because they are the behaviour.
  */
 

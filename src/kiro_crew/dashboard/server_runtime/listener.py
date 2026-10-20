@@ -165,7 +165,7 @@ async def _start_site(
                     outcome = ""
                 if outcome == RECLAIMED:
                     logger.warning(
-                        "Reclaimed port %d from a stale Kiro Crew gateway — rebinding.",
+                        "Reclaimed port %d from a stale Sao Khuê gateway — rebinding.",
                         port,
                     )
                 elif outcome not in (HEALTHY_PEER, FOREIGN_HOLDER):
@@ -182,7 +182,7 @@ async def _start_site(
             if attempt < retries - 1:
                 await asyncio.sleep(delay)
     logger.error(
-        "Port %d still in use after %.0fs — is another Kiro Crew gateway running?\n"
+        "Port %d still in use after %.0fs — is another Sao Khuê gateway running?\n"
         "Stop it with: kirocrew stop  or  sudo systemctl stop kirocrew",
         port,
         retries * delay,
@@ -255,7 +255,7 @@ async def _reserve_dashboard_port(
     BEFORE the app backends spawn.
 
     Same recovery ladder as _start_site: first EADDRINUSE probes/reclaims a
-    stale Kiro Crew holder, otherwise wait up to retries*delay for a graceful
+    stale Sao Khuê holder, otherwise wait up to retries*delay for a graceful
     handover, then SystemExit(1). Non-EADDRINUSE OSErrors re-raise. One
     Windows widening: when the probe finds NO live holder (the TIME_WAIT
     signature — remnant connections pin the port with no process to reclaim),
@@ -286,7 +286,7 @@ async def _reserve_dashboard_port(
                     outcome = ""
                 if outcome == RECLAIMED:
                     logger.warning(
-                        "Reclaimed port %d from a stale Kiro Crew gateway — rebinding.",
+                        "Reclaimed port %d from a stale Sao Khuê gateway — rebinding.",
                         port,
                     )
                 elif outcome not in (HEALTHY_PEER, FOREIGN_HOLDER):
@@ -316,7 +316,7 @@ async def _reserve_dashboard_port(
             if attempt < budget:
                 await asyncio.sleep(delay)
     logger.error(
-        "Port %d still in use after %.0fs — is another Kiro Crew gateway running?\n"
+        "Port %d still in use after %.0fs — is another Sao Khuê gateway running?\n"
         "Stop it with: kirocrew stop  or  sudo systemctl stop kirocrew",
         port,
         budget * delay,

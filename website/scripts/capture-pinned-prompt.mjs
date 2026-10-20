@@ -35,7 +35,7 @@ const PNG_B64 =
 
 const LONG_PROMPT = [
   'Clean up leftover local infrastructure from a finished profiling task in the',
-  'KiroCrew workspace: stop the demo server on :8931, stop the Vite dev server on',
+  'SaoKhue workspace: stop the demo server on :8931, stop the Vite dev server on',
   ':3000, and remove the worktrees whose PRs already merged. Leave anything that',
   'still holds uncommitted work, and do not touch the primary checkout — it is 773',
   'commits behind main and I want it that way for now.',

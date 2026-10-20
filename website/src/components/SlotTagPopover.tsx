@@ -307,7 +307,7 @@ export default function SlotTagPopover() {
   // full-viewport backdrop would otherwise swallow the `contextmenu`: the row's
   // Radix ContextMenuTrigger never sees it and the OS/Electron menu pops instead.
   // So: suppress the native menu, dismiss the picker, and re-issue the same
-  // gesture to the element under the pointer so its own Kiro Crew context menu
+  // gesture to the element under the pointer so its own Sao Khuê context menu
   // opens fresh. Only the backdrop itself does this — a right-click inside the
   // dialog (e.g. on the "New tag" input) keeps its native menu.
   const onBackdropContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {

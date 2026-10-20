@@ -1,5 +1,5 @@
 #!/bin/sh
-# KiroCrew CLI wrapper.
+# SaoKhue CLI wrapper.
 #
 # Public/OSS build: delegates to the bundled .venv so child processes inherit
 # a working Python even under a minimal PATH (e.g. MCP servers spawned by the
@@ -23,7 +23,7 @@ fi
 # No venv found. Source checkouts run from a pip venv created by
 # install.sh / setup.sh / minimal_install.sh, so this is a missing or
 # incomplete install.
-echo "❌ Kiro Crew virtual environment not found at $SCRIPT_DIR/.venv" >&2
+echo "❌ Sao Khuê virtual environment not found at $SCRIPT_DIR/.venv" >&2
 echo "   Set up the source checkout with:" >&2
 printf '       cd "%s" && bash minimal_install.sh\n' "$SCRIPT_DIR" >&2
 echo "   Source checkouts run from their own Python virtual environment." >&2

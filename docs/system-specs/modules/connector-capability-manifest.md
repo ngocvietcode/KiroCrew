@@ -42,7 +42,7 @@ one field loses information a validator needs:
 
 - **Evidence axis** — how well-sourced is the claim that this operation
   exists and has this shape? (`source_status`)
-- **Implementation axis** — how far has Kiro Crew actually gotten building
+- **Implementation axis** — how far has Sao Khuê actually gotten building
   and verifying it? (`status`)
 
 These mirror, deliberately, the two-axis shape the campaign's own evidence
@@ -63,12 +63,12 @@ it. If a real finding does not fit `user_required` / `official_baseline` /
 `unverified`, the fix is to add a fourth value in a later, explicitly-scoped
 revision of this spec — never to drop the entry the value would have held.
 This applies with equal force to a `blocked` entry: a blocked capability is
-evidence Kiro Crew already possesses, and a `source_status` or `status`
+evidence Sao Khuê already possesses, and a `source_status` or `status`
 enum's shape is a schema question, never a reason to discard it.
 
 **`source_status` proves neither implementation nor liveness.**
 `user_required` and `official_baseline` are both claims about *where the
-requirement or its shape came from*, not about whether Kiro Crew has built
+requirement or its shape came from*, not about whether Sao Khuê has built
 or verified it — that is exclusively what `status` (below) tracks. An entry
 can be `source_status: user_required` and `status: planned` at the same
 time, and reading the first as evidence toward the second is a category
@@ -358,7 +358,7 @@ blocker: {
 
 ### Discovery is a separate protocol from the manifest, and is required regardless of runner status
 
-The manifest (above) answers "which operations does Kiro Crew intend to
+The manifest (above) answers "which operations does Sao Khuê intend to
 support for this provider." A separate, run-time question — "which
 capabilities does a specific authorized account binding actually expose right
 now" — is answered by a **provider-capabilities discovery** exchange, not by

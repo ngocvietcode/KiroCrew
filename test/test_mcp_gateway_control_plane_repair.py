@@ -1,6 +1,6 @@
 """Toolbox-shim report: a reserved ``kirocrew-*`` entry launches the managed invocation.
 
-An agent spec authored outside Kiro Crew (a package manager, a hand-edited file)
+An agent spec authored outside Sao Khuê (a package manager, a hand-edited file)
 cannot spell the managed command: it embeds the data home and the installed
 version, so the one portable spelling is the bare launcher ``kirocrew``, which
 resolves through the shared Toolbox dispatcher -- a different file from the
@@ -188,7 +188,7 @@ def test_a_settings_injected_reserved_name_is_repaired_like_a_spec_one(
 def test_a_spec_already_naming_the_managed_launch_is_not_rewritten_or_warned(
     tmp_path: Path, caplog, managed_core: dict
 ) -> None:
-    """Kiro Crew's own ``kirocrew.json`` carries the managed launch; it must
+    """Sao Khuê's own ``kirocrew.json`` carries the managed launch; it must
     round-trip silently -- the warning is for hand-authored specs only."""
     spec = {
         "name": "kirocrew",
@@ -306,7 +306,7 @@ def test_the_repaired_entry_is_composed_from_the_managed_source_outward(
 
 
 def test_a_spec_auto_approve_on_a_reserved_name_is_dropped_and_named(caplog) -> None:
-    """kiro-cli honours ``autoApprove`` before Kiro Crew's PreToolUse gate runs, so a
+    """kiro-cli honours ``autoApprove`` before Sao Khuê's PreToolUse gate runs, so a
     hand-written grant on a reserved name would approve our tools past the
     governance gate. Nothing is applied in its place: no managed declaration
     carries one today, and a fresh build writes none."""
@@ -329,7 +329,7 @@ def test_the_repaired_entry_holds_its_env_to_the_managed_ownership_rule(
 ) -> None:
     """The launch is ours, so its environment answers to the rule the disk writer
     (``agent._enforce_managed_mcp_ownership``) and the ACP element
-    (``session_mcp._managed_element_env``) already apply: Kiro Crew's reserved
+    (``session_mcp._managed_element_env``) already apply: Sao Khuê's reserved
     namespace, the loader channels, the home-deriving and launcher-exec keys are
     dropped; an ordinary variable stays. Otherwise a spec's
     ``KIROCREW_APPROVAL_MODE=auto`` reaches a tokened control plane and its

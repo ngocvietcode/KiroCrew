@@ -246,7 +246,7 @@ def sandbox_unavailable_message(exc: BaseException | None = None) -> str:
     """The user-facing reason a reviewer spawn was refused for want of a sandbox.
 
     Windows gets its own wording because the cause there is structural rather
-    than a misconfiguration: Kiro Crew has no native Windows sandbox backend at
+    than a misconfiguration: Sao Khuê has no native Windows sandbox backend at
     all (macOS uses Seatbelt, Linux uses user namespaces). An undeclared
     ``agent.sandbox_allow_unsandboxed_exec`` already resolves true on Windows
     (``config.loader.unsandboxed_exec_platform_default``), so reaching this
@@ -259,7 +259,7 @@ def sandbox_unavailable_message(exc: BaseException | None = None) -> str:
     if _is_windows():
         base = (
             "the reviewer cannot run: this Windows host has no OS sandbox for the "
-            "review worker. Kiro Crew ships native sandbox backends for macOS "
+            "review worker. Sao Khuê ships native sandbox backends for macOS "
             "(Seatbelt) and Linux (user namespaces) only, so a review is confined "
             "on Windows solely when kiro-cli's own internal sandbox takes the "
             "spawn — and it is refused rather than run unaudited when that does "

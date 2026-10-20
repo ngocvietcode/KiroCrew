@@ -1,4 +1,4 @@
-# Implementation Plan — Kiro Crew App Builder Kit
+# Implementation Plan — Sao Khuê App Builder Kit
 
 Status: historical; none of the proposed `website/src/kit/` tasks shipped.
 

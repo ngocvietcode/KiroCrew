@@ -105,7 +105,7 @@ def soffice_hint() -> str | None:
     this app refuses.
 
     ``None`` means there is no command to give: this distribution packages no
-    LibreOffice, Kiro Crew cannot name its package manager (SUSE, any unrecognized
+    LibreOffice, Sao Khuê cannot name its package manager (SUSE, any unrecognized
     Linux), or its rpm manager is not on ``PATH``. Every surface frames the hint as
     "install it with:", so a guessed command that fails on its own first argument
     or package name is worse than none.

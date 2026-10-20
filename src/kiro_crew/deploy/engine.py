@@ -336,7 +336,7 @@ def run_aws(
     """Run an ``aws`` CLI command. Returns (returncode, stdout, stderr).
 
     Single subprocess chokepoint — unit tests monkeypatch this. Credentials are
-    resolved by the CLI's own provider chain; KiroCrew passes only the profile name.
+    resolved by the CLI's own provider chain; SaoKhue passes only the profile name.
 
     Since deploy-web is LLM-triggerable (chat-native skill), the invocation is
     routed through the same OS-level sandbox (:func:`wrap_argv`) as every other

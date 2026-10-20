@@ -718,8 +718,8 @@ def register_memory_parser(sub: _Commands) -> None:
 def register_agent_parser(sub: _Commands) -> None:
     agent_parser = cli_help.add_command(sub, "agent")
     agent_sub = agent_parser.add_subparsers(dest="agent_action")
-    agent_sub.add_parser("list", help="List Kiro Crew agents")
-    agent_create = agent_sub.add_parser("create", help="Create a Kiro Crew agent")
+    agent_sub.add_parser("list", help="List Sao Khuê agents")
+    agent_create = agent_sub.add_parser("create", help="Create a Sao Khuê agent")
     agent_create.add_argument(
         "--name",
         required=True,
@@ -748,7 +748,7 @@ def register_agent_parser(sub: _Commands) -> None:
             "the template's pinned model, then agent.model"
         ),
     )
-    agent_update = agent_sub.add_parser("update", help="Update a Kiro Crew agent")
+    agent_update = agent_sub.add_parser("update", help="Update a Sao Khuê agent")
     agent_update.add_argument("name", help="Agent name to update")
     agent_update.add_argument("--kiro-agent", help="New kiro agent name")
     agent_update.add_argument("--workspace", help="New workspace name")
@@ -770,7 +770,7 @@ def register_agent_parser(sub: _Commands) -> None:
             "so it follows the template's pinned model, then agent.model"
         ),
     )
-    agent_delete = agent_sub.add_parser("delete", help="Delete a Kiro Crew agent")
+    agent_delete = agent_sub.add_parser("delete", help="Delete a Sao Khuê agent")
     agent_delete.add_argument("name", help="Agent name to delete")
     agent_reset_model = agent_sub.add_parser(
         "reset-model",
@@ -797,7 +797,7 @@ def register_workspace_parser(sub: _Commands) -> None:
         "--dir",
         default=None,
         help=(
-            "Workspace directory NAME, relative to the KiroCrew data home "  # brand-ok: help text kept as it was
+            "Workspace directory NAME, relative to the Sao Khuê data home "
             "(default: workspace-<name>). Any path resolving outside the data "
             "home is rejected."
         ),
@@ -808,7 +808,7 @@ def register_workspace_parser(sub: _Commands) -> None:
     ws_update.add_argument(
         "--dir",
         help=(
-            "New workspace directory NAME, relative to the KiroCrew data home. "  # brand-ok: help text kept as it was
+            "New workspace directory NAME, relative to the Sao Khuê data home. "
             "Any path resolving outside the data home is rejected."
         ),
     )

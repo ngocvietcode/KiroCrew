@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refuse to move a checkout that a running Kiro Crew gateway is using.
+"""Refuse to move a checkout that a running Sao Khuê gateway is using.
 
 Usage: live_checkout_guard.py [PATH]   (PATH defaults to the current directory)
 

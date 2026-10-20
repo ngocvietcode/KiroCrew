@@ -1,6 +1,6 @@
 #!/bin/bash
 # Install the demo app to the data home's apps/ dir so the full pipeline can be tested.
-# Run this once, then navigate to /apps/demo-app in the KiroCrew dashboard.
+# Run this once, then navigate to /apps/demo-app in the SaoKhue dashboard.
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -30,7 +30,7 @@ cat > "$APP_DEST/installed.json" << 'EOF'
 EOF
 
 echo "✓ Demo app installed to $APP_DEST"
-echo "  Navigate to /apps/demo-app in the KiroCrew dashboard to test."
+echo "  Navigate to /apps/demo-app in the SaoKhue dashboard to test."
 echo ""
 echo "  The app will:"
 echo "  - Load dynamically via import('/apps/demo-app/ui/index.mjs')"

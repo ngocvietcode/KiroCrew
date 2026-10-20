@@ -263,7 +263,7 @@ ACP_BACKENDS_CREW_FIRES_SPEC_HOOKS = frozenset(
 
 
 # ── How a harness is made to ask ──
-# Kiro Crew's PreToolUse gate -- the bundled denied-command rules, the
+# Sao Khuê's PreToolUse gate -- the bundled denied-command rules, the
 # sensitive-path block, the governance ceiling -- runs from exactly ONE place,
 # ``HookManager.on_tool_call``, reached only from the permission-request branch of
 # the dispatch parser. A harness that does not send ``session/request_permission``
@@ -279,7 +279,7 @@ class Routing(str, Enum):
     construction and there is nothing to probe or apply.
 
     ``SESSION_CONFIG`` -- the ACP v1 session advertises a config option whose
-    enforced value makes privileged tools ask. Kiro Crew verifies the option is
+    enforced value makes privileged tools ask. Sao Khuê verifies the option is
     advertised and applies it before the first prompt.
 
     ``SEEDED_SETTINGS`` -- the harness is made to ask by a settings file Kiro
@@ -312,7 +312,7 @@ class Routing(str, Enum):
     into a checked-out repository.
 
     ``VERIFIED_GATE_EXTENSION`` -- the harness has NO gate of its own to configure,
-    so Kiro Crew loads one INTO it: an extension Crew ships, passed on the
+    so Sao Khuê loads one INTO it: an extension Crew ships, passed on the
     harness's own command line at spawn, that intercepts every tool call and
     raises the harness's confirm dialog, which the adapter forwards as
     ``session/request_permission``. The precondition -- that the harness loaded
@@ -330,7 +330,7 @@ class Routing(str, Enum):
     told its absolute path, and nothing the agent says can change which file is
     named.
 
-    ``UNVERIFIED`` -- Kiro Crew has NOT established how, or whether, this harness
+    ``UNVERIFIED`` -- Sao Khuê has NOT established how, or whether, this harness
     can be made to ask. This member exists so "we do not know" is a state a
     caller must handle rather than an absent case that falls through to a
     permissive branch. It always resolves INDETERMINATE, which refuses.
@@ -440,7 +440,7 @@ class Readback(str, Enum):
     """HOW a ``VERIFIED_GATE_EXTENSION`` harness is asked whether the gate loaded.
 
     The mechanism is one member of :class:`Routing` because the GUARANTEE is one
-    thing -- Kiro Crew's own gate, loaded into a harness that has none, confirmed
+    thing -- Sao Khuê's own gate, loaded into a harness that has none, confirmed
     present before the first prompt -- but the QUESTION has to be asked in the
     harness's own terms, and two harnesses do not answer the same way. This enum
     is that difference, kept as data beside the routing table so a third harness

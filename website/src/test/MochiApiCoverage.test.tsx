@@ -4,7 +4,7 @@
  * `mochiApiSeam.test.ts` already pins the config nesting, the pack-detail
  * inlining and the panel-width arithmetic. What it does not reach is the set of
  * functions that exist only because a browser tab cannot do what the original's
- * Electron main process did: every one of them talks to a Kiro Crew HTTP route,
+ * Electron main process did: every one of them talks to a Sao Khuê HTTP route,
  * a transient `<input type="file">`, or a blob download.
  *
  * Those are exactly the paths that fail SILENTLY. The vendored call sites are all

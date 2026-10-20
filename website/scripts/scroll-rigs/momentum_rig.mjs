@@ -1,4 +1,4 @@
-// Momentum-scroll reproduction rig for Kiro Crew chat (iOS-like flings).
+// Momentum-scroll reproduction rig for Sao Khuê chat (iOS-like flings).
 //
 // Why this exists: scrollTop-step probes CANNOT reproduce the mobile bounce —
 // they never coast, so programmatic scroll writes (prepend compensation,

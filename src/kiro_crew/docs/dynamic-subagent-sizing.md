@@ -89,7 +89,7 @@ a wide batch may start in waves.
 
 ## Learned Per-Agent Cost
 
-Kiro Crew doesn't hard-code how much an agent costs — it measures it:
+Sao Khuê doesn't hard-code how much an agent costs — it measures it:
 
 - While an agent runs, the reaper loop periodically samples its process-tree
   RSS (memory) and CPU, keeping the **high-water** mark for that run (a single

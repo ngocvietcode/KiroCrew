@@ -2,7 +2,7 @@
 
 The full path an app takes: develop, test locally, list it in a registry, users
 install it. An "app" is a package that contributes agents, skills, SOPs, MCP
-servers, cron jobs, backend routes, or dashboard UI pages to Kiro Crew.
+servers, cron jobs, backend routes, or dashboard UI pages to Sao Khuê.
 
 This guide covers the publish-facing surface (store listing, assets, registry
 entry, review). The complete field reference is
@@ -62,7 +62,7 @@ own repo.
 The App Store fetches each listed app's `app.json` with `git archive` and caches
 it for 24 hours (an external registry's index is cached for 1 hour). Image paths
 inside the manifest are rewritten to blob-proxy URLs, so nothing has to be
-mirrored into the Kiro Crew repo. Push a new version and the store picks it up on
+mirrored into the Sao Khuê repo. Push a new version and the store picks it up on
 the next refresh.
 
 ## 3. Categories come from your tags
@@ -187,7 +187,7 @@ Execution model:
   executes it. Do not put work an update depends on there. Make `onInstall`
   idempotent instead, since a registry update re-runs it.
 
-Only declare `onUninstall` for state Kiro Crew cannot see: app binaries outside
+Only declare `onUninstall` for state Sao Khuê cannot see: app binaries outside
 the data home, shell aliases, launchd plists. For `resources: "gateway"` apps the
 gateway already deregisters agents, skills, MCP entries, and cron jobs, so do not
 duplicate that. For `resources: "app"` apps the gateway deregisters nothing and
@@ -211,7 +211,7 @@ your script owns all of it.
 
 | Field | Description |
 |-------|-------------|
-| `managedBy` | Default resolution strategy. `"gateway"` resolves each entry through the edition's `CapabilityManager` seam; `"app"` means Kiro Crew only checks existence. A per-entry object (`{"id": ..., "managedBy": ...}`) overrides it. |
+| `managedBy` | Default resolution strategy. `"gateway"` resolves each entry through the edition's `CapabilityManager` seam; `"app"` means Sao Khuê only checks existence. A per-entry object (`{"id": ..., "managedBy": ...}`) overrides it. |
 | `capabilities.mcp` / `capabilities.skills` | Capability packages the app needs but does not provide. |
 | `capabilities.agents` | Declarable, but no edition has an install operation for it, so it is always reported unresolved. Declare `managedBy: "app"` or install it out of band. |
 | `commands` | REQUIRED host executables, probed with `which`. A miss is reported in `missing` and warned about; it does not block the install. |
@@ -224,7 +224,7 @@ stock install.
 
 `dependencies.capabilities.mcp` is not `mcpServers`. `mcpServers` are servers
 your app itself provides and runs, and the gateway registers them into
-Kiro Crew's own agent config. `capabilities.mcp` are external servers your app
+Sao Khuê's own agent config. `capabilities.mcp` are external servers your app
 merely consumes.
 
 Resolved dependencies are recorded in a reference-counting ledger at
@@ -255,7 +255,7 @@ named entries.
 |-------|---------|-------------|
 | `os` | `["macos", "linux"]` | Platforms the app can run on: `macos`, `linux`, `windows`. This constrains the machine the GATEWAY runs on. |
 | `arch` | any | Architecture restriction; empty means any. |
-| `installMode` | `"server"` | `"server"`: Kiro Crew clones and installs. `"client"`: the app must be installed on the user's own machine. |
+| `installMode` | `"server"` | `"server"`: Sao Khuê clones and installs. `"client"`: the app must be installed on the user's own machine. |
 | `clientInstall.shell` | | One-liner the user runs in their local terminal. `{{gateway_url}}` and `{{gateway_host}}` are substituted with the dashboard origin and the gateway hostname. |
 | `clientInstall.postInstall` | | Follow-up command shown as a hint (for example, launching the app). |
 | `requiresDesktopApp` | `false` | The app's UI needs the Electron shell (native always-on-top windows, global shortcuts, tray). A UX gate only: the browser marker is client-side and spoofable, so nothing security-relevant may depend on it. |
@@ -330,7 +330,7 @@ safeguards:
 
 ### Third-party executable code is off by default
 
-Code shipped inside the Kiro Crew package (a built-in app) is exempt, but every
+Code shipped inside the Sao Khuê package (a built-in app) is exempt, but every
 other app's **executable** surfaces refuse to run unless the operator turns
 third-party execution on in Settings → Security → Third-party apps ("Trust every
 third-party app"), which sets
@@ -379,7 +379,7 @@ public to read and not publicly writable: you can read
 `catalog/official-registry.json` to see the authored shape your entry will take,
 but outside authors do not open the listing pull request themselves — there is no
 self-serve PR path for third-party apps. A published entry is what
-makes your app appear in the store *and installable*, with **no Kiro Crew
+makes your app appear in the store *and installable*, with **no Sao Khuê
 release involved**: a maintainer authors a `git` source (URL + a branch or tag;
 the publish pipeline resolves and pins the exact commit) plus a category against
 the authored schema, and the pipeline emits the published document that clients
@@ -398,10 +398,10 @@ A maintainer picks it up and authors the catalog entry with full author credit.
 alternative, but it is a maintainer-only org-visibility decision, not something
 an author can do.)
 
-**The bundled seed** (`src/kiro_crew/apps/app-registry.json` in the Kiro Crew
+**The bundled seed** (`src/kiro_crew/apps/app-registry.json` in the Sao Khuê
 repo) is the catalog's offline snapshot, not the listing surface: it is what a
 client falls back to when the catalog host is unreachable. Entries here ride the
-Kiro Crew release train: a seed change follows the normal contribution flow and
+Sao Khuê release train: a seed change follows the normal contribution flow and
 ships with the next release. A catalog row for the same repository supersedes the
 seed row, so the seed needs touching only when offline availability matters.
 
@@ -431,7 +431,7 @@ The seed (and any federated registry index) uses this row shape:
 
 ## 11. Federated external registries
 
-A team can host its own registry without Kiro Crew review per app. Users opt in by
+A team can host its own registry without Sao Khuê review per app. Users opt in by
 adding it to their config:
 
 ```json
@@ -446,7 +446,7 @@ The index is read as `app-registry.json` at the repo root, falling back to
 discovering `apps/*/app.json` when no index file exists. Repo and branch values
 are validated against strict patterns, and unsafe `subdirectory` values are
 dropped from the index. Manage registries with `GET`/`PUT /api/apps/registries`
-(the PUT blocks adding the Kiro Crew repo itself) and `POST
+(the PUT blocks adding the Sao Khuê repo itself) and `POST
 /api/apps/registries/refresh`.
 
 **Trust model:** the user explicitly opts in by adding the registry, and the repo
@@ -597,7 +597,7 @@ installed one.
 - Patch for fixes, minor for features, major for breaking changes (agent config
   schema, MCP tool interface).
 - `minKiroCrewVersion` is checked on install and update; too-old gateways get a
-  clear error telling the user to update Kiro Crew first.
+  clear error telling the user to update Sao Khuê first.
 - Users update from the store or via `POST /api/apps/{name}/update`. For a
   registry-sourced app the update runs its preflight, stops the backend and
   deregisters the app's resources, then re-clones, rebuilds, and re-runs
@@ -626,7 +626,7 @@ installed one.
 
 Reviewers check that the manifest is complete, the permissions are proportionate,
 resource paths do not traverse, any install script is safe to run, and the app is
-useful to Kiro Crew users.
+useful to Sao Khuê users.
 
 ## 15. Quick reference
 

@@ -69,7 +69,7 @@ def test_script_detail_stays_in_the_scripts_help():
 
 
 def test_ci_lane_rules_live_in_the_ci_reference():
-    start = SKILL.index("## Kiro Crew CI at a glance\n")
+    start = SKILL.index("## Sao Khuê CI at a glance\n")
     end = SKILL.index("\n## ", start + 1)
     section = SKILL[start:end]
     assert "`references/ci.md`" in section

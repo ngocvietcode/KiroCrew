@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 APP_NAME = "ops-mission-control"
 
 #: Non-secret app config. Served unauthenticated over ``/api/apps/<name>/config``
-#: (documented Kiro Crew behavior), so NOTHING sensitive may be stored here —
+#: (documented Sao Khuê behavior), so NOTHING sensitive may be stored here —
 #: tokens live in the keystone store (``secrets.py``).
 CONFIG_FILENAME = "config.json"
 
@@ -248,7 +248,7 @@ def write_config(payload: dict[str, Any]) -> None:
     """Replace the non-secret app config.
 
     SECURITY: this file is served over ``/api/apps/<name>/config`` WITHOUT session
-    auth (a documented Kiro Crew behavior apps rely on to bootstrap their UI), so
+    auth (a documented Sao Khuê behavior apps rely on to bootstrap their UI), so
     nothing sensitive may be written here. Tokens go to the keystone store in
     ``secrets.py``; the route layer rejects any key that looks secret-bearing
     before calling this.

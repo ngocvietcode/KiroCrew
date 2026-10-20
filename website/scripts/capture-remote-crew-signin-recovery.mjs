@@ -43,7 +43,7 @@ const START_URL = 'https://amzn.awsapps.com/start'
 /** A crew whose launch finished but whose Kiro sign-in never confirmed. */
 const UNSIGNED_INSTANCE = {
   id: 'kc1',
-  name: 'Kiro Crew Cloud (kc-5e10bb)',
+  name: 'Sao Khuê Cloud (kc-5e10bb)',
   connection_method: 'ssm',
   ssm_target: 'i-0abc123456789def0',
   ssm_run_as: '',
@@ -61,7 +61,7 @@ const UNSIGNED_INSTANCE = {
 
 const STEPS_REGISTERED = [
   { key: 'preflight', label: 'Check your AWS setup', state: 'done', detail: '' },
-  { key: 'provision', label: 'Create the instance and install Kiro Crew', state: 'done', detail: 'i-0abc123456789def0' },
+  { key: 'provision', label: 'Create the instance and install Sao Khuê', state: 'done', detail: 'i-0abc123456789def0' },
   {
     key: 'signin',
     label: 'Sign in to Kiro',
@@ -156,7 +156,7 @@ const LAUNCHING_JOB = {
   status: 'running',
   steps: [
     { key: 'preflight', label: 'Check your AWS setup', state: 'done', detail: '' },
-    { key: 'provision', label: 'Create the instance and install Kiro Crew', state: 'active', detail: '' },
+    { key: 'provision', label: 'Create the instance and install Sao Khuê', state: 'active', detail: '' },
     { key: 'signin', label: 'Sign in to Kiro', state: 'pending', detail: '' },
     { key: 'connect', label: 'Connect', state: 'pending', detail: '' },
   ],
@@ -292,12 +292,12 @@ for (const theme of ['dark', 'light']) {
   const rowPrompt = row.locator('[data-testid="signin-prompt"]')
   // No code on this row yet, so the title names the ACTION and the crew -- not a
   // code the reader has not been given.
-  if (!/Get a sign-in code for Kiro Crew Cloud \(kc-5e10bb\)/i
+  if (!/Get a sign-in code for Sao Khuê Cloud \(kc-5e10bb\)/i
     .test(await rowPrompt.innerText())) {
     fail(`${theme}: the row's sign-in block must name the crew it belongs to`)
   }
   const promptFollowsName = await row.evaluate(el => {
-    const name = [...el.querySelectorAll('div')].find(d => d.textContent.trim() === 'Kiro Crew Cloud (kc-5e10bb)')
+    const name = [...el.querySelectorAll('div')].find(d => d.textContent.trim() === 'Sao Khuê Cloud (kc-5e10bb)')
     const block = el.querySelector('[data-testid="signin-prompt"]')
     return !!name && !!block
       && !!(name.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -702,7 +702,7 @@ for (const theme of ['dark', 'light']) {
   if (await row.getByText(/Launching…/).count()) {
     fail(`${theme}: the row must not use a second name for the state`)
   }
-  const nameEl = row.getByText(/Kiro Crew Cloud \(kc-5e10bb\)/i)
+  const nameEl = row.getByText(/Sao Khuê Cloud \(kc-5e10bb\)/i)
   if (!(await nameEl.isVisible())) fail(`${theme}: the crew name must survive beside the cancel at 390px`)
   // Stacked, not squeezed. The long label in a shrink-0 slot crushed the name and
   // the step line to one word per line for the whole provisioning wait, so below

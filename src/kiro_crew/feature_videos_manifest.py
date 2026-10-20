@@ -69,7 +69,7 @@ MANIFEST_SCHEMA = "kirocrew-feature-videos-manifest-v1"
 #: Basename of the manifest inside a release folder, on the CDN and in the cache.
 MANIFEST_FILENAME = "manifest.json"
 
-#: Public CloudFront distribution in front of Kiro Crew's own asset bucket — the
+#: Public CloudFront distribution in front of Sao Khuê's own asset bucket — the
 #: same distribution the embedding model is served from, a different prefix. The
 #: signature, not the origin, is the trust anchor.
 DEFAULT_CDN_BASE = "https://d3j0sthz5doyui.cloudfront.net/feature-videos"
@@ -184,7 +184,7 @@ _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 #:
 #: One to four components, because the publisher accepts a bare numeric version of
 #: any depth (``scripts/feature-videos/_manifest.py``, in the publishing tool that
-#: ships separately) while Kiro Crew's own
+#: ships separately) while Sao Khuê's own
 #: releases are always ``major.minor.patch``. Accepting what the publisher can emit
 #: costs nothing — the fetch path only ever ASKS for ``major.minor.patch`` folders
 #: (:func:`release_candidates`) — and refusing it would discard a valid release

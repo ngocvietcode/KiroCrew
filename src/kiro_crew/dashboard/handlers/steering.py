@@ -76,7 +76,7 @@ STEERING_SOURCES = ("user", "workspace")
 # The ``inclusion`` modes the Kiro steering format defines
 # (https://kiro.dev/docs/steering/). The tab REPORTS what each document
 # declares and lets an author change it; what the harness then DOES with the
-# declaration is the harness's own business, documented upstream. Kiro Crew
+# declaration is the harness's own business, documented upstream. Sao Khuê
 # does not act on the value.
 STEERING_INCLUSION_MODES: tuple[str, ...] = ("always", "fileMatch", "manual", "auto")
 

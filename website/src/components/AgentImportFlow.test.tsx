@@ -176,7 +176,7 @@ describe('AgentImportFlow', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(
-      screen.getByText(/existing Kiro Crew setup is never overwritten by default/i),
+      screen.getByText(/existing Sao Khuê setup is never overwritten by default/i),
     ).toBeInTheDocument()
     expect(screen.getByText(/matching items are deduplicated/i)).toBeInTheDocument()
     expect(screen.getByText(/Secrets are never imported/i)).toBeInTheDocument()
@@ -690,9 +690,9 @@ describe('AgentImportFlow', () => {
     await screen.findByText('Import complete')
 
     expect(await screen.findByTestId('agent-spec-not-rewritten')).toHaveTextContent(
-      'Saved, but this copy of Kiro Crew could not update the agent config',
+      'Saved, but this copy of Sao Khuê could not update the agent config',
     )    // "Ready" would contradict the notice.
-    expect(screen.queryByText(/ready in Kiro Crew/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/ready in Sao Khuê/i)).not.toBeInTheDocument()
   })
 
   it('shows no notice when the agent spec was rewritten', async () => {

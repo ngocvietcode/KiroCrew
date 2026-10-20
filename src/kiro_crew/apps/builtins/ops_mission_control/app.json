@@ -133,7 +133,7 @@
     "Watch operational signals, investigate incidents, reuse proven fixes, and hand over a complete local audit trail."
   ],
   "configuration": [
-    "Add providers in Settings using environment credentials or provider tokens, keep Observe for read-only use, and explicitly opt into allowed Propose or Act actions; Slack output reuses an existing Kiro Crew connection."
+    "Add providers in Settings using environment credentials or provider tokens, keep Observe for read-only use, and explicitly opt into allowed Propose or Act actions; Slack output reuses an existing Sao Khuê connection."
   ],
   "screenshots": [
     "/app-assets/ops-mission-control/screenshot-main.png"

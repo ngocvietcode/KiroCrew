@@ -32,12 +32,12 @@ stored bytes have to be rewritten or the conversation is over.
 |---|---|
 | `acp/prompt_blocks.py` | images entering a PROMPT (what a user attaches) |
 | `mcp_gateway/image_budget.py` | images an MCP TOOL returns |
-| `computer_use/types.py` `MAX_SCREENSHOT_MAX_PX` | Kiro Crew's own window captures, bounded by the inline cap |
+| `computer_use/types.py` `MAX_SCREENSHOT_MAX_PX` | Sao Khuê's own window captures, bounded by the inline cap |
 
 The path that escapes all three: an agent writes a screenshot to disk, then
 opens it with kiro-cli's built-in `read` tool in Image mode. That tool reads the
 file itself and writes raw bytes straight into kiro-cli's own transcript, so no
-Kiro Crew code is on the path and there is nothing to intercept.
+Sao Khuê code is on the path and there is nothing to intercept.
 
 This is why the cap has to hold on the FILE, before it is read. Note that no
 launch option can guarantee it: a `fullPage` capture takes the whole document

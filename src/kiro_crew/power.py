@@ -49,7 +49,7 @@ _ES_SYSTEM_REQUIRED = 0x00000001
 # enough to be negligible overhead.
 _LINUX_PID_WATCH_INTERVAL_SECS = 15
 
-_DEFAULT_REASON = "Kiro Crew is running a task"
+_DEFAULT_REASON = "Sao Khuê is running a task"
 
 # Consecutive immediate-exit respawns of a POSIX helper before the inhibitor
 # gives up until the next idle boundary. Guards a host where the helper spawns
@@ -121,7 +121,7 @@ def _spawn_posix_inhibitor(reason: str) -> Optional["subprocess.Popen[bytes]"]:
         argv = [
             exe,
             "--what=idle:sleep",
-            "--who=Kiro Crew",
+            "--who=Sao Khuê",
             f"--why={reason}",
             "--mode=block",
             _SH_PATH,

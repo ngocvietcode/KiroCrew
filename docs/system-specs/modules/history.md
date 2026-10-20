@@ -774,7 +774,7 @@ provenance and is diagnosed rather than guessed.
 Imported conversations are persisted through `ConversationLog` under generated,
 closed destination keys. They enter the normal History list but do not create
 live dashboard slots, resume a foreign runtime, or reuse a foreign identifier as
-an executable KiroCrew session key. The normal ConversationLog metadata/message
+an executable SaoKhue session key. The normal ConversationLog metadata/message
 schema, rotation, path sanitization, and retention behavior therefore remain
 authoritative.
 
@@ -2698,7 +2698,7 @@ read-only boundary line the side chat shows. A refused read-only spec is audited
 denied SEL API access (`operation=thread_reply`, `source=read_only_spec`),
 like the app-isolation refusal. A turn cancelled mid-stream (a gateway
 restart) stores the redacted partial answer under
-`[reply interrupted: Kiro Crew stopped before it finished]` -- or the
+`[reply interrupted: Sao Khuê stopped before it finished]` -- or the
 "stored but not answered" row when nothing streamed -- before the
 cancellation propagates, since the panel drops its live row on reconnect; the
 final store write is shielded and drained, so a cancel that lands while the

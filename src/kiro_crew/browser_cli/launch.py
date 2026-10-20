@@ -1,11 +1,11 @@
-"""The launch config that makes `playwright-cli` open the browser Kiro Crew provisions.
+"""The launch config that makes `playwright-cli` open the browser Sao Khuê provisions.
 
-Kiro Crew installs, gates on, and offers downloads for **Chromium**:
+Sao Khuê installs, gates on, and offers downloads for **Chromium**:
 ``install-browser`` fetches the Chromium build, ``browser_ok`` is
 ``browsers_present()["chromium"]``, and ``attach --extension`` supports that
 family alone. The CLI's own default is a different browser -- the branded Chrome
 *channel*, an OS-level install at a path like ``/opt/google/chrome/chrome`` that
-Kiro Crew never provisions and cannot install without root. So on a host that has
+Sao Khuê never provisions and cannot install without root. So on a host that has
 done everything the product asked, the first browse fails with
 
     Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome
@@ -25,7 +25,7 @@ file works for a whole session.
   session, the same constraint that makes
   :func:`kiro_crew.browser_cli.snapshots.cli_env_overrides` use an env var.
 - ``PLAYWRIGHT_MCP_CONFIG`` names a config FILE and applies to every invocation
-  uniformly. That is the one channel that reaches a command line Kiro Crew never
+  uniformly. That is the one channel that reaches a command line Sao Khuê never
   constructs, which is the whole shape of this capability: the agent runs the CLI
   as a shell command.
 
@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 #: fixed by the CLI, not by us.
 CONFIG_ENV = "PLAYWRIGHT_MCP_CONFIG"
 
-#: The engine Kiro Crew provisions and gates on. Kept as one named constant so
+#: The engine Sao Khuê provisions and gates on. Kept as one named constant so
 #: the config can never disagree with what ``install-browser`` fetched.
 LAUNCH_ENGINE = "chromium"
 
@@ -93,7 +93,7 @@ DAEMON_DIR_ENV = "PWTEST_DAEMON_SESSION_DIR"
 _LIFECYCLE_DIR = "pw"
 _UNIX_SOCKET_PATH_MAX_BYTES = 103
 
-#: Marks a generated name as Kiro Crew's in ``playwright-cli list``, so an
+#: Marks a generated name as Sao Khuê's in ``playwright-cli list``, so an
 #: operator can tell an agent's browser from one they opened themselves.
 _SESSION_PREFIX = "kc-"
 
@@ -206,14 +206,14 @@ def _warn_lifecycle_loss(support: SeamSupport, detail: str) -> None:
 def browser_socket_env(env: Mapping[str, str]) -> dict[str, str]:
     """Environment additions keeping daemon sockets reachable and discoverable.
 
-    ``playwright-cli`` launches its daemon after Kiro Crew has pointed
+    ``playwright-cli`` launches its daemon after Sao Khuê has pointed
     ``TMPDIR`` at a per-process scratch directory. Without ``SOCKETS_ENV`` the
     socket disappears when that scratch is reclaimed. ``DAEMON_DIR_ENV`` fixes
-    the corresponding session registry location, letting Kiro Crew find and
+    the corresponding session registry location, letting Sao Khuê find and
     validate the exact generated session file at controlled teardown without
     executing the user-writable CLI wrapper.
 
-    This helper is called only when Kiro Crew generated ``SESSION_ENV``.
+    This helper is called only when Sao Khuê generated ``SESSION_ENV``.
     A location variable holding a FOREIGN value is treated as an
     operator-selected BASE root and namespaced by the generated session; one
     holding a value already under our own lifecycle root arrived by inheritance
@@ -368,7 +368,7 @@ def launch_config_path() -> Path:
 
 
 def desired_config() -> dict[str, object]:
-    """The config Kiro Crew generates.
+    """The config Sao Khuê generates.
 
     Deliberately minimal: it names the engine and nothing else. Every key added
     here becomes a default an operator has to discover in order to override, and
@@ -400,7 +400,7 @@ def write_config() -> Path | None:
     except OSError:
         logger.warning(
             "could not write the browser launch config at %s; playwright-cli will "
-            "fall back to its own default browser channel, which Kiro Crew does "
+            "fall back to its own default browser channel, which Sao Khuê does "
             "not install",
             path,
         )

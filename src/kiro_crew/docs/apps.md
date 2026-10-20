@@ -2,7 +2,7 @@
 
 An **app** is a feature that ships as its own unit: it brings its own pages in the
 dashboard, and it may also bring agents, skills, MCP tools, scheduled jobs and a
-backend process. Twenty-four apps ship inside the Kiro Crew package — Meetings,
+backend process. Twenty-four apps ship inside the Sao Khuê package — Meetings,
 Papyrus, Mochi, Dev Fleet, Notes and the rest — and almost all of them are **off
 until you turn them on**. The App Store is where you turn them on, and where you
 install apps that did not ship with your build.
@@ -54,7 +54,7 @@ Each line below is drawn from the app's own manifest description.
 
 | App | What it does |
 |---|---|
-| **Dev Fleet** (`dev-fleet`) | A control panel for working on Kiro Crew itself: every feature worktree with its pull-request state, and any of them brought up as a preview pod. |
+| **Dev Fleet** (`dev-fleet`) | A control panel for working on Sao Khuê itself: every feature worktree with its pull-request state, and any of them brought up as a preview pod. |
 | **Code Review Sage** (`code-review-sage`) | Deep-reviews GitHub pull requests and tells you which changes actually deserve your attention. |
 | **Auto-Improvement** (`auto-improvement`) | Measures a GitHub repository before it changes it, then runs keep-or-revert improvement cycles against that metric. |
 | **Issue Radar** (`issue-radar`) | An issue triage assistant that remembers — GitHub, GitLab and Azure DevOps items with suggested labels and a local findings ledger. |
@@ -86,7 +86,7 @@ Each line below is drawn from the app's own manifest description.
 
 | App | What it does |
 |---|---|
-| **Files** (`file-explorer`) | Browse and read files on the machine running Kiro Crew, in tabs, with git status and folder search. Read-only by design. |
+| **Files** (`file-explorer`) | Browse and read files on the machine running Sao Khuê, in tabs, with git status and folder search. Read-only by design. |
 | **AWS Control** (`aws-control`) | Your cloud accounts in plain language, plus an S3-backed cloud drive with time-boxed share links. |
 | **Command Bar** (`command-bar`) | Replaces quick-search (`Cmd+K` / `Ctrl+K`) with a launcher: type a command, not a query. |
 
@@ -96,10 +96,10 @@ Each line below is drawn from the app's own manifest description.
 |---|---|
 | **Mochi** (`mochi`) | A desktop companion that lives on your screen, watches pages and feeds for you, and taps you on the shoulder only when something changed. |
 | **Crew Companion** (`crew-companion`) | Paces your day: break nudges, plain-language reminders, a short breathing exercise, and session-finished alerts. Reminders are understood in English, Chinese and Korean (picked from the text's script, not the UI language); an unclear time gets a "when?" prompt instead of a guess. |
-| **Agent Worlds** (`agent-worlds`) | Turns your running agents into characters in an animated pixel-art scene, so a glance tells you how busy Kiro Crew is. |
+| **Agent Worlds** (`agent-worlds`) | Turns your running agents into characters in an animated pixel-art scene, so a glance tells you how busy Sao Khuê is. |
 | **Personal Shopper** (`personal-shopper`) | A personal advisor that researches real stores. It never buys anything — you do. |
 
-Mochi and Crew Companion need the Kiro Crew **desktop app** for their own windows;
+Mochi and Crew Companion need the Sao Khuê **desktop app** for their own windows;
 enabling them from a browser works, but the window does not appear. Channels and
 Workflows are deliberately hidden from Discover and Library while disabled — reach
 them through the features that use them, or enable them from the CLI.
@@ -137,13 +137,13 @@ that needs it stops working.
 
 ## Permissions and trust
 
-**Enabling an app runs its code with the same privileges as Kiro Crew itself.** App
+**Enabling an app runs its code with the same privileges as Sao Khuê itself.** App
 Python is loaded into the gateway process; the manifest's `permissions` block gates
 the SDK tool surface handed to the app, not its imports, filesystem, network or
 subprocess use. There is no process-level sandbox around app code. So the honest rule
 is the simple one: only enable apps you trust.
 
-Kiro Crew makes the boundary explicit rather than pretending it is not there:
+Sao Khuê makes the boundary explicit rather than pretending it is not there:
 
 - **Shipped apps are trusted like core.** Anything loaded from outside the package is
   third-party.

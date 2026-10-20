@@ -108,10 +108,10 @@ function executableSelector(tokens) {
 }
 
 /**
- * Match only a Kiro Crew executable, or a Python process whose first execution
- * selector invokes a Kiro Crew gateway module (`kiro_crew`, or a composed
+ * Match only a Sao Khuê executable, or a Python process whose first execution
+ * selector invokes a Sao Khuê gateway module (`kiro_crew`, or a composed
  * edition's `kirocrew_<edition>` companion — `KIROCREW_MODULE_RE`) followed by
- * a server subcommand (`KIROCREW_SERVER_SUBCOMMANDS`), or a Kiro Crew script.
+ * a server subcommand (`KIROCREW_SERVER_SUBCOMMANDS`), or a Sao Khuê script.
  * Later process arguments never establish ownership, so SSH aliases and
  * unrelated script arguments cannot authorize a kill.
  *
@@ -128,7 +128,7 @@ function isKirocrewCommand(commandLine, options) {
 }
 
 /**
- * `isKirocrewCommand`, narrowed to a Kiro Crew SERVER: argparse's first
+ * `isKirocrewCommand`, narrowed to a Sao Khuê SERVER: argparse's first
  * positional after the executable (or after the console script) must be one of
  * `KIROCREW_SERVER_SUBCOMMANDS`, exactly as the Python twin
  * `port_resolution._args_look_like_kirocrew` gates its console-script form.
@@ -142,7 +142,7 @@ function isKirocrewGatewayCommand(commandLine, options) {
 }
 
 /**
- * Classify a command line: `null` when it is not a Kiro Crew command, else
+ * Classify a command line: `null` when it is not a Sao Khuê command, else
  * `{ serverSubcommand }` -- whether argparse's first positional selects a
  * server subcommand. The `-m <module>` shape only ever matches WITH that
  * subcommand, so it is always `true` there.
@@ -324,7 +324,7 @@ function readCommandBounded(getCommandFn, pid, timeoutMs = SURVIVOR_COMMAND_READ
  * sent. Identity is re-read right before each signal, so a pid that exited and
  * was reused by an unrelated process is never signalled. The identity test is
  * the SERVER one (`isKirocrewGatewayCommand`): a `kirocrew mcp-core` /
- * `mcp-cron` descendant is a Kiro Crew executable too, but it belongs to the
+ * `mcp-cron` descendant is a Sao Khuê executable too, but it belongs to the
  * backend's own orphan sweep, not to this one.
  */
 async function stopForkedGatewaySurvivors(pids, { deadline, graceMs, getCommandFn, signalPidFn, pollMs }) {
@@ -564,7 +564,7 @@ async function stopGatewayGracefully(
 }
 
 /**
- * Force-stop whatever KiroCrew process is LISTENing on `port`, then VERIFY the
+ * Force-stop whatever SaoKhue process is LISTENing on `port`, then VERIFY the
  * port actually freed before reporting success.
  *
  * The old inline version SIGKILLed the owner and resolved after a fixed 800ms
@@ -576,7 +576,7 @@ async function stopGatewayGracefully(
  *
  * This version polls the listener set after killing and returns `freed` based on
  * whether the port is ACTUALLY free afterwards (not merely whether our targets
- * died), plus `survivors` (the KiroCrew PIDs we tried to kill that are still
+ * died), plus `survivors` (the SaoKhue PIDs we tried to kill that are still
  * holding the port) and `foreignHolder` (a non-KiroCrew process still owns it).
  * `freed === false` means a respawn would just fail to bind — the caller MUST
  * NOT respawn; it should tell the user a restart is required (`survivors`, an
@@ -625,7 +625,7 @@ async function forceStopPort(
     return { killed: 0, freed: true, survivors: [], foreignHolder: false, serviceHolder: false };
   }
 
-  // Only signal PIDs we can positively identify as KiroCrew — never SIGKILL an
+  // Only signal PIDs we can positively identify as SaoKhue — never SIGKILL an
   // unrelated app that happens to share the port.
   const targets = [];
   let serviceHolder = false;
@@ -638,7 +638,7 @@ async function forceStopPort(
       // race the respawn. Leave it alone and tell the caller why.
       if (await isServiceManaged(pid, getPpid)) {
         serviceHolder = true;
-        log(`force-stop: SKIP pid=${pid} — service-managed KiroCrew gateway (${cmd.slice(0, 80)})`);
+        log(`force-stop: SKIP pid=${pid} — service-managed SaoKhue gateway (${cmd.slice(0, 80)})`);
         continue;
       }
       try {
@@ -649,7 +649,7 @@ async function forceStopPort(
         log(`force-stop: kill pid=${pid} failed: ${e && e.message}`);
       }
     } else {
-      log(`force-stop: SKIP pid=${pid} — not a KiroCrew process (${cmd.slice(0, 80)})`);
+      log(`force-stop: SKIP pid=${pid} — not a SaoKhue process (${cmd.slice(0, 80)})`);
     }
   }
 
@@ -764,7 +764,7 @@ async function probePortBinding(port, { getListenPids, log = () => {} }) {
  * owner is the ground truth the payload lacks — on a tunnel it is `ssh`.
  *
  * Deliberately fail-safe: every outcome except a positively identified local
- * KiroCrew process is a reason NOT to evict.
+ * SaoKhue process is a reason NOT to evict.
  *   "kirocrew" — a local LISTEN owner matching isKirocrewCommand. Only this
  *                value may authorise a takeover.
  *   "foreign"  — a local LISTEN owner exists but is not ours (e.g. `ssh`).
@@ -802,10 +802,10 @@ async function classifyPortOwner(
     const ours = isKirocrew(cmd);
     if (ours) {
       if (await isServiceManaged(pid, getPpid)) {
-        log(`port-owner: :${port} held by SERVICE-MANAGED KiroCrew pid=${pid} (${cmd.slice(0, 80)}) — reuse, never evict`);
+        log(`port-owner: :${port} held by SERVICE-MANAGED SaoKhue pid=${pid} (${cmd.slice(0, 80)}) — reuse, never evict`);
         return "service";
       }
-      log(`port-owner: :${port} held by local KiroCrew pid=${pid} (${cmd.slice(0, 80)})`);
+      log(`port-owner: :${port} held by local SaoKhue pid=${pid} (${cmd.slice(0, 80)})`);
       return "kirocrew";
     }
     log(`port-owner: :${port} held by NON-KiroCrew pid=${pid} (${cmd.slice(0, 80)})`);

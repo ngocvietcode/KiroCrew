@@ -223,7 +223,7 @@ same as a write makes the label constant, and a label with no variance cannot tu
 the thresholds above. So the TOOL-CALL limb alone is "at least one dispatch that
 could have CHANGED something", where a dispatch is read-only only when its name is
 positively known to be a host-known read-only built-in with trusted provenance
-(`READ_ONLY_BUILTIN_TOOLS`); every MCP call, from any server including Kiro Crew's
+(`READ_ONLY_BUILTIN_TOOLS`); every MCP call, from any server including Sao Khuê's
 own, counts as having changed something (`autonudge_judge.tool_changed_something`). The reply-length and link limbs are unchanged
 and still answer `true` on their own, so a turn that dispatched only reads but answered
 at length or with a link stays `owner_acted: true` — which is what §3.1a's note about

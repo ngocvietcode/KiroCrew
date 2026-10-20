@@ -1,6 +1,6 @@
 """ACP `clientCapabilities` advertisement.
 
-Locks in what KiroCrew declares during the ACP `initialize` handshake, and that
+Locks in what SaoKhue declares during the ACP `initialize` handshake, and that
 BOTH transports declare it. Before this, the key was omitted entirely, so the
 agent assumed the all-false default.
 """

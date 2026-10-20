@@ -1,6 +1,6 @@
 # Skills
 
-Skills are markdown files that teach the LLM agent how to use Kiro Crew capabilities.
+Skills are markdown files that teach the LLM agent how to use Sao Khuê capabilities.
 
 ## This directory is repo-checkout-only
 

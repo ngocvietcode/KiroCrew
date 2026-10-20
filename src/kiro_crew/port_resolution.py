@@ -208,7 +208,7 @@ def _marker_port() -> int | None:
 
     Two guards keep this from being a guess:
 
-    * **Ownership.** Only ports where a verified Kiro Crew gateway process is
+    * **Ownership.** Only ports where a verified Sao Khuê gateway process is
       listening count (:func:`_gateway_owns_port`); a stale marker, or one whose
       port has been taken over by an unrelated process, is discarded.
     * **Ambiguity.** With several gateways up there is no basis to pick one, so
@@ -376,7 +376,7 @@ def resolve_serving_port() -> int:
     return port
 
 
-# Subcommands that launch a long-running Kiro Crew *server* process which
+# Subcommands that launch a long-running Sao Khuê *server* process which
 # ``kirocrew stop`` may need to terminate. These mirror the entry-point
 # subcommands dispatched in ``cli.py`` (``gateway`` / ``dashboard``; ``start``
 # is the historical alias). The task runner (``run``) is intentionally excluded:
@@ -410,7 +410,7 @@ def _basename_stem(tok: str) -> str:
 
 @functools.lru_cache(maxsize=1)
 def _gateway_module_roots() -> frozenset[str]:
-    """Top-level module names a Kiro Crew gateway can be booted from with ``-m``.
+    """Top-level module names a Sao Khuê gateway can be booted from with ``-m``.
 
     Always ``kiro_crew``. A **composed edition** additionally boots from its
     companion's own module: the companion registers a ``kirocrew.plugins`` entry
@@ -419,7 +419,7 @@ def _gateway_module_roots() -> frozenset[str]:
     companion's own ``cli.main``). Hardcoding ``kiro_crew`` therefore made
     :func:`_args_look_like_kirocrew` reject the gateway of every composed
     install, so ``kirocrew stop`` / ``restart`` filtered out the one listening
-    pid and reported "No Kiro Crew gateway currently running on port <p>".
+    pid and reported "No Sao Khuê gateway currently running on port <p>".
 
     Derived from the installed entry points rather than a hardcoded list of
     edition names: core must not know any companion's module name, and a new
@@ -448,7 +448,7 @@ def _gateway_module_roots() -> frozenset[str]:
 
 
 def _args_look_like_kirocrew(args: str) -> bool:
-    """Return ``True`` if a process command-line *args* string is a Kiro Crew server.
+    """Return ``True`` if a process command-line *args* string is a Sao Khuê server.
 
     This gates ``os.kill(pid, SIGTERM)`` in ``cli_server._stop``, so it must be
     **precise** (never match an unrelated process that merely mentions
@@ -538,7 +538,7 @@ def _args_look_like_kirocrew(args: str) -> bool:
 
 
 def _is_kirocrew_process(pid: int) -> bool:
-    """Return ``True`` if *pid* looks like a Kiro Crew gateway process.
+    """Return ``True`` if *pid* looks like a Sao Khuê gateway process.
 
     Resolves the process command line cross-platform via
     :func:`platform_compat.process_command_line` (Linux ``/proc``, macOS ``ps``,

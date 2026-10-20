@@ -22,7 +22,7 @@ agnostic without a parallel set of types:
     pipeline job                    check run
 
 Auth and credential handling follow the same model as ``github_client``: no
-GitLab App, no PAT stored by KiroCrew, no hosted backend. Every call shells out
+GitLab App, no PAT stored by SaoKhue, no hosted backend. Every call shells out
 to ``glab``, which owns its own token storage, and this module only (a) parses a
 project URL safely and (b) runs ``glab api`` with a list argv (never
 ``shell=True``) so there is no shell-injection surface.

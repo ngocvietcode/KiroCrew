@@ -45,7 +45,7 @@ interface Entry {
  * An entry name with the matched fragment emphasised.
  *
  * Matching is a substring search, so the fragment can sit anywhere in the name
- * (`termi` inside `KiroCrew-terminal-completion`). Showing WHERE it matched is
+ * (`termi` inside `SaoKhue-terminal-completion`). Showing WHERE it matched is
  * what makes a non-prefix hit legible instead of looking arbitrary.
  */
 function Matched({ name, at, len }: { name: string; at?: number; len: number }) {

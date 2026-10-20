@@ -967,7 +967,7 @@ def _contract_note(published: Any) -> str:
         return f"the version that saved this board {UNREADABLE}, so some details may be wrong"
     if wrote != CONTRACT_VERSION:
         return (
-            "this board was saved by a different version of Kiro Crew, "
+            "this board was saved by a different version of Sao Khuê, "
             "so some details may be missing or wrong"
         )
     return ""

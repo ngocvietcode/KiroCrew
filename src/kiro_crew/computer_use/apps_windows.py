@@ -158,7 +158,7 @@ def _app_ref(info: windows_ffi.WindowInfo) -> AppRef:
 
 
 def _denied_title(title: str) -> bool:
-    """Whether *title* trips the built-in denylist (Kiro Crew's own window)."""
+    """Whether *title* trips the built-in denylist (Sao Khuê's own window)."""
     probe = AppRef(name="", pid=0, window_title=title)
     return policy.denied_rule_for(probe) is not None
 

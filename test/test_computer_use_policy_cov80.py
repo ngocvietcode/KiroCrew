@@ -50,7 +50,7 @@ class TestTitleIsDenied:
         assert policy.title_is_denied("   ") is False
 
     def test_a_dashboard_tab_title_is_denied_by_substring(self) -> None:
-        assert policy.title_is_denied("(3) Kiro Crew — Settings") is True
+        assert policy.title_is_denied("(3) Sao Khuê — Settings") is True
 
     def test_an_unrelated_title_is_allowed(self) -> None:
         assert policy.title_is_denied("Zibblefax — untitled") is False
@@ -77,6 +77,33 @@ class TestTitleIsDenied:
         rule = policy.denied_rule_for(app)
         assert rule is not None
         assert rule.category == policy.CATEGORY_KIROCREW_SELF
+
+    def test_every_spelling_of_both_product_names_is_denied(self) -> None:
+        """The dashboard is titled Sao Khuê while the packaged app keeps its older
+        identity, and a host may hand a title back decomposed (NFD, as macOS
+        accessibility does) or with its accent stripped. Missing any one of these
+        hands the agent its own Settings page."""
+        import unicodedata
+
+        titles = [
+            "Sao Khuê",
+            "(3) Sao Khuê — Settings",
+            unicodedata.normalize("NFD", "Artifacts — Sao Khuê"),
+            "SAO KHUE",
+            "SaoKhue dashboard",
+            "Kiro Crew",
+            "kirocrew",  # brand-ok: the older joined spelling is under test
+        ]
+        for title in titles:
+            assert policy.title_is_denied(title) is True, title
+            app = AppRef(
+                name="Google Chrome", pid=9, bundle_id="com.google.Chrome", window_title=title
+            )
+            assert policy.denied_rule_for(app) is not None, title
+
+    def test_a_name_that_merely_shares_a_word_is_allowed(self) -> None:
+        assert policy.title_is_denied("Sao Mai — weather") is False
+        assert policy.title_is_denied("Khuê Văn Các") is False
 
 
 class TestOperatorPatterns:

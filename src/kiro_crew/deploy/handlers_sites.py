@@ -162,7 +162,7 @@ async def _do_deploy(params: dict[str, Any]) -> tuple[int, dict[str, Any]]:
     if os.name == "nt":
         return 400, {
             "error": "Artifact Deploy requires a POSIX shell (bash) for deploy scripts. "
-            "Use WSL (Windows Subsystem for Linux) to run the Kiro Crew gateway on Windows."
+            "Use WSL (Windows Subsystem for Linux) to run the Sao Khuê gateway on Windows."
         }
     try:
         profile, region = await _resolve_profile(params)

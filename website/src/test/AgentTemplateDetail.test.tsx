@@ -187,8 +187,8 @@ describe('shared (non-copy) template bound', () => {
     expect(screen.queryByRole('button', { name: /Save as new template/ })).not.toBeInTheDocument()
   })
 
-  it('reads a template Kiro Crew owns as built-in, not as the reader\'s own', async () => {
-    // Provenance is guessed from the filename, so every helper spec Kiro Crew
+  it('reads a template Sao Khuê owns as built-in, not as the reader\'s own', async () => {
+    // Provenance is guessed from the filename, so every helper spec Sao Khuê
     // installs reports source 'builtin' — the same value a hand-written one
     // gets. `kirocrew_owned` is the tie-breaker that must read "Built-in".
     mockApi.agentsInstalled.mockResolvedValue([

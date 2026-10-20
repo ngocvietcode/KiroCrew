@@ -1,10 +1,10 @@
 # Feishu Integration
 
-Talk to your Kiro Crew agent from Feishu (Lark / 飞书) — through a Feishu custom
+Talk to your Sao Khuê agent from Feishu (Lark / 飞书) — through a Feishu custom
 app bot. Create the app in the Feishu developer console, drop in two values, and
 you're chatting.
 
-Like Telegram and WeCom, the connection is outbound-only: Kiro Crew opens a
+Like Telegram and WeCom, the connection is outbound-only: Sao Khuê opens a
 long-connection WebSocket to Feishu, so there's no callback URL, public
 hostname, or open port to manage.
 

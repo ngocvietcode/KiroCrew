@@ -466,7 +466,7 @@ def discover_network(profile: str, region: str, instance_type: str = "") -> tupl
         return vpc_id, igw[0]["SubnetId"], "igw"
     raise aws.AWSError(
         f"no subnet in VPC {vpc_id} has a verified internet egress route (internet "
-        "gateway or NAT). KiroCrew needs outbound access to install packages and "
+        "gateway or NAT). SaoKhue needs outbound access to install packages and "
         "reach SSM. Add an internet gateway + public route (or a NAT), or pass a "
         "subnet that has one via `--subnet`, then retry.",
         action="ec2:DescribeRouteTables",
@@ -517,7 +517,7 @@ def resolve_explicit_subnet(
     if subnet_id not in egress:
         raise aws.AWSError(
             f"subnet {subnet_id} has no verified internet egress route (NAT or "
-            "internet gateway). Kiro Crew needs outbound access to install "
+            "internet gateway). Sao Khuê needs outbound access to install "
             "packages and reach SSM — add a NAT (or IGW) default route to the "
             "subnet's route table, then retry.",
             action="ec2:DescribeRouteTables",
@@ -677,14 +677,14 @@ def resolve_public_ref(repo: str = "") -> str:
     refs = release_channel.release_refs()
     if not refs:
         logger.warning(
-            "no release tag maps onto Kiro Crew %s; the instance will run main", __version__
+            "no release tag maps onto Sao Khuê %s; the instance will run main", __version__
         )
         return ""
     for ref in refs:
         if release_tag_exists(ref, repo):
             return ref
     logger.warning(
-        "no release tag %s for Kiro Crew %s; the instance will run main",
+        "no release tag %s for Sao Khuê %s; the instance will run main",
         " / ".join(refs),
         __version__,
     )
@@ -781,9 +781,9 @@ def deploy(
     extra_packages: str = "",
     ssm_kms_key_arn: str = "",
 ) -> DeployResult:
-    """Provision (or update) the KiroCrew stack. Idempotent by stack name.
+    """Provision (or update) the SaoKhue stack. Idempotent by stack name.
 
-    By default the local source is packaged and uploaded only when Kiro Crew is
+    By default the local source is packaged and uploaded only when Sao Khuê is
     running from a checkout; packaged installs use the template's public-repo
     clone path. Explicit ``ship_source=True`` remains fail-closed when no checkout
     exists. ``subnet_id`` pins the launch to an explicit subnet (validated by
@@ -1020,7 +1020,7 @@ def find_stack(tag: str, profile: str = "", region: str = "") -> Optional[dict[s
         raise aws.AWSError(
             f"a CloudFormation stack named {stack_name(tag)} already exists but is "
             f"NOT tagged {MANAGED_TAG_KEY}=true — refusing to touch it (it wasn't "
-            "created by KiroCrew). Use a different --tag, or remove that stack.",
+            "created by SaoKhue). Use a different --tag, or remove that stack.",
             action="cloudformation:DescribeStacks",
         )
     # Also require the instance tag to match THIS tag. A managed stack that
@@ -1220,7 +1220,7 @@ def list_instances(profile: str = "", region: str = "") -> list[dict[str, Any]]:
 
 
 def list_stacks(profile: str = "", region: str = "") -> list[dict[str, Any]]:
-    """List KiroCrew CloudFormation stacks by deterministic stack prefix."""
+    """List SaoKhue CloudFormation stacks by deterministic stack prefix."""
     profile = validate_profile(profile)
     region = validate_region(region)
     data = aws.checked_json(
@@ -1261,7 +1261,7 @@ def list_stacks(profile: str = "", region: str = "") -> list[dict[str, Any]]:
 def _instance_id_for(tag: str, profile: str, region: str) -> str:
     st = describe(tag, profile, region)
     if not st.get("exists"):
-        raise aws.AWSError(f"no KiroCrew instance found for tag '{tag}'")
+        raise aws.AWSError(f"no SaoKhue instance found for tag '{tag}'")
     iid = st.get("instance_id", "")
     if not iid:
         raise aws.AWSError(f"instance for '{tag}' has no instance id (stack still creating?)")

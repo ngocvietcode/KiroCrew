@@ -151,7 +151,7 @@ diagnosis" while a complete root-cause analysis was one scroll away.
    came from a tracker a colleague reads (PagerDuty, GitHub, Datadog). A comment is the
    safest write there is: append-only, attributed, reversible, zero blast radius — and
    it is the only way your finding reaches someone who lives in the ticket rather than
-   in Kiro Crew.
+   in Sao Khuê.
 
    ```
    ops_mission_control_api(method="POST", path="/incident/action",

@@ -1,6 +1,6 @@
 """Example dynamic workflow: exhaustive bug hunt (loop-until-dry + budget).
 
-Demonstrates two relevant to Kiro Crew patterns at once:
+Demonstrates two relevant to Sao Khuê patterns at once:
   - loop-until-dry: keep fanning out finders until K consecutive clean rounds
   - loop-until-budget: stop early if the token budget runs low
 

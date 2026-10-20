@@ -72,7 +72,7 @@ logger = logging.getLogger("kiro_crew.providers.acp")
 # drain timeout) can leave its per-session lock held briefly. Re-issuing
 # session/load a few times with exponential backoff lets the stale lock release
 # so the new gateway resumes LOSSLESSLY. If the lock never clears we fall back
-# to a fresh session + Kiro Crew history replay (see _start_kiro_runtime_impl).
+# to a fresh session + Sao Khuê history replay (see _start_kiro_runtime_impl).
 _RESUME_MAX_ATTEMPTS = 4  # total session/load attempts before fresh fallback
 # Bound on the setup failure's own text in the failed-setup warning: enough for
 # an RPC error's message, short enough that one line stays one line.
@@ -144,7 +144,7 @@ _MASKED_CREDENTIAL_AUTH_RE = re.compile(r"failed to load aws credentials", re.IG
 #: Names the mask in a startup auth failure, so the deliberate layout is not taken
 #: for a broken one. Fixed text: it never echoes a path's contents or a secret.
 CREDENTIAL_MASK_AUTH_NOTE = (
-    "Kiro Crew hides ~/.aws/credentials and ~/.aws/sso/cache from {label} on "
+    "Sao Khuê hides ~/.aws/credentials and ~/.aws/sso/cache from {label} on "
     "purpose; only ~/.aws/config is readable, so Bedrock via {label} needs a "
     "self-contained credential_process in that file, not SSO or static keys. Keep "
     "static keys in ~/.aws/credentials, not ~/.aws/config, and do not make "
@@ -298,7 +298,7 @@ def _emit_kiro_startup_metric(
 
 
 def _owning_session_key(self: AcpProvider) -> str:
-    """The Kiro Crew session key this provider serves, or ``""``.
+    """The Sao Khuê session key this provider serves, or ``""``.
 
     Handed to the runtime's session-creation paths so the session's broker
     stubs carry a token bound to THIS session (see
@@ -438,13 +438,13 @@ async def _load_session_with_retry(
                 )
                 await asyncio.sleep(backoff)
     # Exhausted every attempt on a persistent lock. Loud, grep-able marker;
-    # the caller migrates to a fresh session with Kiro Crew history replay.
+    # the caller migrates to a fresh session with Sao Khuê history replay.
     logger.warning(
         "Resume of kiro session %s failed after %d attempts (native lock "
         "still unavailable — a stale lock from an uncleanly-killed holder, a "
         "lock-file race with a holder still tearing down, or a rare "
         "same-gateway session-key alias miss); migrating to a fresh session "
-        "with Kiro Crew history replay",
+        "with Sao Khuê history replay",
         resume_sid,
         _RESUME_MAX_ATTEMPTS,
     )
@@ -476,7 +476,7 @@ async def _start_kiro_runtime_impl(
     # restoring Tool Search's activated schemas: the loader still runs, but
     # a tool it reports as loaded remains absent on the next inference. A
     # fresh native session rebuilds that registry, while
-    # ``_history_replay_needed`` preserves the Kiro Crew conversation. Linked
+    # ``_history_replay_needed`` preserves the Sao Khuê conversation. Linked
     # Slack and other channel dispatchers keep native resume until they own
     # the same replay-lease contract end to end. The decision itself is
     # ``agent_sdk.tool_search.resume_takes_tool_search_replay``, shared with
@@ -621,7 +621,7 @@ async def _start_kiro_runtime_impl(
             if should_load:
                 # F2 load-recovery: retry past a stale "active in another
                 # process" lock (Phase 1); on persistent failure fall through
-                # to a fresh session/new below WITH Kiro Crew history replay
+                # to a fresh session/new below WITH Sao Khuê history replay
                 # (Phase 2, self._history_replay_needed). This self-heals
                 # regardless of WHY the resume failed (SIGKILL'd holder,
                 # crash, OOM, drain timeout) — it never depends on the dead

@@ -101,7 +101,7 @@ def _manifest(alias: str | None = None, output: str | None = None, url: bool = F
         out = Path(output)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(rendered, encoding="utf-8")
-        print(f"✅ Manifest written to {output} (name: KiroCrew-{alias})")
+        print(f"✅ Manifest written to {output} (name: SaoKhue-{alias})")
         print(hint)
     else:
         print(rendered)
@@ -109,7 +109,7 @@ def _manifest(alias: str | None = None, output: str | None = None, url: bool = F
 
 
 def _fix_shell_profiles() -> None:
-    """Remove stale KiroCrew PATH entries from shell profiles."""
+    """Remove stale SaoKhue PATH entries from shell profiles."""
     home = Path.home()
     profiles = [
         home / ".zshrc",
@@ -135,7 +135,7 @@ def _fix_shell_profiles() -> None:
                 cleaned.append(line)
             if removed:
                 profile.write_text("".join(cleaned), encoding="utf-8")
-                print(f"  🔧 Cleaned stale Kiro Crew PATH from {profile.name}")
+                print(f"  🔧 Cleaned stale Sao Khuê PATH from {profile.name}")
                 cleaned_profiles.append(profile.name)
         except OSError:
             pass
@@ -213,9 +213,9 @@ def _print_no_desktop_sources() -> None:
 
 
 def _setup_electron() -> None:
-    """Build and install the KiroCrew desktop app (macOS only)."""
+    """Build and install the SaoKhue desktop app (macOS only)."""
     if platform.system() != "Darwin":
-        print("  ⚠️  Kiro Crew desktop app is only available on macOS.")
+        print("  ⚠️  Sao Khuê desktop app is only available on macOS.")
         return
 
     electron_dir = _find_electron_dir()
@@ -228,7 +228,7 @@ def _setup_electron() -> None:
         print("     Install Node.js and re-run: kirocrew setup --electron-only")
         return
 
-    print("  🔨 Building Kiro Crew desktop app…")
+    print("  🔨 Building Sao Khuê desktop app…")
     npm_install = subprocess.run(
         ["npm", "install", "--no-audit", "--no-fund", "--loglevel=error"],
         cwd=str(electron_dir),
@@ -270,7 +270,7 @@ def _setup_electron() -> None:
         shutil.rmtree(app_dest)
     shutil.copytree(str(app_src), str(app_dest))
     print("  ✅ KiroCrew.app installed to ~/Applications")
-    print("     Launch via Spotlight (⌘+Space → KiroCrew) or Finder → ~/Applications")
+    print("     Launch via Spotlight (⌘+Space → SaoKhue) or Finder → ~/Applications")
 
 
 def _setup(
@@ -313,7 +313,7 @@ def _setup_impl(
         _setup_electron()
         return
 
-    print("Kiro Crew Setup 👻\n")
+    print("Sao Khuê Setup 👻\n")
 
     # Report on optional prerequisites.
     _ensure_prerequisites()
@@ -352,7 +352,7 @@ def _setup_impl(
     if removed_mcp:
         print(f"  ✅ Removed stale MCP entries: {', '.join(removed_mcp)}")
 
-    # 2b. Ensure config.json has default KiroCrew agent for fresh installs
+    # 2b. Ensure config.json has default SaoKhue agent for fresh installs
     _ensure_default_agent_in_config()
 
     # 2c. Remove the delegation skill the retired `agent.conductor_skill` flag
@@ -417,14 +417,14 @@ def _setup_impl(
             print()
         else:
             answer = (
-                input("  Install Kiro Crew desktop app to ~/Applications? [Y/n]: ").strip().lower()
+                input("  Install Sao Khuê desktop app to ~/Applications? [Y/n]: ").strip().lower()
             )
             if answer in ("", "y", "yes"):
                 _setup_electron()
             else:
                 print("  ⏭  Skipped. Install later: kirocrew setup --electron-only\n")
 
-    # 7. Cloud (run KiroCrew on the user's own AWS EC2) — optional, delegated.
+    # 7. Cloud (run SaoKhue on the user's own AWS EC2) — optional, delegated.
     _maybe_setup_cloud()
 
     print("\n👻 Done! Try: kirocrew doctor && kirocrew gateway")
@@ -447,7 +447,7 @@ def _builtin_cloud_lane_offered() -> bool:
 
 
 def _maybe_setup_cloud() -> None:
-    """Offer to launch KiroCrew on the user's own AWS EC2.
+    """Offer to launch SaoKhue on the user's own AWS EC2.
 
     A thin delegating step — all AWS/CloudFormation/SSM logic lives in the
     testable ``kiro_crew.cloud`` module. This just asks and hands off to the
@@ -463,10 +463,10 @@ def _maybe_setup_cloud() -> None:
     if not _builtin_cloud_lane_offered():
         return
     print("\n── Run on AWS (optional) ──\n")
-    print("  Kiro Crew can run 24/7 on your own AWS EC2 instance (bring your own")
+    print("  Sao Khuê can run 24/7 on your own AWS EC2 instance (bring your own")
     print("  AWS account; credentials stay in the aws CLI — never stored here).")
     try:
-        answer = input("  Launch KiroCrew on AWS now? [y/N]: ").strip().lower()
+        answer = input("  Launch SaoKhue on AWS now? [y/N]: ").strip().lower()
     except (EOFError, UnicodeDecodeError):
         # Piped/non-interactive setup or a non-UTF-8 locale (e.g. C/POSIX on
         # Amazon Linux Cloud Desktop) — input() decodes stdin with the locale
@@ -711,7 +711,7 @@ def _read_env_pairs(cred_path: Path) -> dict[str, str]:
 
 def _print_wide_env_remedy(cred_path: Path, exc: EnvFileWideEncodingError) -> None:
     print(
-        f"  ❌ {cred_path} is saved as {exc.wide_encoding}, which Kiro Crew cannot read. "
+        f"  ❌ {cred_path} is saved as {exc.wide_encoding}, which Sao Khuê cannot read. "
         "Re-save it as UTF-8 and run 'kirocrew setup --slack' again. "
         "Nothing was changed.\n",
         file=sys.stderr,
@@ -1206,7 +1206,7 @@ def _setup_sandbox_consent() -> None:
     ``detect_backend() == "none"`` alone is not sufficient: it also covers a
     momentary fork/resource failure, which self-heals on the next spawn and must
     never buy a permanent bypass, and a foreign outer sandbox, where this host's
-    sandbox works and the remedy hands isolation back to Kiro Crew rather than
+    sandbox works and the remedy hands isolation back to Sao Khuê rather than
     disabling it. Neither prompt is shown when stdin/stdout are not both a
     terminal, because an unseen question is a hang rather than consent — but on a
     default-allow platform the notice is printed there anyway, since that run is
@@ -1239,7 +1239,7 @@ def _setup_sandbox_consent() -> None:
     if kind != "no_backend":
         # "" (a backend exists — the Linux/macOS norm) or "foreign_sandbox",
         # where this host's sandbox works and the remedy hands isolation back to
-        # Kiro Crew rather than disabling it. Neither warrants this opt-in.
+        # Sao Khuê rather than disabling it. Neither warrants this opt-in.
         return
     # Which way this step ASKS depends on what an undeclared key now resolves to
     # on this platform. Resolved once, up front, because the non-interactive
@@ -1301,14 +1301,14 @@ def _setup_sandbox_consent() -> None:
         # dangerous it is, and a default that describes itself in softer words
         # than the opt-in did would be the silent change this branch exists to
         # avoid.
-        print("  This platform offers no OS-level sandbox backend for Kiro Crew to")
+        print("  This platform offers no OS-level sandbox backend for Sao Khuê to")
         print("  apply — there is no Linux user namespace and no macOS sandbox-exec,")
         print("  and unlike a misconfigured Linux host there is no profile to")
         print("  install that would produce one.")
         print()
         print("  Agent subprocesses therefore run unconfined here BY DEFAULT: an")
         print("  agent-driven subprocess can read your home directory, including")
-        print("  ~/.aws and ~/.ssh, with no OS confinement. Kiro Crew still scrubs")
+        print("  ~/.aws and ~/.ssh, with no OS confinement. Sao Khuê still scrubs")
         print("  credential environment variables and audits every such spawn, but")
         print("  it cannot stop a hostile repo or document from reading files.")
         print()
@@ -1319,13 +1319,13 @@ def _setup_sandbox_consent() -> None:
         granting = False
     else:
         print("  This host offers no OS-level sandbox backend (Linux user namespaces")
-        print("  or macOS sandbox-exec), so Kiro Crew currently REFUSES to run agent")
+        print("  or macOS sandbox-exec), so Sao Khuê currently REFUSES to run agent")
         print("  subprocesses at all — MCP servers, Dev Fleet and the Papyrus")
         print("  compiler will report a sandbox error until you decide.")
         print()
         print("  Allowing them to run unconfined means an agent-driven subprocess can")
         print("  read your home directory, including ~/.aws and ~/.ssh, with no OS")
-        print("  confinement. Kiro Crew still scrubs credential environment variables,")
+        print("  confinement. Sao Khuê still scrubs credential environment variables,")
         print("  but it cannot stop a hostile repo or document from reading files.")
         print()
         answer = _input_or_skip("  Allow unsandboxed execution? [y/N]: ")

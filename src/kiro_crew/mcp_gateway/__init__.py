@@ -1,6 +1,6 @@
 """MCP gateway — sidecar broker for cross-session MCP sharing.
 
-This package wires an asyncio local-IPC broker into KiroCrew as a
+This package wires an asyncio local-IPC broker into SaoKhue as a
 sidecar subprocess. The endpoint is a unix-domain socket on POSIX and a named
 pipe on Windows; ``mcp_gateway.transport`` owns that split so no other module
 has to know which is in play. When enabled, it:
@@ -8,7 +8,7 @@ has to know which is in play. When enabled, it:
 1. Writes rewritten kiro agent JSON into an overlay directory
    (``~/.kiro/crew/mcp-gateway/agents/``) — never touches the user's
    ``~/.kiro/agents/`` files on disk.
-2. Spawns ``python -m kiro_crew.mcp_gateway.gatewayd`` at KiroCrew
+2. Spawns ``python -m kiro_crew.mcp_gateway.gatewayd`` at SaoKhue
    startup and supervises it.
 3. Injects the rewritten specs' broker stubs into each kiro-cli session
    over ACP ``session/new``. A session-injected MCP server outranks the

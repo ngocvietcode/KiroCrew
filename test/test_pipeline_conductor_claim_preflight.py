@@ -983,7 +983,7 @@ class TestForgeClaim:
         the shared sentence alone.) If a later change adds the phrase, this test
         reds and the question gets asked rather than answered by accident."""
         shared = (
-            "Kiro Crew Auto-Pipeline [operator: redacted]: Starting an automated "
+            "Sao Khuê Auto-Pipeline [operator: redacted]: Starting an automated "
             "fix -- this issue is now claimed by redacted's instance."
         )
         assert mod._first_match(mod.SELF_CLAIM_RES, mod.plain_prose(shared)) is None

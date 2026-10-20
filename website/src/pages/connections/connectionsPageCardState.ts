@@ -337,7 +337,7 @@ export function connectionStateFor(
     return probeIndicatesConnected(server.status, grantPresent) ? 'connected' : 'not-verified'
   }
   // The status probe carries no OAuth token — kiro-cli owns token custody and
-  // Kiro Crew stores no credential — so a remote OAuth server answers it with 401
+  // Sao Khuê stores no credential — so a remote OAuth server answers it with 401
   // and the gateway reports `needs_auth`. Two very different situations produce
   // that identical answer: a server nobody has authorized, and a server
   // authorized OUTSIDE the dashboard, which the runtime calls fine and which

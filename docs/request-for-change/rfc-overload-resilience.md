@@ -1171,7 +1171,7 @@ never re-run a command whose side effects may have happened (class `unknown`,
 §9.6); a non-interactive retry stays inside the already-granted approval scope
 and the original parameters. This change ships only that classifier -- it
 yields the lane slot into `waiting_input` -- while the PTY-driving controlled
-terminal (Kiro Crew as the child's parent, answering the prompt over stdin) is
+terminal (Sao Khuê as the child's parent, answering the prompt over stdin) is
 not built.
 
 ### 14.7 Stop-reason → state classifier
@@ -1203,13 +1203,13 @@ branched on `STOP_REASON_TOOL_STALL` and ran its own continuation bounded by
 it instead of reading `stop_reason` ad hoc. Recovery continues from the stored
 result and checkpoint, never by re-submitting the original task text.
 
-### 14.8 Subtasks managed by Kiro Crew vs harness-native subtasks
+### 14.8 Subtasks managed by Sao Khuê vs harness-native subtasks
 
 | Backend | Native subtask surface | Identity | Tool events | Cancel | Resume | Scheduler treatment |
 |---|---|---|---|---|---|---|
 | kiro-cli (`ACP_BACKEND_KIRO`) `use_subagent` | `_kiro.dev/subagent/list_update` (per-sub-agent `sessionId`, status); stream events carry `AcpEvent.sub_session_id` (`acp/types.py` L599) | yes (session id) | attributable only via `sub_session_id`; approvals surface on the parent (`subagent_manager/run_turn.py` `_run_inner_impl` counts them separately) | only the parent session (`session/cancel` on the parent) | none independent of the parent | **not** a task row; counted as residency under the parent task; recovery boundary = parent session; the parent's `WaitRecord` lists native child ids for display only |
 | Claude backend (`ACP_BACKEND_CLAUDE`) | in-harness task tool; no per-child ACP identity today | no | no | parent only | none | same boundary as above; declared in `harness-parity.md` as a capability gap, not a defect |
-| `spawn_run` / `spawn_sub_agents` (all backends) | Kiro Crew task rows | yes | yes | per task | per task (continuable) | full scheduling (§3–§9) |
+| `spawn_run` / `spawn_sub_agents` (all backends) | Sao Khuê task rows | yes | yes | per task | per task (continuable) | full scheduling (§3–§9) |
 
 A backend that later exposes per-child cancel/resume is integrated by adding a
 row adapter; until then the UI showing native cards never implies the scheduler

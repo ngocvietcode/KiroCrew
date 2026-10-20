@@ -264,7 +264,7 @@ class TestTheLineIsValidatedWithTheRows:
     (
         {"history_entry": "must not persist"},
         {"preferences_update": "# User Preferences\n- dark mode"},
-        {"projects_update": "# Active Projects\n- Kiro Crew"},
+        {"projects_update": "# Active Projects\n- Sao Khuê"},
     ),
     ids=("history", "preferences", "projects"),
 )
@@ -354,7 +354,7 @@ async def test_cas_refused_first_publication_does_not_arm_commit_latch(tmp_path,
     c._call_llm = AsyncMock(
         return_value={
             "preferences_update": "# User Preferences\n- dark mode",
-            "projects_update": "# Active Projects\n- Kiro Crew",
+            "projects_update": "# Active Projects\n- Sao Khuê",
         }
     )
     c._memory.write_preferences.side_effect = refuse_preferences
@@ -420,7 +420,7 @@ async def test_a_refused_hold_after_the_first_commit_marks_the_span(
         return_value={
             "history_entry": "committed history",
             "preferences_update": "# User Preferences\n- dark mode",
-            "projects_update": "# Active Projects\n- Kiro Crew",
+            "projects_update": "# Active Projects\n- Sao Khuê",
         }
     )
     c._memory.write_preferences.return_value = True

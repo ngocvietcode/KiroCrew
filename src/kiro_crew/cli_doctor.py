@@ -1,4 +1,4 @@
-"""CLI doctor subcommand — verify Kiro Crew setup and diagnose issues.
+"""CLI doctor subcommand — verify Sao Khuê setup and diagnose issues.
 
 :func:`_doctor` is the orchestrator: it prints the report's sections in one fixed
 order, threads one ``issues`` list through them, and turns that list into the
@@ -427,7 +427,7 @@ _AWS_PROBE_TIMEOUT_SECS = 10
 
 
 def _doctor(platform_boot_error: "Exception | None" = None, bundle: bool = False) -> None:
-    """Verify KiroCrew setup — check dependencies, config, credentials, connectivity.
+    """Verify SaoKhue setup — check dependencies, config, credentials, connectivity.
 
     ``platform_boot_error`` carries a :class:`PlatformCompositionError` from
     ``cli.main`` when the platform context failed to compose (e.g. a profile
@@ -441,7 +441,7 @@ def _doctor(platform_boot_error: "Exception | None" = None, bundle: bool = False
     ``--bundle`` mode has had its turn, so the ``kiro_crew.cli`` import every command
     pays never loads them.
     """
-    print("Kiro Crew Doctor 👻\n")
+    print("Sao Khuê Doctor 👻\n")
     issues: list[str] = []
 
     # ── Diagnostics bundle (--bundle) ──
@@ -833,7 +833,7 @@ def _doctor(platform_boot_error: "Exception | None" = None, bundle: bool = False
         print(f"❌ Fix these issues: {', '.join(issues)}")
         sys.exit(1)
     else:
-        print("✅ Kiro Crew is ready!")
+        print("✅ Sao Khuê is ready!")
 
 
 # ── The facade ────────────────────────────────────────────────────────────────

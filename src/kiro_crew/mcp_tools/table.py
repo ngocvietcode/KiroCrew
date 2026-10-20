@@ -1,4 +1,4 @@
-"""One table that is a Kiro Crew MCP server's whole tool surface.
+"""One table that is a Sao Khuê MCP server's whole tool surface.
 
 A server built on :class:`ToolTable` declares each tool once, as a :class:`Tool`
 row: its advertised descriptor, the identity it requires, the dashboard routes

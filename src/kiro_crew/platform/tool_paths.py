@@ -497,7 +497,7 @@ def is_document_writing_tool(tool_name: str | None, mcp_server_name: str | None)
 #: unlisted tool, keeps the full scan. This is the narrow counterpart of
 #: :data:`DOCUMENT_WRITING_TOOLS`, which no MCP tool may join: a server-side
 #: tool can execute whatever it calls ``content``, so a row is admitted only
-#: for a tool of Kiro Crew's own core server whose handler is known to keep
+#: for a tool of Sao Khuê's own core server whose handler is known to keep
 #: the field as non-executable document text. ``knowledge_add_document``
 #: ingests ``content`` into the knowledge library as the document body.
 #: Additive only.

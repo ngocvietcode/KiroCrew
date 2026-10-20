@@ -324,7 +324,7 @@ def test_teardown_removes_the_stopped_tasks_registry_row(monkeypatch, tmp_path) 
 
     reg = InstancesRegistry(tmp_path / "instances.json")
     reg.add(
-        name="Kiro Crew Cloud (kc-a1b2c3)",
+        name="Sao Khuê Cloud (kc-a1b2c3)",
         ssm_target=EXPECTED_TARGET,
         connection_method="fargate",
         instance_id="doomed",

@@ -49,7 +49,7 @@ class TestRegistryParity:
     def test_the_name_alone_is_not_ownership(self) -> None:
         """An opt-in name is never purged from the user's global mcp.json.
 
-        Kiro Crew never writes an opt-in server there, so anything found under
+        Sao Khuê never writes an opt-in server there, so anything found under
         that name is necessarily the user's own and must be left alone.
         """
         assert PANEL_SERVER not in mcp_cleanup.STALE_MANAGED_MCP_SERVERS

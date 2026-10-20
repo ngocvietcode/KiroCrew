@@ -282,7 +282,7 @@ Two paths produce results:
 
 ### Scope and containment
 
-`api_file_search` treats a caller-supplied `project` as the search root after canonicalization; it is not constrained to a configured workspace root. A `workspace` resolves only to its configured workspace directory. When neither establishes a root, the endpoint searches an existing `KIROCREW_PROJECT_DIR` and the Kiro Crew workspace, but never treats bare home as an implicit fallback; `test_fallback_does_not_use_home` and `test_explicit_home_project_still_searched` pin that distinction.
+`api_file_search` treats a caller-supplied `project` as the search root after canonicalization; it is not constrained to a configured workspace root. A `workspace` resolves only to its configured workspace directory. When neither establishes a root, the endpoint searches an existing `KIROCREW_PROJECT_DIR` and the Sao Khuê workspace, but never treats bare home as an implicit fallback; `test_fallback_does_not_use_home` and `test_explicit_home_project_still_searched` pin that distinction.
 
 The walk starts at each selected root and the endpoint accepts no descendant path parameter to resolve against it. This is not a general root-containment guard: `api_file_search` resolves each candidate only for the sensitive-path check, so a non-sensitive symlink target outside the selected root can remain a result. A sensitive symlink target is rejected on its canonical path; `test_index_file_symlink_resolved_before_sensitive_check` and `test_walk_fallback_file_symlink_resolved_before_sensitive_check` pin that refusal.
 

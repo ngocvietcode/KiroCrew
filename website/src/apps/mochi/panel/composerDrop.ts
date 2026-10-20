@@ -8,7 +8,7 @@
  *
  * HOW MANY IMAGES: as many as you like, and this is why the fork's approach was
  * replaced. The fork read one image into base64 and put it in Mochi's single
- * `screenshot` slot, so a second photo was impossible. KiroCrew's own mechanism
+ * `screenshot` slot, so a second photo was impossible. SaoKhue's own mechanism
  * has no such limit: core's ACP client scans the outgoing message for absolute
  * image PATHS and inlines each one as its own image block. So every dropped file
  * is uploaded and referenced by path:

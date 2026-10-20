@@ -13,7 +13,7 @@ test.describe('Overview Page E2E Tests', () => {
     await expect(page.getByText(/All systems running|Connecting…|Reconnecting…/)).toBeVisible({ timeout: 10000 })
     await expect(page.getByText('Uptime')).toBeVisible()
     // Old sub-tab bar is gone.
-    await expect(page.getByRole('button', { name: 'KiroCrew Config', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'SaoKhue Config', exact: true })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Import/Export', exact: true })).toHaveCount(0)
     // Three summary cards (Usage, WakaTime, Memory) expose the same drill-in verb.
     await expect(page.getByRole('button', { name: 'View details' })).toHaveCount(3)

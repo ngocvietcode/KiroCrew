@@ -1,6 +1,6 @@
 """MetricsRecorder — thin facade over the OpenTelemetry SDK metrics API.
 
-Every core or app metric flows through this facade so KiroCrew's namespace and
+Every core or app metric flows through this facade so SaoKhue's namespace and
 privacy guardrails (``validate_name`` / ``validate_attrs`` / ``redact`` from
 ``kiro_crew.metrics.schema``) run *before* the value reaches an OTEL instrument.
 Namespace validation is exhaustive: ``validate_name`` rejects anything outside

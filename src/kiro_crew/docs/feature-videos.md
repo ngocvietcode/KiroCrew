@@ -1,8 +1,8 @@
 # Feature Videos
 
-Kiro Crew plays a short intro clip for a feature this install has not used yet. Unlike [Feature Tips](feature-tips.md), which are written by a model, a feature video is a recorded clip picked by a fixed rule set: the same install state always produces the same set of *eligible* clips, and one of them is chosen at random.
+Sao Khuê plays a short intro clip for a feature this install has not used yet. Unlike [Feature Tips](feature-tips.md), which are written by a model, a feature video is a recorded clip picked by a fixed rule set: the same install state always produces the same set of *eligible* clips, and one of them is chosen at random.
 
-Clips are hosted, not shipped inside the package. Kiro Crew downloads them in the background and plays them from your own disk — see [Hosted Clips](#hosted-clips).
+Clips are hosted, not shipped inside the package. Sao Khuê downloads them in the background and plays them from your own disk — see [Hosted Clips](#hosted-clips).
 
 ## How It Works
 
@@ -27,7 +27,7 @@ Clips are hosted, not shipped inside the package. Kiro Crew downloads them in th
 
 ## Hosted Clips
 
-Clips live on a CDN, listed by a **signed manifest** for your release. Kiro Crew
+Clips live on a CDN, listed by a **signed manifest** for your release. Sao Khuê
 downloads them into `~/.kiro/crew/feature-videos/<release>/` (readable only by you)
 and plays them from there.
 
@@ -46,7 +46,7 @@ and plays them from there.
 
 ### Trust
 
-- The manifest is signed with the same offline key that signs Kiro Crew's own
+- The manifest is signed with the same offline key that signs Sao Khuê's own
   installer. If the **signature** does not verify, the whole manifest is discarded
   and the built-in list is used: the signature covers the document, so there is no
   such thing as verifying most of it. A malformed **entry** inside a correctly
@@ -62,7 +62,7 @@ and plays them from there.
   longer matches and the file is downloaded again. A clip file edited on disk
   afterwards, by something that already has write access to your own home directory,
   is played as it stands. What it cannot do is change where anything is fetched from,
-  or point Kiro Crew at a file outside the cache.
+  or point Sao Khuê at a file outside the cache.
 - The route that serves a cached file answers only for a plain file directly inside the
   release folder, under the canonical cache directory. A symbolic link is refused rather
   than followed, at the file and at the release folder both, because a manifest names
@@ -72,7 +72,7 @@ and plays them from there.
   is a 404, and a file with a second name (a hard link) is not served. The download side
   holds the release folder open the same way while it writes, and only writes through
   that open folder once it has confirmed where it is.
-- If there is no manifest for your release, Kiro Crew looks for the newest lower one:
+- If there is no manifest for your release, Sao Khuê looks for the newest lower one:
   the same minor line first, then up to three earlier minors. It never looks across a
   major version, since a clip from a different major is likely to show a UI that no
   longer exists.

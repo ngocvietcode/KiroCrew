@@ -556,7 +556,7 @@ def _adopt_source(store, source_id: str, *, event: str):
     source is never activated.
 
     Confirming (or resuming) IS the user adopting this source, so stamp it as
-    adopted in the same write that activates it. Without this, a row Kiro Crew
+    adopted in the same write that activates it. Without this, a row Sao Khuê
     registered itself would be refused by the scan funnel's gate immediately
     after the user satisfied that very gate, and bounce back to
     pending_confirmation.

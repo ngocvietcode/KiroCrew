@@ -13,7 +13,7 @@ Onboarding docs do not belong here either. Tips are feature DISCOVERY —
 "a feature you have not used yet" (see feature-tips.md and the generation
 prompt in tips.py) — and they render above the chat composer of a running
 dashboard session. Anyone who can see a tip has already installed, started,
-and opened Kiro Crew, so a product-overview tip like "Getting Started" can
+and opened Sao Khuê, so a product-overview tip like "Getting Started" can
 only ever be redundant there.
 
 Reference tables are excluded for the same reason as onboarding docs: they answer a

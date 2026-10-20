@@ -268,7 +268,7 @@ def test_aggregate_lifetime_total_gauges_are_reduced_window_relative(tmp_path: P
     """A lifetime-total GAUGE reports the window's activity, not the total.
 
     The process CPU/GC readings became observable gauges so that nothing
-    Kiro Crew exports is cumulative, but their value is still "since this
+    Sao Khuê exports is cumulative, but their value is still "since this
     process started". Reporting the newest sample the way a state gauge is
     reported would put an ever-growing number on the panel; they take the
     window-relative path instead, so this reads 40 (150-110), not 150.

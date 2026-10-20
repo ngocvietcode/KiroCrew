@@ -41,7 +41,7 @@ else, which is why a reviewer looking for the security argument should read
 dispatched is the ordinary shape of the work rather than a special case, and the
 recorded ``session/opened`` lineage already says which session created which, so
 the entitlement is derived from a fact rather than asserted. The wider premise --
-that sessions on a Kiro Crew gateway belong to one operator, so any may read any
+that sessions on a Sao Khuê gateway belong to one operator, so any may read any
 other -- was considered and is NOT the rule: a channel-linked session's
 conversation is a Slack or Telegram thread that several allow-listed people read
 and prompt-injectable content enters, so "one operator" does not reach it.
@@ -136,7 +136,7 @@ def _tool_definitions() -> list[dict[str, Any]]:
 
     Advertised UNCONDITIONALLY, including while ``KIROCREW_CREW_LOG`` is off. An
     agent must learn the flag state from a refusal that says how to switch it on,
-    not from a tool that is not there: a missing tool reads as "Kiro Crew cannot do
+    not from a tool that is not there: a missing tool reads as "Sao Khuê cannot do
     this", which is a different and wrong conclusion.
     """
     return [
@@ -310,7 +310,7 @@ def _proxy_error(payload: dict[str, Any], *, fallback: str) -> str:
     authoritative one and re-deriving a code here would let the two disagree. A
     transport failure — the gateway not running, a socket refused — has no code of
     its own and becomes ``unavailable``: the distinction the agent needs is
-    "Kiro Crew said no" versus "nothing answered".
+    "Sao Khuê said no" versus "nothing answered".
     """
     code = str(payload.get("code") or "")
     message = str(payload.get("error") or fallback)

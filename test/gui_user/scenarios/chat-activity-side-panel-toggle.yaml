@@ -31,7 +31,7 @@ preconditions:
   members: [nova-sky]
   start_url: /chat
 steps:
-  - You are on the chat page. In the left sidebar's session list click the pinned row titled "Welcome to KiroCrew" (below the "Demos" folder, outside it) so that its conversation opens, with a header bar above the transcript showing that title.  # brand-ok: verbatim seeded session title from the rich fixture
+  - You are on the chat page. In the left sidebar's session list click the pinned row titled "Welcome to SaoKhue" (below the "Demos" folder, outside it) so that its conversation opens, with a header bar above the transcript showing that title.  # brand-ok: verbatim seeded session title from the rich fixture
   - Make sure the Activity panel is open. If nothing is showing to the right of the transcript, click the "Open activity panel" button -- a small panel icon at the right end of that header bar, near the pop-out icon -- once. A panel appears beside the transcript. Do not click anything inside it.
   - Read the panel's top strip; it has a highlighted tab labelled "Changes", two icon-only tabs beside it, a "+" button and, at its right end, a "Close panel" button (a panel icon). Click "Close panel".
   - Wait a second.

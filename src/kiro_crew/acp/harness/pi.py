@@ -163,7 +163,7 @@ _PI_MCP_SERVER_NAME_RE = re.compile(r"[A-Za-z0-9_-]+")
 # digest over the raw bytes would read every Windows install as tampered and refuse
 # every pi session there. ``.gitattributes`` pins the checkout LF as well; the
 # normalization here is what keeps the property from resting on a repo-config line.
-PI_GATE_EXTENSION_SHA256 = "33524636eca152b5601be722082da26f217bc58346e98643ce1580e59645a81d"
+PI_GATE_EXTENSION_SHA256 = "3d119d3cf293d06e0c216e15ed3c46f0643b243d77c1b1b4c6ce20ae232c22bc"
 
 _pi_acp_argv_cache: tuple[list[str] | None, str] | object = launch_mod._UNRESOLVED
 
@@ -285,7 +285,7 @@ def _pi_version_issue(pi_bin: str) -> str:
 
 
 def pi_gate_extension_path() -> str:
-    """The absolute path of the gate extension Kiro Crew ships for pi.
+    """The absolute path of the gate extension Sao Khuê ships for pi.
 
     Package data beside :mod:`kiro_crew.agent_sdk`, resolved from that package's
     own location so a wheel install and a source checkout name the same file the
@@ -331,16 +331,16 @@ def _pi_gate_artifact_dir() -> str:
     except OSError as exc:
         raise AcpToolGateUnroutable(
             f"{acp_tool_gate.label_for(ACP_BACKEND_PI)} routes tool calls through a gate "
-            "extension Kiro Crew seals into its own artifact directory, but that "
+            "extension Sao Khuê seals into its own artifact directory, but that "
             f"directory could not be created or secured ({expected}: {exc}). Fix the "
-            "permissions or free space under the Kiro Crew config directory to select "
+            "permissions or free space under the Sao Khuê config directory to select "
             "this harness."
         ) from exc
     owner_only = platform_compat.IS_WINDOWS or stat.S_IMODE(info.st_mode) == 0o700
     if resolved != canonical_expected or not owner_only:
         raise AcpToolGateUnroutable(
             f"{acp_tool_gate.label_for(ACP_BACKEND_PI)} routes tool calls through a gate "
-            "extension Kiro Crew seals into its own artifact directory, but that "
+            "extension Sao Khuê seals into its own artifact directory, but that "
             f"directory is not a real owner-only leaf ({expected}). Fix its permissions "
             "to select this harness."
         )
@@ -407,14 +407,14 @@ def _seal_gate_extension(
     except OSError as exc:
         raise PiGateExtensionTampered(
             f"the {label} at {source} cannot be read ({exc}); a session cannot "
-            "start on a gate whose code this build did not ship. Reinstall Kiro Crew."
+            "start on a gate whose code this build did not ship. Reinstall Sao Khuê."
         ) from exc
     digest = hashlib.sha256(payload).hexdigest()
     if digest != pinned_digest:
         raise PiGateExtensionTampered(
             f"the {label} at {source} does not match the digest this build "
             f"pinned ({digest[:12]}… vs {pinned_digest[:12]}…); a session "
-            "cannot start on a gate whose code this build did not ship. Reinstall Kiro Crew."
+            "cannot start on a gate whose code this build did not ship. Reinstall Sao Khuê."
         )
     return _publish_gate_artifact(artifact_dir, sealed_name, payload, stage_prefix=stage_prefix)
 

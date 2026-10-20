@@ -292,7 +292,7 @@ async def _publish(
 
 #: What the card says when its step ran but the result could not be saved.
 _UNRECORDED_MESSAGE = (
-    "This step ran, but Kiro Crew could not save its result, so the card cannot "
+    "This step ran, but Sao Khuê could not save its result, so the card cannot "
     "continue or undo it. Check the change before asking for it again."
 )
 

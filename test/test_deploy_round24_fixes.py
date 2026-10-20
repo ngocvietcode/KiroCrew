@@ -1,4 +1,4 @@
-"""Regression tests for Round-24 advisories (KiroCrew PR #6).
+"""Regression tests for Round-24 advisories (SaoKhue PR #6).
 
 F1: scan-blocked MCP previews with OVERRIDABLE (non-credential) findings are
     persisted as pending entries flagged override_scan_required, so the human

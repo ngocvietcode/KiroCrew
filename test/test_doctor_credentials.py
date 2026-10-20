@@ -1,6 +1,6 @@
 """The doctor Credentials section — the self-service answer to "AWS is unavailable".
 
-Advisory by construction: an unconfigured AWS profile is not a Kiro Crew fault, so
+Advisory by construction: an unconfigured AWS profile is not a Sao Khuê fault, so
 every case here also asserts that ``issues`` stays empty. A regression that made
 this section blocking would turn ``doctor`` red on every host that does not use
 AWS.

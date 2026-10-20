@@ -7,7 +7,7 @@ const {
   READY_PATH,
 } = require("../../instance-guard");
 
-const RESTARTING_STATUS = "Restarting Kiro Crew to finish the update…";
+const RESTARTING_STATUS = "Restarting Sao Khuê to finish the update…";
 // How long this instance stays alive waiting for a successor copy of the app
 // to prove itself by serving on the gateway port (relaunchViaConfirmedSuccessor):
 // Electron boot, then the successor's own gateway budget.

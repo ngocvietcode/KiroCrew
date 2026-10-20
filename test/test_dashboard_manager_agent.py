@@ -248,7 +248,7 @@ class TestTheSpecsSurfaceIsSmallOnPurpose:
 
 class TestItIsOwnedButNotRequired:
     def test_the_filename_is_in_the_owned_allowlist(self) -> None:
-        """The convergence sweep rewrites only files Kiro Crew generates."""
+        """The convergence sweep rewrites only files Sao Khuê generates."""
         assert DASHBOARD_MANAGER_AGENT_FILENAME in OWNED_KIRO_AGENT_FILES
 
     def test_it_is_not_required_for_the_product_to_work(self) -> None:

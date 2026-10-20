@@ -212,7 +212,7 @@ async def install_from_registry(
     survives reboots, used by app update scripts).
 
     For self-managed apps (``managed: "self"`` in registry), only the clone +
-    install script is run — Kiro Crew does NOT copy files to ``~/.kiro/crew/apps/``
+    install script is run — Sao Khuê does NOT copy files to ``~/.kiro/crew/apps/``
     or register resources via bridges.  The app registers itself at runtime.
 
     For kirocrew-managed apps, files are copied to ``~/.kiro/crew/apps/{name}/``
@@ -405,7 +405,7 @@ async def install_from_registry(
     # owner's own trusted forge; cloning it with the gateway's ambient git/ssh
     # identity would read that private repo as a confused deputy. So an
     # index-originated install clones credential-free + strict-sandboxed too.
-    # Bundled (curated, shipped with Kiro Crew) entries have no ``_registry`` marker
+    # Bundled (curated, shipped with Sao Khuê) entries have no ``_registry`` marker
     # and remain owner-designated → full credentials.
     #
     # Same-repo credential carve-out: when the entry's effective clone URL is
@@ -437,7 +437,7 @@ async def install_from_registry(
     # official even though it takes the credential-free posture above.
     official_entry = _official_entry(entry)
     # The originating external registry id, recorded as provenance. Empty means
-    # the bundled catalog shipped with Kiro Crew, which is itself a distinct source.
+    # the bundled catalog shipped with Sao Khuê, which is itself a distinct source.
     # Captured BEFORE the owner-designated carve-out (same reasoning as above):
     # the entry still came from that external registry, and provenance must say so.
     source_registry = _strip_git_target_userinfo(str(entry.get("_registry", "") or ""))
@@ -496,7 +496,7 @@ async def install_from_registry(
     # provenance must record the artifact actually installed, not the preview.
 
     # Platform compatibility check — if the app requires a specific OS and
-    # Kiro Crew is running on an incompatible platform, return client install
+    # Sao Khuê is running on an incompatible platform, return client install
     # instructions instead of attempting a server-side install.
     manifest_platform = (manifest or {}).get("platform", {})
     required_os = manifest_platform.get("os", ["macos", "linux"])
@@ -603,7 +603,7 @@ async def install_from_registry(
                     "ok": False,
                     "name": name,
                     "error": f"{name} is already installed on this machine. "
-                    f"Launch it to register with Kiro Crew automatically.",
+                    f"Launch it to register with Sao Khuê automatically.",
                 }
         except (asyncio.TimeoutError, OSError):
             pass
@@ -1177,7 +1177,7 @@ async def install_from_registry(
             outcome = startup_refusal
             return outcome
 
-        # Step 4: Register with Kiro Crew
+        # Step 4: Register with Sao Khuê
         if is_self_managed:
             # Pre-register with manifest from the cloned repo so the app
             # appears in Installed tab immediately (with openCommand, icon, etc.)
@@ -1252,7 +1252,7 @@ async def install_from_registry(
                 outcome["notice"] = notice
             return outcome
 
-        # Managed by Kiro Crew: copy to ~/.kiro/crew/apps/ and register resources
+        # Managed by Sao Khuê: copy to ~/.kiro/crew/apps/ and register resources
         log_lines.append("Installing app...")
         # Lock-free: the route handler holds app_lifecycle_lock(name) across
         # the whole transaction (clone/build → copy → register → backend

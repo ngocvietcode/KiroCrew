@@ -163,7 +163,7 @@ INVOKE_TIMEOUT_SECS = 90.0
 # key proceeds under the placeholder below. See the strict-resolver comment in
 # ``_call_tool_inner``.
 ERR_GATEWAY_UNREACHABLE = (
-    "the KiroCrew gateway is not reachable, so computer use cannot run "
+    "the SaoKhue gateway is not reachable, so computer use cannot run "
     "(every computer-use action is evaluated and audited in the gateway): {detail}"
 )
 
@@ -559,7 +559,7 @@ def _tool_definitions() -> list[dict[str, Any]]:
                         "description": "The literal text to type.",
                     },
                     # REQUIRED, matching ``MCP_COMPUTER_SCHEMAS``. Keystrokes go
-                    # only to an element KiroCrew can inspect: with no index there
+                    # only to an element SaoKhue can inspect: with no index there
                     # is no role/subrole for the always-on secure-target refusal to
                     # check, so "type into whatever is focused" could land in a
                     # focused password box. The advertised schema has to say so —

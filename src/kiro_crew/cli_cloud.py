@@ -162,10 +162,10 @@ def _cloud_list(args: argparse.Namespace) -> int:
         ui.fail(str(exc))
         return 1
     if not rows:
-        ui.info("No KiroCrew cloud instances found.")
+        ui.info("No SaoKhue cloud instances found.")
         ui.detail("Launch one with: kirocrew cloud launch")
         return 0
-    ui.note(f"{ui.BOLD}KiroCrew cloud instances ({region}):{ui.RESET}")
+    ui.note(f"{ui.BOLD}SaoKhue cloud instances ({region}):{ui.RESET}")
     for r in rows:
         state = r.get("instance_state", "?")
         ui.note(f"  {ui.BOLD}{r['tag']}{ui.RESET}  {r['instance_id']}  {ui.DIM}{state}{ui.RESET}")
@@ -402,7 +402,7 @@ def _cloud_destroy(args: argparse.Namespace) -> int:
     )
     ui.detail("Any data on the instance is lost. This cannot be undone.")
     if not getattr(args, "yes", False):
-        if not ui.confirm(f"Remove KiroCrew instance '{tag}' from AWS?", default=False):
+        if not ui.confirm(f"Remove SaoKhue instance '{tag}' from AWS?", default=False):
             ui.info("Aborted — nothing was deleted.")
             return 0
 
@@ -568,7 +568,7 @@ def _cloud_doctor(args: argparse.Namespace) -> int:
     import shutil
 
     profile, region = _resolve(args)
-    ui.note(f"{ui.BOLD}KiroCrew cloud — diagnostics{ui.RESET}")
+    ui.note(f"{ui.BOLD}SaoKhue cloud — diagnostics{ui.RESET}")
     # Client prerequisites. Probe the exact binary resolved spawn sites execute
     # (the shared deploy-engine resolver), so the doctor's verdict agrees with
     # what `kirocrew cloud` commands actually run under a GUI-launched
@@ -627,7 +627,7 @@ def _ensure_session_manager_plugin() -> bool:
     if ssm.session_manager_plugin_installed():
         return True
     ui.warn("session-manager-plugin is required for SSM dashboard tunnels.")
-    ui.detail("KiroCrew can install AWS's official Session Manager plugin locally.")
+    ui.detail("SaoKhue can install AWS's official Session Manager plugin locally.")
     if not ui.confirm("Install session-manager-plugin now?", default=True):
         ui.detail("Install it later with: kirocrew cloud doctor")
         return False
@@ -664,10 +664,10 @@ def handle_cloud(args: argparse.Namespace) -> int:
     """Entry point for ``kirocrew cloud <action>``."""
     action = getattr(args, "cloud_action", None)
     if not action:
-        ui.note(f"{ui.BOLD}kirocrew cloud{ui.RESET} — run KiroCrew on your own AWS EC2")
+        ui.note(f"{ui.BOLD}kirocrew cloud{ui.RESET} — run SaoKhue on your own AWS EC2")
         print()
         ui.detail("launch      Provision + configure an instance (interactive)")
-        ui.detail("list        List your KiroCrew cloud instances")
+        ui.detail("list        List your SaoKhue cloud instances")
         ui.detail("status      Show one instance's state")
         ui.detail("tunnel      Open the dashboard SSM tunnel (alias: connect)")
         ui.detail("connect     Open the dashboard over an SSM tunnel")

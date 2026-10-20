@@ -446,7 +446,7 @@ function lastSeparator(word: string): number {
  * untouched. Otherwise the last segment is erased with DEL and retyped whole —
  * the case for a case-insensitive hit (`Docs` for `docs`), for a substring hit
  * where the typed text sits in the MIDDLE of the name (`termi` →
- * `KiroCrew-terminal-completion`), for a name whose escaping alters characters
+ * `SaoKhue-terminal-completion`), for a name whose escaping alters characters
  * the user already typed, and for the `./` guard below.
  */
 /**

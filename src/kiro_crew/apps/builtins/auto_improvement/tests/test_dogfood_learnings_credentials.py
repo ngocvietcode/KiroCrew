@@ -281,7 +281,7 @@ class TestAgentTestsCannotWriteKiroCrewConfig:
     """`mode="strict"` hides credential READS; it does not make the filesystem read-only.
 
     Measured on this host before the fix: a strict-mode child ran
-    `open('~/.kiro/crew/config.json','a')` and exited 0 — it MODIFIED Kiro Crew's own
+    `open('~/.kiro/crew/config.json','a')` and exited 0 — it MODIFIED Sao Khuê's own
     write-protected config. Those paths are `security.write_protected_home_paths()`, enforced
     by the platform HOOK layer, which a sandboxed subprocess never passes through, so the
     protection was inert for exactly the code that most needs it: the target repository's
@@ -323,7 +323,7 @@ class TestAgentTestsCannotWriteKiroCrewConfig:
         src = inspect.getsource(P._run)
         assert (
             "extra_hidden_dirs=_write_protected_targets()" in src
-        ), "the sandbox spawn does not mask Kiro Crew's write-protected paths"
+        ), "the sandbox spawn does not mask Sao Khuê's write-protected paths"
 
     def test_a_broken_helper_still_runs_the_suite(self, monkeypatch) -> None:
         """Fail-soft: masking is defense-in-depth. Refusing to run any test would be worse."""
@@ -368,7 +368,7 @@ class TestFallbackAgentCannotSeeCredentials:
         assert seen["mode"] == "strict", "the unattended agent must not see credential dirs"
         # The worktree must stay VISIBLE or there is nothing for the agent to edit.
         assert str(tmp_path.resolve()) in seen["kw"]["extra_visible_dirs"]
-        # And the agent's tooling must not inherit Kiro Crew's interpreter paths.
+        # And the agent's tooling must not inherit Sao Khuê's interpreter paths.
         assert seen["kw"]["strip_python_env"] is True
 
 

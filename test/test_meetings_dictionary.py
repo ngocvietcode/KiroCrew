@@ -25,7 +25,7 @@ def dictionary(tmp_path: Path) -> DomainDictionary:
     path = tmp_path / "dictionary.toml"
     path.write_text(
         '[[term]]\ncorrect = "DynamoDB"\naliases = ["dynamo db", "dynamo d b"]\n'
-        '\n[[term]]\ncorrect = "KiroCrew"\naliases = ["kiro crew", "kiro-crew"]\n'
+        '\n[[term]]\ncorrect = "SaoKhue"\naliases = ["kiro crew", "kiro-crew"]\n'  # brand-ok: alias data
     )
     d = DomainDictionary()
     d.load(path)
@@ -43,7 +43,7 @@ class TestMatching:
         assert dictionary.correct("Dynamo DB is fast") == "DynamoDB is fast"
 
     def test_multiple_corrections_in_one_line(self, dictionary):
-        assert dictionary.correct("kiro crew uses dynamo db") == "KiroCrew uses DynamoDB"
+        assert dictionary.correct("kiro crew uses dynamo db") == "SaoKhue uses DynamoDB"  # brand-ok: alias data
 
     def test_word_boundaries_respected(self, dictionary):
         # No space, so the "dynamo db" alias must not match inside the word.
@@ -52,8 +52,8 @@ class TestMatching:
     @pytest.mark.parametrize(
         "correct",
         [
-            r"C:\Users\share",   # a Windows path — `\U` is "bad escape" in a template
-            r"a\1b",             # a group reference: would substitute, not insert
+            r"C:\Users\share",  # a Windows path — `\U` is "bad escape" in a template
+            r"a\1b",  # a group reference: would substitute, not insert
             r"back\\slash",
             r"trailing\\",
         ],
@@ -114,9 +114,7 @@ class TestMatching:
             ("c++", "c++11 shipped"),
         ],
     )
-    def test_a_punctuation_edged_alias_does_not_match_inside_a_token(
-        self, alias: str, said: str
-    ):
+    def test_a_punctuation_edged_alias_does_not_match_inside_a_token(self, alias: str, said: str):
         """The same `\\b` fired where the term did NOT apply.
 
         `\\b\\.net\\b` requires a word character before the dot, which is exactly
@@ -187,7 +185,10 @@ class TestLoading:
     def test_term_cap_enforced(self):
         d = DomainDictionary()
         d.load_terms(
-            [{"correct": f"T{i}", "aliases": [f"t {i}"]} for i in range(k.MAX_DICTIONARY_TERMS + 50)]
+            [
+                {"correct": f"T{i}", "aliases": [f"t {i}"]}
+                for i in range(k.MAX_DICTIONARY_TERMS + 50)
+            ]
         )
         assert len(d.terms) == k.MAX_DICTIONARY_TERMS
 
@@ -224,7 +225,7 @@ class TestMutation:
     def test_remove_term(self, dictionary):
         assert dictionary.remove_term("DynamoDB") is True
         assert dictionary.correct("dynamo db") == "dynamo db"
-        assert dictionary.correct("kiro crew") == "KiroCrew"
+        assert dictionary.correct("kiro crew") == "SaoKhue"  # brand-ok: alias data
 
     def test_remove_missing_returns_false(self, dictionary):
         assert dictionary.remove_term("Nope") is False

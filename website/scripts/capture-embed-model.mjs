@@ -88,7 +88,7 @@ await page.route('**/api/**', async route => {
   if (path === '/api/memory/semantic') return json(route, { entries: [] })
   if (path === '/api/themes') return json(route, { themes: [], installed: [] })
   if (path === '/api/theme/boot') return json(route, { mode: 'light', theme: '' })
-  if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Kiro Crew', avatar: '' })
+  if (path === '/api/dashboard/branding') return json(route, { bot_name: 'Sao Khuê', avatar: '' })
   if (path === '/api/notifications') return json(route, { notifications: [], unread: 0 })
   if (path === '/api/status') return json(route, { sessions: 12, messages: 4821, cron_jobs: 7, subagents: 3, lessons: 52, uptime: 273840, version: '0.1.0' })
   if (path === '/api/chat/slots') return json(route, [])

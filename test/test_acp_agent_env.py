@@ -3,7 +3,7 @@
 The contract under test:
 
 * the mapping is empty by default, so nothing changes until an operator sets it;
-* a name outside the POSIX identifier grammar, a name Kiro Crew, the sandbox or a
+* a name outside the POSIX identifier grammar, a name Sao Khuê, the sandbox or a
   runtime loader owns, a credential-shaped name, and a non-string or NUL-bearing
   value are dropped with a warning that names the key and never the value;
 * a name the agent environment scrub strips is dropped at spawn, with a warning,
@@ -13,7 +13,7 @@ The contract under test:
   held it exactly as it found it;
 * the shared launch tail lays the map over the inherited gateway environment for
   every backend, on both drivers, so it wins over the gateway's own value -- and
-  everything Kiro Crew sets for the session afterwards, and the scrub, still win
+  everything Sao Khuê sets for the session afterwards, and the scrub, still win
   over it.
 """
 
@@ -178,8 +178,8 @@ _EXEC_NAMES = [
     "XDG_CONFIG_DIRS",
     "XDG_CACHE_HOME",
     "XDG_STATE_HOME",
-    # A harness Kiro Crew launches, pointed at a config file whose MCP commands
-    # it runs at start-up, and the variable Kiro Crew hands it its own config in.
+    # A harness Sao Khuê launches, pointed at a config file whose MCP commands
+    # it runs at start-up, and the variable Sao Khuê hands it its own config in.
     "OPENCODE_CONFIG",
     "OPENCODE_CONFIG_DIR",
     "OPENCODE_CONFIG_CONTENT",
@@ -317,7 +317,7 @@ class TestTheConfigKey:
         assert coerce_agent_env({name: "v"}) == {}
 
     def test_every_variable_the_opencode_harness_is_handed_is_refused(self) -> None:
-        # Kiro Crew hands the opencode harness its permission routing through this
+        # Sao Khuê hands the opencode harness its permission routing through this
         # variable; the map must not be able to replace it, or point the harness at
         # a different config file through a sibling of it.
         from kiro_crew.acp.harness import opencode

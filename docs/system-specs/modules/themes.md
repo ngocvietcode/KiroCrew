@@ -7,7 +7,7 @@ up to a full "experience pack" (fonts, sandboxed overlays, audio, persona). A
 color theme is the degenerate case of a pack — the whole spectrum lives behind
 **one Theme dropdown** in Settings → Display: install many, select one.
 
-Themes are a **standalone subsystem built on `useTheme`**, not Kiro Crew apps. This document is the **source of truth** for the end-to-end subsystem.
+Themes are a **standalone subsystem built on `useTheme`**, not Sao Khuê apps. This document is the **source of truth** for the end-to-end subsystem.
 The frontend pack-author contract (the CSS-var surface and the
 `overrides.css` selector allowlist) lives in
 [`website/docs/theming-contract.md`](../../../website/docs/theming-contract.md);
@@ -18,8 +18,8 @@ where the two overlap, this spec governs.
 `theme.json` MUST declare `"formatVersion": 1` (required integer major,
 mirroring the platform layer's pinned-`CONTRACT_VERSION` precedent). Validation
 rejects a missing/non-integer value, and rejects an unknown major with an
-explicit *"this pack requires a newer version of Kiro Crew"* message — never the
-opaque generic-validation errors — so an older Kiro Crew degrades honestly when
+explicit *"this pack requires a newer version of Sao Khuê"* message — never the
+opaque generic-validation errors — so an older Sao Khuê degrades honestly when
 handed a newer pack. Semantics changes within a major stay backward-tolerant;
 breaking manifest changes bump the major.
 

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  Per-crew Fargate scaffolding for one Kiro Crew remote crew: the two roles a task
+  Per-crew Fargate scaffolding for one Sao Khuê remote crew: the two roles a task
   carries and the log group it writes to. One stack per crew, alongside the
   shared kirocrew-fargate-base.yaml. Deleting this stack removes exactly one
   crew's identity and logs and leaves the cluster and its siblings untouched.

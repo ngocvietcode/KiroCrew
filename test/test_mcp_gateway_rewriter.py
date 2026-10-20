@@ -1351,7 +1351,7 @@ def _fresh_cmd_safe_state():
 
 def _program_files_interpreter(tmp_path: Path) -> str:
     """A real executable whose path sits under a directory with a space."""
-    exe_dir = tmp_path / "Program Files" / "Kiro Crew"
+    exe_dir = tmp_path / "Program Files" / "Sao Khuê"
     exe_dir.mkdir(parents=True)
     exe = exe_dir / "python"
     exe.write_text("#!/bin/sh\n")
@@ -1365,7 +1365,7 @@ def test_wrapped_argv_is_cmd_safe_under_a_spaced_interpreter_path(
     """Every element of a wrapped entry's launch argv is free of cmd.exe
     metacharacters when a short form exists for the interpreter path."""
     exe = _program_files_interpreter(tmp_path)
-    short = exe.replace("Program Files", "PROGRA~1").replace("Kiro Crew", "KIROCR~1")
+    short = exe.replace("Program Files", "PROGRA~1").replace("Sao Khuê", "KIROCR~1")
     monkeypatch.setattr(sys, "executable", exe)
     monkeypatch.setattr("kiro_crew.mcp_gateway.rewriter.platform_compat.IS_WINDOWS", True)
     monkeypatch.setattr("kiro_crew.platform_compat.short_path_name", lambda p: short)

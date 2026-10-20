@@ -4,7 +4,7 @@ Status: implemented in `src/kiro_crew/apps/manager_records.py`, `src/kiro_crew/a
 
 ## Overview
 
-This feature implements a graceful two-phase migration mechanism for KiroCrew builtin apps being extracted to standalone packages. The design ensures users never experience a sudden loss of functionality — they receive advance warnings (Phase 1) and helpful guidance (Phase 2) throughout the transition.
+This feature implements a graceful two-phase migration mechanism for SaoKhue builtin apps being extracted to standalone packages. The design ensures users never experience a sudden loss of functionality — they receive advance warnings (Phase 1) and helpful guidance (Phase 2) throughout the transition.
 
 The system leverages the existing `InstalledApp` metadata, `_BUILTIN_APPS` registration, and the dynamic app navigation system in the frontend to provide a seamless migration experience.
 

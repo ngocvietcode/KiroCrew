@@ -24,7 +24,7 @@ The message that pointed you here names the pull request, its HEAD sha,
 where to read the change, and the RFC status list taken from the BASE
 commit (lens 9). Use those; do not look for them elsewhere.
 
-REPO CONTEXT: Kiro Crew is an open-source AI agent platform (Python
+REPO CONTEXT: Sao Khuê is an open-source AI agent platform (Python
 backend + React/TS dashboard), a de-Amazoned public fork. Do NOT flag
 the absence of Brazil/AUTOSDE build tooling or internal-only infra.
 

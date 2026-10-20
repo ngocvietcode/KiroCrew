@@ -150,7 +150,7 @@ _MISSING_DEPS_HINT = (
 #: package list for. It names the engine and points at the library names
 #: Playwright printed above it, rather than offering Chromium's list as a fix.
 _UNLISTED_ENGINE_HINT = (
-    "The {title} browser needs OS libraries that only root can install. Kiro Crew "
+    "The {title} browser needs OS libraries that only root can install. Sao Khuê "
     "has no verified package list for {title} on this distribution: install the "
     "libraries Playwright names above with your package manager, then retry the "
     "download."
@@ -163,7 +163,7 @@ _UNLISTED_ENGINE_HINT = (
 #: it is the LAST line of the failure detail -- the position that survives
 #: truncation.
 _UNSUPPORTED_ENGINE_HINT = (
-    "{title} is not supported on this operating system: Kiro Crew has no way to "
+    "{title} is not supported on this operating system: Sao Khuê has no way to "
     "install the OS libraries it needs on this Linux distribution. Chromium is "
     "the supported browser engine on this host."
 )

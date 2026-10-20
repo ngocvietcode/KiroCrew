@@ -218,10 +218,10 @@ describe("macOS bundle naming", () => {
   });
 
   it("uses CFBundleDisplayName for spaced stable and nightly names", () => {
-    assert.equal(extendInfo.CFBundleDisplayName, "Kiro Crew");
+    assert.equal(extendInfo.CFBundleDisplayName, "Sao Khuê");
     assert.match(
       buildScript,
-      /-c\.mac\.extendInfo\.CFBundleDisplayName=Kiro Crew Nightly/
+      /-c\.mac\.extendInfo\.CFBundleDisplayName=Sao Khuê Nightly/
     );
     assert.doesNotMatch(buildScript, /-c\.mac\.extendInfo\.CFBundleName=/);
   });
@@ -1218,7 +1218,7 @@ describe("uninstall data preservation contract", () => {
     // NSIS generates its own uninstaller, so there is no in-app uninstall
     // handler to audit any more -- the guarantee moves entirely into config.
     // deleteAppDataOnUninstall MUST stay false/absent: it would delete the
-    // Electron userData dir on uninstall, and the KiroCrew home under
+    // Electron userData dir on uninstall, and the SaoKhue home under
     // ~/.kiro/crew is user data that survives an uninstall by design.
     assert.notEqual(
       electronPkg.build.nsis?.deleteAppDataOnUninstall,
@@ -1244,7 +1244,7 @@ describe("uninstall data preservation contract", () => {
 
   it("uses an assisted installer so nightly installs beside stable", () => {
     // getWindowsInstallationDirName(appInfo, !oneClick || isPerMachine) in
-    // app-builder-lib only uses productFilename ("KiroCrew" / "KiroCrew
+    // app-builder-lib only uses productFilename ("KiroCrew" / "KiroCrew  // brand-ok: productName identifiers
     // Nightly") when that flag is true. Under oneClick+perUser it falls back to
     // appInfo.sanitizedName -- the npm package name -- which would put both
     // channels in ONE directory named after the package rather than the product.
@@ -1331,7 +1331,7 @@ describe("uninstall data preservation contract", () => {
     }
   });
 
-  it("keeps the uninstaller away from the Kiro Crew data home", () => {
+  it("keeps the uninstaller away from the Sao Khuê data home", () => {
     // The one thing this macro must never touch: sessions, memory, the DB and
     // config. It is user data and survives an uninstall by design.
     const nsh = fs.readFileSync(path.join(ROOT, "build", "installer.nsh"), "utf8");

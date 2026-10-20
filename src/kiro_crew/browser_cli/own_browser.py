@@ -20,7 +20,7 @@ A user who asks for a headless browser outright, and a host the gateway cannot
 attach from (a remote gateway viewed from a laptop), override all three; the
 agent-facing guidance says so in prose because no host fact can see either.
 
-**Why the attach command carries ``PLAYWRIGHT_MCP_ISOLATED=false``.** Kiro Crew
+**Why the attach command carries ``PLAYWRIGHT_MCP_ISOLATED=false``.** Sao Khuê
 honours an operator's ``PLAYWRIGHT_MCP_CONFIG`` untouched
 (:func:`kiro_crew.browser_cli.launch.cli_env_overrides`), and a config that sets
 ``browser.isolated: true`` pre-empts attach: playwright-core checks ``isolated``

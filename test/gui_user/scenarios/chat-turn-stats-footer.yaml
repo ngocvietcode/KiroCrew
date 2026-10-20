@@ -9,7 +9,7 @@
 # round trip took and is not judged; the footer's presence under the newest
 # reply is.
 #
-# The subject is the seeded "Welcome to KiroCrew" session: pinned, outside the  (brand-ok: fixture title)
+# The subject is the seeded "Welcome to SaoKhue" session: pinned, outside the  (brand-ok: fixture title)
 # Demos folder, titled on disk (so a send here starts no auto-title), and its
 # seeded replies carry no turn stats, so the only footer on screen is the one
 # this turn adds. More bubbles in the same thread do not change what the retry
@@ -27,7 +27,7 @@ preconditions:
   members: [nova-sky]
   start_url: /chat
 steps:
-  - You are on the chat page. In the left sidebar's session list click the pinned row titled "Welcome to KiroCrew" (below the "Demos" folder, outside it) so that its conversation opens.  # brand-ok: verbatim seeded session title from the rich fixture
+  - You are on the chat page. In the left sidebar's session list click the pinned row titled "Welcome to SaoKhue" (below the "Demos" folder, outside it) so that its conversation opens.  # brand-ok: verbatim seeded session title from the rich fixture
   - Click into the message box at the bottom of the conversation and type exactly "ping from the gui test".
   - Press Enter to send it, then wait about three seconds for the reply to arrive and the screen to settle.
 expectations:

@@ -12,11 +12,11 @@ attribution ("where did this come from?"), one-click bulk removal, and -- via
 removed without touching the rest. Loose items with no owning source row can
 never be undone.
 
-This replaces the never-built server-side doc-link scanner. Rather than Kiro Crew
+This replaces the never-built server-side doc-link scanner. Rather than Sao Khuê
 regex-matching links in chat and fetching them unattended -- which needs an SSRF
 host allowlist and still fetches under no one's supervision -- the agent reads
 the document with its own tools, under its own approval, and hands over text.
-Kiro Crew fetches nothing, so ``knowledge.doc_ingest_hosts`` does not apply here;
+Sao Khuê fetches nothing, so ``knowledge.doc_ingest_hosts`` does not apply here;
 it stays scoped to the server-fetch path.
 """
 

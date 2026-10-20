@@ -38,7 +38,7 @@ function mount() {
   function wrapper({ children }: { children: React.ReactNode }) {
     return createElement(Provider, { store }, children)
   }
-  renderHook(() => useNativeNotification('Kiro Crew', '/avatar.png'), { wrapper })
+  renderHook(() => useNativeNotification('Sao Khuê', '/avatar.png'), { wrapper })
   return store
 }
 

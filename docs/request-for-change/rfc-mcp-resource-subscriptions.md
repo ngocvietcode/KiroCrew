@@ -32,14 +32,14 @@ superseded-by: []
 
 MCP lets a server tell a client that a resource changed. The client sends
 `resources/subscribe` for a URI, and the server sends
-`notifications/resources/updated` when that resource changes. Kiro Crew's MCP
+`notifications/resources/updated` when that resource changes. Sao Khuê's MCP
 gateway already routes those notifications to the stub that subscribed. Nothing
 reaches a chat, though. The subscription belongs to the chat's kiro-cli
-connection, so it ends when Kiro Crew stops an idle chat's kiro-cli, and an update
+connection, so it ends when Sao Khuê stops an idle chat's kiro-cli, and an update
 that does arrive has no way to start a turn.
 
 This RFC lets a session subscribe to a resource on one of its MCP servers and be
-woken when it changes, whether or not its kiro-cli is running. Kiro Crew holds the
+woken when it changes, whether or not its kiro-cli is running. Sao Khuê holds the
 subscription itself, through an ordinary gateway stub it opens for the session
 (the **holder**). Each update becomes an event in the webhook-subscriptions
 buffer, and that RFC's `session` consumer delivers the wake. The change adds an
@@ -49,7 +49,7 @@ event source, not a wake path.
 
 ### 2.1 Watch loops mostly find nothing
 
-A session that waits on something outside Kiro Crew polls for it on a timer. On
+A session that waits on something outside Sao Khuê polls for it on a timer. On
 one operator's gateway between 2026-10-06 and 2026-10-13, twelve such loops
 watched pull requests and code reviews. Together they woke about 2,100 times:
 
@@ -83,8 +83,8 @@ that push.
 | Gap | Evidence |
 |---|---|
 | A subscription ends with the chat's kiro-cli connection | `Backend.detach_stub` releases the upstream subscription when the last subscriber leaves. A reaped kiro-cli detaches its stub, and the backend is evicted `mcp_gateway.idle_timeout_secs` later (default 300, `src/kiro_crew/config/integration_sections.py`). |
-| A subscription does not survive a daemon restart | The subscription tables live in the daemon process. A kiro-cli stub that ever subscribed refuses to reconnect (`has_live_subscriptions` in `src/kiro_crew/mcp_gateway/stub_bridge.py`). The daemon exits when the Kiro Crew server that spawned it exits (`_owner_liveness_sweeper` in `src/kiro_crew/mcp_gateway/daemon/sweepers.py`), so every server restart is also a daemon restart. |
-| An update cannot start a turn | On the kiro-cli backend a turn starts only when Kiro Crew sends a prompt. Nothing turns an update into one. |
+| A subscription does not survive a daemon restart | The subscription tables live in the daemon process. A kiro-cli stub that ever subscribed refuses to reconnect (`has_live_subscriptions` in `src/kiro_crew/mcp_gateway/stub_bridge.py`). The daemon exits when the Sao Khuê server that spawned it exits (`_owner_liveness_sweeper` in `src/kiro_crew/mcp_gateway/daemon/sweepers.py`), so every server restart is also a daemon restart. |
+| An update cannot start a turn | On the kiro-cli backend a turn starts only when Sao Khuê sends a prompt. Nothing turns an update into one. |
 
 ## 3. Goals and non-goals
 
@@ -93,7 +93,7 @@ Goals:
 - A session subscribes to a (server, URI) pair on an MCP server it already has,
   and is woken when the server reports a change.
 - The subscription survives the session's kiro-cli being stopped, the backend
-  process dying, and a Kiro Crew restart.
+  process dying, and a Sao Khuê restart.
 - Updates are coalesced and budgeted, and reach the model as untrusted data.
 - A subscription that cannot be kept up pauses with a reason. It never stops
   silently.
@@ -111,9 +111,9 @@ Not a goal:
 
 ## 4. Design
 
-### 4.1 The holder: a stub Kiro Crew opens for the session
+### 4.1 The holder: a stub Sao Khuê opens for the session
 
-For each (session, server) pair with at least one subscription, the Kiro Crew
+For each (session, server) pair with at least one subscription, the Sao Khuê
 server opens a gateway stub connection of its own, the holder. It registers with
 the session's own stub's Register payload for that server, so it attaches to the
 same pooled backend, but under a `stub_uuid` of its own. The daemon keys attach,
@@ -143,7 +143,7 @@ connection. The subscription record keeps them, so the holder can register again
 after a restart with no kiro-cli present. Persisting a Register is not new:
 prewarm already writes Register payloads, token removed, to `hot-keys.json`.
 
-The holder's identity is the session key, not a stored token. Kiro Crew mints a
+The holder's identity is the session key, not a stored token. Sao Khuê mints a
 stub token for the holder and pushes a `claim` frame that binds it to the stored
 session key, the same frame a kiro-cli client gets. `build_claim_frame` builds it
 (`src/kiro_crew/mcp_gateway/claim.py`): the frame
@@ -179,7 +179,7 @@ Each failure has an owner:
 | Failure | What notices it | What happens |
 |---|---|---|
 | The backend process dies | The holder forwards an MCP `ping` request every 60 s, and the forward raises `BackendGone` | The daemon's existing respawn path rebuilds the backend, re-primes it from the holder's captured `initialize` and replays the holder's subscriptions (the `BackendGone` handler in `_handle_connection`). |
-| The daemon or the Kiro Crew server restarts | The holder's socket reaches end of file, or the server starts with stored subscriptions | The holder reconnects once the manager has a daemon, registers from the stored Register under a fresh `stub_uuid`, is claimed with the stored session key through a fresh `claim` frame (binding a token it mints for itself; no token from before the restart is reused), sends the stored `initialize` and subscribes to every URI again. |
+| The daemon or the Sao Khuê server restarts | The holder's socket reaches end of file, or the server starts with stored subscriptions | The holder reconnects once the manager has a daemon, registers from the stored Register under a fresh `stub_uuid`, is claimed with the stored session key through a fresh `claim` frame (binding a token it mints for itself; no token from before the restart is reused), sends the stored `initialize` and subscribes to every URI again. |
 | Updates are lost during a gap | Any re-subscribe | One "may have changed" event per URI, because updates sent while nobody held the subscription are gone. |
 | The backend cannot be started again | Registering or subscribing fails, for example because the launch approval changed | The subscription pauses with the reason, and the pause is reported. |
 
@@ -236,11 +236,11 @@ and a kiro-cli stub of the same session on a server the gateway fronts:
 - `raw`: `_caller_from_register` leaves it the empty default. It is populated only
   by `CallerContext.from_meta`, which parses a forwarded request on the backend
   side, not the daemon-side caller the grant records. So it is empty for both.
-- `session_token`: `_caller_for_backend` attaches the token only to a Kiro Crew
+- `session_token`: `_caller_for_backend` attaches the token only to a Sao Khuê
   control-plane backend; for a third-party server it returns the caller unchanged,
   and `_caller_from_register` never set a token, so the field is empty for both.
   The token value never enters the comparison on a server the gateway fronts. On
-  a Kiro Crew control plane the holder carries its own token, so it is a separate
+  a Sao Khuê control plane the holder carries its own token, so it is a separate
   caller there with its own grant, and the gateway and the server agree.
 - `identity_denial`: set only on a frame forwarded to a denied control-plane
   backend (`_caller_for_backend`). Empty for a third-party server, for both.

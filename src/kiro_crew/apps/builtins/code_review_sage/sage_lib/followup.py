@@ -29,7 +29,7 @@ all, because it answers confidently with no idea what was reviewed:
   * The transcript must still be on disk. ``resumable`` says so before a slot is
     offered, and the run's descriptor is useless without it.
   * The resume must actually land. A slot created for a follow-up carries no
-    Kiro Crew conversation log, so the dashboard's fallback (history replay) has
+    Sao Khuê conversation log, so the dashboard's fallback (history replay) has
     nothing to replay.
 
 Nothing here ever deletes a kiro-cli transcript. The only session id available is

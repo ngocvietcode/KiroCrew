@@ -207,20 +207,20 @@ def _status(args: argparse.Namespace) -> None:
             data = json.loads(resp.read())
     except urllib.error.HTTPError as e:
         if e.code in (401, 403):
-            print("Kiro Crew gateway is running (token auth enabled).")
+            print("Sao Khuê gateway is running (token auth enabled).")
             print("  For detailed stats, see the Overview page in the dashboard.")
         else:
-            print(f"Kiro Crew gateway is running but returned HTTP {e.code}.")
+            print(f"Sao Khuê gateway is running but returned HTTP {e.code}.")
         return
     except (urllib.error.URLError, OSError):
-        print("Kiro Crew gateway is not running.")
+        print("Sao Khuê gateway is not running.")
         print("  Start it with: kirocrew gateway")
         return
     except Exception:
-        print("Kiro Crew gateway is running but returned an unexpected response.")
+        print("Sao Khuê gateway is running but returned an unexpected response.")
         return
 
-    print(f"Kiro Crew v{__version__} 👻\n")
+    print(f"Sao Khuê v{__version__} 👻\n")
     print(f"  Uptime:      {data.get('uptime', '—')}")
     print(f"  Sessions:    {data.get('sessions', 0)}")
     print(f"  Messages:    {data.get('messages', 0)}")

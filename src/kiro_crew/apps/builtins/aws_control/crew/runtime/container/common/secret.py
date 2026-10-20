@@ -1,4 +1,4 @@
-"""Reading the Kiro Crew backend's per-boot authentication secret.
+"""Reading the Sao Khuê backend's per-boot authentication secret.
 
 The backend writes `gateway-<port>.secret` into its run directory at startup.
 The value is `os.urandom(16)`, generated fresh on every boot, and it is NOT

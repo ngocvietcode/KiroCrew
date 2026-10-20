@@ -358,7 +358,7 @@ def userns_reattach_needed(version: str) -> bool:
 def userns_reattach_remedy(version: str) -> str:
     """What the operator runs when :func:`userns_reattach_needed` holds."""
     return (
-        f"Kiro Crew {version} is ready. Applying it moves the launcher the kirocrew-userns "
+        f"Sao Khuê {version} is ready. Applying it moves the launcher the kirocrew-userns "
         "AppArmor profile is attached to, so the sandbox profile would stop applying at "
         "the next service start. Run `kirocrew update`, then `kirocrew service install` "
         "(which re-attaches the profile and restarts the service onto the new version). "
@@ -370,7 +370,7 @@ def userns_reattach_remedy(version: str) -> str:
 def userns_reattach_after_apply(version: str) -> str:
     """What the operator runs when *version* was promoted while that profile applies."""
     return (
-        f"Kiro Crew {version} is installed, and the kirocrew-userns AppArmor profile is "
+        f"Sao Khuê {version} is installed, and the kirocrew-userns AppArmor profile is "
         "still attached to the previous launcher, so the sandbox profile stops applying "
         "at the next service start. Run `kirocrew service install`, which re-attaches "
         "the profile and restarts the service onto the new version. `kirocrew doctor` "
@@ -414,7 +414,7 @@ def relaunch_before_apply() -> bool:
 def restart_unreachable_remedy(version: str, channel: str) -> str:
     """What the operator is told when :func:`restart_reaches` is false."""
     return (
-        f"Kiro Crew {version} was installed, but a restart would start the running "
+        f"Sao Khuê {version} was installed, but a restart would start the running "
         "version again, because the crew-venv-current link does not lead to the new "
         "tree. The gateway is not restarting. Re-run the installer, which repoints "
         f"the link: {installer_rerun_command(channel)}"

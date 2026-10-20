@@ -1,4 +1,4 @@
-"""KiroCrew cloud launcher — provision + run KiroCrew on the user's own EC2.
+"""SaoKhue cloud launcher — provision + run SaoKhue on the user's own EC2.
 
 The design is documented in ``docs/system-specs/modules/cloud.md``. The short
 version:
@@ -6,7 +6,7 @@ version:
 - **Bring-your-own-AWS, store nothing.** Every AWS call shells to the ``aws``
   CLI with ``--profile`` (never boto3) through the single :func:`cloud.aws.run_aws`
   chokepoint, so credential resolution stays in the CLI's own provider chain.
-  KiroCrew persists only a profile name, region, and stack name.
+  SaoKhue persists only a profile name, region, and stack name.
 - **CloudFormation** provisions the whole resource stack (IAM role + instance
   profile, security group, EC2 instance, EBS volume, tags) in one atomic,
   rollback-safe, one-command-teardown deploy.

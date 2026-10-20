@@ -578,7 +578,7 @@ class TestRunHelper:
     async def test_hides_kirocrews_own_trust_root_from_the_compiler(
         self, project: Path
     ) -> None:
-        """Strict mode alone is NOT enough — it misses KiroCrew's own secrets.
+        """Strict mode alone is NOT enough — it misses SaoKhue's own secrets.
 
         ``_STRICT_DIRS`` covers third-party credential locations plus
         ``~/.kiro/crew/.env``, but the gateway's ``.local_secret``,
@@ -1330,7 +1330,7 @@ class TestTheCompileLinkScanRefusesJunctionsToo:
     """The Compile guard must refuse a link through ``store.is_reparse_link``.
 
     That helper's own contract says it: "every place this module refuses a link at a
-    name Kiro Crew owns has to refuse a junction too, or the refusal is POSIX-only".
+    name Sao Khuê owns has to refuse a junction too, or the refusal is POSIX-only".
     ``store.list_files`` honours it. ``_symlinked_artifacts`` asked ``is_symlink()``,
     which does NOT report a Windows directory junction — and a junction is precisely
     a DIRECTORY link, so it reached the ``is_dir()`` arm of the same loop and broke

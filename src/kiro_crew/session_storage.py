@@ -2,7 +2,7 @@
 
 A session is presented as ONE thing with ONE size, because that is what it is to
 the person looking at it. Underneath, its bytes are split across two stores that
-Kiro Crew and kiro-cli each own:
+Sao Khuê and kiro-cli each own:
 
 * ``<data home>/sessions/<stem>.jsonl`` plus its rotated
   ``sessions/archive/<stem>__<stamp>.jsonl`` segments — the transcript, read by

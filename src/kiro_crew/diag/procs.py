@@ -1,4 +1,4 @@
-"""Read-only process-tree view of the Kiro Crew process family.
+"""Read-only process-tree view of the Sao Khuê process family.
 
 One debug question: *what is running under this install right now, who owns it,
 and which of it is orphaned?* Today an agent answers that with an ad-hoc ``ps``

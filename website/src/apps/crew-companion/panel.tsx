@@ -227,7 +227,7 @@ function Panel() {
 const host = document.getElementById('root')
 if (host) {
   initI18n()
-  // Await the theme before the first paint: the card is styled from Kiro Crew's
+  // Await the theme before the first paint: the card is styled from Sao Khuê's
   // variables, and rendering ahead of them shows fallback colours and then snaps.
   void adoptDashboardTheme().then(() => {
     watchThemeChanges()

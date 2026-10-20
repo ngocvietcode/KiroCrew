@@ -343,7 +343,7 @@ describe('McpManagement first stub approval (one click)', () => {
   it.each([
     ['launch_unresolved', 'alpha-mcp has no command to show, so it cannot use a shared backend. Nothing was turned on.'],
     ['launch_over_cap', 'alpha-mcp starts too many different commands to use a shared backend. Nothing was turned on.'],
-    ['invalid_server_name', 'alpha-mcp is not a name Kiro Crew can read as a server. Nothing was turned on.'],
+    ['invalid_server_name', 'alpha-mcp is not a name Sao Khuê can read as a server. Nothing was turned on.'],
     ['launch_resolve_failed', 'The command alpha-mcp would run could not be read. Nothing was turned on.'],
   ] as const)('says nothing was turned on when the read fails with %s', async (code, message) => {
     idle()

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  KiroCrew One-Click Deploy - per-app backend (API Gateway HTTP API -> Lambda).
+  SaoKhue One-Click Deploy - per-app backend (API Gateway HTTP API -> Lambda).
   The Lambda is invoked ONLY by API Gateway (resource policy scoped to
   apigateway.amazonaws.com), never through a Function URL, which would require a
   Principal:"*" policy and make the function world-accessible. The public entry is

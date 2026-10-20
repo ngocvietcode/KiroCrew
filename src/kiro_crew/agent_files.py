@@ -1,10 +1,10 @@
-"""Canonical filenames of the agent configs KiroCrew generates.
+"""Canonical filenames of the agent configs SaoKhue generates.
 
-Single source of truth for the on-disk names KiroCrew writes into
+Single source of truth for the on-disk names SaoKhue writes into
 ``~/.kiro/agents/`` (kiro specs). This is a **leaf module** (no intra-package
 imports) so both
 ``agent.py`` (which writes these files) and ``browser/setup.py`` (whose
-Playwright convergence sweep must touch only KiroCrew-owned files) can import it
+Playwright convergence sweep must touch only SaoKhue-owned files) can import it
 without an import cycle — ``agent.py`` imports ``converge_playwright_servers``
 from ``browser/setup.py``, so ``browser/setup.py`` cannot import ``agent.py``.
 
@@ -16,10 +16,10 @@ place: add its filename to ``OWNED_KIRO_AGENT_FILES`` and every consumer
 
 from __future__ import annotations
 
-# The primary KiroCrew agent spec.
+# The primary SaoKhue agent spec.
 AGENT_FILENAME = "kirocrew.json"
 
-# Background/auxiliary managed agent specs KiroCrew writes under ~/.kiro/agents/.
+# Background/auxiliary managed agent specs SaoKhue writes under ~/.kiro/agents/.
 LITE_AGENT_FILENAME = "kirocrew-lite.json"
 # The tool-less agent a non-operator channel sender talks to. Its own file so the
 # background helper (lite) may grow a tool one day without handing it to a guest.
@@ -86,9 +86,9 @@ def is_assistant_member(name: object, entry: object) -> bool:
     return name == ASSISTANT_MEMBER_NAME
 
 
-# Collective allowlists — the EXACT filenames KiroCrew owns in each dir. Used by
+# Collective allowlists — the EXACT filenames SaoKhue owns in each dir. Used by
 # the Playwright convergence sweep (browser/setup.py) so it rewrites only files
-# KiroCrew generates, never a user's own agent config that happens to share a
+# SaoKhue generates, never a user's own agent config that happens to share a
 # prefix (e.g. a hand-authored ``kirocrew-custom.json``).
 OWNED_KIRO_AGENT_FILES = (
     AGENT_FILENAME,
@@ -149,7 +149,7 @@ REQUIRED_KIRO_AGENT_FILES = (
 # The match is therefore exact and case-sensitive: the built-in ids are all
 # lower-case, and every case variant registers as an ordinary client agent.
 #
-# Why this lives with the FILENAMES: Kiro Crew names a crewmate's private
+# Why this lives with the FILENAMES: Sao Khuê names a crewmate's private
 # template copy after the crewmate, and the seeded first crewmate is called
 # ``default``, so without this set its first template edit writes
 # ``~/.kiro/agents/default.json`` and binds the crewmate to an id that can never
@@ -181,7 +181,7 @@ def kas_wire_agent_id(agent_id: str) -> str:
     Itself for every id but :data:`KAS_RESERVED_AGENT_IDS`, which the engine
     drops or shadows; those get :data:`KAS_WIRE_ID_SUFFIX`. Applied only where
     the id crosses the wire (the ``customAgents`` batch, ``set_mode``, the
-    advertised modes read back), so the rest of Kiro Crew keeps the crewmate's
+    advertised modes read back), so the rest of Sao Khuê keeps the crewmate's
     own id and kiro-cli, which reserves none of these, never sees the alias.
 
     A session registers exactly one agent, so the alias cannot meet a second

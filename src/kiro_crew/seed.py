@@ -21,13 +21,13 @@ from pathlib import Path
 
 try:  # py3.9+ stdlib; kept in a try so older runtimes raise cleanly.
     from importlib.resources import files as _resource_files
-except ImportError:  # pragma: no cover — KiroCrew targets py3.10.
+except ImportError:  # pragma: no cover — SaoKhue targets py3.10.
     _resource_files = None  # type: ignore[assignment]
 
 # ``kiro_crew.sel`` is a first-party module shipped in the same package, so
 # we import it at top level like every other caller (``subagent.py``,
 # ``taskrunner.py``, ``dashboard/stt_stream.py``, ...). An ImportError here
-# would mean the KiroCrew install itself is broken — there's no scenario
+# would mean the SaoKhue install itself is broken — there's no scenario
 # where it's optional. ``_safe_audit`` still handles *runtime* SEL failures
 # (read-only ``$HOME``, HMAC-key write failure) via its broad except.
 from kiro_crew import pinned_fs, platform_compat
@@ -87,7 +87,7 @@ def _fixtures_root() -> Path:
     workspaces (``src/kiro_crew/tests_fixtures/``) and in the pip-installed
     layout where the package lives under
     ``site-packages/kiro_crew/``. ``files()`` returns a ``Traversable``
-    which, for the regular filesystem loader KiroCrew uses, is a real
+    which, for the regular filesystem loader SaoKhue uses, is a real
     ``PosixPath`` — no ``as_file`` context manager gymnastics needed.
     """
     if _resource_files is None:  # pragma: no cover — see import guard above.

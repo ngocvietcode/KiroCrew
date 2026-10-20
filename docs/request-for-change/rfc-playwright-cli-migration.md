@@ -12,7 +12,7 @@ supersedes: []
 superseded-by: []
 ---
 
-# RFC: Migration — Playwright MCP + Kiro Crew proxy to Playwright CLI
+# RFC: Migration — Playwright MCP + Sao Khuê proxy to Playwright CLI
 
 This migration replaces the browser stack wholesale rather than adding a second
 path, because two browser backends would double the surface that already produces
@@ -29,7 +29,7 @@ the defects it retires.
 
 ## Why
 
-Today an agent drives a browser through `@playwright/mcp` behind a Kiro Crew
+Today an agent drives a browser through `@playwright/mcp` behind a Sao Khuê
 proxy that exists to keep accessibility trees out of the model context. The
 proxy earns its keep, but the surrounding machinery does not:
 
@@ -124,7 +124,7 @@ them.
 The capability rests on a package whose only official distribution is the npm
 registry, and that is a real cost this migration accepts rather than solves:
 
-- `@playwright/cli` is a Node program (`#!/usr/bin/env node`; Kiro Crew requires Node 20+, `MIN_NODE_MAJOR` in `browser_cli/install.py`), so there
+- `@playwright/cli` is a Node program (`#!/usr/bin/env node`; Sao Khuê requires Node 20+, `MIN_NODE_MAJOR` in `browser_cli/install.py`), so there
   is no way to drop a self-contained binary on a host. Bundling it would not
   remove that requirement, only the 19 MB download.
 - The upstream GitHub release carries **no build assets**, so "download the

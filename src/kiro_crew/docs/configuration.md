@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Everything Kiro Crew remembers about how it should behave lives in one JSON file,
+Everything Sao Khuê remembers about how it should behave lives in one JSON file,
 `~/.kiro/crew/config.json`, created automatically on the first `kirocrew gateway`
 run. Most keys are also editable from the dashboard's Settings pages, and this
 page covers the most-used keys that are not: what they mean, what they default
@@ -36,7 +36,7 @@ on disk even if you never set it — and a stored value always beats the shipped
 default. Changing a default therefore reaches new installs only: yours keeps
 whatever was written the last time it saved.
 
-Kiro Crew fixes that for itself on three keys: the two agent timeout budgets (the
+Sao Khuê fixes that for itself on three keys: the two agent timeout budgets (the
 subagent timeout and the chat-turn ceiling) and the subagent memory floor
 (`agent.spawn_min_memory_gb`, whose old `4.0` kept subagents from starting on a
 16 GB laptop). On the first start after an upgrade, a stored value that is exactly
@@ -53,7 +53,7 @@ To choose the short entry afterwards: `kirocrew config set skills.lazy_load fals
 
 Everything else is reported, not changed, because a stored value can be a real
 choice: `stt.streaming: false` is how you turn live dictation text off, and on disk
-that is identical to the old default. On startup Kiro Crew prints one line naming any
+that is identical to the old default. On startup Sao Khuê prints one line naming any
 key still holding an old default.
 
 `kirocrew config defaults` shows each one with its stored value, the current
@@ -71,29 +71,29 @@ restart only for a key that needs one, and names it. `--keep` records the exact
 values you affirmed, so changing one later brings the notice back. `kirocrew doctor` lists
 everything, affirmed values included.
 
-The same command also clears a stored value Kiro Crew has to replace — a retired
+The same command also clears a stored value Sao Khuê has to replace — a retired
 `stt.provider` such as `whisper`, which already runs on `local`. That one cannot be
 kept, because the stored name has no engine behind it; `--adopt` drops the dead
 value and the notice with it.
 
 ## Sandbox
 
-`agent.sandbox` controls whether Kiro Crew wraps the agent process in its own
+`agent.sandbox` controls whether Sao Khuê wraps the agent process in its own
 OS-level sandbox (a user namespace on Linux, `sandbox-exec` on macOS), and how
 much of your home directory that sandbox hides from the agent's subprocesses.
 
 | Value | Behavior |
 |-------|----------|
-| `auto` (default) | Add the Kiro Crew OS-level sandbox at the **standard** tier; on macOS it defers to the kiro-cli internal sandbox when that is enabled |
-| `strict` | Add the Kiro Crew OS-level sandbox at the **strict** tier: everything `standard` hides, plus `~/.aws` (including `~/.aws/sso/cache`, kiro-cli's grant store for OAuth-connected remote MCP servers), `~/.ssh` (only `known_hosts` stays readable), `~/.kube`, `~/.config/gh`, and the credential files `~/.npmrc`, `~/.pypirc`, `~/.netrc`, `~/.git-credentials` |
-| `off` | Skip the Kiro Crew OS-level sandbox |
+| `auto` (default) | Add the Sao Khuê OS-level sandbox at the **standard** tier; on macOS it defers to the kiro-cli internal sandbox when that is enabled |
+| `strict` | Add the Sao Khuê OS-level sandbox at the **strict** tier: everything `standard` hides, plus `~/.aws` (including `~/.aws/sso/cache`, kiro-cli's grant store for OAuth-connected remote MCP servers), `~/.ssh` (only `known_hosts` stays readable), `~/.kube`, `~/.config/gh`, and the credential files `~/.npmrc`, `~/.pypirc`, `~/.netrc`, `~/.git-credentials` |
+| `off` | Skip the Sao Khuê OS-level sandbox |
 
 **What the default leaves visible, and why.** The standard tier hides
 `~/.gnupg`, `~/.docker`, `~/.azure`, `~/.config/gcloud`, the crew secret vault
 and the governance cache. It deliberately does **not** hide `~/.aws`, `~/.ssh`
 or `~/.kube`: the `aws` CLI, boto3 and `credential_process`, git-over-SSH and
 `kubectl` all read those directories, and an agent that cannot reach them
-cannot debug or deploy the way you would. Kiro Crew's file tools still refuse to
+cannot debug or deploy the way you would. Sao Khuê's file tools still refuse to
 open paths under them, and the AWS/SSH environment-variable, SDK and
 exfiltration command shapes are denied at the tool gate, but a plain shell read
 (`cat ~/.aws/credentials`) is not fenced at this tier — the OS sandbox is the
@@ -110,17 +110,17 @@ It is opt-in and per host; nothing changes for you until you set it.
 Like every value of this key, a change applies to sessions started after it: a
 session already running keeps the tier it was spawned with until it ends, so
 restart the sessions (or the gateway) you want confined at the new tier.
-`strict` only tightens where Kiro Crew's own sandbox is what confines the
+`strict` only tightens where Sao Khuê's own sandbox is what confines the
 spawn: on Windows there is no OS backend, and a macOS spawn delegated to
 kiro-cli's internal sandbox is confined by that profile instead.
 
-The two layers are mutually exclusive on macOS because a nested seatbelt sandbox fails with `EPERM`. The default is `auto`: it uses the Kiro Crew sandbox where available and defers to the kiro-cli internal sandbox on macOS when that sandbox is enabled.
+The two layers are mutually exclusive on macOS because a nested seatbelt sandbox fails with `EPERM`. The default is `auto`: it uses the Sao Khuê sandbox where available and defers to the kiro-cli internal sandbox on macOS when that sandbox is enabled.
 
 Set via `kirocrew config set agent.sandbox auto` (or `strict`, or `off`).
 
 ## ACP Backend
 
-`agent.acp_backend` selects the ACP harness Kiro Crew drives. `agent.provider`
+`agent.acp_backend` selects the ACP harness Sao Khuê drives. `agent.provider`
 stays `acp` either way — the backend is a choice *within* ACP, not a different
 provider.
 
@@ -134,7 +134,7 @@ provider.
 | `opencode` | OpenCode | Uses OpenCode's native ACP server. |
 | `pi` | Pi | Uses `pi-acp` and its Pi gate extension. |
 | `goose` | goose | Uses goose's native ACP server. |
-| `deepseek` | DeepSeek Harness | Runs `dsh --profile acp` with Kiro Crew's gate plugin; provider keys come from `agent.deepseek_env`. |
+| `deepseek` | DeepSeek Harness | Runs `dsh --profile acp` with Sao Khuê's gate plugin; provider keys come from `agent.deepseek_env`. |
 
 Codex runs with `~/.aws/credentials` and `~/.aws/sso/cache` hidden on purpose,
 and only `~/.aws/config` readable. Codex on Amazon Bedrock therefore needs a
@@ -152,27 +152,27 @@ missing harness components with their install command. `kirocrew doctor` reports
 backend-specific setup failures. An unselectable or unrecognized value logs a
 warning and falls back to the default backend.
 
-KAS is not a separate executable: Kiro Crew starts a sufficiently recent
-kiro-cli ACP relay. When Kiro Crew owns KAS authentication, the relay asks the
-gateway for access tokens and the encrypted refresh token stays in Kiro Crew;
+KAS is not a separate executable: Sao Khuê starts a sufficiently recent
+kiro-cli ACP relay. When Sao Khuê owns KAS authentication, the relay asks the
+gateway for access tokens and the encrypted refresh token stays in Sao Khuê;
 otherwise `--auth-method cli` uses kiro-cli's existing login. A sign-in or
 sign-out takes effect on the next KAS process.
 
 When the gateway starts with KAS as the selected main or member backend, it runs the
 same `kiro-cli acp --help` check `kirocrew doctor` reports, in the background, so
 startup does not wait for it. If that kiro-cli has no
-`--agent-engine` flag, or does not offer engine `v3`, Kiro Crew logs a warning and
+`--agent-engine` flag, or does not offer engine `v3`, Sao Khuê logs a warning and
 runs kiro-cli instead; the dashboard's KAS row lists `kiro-cli acp --agent-engine
 v3` as missing. `config.json` keeps `kas`, so updating kiro-cli and restarting
 returns to KAS. A check that cannot run leaves KAS selected.
 
 KAS can also run with **no kiro-cli at all**. `kirocrew kas install` downloads
-the `@kiro/agent` version this Kiro Crew release pins, plus its own Node runtime,
+the `@kiro/agent` version this Sao Khuê release pins, plus its own Node runtime,
 from a sha256-pinned manifest (`agent.kas_bundle_url`) into
-`<data home>/engines/kas/<version>/`. Each Kiro Crew release runs exactly one
-engine version; after a Kiro Crew update run `kirocrew kas install` again. And
+`<data home>/engines/kas/<version>/`. Each Sao Khuê release runs exactly one
+engine version; after a Sao Khuê update run `kirocrew kas install` again. And
 `agent.kas_bundle: true` makes the `kas` backend spawn that engine directly. On
-this route Kiro Crew is always the credential owner: sign in from the dashboard
+this route Sao Khuê is always the credential owner: sign in from the dashboard
 (Sign in) — kiro-cli's login is not consulted. `kirocrew kas status` shows what is
 installed and whether the route is on; `kirocrew doctor` reports it under
 "KAS backend". The engine directory is read-only inside the agent sandbox and
@@ -271,17 +271,17 @@ harness for crew-member DM sessions, reads the same values.
 |-----|-------------|---------|
 | `agent.provider` | LLM provider backend. `"acp"` (KiroACP / kiro-cli) is the only accepted value | `"acp"` |
 | `agent.default_agent` | Default agent name for new sessions. Empty resolves from the agent config | `""` |
-| `agent.kas_bundle` | Run the `kas` backend from Kiro Crew's own installed engine bundle (`kirocrew kas install`) with its bundled Node, instead of kiro-cli's ACP relay. kiro-cli is not needed; the engine signs in through Kiro Crew's own login only. `true` with nothing installed refuses the spawn and names the install command | `false` |
+| `agent.kas_bundle` | Run the `kas` backend from Sao Khuê's own installed engine bundle (`kirocrew kas install`) with its bundled Node, instead of kiro-cli's ACP relay. kiro-cli is not needed; the engine signs in through Sao Khuê's own login only. `true` with nothing installed refuses the spawn and names the install command | `false` |
 | `agent.kas_bundle_url` | `https://` base `kirocrew kas install` fetches the engine manifest from (`<base>/kas/<version>/manifest.json`). Every artifact is sha256-pinned by the manifest and the manifest by the release, so this chooses where the pinned build is fetched from, never what is trusted. Non-https values fall back to the default | the project's release bucket |
-| `agent.deepseek_env` | Provider keys handed to the DeepSeek Harness (`agent.acp_backend: deepseek`) as environment variables at spawn: a map of environment-variable NAME to a `secret://<vault name>` reference. Store the key under Settings → Secrets first, then map it — e.g. `{"DEEPSEEK_API_KEY": "secret://my-dsh-key"}`. Any provider name the harness knows works. A plaintext value is refused at write time — the `config set` itself fails, so no key is ever stored in `config.json` — and, at spawn, so is a name the harness would forward to its own shell children, a name Kiro Crew sets itself, or one Kiro Crew's agent environment scrub strips: the session is refused before it starts, naming the offending key. Empty means no key — a locally served model needs none. Other backends ignore it | `{}` |
+| `agent.deepseek_env` | Provider keys handed to the DeepSeek Harness (`agent.acp_backend: deepseek`) as environment variables at spawn: a map of environment-variable NAME to a `secret://<vault name>` reference. Store the key under Settings → Secrets first, then map it — e.g. `{"DEEPSEEK_API_KEY": "secret://my-dsh-key"}`. Any provider name the harness knows works. A plaintext value is refused at write time — the `config set` itself fails, so no key is ever stored in `config.json` — and, at spawn, so is a name the harness would forward to its own shell children, a name Sao Khuê sets itself, or one Sao Khuê's agent environment scrub strips: the session is refused before it starts, naming the offending key. Empty means no key — a locally served model needs none. Other backends ignore it | `{}` |
 | `agent.approval_mode` | `"auto"` or `"interactive"` | `"auto"` |
 | `agent.model` | Default LLM model for new sessions. `"auto"` defers to the agent config, then to Kiro's own default. Editable from Settings → Chat → Model; a per-session model picker overrides it for that session only | `"auto"` |
 | `agent.reasoning_effort` | Default reasoning effort on models that support it. One of `""`, `low`, `medium`, `high`, `xhigh`, `max`; `""` defers to the provider/model default. A per-session override wins | `""` |
-| `agent.sandbox` | `"auto"` (Kiro Crew OS-level sandbox at the standard tier, which leaves `~/.aws`/`~/.ssh`/`~/.kube` visible for credential tooling; defers to the kiro-cli internal sandbox on macOS), `"strict"` (also hides `~/.aws` incl. `sso/cache`, `~/.ssh` bar `known_hosts`, `~/.kube`, `~/.config/gh`, `~/.npmrc`, `~/.pypirc`, `~/.netrc`, `~/.git-credentials`), or `"off"` (skip the Kiro Crew sandbox). Applies to sessions started after the change. See [Sandbox](#sandbox) | `"auto"` |
+| `agent.sandbox` | `"auto"` (Sao Khuê OS-level sandbox at the standard tier, which leaves `~/.aws`/`~/.ssh`/`~/.kube` visible for credential tooling; defers to the kiro-cli internal sandbox on macOS), `"strict"` (also hides `~/.aws` incl. `sso/cache`, `~/.ssh` bar `known_hosts`, `~/.kube`, `~/.config/gh`, `~/.npmrc`, `~/.pypirc`, `~/.netrc`, `~/.git-credentials`), or `"off"` (skip the Sao Khuê sandbox). Applies to sessions started after the change. See [Sandbox](#sandbox) | `"auto"` |
 | `agent.streaming` | Stream response text as it is generated | `true` |
 | `agent.bot_name` | Custom name the bot identifies as | `""` |
 | `agent.session_sharing` | Reuse a shared ACP runtime for subagents on the kiro-cli backend; alternate ACP backends ignore it | `true` |
-| `agent.tool_search` | Defer MCP tool definitions so the model loads them on demand with `tool_search`. kiro-cli defers once either threshold below is exceeded; KAS defers all of them, and only when the active agent's `tools` grants `tool_search` (otherwise the setting is sent off for that agent). Other ACP backends ignore it. Kiro Crew's own MCP servers defer only when the spawn runs the pinned kiro-cli install (or its `kiro-cli-chat`) at 2.27.0 or later; any other executable, or an older or unknown version, keeps them resident. Setting `ASBX_KIRO_MANDATORY_MCPS` (comma-separated server names) in the gateway's environment overrides that never-defer list | `true` |
+| `agent.tool_search` | Defer MCP tool definitions so the model loads them on demand with `tool_search`. kiro-cli defers once either threshold below is exceeded; KAS defers all of them, and only when the active agent's `tools` grants `tool_search` (otherwise the setting is sent off for that agent). Other ACP backends ignore it. Sao Khuê's own MCP servers defer only when the spawn runs the pinned kiro-cli install (or its `kiro-cli-chat`) at 2.27.0 or later; any other executable, or an older or unknown version, keeps them resident. Setting `ASBX_KIRO_MANDATORY_MCPS` (comma-separated server names) in the gateway's environment overrides that never-defer list | `true` |
 | `agent.tool_search_min_pct` | Tool-definition context threshold as a percentage; `0` with the token threshold also `0` always defers | `5` |
 | `agent.tool_search_min_tokens` | Tool-definition token threshold; `0` with the percentage threshold also `0` always defers | `50000` |
 | `agent.fallback_model` | Model used after the active model exhausts its transient-retry budget. `"auto"` defers to availability-aware routing; `""` disables fallback | `"auto"` |
@@ -306,7 +306,7 @@ harness for crew-member DM sessions, reads the same values.
 | Key | Description | Default |
 |-----|-------------|---------|
 | `session.timeout_secs` | Idle session timeout in seconds (0 disables the idle sweep) | `3600` (60 min) |
-| `session.idle_exempt_keys` | Session keys the idle timeout never ends, for a chat that automation wakes hours apart and that would otherwise start cold on every wake. A dashboard chat's key is `dashboard:` followed by the `sid` in its URL, unless the tab is linked to a cron job or a channel thread, which uses that link's key instead (for example `cron:<job id>`). Closing a dashboard or cron tab still ends its process; a channel thread's session belongs to the channel, so closing its viewer does not. `session.watchdog_rss_max_mb`, when set, still applies. A listed session with no tab, such as a cron job that runs without one, keeps running even after its job is deleted, so take a deleted job's key off the list. The RSS limit or a gateway restart still ends it. On the kiro-cli or KAS backend, a Kiro sign-out from the dashboard ends it at once, whatever account it signed in with. After any other switch or sign-out of the Kiro account it signed in with, the next dashboard chat turn ends it, and so does the next agent cron run unless Kiro Crew then cannot tell which account is signed in, as with a social login. A session that is mid-turn then ends later instead, when its next turn starts or at a later dashboard chat turn or agent cron run. Re-read every cleanup tick, so a change needs no restart. At most 10 keys of up to 512 characters each are kept, because each listed key can keep a whole kiro-cli process tree running; a longer key is dropped, not cut short, and the gateway log warns once per load when any key is dropped | `[]` |
+| `session.idle_exempt_keys` | Session keys the idle timeout never ends, for a chat that automation wakes hours apart and that would otherwise start cold on every wake. A dashboard chat's key is `dashboard:` followed by the `sid` in its URL, unless the tab is linked to a cron job or a channel thread, which uses that link's key instead (for example `cron:<job id>`). Closing a dashboard or cron tab still ends its process; a channel thread's session belongs to the channel, so closing its viewer does not. `session.watchdog_rss_max_mb`, when set, still applies. A listed session with no tab, such as a cron job that runs without one, keeps running even after its job is deleted, so take a deleted job's key off the list. The RSS limit or a gateway restart still ends it. On the kiro-cli or KAS backend, a Kiro sign-out from the dashboard ends it at once, whatever account it signed in with. After any other switch or sign-out of the Kiro account it signed in with, the next dashboard chat turn ends it, and so does the next agent cron run unless Sao Khuê then cannot tell which account is signed in, as with a social login. A session that is mid-turn then ends later instead, when its next turn starts or at a later dashboard chat turn or agent cron run. Re-read every cleanup tick, so a change needs no restart. At most 10 keys of up to 512 characters each are kept, because each listed key can keep a whole kiro-cli process tree running; a longer key is dropped, not cut short, and the gateway log warns once per load when any key is dropped | `[]` |
 | `session.empty_response_auto_continue` | After two consecutive empty model responses, send transcript-visible `continue` nudges on the same session | `true` |
 | `session.empty_response_max_continues` | How many `continue` nudges may run back to back before the give-up card (clamped 1-10; above 1 the notice shows "recovery N of M") | `1` |
 | `session.autocompact_pct` | Context usage percentage at which auto-compaction triggers (5-90). Lower compacts sooner and keeps per-turn cost down; higher retains more conversation before rewriting it. Applies to new installs: an existing `config.json` keeps its stored value. On the KAS backend it does not trigger compaction: KAS decides when to compact on its own | `70.0` |
@@ -372,7 +372,7 @@ transcribed the same way.
 | `stt.enabled` | Turn spoken input into text you can send | `true` |
 | `stt.provider` | `"local"` (this machine, no account), `"apple"` (the on-device recognizer built into macOS 26 and later), `"transcribe"` (AWS Transcribe, which bills your AWS account), or `"off"` (no recognizer runs, the same as turning speech input off). `kirocrew config set` refuses any other value. A stored unknown value runs as `off` with a log warning, and `kirocrew config defaults --adopt stt.provider` rewrites it to `off` rather than switching to `local`; a retired name reads as `local` (see below) | `"local"` |
 | `stt.model` | Which speech model the local provider downloads and runs: `tiny`, `base`, `small`, `large-v3-turbo`, or `custom` to run your own (see below). Bigger is more accurate and a longer first-time download — and on a CPU-only build the largest can recognise slower than you speak (an 11-second clip took 13.6 s on a 16-thread aarch64 CPU, 1.24x the audio), which Settings → Voice says beside the choice | `"base"` |
-| `stt.custom_model_path` | File name of a whisper.cpp ggml model in the speech models folder (`models/whisper` under the Kiro Crew home), run instead of a catalog one when `model` is `custom`. Must resolve to a regular file inside that folder; nothing is downloaded | `""` |
+| `stt.custom_model_path` | File name of a whisper.cpp ggml model in the speech models folder (`models/whisper` under the Sao Khuê home), run instead of a catalog one when `model` is `custom`. Must resolve to a regular file inside that folder; nothing is downloaded | `""` |
 | `stt.custom_model_sha256` | The 64-character hex sha256 of the file at `custom_model_path`, checked on every load. Required for `model: "custom"`; with either half missing or malformed, `custom` degrades to the default model with a warning | `""` |
 | `stt.language_code` | Language for speech recognition, e.g. `en-US`, `fr-FR`. `"auto"` auto-detects on the local provider | `"auto"` |
 | `stt.streaming` | Show words in the message box while you are still speaking rather than only once you stop. Every provider supports it; turning it off spends less CPU on `local` and fewer API calls on `transcribe` | `true` |
@@ -392,7 +392,7 @@ transcribed the same way.
 #### The local provider downloads one model, once
 
 Recognition needs weights, and they are too large to ship inside the package, so
-the first time you dictate Kiro Crew fetches the model named by `stt.model` and
+the first time you dictate Sao Khuê fetches the model named by `stt.model` and
 every session after that loads it from disk. `base` is 148 MB. The others are
 78 MB (`tiny`), 488 MB (`small`) and 1.6 GB (`large-v3-turbo`). The dashboard says
 a download has started before it begins and reports its progress, because a silent
@@ -409,7 +409,7 @@ recognizer, decoder, and AWS client. In a source environment the recognizer and
 AWS client are the optional `voice` extra, installed as its own dependencies
 (`pip install 'boto3>=1.34,<2' 'amazon-transcribe>=0.6.3,<1' 'pywhispercpp>=1.5,<2'`):
 
-- **Intel Macs have no prebuilt recognizer.** Every other platform Kiro Crew
+- **Intel Macs have no prebuilt recognizer.** Every other platform Sao Khuê
   supports (Apple silicon macOS, glibc and musl Linux on x86_64 and arm64, and
   Windows) installs a ready-built wheel. On an Intel Mac `pip` falls back to
   building from source, which needs a C++ toolchain and CMake. Settings reports
@@ -431,7 +431,7 @@ AWS client are the optional `voice` extra, installed as its own dependencies
   same pinned upstream bytes into `<data home>/models/ffmpeg/` and verifies them
   against a built-in SHA-256 digest before anything is executed. The digest is the
   trust anchor, so `~/.local/bin` is still not a place a decoder can be installed
-  for Kiro Crew's use. If that download fails, the page offers to hand the failure
+  for Sao Khuê's use. If that download fails, the page offers to hand the failure
   to a chat session, which is given the host details and the trusted locations.
 
 #### Retired providers
@@ -557,7 +557,7 @@ uses. For separation beyond picking the account:
 
 - A [crew](crew-members.md) gives a project its own workspace, memory store and
   approval mode.
-- A separate Kiro Crew instance, with its own `KIROCREW_HOME` and port, keeps
+- A separate Sao Khuê instance, with its own `KIROCREW_HOME` and port, keeps
   everything apart.
 
 ### Memory and embeddings
@@ -574,9 +574,9 @@ them, so there is no enable switch here: only knobs for *which* model runs.
 | `memory.embedding_bulk_threads` | Threads used for background embedding; `0` inherits `embedding_threads` | `1` |
 | `memory.embedding_bulk_duty` | Target fraction of worker time spent on background embedding; interactive queries take priority | `0.2` |
 | `memory.embedding_idle_evict_secs` | Unload the embedding model after this many seconds with no embedding; the next search loads it again. `0` keeps it loaded | `3600` |
-| `memory.embed_model_url` | Override HTTPS URL for the embedding-model GGUF download (mirrored or airgapped hosts). Empty uses the public Kiro Crew CDN. `KIROCREW_EMBED_MODEL_URL` wins over both. Downloads are sha256-verified regardless of source | `""` |
+| `memory.embed_model_url` | Override HTTPS URL for the embedding-model GGUF download (mirrored or airgapped hosts). Empty uses the public Sao Khuê CDN. `KIROCREW_EMBED_MODEL_URL` wins over both. Downloads are sha256-verified regardless of source | `""` |
 | `memory.embed_model_path` | Absolute path to a local GGUF to run **instead of** the bundled Qwen3-Embedding-0.6B. When set, the default model is never downloaded, so a custom model survives a default-model version change. Set `embedding_dim` to the model's output width. Changing the model changes the vector space, so stored embeddings are regenerated in the background. A configured-but-unreadable path fails closed (keyword search still works) rather than silently reverting to the default and re-embedding your corpus. Editable from the dashboard (Memory → Embedding Model). `KIROCREW_EMBED_MODEL_PATH` wins over this | `""` |
-| `memory.embed_model_id` | Optional label for a custom model. The vector-space identity is `<label>:sha256:<digest>` of the model file's bytes, so two different models of identical name and size are always told apart and this key cannot pin or override that identity. A model recorded without a label takes the pooling its GGUF declares into its id, after the digest (`custom:sha256:<digest>@mean`, `custom:sha256:<digest>@cls`); a label you set, whatever it contains, keeps last-token pooling. A custom model applied before Kiro Crew read the declared pooling keeps last-token pooling and its vectors until you apply it again. A file replaced in place under a `custom` id takes the new file's declared pooling (its digest changed, so it is re-embedded anyway); a label you set carries over. Applying a model from the dashboard writes the resulting id together with `memory.embed_model_stamp` (the file's device, inode, size and timestamps); an unchanged file reuses the stored digest at startup instead of re-hashing the weights | `""` |
+| `memory.embed_model_id` | Optional label for a custom model. The vector-space identity is `<label>:sha256:<digest>` of the model file's bytes, so two different models of identical name and size are always told apart and this key cannot pin or override that identity. A model recorded without a label takes the pooling its GGUF declares into its id, after the digest (`custom:sha256:<digest>@mean`, `custom:sha256:<digest>@cls`); a label you set, whatever it contains, keeps last-token pooling. A custom model applied before Sao Khuê read the declared pooling keeps last-token pooling and its vectors until you apply it again. A file replaced in place under a `custom` id takes the new file's declared pooling (its digest changed, so it is re-embedded anyway); a label you set carries over. Applying a model from the dashboard writes the resulting id together with `memory.embed_model_stamp` (the file's device, inode, size and timestamps); an unchanged file reuses the stored digest at startup instead of re-hashing the weights | `""` |
 | `memory.semantic_confidence_threshold` | Minimum similarity score for a semantic search result | `0.8` |
 | `memory.episodic_dedup_threshold` | Similarity threshold for deduplicating episodic memories | `0.88` |
 | `memory.episodic_max_results` | Max episodic memories injected per session | `8` |
@@ -660,7 +660,7 @@ member-memory sandbox is required.
 | `knowledge.auto_ingest_artifacts` | Auto-ingest content-bearing local artifacts into the Knowledge Library as a searchable "Artifacts" source, kept in sync and removed when the artifact is deleted (see [Knowledge Library](knowledge-library-how-it-works.md)). Opt-in: enabling it backfills the artifacts you already have | `false` |
 | `knowledge.auto_ingest_artifact_kinds` | Artifact kinds eligible for auto-ingest. `widget` is excluded as UI rather than a document; `svg` is excluded because the file reader has no support for it | `["markdown", "text", "html", "json"]` |
 | `knowledge.max_ingest_file_mb` | Per-file Knowledge Library ingestion size cap; oversized files are skipped. `0` disables the cap | `100.0` |
-| `knowledge.auto_add_documents` | Let the agent add documents it reads while working to the Knowledge Library (one aggregate "Auto-added" source). The agent fetches the content with its own tools under your approval; Kiro Crew fetches nothing, so `doc_ingest_hosts` does not apply. Renamed from `auto_ingest_doc_links`, which is still accepted on read | `false` |
+| `knowledge.auto_add_documents` | Let the agent add documents it reads while working to the Knowledge Library (one aggregate "Auto-added" source). The agent fetches the content with its own tools under your approval; Sao Khuê fetches nothing, so `doc_ingest_hosts` does not apply. Renamed from `auto_ingest_doc_links`, which is still accepted on read | `false` |
 | `knowledge.folder_ingest_chunk_budget` | Chunks a folder you add by hand may ingest per watcher sweep, including the first scan started by confirming the source. Nothing is skipped — newest files land first and the rest continue on later sweeps — so this paces spend rather than limiting what is ingested. 0 removes the bound; a per-source `chunk_budget` property overrides it for one folder | `300` |
 | `knowledge.dedup_every_n_sweeps` | Run a full duplicate-collapsing pass every Nth watcher sweep (the per-write gate only catches byte-identical documents). 0 disables | `12` |
 | `knowledge.extraction_pool_size` | Concurrent LLM workers for document extraction. Applies live: the pool resizes once its in-flight extractions finish | `3` |
@@ -679,7 +679,7 @@ member-memory sandbox is required.
 
 ## Running a custom speech-to-text model
 
-Put a whisper.cpp ggml model file in the speech models folder, `models/whisper` under the Kiro Crew home (`~/.kiro/crew/models/whisper` by default). Then set `stt.model` to `custom`, `stt.custom_model_path` to the file's name, and `stt.custom_model_sha256` to its 64-character hex sha256:
+Put a whisper.cpp ggml model file in the speech models folder, `models/whisper` under the Sao Khuê home (`~/.kiro/crew/models/whisper` by default). Then set `stt.model` to `custom`, `stt.custom_model_path` to the file's name, and `stt.custom_model_sha256` to its 64-character hex sha256:
 
 ```json
 {
@@ -710,7 +710,7 @@ Only whisper.cpp ggml weights work. This picks a different model for the bundled
 | `KIROCREW_SKIP_MODEL_DOWNLOAD` | Set to `1` to skip the background embedding-model download at gateway startup (tests, CI, airgapped hosts) | unset |
 | `KIROCREW_EMBED_MODEL_URL` | Override HTTPS URL for the embedding-model GGUF; wins over `memory.embed_model_url` and the CDN default | unset |
 | `KIROCREW_EMBED_MODEL_PATH` | Absolute path to a local GGUF to use instead of the bundled model; wins over `memory.embed_model_path` and suppresses the default download entirely. A model set only here is never recorded, so it keeps last-token pooling; setting `memory.embed_model_path` to the same file (or applying it in the dashboard) records it with the pooling its GGUF declares | unset |
-| `KIROCREW_CC_PERMISSION_MODE` | Set to `auto` to seed every Claude Code session with Claude's own classifier as its permission mode. Only the exact value `auto` takes effect; anything else logs a warning and seeds nothing. Audit caveat: a call the classifier approves asks nothing, so it reaches no Kiro Crew tool-call hook and writes no security event log record. Other backends ignore it | unset |
+| `KIROCREW_CC_PERMISSION_MODE` | Set to `auto` to seed every Claude Code session with Claude's own classifier as its permission mode. Only the exact value `auto` takes effect; anything else logs a warning and seeds nothing. Audit caveat: a call the classifier approves asks nothing, so it reaches no Sao Khuê tool-call hook and writes no security event log record. Other backends ignore it | unset |
 | `KIROCREW_SKIP_APP_STORE_FETCH` | Set to `1` to keep the app store off the network: the listing shows the bundled app list and does not fetch the published catalog (tests, CI, airgapped hosts). Installing an app still needs the network | unset |
 
 Use a dedicated directory for `KIROCREW_HOME`. Startup applies owner-only
@@ -814,7 +814,7 @@ Updating by hand never restarts a running gateway, so finish with
   `kirocrew restart`. On pipx it re-runs the installer, which replaces the pipx
   install.
 - **Plain `pip`:** upgrade with pip in the same environment, from the channel
-  index you installed from (Kiro Crew is not on PyPI; see
+  index you installed from (Sao Khuê is not on PyPI; see
   [Installing a published wheel with pip](../../../docs/guides/install.md#installing-a-published-wheel-with-pip)),
   then `kirocrew restart`. Here `kirocrew update` installs a separate copy
   instead of upgrading that environment.
@@ -883,7 +883,7 @@ editing the file.
 
 ## Denied Commands
 
-The built-in destructive-command deny rules are enforced at Kiro Crew's own
+The built-in destructive-command deny rules are enforced at Sao Khuê's own
 PreToolUse gate, and are on by default. They are configurable from Settings →
 Security: you can disable individual rules, disable them all, or add your own
 patterns.

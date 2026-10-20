@@ -1,10 +1,10 @@
 ---
 name: theme-pack-authoring
-description: Build, validate, and install Kiro Crew theme packs -- pack anatomy, the 56-variable palette, role-tagged fonts, the overrides.css allowlist (what installs vs what actually renders), and the install-verify cycle. Use when the user wants to create or edit a theme pack.
+description: Build, validate, and install Sao Khuê theme packs -- pack anatomy, the 56-variable palette, role-tagged fonts, the overrides.css allowlist (what installs vs what actually renders), and the install-verify cycle. Use when the user wants to create or edit a theme pack.
 triggers: theme pack, custom theme, theme.json, variables.json, overrides.css, install theme, theme font, dashboard theme, build a theme
 ---
 
-# Kiro Crew theme-pack authoring
+# Sao Khuê theme-pack authoring
 
 House rules for building theme packs. The authoritative contract is
 [`website/docs/theming-contract.md`](https://github.com/kirodotdev/KiroCrew/blob/main/website/docs/theming-contract.md);
@@ -49,7 +49,7 @@ a level-0 pack shipping a font is refused.
 
 `loaderIcons` is optional and requires Level 1 or 2. Supply 4–8 distinct names
 from: `cloud`, `flower`, `heart`, `moon`, `sparkles`, `star`, `sun`, `zap`.
-Kiro Crew maps these names to bundled Lucide symbols and keeps the stock
+Sao Khuê maps these names to bundled Lucide symbols and keeps the stock
 cross-fading carousel; packs cannot inject loader code or SVG through this field.
 To ship your own loader art instead, put 1–8 `.png`/`.webp`/`.gif`/`.svg` files
 in `loader/` (Level 1): one renders alone, 2–8 are cycled, and they win over
@@ -61,7 +61,7 @@ in `loader/` (Level 1): one renders alone, 2–8 are cycled, and they win over
 - `sans` faces feed the **Sans** Font Family option; `mono` faces feed **Mono**
   AND code surfaces (code blocks, inline code, diffs) under every option.
 - **System always stays the OS font** — a pack cannot reach it. Unfilled roles
-  fall back to Kiro Crew's own stacks.
+  fall back to Sao Khuê's own stacks.
 - Max **6 faces across both roles**; pick weights deliberately. The UI uses
   400/500/600/700; with 3 sans slots ship 400/500/600 (`font-bold` resolves to
   600, acceptable; 400/500/700 makes the many semibold elements render heavy).
@@ -196,7 +196,7 @@ what to change; re-install overwrites, which is the update path. Iterate by
 editing the pack source and re-installing — do not hand-edit the installed copy
 under the data directory, which bypasses validation.
 
-In a Kiro Crew dev checkout, `_validate_theme_dir(pack_dir, installing=True)`
+In a Sao Khuê dev checkout, `_validate_theme_dir(pack_dir, installing=True)`
 from `kiro_crew.dashboard.theme_validate` runs the same check programmatically.
 
 ## Verify like you mean it

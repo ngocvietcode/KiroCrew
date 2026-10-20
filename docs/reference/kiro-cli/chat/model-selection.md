@@ -69,7 +69,7 @@ restart.
 `/effort`, or the `--effort` launch flag, sets the level; the picker offers only
 the levels the current model supports and the choice persists. A higher level
 spends more tokens internally, so it costs more credits at the same multiplier.
-Kiro Crew's own resolution order and per-role behaviour are documented in
+Sao Khuê's own resolution order and per-role behaviour are documented in
 [providers](../../../system-specs/modules/providers.md).
 
 ## Choosing guide

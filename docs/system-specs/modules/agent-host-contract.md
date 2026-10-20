@@ -1,6 +1,6 @@
 # Agent host contract
 
-What an agent backend must supply to Kiro Crew *besides* speaking the Agent Client
+What an agent backend must supply to Sao Khuê *besides* speaking the Agent Client
 Protocol. ACP defines the wire; this document defines the **host** — the
 filesystem layout, agent-definition format, session store, credential store,
 sandbox posture, MCP delivery channel, billing surface, and permission engine
@@ -419,7 +419,7 @@ invented one.
 
 | | kiro-cli | KAS | CC | Codex | OpenCode | Pi | goose | DeepSeek |
 |---|---|---|---|---|---|---|---|---|
-| How a tool result arrives | `content[].content.text` blocks, or `rawOutput.items[].Text` / `.Json.stdout` | `content[].content.text` blocks, or a **flat `rawOutput` object with no `items`** (measured: `{output, exitCode, message}`, `{response, imageBase64Urls, message}`, `{kind, retracted}`) — and an MCP result can arrive **already-serialised**, **copied into several fields**, one field **replaced by an offload reference** above a size threshold, and every string **capped at 30k chars** (head 500 + tail 500) | `content[]` text blocks | unmeasured — no codex tool-result shape is recorded. Codex adds no builder of its own and rides the shared `_build_tool_result_event` path, which handles `content[].content.text`, `rawOutput.items[]`, and any other non-empty `rawOutput` object by serialising it (`acp/_dispatch_parts/tool_result_events.py`) | as `tool_call_update` frames carrying `content` blocks — captured live: an `in_progress` update, then a terminal one (`test/fixtures/acp_frames/opencode/`) | as `tool_call_update` frames — captured live: `in_progress` updates, then a `completed` one whose only payload is `_meta.terminal_exit` (exit code, signal). For a bash call NO stdout text arrives in any frame: the `tool_call` frame's `content` is a `terminal` block naming the adapter's terminal id, and the output is meant to be read through the ACP `terminal/*` methods, which Kiro Crew does not implement. The model sees the output; the transcript's tool pill shows the call and its exit, not its text (`test/fixtures/acp_frames/pi/`) | as `tool_call_update` frames carrying `content` blocks — captured live: an `in_progress` update, then a terminal one (`test/fixtures/acp_frames/goose/`) | `content[].content.text` blocks on `tool_call_update` (captured). A sandbox denial arrives INSIDE that text as `[sandbox: file access denied under <mode>]` with a `status` of `completed` rather than `failed`, so a reader keying on status alone would record a denied action as a successful one |
+| How a tool result arrives | `content[].content.text` blocks, or `rawOutput.items[].Text` / `.Json.stdout` | `content[].content.text` blocks, or a **flat `rawOutput` object with no `items`** (measured: `{output, exitCode, message}`, `{response, imageBase64Urls, message}`, `{kind, retracted}`) — and an MCP result can arrive **already-serialised**, **copied into several fields**, one field **replaced by an offload reference** above a size threshold, and every string **capped at 30k chars** (head 500 + tail 500) | `content[]` text blocks | unmeasured — no codex tool-result shape is recorded. Codex adds no builder of its own and rides the shared `_build_tool_result_event` path, which handles `content[].content.text`, `rawOutput.items[]`, and any other non-empty `rawOutput` object by serialising it (`acp/_dispatch_parts/tool_result_events.py`) | as `tool_call_update` frames carrying `content` blocks — captured live: an `in_progress` update, then a terminal one (`test/fixtures/acp_frames/opencode/`) | as `tool_call_update` frames — captured live: `in_progress` updates, then a `completed` one whose only payload is `_meta.terminal_exit` (exit code, signal). For a bash call NO stdout text arrives in any frame: the `tool_call` frame's `content` is a `terminal` block naming the adapter's terminal id, and the output is meant to be read through the ACP `terminal/*` methods, which Sao Khuê does not implement. The model sees the output; the transcript's tool pill shows the call and its exit, not its text (`test/fixtures/acp_frames/pi/`) | as `tool_call_update` frames carrying `content` blocks — captured live: an `in_progress` update, then a terminal one (`test/fixtures/acp_frames/goose/`) | `content[].content.text` blocks on `tool_call_update` (captured). A sandbox denial arrives INSIDE that text as `[sandbox: file access denied under <mode>]` with a `status` of `completed` rather than `failed`, so a reader keying on status alone would record a denied action as a successful one |
 | Directive marker readable in the result | yes | **no**, and it does not need to be | yes | unmeasured, and it does not need to be | unmeasured for a directive specifically. What IS observed: the completed `tool_call_update` carries the command's stdout verbatim in `content[].content.text` and again in `rawOutput.output` (`permission-request-live.jsonl`), so the channel a marker would ride is the ordinary one | unmeasured, and moot today: no Crew MCP server can be mounted on this harness (§5), so no directive tool is callable from a pi session | unmeasured for a directive specifically. What IS observed: the completed `tool_call_update` carries the command's stdout verbatim in `content[].content.text` and again in `rawOutput.stdout`, so the channel a marker would ride is the ordinary result text | unmeasured, and it does not need to be |
 | How the tool call's `rawInput` arrives | complete on `tool_call` | complete on `tool_call`, uncapped (`tool-call-emitter.ts` passes it around its wire cap (kiro-agent `tool-call-emitter.ts`)); carries a `_meta` block the MCP server never sees | empty on `tool_call`, complete on `tool_call_update` | unmeasured — rides the shared `_build_tool_call_event` / `_build_tool_refinement_event`, which record `raw_tool_params` from whichever frame carries it | as a JSON object on the `tool_call` frame, and it is REFINED afterwards: the first frame carried only `cwd`, and the command appeared on the following `tool_call_update` (captured live) | `null` on the bash `tool_call` frame and `{}` on a read whose arguments the model omitted (captured live) — the adapter does not forward the arguments there. They arrive on the permission request's envelope instead, written by Crew's extension from pi's own `tool_call` event (`acp/_dispatch_parts/permission_requests.py`) | as a JSON object on the `tool_call` frame and COMPLETE there — the builtin's frame carried `command` and `timeout_secs` together, with no later refinement needed, unlike a harness whose first frame carries only `cwd` | complete on `tool_call`, carrying the arguments the model supplied (`command` and `description` for bash, `file_path` and `content` for write). A malformed argument set is rejected by the harness's own schema before anything runs and comes back as a `failed` `tool_call_update` |
 | Wire title of an MCP tool call | `_meta.kiro` identity, title not needed | `Running: @<serverName>/<toolName>` (measured; the `Running: ` prefix is the backend's, and `directive_tool_from_call` strips one) | raw Claude tool name `mcp__<server>__<tool>` | still unmeasured, and it matters rather than being moot, because codex sessions carry Crew's MCP servers and `monitor_start` and friends are callable there. A codex call resolves to no directive tool from the title, and codex emits no `_meta.kiro.toolName` either, so the marker gate correctly refuses — what lands the directive is the OUT-OF-BAND record (`dashboard/directive_queue`), claimed by the digest of the call's own `rawInput` and never by the result body. That path needs the MCP child to reach the gateway under this session's identity, which is exactly why the projection carries `KIROCREW_SESSION_KEY` on the element: without it the record is parked under no session and the whole control plane fails closed on this backend (`dashboard/chat_turn/tool_rows.py` and `tool_results.py`, `providers/mirrors/codex.py`) | `<server>_<tool>` — ONE underscore, and no `_meta.kiro` at all, so the title is the only channel that names the tool (**captured live** off 1.18.30 — `test/fixtures/acp_frames/opencode/mcp-directive-call-live.jsonl`, a turn whose only tool is a Crew MCP directive tool mounted through `session/new` `mcpServers` by the capture harness, Crew also sends this backend its array, `_opencode_session_mcp_servers`, §5). The id is `sanitize(server) + "_" + sanitize(tool)` with `[^a-zA-Z0-9_-]` replaced by `_`, and a validator caps it at 64 chars — Crew's longest control-plane name is 45. `directive_tool_from_call` recognises that spelling by EXACT server-qualified match (`_server_underscore_qualified`) rather than by widening `match_tool` to a single underscore, which would resolve `do_monitor_start`; `channel._blocked_tool_named` normalizes the same prefix. As on codex, what lands the directive is the OUT-OF-BAND record (`dashboard/directive_queue`) claimed by the digest of the call's own `rawInput` — the title only selects WHICH record, and it is the harness's own field, never the model's | unknown to this repository — no Crew MCP server can be mounted on this harness today, so no such call has been seen | `<server>: <tool with spaces>` as human copy, with the machine-readable pair alongside it under `_meta.goose.toolCall` (`toolName`, `extensionName`) — so unlike opencode the title is NOT the only channel that names the tool (**captured live** off 1.50.1) | `mcp__<serverName>__<toolName>`, captured as `mcp__crew-probe__crew_probe_echo` (see the Tool-name grammar row in §5). Native tool titles arrive bare |
@@ -552,7 +552,7 @@ absent or `""` key is "no choice" and also selects KAS; a manual harness
 choice stores its id, and Kiro CLI is stored as `"kiro"`. Kiro CLI remains the
 first-class fallback floor, and `agent.provider` stays `"acp"` —
 the harness is never the provider selector (see
-[harness-parity.md](harness-parity.md)). Only the Kiro Crew-side integration is
+[harness-parity.md](harness-parity.md)). Only the Sao Khuê-side integration is
 documented here: that backend is not open source, so its wire shapes, storage,
 auth and process internals are out of scope, and every place its signals differ
 from `kiro-cli`'s is absorbed in one Crew module so a change there is a one-file
@@ -590,16 +590,16 @@ transport mode is out of scope pending its own design and review.
 
 Hooks are served over the ACP hooks channel, and NOT announced. `acp/kas_wire.py`
 builds the answers to `_kiro/hooks/list`, `_kiro/hooks/sessionStart` and
-`_kiro/hooks/executeHook` from Kiro Crew's own script-hook store, and
+`_kiro/hooks/executeHook` from Sao Khuê's own script-hook store, and
 `AcpSessionHandle` routes all three. `KAS_CLIENT_CAPABILITIES` does not carry
 `hooks: {enabled: true}`, so the agent asks none of them.
 
-The flag stays off because the surface would duplicate a stronger one. Kiro Crew's
+The flag stays off because the surface would duplicate a stronger one. Sao Khuê's
 own turn loop (`dashboard/chat_turn/turn_spec_hooks.py` `_fire`) already fires all five events
 this surface can serve for a KAS session, and its PreToolUse can block a tool on
 exit 2; `executeHook` output only reaches the agent as a context note. Announcing
 would run each hook twice and add a weaker block path. The two request triggers with
-no Kiro Crew event, `preTaskExecution` and `postTaskExecution`, are where this
+no Sao Khuê event, `preTaskExecution` and `postTaskExecution`, are where this
 channel could add something the turn loop cannot, and today no stored hook maps to
 either, so both answer an empty list. `AcpSessionHandle` routes `executeHook` only
 while the handshake announces `hooks`, so a backend that sends it unasked is
@@ -609,11 +609,11 @@ The agent spec's own `hooks` field takes the same turn-loop path. The `customAge
 
 If the flag is ever set, send the covenant's shape and no `v2` sub-flag: `v2` selects
 the agent's own disk loader, which spawns the command itself. Without `v2` the agent
-wires its ACP hook providers, so Kiro Crew becomes the only hook provider for that
+wires its ACP hook providers, so Sao Khuê becomes the only hook provider for that
 session and the user's `.kiro/hooks/*.json` files and agent-profile hooks stop being
 loaded by the agent.
 
-The security argument for this channel is that Kiro Crew spawns the hook's command,
+The security argument for this channel is that Sao Khuê spawns the hook's command,
 so the deny floor and the ceiling are on the path. It rests on one property of the
 agent, verified rather than assumed: a listed `runCommand` action travels back to the
 client and is never spawned agent-side. Read out of the shipped `@kiro/agent` bundle
@@ -623,12 +623,12 @@ hook providers, the hooks provider and the pre/post-tool-use pair, read
 `hook.action.command` only to hand it to one shared helper, and that helper's single
 outbound call is `_kiro/hooks/executeHook`. That helper first asks the client for
 permission with `session/request_permission`, titled with the command, unless the
-listed action carries `approved`, which Kiro Crew never sends; the permission answer
+listed action carries `approved`, which Sao Khuê never sends; the permission answer
 and the execute gates below are independent, so neither relies on the other.
 
 `executeHook` runs a hook only when all four hold, in order:
 
-- an owning Kiro Crew session is known. `AcpSessionHandle` carries it, threaded from
+- an owning Sao Khuê session is known. `AcpSessionHandle` carries it, threaded from
   `AcpRuntime.create_session(session_key=…)` / `load_session(session_key=…)` and
   rebound on a warm-pool claim (`bind_session_key`); a pooled session nobody has
   claimed is refused;

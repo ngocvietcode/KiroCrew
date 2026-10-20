@@ -847,5 +847,5 @@
       "action": "SCMP_ACT_ALLOW"
     }
   ],
-  "_comment": "Kiro Crew custom seccomp profile \u2014 extends the Docker default by adding unshare(CLONE_NEWUSER/NEWNS), clone(CLONE_NEWUSER), and mount (inside a user namespace). Required for Kiro Crew's inner Linux user-namespace sandbox to work inside Docker containers. Less permissive than --security-opt seccomp=unconfined and far less permissive than --privileged. See docs/docker.md for usage."
+  "_comment": "Sao Khuê custom seccomp profile \u2014 extends the Docker default by adding unshare(CLONE_NEWUSER/NEWNS), clone(CLONE_NEWUSER), and mount (inside a user namespace). Required for Sao Khuê's inner Linux user-namespace sandbox to work inside Docker containers. Less permissive than --security-opt seccomp=unconfined and far less permissive than --privileged. See docs/docker.md for usage."
 }

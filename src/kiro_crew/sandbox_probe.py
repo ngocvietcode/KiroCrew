@@ -1053,7 +1053,7 @@ def _probe_sandbox_exec() -> bool:
         return False
     # Probe with a file-based (allow default) profile against a TRUSTED, fixed
     # system binary. We deliberately do NOT probe the (user-writable) kiro-cli
-    # binary: the probe runs under (allow default) with Kiro Crew's credentials,
+    # binary: the probe runs under (allow default) with Sao Khuê's credentials,
     # so exec'ing a user-writable target here could run a planted payload
     # effectively unsandboxed. The probe only needs to confirm the kernel
     # accepts sandbox_apply, which /usr/bin/true validates safely.
@@ -1109,7 +1109,7 @@ def _probe_sandbox_exec() -> bool:
 
 
 def _inside_kirocrew_sandbox() -> bool:
-    """True when this process already runs inside a Kiro Crew OS sandbox.
+    """True when this process already runs inside a Sao Khuê OS sandbox.
 
     Nested sandboxing is impossible on both backends: the Linux launcher's
     seccomp filter denies ``unshare``/``setns`` precisely so the sandboxed tree
@@ -1179,10 +1179,10 @@ def _inside_macos_sandbox() -> bool:
 
     Unlike :data:`_IN_SANDBOX_MARKER` this is OS-authoritative: it cannot be
     spoofed through an agent-influenced environment, and it sees sandboxes
-    Kiro Crew did NOT create — notably kiro-cli >= 2.13's own internal seatbelt
+    Sao Khuê did NOT create — notably kiro-cli >= 2.13's own internal seatbelt
     (see ``_KIRO_INTERNAL_SETTINGS_PATH``), or an operator-wrapped gateway. It is
     therefore NOT sufficient on its own to grant a passthrough: it proves *some*
-    sandbox is active, not that Kiro Crew built it or scrubbed the environment.
+    sandbox is active, not that Sao Khuê built it or scrubbed the environment.
     The marker supplies that half; see :func:`wrap_argv`.
     """
     return _macos_sandbox_state() is True

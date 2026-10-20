@@ -1,6 +1,6 @@
-# Installing and Running Kiro Crew
+# Installing and Running Sao Khuê
 
-This guide covers every way to install Kiro Crew, the first-run setup, how to
+This guide covers every way to install Sao Khuê, the first-run setup, how to
 verify the install, and how to troubleshoot the failures that actually happen.
 
 Builds use plain `pip` + `npm`/Vite + `pytest`, driven by the repo-root
@@ -46,7 +46,7 @@ bundled, so end users of those artifacts need neither Node nor a compiler.
 
 ### Default agent backend: `kiro-cli`
 
-Kiro Crew drives the default agent through **`kiro-cli`** over the
+Sao Khuê drives the default agent through **`kiro-cli`** over the
 [Agent Client Protocol](https://github.com/zed-industries/agent-client-protocol)
 (ACP). Other ACP backends can be selected with `agent.acp_backend`, but a fresh
 configuration uses Kiro and the gateway spawns `kiro-cli acp --agent <name>`.
@@ -62,7 +62,7 @@ If `kiro-cli` is not on `PATH`, spawning a session fails with
 page detects the missing prerequisite, shows copyable installer commands for the
 host's platform and the login commands to run yourself, and offers a **Use other
 coding agents** picker so another configured harness can finish setup instead.
-Kiro Crew does not run the install or the login itself. `kirocrew doctor`
+Sao Khuê does not run the install or the login itself. `kirocrew doctor`
 reports both the binary and the login state.
 
 ### Embeddings: nothing to install
@@ -308,7 +308,7 @@ venv puts its executables in `.venv\Scripts\`, and the macOS-only
 3. **stage**: `.venv/bin/python -m kiro_crew.frontend stage .` makes
    `website/dist` the served `src/kiro_crew/static/dist`: a link to
    `website/dist`, or for an edition a link to a fresh private copy. It waits at
-   most 30 s for the staging lock a Kiro Crew build holds. `make wheel` stages
+   most 30 s for the staging lock a Sao Khuê build holds. `make wheel` stages
    the same way; `make backend-bin` does not, since its bundle copies
    `website/dist` itself, so it needs no Python for this. `make frontend` alone
    does not stage either: a checkout whose `static/dist` is still a real
@@ -373,7 +373,7 @@ The pip install name is **`kirocrew`**; the import package is `kiro_crew`.
 
 #### Installing a PUBLISHED wheel with pip
 
-Kiro Crew is not on PyPI, so `pip` reaches it through the release CDN. Two forms
+Sao Khuê is not on PyPI, so `pip` reaches it through the release CDN. Two forms
 are published, and they serve different needs:
 
 ```bash
@@ -388,7 +388,7 @@ pip install --pre kirocrew --extra-index-url https://updates.crew.kiro.dev/feed/
 
 # 2. Pin one exact wheel by hash. Every version directory publishes a SHA256SUMS
 #    file beside the wheel; take your wheel's hash from there. pip verifies it and
-#    consults no index for Kiro Crew itself — so there is no name to squat.
+#    consults no index for Sao Khuê itself — so there is no name to squat.
 pip install "https://download.crew.kiro.dev/cli/stable/<version>/kirocrew-<version>-py3-none-any.whl#sha256=<sha256>"
 ```
 
@@ -403,7 +403,7 @@ Form 2 pins a byte-exact artifact and consults no index for the `kirocrew` name,
 so it is the one to use where a public-PyPI squat of the name is a concern, or
 when a deployment must pin a byte-exact artifact anyway — a locked requirements
 file, an airgapped mirror, or a reproducible image build. The in-place upgrade
-command Kiro Crew emits for a plain-pip install uses the form-2 pinned wheel for
+command Sao Khuê emits for a plain-pip install uses the form-2 pinned wheel for
 exactly this reason, and when it cannot fetch or verify the signed wheel it
 reports that and points at the channel's artifact directory rather than fall
 back to the form-1 name-resolving command. Form 1 tracks a channel hands-free
@@ -420,7 +420,7 @@ Because a `[project]` table exists, setuptools reads the entry points from
 there and ignores `setup.cfg`'s `console_scripts`, so `kirocrew` is the only
 command installed on `PATH`.
 
-Optional extras. Kiro Crew is not on PyPI, so `pip install "kirocrew[voice]"`
+Optional extras. Sao Khuê is not on PyPI, so `pip install "kirocrew[voice]"`
 cannot resolve — install an extra's own distributions into the environment that
 runs the gateway instead (e.g. `pip install 'boto3>=1.34,<2'
 'amazon-transcribe>=0.6.3,<1' 'pywhispercpp>=1.5,<2'` for `voice`). The dashboard
@@ -456,7 +456,7 @@ on Linux, and an assisted NSIS Setup.exe on Windows, under
 `website/electron/dist/`. The macOS DMG opens to a branded
 drag-to-Applications layout carrying the opening animation's artwork. The
 Windows wizard keeps native controls and its
-per-user default while carrying matching Kiro Crew artwork through its sidebar
+per-user default while carrying matching Sao Khuê artwork through its sidebar
 and header. Its Finish page links to the external Kiro CLI setup guide and names
 the login command required by the default agent before offering to launch Kiro
 Crew. On macOS the default is ONE universal DMG: the Electron shell is
@@ -585,12 +585,12 @@ it on for you. From a source install, `bash install.sh --kas` downloads the
 engine version this release pins; after any other install, `kirocrew kas
 install` does the same. The desktop app ships that engine inside the app
 (`BUNDLE_KAS=1` at build time), so there is nothing to download. To try the
-route, turn on **Run KAS on Kiro Crew's own engine** under Settings → Developer →
+route, turn on **Run KAS on Sao Khuê's own engine** under Settings → Developer →
 Feature Previews (or `kirocrew config set agent.kas_bundle true`) and restart; you
 then sign in from the **Kiro sign-in** card on Settings → Agent Harness → KAS, and
 `kiro-cli login` is not used.
 
-Then start Kiro Crew:
+Then start Sao Khuê:
 
 ```bash
 kirocrew setup            # interactive wizard
@@ -677,7 +677,7 @@ path. An agent uses the bounded `browser` MCP operation set (`navigate`,
 Playwright CLI installation is required for this path.
 
 When no native panel serves the session, or `dashboard.use_builtin_browser` is
-off, Kiro Crew directs the agent to the `playwright-cli` fallback. Install the
+off, Sao Khuê directs the agent to the `playwright-cli` fallback. Install the
 managed copy from **Settings → Browser**. For a system-wide manual install, use
 Node.js 20 or newer:
 
@@ -733,7 +733,7 @@ it.
 
 ### The data home lives under `~/.kiro/`
 
-Kiro Crew stores its data in `~/.kiro/crew`, sharing the `~/.kiro/` base with
+Sao Khuê stores its data in `~/.kiro/crew`, sharing the `~/.kiro/` base with
 other Kiro-family apps. An existing top-level `~/.kirocrew` install migrates
 automatically on first launch: its data (config, credentials, session history,
 databases) is copied into `~/.kiro/crew`, **overwriting** any file already at
@@ -960,11 +960,11 @@ For remote hosts, see [remote-and-mobile.md](remote-and-mobile.md).
 
 ## Linux: the agent sandbox and unprivileged user namespaces
 
-On Linux, Kiro Crew isolates the agent by entering a **user namespace** and then
+On Linux, Sao Khuê isolates the agent by entering a **user namespace** and then
 a **mount namespace**, over-mounting credential paths with empty directories so
 the agent cannot read them. Which paths depends on the tier: the default
 `agent.sandbox: "auto"` runs the **standard** tier, which hides `~/.gnupg`,
-`~/.docker`, `~/.azure`, `~/.config/gcloud` and Kiro Crew's own secret vault but
+`~/.docker`, `~/.azure`, `~/.config/gcloud` and Sao Khuê's own secret vault but
 deliberately leaves `~/.aws`, `~/.ssh` and `~/.kube` visible so the `aws` CLI,
 `credential_process`, git-over-SSH and `kubectl` keep working inside the agent.
 `agent.sandbox: "strict"` additionally hides `~/.aws` (including the
@@ -975,7 +975,7 @@ stop working inside the agent as a result; it applies to sessions started after
 the change. See the
 [Sandbox section of the configuration guide](../../src/kiro_crew/docs/configuration.md#sandbox).
 If the sandbox cannot be built,
-Kiro Crew **refuses to run the agent** rather than run it unisolated: spawns fail
+Sao Khuê **refuses to run the agent** rather than run it unisolated: spawns fail
 closed. This is deliberate and is not something to work around casually.
 
 **Ubuntu 23.10 and newer ship `kernel.apparmor_restrict_unprivileged_userns=1`**,
@@ -1204,7 +1204,7 @@ kirocrew gateway --port auto   # bind an OS-assigned port if 5476 is taken
 
 ## Uninstalling
 
-Uninstalling removes the Kiro Crew binary and its runtime but **preserves your
+Uninstalling removes the Sao Khuê binary and its runtime but **preserves your
 data home** (`~/.kiro/crew`) — configuration, credentials, memory, sessions,
 apps, and the audit chain remain intact. This is intentional: reinstalling picks
 up where you left off without re-running setup or losing history.
@@ -1292,7 +1292,7 @@ cd /path/to/KiroCrew \
 
 ### macOS desktop app (DMG / zip)
 
-1. Quit Kiro Crew from the menu bar or Dock.
+1. Quit Sao Khuê from the menu bar or Dock.
 2. Drag **KiroCrew.app** from `/Applications` to the Trash (or `rm -rf`).
 
 There is no installer package or receipt to clean — the DMG is a drag-install.
@@ -1307,7 +1307,7 @@ rm -f ~/Applications/KiroCrew-x86_64.AppImage   # or wherever you saved it
 
 ### Windows (NSIS installer)
 
-Use **Settings → Apps → Installed apps**, find "Kiro Crew", and click
+Use **Settings → Apps → Installed apps**, find "Sao Khuê", and click
 **Uninstall**. The NSIS uninstaller removes the application directory and
 shortcuts but does not touch `~/.kiro/crew`.
 
@@ -1406,7 +1406,7 @@ For reference, the data home structure and what each uninstall path touches:
 **Windows NSIS uninstaller behavior.** `nsis.oneClick` is false and
 `nsis.deleteAppDataOnUninstall` is left false, so the uninstaller removes only
 the application install directory and its shortcuts; it never resolves or removes
-the Kiro Crew home, which lives outside the install directory. Each signed Windows
+the Sao Khuê home, which lives outside the install directory. Each signed Windows
 installer must pass an install, create-sentinel-under-`~/.kiro/crew`,
 uninstall, verify-sentinel smoke test before release. A separate Kiro-family
 uninstaller could remove the parent `~/.kiro/` directory; it must exclude
@@ -1433,6 +1433,6 @@ sign-off is tracked in
 - [Security deep dive](../architecture/security-deep-dive.md): sandbox,
   governance, and denied commands.
 - [App Kit guide](../app-kit/getting-started.md): build apps that extend
-  Kiro Crew.
+  Sao Khuê.
 - [CONTRIBUTING.md](../../CONTRIBUTING.md): development setup and the PR
   workflow.

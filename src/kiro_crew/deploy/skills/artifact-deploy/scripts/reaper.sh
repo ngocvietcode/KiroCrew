@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - TTL reaper. Deletes non-persistent deploys whose
+# SaoKhue One-Click Deploy - TTL reaper. Deletes non-persistent deploys whose
 # expires_at is in the past (S3 prefix + invalidation, and any backend stack).
-# Safe to run on a schedule (KiroCrew cron / in-account EventBridge).
+# Safe to run on a schedule (SaoKhue cron / in-account EventBridge).
 # Usage: reaper.sh [--dry-run] [--profile P] [--region R]
 set -uo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_common.sh"

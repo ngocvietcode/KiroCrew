@@ -377,7 +377,7 @@ export const CREW_SORT_FIELDS: { key: CrewSortKey; label: string; icon: LucideIc
 // ── Persisted UI state ────────────────────────────────────────────────────
 // The whole app view (which dashboard / issues / settings page is showing, the
 // selected issue, and the active filters + sort) is persisted here so leaving
-// Issue Radar for another KiroCrew page and coming back restores exactly where
+// Issue Radar for another SaoKhue page and coming back restores exactly where
 // you were. Mirrors loadActiveRepo above (the active repo is persisted on its
 // own key); together they fully restore the app on return.
 export const UI_STATE_KEY = 'kc:issue-radar:ui-state'

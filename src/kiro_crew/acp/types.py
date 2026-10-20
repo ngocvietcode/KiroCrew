@@ -231,7 +231,7 @@ METHOD_MCP_SERVER_INIT_FAILURE = "_kiro.dev/mcp/server_init_failure"
 #: session put on the wire has reported READY -- a roster member that reported
 #: an init failure is named in the ``failed:`` bucket instead, and then the
 #: stall may well be in it. The count before it covers only the session-injected
-#: roster -- on kiro-cli the broker stubs Kiro Crew injects -- not the agent
+#: roster -- on kiro-cli the broker stubs Sao Khuê injects -- not the agent
 #: spec's own servers and not the backend's session-start steps after MCP init;
 #: without this note a complete count read as "MCP is up, so MCP is the
 #: problem". The fraction already says every server reported, so the note adds
@@ -283,7 +283,7 @@ TODO_ID_MAX = 64
 
 # Capabilities we advertise during `initialize`.
 #
-# Nothing is advertised that has no inbound handler. Kiro Crew serves exactly one
+# Nothing is advertised that has no inbound handler. Sao Khuê serves exactly one
 # server-initiated request, `session/request_permission`; everything else reaches
 # `_reject_unknown_server_request` and comes back `-32601 method not found`.
 #
@@ -302,7 +302,7 @@ TODO_ID_MAX = 64
 # handler for it, never before: `test_acp_client_capabilities.py` fails if the two
 # drift apart again.
 #
-# `fs` and `terminal` stay false for the same reason, and always have: Kiro Crew
+# `fs` and `terminal` stay false for the same reason, and always have: Sao Khuê
 # does not serve the agent's file or terminal requests over ACP -- the agent uses
 # its own tools for that, and advertising them would invite requests we have no
 # handler for.
@@ -390,7 +390,7 @@ PROVIDER_LABEL_BY_BACKEND: dict = {
 # client selects KAS feature flags; ``openExternalUrl`` is covered below.
 #
 # ``hooks`` stays undeclared although ``acp/kas_wire.py`` serves all three of its
-# methods. Kiro Crew's own turn loop already fires every hook event this surface
+# methods. Sao Khuê's own turn loop already fires every hook event this surface
 # can serve for a KAS session, and its PreToolUse can BLOCK a tool on exit 2;
 # announcing would run each hook twice and hand the agent a path whose output is
 # only a context note.
@@ -870,7 +870,7 @@ class AcpEvent:
     #: ``None`` on every other terminal, including a plain ``end_turn`` whose
     #: metadata said nothing about a refusal.
     refusal: "RefusalInfo | None" = None
-    #: True when Kiro Crew fabricated this terminal event because the provider
+    #: True when Sao Khuê fabricated this terminal event because the provider
     #: omitted its result frame. Consumers must not treat it as raw completion
     #: evidence even when compatibility requires ``stop_reason=end_turn``.
     synthetic_completion: bool = False

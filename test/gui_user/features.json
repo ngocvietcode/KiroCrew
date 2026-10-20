@@ -3786,7 +3786,7 @@
       "title": "Crew Companion: set break interval and add a reminder",
       "user_story": "As a desktop user, I want to configure break nudges and add a plain-language reminder, so that the floating companion paces my day.",
       "start_url": "/crew-companion",
-      "entry_path": "Kiro Crew Desktop > enable Crew Companion > Rail > Crew Companion > Settings section > Reminders section",
+      "entry_path": "Sao Khuê Desktop > enable Crew Companion > Rail > Crew Companion > Settings section > Reminders section",
       "preconditions": {
         "seed": "apps-installed",
         "members": [],
@@ -3846,7 +3846,7 @@
         "seed": "apps-installed",
         "members": [],
         "feature_flags": [],
-        "notes": "Needs browser microphone permission and Kiro Crew's speech-to-text over /api/ws/stt (STT backend dependencies like faster-whisper are optional heavy installs not present in the target image). Calendar via optional .ics path; agents via ACP backend."
+        "notes": "Needs browser microphone permission and Sao Khuê's speech-to-text over /api/ws/stt (STT backend dependencies like faster-whisper are optional heavy installs not present in the target image). Calendar via optional .ics path; agents via ACP backend."
       },
       "runnable": "needs-secret",
       "estimated_steps": 7,
@@ -3870,7 +3870,7 @@
       "title": "Mochi: enable the desktop pet and view activity, watchlist, and plan",
       "user_story": "As a desktop user, I want a pet that floats on my screen and watches pages for me, so that I am tapped only when something changed.",
       "start_url": "/mochi",
-      "entry_path": "Kiro Crew Desktop > enable Mochi > Rail > Mochi > status row > Activity / Watchlist / Plan tabs",
+      "entry_path": "Sao Khuê Desktop > enable Mochi > Rail > Mochi > status row > Activity / Watchlist / Plan tabs",
       "preconditions": {
         "seed": "apps-installed",
         "members": [],
@@ -4043,7 +4043,7 @@
       "id": "app-agent-worlds-scene",
       "feature": "worlds",
       "title": "Agent Worlds: open the 3D scene page, switch scene, pop out",
-      "user_story": "As a user running several agents, I want an ambient 3D scene of my crew with switchable themes, so that I can see at a glance how busy Kiro Crew is.",
+      "user_story": "As a user running several agents, I want an ambient 3D scene of my crew with switchable themes, so that I can see at a glance how busy Sao Khuê is.",
       "start_url": "/worlds",
       "entry_path": "Enable Agent Worlds in App Store > Rail > Worlds (/worlds via BuiltinAppRoute) > scene picker (office, ghost, panda, underwater, wizard tower, watering hole, neural constellation, mission control) > popout",
       "preconditions": {
@@ -4365,7 +4365,7 @@
       "id": "standalone-openai-compatible-api",
       "feature": "api",
       "title": "OpenAI-compatible API",
-      "user_story": "As an external client, I want a chat-completions shim, so that existing OpenAI tooling can talk to Kiro Crew.",
+      "user_story": "As an external client, I want a chat-completions shim, so that existing OpenAI tooling can talk to Sao Khuê.",
       "start_url": "/chat",
       "entry_path": "External clients only; POST /v1/chat/completions",
       "preconditions": {
@@ -5251,7 +5251,7 @@
       "id": "settings-instances",
       "feature": "remote-instances",
       "title": "Settings › Remote Crew",
-      "user_story": "As an operator, I want to register remote Kiro Crew instances and see provisioning lanes, so that I can switch crews from the header.",
+      "user_story": "As an operator, I want to register remote Sao Khuê instances and see provisioning lanes, so that I can switch crews from the header.",
       "start_url": "/settings/instances",
       "entry_path": "Settings → Remote Crew (/instances redirects)",
       "preconditions": {
@@ -5293,7 +5293,7 @@
       },
       "runnable": "excluded",
       "estimated_steps": 4,
-      "rationale": "This is not a missing credential but a missing second live Kiro Crew instance plus a network tunnel, which the Xvfb+fake-ACP, no-network target cannot provide. Only the flag-gated menu entry is renderable (cover that in a nightly menu assertion if wanted).",
+      "rationale": "This is not a missing credential but a missing second live Sao Khuê instance plus a network tunnel, which the Xvfb+fake-ACP, no-network target cannot provide. Only the flag-gated menu entry is renderable (cover that in a nightly menu assertion if wanted).",
       "source": [
         "docs/feature-map/README.md",
         "website/src/utils/previewFlags.ts",
@@ -5341,7 +5341,7 @@
       "id": "standalone-cloud-launch",
       "feature": "remote-instances",
       "title": "Cloud launch",
-      "user_story": "As an operator, I want to provision a remote Kiro Crew instance (EC2 by default) through a lane selector, so that I can run crews in the cloud.",
+      "user_story": "As an operator, I want to provision a remote Sao Khuê instance (EC2 by default) through a lane selector, so that I can run crews in the cloud.",
       "start_url": "/settings/instances",
       "entry_path": "Settings → Remote Crew → Set up a new one",
       "preconditions": {
@@ -5533,7 +5533,7 @@
       "id": "kas-auth-sign-in-card-signed-out",
       "feature": "auth",
       "title": "Kiro sign-in card on Settings > Agent Harness (signed-out state)",
-      "user_story": "As an operator, I want to see whether Kiro Crew holds a Kiro identity and how to sign in, so that I can fix a session that cannot start.",
+      "user_story": "As an operator, I want to see whether Sao Khuê holds a Kiro identity and how to sign in, so that I can fix a session that cannot start.",
       "start_url": "/settings/agent",
       "entry_path": "Settings > Agent Harness > scroll below the backend switch to the 'Kiro sign-in' card (deep link /settings/agent?highlight=key:kiro-sign-in)",
       "preconditions": {
@@ -7446,7 +7446,7 @@
       "id": "developer-config",
       "feature": "developer",
       "title": "Developer › Config",
-      "user_story": "As a developer, I want raw Kiro Crew and agent config editors, so that I can fix a setting no panel exposes.",
+      "user_story": "As a developer, I want raw Sao Khuê and agent config editors, so that I can fix a setting no panel exposes.",
       "start_url": "/developer",
       "entry_path": "Developer → config tab (?tab=config)",
       "preconditions": {

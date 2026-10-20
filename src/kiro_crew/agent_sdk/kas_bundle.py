@@ -1,4 +1,4 @@
-"""Kiro Crew's own KAS engine bundle, through the agent-backend boundary.
+"""Sao Khuê's own KAS engine bundle, through the agent-backend boundary.
 
 The install, lookup and pin live in the ACP layer (:mod:`kiro_crew.acp.kas_bundle`,
 :mod:`kiro_crew.acp.kas_pin`). Application code -- the ``kirocrew kas`` CLI, the

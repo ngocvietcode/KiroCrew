@@ -52,7 +52,7 @@ const CALENDAR_EVENTS = [{
   start: '2026-08-09T09:00:00Z',
   end: '2026-08-09T10:00:00Z',
   location: 'Studio A',
-  organizer: 'Kiro Crew',
+  organizer: 'Sao Khuê',
   attendees: [],
   description: '',
 }]

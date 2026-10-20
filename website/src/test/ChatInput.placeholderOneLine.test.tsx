@@ -5,7 +5,7 @@ import { renderWithProviders } from './helpers'
 import ChatInput from '../components/ChatInput'
 
 /**
- * The composer hint is long (`Message Kiro Crew… (/command · @file · $skill)`)
+ * The composer hint is long (`Message Sao Khuê… (/command · @file · $skill)`)
  * and it is a label, so in a narrow split-view pane it is held to one line and
  * its cut tail fades out. The other placeholders this textarea shows are
  * sentences (gateway offline, stopping, recording), and those keep wrapping so

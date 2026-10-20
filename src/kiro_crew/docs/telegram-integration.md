@@ -1,11 +1,11 @@
 # Telegram Integration
 
-Chat with your Kiro Crew agent right from Telegram — on your phone, your laptop,
+Chat with your Sao Khuê agent right from Telegram — on your phone, your laptop,
 anywhere. Create a bot, paste one token, and you're talking. Replies stream back
 live, with tappable option buttons.
 
 Telegram is the quickest channel to set up: just a bot token, no plugins, and it
-works from behind a firewall — Kiro Crew reaches out to Telegram, so there's
+works from behind a firewall — Sao Khuê reaches out to Telegram, so there's
 nothing to expose.
 
 ## The easy way: use Settings
@@ -45,7 +45,7 @@ log.
 
 ## Access control
 
-> **Kiro Crew runs on your machine, with your files and credentials.** So it only
+> **Sao Khuê runs on your machine, with your files and credentials.** So it only
 > talks to people you name — and only in private chats.
 
 - Trusted numeric IDs go in `allowed_user_ids`; an empty list means nobody.
@@ -88,7 +88,7 @@ At startup the bot publishes the menu commands from `COMMAND_SPEC` through `setM
 - `/queue <msg>` — while a reply is generating, hold this message and answer
   it after the current turn (overrides `queue_mode` for this message)
 - `/agent` (or `/agents`) — pick the agent from an inline-button list of the specs installed on
-  this machine, except Kiro Crew's own internal agents and app-installed
+  this machine, except Sao Khuê's own internal agents and app-installed
   (`<app>--<agent>`) agents. It shows at most 24; a final inert
   "… and N more not shown" row counts the rest. Button-only for the same reason `/model` is. Unlike a model, an
   agent cannot be swapped inside a running session — the spec decides which MCP

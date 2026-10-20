@@ -198,7 +198,7 @@ async def _shutdown(self: GatewayOrchestrator) -> None:
 
     # Stop the pooled MCP gateway broker + its backends. gatewayd is
     # spawned with start_new_session (and no PR_SET_PDEATHSIG), so on a
-    # clean Kiro Crew exit it and its pooled MCP subprocesses would
+    # clean Sao Khuê exit it and its pooled MCP subprocesses would
     # otherwise leak orphaned until the next start's flock adoption.
     await self._stop_mcp_broker()
 

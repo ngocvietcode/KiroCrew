@@ -151,10 +151,10 @@ function shouldOfferRelocation(location, { bundleWritable = true } = {}) {
 function describeLocation(location, { bundleWritable = true } = {}) {
   if (canInstallUpdates(location, { bundleWritable })) return "";
   if (location === "translocated") {
-    return "macOS is running Kiro Crew from a temporary read-only copy (App Translocation), "
+    return "macOS is running Sao Khuê from a temporary read-only copy (App Translocation), "
       + "so it cannot install its own updates.";
   }
-  return "Kiro Crew is running from a read-only disk image, so it cannot install its own updates.";
+  return "Sao Khuê is running from a read-only disk image, so it cannot install its own updates.";
 }
 
 /**
@@ -246,10 +246,10 @@ function canUpdateLinuxInstall(kind, { imageWritable = true, packageFormat = "" 
 function describeLinuxInstall(kind, { imageWritable = true, packageFormat = "" } = {}) {
   if (canUpdateLinuxInstall(kind, { imageWritable, packageFormat })) return "";
   if (kind === "package") {
-    return "Kiro Crew cannot tell which package format this install came from, so it "
+    return "Sao Khuê cannot tell which package format this install came from, so it "
       + "cannot fetch the right update. Update it through your package manager.";
   }
-  return "Kiro Crew cannot write to the folder holding its AppImage, so it cannot replace "
+  return "Sao Khuê cannot write to the folder holding its AppImage, so it cannot replace "
     + "itself with an update. Move the AppImage somewhere you own, such as ~/Applications.";
 }
 

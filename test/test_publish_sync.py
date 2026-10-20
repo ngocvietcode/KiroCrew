@@ -388,7 +388,7 @@ async def test_publish_unavailable_when_provider_absent(store, fake_client):
 async def test_push_version_updates_sha_and_map(store, fake_client):
     store.create(name="Doc", content="v1", kind="text", slug="d")
     await publish_sync.publish("d")
-    # New KiroCrew version
+    # New SaoKhue version
     store.update("d", content="v2 content", snapshot=True)
     await publish_sync.push_version(store.get("d"))
 
@@ -406,8 +406,8 @@ async def test_push_version_updates_sha_and_map(store, fake_client):
 async def test_push_version_skips_already_synced_version(store, fake_client):
     store.create(name="Doc", content="x", kind="text", slug="d")
     await publish_sync.publish("d")  # last_synced_kirocrew_version = 1
-    # No new KiroCrew version since publish → push is a no-op (we push exactly
-    # once per KiroCrew version to preserve the 1:1 invariant + idempotency).
+    # No new SaoKhue version since publish → push is a no-op (we push exactly
+    # once per SaoKhue version to preserve the 1:1 invariant + idempotency).
     await publish_sync.push_version(store.get("d"))
     assert fake_client.called("upload_version") == []
     # force=True (re-publish path) pushes anyway.
@@ -576,7 +576,7 @@ async def test_republish_preserves_push_error(store, fake_client):
     # subsequent sharing update (which clears last_error). review-bot regression.
     store.create(name="Doc", content="v1", kind="text", slug="d")
     await publish_sync.publish("d")
-    store.update("d", content="v2", snapshot=True)  # new KiroCrew version
+    store.update("d", content="v2", snapshot=True)  # new SaoKhue version
     fake_client.upload_version_response = {"error": "expected sha mismatch"}
     result = await publish_sync.publish("d", visibility="PUBLIC")
     assert "conflict" in result["last_error"].lower()
@@ -1124,7 +1124,7 @@ async def test_refresh_flags_rollback(store, fake_client):
     art = store.create(name="Doc", content="hello", kind="text")
     await publish_sync.publish(art.slug, visibility="PRIVATE")
     # The remote bytes changed out-of-band AT THE SAME version (an external
-    # edit or rollback): the version still matches what KiroCrew published, but
+    # edit or rollback): the version still matches what SaoKhue published, but
     # the sha does not. This is genuine drift to surface (a cloud-ahead
     # version is now a pullable edit, not drift — covered separately).
     fake_client.get_response = {
@@ -1137,7 +1137,7 @@ async def test_refresh_flags_rollback(store, fake_client):
     }
     refreshed = await publish_sync.refresh_publication(art.slug)
     assert refreshed.publication is not None
-    assert refreshed.publication.last_error.startswith("The remote copy changed outside Kiro Crew")
+    assert refreshed.publication.last_error.startswith("The remote copy changed outside Sao Khuê")
 
 
 @pytest.mark.asyncio
@@ -1145,9 +1145,9 @@ async def test_refresh_clears_drift_when_reconciled(store, fake_client):
     art = store.create(name="Doc", content="hello", kind="text")
     await publish_sync.publish(art.slug, visibility="PRIVATE")
     store.update_publication(
-        art.slug, last_error="The remote copy changed outside Kiro Crew: it is showing v9."
+        art.slug, last_error="The remote copy changed outside Sao Khuê: it is showing v9."
     )
-    # The remote now matches what KiroCrew published again → note clears.
+    # The remote now matches what SaoKhue published again → note clears.
     fake_client.get_response = {
         "artifact": {
             "visibility": "PRIVATE",
@@ -1175,7 +1175,7 @@ async def test_refresh_clears_drift_written_before_the_brand_rename(store, fake_
     art = store.create(name="Doc", content="hello", kind="text")
     await publish_sync.publish(art.slug, visibility="PRIVATE")
     store.update_publication(
-        art.slug, last_error="The remote copy changed outside KiroCrew: it is showing v9."
+        art.slug, last_error="The remote copy changed outside SaoKhue: it is showing v9."
     )
     fake_client.get_response = {
         "artifact": {

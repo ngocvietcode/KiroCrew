@@ -20,7 +20,7 @@ from . import sensitive as _sensitive
 from .contract import _MAX_PROMPT_BYTES, ExportRefused
 from .crew import ResolvedCrew
 
-# MCP servers Kiro Crew resolves to an absolute path to a local binary; copying
+# MCP servers Sao Khuê resolves to an absolute path to a local binary; copying
 # the definition ships a path that does not exist in the container. Ported from
 # ``crew_export/candidates.py:_CONTAINER_OWNED_MCP``.
 _CONTAINER_OWNED_MCP = frozenset(
@@ -356,7 +356,7 @@ def mcp_candidates(agent_spec: dict) -> list[Candidate]:
                     kind="mcp",
                     id=name,
                     content_hash=_hashing._sha(canonical.encode("utf-8")),
-                    blocked="a Kiro Crew-managed server that resolves to an absolute "
+                    blocked="a Sao Khuê-managed server that resolves to an absolute "
                     "path on this machine; the container composes its own",
                 )
             )

@@ -86,14 +86,14 @@ def _unreadable_skips_section(
             print(f"  {label}: ⏭  skipped — {shown} is not readable from this shell")
             _print_wrapped(
                 "This shell runs inside a sandbox (an agent's shell is one), which "
-                "can hide part of the Kiro Crew data home. Run `kirocrew doctor` from "
+                "can hide part of the Sao Khuê data home. Run `kirocrew doctor` from "
                 "your own terminal to check this section."
             )
             return
         print(f"  {label}: ❌ {shown} is not readable ({exc.strerror or exc})")
         _print_wrapped(
             "If this shell runs inside an agent sandbox, that sandbox hides part of "
-            "the Kiro Crew data home on purpose: run `kirocrew doctor` from your own "
+            "the Sao Khuê data home on purpose: run `kirocrew doctor` from your own "
             "terminal. Otherwise check the ownership and permissions of that path."
         )
         issues.append(f"{label}: {shown} is not readable")

@@ -462,7 +462,7 @@ class TestForeignHomeDerivedSpecWrites:
         The remedy named is the existing non-default-home one -- remove the
         stale ``kirocrew*.json`` specs and restart -- deliberately NOT
         ``KIRO_HOME``, whose own scope caveat says it relocates kiro-cli's
-        session storage that Kiro Crew still reads from the host path. The
+        session storage that Sao Khuê still reads from the host path. The
         rebuild's own refusal suggests no remedy for exactly that reason.
         """
         import json

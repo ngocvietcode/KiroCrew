@@ -69,7 +69,7 @@ class TestPublishAndClaim:
         assert _claim("never-published", {}) is None
 
     def test_unknown_kind_is_refused(self):
-        """The only legitimate publishers are Kiro Crew's own directive tools, so
+        """The only legitimate publishers are Sao Khuê's own directive tools, so
         an unrecognized kind means the request did not come from one."""
         with pytest.raises(ValueError, match="unknown directive kind"):
             _pub("sess-a", "rm_rf_everything", {})

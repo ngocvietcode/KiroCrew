@@ -330,7 +330,7 @@ jobs:
 
       - name: Check for this repository's markers in shipped skill bodies
         # Everything under src/kiro_crew/builtin_skills/ installs on every
-        # machine that installs Kiro Crew, so a skill body naming THIS
+        # machine that installs Sao Khuê, so a skill body naming THIS
         # repository -- its GitHub slug, a src/ checkout path, a test file, a
         # workflow file -- is an instruction that resolves for one user and
         # points an agent at a path that does not exist for everyone else.
@@ -453,7 +453,7 @@ jobs:
           python-version: "3.12"
 
       - name: Check harness identity tests on the lines this change adds
-        # Kiro Crew drives one first-class harness (kiro-cli) and adapts the
+        # Sao Khuê drives one first-class harness (kiro-cli) and adapts the
         # others. The defect class is a call site that spells "this is kiro" as
         # the ABSENCE of another harness: correct with two backends, and then it
         # hands the third a capability or a sandbox waiver nobody granted it.

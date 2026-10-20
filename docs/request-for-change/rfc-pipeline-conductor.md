@@ -40,7 +40,7 @@ carries the judgment.
 
 ## Why
 
-Kiro Crew's issue-fixing automation today is three open-loop pipelines (issue → new PR, red PR →
+Sao Khuê's issue-fixing automation today is three open-loop pipelines (issue → new PR, red PR →
 green, green PR → merge). They are **agentic workflows wrapped in deterministic scripts**: cron
 scanners and dispatchers own the control flow; agent sessions do the work inside it. The AI-native
 shape is the inversion — **deterministic scripts wrapped in an agentic control plane**, which is

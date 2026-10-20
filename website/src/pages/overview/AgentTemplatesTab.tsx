@@ -170,7 +170,7 @@ const READ_ONLY_LEAD_KEY = {
 const NATIVE_TOOL_NAMES = ['fs_read', 'fs_write', 'execute_bash', 'use_aws', 'grep', 'glob', 'web_fetch', 'web_search', 'knowledge', 'thinking'] as const
 
 /**
- * Kiro Crew's background-subagent tools, offered as completions too. Adding one
+ * Sao Khuê's background-subagent tools, offered as completions too. Adding one
  * grants it and the save declares the server, so a custom agent gets the same
  * session-attached spawn (task box, Stop, explicit `agent` / `crew`) as the
  * built-in agent without a hand-edited spec.

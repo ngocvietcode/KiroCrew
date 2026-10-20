@@ -7,7 +7,7 @@ Storage layout:
 Agent isolation:
     The whole ``.vault`` directory is a keystone leaf in _CREW_SECRET_LEAVES
     (security.py), so the verb-independent sensitive-path backstop blocks every
-    Kiro Crew-mediated read of these files — tool reads (is_sensitive_path) and
+    Sao Khuê-mediated read of these files — tool reads (is_sensitive_path) and
     shell commands (is_sensitive_bash_command), including a scripted
     ``python -c "open('~/.kiro/crew/.vault/...')"``. This is the same
     application-level trust model as ``.local_secret`` and SSH keys; direct

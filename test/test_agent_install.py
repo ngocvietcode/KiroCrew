@@ -127,7 +127,7 @@ class TestInstallAgent:
 
         kiro-cli rejects a spec with a field it does not know, and it rejects the
         WHOLE agent when it does -- so one stray ``cwd`` on a managed server would
-        take every Kiro Crew tool down with it. Preserving the user's
+        take every Sao Khuê tool down with it. Preserving the user's
         timeout/env/disabled is what put unknown keys in reach on this path (the
         build would otherwise rebuild the entry from scratch), so the allow-list ships
         with the preservation rather than after it.
@@ -539,7 +539,7 @@ class TestInstallAgent:
 
         assert entry["command"] == "/usr/bin/kirocrew"
         # The malformed string is discarded rather than fed to dict(...); any
-        # remaining ``env`` key is only Kiro Crew's own KIROCREW_HOME pin (the
+        # remaining ``env`` key is only Sao Khuê's own KIROCREW_HOME pin (the
         # test harness's tmp_path counts as an override home).
         assert set(entry.get("env", {})) <= {"KIROCREW_HOME"}
 
@@ -808,7 +808,7 @@ class TestInstallAgent:
         """hooks are always overwritten from bundled.
 
         ``deniedCommands`` are NOT injected into the agent spec (command
-        denial lives in Kiro Crew's own hooks.py PreToolUse gate). A stale
+        denial lives in Sao Khuê's own hooks.py PreToolUse gate). A stale
         ``deniedCommands`` left by an older build is STRIPPED on refresh so
         kiro-cli stops enforcing it ahead of the hook gate — otherwise an
         upgraded install's Settings > Security opt-out would silently stay

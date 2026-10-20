@@ -102,7 +102,7 @@ class TestDoctorAgentAuth:
             vault_detail=detail,
         )
         assert probes == 1
-        assert "✅ Kiro Crew vault (signed in through Kiro Crew)" in out
+        assert "✅ Sao Khuê vault (signed in through Sao Khuê)" in out
         assert detail in out
         # The kiro row is untouched: it still reports the host store's own state.
         assert "✅ kiro-cli's own sign-in" in out
@@ -115,8 +115,8 @@ class TestDoctorAgentAuth:
         the row's "could not check" marker, never a green asserted from silence."""
         out, probes = self._run(monkeypatch, capsys, ["kas"], signed_in=True, vault_holds=True)
         assert probes == 0
-        assert "⚠️  Kiro Crew vault (signed in through Kiro Crew)" in out
-        assert "✅ Kiro Crew vault" not in out
+        assert "⚠️  Sao Khuê vault (signed in through Sao Khuê)" in out
+        assert "✅ Sao Khuê vault" not in out
         # The guard on the secondary line is load-bearing: nothing probed
         # kiro-cli's store here, so nothing may be asserted about it.
         assert "also present" not in out
@@ -141,8 +141,8 @@ class TestDoctorAgentAuth:
             vault_detail=detail,
         )
         assert probes == 0
-        assert "⚠️  Kiro Crew vault (signed in through Kiro Crew)" in out
-        assert "✅ Kiro Crew vault" not in out
+        assert "⚠️  Sao Khuê vault (signed in through Sao Khuê)" in out
+        assert "✅ Sao Khuê vault" not in out
         # Wrapped, not reworded: the remedy reaches the row.
         for word in detail.split():
             assert word in out, word
@@ -170,7 +170,7 @@ class TestDoctorAgentAuth:
         out, probes = self._run(monkeypatch, capsys, ["kas"], signed_in=True, vault_holds=False)
         assert probes == 1
         assert "✅ kiro-cli's own sign-in" in out
-        assert "Kiro Crew vault" not in out
+        assert "Sao Khuê vault" not in out
 
     def test_a_stored_but_unusable_vault_identity_is_still_reported(
         self, monkeypatch, capsys
@@ -207,7 +207,7 @@ class TestDoctorAgentAuth:
         )
         assert probes == 1
         assert "✅ kiro-cli's own sign-in" in out
-        assert "Kiro Crew vault" not in out
+        assert "Sao Khuê vault" not in out
 
 
 class TestDoctorKasBundle:
@@ -266,7 +266,7 @@ class TestDoctorKasBundle:
         assert "bundle:      ✅ KAS 0.66.33, Node 22.23.3" in out
         argv = " ".join(kas_bundle.bundle_spawn_argv(installed))
         assert argv in out
-        assert "auth owner:  Kiro Crew vault" in out
+        assert "auth owner:  Sao Khuê vault" in out
         assert "not signed in" in out
         assert issues == []
 
@@ -396,12 +396,12 @@ class TestDoctorKas:
         out = capsys.readouterr().out
         assert "acp --agent-engine v3\n" in out
         assert "--auth-method" not in out
-        assert "auth owner:  Kiro Crew vault" in out
+        assert "auth owner:  Sao Khuê vault" in out
         assert "crew vault:  social/Google" in out
         # The token line agrees with its own auth owner line: vault-owned spawn,
         # vault-named token source -- naming kiro-cli's store here would
         # contradict the owner line two rows up.
-        assert "token:       ➖ Kiro Crew vault sign-in (see the auth owner line above)" in out
+        assert "token:       ➖ Sao Khuê vault sign-in (see the auth owner line above)" in out
         assert "kiro-cli's own sign-in" not in out
         assert issues == []
 

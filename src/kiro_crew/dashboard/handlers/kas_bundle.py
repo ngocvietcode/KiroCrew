@@ -1,4 +1,4 @@
-"""Dashboard handlers for Kiro Crew's own KAS engine bundle (Settings > Agent Harness).
+"""Dashboard handlers for Sao Khuê's own KAS engine bundle (Settings > Agent Harness).
 
 Two routes, both thin over :mod:`kiro_crew.agent_sdk.kas_bundle`:
 

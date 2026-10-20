@@ -182,7 +182,7 @@ def _production_embedder_id() -> str:
 
     Read from the LIVE embedder, not from the module constants. The constants
     describe the bundled model; ``KIROCREW_EMBED_MODEL_PATH`` (and the
-    ``memory.embed_model_path`` config knob) make Kiro Crew run a different one,
+    ``memory.embed_model_path`` config knob) make Sao Khuê run a different one,
     and the width can additionally be adopted from the model file itself. Reading
     the constants in that situation stamps a custom run with the bundled
     identity, and ``compare_reports`` -- which refuses only when the two

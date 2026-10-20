@@ -35,7 +35,7 @@ type TrustConfirmTarget =
  * The backend's prose is preferred over a generic "request failed" because the
  * two 409s here are not retry-and-hope conditions: `trust_setting_overlay_owned`
  * names the FILE and KEY the user has to edit (nothing the UI can do for them,
- * since `config.local.json` is user-owned and never written by Kiro Crew), and
+ * since `config.local.json` is user-owned and never written by Sao Khuê), and
  * `blanket_trust_sweep_incomplete` names the apps still executing after trust was
  * withdrawn. Collapsing either into "something went wrong" hides the only
  * actionable part.

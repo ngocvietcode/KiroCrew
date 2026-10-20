@@ -1199,7 +1199,7 @@ class TestSsmMintOutputRedaction:
     # short payload and signature so it clears neither of the bounds
     # `security`'s own two-segment link-token pattern keys on. A real token is
     # already redacted by that pattern; this value stands in for the shapes that
-    # are not -- a remote of a different Kiro Crew vintage, or a truncated write.
+    # are not -- a remote of a different Sao Khuê vintage, or a truncated write.
     _SYNTHETIC_TOKEN = "eyJzdWIiOiJzeW50aGV0aWMiLCJleHAiOjF9.c3ludGhldGljLXNpZ25hdHVyZQ"
 
     # SYNTHETIC opaque bearer value: no `eyJ` prefix and no dot, so no token-SHAPE

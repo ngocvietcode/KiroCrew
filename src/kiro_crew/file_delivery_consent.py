@@ -1,4 +1,4 @@
-"""Explicit owner consent before Kiro Crew delivers a file whose contents the
+"""Explicit owner consent before Sao Khuê delivers a file whose contents the
 credential scanner flags.
 
 An agent can legitimately generate secret material the owner needs delivered --

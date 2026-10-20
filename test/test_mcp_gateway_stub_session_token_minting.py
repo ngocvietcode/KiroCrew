@@ -141,7 +141,7 @@ def test_an_owned_control_plane_register_names_the_stubs_code_generation(
     """Only Crew's own MCP target needs a daemon-generation compatibility gate.
 
     A third-party target keeps the wire shape it had before this field; otherwise
-    upgrading Kiro Crew would unpool every unrelated server even when its own
+    upgrading Sao Khuê would unpool every unrelated server even when its own
     binary and protocol did not move.
     """
     from kiro_crew import code_fingerprint as fingerprint_mod

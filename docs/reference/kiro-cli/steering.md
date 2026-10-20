@@ -89,11 +89,11 @@ Two corollaries for this repo:
   `chat --no-interactive` path, so every document loaded regardless
   ([kirodotdev/Kiro#10794](https://github.com/kirodotdev/Kiro/issues/10794), and
   [#3026](https://github.com/kirodotdev/KiroCrew/issues/3026) where that was
-  experienced here). Kiro Crew's kiro-cli version floors gate individual
+  experienced here). Sao Khuê's kiro-cli version floors gate individual
   features, not startup, so check the installed version before diagnosing a
   steering problem.
 
-## Viewing and editing in Kiro Crew
+## Viewing and editing in Sao Khuê
 
 The dashboard surfaces both locations under **Customize → Steering**: it lists every `.md` file in `~/.kiro/steering` and the active project's `.kiro/steering`, renders the content, and supports creating, editing and deleting files. See `docs/system-specs/modules/steering-viewer.md`.
 

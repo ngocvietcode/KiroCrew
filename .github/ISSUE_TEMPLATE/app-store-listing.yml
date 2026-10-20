@@ -1,5 +1,5 @@
 name: App Store listing request
-description: Request that your Kiro Crew app be listed in the official App Store catalog.
+description: Request that your Sao Khuê app be listed in the official App Store catalog.
 labels: ["enhancement"]
 body:
   - type: markdown

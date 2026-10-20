@@ -94,7 +94,7 @@ const LOCAL_BUILTIN = {
 }
 
 const SERVER_BUILTIN_ROW = {
-  name: 'meetings', displayName: 'Meetings', author: 'Kiro Crew',
+  name: 'meetings', displayName: 'Meetings', author: 'Sao Khuê',
   description: 'Curated catalog copy.', version: '1.2.0',
   tags: ['code-review'], installed: true, enabled: true, updateAvailable: false,
   origin: 'builtin', lifecycle: 'locked', provenance: 'builtin', verified: true,
@@ -212,8 +212,8 @@ describe('AppsPage — builtin rows come from the catalog', () => {
     // no install coordinates, so rendering the generic Install card would
     // offer a control that cannot work.
     const catalogOnlyBuiltin = {
-      name: 'future-app', displayName: 'Future App', author: 'Kiro Crew',
-      description: 'Ships in a newer Kiro Crew.', version: '9.9.9',
+      name: 'future-app', displayName: 'Future App', author: 'Sao Khuê',
+      description: 'Ships in a newer Sao Khuê.', version: '9.9.9',
       installed: false, updateAvailable: false,
       source: { type: 'builtin' },
     }

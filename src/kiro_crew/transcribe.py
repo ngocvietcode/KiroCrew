@@ -6,7 +6,7 @@ what makes it usable, because the cost that made local speech-to-text feel broke
 was never the decode. A warm decode of 4.2 s of audio measures 30-48 ms (real-time
 factor 0.007-0.011) and a 0.9 s push-to-talk utterance 27 ms, against seconds per
 utterance for anything that loads a model per recording. It needs no external
-binary and it works on every OS Kiro Crew supports.
+binary and it works on every OS Sao Khuê supports.
 
 Two further providers are *adapted* onto the same seam rather than being
 first-class, and neither may add a step to the local path:

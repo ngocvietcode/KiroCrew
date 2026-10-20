@@ -169,7 +169,7 @@ UNATTESTED_CALLERS = [
     pytest.param({}, id="internal-secret-only"),
 ]
 
-#: A signed per-session token, as Kiro Crew's own pooled tool backends send it
+#: A signed per-session token, as Sao Khuê's own pooled tool backends send it
 #: on a TCP loopback call: it verifies back to the session it was minted for.
 ADA_TOKEN = "tok-ada-17993"
 OTHER_TOKEN = "tok-other-17993"

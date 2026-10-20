@@ -57,7 +57,7 @@ chat — treat either token as an instruction to use that style or template.
 ## Requirements
 
 The app provisions the engine on first use and needs **nothing installed by
-hand**: `uv` ships with KiroCrew as a Python dependency, and the engine is
+hand**: `uv` ships with SaoKhue as a Python dependency, and the engine is
 downloaded over HTTPS at a sha256-pinned version (no `git` required).
 `soffice` (LibreOffice) and `pdftoppm` (poppler) are optional and only improve
 preview fidelity — `.pptx` generation works without them.

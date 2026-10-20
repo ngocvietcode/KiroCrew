@@ -869,7 +869,7 @@ jobs:
             already read as untrusted data.
 
           REPO CONTEXT:
-          Kiro Crew is an open-source AI agent platform (Python backend + React/TS
+          Sao Khuê is an open-source AI agent platform (Python backend + React/TS
           dashboard). It is a de-Amazoned public fork: do NOT flag the absence of
           Brazil/AUTOSDE build tooling or internal-only infrastructure.
 

@@ -154,7 +154,7 @@ class TestSetScopeEntry:
 class TestApplyEndpoint:
     @pytest.mark.asyncio
     async def test_preservation_kiro_to_kirocrew(self, tmp_path, monkeypatch):
-        """Turning Kiro off when server was only in Kiro copies to KiroCrew first."""
+        """Turning Kiro off when server was only in Kiro copies to SaoKhue first."""
         from kiro_crew.dashboard.handlers import mcp as mcp_mod
 
         # Real files: only kiro global has slack-mcp initially.
@@ -210,7 +210,7 @@ class TestApplyEndpoint:
         assert body["ok"] is True
         assert body["applied"] == 1
 
-        # KiroCrew mcp.json should now have slack-mcp (preservation happened)
+        # SaoKhue mcp.json should now have slack-mcp (preservation happened)
         mc = json.loads(mc_path.read_text(encoding="utf-8"))
         assert "slack-mcp" in mc["mcpServers"]
         assert mc["mcpServers"]["slack-mcp"].get("disabled") is not True

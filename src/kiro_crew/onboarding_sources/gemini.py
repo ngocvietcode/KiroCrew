@@ -104,7 +104,7 @@ _GEMINI_PROJECT_FOLDER_KEY = "folderUri"
 _GEMINI_FILE_URI_SCHEME = "file://"
 
 
-# Directories that exist under the shared home but have no Kiro Crew
+# Directories that exist under the shared home but have no Sao Khuê
 # destination. Antigravity kept Skills, Hooks, Subagents and plugins; only the
 # skills path can land here, and only when it is a SKILL.md package.
 _GEMINI_UNSUPPORTED_DIRS = (
@@ -179,7 +179,7 @@ def _normalized_gemini_spec(spec: dict[str, Any]) -> dict[str, Any]:
     has the final say. That keeps the credential boundary intact: a server with
     a populated ``env``, or with an unsupported field such as
     ``authProviderType``, is still refused with its own diagnostic rather than
-    being reshaped into something Kiro Crew cannot actually run.
+    being reshaped into something Sao Khuê cannot actually run.
     """
     rewritten: dict[str, Any] = {}
     has_url = "url" in spec

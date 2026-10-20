@@ -1,11 +1,11 @@
-"""Publish-provider interface for sharing KiroCrew artifacts to external
+"""Publish-provider interface for sharing SaoKhue artifacts to external
 destinations.
 
 A ``PublishProvider`` abstracts "publish this artifact's bytes to a destination
 and give me back a stable id + URL, then keep versions/sharing in sync." The
 interface is vendor-neutral: any destination that can accept bytes and return a
 stable id/URL can plug in by implementing this interface and registering itself.
-Mirrors KiroCrew's ``LLMProvider`` ABC pattern.
+Mirrors SaoKhue's ``LLMProvider`` ABC pattern.
 
 In the public (standalone) edition NO concrete provider is registered — the
 registry is empty, so ``get_provider`` raises ``PublishUnavailableError`` (→ 503)
@@ -29,7 +29,7 @@ Error model:
 - ``push_version`` is **best-effort** and NEVER raises for upstream failures —
   it returns a ``PushResult`` whose ``error`` is set (and ``conflict`` flags an
   optimistic-concurrency mismatch). This preserves the "a sync failure never
-  fails the KiroCrew update" invariant.
+  fails the SaoKhue update" invariant.
 """
 
 from __future__ import annotations
@@ -113,7 +113,7 @@ class SharingModel:
     supports_roles: bool = True
     #: Sharing has a time dimension (TTL).
     supports_expiration: bool = False
-    #: Can KiroCrew set sharing via the provider API? When False the UI shows an
+    #: Can SaoKhue set sharing via the provider API? When False the UI shows an
     #: "out of band" link instead of grant controls (web-UI-only sharing).
     programmable: bool = True
     #: Where the user manages sharing when not ``programmable`` (may contain a
@@ -131,7 +131,7 @@ class SyncModel:
     - ``authority="kirocrew"`` + ``concurrency="lww"`` → MIRROR_LWW
       (blind last-write-wins; no Force-push).
     - ``authority="remote"`` + ``concurrency="crdt"`` → LIVE_CRDT
-      (KiroCrew is a participant; no version-conflict UI).
+      (SaoKhue is a participant; no version-conflict UI).
     """
 
     #: "kirocrew" (MIRROR / collab_mode=mirror) | "remote" (LIVE / collab_mode=live)

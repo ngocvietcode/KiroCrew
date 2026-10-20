@@ -2,13 +2,13 @@
  * Give a standalone app window the dashboard's live theme.
  *
  * The problem: an app window is its own page entry, and the bundler emits no
- * stylesheet link for it — so none of Kiro Crew's CSS variables exist there. The
+ * stylesheet link for it — so none of Sao Khuê's CSS variables exist there. The
  * panel is styled entirely from those variables, so without this it silently falls
  * back to the hardcoded literals in `panelSkin` and ignores the user's theme.
  *
  * Why not a fixed palette: the sibling companion app ships one (`applyFallbackTheme`),
  * which is honest about being a fallback but cannot follow a theme change or serve
- * the ~36 themes Kiro Crew offers. The panel already resolves every colour through a
+ * the ~36 themes Sao Khuê offers. The panel already resolves every colour through a
  * variable, so the only missing piece is the variables themselves.
  *
  * Why discover the hrefs at runtime rather than hardcode them: the dashboard's

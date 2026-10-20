@@ -289,7 +289,7 @@ class TestRefusalsOnUnsupportedPlatform:
         assert isinstance(result, str)
         if tool_name == "computer_end_turn":
             # The control-plane tool touches no other application, so it legitimately
-            # succeeds with no driver: it only drops KiroCrew's OWN cached snapshots.
+            # succeeds with no driver: it only drops SaoKhue's OWN cached snapshots.
             assert not result.startswith(ERROR_PREFIX), result
             return
         assert result.startswith(ERROR_PREFIX), result

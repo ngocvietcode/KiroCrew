@@ -1,6 +1,6 @@
-# Kiro Crew Website
+# Sao Khuê Website
 
-React + TypeScript + Vite single-page app for the Kiro Crew dashboard. Built assets
+React + TypeScript + Vite single-page app for the Sao Khuê dashboard. Built assets
 are emitted to `dist/` and copied into the Python package at
 `../src/kiro_crew/static/dist/` so the gateway can serve them.
 

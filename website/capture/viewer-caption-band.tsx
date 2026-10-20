@@ -100,7 +100,7 @@ async function main() {
     }, [])
     return (
       <div className="bg-bg text-text min-h-screen">
-        <div className="h-[42px] bg-chrome border-b border-border flex items-center px-4 text-sm">Kiro Crew</div>
+        <div className="h-[42px] bg-chrome border-b border-border flex items-center px-4 text-sm">Sao Khuê</div>
         <div className="p-4 space-y-3">
           <div className="h-4 w-2/3 rounded bg-chrome" />
           <div className="h-40 w-full rounded-lg bg-chrome" />

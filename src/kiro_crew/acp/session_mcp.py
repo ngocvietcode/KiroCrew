@@ -6,7 +6,7 @@ Crew's MCP servers come from and the only place: neither claude-agent-acp nor
 codex-acp reads ``~/.kiro/agents/<name>.json``. kiro-cli reads native servers
 through ``--agent``; managed control planes can also receive per-session
 overrides solely to carry ordinary identity. Without
-the translation here such a session runs with ZERO Kiro Crew tools -- the harness
+the translation here such a session runs with ZERO Sao Khuê tools -- the harness
 itself works (prompts, streaming, permissions) but ``send_message``,
 ``spawn_run``, ``cron_add`` and every user-installed server are simply absent.
 
@@ -1266,7 +1266,7 @@ def builtin_app_identity_launches() -> dict[str, dict[str, Any]]:
     re-declares. A builtin app server whose shipped manifest runs the host CLI
     (``mochi:mochi``, ``command: "kirocrew"``) is pinned by
     ``bridges._pin_host_cli_command`` to this gateway's own interpreter, so it is
-    Kiro Crew's own code and serves through ``mcp_shared.run_mcp_stdio_loop``,
+    Sao Khuê's own code and serves through ``mcp_shared.run_mcp_stdio_loop``,
     whose ``tools/call`` needs the same attestation as the managed servers. Mounted
     straight from the spec it carries no session token and refuses every call as
     ``identity_unattested``.
@@ -1335,7 +1335,7 @@ def _declared_launch(source: Mapping[str, Any]) -> tuple[str, list[str]]:
 # surface -- only the values the arms below read.
 _NATIVE_ELEMENT_KEYS: frozenset[str] = _agent_mod._MANAGED_MCP_ENTRY_KEYS - {"timeout"}
 
-# Kiro Crew's OWN bookkeeping on an entry: the provenance marker the global-file
+# Sao Khuê's OWN bookkeeping on an entry: the provenance marker the global-file
 # sync stamps on an entry it authored, and the derived-field record the spec
 # rebuild writes. Neither is a setting kiro-cli reads -- unknown keys are dropped
 # at deserialization -- so neither restricts the server, and an element that
@@ -1440,7 +1440,7 @@ class NativeSettingsUnreadable(ValueError):
     def explain(self, outcome: str) -> str:
         """One sentence for a user: why every native element is withheld."""
         return (
-            f"{self.label} ({_named_path(self.path)}) could not be read safely, so no Kiro Crew"
+            f"{self.label} ({_named_path(self.path)}) could not be read safely, so no Sao Khuê"
             f" server can be mounted with this session's identity; repair or remove"
             f" that file to restore {outcome}"
         )
@@ -1830,7 +1830,7 @@ def kiro_control_plane_servers(
         # refused ``identity_unattested``. Pooled broker stubs keep their token.
         logger.warning(
             "session MCP: MCP settings unreadable (%s); agent %r gets no identity"
-            " elements for unpooled Kiro Crew servers mounted from its spec, so their"
+            " elements for unpooled Sao Khuê servers mounted from its spec, so their"
             " calls will refuse identity_unattested",
             exc,
             agent,

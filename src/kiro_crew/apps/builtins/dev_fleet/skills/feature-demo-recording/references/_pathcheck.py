@@ -8,7 +8,7 @@ controls, so every path is vetted through the CENTRALIZED sensitive-path
 gate (kiro_crew.security.is_sensitive_path) -- never a local copy of the
 denylist, which would drift (miss .docker, .npmrc, .netrc, trust roots...).
 
-Fail-closed: these scripts record KiroCrew demos, so the worktree venv they
+Fail-closed: these scripts record SaoKhue demos, so the worktree venv they
 run in has kiro_crew installed. If the import fails, path safety cannot be
 established and the script refuses to run.
 

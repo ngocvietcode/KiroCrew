@@ -1,7 +1,7 @@
 # Governance Model (two-level Policy ∩ Profile)
 
 The `kiro_crew.platform.governance` (with its `governance_parts` owners) +
-`kiro_crew.platform.governance_profiles` modules implement Kiro Crew's **two-level
+`kiro_crew.platform.governance_profiles` modules implement Sao Khuê's **two-level
 security governance model**. Governance
 is resolved by a single rule — *the tightest boundary wins*:
 
@@ -14,10 +14,10 @@ is resolved by a single rule — *the tightest boundary wins*:
 The effective permission for any item is `policy ∩ profile`. This spec is the
 implementation companion to the design doc (Pippin `kirocrew/MVTDhLpm2SSW`).
 
-> Scope: this governs **Kiro Crew's own** security boundaries — what the host
+> Scope: this governs **Sao Khuê's own** security boundaries — what the host
 > performs on behalf of the agent across every surface (CLI, dashboard, Slack,
 > cron, heartbeat, sub-agents, apps). The underlying kiro-cli agent config
-> (`~/.kiro/agents/*.json`) is **out of scope**: Kiro Crew enforces its own
+> (`~/.kiro/agents/*.json`) is **out of scope**: Sao Khuê enforces its own
 > ceiling at its own gate even when the kiro side grants more. The one place a
 > kiro-cli spec field is READ at a Crew gate is the spawn gate's honouring of
 > the parent agent's `toolsSettings.subagent.availableAgents` — an
@@ -584,7 +584,7 @@ a **content digest**, not `mtime:size`, which a size-preserving replacement with
 timestamp (`cp -p`, a restored backup, a deliberate `touch`) slips past — leaving the
 previous, potentially looser ceiling enforced while every poll reports "unchanged".
 
-It also **refuses a source the account Kiro Crew runs as can write — the file or any
+It also **refuses a source the account Sao Khuê runs as can write — the file or any
 ancestor directory.** A distribution source
 this account can rewrite is one an agent subprocess can rewrite — it runs as the same uid —
 and the refresher would then install that ceiling without even a restart. The field manual
@@ -856,7 +856,7 @@ resolves the fleet ceiling from that file and fails closed without it, so
 actually set, so an ungoverned host is unchanged. Without it the two controls contradict
 each other and every app backend on a centrally-governed host exits at boot. Reading the
 ceiling it is about to be bound by is not an escalation: the exposure the mask exists to
-prevent is the model-driven agent learning the deny patterns, and this is Kiro Crew's own
+prevent is the model-driven agent learning the deny patterns, and this is Sao Khuê's own
 spawn rather than a tool call.
 
 **That carve-out grants READ only where a sandbox applies, and the seal lives in `sandbox`,
@@ -974,13 +974,13 @@ The other case is the agent config's **`allowedTools`**. It is kiro-cli's blanke
 auto-approve list, and the five writers of it consult the ceiling when they *write* — after
 which kiro-cli reads the FILE. So a ceiling that comes to deny a tool mid-flight does not
 narrow a list already on disk, and every session started afterwards keeps auto-approving what
-the fleet now forbids: the tool short-circuits inside the harness and never reaches Kiro Crew's
+the fleet now forbids: the tool short-circuits inside the harness and never reaches Sao Khuê's
 own PreToolUse gate. `agent.reproject_for_ceiling_change` re-derives the file, bounded to an
 actual ceiling move by `governance_generation` — hooks run on every confirming poll, so an
 unconditional rebuild would rewrite a file kiro-cli watches every refresh interval for nothing.
 
 "The file" is every spec a session can be started on through a crew, not only `kirocrew.json`.
-The rebuild re-derives Kiro Crew's own specs, then the fork refresh
+The rebuild re-derives Sao Khuê's own specs, then the fork refresh
 (`agent_materialization.fork_refresh`) re-filters `allowedTools` and strips governed
 `autoApprove` on every corroborated fork, and then runs the same two passes over every
 **shared template** a crew in `config.json` is bound to: a spec created on the Agent
@@ -993,7 +993,7 @@ that name, and when two specs claim it every JSON one is filtered, since which i
 undefined. That is why the pass does not resolve through `agent.agent_spec_path`: a resolver
 for a writer acting on one agent prefers a declared match over a stem match and refuses two
 declared matches, and either rule would leave a claimant's grants unfiltered here. The
-exemption for Kiro Crew's own specs and for forks is per file, not per name: the pass skips
+exemption for Sao Khuê's own specs and for forks is per file, not per name: the pass skips
 `<name>.json` for an owned name its installer governs and the file `agent.agent_spec_path`
 resolves for a fork, because those are the only files those writers rewrite, and filters
 every other file that claims the name. A second file declaring `kirocrew`, for example, is
@@ -1055,7 +1055,7 @@ that raised, or a rebuild that raised. The boot, pending and retry warnings name
 of spec is held.
 
 A spec no crew is bound to is not re-filtered, whoever wrote it. A file hand-placed in the
-agents directory is outside every Kiro Crew writer. A template created on the Agent
+agents directory is outside every Sao Khuê writer. A template created on the Agent
 templates tab and left unbound keeps the grants it was saved with, and a subagent started on
 it through `spawn` runs with them. That spawn path is not covered here.
 
@@ -2071,11 +2071,11 @@ read-your-writes should add it deliberately, with its own tests.
   STILL denied when the enterprise ceiling pins the equivalent pattern —
   tightest-wins. The call sites thread `session_key`/`agent` (they default to
   `""`, so non-governed callers are unaffected).
-- **Plane B — kiro agent JSON**: out of scope (v1). Kiro Crew no longer writes
+- **Plane B — kiro agent JSON**: out of scope (v1). Sao Khuê no longer writes
   `deniedCommands` into `~/.kiro/agents/*.json` at all — the
   `agent._enforce_denied_commands` injection path is retired — so the hooks gate
   is the SOLE denied-command enforcement point, not a secondary layer. The gate
-  is authoritative; Kiro Crew does not regenerate `~/.kiro/agents/*.json`.
+  is authoritative; Sao Khuê does not regenerate `~/.kiro/agents/*.json`.
 - **Plane C — out-of-band executors**: the cron `command` (runs via `sh -c`
   outside the ACP flow) is gated in `mcp_cron._vet_command_governance`; the
   cron *capability* on/off gate in `mcp_cron._vet_cron_capability_governance`.
@@ -2177,7 +2177,7 @@ either level permits. In particular:
   settings, credentials, hooks, native personas/agents, raw instructions, and
   runtime state are never imported.
 - The strict settings allowlist excludes governance and security controls.
-  Preserving an existing Kiro Crew value on collision cannot be overridden by
+  Preserving an existing Sao Khuê value on collision cannot be overridden by
   foreign precedence.
 - Imported workspace references grant no filesystem permission. Any later tool
   use is evaluated by the ordinary filesystem scopes and sensitive-path
@@ -2612,7 +2612,7 @@ denials leave the same forensic trail.
 
 > **Capability `profile-absence` semantics (deliberate deviation from spec A.4
 > rule 8).** The spec says a profile that OMITS a capability defaults it to
-> `false`. Kiro Crew instead treats an omitted scope as *not governed by the
+> `false`. Sao Khuê instead treats an omitted scope as *not governed by the
 > profile* (truth-table "not-governed" → bounded by policy alone), because the
 > stricter reading would turn every minimal profile (e.g. one that governs only
 > `tools`) into a near-deny-all of all capabilities. To disable a capability a
@@ -2851,7 +2851,7 @@ ungoverned):
 **Recorded maintainer decision (2026-07-24, PR #107):** "consent =
 surprise-prevention UX, not authorization" is **accepted as the v1
 contract** for installed-pack personas, and `capabilities.theme_persona`
-ships `capability_default=True`. Rationale: Kiro Crew is a single-user,
+ships `capability_default=True`. Rationale: Sao Khuê is a single-user,
 self-hosted tool where the pack installer is the machine owner; the persona is
 tone-only, content-bound (sha256), and enterprise-disableable via the row
 above — while a default-off would make every installed persona silently dead
@@ -3590,7 +3590,7 @@ either one now aborts governance boot (see the `_MATCHERS` note above).
 **What replaced it.** One operator opt-in on the keystone `computer_use.json`,
 which `security._SENSITIVE_HOME_DIRS` fences the agent away from. The agent cannot
 read or write that file, so it cannot enable its own desktop automation — and it
-cannot drive Kiro Crew's own window either (`computer_use/policy.py`), so it cannot
+cannot drive Sao Khuê's own window either (`computer_use/policy.py`), so it cannot
 click the toggle in the UI. Those two facts are the entire boundary.
 
 **What this costs, stated plainly.** There is no way to express "computer use is

@@ -107,7 +107,7 @@ describe('contributedCommands — what it accepts', () => {
     for (const displayName of [
       undefined,
       'PR Bulk Ops',
-      'Kiro Crew',      // claims to be the host
+      'Sao Khuê',      // claims to be the host
       '   ',            // truthy, so `||` accepted it
       '\u200b',         // zero-width, survives `.trim()`
       '\u034f',         // combining grapheme joiner

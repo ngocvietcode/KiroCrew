@@ -279,7 +279,7 @@ class TestListing:
 class TestInclusionMetadata:
     """The listing reports each document's declared ``inclusion``.
 
-    Kiro Crew does not ACT on the value — on the live ACP path the load
+    Sao Khuê does not ACT on the value — on the live ACP path the load
     decision is kiro-cli's, which reads the same front matter itself. These
     pin that the tab shows the author what they declared, and that a
     declaration never masquerades as the document's summary.

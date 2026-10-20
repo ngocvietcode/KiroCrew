@@ -9,9 +9,9 @@ the corpus does and does not prove.
 | `turn-live.jsonl` | live | `session/new` response, `usage_update`, `tool_call`, `tool_call_update`, `agent_message_chunk`, and the `session/prompt` result carrying `stopReason` |
 | `mcp-stdio-mount-live.jsonl` | live | a stdio MCP mount completing a ROUND TRIP: `session/new` with a real server, then `tool_call` / `tool_call_update` for `mcp__crew-probe__crew_probe_echo` |
 | `mcp-stdio-rollback-live.jsonl` | live | the same mount with an unstartable command: `session/new` fails WHOLE and names the server |
-| `permission-request-live.jsonl` | live | `tool_call`, the `session/request_permission` the harness sends with Kiro Crew's gate plugin composed, and the `tool_call_update` through `completed` |
+| `permission-request-live.jsonl` | live | `tool_call`, the `session/request_permission` the harness sends with Sao Khuê's gate plugin composed, and the `tool_call_update` through `completed` |
 | `tool-call-id-reuse-live.jsonl` | live | the SAME `toolCallId` (`call_0`) across two consecutive turns of one session: `tool_call`, `session/request_permission` and a terminal `tool_call_update` for each, with the first turn's `session/prompt` result between them |
-| `side-read-only-live.jsonl` | live | six calls in one turn with Kiro Crew's gate plugin composed (dsh 0.2.0-rc.2): `read`, `grep`, `glob`, `write`, `bash` and an unknown `mcp__probe__read`, each a `tool_call` naming the tool in `title`, the `session/request_permission` it raised, and its terminal `tool_call_update` (the three reads `completed` on allow-once, the rest `failed` on reject-once). The evidence `ACP_BACKENDS_SIDE_READONLY` admits deepseek on |
+| `side-read-only-live.jsonl` | live | six calls in one turn with Sao Khuê's gate plugin composed (dsh 0.2.0-rc.2): `read`, `grep`, `glob`, `write`, `bash` and an unknown `mcp__probe__read`, each a `tool_call` naming the tool in `title`, the `session/request_permission` it raised, and its terminal `tool_call_update` (the three reads `completed` on allow-once, the rest `failed` on reject-once). The evidence `ACP_BACKENDS_SIDE_READONLY` admits deepseek on |
 
 ## What the MCP mount captures establish
 
@@ -84,7 +84,7 @@ verb, and which verb is sent. Without membership a reopened session reads as
 
 `session/request_permission` is a required class, and on this harness's own
 default composition nothing produces one. `permission-request-live.jsonl` is that
-class captured live -- and what makes it fire is Kiro Crew's gate plugin
+class captured live -- and what makes it fire is Sao Khuê's gate plugin
 (`src/kiro_crew/agent_sdk/gate_extensions/deepseek/kiro_crew_tool_gate.mjs`)
 composed through the harness's own per-launch `--patch` overlay. The plugin
 answers the harness's `tools/pre-execute` waterfall with `{kind: 'ask'}`, its

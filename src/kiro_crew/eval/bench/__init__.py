@@ -5,7 +5,7 @@ harness runs 4 hand-written scenarios carrying 19 substring assertions in a sing
 pass, with no repetitions, no seed control and no baseline comparison. That is a
 usable smoke test and a poor instrument for "did this change help" — one flipped
 assertion out of 19 is indistinguishable from sampling noise, and sampling cannot
-be pinned because Kiro Crew threads no ``temperature`` or ``seed`` through its
+be pinned because Sao Khuê threads no ``temperature`` or ``seed`` through its
 provider stack.
 
 This package answers that question instead, by splitting the measurement in two:

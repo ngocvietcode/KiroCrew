@@ -112,7 +112,7 @@ describe('KiroPrerequisiteGate', () => {
     // A too-old kiro-cli (acp_supported false) refuses KAS — keep polling. This
     // is the case the marker also refuses, so the two cannot drift.
     expect(acpBackendsRefetchInterval(status({ acp_supported: false }), true, kas)).toBe(30_000)
-    // KAS loads Kiro Crew's agent specs: a missing or rejected spec keeps the
+    // KAS loads Sao Khuê's agent specs: a missing or rejected spec keeps the
     // gate on its repair card instead of opening the dashboard.
     expect(acpBackendsRefetchInterval(status({ missing_agent_specs: ['kirocrew-lite'] }), true, kas)).toBe(30_000)
     expect(acpBackendsRefetchInterval(status({ rejected_agent_specs: ['kirocrew'] }), true, kas)).toBe(30_000)
@@ -203,7 +203,7 @@ describe('KiroPrerequisiteGate', () => {
   })
 
   it('sends the user to Kiro CLI setup instead of installing anything', async () => {
-    // Kiro Crew does not install Kiro CLI. A missing CLI must offer a link to
+    // Sao Khuê does not install Kiro CLI. A missing CLI must offer a link to
     // Kiro's own setup page and NO install action of any kind, so there is
     // nothing for the user to press that would download and run a script.
     vi.mocked(api.kiroPrerequisite).mockResolvedValue(status({ platform: 'Windows' }))
@@ -342,7 +342,7 @@ describe('KiroPrerequisiteGate', () => {
   })
 
   it('exposes no way to start a sign-in from the dashboard', async () => {
-    // Kiro Crew does not authenticate for the user: there is no device-flow
+    // Sao Khuê does not authenticate for the user: there is no device-flow
     // trigger, no sign-in URL, and no device code surfaced anywhere.
     vi.mocked(api.kiroPrerequisite).mockResolvedValue(status({ installed: true }))
 
@@ -468,7 +468,7 @@ describe('KiroPrerequisiteGate', () => {
       <KiroPrerequisiteGate><div>Dashboard loaded</div></KiroPrerequisiteGate>,
     )
 
-    expect(await screen.findByText("Kiro Crew's agent specs are not installed")).toBeInTheDocument()
+    expect(await screen.findByText("Sao Khuê's agent specs are not installed")).toBeInTheDocument()
     expect(screen.queryByText('Dashboard loaded')).not.toBeInTheDocument()
     // Names the actual files, so the user can see what to look for on disk.
     expect(screen.getByText(/kirocrew\.json/)).toBeInTheDocument()
@@ -478,7 +478,7 @@ describe('KiroPrerequisiteGate', () => {
 
   it('gates on a spec that is PRESENT but which kiro-cli refuses', async () => {
     // The gap the missing-specs card cannot cover: statting the file says it is
-    // there, while kiro-cli drops it from its agent table, so Kiro Crew's agent
+    // there, while kiro-cli drops it from its agent table, so Sao Khuê's agent
     // silently becomes kiro-cli's default one with none of its MCP servers.
     vi.mocked(api.kiroPrerequisite).mockResolvedValue(status({
       installed: true,
@@ -498,7 +498,7 @@ describe('KiroPrerequisiteGate', () => {
     )
 
     expect(
-      await screen.findByText("Kiro CLI will not load Kiro Crew's agent specs"),
+      await screen.findByText("Kiro CLI will not load Sao Khuê's agent specs"),
     ).toBeInTheDocument()
     expect(screen.queryByText('Dashboard loaded')).not.toBeInTheDocument()
     // Exact match on the list entry: the reason below also contains the filename
@@ -531,7 +531,7 @@ describe('KiroPrerequisiteGate', () => {
     expect(note).toHaveTextContent('does not rewrite them')
     // The leading cause is a kiro-cli upgrade, which re-checking cannot fix, so
     // both remedies must be present as their own lines rather than buried.
-    expect(screen.getByText(/Update Kiro Crew\./)).toBeInTheDocument()
+    expect(screen.getByText(/Update Sao Khuê\./)).toBeInTheDocument()
     expect(screen.getByText(/Rewrite the specs from scratch/)).toBeInTheDocument()
     // The command must NOT come from a catalog value: a translator must not be
     // able to alter a string the user pastes into a shell.
@@ -557,10 +557,10 @@ describe('KiroPrerequisiteGate', () => {
     )
 
     expect(
-      await screen.findByText("Kiro Crew's agent specs are not installed"),
+      await screen.findByText("Sao Khuê's agent specs are not installed"),
     ).toBeInTheDocument()
     expect(
-      screen.queryByText("Kiro CLI will not load Kiro Crew's agent specs"),
+      screen.queryByText("Kiro CLI will not load Sao Khuê's agent specs"),
     ).not.toBeInTheDocument()
   })
 
@@ -737,7 +737,7 @@ describe('KiroPrerequisiteGate', () => {
     )
 
     expect(await screen.findByText('Dashboard loaded')).toBeInTheDocument()
-    expect(screen.queryByText('Kiro Crew needs Kiro sign-in.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sao Khuê needs Kiro sign-in.')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Sign in to Kiro' })).not.toBeInTheDocument()
     expect(screen.queryByText('kiro-cli login')).not.toBeInTheDocument()
     // Nothing is paused: no gate chrome of any kind renders over the app.
@@ -833,7 +833,7 @@ describe('KiroPrerequisiteGate', () => {
 
     await waitFor(() => expect(api.kiroPrerequisite).toHaveBeenCalled())
     expect(screen.getByText('Dashboard loaded')).toBeInTheDocument()
-    expect(screen.queryByText('Kiro Crew needs Kiro sign-in.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sao Khuê needs Kiro sign-in.')).not.toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
     expect(screen.queryByText('Your crew is almost ready.')).not.toBeInTheDocument()
   })

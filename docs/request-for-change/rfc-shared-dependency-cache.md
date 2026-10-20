@@ -15,7 +15,7 @@ superseded-by: []
 
 # RFC: Shared Dependency Cache for Worktrees
 
-Every Kiro Crew worktree carries its own copy of the same dependencies. On a
+Every Sao Khuê worktree carries its own copy of the same dependencies. On a
 host that develops the way the repo's own skills recommend — one worktree per
 change, one pod per worktree — that copy is the dominant cost of a worktree,
 and it is paid in full for the twentieth worktree as for the first. This RFC
@@ -35,7 +35,7 @@ Status: draft (no maintainer acceptance recorded). Phase 1, the opt-in, is on ma
 
 ## Problem
 
-Measured on one contributor host with 27 Kiro Crew worktrees under one XFS
+Measured on one contributor host with 27 Sao Khuê worktrees under one XFS
 volume (2026-09-11, main at `dbae53485`):
 
 | Per worktree | Size | Notes |

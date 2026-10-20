@@ -2,7 +2,7 @@
 
 This is the cross-OS end-to-end floor: a real ``kirocrew gateway`` subprocess, a
 real HTTP round trip, a real ACP session and a real prompt turn, on every
-platform Kiro Crew ships to. Everything is offline and credential-less -- the
+platform Sao Khuê ships to. Everything is offline and credential-less -- the
 agent binary is the packaged fake ACP backend, wired through
 ``KIROCREW_KIRO_BIN`` exactly as ``test/test_e2e_smoke.py`` does -- so no model,
 no token and no network is involved.
@@ -67,7 +67,7 @@ pytestmark = pytest.mark.skipif(
     reason="Cross-OS gateway boot matrix. Set KIROCREW_E2E=1 to run.",
 )
 
-# Kiro Crew's own default when ``agent.sandbox`` is absent: what the config
+# Sao Khuê's own default when ``agent.sandbox`` is absent: what the config
 # loader resolves the missing key to, and so what ``GET /api/config/kirocrew``
 # reports for it. Restated rather than imported so a change to that default
 # surfaces here as a named mismatch.
@@ -397,7 +397,7 @@ def test_tool_marker_prompt_completes_the_turn() -> None:
 def test_seeded_sandbox_mode_boots_and_runs_a_turn(fixture: str) -> None:
     """A gateway boots and serves under each seeded ``agent.sandbox`` tier.
 
-    THE DELEGATION PIN. On Windows the ``auto`` tier MUST complete a turn: Kiro Crew
+    THE DELEGATION PIN. On Windows the ``auto`` tier MUST complete a turn: Sao Khuê
     has no native Windows sandbox backend, so a positively classified Kiro ACP
     spawn delegates to Kiro CLI's own internal sandbox
     (``sandbox.wrap_argv``'s ``win32 and is_kiro_cli`` branch). Break that branch
@@ -433,7 +433,7 @@ def test_seeded_sandbox_mode_boots_and_runs_a_turn(fixture: str) -> None:
         assert status == 200, f"/api/health returned {status} under sandbox={seeded}"
 
         # ``off`` defers isolation to the agent's own sandbox and never needs a
-        # Kiro Crew backend, so the turn must complete everywhere.
+        # Sao Khuê backend, so the turn must complete everywhere.
         turn_expected = seeded == "off" or platform_compat.IS_WINDOWS
         if not turn_expected:
             turn_expected = sandbox.detect_backend(config_mode=seeded) != "none"

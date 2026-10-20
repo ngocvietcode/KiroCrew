@@ -41,7 +41,7 @@ _FRAME_RE = re.compile(r'^\s*File "(?P<file>[^"]+)", line (?P<line>\d+) in (?P<f
 
 #: Ordered (surface label, predicate over (posix file path, function)). The
 #: FIRST frame walked bottom-up that satisfies a predicate decides, because the
-#: outermost Kiro Crew frame is the one that says who started the turn: a cron
+#: outermost Sao Khuê frame is the one that says who started the turn: a cron
 #: turn also passes through the Slack gateway module and the shared streaming
 #: helper, so matching top-down on "slack/" would misname it.
 _SURFACE_RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
@@ -122,7 +122,7 @@ class Frame:
 class StallAttribution:
     dump: Path
     surface: str = "unknown"
-    #: The innermost Kiro Crew frame of the wedged stack (what the loop was
+    #: The innermost Sao Khuê frame of the wedged stack (what the loop was
     #: actually executing), when one is recognisable.
     stuck_in: Frame | None = None
     #: The security-gate frame, when the stall is inside the permission gate.

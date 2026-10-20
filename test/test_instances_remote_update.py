@@ -552,8 +552,8 @@ class TestUpdateJob:
         restart = await mgr.restart_remote("fg")
 
         assert update["ok"] is False and update["code"] == "headless"
-        assert "no Kiro Crew gateway to update" in update["message"]
-        assert restart["ok"] is False and "no Kiro Crew gateway to restart" in restart["message"]
+        assert "no Sao Khuê gateway to update" in update["message"]
+        assert restart["ok"] is False and "no Sao Khuê gateway to restart" in restart["message"]
         assert runner.calls == []
         assert mgr.remote_update_job("fg") is None
         await mgr.shutdown()

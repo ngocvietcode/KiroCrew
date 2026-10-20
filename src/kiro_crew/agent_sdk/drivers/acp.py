@@ -1045,7 +1045,7 @@ def skill_view_source_agent(name: str) -> str | None:
 def skill_view_sidecar_dirs() -> tuple[str, str]:
     """``(metadata, leases)``: where this home keeps the projection's side files.
 
-    Absolute paths under the Kiro Crew data home (never beside the aliases in
+    Absolute paths under the Sao Khuê data home (never beside the aliases in
     the agents directory), for messages that point an operator at them; their
     contents stay the projection module's business.
     """

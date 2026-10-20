@@ -2,7 +2,7 @@
   "name": "workflows",
   "version": "1.0.0",
   "displayName": "Workflows",
-  "description": "Author, run, and watch dynamic workflows: Python scripts, usually written for you by an agent from a plain-English goal, that drive several Kiro Crew agents through ordered phases. A script is checked against a sandboxed set of workflow commands before anything runs, so mistakes surface without executing, and the page then streams each phase and agent event as the run progresses. In a source checkout, runnable examples are available to start from; packaged installs ship none.",
+  "description": "Author, run, and watch dynamic workflows: Python scripts, usually written for you by an agent from a plain-English goal, that drive several Sao Khuê agents through ordered phases. A script is checked against a sandboxed set of workflow commands before anything runs, so mistakes surface without executing, and the page then streams each phase and agent event as the run progresses. In a source checkout, runnable examples are available to start from; packaged installs ship none.",
   "author": "kirocrew",
   "tags": [
     "workflows",

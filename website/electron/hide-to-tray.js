@@ -75,7 +75,7 @@
 // transition was animating is left on screen owned by nothing — no traffic
 // lights, immovable, covering every other app. Hiding only the real WINDOW then
 // leaves the user with the overlay as the only thing on screen: the "frozen copy
-// of Kiro Crew blocking my other apps" report.
+// of Sao Khuê blocking my other apps" report.
 //
 // There is no in-process signal for "AppKit has finished". Measured on macOS 26
 // against the shipped build: `enter-full-screen` (AppKit's

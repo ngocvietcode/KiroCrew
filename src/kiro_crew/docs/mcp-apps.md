@@ -1,12 +1,12 @@
 # MCP Apps
 
-Kiro Crew renders **MCP Apps** natively: when an MCP tool returns a `ui://` resource
+Sao Khuê renders **MCP Apps** natively: when an MCP tool returns a `ui://` resource
 alongside its text, the dashboard mounts that resource as a live, interactive
 component in the chat instead of showing you a wall of JSON. Ask for a diagram and
 the excalidraw server gives you an editable Excalidraw canvas in the conversation;
 other servers ship PDF viewers, forms, and dashboards the same way. This is the
 [SEP-1865](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx)
-`ui` extension — Kiro Crew targets the **Stable 2026-01-26** revision — and it works with any conforming command-based stdio server: nothing is hardcoded per vendor.
+`ui` extension — Sao Khuê targets the **Stable 2026-01-26** revision — and it works with any conforming command-based stdio server: nothing is hardcoded per vendor.
 
 If you just want it working: **Developer → MCP Management → route the server → on**. Routing adds the server to `mcp_gateway.stub_servers`; the rest of this page explains what that changes and what to check when a render does not appear.
 
@@ -181,25 +181,25 @@ In both cases the diagram returns; the canvas edits do not.
 
 ## What a server must do to get content rendered
 
-Nothing specific to Kiro Crew. Conform to SEP-1865:
+Nothing specific to Sao Khuê. Conform to SEP-1865:
 
 1. **Serve a `ui://` resource** — the app's HTML, returned from `resources/read`.
 2. **Associate it with the tool.** Either form works:
    - on the **tool definition**: `_meta.ui.resourceUri` (SEP-1865's primary form —
-     preferred, and what Kiro Crew harvests at backend spawn), or
+     preferred, and what Sao Khuê harvests at backend spawn), or
    - on the **tool result**: `result._meta.ui.resourceUri` per call.
 
    The deprecated flat key `_meta["ui/resourceUri"]` is also read, for
    compatibility. Only a string beginning `ui://` is eligible.
 
 The per-result `_meta` is optional and some servers omit it, which is why
-Kiro Crew harvests declared URIs from `tools/list` when the backend starts — a
+Sao Khuê harvests declared URIs from `tools/list` when the backend starts — a
 tool that declared a `ui://` resource renders even when its individual results
 carry no `_meta`.
 
 ## Deviations from SEP-1865
 
-Kiro Crew targets the Stable 2026-01-26 revision. Two things an app author should
+Sao Khuê targets the Stable 2026-01-26 revision. Two things an app author should
 know, because a spec-conforming app may otherwise wait for something that never
 arrives.
 
@@ -207,7 +207,7 @@ arrives.
 host to wrap the view in an intermediate *sandbox proxy* at a different origin
 (`allow-scripts allow-same-origin` on the outer frame) and to hand the HTML over
 via a `ui/notifications/sandbox-proxy-ready` → `ui/notifications/sandbox-resource-ready`
-handshake. Kiro Crew does not do this. It renders app HTML in a **single
+handshake. Sao Khuê does not do this. It renders app HTML in a **single
 null-origin iframe** — `sandbox="allow-scripts allow-forms"`, deliberately
 without `allow-same-origin` — with the CSP injected as a `<meta>` element ahead
 of any server-supplied byte.
@@ -237,7 +237,7 @@ these being absent, per the spec's own graceful-degradation rule:
 
 The `hostContext` reply carries `theme`, `displayMode`, `availableDisplayModes`,
 `containerDimensions` and — when the dashboard palette resolves —
-`styles.variables`. Kiro Crew resolves its own design tokens for the active
+`styles.variables`. Sao Khuê resolves its own design tokens for the active
 theme and mode, maps them onto the spec's `McpUiStyleVariableKey` set, and sends
 them in `hostContext.styles.variables` both in the `ui/initialize` result and in
 `ui/notifications/host-context-changed` when the theme changes under a mounted
@@ -251,7 +251,7 @@ The honest residue, so a spec-conforming app is not surprised:
   from `'self'` and `data:`, so a forwarded `@font-face` naming a dashboard-origin
   or remote URL would be blocked inside the frame anyway.
 - **`--font-sans` / `--font-mono` usually do not survive sanitization.** The value
-  filter rejects the quoted family names in Kiro Crew's font stacks, so those two
+  filter rejects the quoted family names in Sao Khuê's font stacks, so those two
   keys are typically absent from the payload; they resolve only for a locally
   installed face named by a bare identifier.
 - **`--color-background-info` arrives as a `color-mix()` expression**, not a flat
@@ -264,7 +264,7 @@ The honest residue, so a spec-conforming app is not surprised:
 - **No typography scale is sent — keep your own.** `--font-weight-*`, every
   `--font-*-size` and `--font-*-line-height`, plus `--border-radius-xs`,
   `--border-radius-full`, `--border-width-regular` and `--shadow-hairline`, are
-  never in the payload. Kiro Crew has no stored value for them, and sending an
+  never in the payload. Sao Khuê has no stored value for them, and sending an
   invented number would make your app paint a size the dashboard does not render.
   What you DO get is the palette, the two font families, `--border-radius-sm/md/lg/xl`
   and `--shadow-sm/md/lg`. Pair those with your own type scale.
@@ -300,7 +300,7 @@ Useful when something renders as text and you need to find where the chain broke
 
 ## Security posture
 
-Worth understanding before you point Kiro Crew at an unfamiliar server, because
+Worth understanding before you point Sao Khuê at an unfamiliar server, because
 app HTML is **server-controlled code running in your dashboard**.
 
 - **The iframe is `sandbox="allow-scripts allow-forms"`** — deliberately *without*

@@ -6,11 +6,11 @@ Combines the pure data layer (``artifacts.ArtifactStore`` — reads/writes the
 that touches both the store and a provider.
 
 Responsibilities that live here (provider-agnostic):
-- Rendering a KiroCrew artifact to ``(bytes-on-disk, content_type)`` — including
+- Rendering a SaoKhue artifact to ``(bytes-on-disk, content_type)`` — including
   wrapping ``widget`` artifacts in a standalone HTML document.
-- The version-bump → push chokepoint and the 1:1 KiroCrew↔destination version
+- The version-bump → push chokepoint and the 1:1 SaoKhue↔destination version
   invariant. Reverts mirror as a new version (never a pointer-rollback).
-- Best-effort sync: a ``push_version`` failure NEVER fails the KiroCrew update;
+- Best-effort sync: a ``push_version`` failure NEVER fails the SaoKhue update;
   a genuine failure is recorded in ``publication.last_error`` and surfaced to
   the UI. A SUCCESSFUL publish whose link is not usable yet (e.g. CloudFront
   still rolling out) records that status on ``publication.notice`` instead —
@@ -130,7 +130,7 @@ WRAPPER_REVISION: int = 2
 # egress boundary: script-src deliberately admits jsdelivr/cdnjs, and CSP does
 # not govern top-level navigation. Origin-level isolation (no cookies, no
 # storage, no parent DOM) additionally depends on the destination rendering it
-# in a sandboxed iframe, which the provider owns and Kiro Crew cannot enforce;
+# in a sandboxed iframe, which the provider owns and Sao Khuê cannot enforce;
 # it is an expectation of the viewer, not a guarantee made here.
 _CSP = (
     "default-src 'none'; "
@@ -303,7 +303,7 @@ def unwrap_widget_html(html: str) -> str | None:
     """Recover a widget's inner fragment from a document produced by
     ``wrap_widget_html``, or ``None`` when the sentinels are absent.
 
-    Used on pull: a sentinel-bearing document was a KiroCrew widget, so we strip
+    Used on pull: a sentinel-bearing document was a SaoKhue widget, so we strip
     the wrapper and keep ``kind="widget"`` (preserving inline-chat embedding).
     A document without the sentinels (a foreign / pre-sentinel artifact) returns
     ``None`` and the caller keeps it as ``html``. Sentinel-delimited extraction
@@ -703,7 +703,7 @@ async def push_version(art: Artifact, *, force: bool = False) -> None:
 
     Best-effort: never raises for upstream failures. On a conflict or any
     provider failure, records ``publication.last_error`` and returns. Pushes
-    exactly once per KiroCrew version (idempotent + the 1:1 invariant); a force
+    exactly once per SaoKhue version (idempotent + the 1:1 invariant); a force
     push (used by re-publish) bypasses the version guard.
     """
     if art.publication is None or not art.publication.auto_sync:
@@ -731,7 +731,7 @@ async def push_version(art: Artifact, *, force: bool = False) -> None:
             fresh = await asyncio.to_thread(lambda: store.update(art.slug, snapshot=True))
         except Exception as exc:  # pragma: no cover — snapshot must not break push
             logger.warning("push_version: pre-push snapshot failed for %s: %s", art.slug, exc)
-    # Push exactly once per KiroCrew version. If this version was already synced
+    # Push exactly once per SaoKhue version. If this version was already synced
     # (and not force-republishing), there's nothing to do. We deliberately do
     # NOT dedupe on content — the 1:1 mapping is intentional, and a provider's
     # stored bytes (e.g. the provider's HTML auto-injection) won't match a
@@ -977,7 +977,7 @@ async def unpublish(slug: str) -> None:
 
 # Sentinel prefix for the out-of-band-drift sync note, so refresh can both set
 # and later clear it without clobbering a genuine push-conflict message.
-_DRIFT_PREFIX = "The remote copy changed outside Kiro Crew"
+_DRIFT_PREFIX = "The remote copy changed outside Sao Khuê"
 
 # This prefix is not only displayed -- it is PERSISTED in `last_error` and matched
 # back on the next reconcile. Publications written before the display-name rename
@@ -985,7 +985,7 @@ _DRIFT_PREFIX = "The remote copy changed outside Kiro Crew"
 # pre-upgrade drift note stuck forever: the remote reconciles, the `elif` below
 # never matches, and the banner never clears. Match both spellings when clearing;
 # only the current one is ever written.
-_DRIFT_PREFIXES = (_DRIFT_PREFIX, "The remote copy changed outside KiroCrew")
+_DRIFT_PREFIXES = (_DRIFT_PREFIX, "The remote copy changed outside SaoKhue")
 
 
 async def refresh_publication(slug: str) -> Artifact:
@@ -1024,10 +1024,10 @@ async def refresh_publication(slug: str) -> Artifact:
             fields["shared_with"] = normalized
     # Out-of-band content/version drift: someone rolled the provider's live
     # pointer back to an older version, or edited the bytes directly. We do NOT
-    # mirror it into Kiro Crew's append-only history; instead record a drift
+    # mirror it into Sao Khuê's append-only history; instead record a drift
     # message telling the user to publish again (re-publishing an already-published
-    # artifact force-pushes Kiro Crew's current content as a new top version).
-    # Kiro Crew stays authoritative.
+    # artifact force-pushes Sao Khuê's current content as a new top version).
+    # Sao Khuê stays authoritative.
     expected_dest_v = pub.version_map.get(str(pub.last_synced_kirocrew_version))
     cur_v = state.get("current_version")
     cur_sha = state.get("sha256")
@@ -1056,8 +1056,8 @@ async def refresh_publication(slug: str) -> Artifact:
             f"v{expected_dest_v}" if expected_dest_v is not None else "an unknown version"
         )
         drift_msg = (
-            f"{_DRIFT_PREFIX}: it is showing {cur_v_str} (Kiro Crew published "
-            f"{expected_str}). Publish the artifact again to re-publish Kiro Crew's "
+            f"{_DRIFT_PREFIX}: it is showing {cur_v_str} (Sao Khuê published "
+            f"{expected_str}). Publish the artifact again to re-publish Sao Khuê's "
             "current version."
         )
         if pub.last_error != drift_msg:
@@ -1261,7 +1261,7 @@ async def delete_for_artifact(art: Artifact) -> DeleteWithdrawal:
 
 
 def _kind_for_content_type(content_type: str) -> str:
-    """Map an upstream content-type back to a KiroCrew artifact kind.
+    """Map an upstream content-type back to a SaoKhue artifact kind.
 
     Pulled/cloned artifacts arrive as *rendered* bytes — a widget's inner HTML
     is already wrapped in a standalone document, so HTML maps to ``html``, not

@@ -1,4 +1,4 @@
-"""Lineage adapter: an install of Kiro Crew's OWN layout that an edition registers.
+"""Lineage adapter: an install of Sao Khuê's OWN layout that an edition registers.
 
 A predecessor, a rename or a fork of this product writes ``config.json``,
 ``mcp.json``, ``recent_projects.json``, a ``workspace/`` tree, ``crons.json``
@@ -64,7 +64,7 @@ _UNSCOPED_WORKSPACE_IDS = frozenset({"", "default", "global", "main", "none", "n
 
 
 def _scan_lineage_install(scan: _Scan) -> None:
-    """Scan an agent that shares Kiro Crew's OWN on-disk layout.
+    """Scan an agent that shares Sao Khuê's OWN on-disk layout.
 
     A predecessor, a rename, or a fork of this product writes the same files in
     the same places — ``config.json``, ``mcp.json``, ``recent_projects.json``,
@@ -137,7 +137,7 @@ def _scan_lineage_install(scan: _Scan) -> None:
 def _row_is_workspace_scoped(value: Any) -> bool:
     """Return whether a memory row belongs to ONE foreign workspace.
 
-    Kiro Crew's own memory tables have no workspace column, so a genuinely
+    Sao Khuê's own memory tables have no workspace column, so a genuinely
     workspace-scoped row has no faithful destination and is reported unsupported.
     A SENTINEL value is not scoping, though: a single-workspace install stamps
     every row with the same placeholder, so reading that as scoped discarded 100%

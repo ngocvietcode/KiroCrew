@@ -33,8 +33,8 @@ Devanagari has its own sentence-ending punctuation:
 Devanagari uses a shirorekha (headline stroke) that visually connects characters within a
 word. At a Latin/Devanagari word boundary, use normal Hindi word spacing.
 
-Write `Kiro Crew से कनेक्ट करो`: keep one space before the postposition. Do not glue it as
-`Kiro Crewसे`, and do not double-space.
+Write `Sao Khuê से कनेक्ट करो`: keep one space before the postposition. Do not glue it as
+`Sao Khuêसे`, and do not double-space.
 
 **Font fallback**: ensure CSS `font-family` lists a Devanagari font (Noto Sans Devanagari)
 before the Latin fallback so conjuncts render correctly.
@@ -44,7 +44,7 @@ before the Latin fallback so conjuncts render correctly.
 ## 3. Do not translate
 
 Product names stay in Latin script. The canonical list in `glossary.json` includes
-`KiroCrew`, `MCP`, `Slack`, `GitHub`, and others. The prose brand `Kiro Crew` also remains
+`KiroCrew`, `MCP`, `Slack`, `GitHub`, and others. The prose brand `Sao Khuê` also remains
 unchanged; do not transliterate it into Devanagari (not `किरोक्रू`).
 
 Checked by `glossary.test.ts`.

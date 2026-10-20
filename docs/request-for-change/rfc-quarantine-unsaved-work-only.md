@@ -58,7 +58,7 @@ The quarantine keeps every byte of every dead clone for 14 days.
 
 - On one host, `.quarantine` reached **28 GB over 24 trees in about one day**,
   and the 80 GB disk reached **99%**.
-- One Kiro Crew clone is about **4.2 GB**: `.git` 1.8 GB, `node_modules`
+- One Sao Khuê clone is about **4.2 GB**: `.git` 1.8 GB, `node_modules`
   0.95 GB, `.venv` 0.63 GB, source 0.8 GB.
 - The work that is actually unsaved in such a clone is usually a few local
   commits and a few edited files: kilobytes to a few megabytes.
@@ -68,7 +68,7 @@ long before anything expires.
 
 A sibling PR (branch `fix/scratch-delete-clean-trees`) removes the regenerable
 directories (`node_modules`, `.venv` and similar) before a tree is quarantined.
-That takes a Kiro Crew clone from about 4.2 GB to about 2.6 GB. The rest is
+That takes a Sao Khuê clone from about 4.2 GB to about 2.6 GB. The rest is
 `.git` plus the checked-out source, and that is what this RFC covers.
 
 ### Why #19897 did not just ask git
@@ -186,12 +186,12 @@ the saving on by default therefore needs a trusted store that exists without
 setup, which is open question 9 and an entry condition of Phase 3.
 
 **For default hosts, the fix is the sibling PR**, which drops the regenerable
-directories with no setup and takes a Kiro Crew clone from ~4.2 GB to ~2.6 GB.
+directories with no setup and takes a Sao Khuê clone from ~4.2 GB to ~2.6 GB.
 This RFC accepts that trade. Phases 1a, 1b and 2 ship **only for operators
 who opt in** by configuring a mirror (or, after Phase 2, a provider
 credential). A default host gains nothing from them until open question 9 is
 answered. They are still worth shipping first, because the hosts that fill
-their disk this way are the ones that develop Kiro Crew itself, where a
+their disk this way are the ones that develop Sao Khuê itself, where a
 mirror of one repository is a one-line setup.
 
 **Hash strength.** Object ids are compared as full SHAs: 40 hex digits for
@@ -381,7 +381,7 @@ is left as an open question.
 
 ### Worked sizes
 
-One Kiro Crew clone with 3 local commits and 2 edited files:
+One Sao Khuê clone with 3 local commits and 2 edited files:
 
 | Stage | Size |
 |---|---|
@@ -523,7 +523,7 @@ The phase exit criteria above are the main tests. Beyond them:
 ## Open questions
 
 1. Is the gateway-owned mirror acceptable disk-wise? One full mirror per
-   configured repository (about 1.8 GB for Kiro Crew) is paid once, against
+   configured repository (about 1.8 GB for Sao Khuê) is paid once, against
    ~4.2 GB per quarantined clone today, or ~2.6 GB after the sibling PR.
 2. Should Phase 1b ship the provider kind instead of the mirror kind, because it
    needs no extra disk?

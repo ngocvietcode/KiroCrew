@@ -2,7 +2,7 @@
 title: App SDK durable jobs and view state
 status: partial
 revision: v1
-author: Kiro Crew
+author: Sao Khuê
 created: 2026-09-06
 last-audited: 2026-10-05
 audited-at: e281ecaf33

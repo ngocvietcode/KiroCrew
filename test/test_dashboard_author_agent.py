@@ -69,7 +69,7 @@ def _is_installers(path: Path) -> bool:
 
 
 def test_the_dashboard_author_filename_is_owned() -> None:
-    """A managed spec Kiro Crew writes must be in the owned-files allowlist, or the
+    """A managed spec Sao Khuê writes must be in the owned-files allowlist, or the
     Playwright convergence sweep and the self-heal pass skip it."""
     assert DASHBOARD_AUTHOR_AGENT_FILENAME == "kirocrew-dashboard-author.json"
     assert DASHBOARD_AUTHOR_AGENT_FILENAME in OWNED_KIRO_AGENT_FILES

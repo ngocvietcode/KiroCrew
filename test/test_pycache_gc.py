@@ -237,7 +237,7 @@ def test_symlinked_ancestor_component_refused(tmp_path):
 def test_arbitrary_pycache_prefix_is_not_adopted(tmp_path, monkeypatch):
     """A user-set PYTHONPYCACHEPREFIX must never become the deletion root.
 
-    Only Kiro Crew's own configured cache directory is ever pruned; an active
+    Only Sao Khuê's own configured cache directory is ever pruned; an active
     prefix pointing elsewhere is ignored (those mirrors are not ours to
     manage).
     """

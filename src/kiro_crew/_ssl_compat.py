@@ -158,7 +158,7 @@ def _ensure_ssl_certs() -> None:
     the file it names cannot be found.
 
     Windows takes none of this: the derivation exports nothing there, so no
-    Kiro Crew process can have left a value behind and whatever is set is an
+    Sao Khuê process can have left a value behind and whatever is set is an
     operator's.
 
     macOS additionally installs Security.framework evaluation for this
@@ -194,7 +194,7 @@ def _ensure_ssl_certs() -> None:
         # WARNING, not INFO: the prelude runs before logging is configured, and
         # the default last-resort handler drops everything below WARNING.
         logger.warning(
-            "Ignoring %s inherited from another Kiro Crew process; "
+            "Ignoring %s inherited from another Sao Khuê process; "
             "this install resolves its own CA bundle",
             " and ".join(replaced),
         )
@@ -215,7 +215,7 @@ def _derive_trust() -> None:
             logger.warning(
                 "SSL_CERT_FILE=%s names a file this process cannot find; TLS "
                 "connections will fail until it is corrected or unset (if an "
-                "earlier Kiro Crew install exported this value, start it from a "
+                "earlier Sao Khuê install exported this value, start it from a "
                 "clean environment)",
                 preset,
             )
@@ -238,7 +238,7 @@ def _derive_trust() -> None:
 
     # The file-based fallback keeps standalone/source installations usable when
     # the OS-specific bootstrap is unavailable.  requests makes certifi part of
-    # Kiro Crew's installed dependency closure, including the desktop bundle.
+    # Sao Khuê's installed dependency closure, including the desktop bundle.
     try:
         import certifi
 

@@ -65,7 +65,7 @@ class MessagingConfig:
             "Use Transport",
             "Route inbound Slack messages through the SlackTransport → TurnDriver → "
             "SlackRenderer channel-neutral path instead of the native handle_message "
-            "monolith. Default ON in Kiro Crew (the transport abstraction is the canonical "
+            "monolith. Default ON in Sao Khuê (the transport abstraction is the canonical "
             "path, shared with future channels). Set to false to fall back to the legacy "
             "native handler.",
         ),

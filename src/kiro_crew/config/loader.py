@@ -1,9 +1,9 @@
-"""Configuration loader for KiroCrew.
+"""Configuration loader for SaoKhue.
 
 Config location: ~/.kiro/crew/config.json (overridden by KIROCREW_HOME)
 Credentials:    ~/.kiro/crew/.env (overridden by KIROCREW_HOME)
 
-KiroCrew is KiroACP-only: the sole provider is the ACP adapter driving the
+SaoKhue is KiroACP-only: the sole provider is the ACP adapter driving the
 kiro-cli backend. This module handles session timeouts, hook rules, and the
 dashboard URL via the config file. (The dashboard *port* is set with the
 ``KIROCREW_PORT`` env var, not a config key.)
@@ -556,7 +556,7 @@ def resolve_effective_model(
     path (the dashboard's model chip) and the execution path
     (``create_provider_factory._acp``) cannot drift apart. Tiers, highest first:
 
-    1. the KiroCrew agent's own ``model``
+    1. the SaoKhue agent's own ``model``
     2. the bound kiro agent's pinned ``model`` (skipped for the built-in
        ``kirocrew`` agent, which tracks the global by design)
     3. for a session an app owns (*app_name*), the user's ``apps.<name>.model``
@@ -615,7 +615,7 @@ def validate_kiro_agent_references(
     for mc_name, mc_agent in config.agents.items():
         if mc_agent.kiro_agent and mc_agent.kiro_agent not in installed_names:
             logger.warning(
-                "KiroCrew agent '%s' references kiro agent '%s' " "which is not installed",
+                "SaoKhue agent '%s' references kiro agent '%s' " "which is not installed",
                 mc_name,
                 mc_agent.kiro_agent,
             )

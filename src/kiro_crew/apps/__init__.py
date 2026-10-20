@@ -1,4 +1,4 @@
-"""KiroCrew App Platform — federated agentic app ecosystem."""
+"""SaoKhue App Platform — federated agentic app ecosystem."""
 from __future__ import annotations
 
 from kiro_crew.apps.bridges import (

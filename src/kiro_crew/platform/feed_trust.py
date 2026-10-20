@@ -159,7 +159,7 @@ def verify_document_signature(document: dict, *, max_payload_bytes: int) -> bool
 def _verify_signature(manifest: dict, *, max_payload_bytes: int, flat_strings_only: bool) -> bool:
     """Shared core: canonicalize the payload and verify it with openssl.
 
-    One body for every signed document Kiro Crew honours, so the canonical-JSON
+    One body for every signed document Sao Khuê honours, so the canonical-JSON
     shape, the signature bounds, the trusted-openssl resolution and the
     fail-safe direction cannot drift between callers. Callers own only their own
     shape checks (which key_id discipline, which payload cap, which schema).

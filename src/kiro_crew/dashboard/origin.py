@@ -375,7 +375,7 @@ def frame_ancestors_value(extra: "Iterable[str]" = ()) -> str:
       the browser is on ``https://<tunnel-host>``, no ancestor matches, and the frame
       is refused — a breakage invisible on a direct loopback connection.
     * **``'self'`` alone is not enough, because the directive is matched against
-      EVERY ancestor.** Kiro Crew frames at depth: the Instances embed puts a remote
+      EVERY ancestor.** Sao Khuê frames at depth: the Instances embed puts a remote
       dashboard inside the local one, so a widget sits three levels down (local
       dashboard → embedded dashboard → widget) and its grandparent is a different
       origin. With only ``'self'`` the browser answers "Framing '...' violates ...

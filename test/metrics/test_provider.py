@@ -301,7 +301,7 @@ def test_otlp_reader_degrades_without_logging_endpoint(monkeypatch, caplog):
     ],
 )
 def test_otlp_reader_warns_on_another_signals_route(monkeypatch, caplog, endpoint, signal):
-    """Kiro Crew emits metrics only. An endpoint aimed at a tracing backend's
+    """Sao Khuê emits metrics only. An endpoint aimed at a tracing backend's
     /v1/traces (e.g. Langfuse) gets every batch rejected and no trace ever
     arrives, so the reader says so once at WARNING, by destination name only."""
     import logging

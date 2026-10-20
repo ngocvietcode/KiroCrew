@@ -75,7 +75,7 @@ def _snapshot_memory_or_exit() -> None:
 
 
 def _update(force: bool = False) -> None:
-    """Update Kiro Crew — dispatches based on install layout.
+    """Update Sao Khuê — dispatches based on install layout.
 
     Three install layouts, three update paths:
 
@@ -96,7 +96,7 @@ def _update(force: bool = False) -> None:
     """
     from kiro_crew.platform.update_layout import InstallLayout
 
-    print("👻 Updating Kiro Crew…\n")
+    print("👻 Updating Sao Khuê…\n")
 
     # A policy-defined provider OWNS the update on this host. Checked before any
     # layout dispatch so a manual `kirocrew update` cannot run the built-in
@@ -470,7 +470,7 @@ def _update(force: bool = False) -> None:
     if rc != 0:
         sys.exit(1)
 
-    print("\n✅ Kiro Crew updated!")
+    print("\n✅ Sao Khuê updated!")
 
     _refresh_agent_config(proj)
 
@@ -790,7 +790,7 @@ def _update_wheel(layout) -> None:
         print(f"    {cmd}")
         sys.exit(1)
 
-    print(f"\n✅ Kiro Crew updated to {remote_version}!")
+    print(f"\n✅ Sao Khuê updated to {remote_version}!")
     print("\n  Restart the gateway to use the new version:")
     print("    kirocrew restart")
 
@@ -843,7 +843,7 @@ def _update_managed_venv(
         failure = exc
     outcome = wheel_apply.classify(failure)
     if outcome.status == "promoted":
-        print(f"\n✅ Kiro Crew {remote_version} installed at {promoted}")
+        print(f"\n✅ Sao Khuê {remote_version} installed at {promoted}")
         if reattach:
             print(f"\n  ⚠️  {wheel_apply.userns_reattach_after_apply(remote_version)}")
             return

@@ -3,7 +3,7 @@
 Source: https://kiro.dev/docs/custom-agents/subagents/ (fetched 2026-09-06)
 
 Upstream retired `/docs/cli/chat/subagents/` and moved the page under custom
-agents. This describes **upstream's** subagent model; Kiro Crew's own
+agents. This describes **upstream's** subagent model; Sao Khuê's own
 `spawn_run` / `spawn_continue` contract is owned by
 [subagent](../../../system-specs/modules/subagent.md).
 

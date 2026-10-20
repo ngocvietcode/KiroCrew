@@ -44,7 +44,7 @@ superseded-by: []
 
 ## Summary
 
-Kiro Crew's remote-access story is "bind loopback, mount token auth, put a
+Sao Khuê's remote-access story is "bind loopback, mount token auth, put a
 tunnel in front". `tailscale serve` fits that shape exactly and works today with
 no code changes. But it works *by accident*, and two of the properties the
 documentation advertises as mitigations do not hold behind it.

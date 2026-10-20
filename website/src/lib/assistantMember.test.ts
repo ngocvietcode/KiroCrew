@@ -15,7 +15,7 @@ describe('hideMateWithoutPreview', () => {
   const created = { name: 'mate', source: 'builtin' }
   const theirs = { name: 'mate', source: 'kirocrew' }
   const other = { name: 'scout', source: 'kirocrew' }
-  it('hides only the Mate Kiro Crew created while the preview is off', () => {
+  it('hides only the Mate Sao Khuê created while the preview is off', () => {
     expect(hideMateWithoutPreview([created, other], false)).toEqual([other])
     expect(hideMateWithoutPreview([theirs, other], false)).toEqual([theirs, other])
   })

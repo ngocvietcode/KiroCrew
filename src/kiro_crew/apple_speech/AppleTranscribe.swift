@@ -1,7 +1,7 @@
-// AppleTranscribe.swift — on-device speech-to-text helper for Kiro Crew's `apple` STT provider.
+// AppleTranscribe.swift — on-device speech-to-text helper for Sao Khuê's `apple` STT provider.
 //
 // WHY A SEPARATE BINARY: Apple's SpeechAnalyzer / SpeechTranscriber (macOS 26+) is a
-// Swift-only framework. The Kiro Crew gateway is Python, so the only way to reach it is
+// Swift-only framework. The Sao Khuê gateway is Python, so the only way to reach it is
 // a small out-of-process helper. This file is compiled on demand by
 // ``kiro_crew.apple_speech`` into the data home's cache dir; a shipped build would
 // precompile and sign it instead.

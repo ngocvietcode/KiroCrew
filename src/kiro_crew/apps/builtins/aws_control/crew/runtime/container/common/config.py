@@ -24,7 +24,7 @@ posture and silence must never.
 
 Two values are deliberately NOT configurable.
 
-`BACKEND_HOST` is fixed at 127.0.0.1. The Kiro Crew backend must never be
+`BACKEND_HOST` is fixed at 127.0.0.1. The Sao Khuê backend must never be
 reachable from the network, and a setting is a thing an operator can get wrong.
 
 The backend's authentication secret is not here either. It is generated per boot
@@ -54,16 +54,16 @@ BACKEND_HOST = "127.0.0.1"
 CONTROL_SECRET_HEADER = "X-SMC-Control-Secret"
 
 # The namespace every installed crew spec lives in, as a filename stem AND as the
-# spec's declared ``name``. Kiro Crew derives specs of its own into the same directory
+# spec's declared ``name``. Sao Khuê derives specs of its own into the same directory
 # -- ``kirocrew.json``, ``kirocrew-lite.json`` and the ``kirocrew-worker.json`` mirror
 # it rebuilds from the default -- and a crew called ``kirocrew-worker`` is not
 # hypothetical: it is the crew this deployment ships. Without a namespace the install
 # lands ON the mirror, and the next spawn-path re-derivation replaces the shared crew's
-# prompt and tools with Kiro Crew's own, with no error.
+# prompt and tools with Sao Khuê's own, with no error.
 #
 # The prefix is on BOTH the filename and the declared name because those are two
 # different resolutions and only one of them dispatches. kiro-cli enumerates agents by
-# the spec's DECLARED name, and Kiro Crew's snapshot of dispatchable agents does the
+# the spec's DECLARED name, and Sao Khuê's snapshot of dispatchable agents does the
 # same, so a file named ``crew-x.json`` whose spec still declares ``x`` is reachable
 # under neither id: ``x`` is now declared TWICE (by the crew and by the mirror) and is
 # refused as ambiguous, while ``crew-x`` is declared by nothing and falls back to the
@@ -71,7 +71,7 @@ CONTROL_SECRET_HEADER = "X-SMC-Control-Secret"
 # Measured against ``acp/kas_agents.load_agent_spec`` and
 # ``config.loader._scan_materialized_agents``, not inferred.
 #
-# ``crew-`` is free by construction: every spec Kiro Crew manages is named
+# ``crew-`` is free by construction: every spec Sao Khuê manages is named
 # ``kirocrew*`` (``kiro_crew/agent_files.py``), and no KAS built-in id begins with it.
 # That tree is not importable here (the container installs no ``kiro_crew``), so the
 # two definitions are pinned together by a test instead, the way the agents-dir
@@ -259,7 +259,7 @@ class ConfigError(ValueError):
 
 @dataclass(frozen=True)
 class Settings:
-    # The Kiro Crew backend, on loopback.
+    # The Sao Khuê backend, on loopback.
     backend_port: int
     backend_run_dir: Path
 
@@ -434,7 +434,7 @@ class Settings:
         Why not the process HOME's ``~/.kiro/agents``, which is where this landed
         before: that directory is SHARED by every instance under this ``$HOME``, and
         the backend runs on a non-default data home (``KIROCREW_HOME=<data home>``).
-        Kiro Crew refuses to rewrite a shared agents dir from a non-default home --
+        Sao Khuê refuses to rewrite a shared agents dir from a non-default home --
         the specs it would write pin the writer's data home into every managed MCP
         server entry, which breaks strict session identity for a default-home
         gateway (kirodotdev/KiroCrew#9690). In the container that refusal meant the
@@ -669,7 +669,7 @@ def load() -> Settings:
         ),
         data_home=data_home,
         # Defaults to the data home itself, NOT a `config/` subdirectory.
-        # Verified against a running gateway: Kiro Crew's `config_dir()` and
+        # Verified against a running gateway: Sao Khuê's `config_dir()` and
         # `data_home()` resolve to the same directory, so `session_map.json` and
         # `open_slots.json` sit at the home root.
         #

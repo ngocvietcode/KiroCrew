@@ -28,12 +28,12 @@ if TYPE_CHECKING:
 # tags and session namespaces. Kept close to the injection site so new
 # transports can extend it alongside their dispatcher wiring.
 _RUNTIME_DISPLAY = {
-    "dashboard": "KiroCrew dashboard",  # brand-ok: prompt bytes the model reads
-    "cron": "KiroCrew cron job",  # brand-ok: prompt bytes the model reads
-    "subagent": "KiroCrew subagent",  # brand-ok: prompt bytes the model reads
-    "taskrunner": "KiroCrew task runner",  # brand-ok: prompt bytes the model reads
-    "background": "KiroCrew background",  # brand-ok: prompt bytes the model reads
-    "heartbeat": "KiroCrew heartbeat",  # brand-ok: prompt bytes the model reads
+    "dashboard": "SaoKhue dashboard",
+    "cron": "SaoKhue cron job",
+    "subagent": "SaoKhue subagent",
+    "taskrunner": "SaoKhue task runner",
+    "background": "SaoKhue background",
+    "heartbeat": "SaoKhue heartbeat",
     "cli": "CLI terminal",
     "slack": "Slack",
     "discord": "Discord",
@@ -541,7 +541,7 @@ _COMPUTER_USE_SECTION = (
     "with the app. When a screenshot is attached you get a **file path**, not an image —\n"
     "open it with the file-read tool only when the outline genuinely cannot answer the\n"
     "question (it costs ~8K tokens). Password fields render as `<secure>` and their\n"
-    "window is never captured. Kiro Crew's own dashboard is refused, for reading as well\n"
+    "window is never captured. Sao Khuê's own dashboard is refused, for reading as well\n"
     "as typing, because driving it would let you change your own security settings.\n"
     "Read the `computer-use` skill before your first call."
 )

@@ -1,4 +1,4 @@
-"""Asyncio unix-socket server for the KiroCrew MCP gateway.
+"""Asyncio unix-socket server for the SaoKhue MCP gateway.
 
 This module is the entry point for ``python -m
 kiro_crew.mcp_gateway.gatewayd`` and for in-process use by
@@ -1252,7 +1252,7 @@ async def _acquire_backend(
             # fence has already matched against this process's.
             if not _user_site_holds_our_package():
                 spawn_env["PYTHONNOUSERSITE"] = "1"
-        # Kiro Crew's own UTF-8 pinning, applied after the verdict for every
+        # Sao Khuê's own UTF-8 pinning, applied after the verdict for every
         # pooled backend. The classifier must see every launcher-injection
         # namespace removed, so these Python keys cannot be present earlier
         # without every control plane denying its own token; and the child must

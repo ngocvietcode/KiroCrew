@@ -69,7 +69,7 @@ be picked up by chat B, and if B was trusted (a Trust press, YOLO, or a
 `shell(...)`, a file write, a further spawn -- was auto-approved on B's trust,
 for work B never read.
 
-That was a widening nobody chose. Trust in Kiro Crew is granted **per chat**: a
+That was a widening nobody chose. Trust in Sao Khuê is granted **per chat**: a
 person presses Trust on a conversation they are watching, and the grant means
 "the requests this conversation makes are mine". A continuation from another
 chat carries into B a body of prior turns, tool results and pending intentions

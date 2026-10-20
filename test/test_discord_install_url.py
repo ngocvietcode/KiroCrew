@@ -28,7 +28,7 @@ _DOC = Path(__file__).resolve().parents[1] / "src" / "kiro_crew" / "docs" / "dis
 #: so this file states the expected value independently of the code under test.
 _DOCUMENTED_PERMISSIONS = 309237711936
 
-#: Discord's SEND_MESSAGES bit, deliberately NOT requested: a Kiro Crew turn
+#: Discord's SEND_MESSAGES bit, deliberately NOT requested: a Sao Khuê turn
 #: runs in a thread, and the bot must not be able to post in a shared channel.
 _PERM_SEND_MESSAGES = 1 << 11
 
@@ -90,7 +90,7 @@ class TestDocAgreement:
 
     def test_doc_url_matches_the_built_url(self) -> None:
         # The doc's URL is the manual fallback an operator pastes; it has to be
-        # the same URL, parameter for parameter, that Kiro Crew builds.
+        # the same URL, parameter for parameter, that Sao Khuê builds.
         doc_urls = [
             line.strip()
             for line in _doc_text().splitlines()

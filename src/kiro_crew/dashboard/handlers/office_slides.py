@@ -577,7 +577,7 @@ def _sensitive_hidden_dirs() -> tuple[str, ...]:
     """Trust-root paths to hide from the child, beyond ``strict`` mode's own list.
 
     Same derivation as the Papyrus compiler's: ``strict`` hides the third-party
-    credential dirs, but Kiro Crew's own keystone files (``.local_secret``,
+    credential dirs, but Sao Khuê's own keystone files (``.local_secret``,
     ``sel_hmac.key``, ...) sit in the data home, and LibreOffice reads files --
     a crafted deck can link or embed one. Re-anchored under the live data home
     because ``KIROCREW_HOME`` may point away from the default.

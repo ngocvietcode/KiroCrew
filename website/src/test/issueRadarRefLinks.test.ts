@@ -223,7 +223,7 @@ describe('linkifyIssueRefs', () => {
   it('does not touch an HTML entity or a cross-repo shorthand', () => {
     expect(linkifyIssueRefs('&#123; literal', gh(O, R))).toBe('&#123; literal')
     expect(linkifyIssueRefs('other/repo#5 elsewhere', gh(O, R))).toBe('other/repo#5 elsewhere')
-    expect(linkifyIssueRefs('KiroCrew#5 elsewhere', gh(O, R))).toBe('KiroCrew#5 elsewhere')
+    expect(linkifyIssueRefs('SaoKhue#5 elsewhere', gh(O, R))).toBe('SaoKhue#5 elsewhere')
   })
 
   it('treats an all-digit run as a reference even when it could be a hex colour', () => {

@@ -6,10 +6,10 @@ the corpus does and does not prove.
 | File | Provenance | Frame classes it carries |
 |---|---|---|
 | `session-live.jsonl` | live | initialize response with `agentInfo.version`, `session/new` response with a `sessionId` (a `model` select of `provider/model` ids, a `thought_level` select, a `modes` block), `available_commands_update`, a `tool_call` and two `tool_call_update` frames (`in_progress`, then `failed`) for a read the model called with no arguments, `agent_message_chunk`, and the `session/prompt` result carrying `stopReason` |
-| `permission-request-live.jsonl` | live | `tool_call`, `tool_call_update`, the `session/request_permission` the adapter forwarded from Kiro Crew's gate extension, the updates through `completed`, and the result |
+| `permission-request-live.jsonl` | live | `tool_call`, `tool_call_update`, the `session/request_permission` the adapter forwarded from Sao Khuê's gate extension, the updates through `completed`, and the result |
 | `session-load-live.jsonl` | live | a `session/load` from a second process: the replayed `user_message_chunk` / `agent_message_chunk` / `tool_call` updates and the load result, which carries `configOptions`, `models` and `modes` |
 | `compact-live.jsonl` | live | the initialize and `session/new` responses, four ordinary turns (`agent_message_chunk`, `usage_update`, `session/prompt` result), the `/compact` turn (pi's `Compaction completed` chunk and an `end_turn` result with no `usage_update` and no status frame), and one ordinary turn after it |
-| `mcp-stdio-mount-live.jsonl` | live | the initialize and `session/new` responses, a `tool_call` for `mcp__probe_server__echo`, the `session/request_permission` the adapter forwarded from Kiro Crew's gate extension, the updates through `completed` carrying the server's own result, and the result |
+| `mcp-stdio-mount-live.jsonl` | live | the initialize and `session/new` responses, a `tool_call` for `mcp__probe_server__echo`, the `session/request_permission` the adapter forwarded from Sao Khuê's gate extension, the updates through `completed` carrying the server's own result, and the result |
 
 Captured off `pi-acp` 0.0.33 spawning `pi` 0.85.1 and driving a locally
 served model configured in pi's own `models.json`, with agent-to-client lines
@@ -49,7 +49,7 @@ server was never asked `tools/call`. An array-only drive spawns no server at all
 Pi has no permission gate of its own: `pi` runs every tool call without asking, and
 `pi-acp` sends `session/request_permission` only when an extension inside `pi`
 raises a confirm dialog. So the frame in `permission-request-live.jsonl` exists
-because Kiro Crew's gate extension (`agent_sdk/gate_extensions/pi/`) was loaded
+because Sao Khuê's gate extension (`agent_sdk/gate_extensions/pi/`) was loaded
 into that `pi` through the gate launcher, and it is the observation the enforcement
 story needs: the extension intercepted the model's `bash` call, the adapter
 forwarded the dialog as `session/request_permission`, and the command ran only after
@@ -83,5 +83,5 @@ One more fact the capture records: a bash result on this adapter carries NO stdo
 text. The `tool_call` frame's `content` is a `terminal` block naming the adapter's
 terminal id, and the `completed` update carries `_meta.terminal_exit` with the exit
 code and nothing else -- the output is meant to be read through the ACP
-`terminal/*` methods, which Kiro Crew does not implement. The model saw the output
+`terminal/*` methods, which Sao Khuê does not implement. The model saw the output
 (its reply reports it); the transcript's tool pill does not.

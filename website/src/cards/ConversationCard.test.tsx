@@ -162,7 +162,7 @@ describe('card registry', () => {
 describe('card layout', () => {
   const INSET = /(^|\s)(?:[a-z0-9@[\]:-]*:)?-?(?:p[xlrse]|m[xlrse])-/
 
-  it('names the crewmate that proposed it, and Kiro Crew outside a crewmate chat', async () => {
+  it('names the crewmate that proposed it, and Sao Khuê outside a crewmate chat', async () => {
     pending = [card({ reason: 'You asked for shorter replies.' })]
     const rows = pending.map(c => row(c))
     qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -180,7 +180,7 @@ describe('card layout', () => {
     expect(await view.findByText(L('reason_label', { name: 'Pebble' }))).toBeInTheDocument()
     view.unmount()
     renderCards()
-    expect(await screen.findByText(L('reason_label', { name: 'Kiro Crew' }))).toBeInTheDocument()
+    expect(await screen.findByText(L('reason_label', { name: 'Sao Khuê' }))).toBeInTheDocument()
   })
 
   it('puts every block of a card on one left edge: no child adds its own inset', async () => {
@@ -695,7 +695,7 @@ describe('one-shot schedule', () => {
       await act(async () => { vi.advanceTimersByTime(2_100) })
       expect(screen.queryByTestId('change-card-apply')).toBeNull()
       const status = screen.getByTestId('change-card-status')
-      expect(status.textContent).toBe(L('time_passed', { name: 'Kiro Crew' }))
+      expect(status.textContent).toBe(L('time_passed', { name: 'Sao Khuê' }))
       expect(status.getAttribute('aria-live')).toBe('polite')
       expect(document.activeElement).toBe(screen.getByTestId('change-card-cancel'))
     } finally {

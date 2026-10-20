@@ -62,7 +62,7 @@ def describe_dropped_grant(dropped: DroppedGrant) -> str:
     """One channel-neutral line telling the operator what they lost."""
     return (
         f"Auto-approve (YOLO) is OFF: the grant from {dropped.source or 'an earlier session'} "
-        f"had {fmt_grant_duration(dropped.remaining_secs)} left when Kiro Crew restarted. "
+        f"had {fmt_grant_duration(dropped.remaining_secs)} left when Sao Khuê restarted. "
         "Grants live in memory only, so a restart ends them. Re-enable it if you still want it."
     )
 
@@ -190,7 +190,7 @@ def grant_declared_yolo() -> ActivationResult:
 
 # ── User-facing grant-lifetime text (channel-neutral) ──
 
-NO_EXPIRY_TEXT = "stays on until Kiro Crew restarts"
+NO_EXPIRY_TEXT = "stays on until Sao Khuê restarts"
 
 
 def fmt_grant_duration(secs: int) -> str:

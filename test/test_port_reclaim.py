@@ -55,7 +55,7 @@ async def test_foreign_holder_is_never_touched() -> None:
     outcome = await pr.reclaim_stale_gateway_port(
         5476,
         list_listeners=lambda _p: [4321],
-        is_kirocrew=lambda _pid: False,  # not a KiroCrew process
+        is_kirocrew=lambda _pid: False,  # not a SaoKhue process
         probe_healthy=_unhealthy,
         terminate=_terminate,
     )

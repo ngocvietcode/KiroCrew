@@ -697,7 +697,7 @@ slices:
 | `dashboard` | SSE/WS connection state, chat slots, approval mode, optimistic slot add/remove, thunks for slot fetch and approval-mode change |
 | `chat` | active slot, messages, session history with pagination, WS chunk/done handling, thunks for slot CRUD and history fetch/resume/delete |
 | `notifications` | notification list with add/delete/clear plus their thunks |
-| `instances` | the known Kiro Crew instances a user can switch between |
+| `instances` | the known Sao Khuê instances a user can switch between |
 
 Server data belongs in React Query, not in a slice. Reach for Redux only when the
 state is shell-wide and not a cached server read.

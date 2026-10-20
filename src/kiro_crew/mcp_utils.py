@@ -16,7 +16,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-#: Kiro Crew's internal names for the two OAuth hints on a remote MCP entry.
+#: Sao Khuê's internal names for the two OAuth hints on a remote MCP entry.
 #: These are the names used in ``mcp.json``, the custom-server API and the UI
 #: types.  They are NOT the names kiro-cli parses -- see
 #: :func:`kiro_oauth_wire_entry` for the translation and why it matters.
@@ -84,7 +84,7 @@ def _wire_scopes(raw: object, *, server: str = "") -> list[str] | None:
     non-empty list of non-empty strings. Partial forwarding is not an option: a
     hand-edited ``scopes: ["read", 7]`` emitted as-is makes kiro-cli reject the
     WHOLE agent spec ("expected a sequence" of strings), which drops every one of
-    Kiro Crew's MCP tools, not just this server's. Omitting the field instead
+    Sao Khuê's MCP tools, not just this server's. Omitting the field instead
     costs this entry the provider's default grant and leaves the rest working.
 
     All-or-nothing on purpose, matching the custom-server API's validation

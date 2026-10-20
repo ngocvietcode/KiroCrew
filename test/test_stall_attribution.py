@@ -251,7 +251,7 @@ class TestSurface:
 
     def test_cron_wins_over_the_slack_gateway_module_it_passes_through(self) -> None:
         # A cron turn's stack contains slack/gateway.py frames; the OUTERMOST
-        # Kiro Crew frame is the cron run, and that is what names the surface.
+        # Sao Khuê frame is the cron run, and that is what names the surface.
         assert classify_surface(parse_frames(CRON_STACK)) == "cron"
 
     def test_dashboard_chat_and_slack(self) -> None:

@@ -1,4 +1,4 @@
-"""Knowledge Library -- personal knowledge graph for KiroCrew."""
+"""Knowledge Library -- personal knowledge graph for SaoKhue."""
 
 from kiro_crew.knowledge.store import KnowledgeStore
 

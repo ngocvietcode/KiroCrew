@@ -46,7 +46,7 @@ async def _surface_agent_welcome(
 
     The one consumer of the agent-config field. An agent JSON may carry a
     ``welcomeMessage`` — a usage hint its author wants the user to read when the
-    agent takes over — and this is the only place it reaches a user. Kiro Crew's
+    agent takes over — and this is the only place it reaches a user. Sao Khuê's
     own bundled agents ship one, so the field is not a niche extension point.
 
     Three properties are the whole design, and each one rules out an

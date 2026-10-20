@@ -240,8 +240,8 @@ async def api_kiro_prerequisite_update_cli(request: web.Request) -> web.Response
 
     A POST for the same reason as repair-specs: the spawn must be origin-checked
     and audited, and both barriers are method-scoped. Offered only to remedy a
-    too-old kiro-cli that lacks the ``acp`` subcommand Kiro Crew launches every
-    session through. Unlike the install/sign-in steps (which Kiro Crew only
+    too-old kiro-cli that lacks the ``acp`` subcommand Sao Khuê launches every
+    session through. Unlike the install/sign-in steps (which Sao Khuê only
     names), this one runs ``kiro-cli update`` FOR the owner — the CLI's own
     self-update, the same command the auto-update path already runs.
 

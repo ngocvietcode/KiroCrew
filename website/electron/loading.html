@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Kiro Crew</title>
+  <title>Sao Khuê</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -10,7 +10,7 @@
       --backdrop: #0f1117;               /* neutral shown during the final hand-off fade */
       /* Foreground "ink". Two variables because the two texts have different WCAG
          bars and sit on different parts of the backdrop (see the contrast block):
-           --ink        → large "Kiro Crew" wordmark (AA large = 3:1) at the gradient centre
+           --ink        → large "Sao Khuê" wordmark (AA large = 3:1) at the gradient centre
            --ink-status → 14px status text + dot (AA normal = 4.5:1) at the bottom edge
          Both default to white (dark accents) and flip to dark when the accent is light. */
       --ink: #ffffff;
@@ -69,7 +69,7 @@
     .g-eyes { transform-box: fill-box; transform-origin: center; transition: transform 0.09s ease; }
     .g-eyes.blink { transform: scaleY(0.08); }   /* one whole ghost blinks (both eyes) */
 
-    /* ---- "Kiro Crew" wordmark — appears briefly in the centre on ready ---- */
+    /* ---- "Sao Khuê" wordmark — appears briefly in the centre on ready ---- */
     #title {
       position: absolute; left: 50%; top: 50%;
       transform: translate(-50%, -50%) translateY(10px) scale(0.96);
@@ -148,14 +148,14 @@
 <body>
   <div id="stage">
     <div id="ghosts"></div>
-    <div id="title">Kiro Crew</div>
+    <div id="title">Sao Khuê</div>
     <div id="status"><span class="dot"></span><span id="statusText">Starting gateway&hellip;</span></div>
     <div id="exit" hidden>
       <!-- The static copy is the connection-window wording; the script below
            rewrites the label, the hint and the aria-label once it knows which
            window it is in (see closeLabelFor / closeHintFor). -->
-      <button id="closeWin" type="button" aria-describedby="closeHint" aria-label="Close window and stop reconnecting. This connection window closes and stops trying to connect. Kiro Crew itself keeps running; to connect again, pick New Connection Window… from the Kiro Crew icon's menu.">Close window and stop reconnecting</button>
-      <p id="closeHint">This connection window closes and stops trying to connect. Kiro Crew itself keeps running; to connect again, pick New Connection Window… from the Kiro Crew icon's menu.</p>
+      <button id="closeWin" type="button" aria-describedby="closeHint" aria-label="Close window and stop reconnecting. This connection window closes and stops trying to connect. Sao Khuê itself keeps running; to connect again, pick New Connection Window… from the Sao Khuê icon's menu.">Close window and stop reconnecting</button>
+      <p id="closeHint">This connection window closes and stops trying to connect. Sao Khuê itself keeps running; to connect again, pick New Connection Window… from the Sao Khuê icon's menu.</p>
     </div>
   </div>
 
@@ -380,7 +380,7 @@
       resolve();
     }
 
-    // Hold the composition; "Kiro Crew" appears briefly; then hand off (fade → bootComplete).
+    // Hold the composition; "Sao Khuê" appears briefly; then hand off (fade → bootComplete).
     function resolve() {
       resolved = true;
       ghosts.forEach(function (g) { if (!g.visible && Math.random() < 0.5) showGhost(g); });
@@ -451,13 +451,13 @@
     // label, which follows app.name.
     var COLD_BOOT_STALL_MS = 15000;
     var TRAY_LOCATION = {
-      darwin: "the Kiro Crew icon in the menu bar, at the top-right of the screen",
-      win32: "the Kiro Crew icon in the notification area next to the clock (it may sit behind the ^ chevron)"
+      darwin: "the Sao Khuê icon in the menu bar, at the top-right of the screen",
+      win32: "the Sao Khuê icon in the notification area next to the clock (it may sit behind the ^ chevron)"
     };
     function closeHintFor(primary, platform) {
-      if (!primary) return "This connection window closes and stops trying to connect. Kiro Crew itself keeps running; to connect again, pick New Connection Window… from the Kiro Crew icon's menu.";
-      var where = TRAY_LOCATION[platform] || "the Kiro Crew icon in the system tray";
-      return "This window closes; Kiro Crew keeps running and keeps trying to connect in the background. Bring the window back from " + where + ".";
+      if (!primary) return "This connection window closes and stops trying to connect. Sao Khuê itself keeps running; to connect again, pick New Connection Window… from the Sao Khuê icon's menu.";
+      var where = TRAY_LOCATION[platform] || "the Sao Khuê icon in the system tray";
+      return "This window closes; Sao Khuê keeps running and keeps trying to connect in the background. Bring the window back from " + where + ".";
     }
     function closeLabelFor(primary) {
       return primary ? "Close window" : "Close window and stop reconnecting";

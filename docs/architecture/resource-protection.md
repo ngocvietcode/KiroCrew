@@ -1,6 +1,6 @@
 # Resource Protection Mechanisms
 
-Kiro Crew runs long-lived LLM sessions that spawn OS processes (kiro-cli, MCP servers) across
+Sao Khuê runs long-lived LLM sessions that spawn OS processes (kiro-cli, MCP servers) across
 several workflows: chat subagents, cron jobs, task runner steps, and background sessions.
 Each workflow has different failure modes (event-loop saturation, orphaned tasks, hung
 processes, context overflow), so protection is layered. Primary timeouts catch the common

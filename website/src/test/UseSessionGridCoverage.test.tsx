@@ -4,7 +4,7 @@ import { useSessionGrid } from '../hooks/useSessionGrid'
 import type { GridLeaf, GridNode, GridSplit } from '../hooks/useSessionGrid'
 
 /**
- * Coverage for useSessionGrid — the recursive split-tree state behind Kiro Crew's
+ * Coverage for useSessionGrid — the recursive split-tree state behind Sao Khuê's
  * native "terminal split" chat mode.
  *
  * The hook owns four things worth pinning down: restore-from-persistence on entry,

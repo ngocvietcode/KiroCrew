@@ -122,7 +122,7 @@ const UNSIGNED_SSO_JOB = {
 }
 const CLOUD_INSTANCE = {
   id: 'kc1',
-  name: 'Kiro Crew Cloud (kc-5e10bb)',
+  name: 'Sao Khuê Cloud (kc-5e10bb)',
   connection_method: 'ssm' as const,
   ssm_target: 'i-0abc123456789def0',
   ssh_host: '',
@@ -242,7 +242,7 @@ describe('a crew created without a Kiro sign-in — the progress card', () => {
     renderWithProviders(<RemoteCrewPanel />)
     await openSetup(u)
 
-    await screen.findByText(/Kiro Crew Cloud \(kc-5e10bb\)/i)
+    await screen.findByText(/Sao Khuê Cloud \(kc-5e10bb\)/i)
     expect(screen.queryByTestId('step-waiting-signin')).not.toBeInTheDocument()
     expect(screen.queryByTestId('step-waiting-connect')).not.toBeInTheDocument()
     expect(screen.queryByText(/Needs sign-in/i)).not.toBeInTheDocument()
@@ -507,8 +507,8 @@ describe('Your crews — an unsigned cloud crew', () => {
     const prompt = await screen.findByTestId('signin-prompt')
     // No code yet on this row, so the title names the action, not a code the
     // reader has not been given -- and still names the crew.
-    expect(prompt).toHaveTextContent(/Get a sign-in code for Kiro Crew Cloud \(kc-5e10bb\)/i)
-    const header = screen.getByText('Kiro Crew Cloud (kc-5e10bb)')
+    expect(prompt).toHaveTextContent(/Get a sign-in code for Sao Khuê Cloud \(kc-5e10bb\)/i)
+    const header = screen.getByText('Sao Khuê Cloud (kc-5e10bb)')
     expect(header.compareDocumentPosition(prompt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     // Inside the row it belongs to, not a sibling of the whole list.
     expect(prompt.closest('[data-crew-id="kc1"]')).not.toBeNull()
@@ -559,7 +559,7 @@ describe('Your crews — an unsigned cloud crew', () => {
 
     // findAll, not find: an unsigned row names its crew twice on purpose — the
     // row header, and the sign-in block that must not be misattributed.
-    expect(await screen.findAllByText(/Kiro Crew Cloud \(kc-5e10bb\)/i)).not.toHaveLength(0)
+    expect(await screen.findAllByText(/Sao Khuê Cloud \(kc-5e10bb\)/i)).not.toHaveLength(0)
     expect(screen.queryByText(/Setting up/i)).not.toBeInTheDocument()
   })
 })
@@ -1251,7 +1251,7 @@ describe('round 9 — the recheck tells the truth about success', () => {
     renderWithProviders(<RemoteCrewPanel />)
     await openSetup(u)
 
-    await screen.findByText(/Kiro Crew Cloud \(kc-5e10bb\)/i)
+    await screen.findByText(/Sao Khuê Cloud \(kc-5e10bb\)/i)
     // No code yet: the badge must not say "your approval" before there is
     // anything to approve. It says the code is being fetched.
     // The prompt block shows the same words beside its spinner, so assert the
@@ -1277,7 +1277,7 @@ describe('round 9 — the recheck tells the truth about success', () => {
     renderWithProviders(<RemoteCrewPanel />)
     await openSetup(u)
 
-    await screen.findByText(/Kiro Crew Cloud \(kc-5e10bb\)/i)
+    await screen.findByText(/Sao Khuê Cloud \(kc-5e10bb\)/i)
     expect(screen.getByText(/Waiting for your approval/i)).toBeInTheDocument()
   })
 })
@@ -1307,8 +1307,8 @@ describe('round 15 — one row at a time, and the prompt fetched for you', () =>
     // click on one instance grey out the button on every other unsigned one.
     const jobA = { ...UNSIGNED_JOB, id: 'job-a', tag: 'kc-aaaaaa', instance_id: 'i-aaa' }
     const jobB = { ...UNSIGNED_JOB, id: 'job-b', tag: 'kc-bbbbbb', instance_id: 'i-bbb' }
-    const instA = { ...CLOUD_INSTANCE, id: 'inst-a', name: 'Kiro Crew Cloud (kc-aaaaaa)', ssm_target: 'i-aaa', status: { instance_id: 'inst-a', state: 'disconnected' as const } }
-    const instB = { ...CLOUD_INSTANCE, id: 'inst-b', name: 'Kiro Crew Cloud (kc-bbbbbb)', ssm_target: 'i-bbb', status: { instance_id: 'inst-b', state: 'disconnected' as const } }
+    const instA = { ...CLOUD_INSTANCE, id: 'inst-a', name: 'Sao Khuê Cloud (kc-aaaaaa)', ssm_target: 'i-aaa', status: { instance_id: 'inst-a', state: 'disconnected' as const } }
+    const instB = { ...CLOUD_INSTANCE, id: 'inst-b', name: 'Sao Khuê Cloud (kc-bbbbbb)', ssm_target: 'i-bbb', status: { instance_id: 'inst-b', state: 'disconnected' as const } }
     vi.mocked(api.cloudLaunches).mockResolvedValue({ jobs: [jobA, jobB] } as never)
     vi.mocked(api.listInstances).mockResolvedValue({ active: true, warm_set_cap: 5, instances: [instA, instB] })
     // Never resolves: keeps the mutation pending while we look at the other row.

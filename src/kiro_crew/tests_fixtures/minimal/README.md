@@ -10,7 +10,7 @@ timestamps, and paths are synthetic.
 Running `kirocrew gateway --seed minimal` against a fresh
 `$KIROCREW_HOME` lands you on a clickable dashboard: memory tab shows
 the workspace content, cron tab shows the two jobs, sessions tab shows
-the pinned **Welcome to KiroCrew** starter. Useful as the default
+the pinned **Welcome to SaoKhue** starter. Useful as the default
 fixture for pytest tests that need "populated enough to exercise the
 dashboard" without having to author more content than necessary.
 

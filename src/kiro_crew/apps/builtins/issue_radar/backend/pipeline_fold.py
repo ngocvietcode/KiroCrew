@@ -1,4 +1,4 @@
-"""Fold Kiro Crew's own auto-triage pipeline into a three-level object model.
+"""Fold Sao Khuê's own auto-triage pipeline into a three-level object model.
 
 The pipeline is a chain of scheduled jobs, not a resident worker pool: a scanner
 labels new issues, a triage pass classifies them, a dispatcher opens one chat

@@ -6,7 +6,7 @@
 // className/style/`d` value from the shared i18n lint's attribute exemptions).
 //
 // Design source: Figma "Michelle Playground" frame 232:2123 (see design/).
-// Two-panel layout inside Kiro Crew's content area: resizable left rail + preview.
+// Two-panel layout inside Sao Khuê's content area: resizable left rail + preview.
 //
 // This module is the page's import path and its layout: the left rail, the
 // preview panel and the request rows (`RequestGroup`, `CommentRow`). The page's
@@ -446,7 +446,7 @@ export default function DesignTweak() {
             {/* dropdown panel — drops DOWNWARD from the trigger's bottom edge.
 
                 Geometry lives in inline styles on purpose: this app has no build
-                step and borrows the host's compiled Tailwind, so any class Kiro Crew
+                step and borrows the host's compiled Tailwind, so any class Sao Khuê
                 does not itself use was purged. `left-5`, `right-5` and `top-[52px]`
                 are all absent from the host bundle, which left top/left/right at
                 `auto` — the panel then sat at its static position, vertically

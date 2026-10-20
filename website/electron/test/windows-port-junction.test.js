@@ -137,7 +137,7 @@ test("a backend at a path the resolver never selected stays foreign", () => {
   );
 });
 
-test("classifyPortOwner recognises the junction-resolved backend as a local Kiro Crew gateway", async () => {
+test("classifyPortOwner recognises the junction-resolved backend as a local Sao Khuê gateway", async () => {
   const trustedExecutablePaths = [JUNCTION_PYTHON];
   const logs = [];
   const owner = await classifyPortOwner(5476, {
@@ -151,5 +151,5 @@ test("classifyPortOwner recognises the junction-resolved backend as a local Kiro
   });
   assert.strictEqual(owner, "kirocrew");
   // The log line quotes the existing owner vocabulary verbatim.
-  assert.ok(logs.some((line) => line.includes("held by local KiroCrew pid=33000"))); // brand-ok
+  assert.ok(logs.some((line) => line.includes("held by local SaoKhue pid=33000")));
 });

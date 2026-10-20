@@ -322,7 +322,7 @@ def _setup_cli_logging(command: str | None, verbose: int) -> None:
             for handler in logging.getLogger().handlers:
                 if type(handler) is logging.StreamHandler:
                     handler.setLevel(logging.WARNING)
-    # Kiro Crew loggers: --verbose CLI flag takes precedence, otherwise
+    # Sao Khuê loggers: --verbose CLI flag takes precedence, otherwise
     # fall back to the persistent log_level from config.
     if verbose == 0:
         try:
@@ -337,7 +337,7 @@ def _setup_cli_logging(command: str | None, verbose: int) -> None:
     # On startup, rotate gateway.log → gateway.log.prev so a crash's final
     # lines are never lost.  Only for `gateway` subcommand
     # to avoid renaming the file while the gateway is actively writing.
-    # encoding="utf-8" is REQUIRED on Windows: Kiro Crew logs non-ASCII glyphs and
+    # encoding="utf-8" is REQUIRED on Windows: Sao Khuê logs non-ASCII glyphs and
     # the default file encoding there is cp1252, so a RotatingFileHandler without
     # it raises UnicodeEncodeError on the first non-ASCII log record (logging
     # swallows it, but it spams "--- Logging error ---" tracebacks and drops the

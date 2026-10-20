@@ -391,7 +391,7 @@ def _fetch_file(request: FetchRequest) -> FetchedPolicy:
             )
         if stat_writable_by_current_user(st) or path_writable_by_current_user(path):
             raise PlatformCompositionError(
-                f"policy source {request.url!r} is writable by the account Kiro Crew runs "
+                f"policy source {request.url!r} is writable by the account Sao Khuê runs "
                 "as. A file:// distribution source must be read-only to it, or an agent "
                 "subprocess could publish its own ceiling. Use a root-owned path or a "
                 "read-only mount; for a local, editable policy use "

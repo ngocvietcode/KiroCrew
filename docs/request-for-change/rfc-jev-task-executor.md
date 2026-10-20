@@ -38,7 +38,7 @@ A ten-step errand such as "open the second search result and note its price and
 rating" costs ten full model turns. Most of those turns involve no reasoning.
 The model is picking one line out of a list the harness already wrote.
 
-Kiro Crew already has a cheap model for that kind of question. The decisions
+Sao Khuê already has a cheap model for that kind of question. The decisions
 seam (`src/kiro_crew/decisions/`, spec
 [`decisions.md`](../system-specs/modules/decisions.md)) sends Jev a closed menu
 and gets back one pick with a calibrated probability. Seven points use it today
@@ -118,7 +118,7 @@ executor is itself a trust-boundary component, not a surface:
   the existing Decisions card and the existing tool card in chat.
 
 The cost is release coupling: the loop's heuristics can no longer change
-without a Kiro Crew release. Core takes only the generic loop. Site-specific
+without a Sao Khuê release. Core takes only the generic loop. Site-specific
 rules stay out, and JevOnly stays the place to experiment before a rule is
 generic enough to land.
 

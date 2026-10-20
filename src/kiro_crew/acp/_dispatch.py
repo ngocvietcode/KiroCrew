@@ -172,7 +172,7 @@ def kas_crew_agent_id(agents: Any, mode_id: str) -> str:
 
     The inverse of the rename :func:`attach_kas_custom_agents` applies, read
     from the batch the session registered, so it can only ever map back to an
-    agent Kiro Crew sent. Any other id (a KAS built-in) is returned unchanged.
+    agent Sao Khuê sent. Any other id (a KAS built-in) is returned unchanged.
     """
     for a in agents if isinstance(agents, list) else ():
         agent_id = a.get("id") if isinstance(a, dict) else None

@@ -358,7 +358,7 @@ class FolderWatcher:
         ``embed_priority`` is forwarded per scan. Scheduled sweeps choose the
         bulk pool while dashboard-triggered scans retain the normal default.
 
-        **A source Kiro Crew registered itself is refused here, not scanned.** The two
+        **A source Sao Khuê registered itself is refused here, not scanned.** The two
         paths that registered folders on their own are gone, and with them the
         containment re-validation that made such a row safe to walk; a row can still
         exist, from a database written before the removal or from ``import_bundle``

@@ -1119,7 +1119,7 @@ class TestRequiresDesktopApp:
         assert manifest.platform.requiresDesktopApp is True
 
     def test_windows_is_expressible(self):
-        """KiroCrew runs natively on Windows, so a manifest must be able to say so.
+        """SaoKhue runs natively on Windows, so a manifest must be able to say so.
 
         Without the mapping row `"windows"` was accepted into the list and then
         matched NOTHING — a declaring app was silently unsupported everywhere,

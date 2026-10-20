@@ -22,7 +22,7 @@ const app = (name: string, over: Partial<RegistryApp> = {}): RegistryApp => ({
   name,
   displayName: name.replace(/(^|-)(\w)/g, (_, s, c) => (s ? ' ' : '') + c.toUpperCase()).trim(),
   description: `About ${name}.`,
-  author: 'Kiro Crew',
+  author: 'Sao Khuê',
   version: '1.0.0',
   tags: ['agents'],
   installed: false,
@@ -168,7 +168,7 @@ describe('an app card', () => {
   it('shows the app provenance on its row', () => {
     mount({ apps: [app('hero-app', { tags: ['research'] })] })
     expect(screen.getByText(/Research & Writing/)).toBeTruthy()
-    expect(screen.getByText('Kiro Crew registry')).toBeTruthy()
+    expect(screen.getByText('Sao Khuê registry')).toBeTruthy()
   })
 
   it('renders exactly one row', () => {

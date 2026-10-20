@@ -1,7 +1,7 @@
 """Launching and tearing down a child as a process *group*.
 
 The container runs a small tree of long-lived children. One of them, the
-Kiro Crew backend, itself launches ``kiro-cli`` workers, and each worker is a
+Sao Khuê backend, itself launches ``kiro-cli`` workers, and each worker is a
 two-process tree: a launcher and the child that actually runs the turn.
 Signalling the launcher's pid alone orphans that child, which goes on to finish
 its turn against a data home the container is trying to shut down.

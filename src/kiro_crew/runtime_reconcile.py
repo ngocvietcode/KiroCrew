@@ -572,7 +572,7 @@ def process_is_a_managed_agent(pid: int) -> bool:
 def process_is_ours(pid: int, *, proc_root: Path | None = None) -> bool:
     """Whether *pid* carries this install's spawn marker.
 
-    The marker is an environment variable set on every process Kiro Crew spawns
+    The marker is an environment variable set on every process Sao Khuê spawns
     and inherited by its whole tree, so it answers for a descendant the spawn
     never recorded -- which is most of what an unowned reading is made of. It is
     read out of the kernel's exec-time copy rather than from any file this uid

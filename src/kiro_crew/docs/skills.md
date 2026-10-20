@@ -63,7 +63,7 @@ Overview → Skills tab → "+ New" button → enter name and content.
 
 ### Via Chat
 
-Ask Kiro Crew: "Create a skill called X that does Y"
+Ask Sao Khuê: "Create a skill called X that does Y"
 
 ### Manually
 
@@ -71,7 +71,7 @@ Create `~/.kiro/crew/skills/my-skill/SKILL.md` with frontmatter and content.
 
 ## Built-in Skills
 
-Kiro Crew ships with built-in skills that are synced from the packaged skills directory on startup. These cover common workflows like URL shortening, code search, and writing assistance.
+Sao Khuê ships with built-in skills that are synced from the packaged skills directory on startup. These cover common workflows like URL shortening, code search, and writing assistance.
 
 ## Skill Sources and Priority
 
@@ -83,7 +83,7 @@ The startup sync also copies `$KIROCREW_PROJECT_DIR/skills/` and packaged built-
 
 ### Project-skill trust
 
-The dashboard can grant trust only to the requesting chat's active project. Before recording a grant, Kiro Crew canonicalizes the path, requires an existing readable directory, and verifies that the reviewed canonical key still matches; trusted project skills are then read from `<project>/.kiro/skills/`. Revoking the grant stops those project skills from loading.
+The dashboard can grant trust only to the requesting chat's active project. Before recording a grant, Sao Khuê canonicalizes the path, requires an existing readable directory, and verifies that the reviewed canonical key still matches; trusted project skills are then read from `<project>/.kiro/skills/`. Revoking the grant stops those project skills from loading.
 
 ## Importing Skills from a GitHub Repository
 

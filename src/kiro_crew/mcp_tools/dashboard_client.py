@@ -1,6 +1,6 @@
-"""The port a Kiro Crew MCP tool reaches the dashboard through.
+"""The port a Sao Khuê MCP tool reaches the dashboard through.
 
-Every MCP server Kiro Crew ships talks to the gateway the same way: an
+Every MCP server Sao Khuê ships talks to the gateway the same way: an
 authenticated loopback request to an ``/api`` route, answered with JSON. This
 module names that dependency as a port, :class:`DashboardClient`, so a tool body
 takes it as a parameter instead of importing ``mcp_core``'s request helpers by

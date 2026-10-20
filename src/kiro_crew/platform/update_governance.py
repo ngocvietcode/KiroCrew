@@ -1,7 +1,7 @@
 """The update seam: where new code may come from, and the minimum version.
 
 Two enterprise pins, read from the trust-root ``security_policy.json`` (see
-``governance.UpdatePins``), applied at the three places KiroCrew replaces its own
+``governance.UpdatePins``), applied at the three places SaoKhue replaces its own
 code: ``POST /api/update``, ``kirocrew update``, and the unattended gateway-boot
 auto-apply. This module exists so those three share one implementation and
 cannot drift.

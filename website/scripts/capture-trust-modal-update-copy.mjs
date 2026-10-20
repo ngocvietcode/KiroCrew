@@ -86,8 +86,8 @@ const RETRY_CLAUSE = BEFORE
   ? 'Your trust is already saved, so Trust and try again asks for no new trust and just tries again'
   : 'could not be updated. To remove the trust, open Settings'
 const OFFLINE_NEXT = BEFORE
-  ? 'Kiro Crew is not connected right now, so try again once it reconnects.'
-  : 'Kiro Crew is not connected right now, so \u201cTrust and try again\u201d stays off until it reconnects.'
+  ? 'Sao Khuê is not connected right now, so try again once it reconnects.'
+  : 'Sao Khuê is not connected right now, so \u201cTrust and try again\u201d stays off until it reconnects.'
 const LOGS_CLAUSE = "'s logs"
 const ASK_CLAUSE = `If it fails again, choose ${named('Ask the agent')} to find out why.`
 const WORKING_UPDATE = 'Trusting and updating...'

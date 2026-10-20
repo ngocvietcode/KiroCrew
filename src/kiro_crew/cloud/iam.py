@@ -1,6 +1,6 @@
 """cloud IAM — least-privilege policy generator + read-only reachability check.
 
-Same philosophy as ``deploy_web/iam.py``: **KiroCrew never performs an IAM
+Same philosophy as ``deploy_web/iam.py``: **SaoKhue never performs an IAM
 write.** We *generate* the policy text for the user to apply themselves (or they
 already have it, being the account owner). Verification is **read-only
 reachability only** — ``sts get-caller-identity`` plus harmless ``describe``
@@ -473,7 +473,7 @@ def policy_document() -> dict[str, Any]:
             "Resource": "arn:aws:ec2:*:*:vpc/*",
         },
         {
-            # Tag-gated mutation of resources managed by Kiro Crew: SG-rule
+            # Tag-gated mutation of resources managed by Sao Khuê: SG-rule
             # mutation, the destructive SG/tag verbs, and instance lifecycle. All
             # three share the same Effect + Resource ("*") + Condition
             # (aws:ResourceTag/kirocrew:managed=true), so they are ONE statement —
@@ -752,7 +752,7 @@ def policy_document() -> dict[str, Any]:
         {
             # The sensitive verbs — StartSession (interactive shell / tunnel)
             # and SendCommand (effectively RCE) — are gated to instances tagged by
-            # Kiro Crew so a leaked launcher credential can't open sessions or
+            # Sao Khuê so a leaked launcher credential can't open sessions or
             # run commands on every SSM-managed box in the account (mirrors the
             # tag gate on Ec2ManagedResourceMutateTagged). The tag condition is on
             # the instance resource only: SSM documents don't carry our tag, so

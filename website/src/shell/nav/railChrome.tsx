@@ -106,8 +106,8 @@ export function RailBrandToggle({ effectiveCollapsed, toggleNav, avatar, brandin
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="text-[13px] font-bold tracking-[.14em] uppercase whitespace-nowrap truncate min-w-0"
               >
-                {/* Last word of the bot name carries the accent (KIRO
-                    CREW: muted brand, accent product); single-word names
+                {/* Last word of the bot name carries the accent (SAO
+                    KHUÊ: muted first word, accent last); single-word names
                     render all-muted. */}
                 {botName.includes(' ') ? (
                   <>

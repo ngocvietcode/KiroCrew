@@ -1,4 +1,4 @@
-"""Regression tests for Round-22 findings (KiroCrew PR #6).
+"""Regression tests for Round-22 findings (SaoKhue PR #6).
 
 F1: shell deploy snapshots reject hardlinked source files BEFORE cp -a
     (the shell twin of _stage_tree_safe's st_nlink > 1 gate — R19/R20).

@@ -120,7 +120,7 @@ CONTRACT_FILENAME = "fix-contract.json"
 #: Ignored unconditionally: the conductor's own dispatch artefact, not the fix.
 ALWAYS_IGNORED = (CONTRACT_FILENAME,)
 
-#: Untracked paths a Kiro Crew test run leaves in the tree, exempt BY NAME rather than
+#: Untracked paths a Sao Khuê test run leaves in the tree, exempt BY NAME rather than
 #: by suffix. Kept as a short list so a reviewer can read it: everything else untracked is
 #: part of the change, because a fix that depends on a file git does not know about
 #: crashes the merged checkout whatever the file's extension is.

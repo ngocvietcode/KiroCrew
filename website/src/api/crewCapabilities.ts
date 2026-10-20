@@ -52,7 +52,7 @@ export interface CapabilityPreview extends CapabilityView {
   impact: (CapabilityRef & { member: string; change: 'added' | 'removed' | 'changed'; approval_expanded: boolean })[]
   /** Approvals this draft sets that the saved spec will not carry: a security
    * profile governs the server, the member has no enabled connection to it,
-   * or Kiro Crew rebuilds that connection without approvals. */
+   * or Sao Khuê rebuilds that connection without approvals. */
   withheld_approvals?: (CapabilityRef & { reason: 'governed' | 'not_connected' | 'managed' | 'unexplained' })[]
 }
 const endpoint = (member: string) => `/api/agents/${encodeURIComponent(member)}/capabilities`

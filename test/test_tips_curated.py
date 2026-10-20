@@ -38,7 +38,7 @@ class TestCuratedTips:
         assert len(tips) >= 8
         ids = [t["id"] for t in tips]
         assert len(ids) == len(set(ids)), "curated tip ids must be unique"
-        # A few known Kiro Crew-native features must be present.
+        # A few known Sao Khuê-native features must be present.
         for expected in ("split-view", "command-palette", "warm-pool", "secrets-vault"):
             assert expected in ids
         # The secrets-vault tip routes to the Secrets settings tab.

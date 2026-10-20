@@ -1,7 +1,7 @@
 """Pin each managed server's advertised caller-identity to what discovery reads.
 
 The shareability assessment has to answer "can one backend serve two sessions"
-for Kiro Crew's own MCP servers WITHOUT spawning them: on a host where the probe
+for Sao Khuê's own MCP servers WITHOUT spawning them: on a host where the probe
 cannot run there is no ``initialize`` response to read the capability from. So
 :func:`managed_server_is_session_bound` reads a module constant instead.
 

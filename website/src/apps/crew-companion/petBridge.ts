@@ -1,5 +1,5 @@
 /**
- * The API surface `useDrag` and `PetContextMenu` expect, backed by Kiro Crew.
+ * The API surface `useDrag` and `PetContextMenu` expect, backed by Sao Khuê.
  *
  * In the desktop app these were Electron IPC calls into the main process, which owned
  * the pet window and persisted its position to userData. Here the companion is a

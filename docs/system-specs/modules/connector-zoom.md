@@ -66,8 +66,8 @@ are `identity`, `paging`, `processing`, and `errors` (redaction lives with
 
 ## The Meetings app is not this connector
 
-Kiro Crew's built-in [Meetings app](meetings.md) transcribes a meeting through
-Kiro Crew's **own** streaming speech-to-text and fans the transcript out to a
+Sao Khuê's built-in [Meetings app](meetings.md) transcribes a meeting through
+Sao Khuê's **own** streaming speech-to-text and fans the transcript out to a
 small crew of background agents that produce a local, model-generated summary.
 Zoom's **AI Companion meeting summary** is a distinct, vendor-side product:
 Zoom's own models generate it on Zoom's infrastructure, and this connector reads
@@ -75,7 +75,7 @@ it back through `meeting_summary` endpoints. **These two must never be
 conflated.** The builtin app's locally-produced summary is never substituted for
 Zoom's native AI Companion summary, and the AI Companion summary this connector
 reads is never treated as, or fed into, the Meetings app's own STT+LLM pipeline.
-They answer different questions ("what did Kiro Crew's agents make of the audio
+They answer different questions ("what did Sao Khuê's agents make of the audio
 we captured" versus "what did Zoom's AI Companion produce for the host"), have
 different provenance and different entitlements, and a reader or a later adapter
 that treats one as the other is producing a false record.

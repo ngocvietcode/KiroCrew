@@ -1,4 +1,4 @@
-"""Sections for the external processes, hosts and sources Kiro Crew reaches.
+"""Sections for the external processes, hosts and sources Sao Khuê reaches.
 
 Owns the DTOs and defaults for ``mcp`` and ``mcp_gateway`` (including the MCP stub
 roster readers the gateway seed shares), ``instances``, ``tunnel``, ``publish``,
@@ -110,10 +110,10 @@ def _resolve_stub_overrides(mcp_gateway_data: dict) -> dict[str, bool]:
 #: The managed server whose stub decision the followers below inherit.
 MANAGED_STUB_LEADER = "kirocrew-core"
 
-#: Kiro Crew's own managed servers that are stubbed whenever
+#: Sao Khuê's own managed servers that are stubbed whenever
 #: :data:`MANAGED_STUB_LEADER` is, unless an operator override says otherwise.
 #:
-#: Each one is launched from Kiro Crew's own install (so its launch needs no
+#: Each one is launched from Sao Khuê's own install (so its launch needs no
 #: operator approval, see ``rewriter._is_managed_launch``), is handed the
 #: per-session token by gatewayd (``daemon.control_plane.CONTROL_PLANE_BACKENDS``)
 #: and advertises ``kirocrew.caller-identity``, refusing a caller the gateway
@@ -766,7 +766,7 @@ class McpConfig:
             "Extra MCP Binary Directories",
             "Additional directories to search for MCP server binaries, ahead of "
             "the built-in locations. Add one when a package manager installs its "
-            "MCP launchers somewhere Kiro Crew does not know about: a server "
+            "MCP launchers somewhere Sao Khuê does not know about: a server "
             "declared by bare name that resolves nowhere never starts, and the "
             "session just comes up short of tools. Each entry must be a single "
             "absolute directory (``~`` is expanded); anything else is ignored "
@@ -787,11 +787,11 @@ class McpConfig:
         metadata=_meta(
             "Honour MCP autoApprove",
             "Keep an ``autoApprove`` list you wrote yourself -- one hand-added to "
-            "``mcp.json`` or to an agent file -- in the agent config Kiro Crew "
+            "``mcp.json`` or to an agent file -- in the agent config Sao Khuê "
             "writes. On by default: an ``autoApprove`` is a deliberate choice about "
             "your own tools and is respected, so those verbs run without an approval "
             "card. Know what it costs before writing one: the agent runtime approves "
-            "such a call locally and emits no permission request, so Kiro Crew's "
+            "such a call locally and emits no permission request, so Sao Khuê's "
             "own tool gate never runs for it. Turn this OFF to drop every verb no "
             "server spec declares, which puts those tools back through the gate. A "
             "governance ceiling strips the key whatever this says, and a verb a spec "
@@ -808,7 +808,7 @@ class InstancesConfig:
     """Multi-instance management (the *Instances* feature).
 
     Gates and tunes the gateway's ability to manage/switch between several
-    remote Kiro Crew instances over SSH tunnels. Off by default — opt-in only,
+    remote Sao Khuê instances over SSH tunnels. Off by default — opt-in only,
     since enabling it allows the gateway to open SSH ``-L`` forwards and relaxes
     the dashboard CSP ``frame-src`` for the active loopback tunnel ports.
 
@@ -822,7 +822,7 @@ class InstancesConfig:
         metadata=_meta(
             "Enabled",
             "Enable multi-instance management — lets this gateway open SSH tunnels "
-            "to remote Kiro Crews and embed their dashboards. Default off (opt-in). "
+            "to remote Sao Khuês and embed their dashboards. Default off (opt-in). "
             "Enabling also scopes a CSP frame-src relaxation to active tunnel ports.",
             restart=True,
         ),
@@ -1055,7 +1055,7 @@ class TunnelConfig:
 
 @dataclass
 class AwsConfig:
-    """AWS settings for the agent sessions Kiro Crew starts.
+    """AWS settings for the agent sessions Sao Khuê starts.
 
     ``project_profiles`` is the operator's directory -> named-profile map; the
     rules that read it live in :mod:`kiro_crew.aws_project_profiles`.

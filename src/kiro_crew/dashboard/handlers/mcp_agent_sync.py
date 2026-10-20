@@ -1,4 +1,4 @@
-"""Copying MCP servers into the Kiro Crew agent spec.
+"""Copying MCP servers into the Sao Khuê agent spec.
 
 ``_sync_mcp_to_agent`` and its batch form, the refusal when the agent home is not ours to
 write, and whether live sessions pick a change up by hot reload.
@@ -50,7 +50,7 @@ def _agent_home_not_owned_response(name: str) -> web.Response:
         {
             "error": (
                 f"'{name}' was not applied: this agent config is owned by another "
-                "Kiro Crew data home, which this instance will not rewrite."
+                "Sao Khuê data home, which this instance will not rewrite."
             ),
             "code": "agent_home_not_owned",
         },

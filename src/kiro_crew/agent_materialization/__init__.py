@@ -6,7 +6,7 @@ name. Nothing outside ``kiro_crew.agent`` and this package imports an owner, so 
 layout below can change without touching a caller.
 
 * :mod:`.kiro_hooks` -- the spec ``hooks`` field: validation, both spec shapes, the
-  autoimport scan and the merge. The legacy-key repair of the specs Kiro Crew owns
+  autoimport scan and the merge. The legacy-key repair of the specs Sao Khuê owns
   stays :func:`kiro_crew.agent.repair_agent_configs`.
 * :mod:`.managed_mcp` -- policy over the managed MCP registry: emission eligibility,
   the gate snapshot, the data-home pin, the registry marker and field ownership.

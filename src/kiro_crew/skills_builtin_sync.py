@@ -44,7 +44,7 @@ from kiro_crew.skills_discovery import (
 logger = logging.getLogger("kiro_crew.skills")
 
 
-# Skills RELOCATED into the kirocrew-dev/ folder (the Kiro Crew development
+# Skills RELOCATED into the kirocrew-dev/ folder (the Sao Khuê development
 # suite). Without this, an upgraded install keeps BOTH the old flat copy
 # and the new nested copy — two divergent copies of the same skill matched
 # nondeterministically by trigger overlap. The flat copy is NOT deleted (it
@@ -72,7 +72,7 @@ def _claim_dir_for_replacement(dest_dir: Path) -> Path | None:
     """Atomically move *dest_dir* to a dot-prefixed sibling before verifying.
 
     Verify-then-delete has a race: another process (an editor, a second
-    Kiro Crew instance syncing the same home) can swap the directory between
+    Sao Khuê instance syncing the same home) can swap the directory between
     the fingerprint check and the rmtree, destroying a tree the check never
     saw. Renaming first makes the claim atomic — whatever tree the caller
     verifies is exactly the tree it then deletes, restores, or quarantines.

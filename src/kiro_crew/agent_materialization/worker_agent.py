@@ -996,7 +996,7 @@ class ForeignAgentSpec(DerivedSpecStale):
     crew shared through the Fargate runtime installs its own spec into the same
     directory, so a file sitting at that path is not necessarily a mirror. A
     re-derivation that read one anyway would judge it a stale mirror of the default
-    and replace the shared crew's prompt and tool surface with Kiro Crew's own, with
+    and replace the shared crew's prompt and tool surface with Sao Khuê's own, with
     no error and nothing in the logs naming the crew.
 
     A :class:`DerivedSpecStale` rather than a sibling of it, and the subclassing is

@@ -1500,7 +1500,7 @@ _GOLDEN_DIGESTS: dict[str, str] = {
     "cancelled_messages": "fcfbabbeaa380023b98273c08331bbae08d6971a5c5237c6f3b218d827aac943",
     "cancelled_stop_reason": "38c292699d20bc4d1b460b264e2ca9cb62a3e67ddbf465434566d482b7a1f50c",
     "cmd_allowed_denied": "0802fc63efe6e37f62e532419b17548240110c89100b8b4925703f80306e2621",
-    "cmd_allowlist_and_channel": "0b64b0c42209ad4e75596212067a1b7fd2c7dabdba488324355a4cdcca3f9d43",
+    "cmd_allowlist_and_channel": "a1c01d078f0a14ab698e0bab89db0cbf5369943c02b7bcfff336dd6b839f77e4",
     "cmd_compact": "6e48bff6ebaa74ae629d99c5f6977e10e73aed3c42f10c7f906cfc91d65f2a62",
     "cmd_dashboard_bad_duration": "38a7cb5332a1ba5ff255ec3303f56379bdd35ad259fede729cbba8f807d1b162",
     "cmd_link_to_dashboard_unavailable": "3a7c8916de8eec9ddf603e7ccaaa8d892e682a9f5d7a56783277ea8e64955fdd",
@@ -1527,7 +1527,7 @@ _GOLDEN_DIGESTS: dict[str, str] = {
     "error_timeout": "608f9764fe3ed40a4e758a69d881f2c829e08a6aa89302e9f007a1c1b463db44",
     "error_unexpected": "ae7bc265f3ffd8441f818df443f1586b1e0f3c6d2009d7b707220f0b6e92829a",
     "hook_auto_reply": "f976c5ff2c752a2259381bcfd9fbf6e2fb72ca95fcdb1bbfa53c5ddf98f68f53",
-    "hook_deny_and_flag": "128570569dc7d30d1327ba223a903e3d1da2c190df536c018cc8555f04bfb1da",
+    "hook_deny_and_flag": "e0f8c52ef4741bb8351be1eb9a27cfcb2780a8e1723f0ae0ff5f09c7b3a0279d",
     "interaction_edges": "80e9ab4e4ba623f57a0360df952f7d6c787348fc81ff69368bbfcfb2ce22bc8f",
     "interactive_approve": "e6f33da7bfb82b921f184c46ac76705f6a2d0bfb3841c230d5be7c30c5783e47",
     "interactive_approve_answered": "cbcfe6a559c59c8314699ebb58b1ca04c0ea7e0cc01b301fc345b93d7f7fc963",
@@ -2673,7 +2673,7 @@ def test_the_import_time_phase_table_is_built_in_the_facade() -> None:
 
 
 def test_a_frame_in_an_owner_is_attributed_to_slack() -> None:
-    """A loop stall whose outermost Kiro Crew frame is an owner function still reads
+    """A loop stall whose outermost Sao Khuê frame is an owner function still reads
     as the Slack surface (``stall_attribution``'s slack rule names the package)."""
     from kiro_crew import stall_attribution
 

@@ -960,7 +960,7 @@ _COMPACT_FAIL_REASON_MAX_CHARS = 300
 
 
 # The answer to a /compact that reached a fresh provider session still owing the
-# Kiro Crew conversation replay. The replay rides the next context-bearing
+# Sao Khuê conversation replay. The replay rides the next context-bearing
 # prompt, so that session holds nothing yet and the backend reports no
 # compaction status to wait for.
 COMPACT_REPLAY_PENDING_NOTICE = (

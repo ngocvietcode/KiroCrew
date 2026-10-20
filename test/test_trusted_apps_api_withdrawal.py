@@ -177,7 +177,7 @@ async def test_mutations_refuse_when_config_local_owns_the_trust_setting(
     # code returned 200, telling the operator a grant was revoked while the overlay
     # re-admitted the app's code on the very next load. Third variant of
     # "revocation that revokes nothing". Refusing is the honest answer: the overlay
-    # is user-owned and Kiro Crew never writes it.
+    # is user-owned and Sao Khuê never writes it.
     (home / "config.local.json").write_text(
         json.dumps({"agent": {"apps_trusted": ["pinned-app"]}}), encoding="utf-8"
     )

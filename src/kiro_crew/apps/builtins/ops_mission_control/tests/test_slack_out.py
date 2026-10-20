@@ -3,7 +3,7 @@
 The load-bearing properties, in order of what would hurt most if broken:
 
 1. **No credential of our own.** The app must never grow a Slack token field; it
-   reuses Kiro Crew's client. A test asserts the secret store stays untouched,
+   reuses Sao Khuê's client. A test asserts the secret store stays untouched,
    because "just add a token field" is the obvious future regression.
 2. **A Slack outage cannot break ops.** Every send swallows its exception. If this
    regresses, a Slack blip stops incident claiming.
@@ -138,7 +138,7 @@ class TestNoTokenOfItsOwn(_HomeIsolated):
             self.assertNotIn(
                 banned,
                 source,
-                "Slack output must reuse Kiro Crew's client, never store its own token",
+                "Slack output must reuse Sao Khuê's client, never store its own token",
             )
 
     def test_reads_the_client_off_gateway_state(self) -> None:
@@ -206,7 +206,7 @@ class TestPublish(_HomeIsolated):
         self.assertFalse(await self._publish(fake))
 
     async def test_no_client_publishes_nothing(self) -> None:
-        """Slack not configured on Kiro Crew itself: quiet no-op, never a crash."""
+        """Slack not configured on Sao Khuê itself: quiet no-op, never a crash."""
         self.assertFalse(await slack_out.publish(self.incident, None))
 
     async def test_disabled_publishes_nothing(self) -> None:

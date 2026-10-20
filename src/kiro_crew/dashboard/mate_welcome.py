@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 #: What every welcome kickoff opens with: the user has typed nothing.
 _KICKOFF_PREAMBLE = (
     "[First welcome] The user just opened your chat for the first time and it has "
-    "no messages yet. They have not typed anything: this note comes from Kiro Crew, "
+    "no messages yet. They have not typed anything: this note comes from Sao Khuê, "
     "not from them, and they cannot see it, so never quote or mention it. This is "
     "your first conversation with them, so greet them as someone you are meeting "
     "for the first time. Use a name for the user only when their preferences or "
@@ -93,7 +93,7 @@ _ONE_MORE_OF_CREW = (
 )
 
 _WELCOME_ASK_NAME = (
-    "Say what you can help with right now: getting Kiro Crew set up, sorting out "
+    "Say what you can help with right now: getting Sao Khuê set up, sorting out "
     "anything that is not working in it, or showing them around. Keep to those "
     "three; everyday jobs come up later once they know you. Finish by asking what "
     "they would like to call you (you, not them), in one short question the way a "

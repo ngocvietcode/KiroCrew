@@ -498,7 +498,7 @@ def resolve_workers() -> int:
        156s @ 64 workers vs 92s @ 32 workers (-41%).
     2. ``PYTEST_XDIST_AUTO_NUM_WORKERS``, xdist's OWN knob. Honoured as a ceiling
        because this hook, being ``firstresult``, runs instead of xdist's default
-       implementation and would otherwise discard it silently -- and Kiro Crew itself
+       implementation and would otherwise discard it silently -- and Sao Khuê itself
        seeds that variable with a memory-aware cap at every agent spawn boundary
        (``resource_status.inject_xdist_auto_cap``). A run that inherits a deliberate
        cap must not be handed more workers than it asked for.

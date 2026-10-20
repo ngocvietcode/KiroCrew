@@ -1,6 +1,6 @@
 """The Strands Decider launcher's ASGI wrappers: null rubrics and one decision at a time.
 
-Kiro Crew's wire format types each option's rubric as nullable and sends ``null``
+Sao Khuê's wire format types each option's rubric as nullable and sends ``null``
 for an option with none; Strands Decider's server types every rubric as a string
 and answers 422 to a null one, so without the rewrite every decision would be
 skipped. Its endpoint also runs every request concurrently on a thread pool, so

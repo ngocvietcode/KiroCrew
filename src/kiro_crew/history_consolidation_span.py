@@ -58,7 +58,7 @@ _CONSOLIDATION_MAX_HEAD_SLICES = 8
 # budget would cut it to a third of the span it gives a Latin one for no reason
 # the provider cares about. 65_536 characters leaves room beside the transcript
 # for the instructions and the current memory blocks in every context window
-# Kiro Crew dispatches to.
+# Sao Khuê dispatches to.
 _CONSOLIDATION_PROMPT_BUDGET_CHARS = 64 * 1024
 
 

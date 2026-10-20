@@ -171,7 +171,7 @@ def credential_mask_applies(mode: str) -> bool:
     effective = _clamp_sandbox_mode_to_floor(mode, floor)
     if effective == "off":
         return False
-    # Already inside a Kiro Crew sandbox: a nested re-wrap is impossible by design,
+    # Already inside a Sao Khuê sandbox: a nested re-wrap is impossible by design,
     # wrap_argv passes the argv through (at most an env scrub) and never reaches a
     # backend that could apply the mask. The OUTER sandbox confines the child, but it
     # was built for the tier's own hidden dirs -- which deliberately leave ~/.aws,
@@ -361,7 +361,7 @@ def scrub_env(
 
 
 def without_python_env(env: Mapping[str, str] | None = None) -> dict[str, str]:
-    """Return a copy of *env* (default ``os.environ``) without Kiro Crew's own
+    """Return a copy of *env* (default ``os.environ``) without Sao Khuê's own
     Python interpreter settings, and with every other variable kept.
 
     Drops each key that starts with one of ``_PYTHON_ENV_PREFIXES``, compared
@@ -369,7 +369,7 @@ def without_python_env(env: Mapping[str, str] | None = None) -> dict[str, str]:
     variables, ``GNUPGHOME`` and ``GIT_ASKPASS`` all survive.
 
     This is the policy for a child that is NOT an agent but still must not load
-    Kiro Crew's interpreter packages instead of its own: the user's own dashboard
+    Sao Khuê's interpreter packages instead of its own: the user's own dashboard
     terminal, a third-party pooled MCP backend, and the ``aws`` CLI the voice list
     runs. Those children need the user's credentials, so they must not use
     :func:`scrub_agent_subprocess_env`, which also strips them.
@@ -417,7 +417,7 @@ def scrub_agent_denied_env(env: dict[str, str]) -> dict[str, str]:
     :func:`sandboxed_spawn_argv`), so without this scrub the channel credentials
     would be inherited by the agent subprocess on the default tier — reachable
     via ``env`` / ``os.environ`` and usable to control those channel identities
-    outside Kiro Crew.
+    outside Sao Khuê.
 
     Unlike :func:`scrub_env`, this deliberately does NOT strip
     ``_SENSITIVE_ENV_PREFIXES`` (AWS/SSH/GPG): the ``standard`` sandbox is
@@ -493,7 +493,7 @@ def sandboxed_spawn_argv(
             pre-augmented env (e.g. with a resolved ``PATH``) to have the scrub
             applied on top of it.
         strip_python_env: Strip ``PYTHONPATH``/``PYTHONHOME`` so a foreign
-            Python child does not inherit Kiro Crew's interpreter paths. Applied
+            Python child does not inherit Sao Khuê's interpreter paths. Applied
             BOTH inside :func:`wrap_argv`'s launcher AND to the returned env, so
             the strip holds even on the fail-open path where no launcher runs.
         extra_hidden_dirs: Additional absolute directory trees the caller needs
@@ -588,7 +588,7 @@ def sandboxed_spawn_argv(
     wrapped = cgroup_scope_argv(wrapped)
     # Positive-identity marker for the orphan sweep: every tree spawned through
     # this chokepoint (and its descendants, via env inheritance) is identifiable
-    # as spawned by Kiro Crew even when its cmdline carries no Kiro Crew fingerprint
+    # as spawned by Sao Khuê even when its cmdline carries no Sao Khuê fingerprint
     # (e.g. ``npx @playwright/mcp``).
     scrubbed[KIROCREW_SPAWNED_ENV] = KIROCREW_SPAWNED_VALUE
     # Marks this tree as TOOL work -- a build, an ``npx`` install, a ``git``/``gh``

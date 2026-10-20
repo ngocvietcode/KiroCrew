@@ -1,7 +1,7 @@
 """The checklist pill after the native conversation restarts, and a person's tick.
 
 kiro-cli keeps the ``todo_list`` tool's state inside ONE native conversation.
-Kiro Crew replaces that conversation on an agent switch, a failed
+Sao Khuê replaces that conversation on an agent switch, a failed
 ``session/load``, a poisoned-conversation discard and ``/clear``, while the
 pill's slot snapshot survives all of them. The agent then holds an empty list
 under a pill that shows the old one, and its next ``complete`` fails with

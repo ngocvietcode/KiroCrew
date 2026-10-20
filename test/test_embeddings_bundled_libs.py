@@ -334,7 +334,7 @@ class TestBundledLinuxX86CpuGate:
     def test_operator_override_is_kept_out_of_the_bundled_shape_rule(
         self, tmp_path: Path, monkeypatch, caplog
     ) -> None:
-        """A directory that merely sits inside a Kiro Crew tree is still the operator's."""
+        """A directory that merely sits inside a Sao Khuê tree is still the operator's."""
         _stub_bundled_linux_libs(tmp_path)
         override = tmp_path / "kiro_crew" / "_vendor" / "llama_cpp_libs"  # no platform leaf
         override.mkdir(parents=True)
@@ -356,7 +356,7 @@ class TestBundledLinuxX86CpuGate:
         assert stand_in.SEAM_AT_IMPORT is None
         assert stand_in.ENV_AT_IMPORT == str(override)
         assert active_lib_path == str(override)
-        assert "inherited from another Kiro Crew process" not in caplog.text
+        assert "inherited from another Sao Khuê process" not in caplog.text
 
     def test_runtime_import_hardens_locale_encoded_null_streams(
         self, tmp_path: Path, monkeypatch

@@ -292,7 +292,7 @@ def _kill_orphan_mcp_descendants(
     license killing arbitrary descendants:
 
     * ``KIROCREW_SPAWNED`` in the member's exec-time environ, proving it
-      belongs to a tree Kiro Crew spawned (:func:`_env_has_kirocrew_marker`,
+      belongs to a tree Sao Khuê spawned (:func:`_env_has_kirocrew_marker`,
       Linux-only and fail-closed, so this whole reap is a no-op off Linux —
       matching the work-class floor).
     * NOT a gateway/CLI entrypoint (:data:`_GATEWAY_MARKERS`), so an
@@ -301,7 +301,7 @@ def _kill_orphan_mcp_descendants(
     * The SAME process the walk saw -- its ``_pid_start_token`` must still
       match the one captured at enumeration. Without this the reap has a
       PID-recycle hole: the root's ``killpg`` reaps a descendant, the kernel
-      hands that PID to a NEW Kiro-Crew-spawned worker, and the stale entry
+      hands that PID to a NEW SaoKhue-spawned worker, and the stale entry
       then SIGKILLs a live process that passes every other gate. A token that
       cannot be read on either side is treated as unproven identity and the
       member is skipped, never as a mismatch -- declining to act is not the
@@ -334,7 +334,7 @@ def _kill_orphan_mcp_descendants(
             # list it assembled some other way.
             continue
         if not _env_has_kirocrew_marker(target):
-            continue  # not provably part of a Kiro Crew tree
+            continue  # not provably part of a Sao Khuê tree
         live_token = _pid_start_token(target)
         if walk_token is None or live_token is None:
             logger.debug(

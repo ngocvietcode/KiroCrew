@@ -1,7 +1,7 @@
-"""Registration bridges — wire app resources into KiroCrew's runtime.
+"""Registration bridges — wire app resources into SaoKhue's runtime.
 
 When an app is installed or enabled, its agents, skills, and cron jobs need
-to be registered with KiroCrew's existing systems.  This module provides
+to be registered with SaoKhue's existing systems.  This module provides
 ``register_app`` and ``deregister_app`` which handle the namespacing and
 symlink/copy operations.
 
@@ -25,9 +25,9 @@ from kiro_crew import _facade_mirror
 # its responsibility:
 #
 #   ``bridges_sources`` -- Which manifest and root an app registers from, its resource names and target dirs.
-#   ``bridges_mcp_config`` -- Kiro Crew's own agent config file: its path, its lock, locked reads and writes.
+#   ``bridges_mcp_config`` -- Sao Khuê's own agent config file: its path, its lock, locked reads and writes.
 #   ``bridges_agents`` -- Materializing an app's agents into the kiro-cli agents directory.
-#   ``bridges_skills`` -- Linking an app's skills into the Kiro Crew skills directory.
+#   ``bridges_skills`` -- Linking an app's skills into the Sao Khuê skills directory.
 #   ``bridges_crons`` -- An app's cron manifest and its jobs in the running CronService.
 #   ``bridges_mcp`` -- Registering an app's MCP servers, and resolving each stdio server's command.
 #   ``bridges_register`` -- register_app / deregister_app as a whole, and an app's session pointers.

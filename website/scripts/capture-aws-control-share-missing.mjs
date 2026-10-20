@@ -125,7 +125,7 @@ const SHELL = {
   '/api/auth/me': { user: 'owner', app: '' },
   '/api/status': { sessions: 0, messages: 0, cron_jobs: 0, subagents: 0, lessons: 0, uptime: 1, version: '0.1.0' },
   '/api/kiro-prerequisite': { installed: true, authenticated: true, ready: true },
-  '/api/dashboard/branding': { bot_name: 'Kiro Crew', avatar: '' },
+  '/api/dashboard/branding': { bot_name: 'Sao Khuê', avatar: '' },
   '/api/theme/boot': { mode: 'dark', theme: '' },
   '/api/themes': { themes: [], installed: [] },
   '/api/notifications': { notifications: [], unread: 0 },

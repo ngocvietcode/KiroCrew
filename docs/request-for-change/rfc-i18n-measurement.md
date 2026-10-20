@@ -22,7 +22,7 @@ superseded-by: []
 
 ## Summary
 
-KiroCrew's i18n mechanism is **structurally rigorous and linguistically
+SaoKhue's i18n mechanism is **structurally rigorous and linguistically
 unmeasured**. The structural half is, in places, better than industry practice:
 CLDR plural categories are exactly correct in all ten locales, key parity is
 exact, and the ratchet design is more disciplined than the norm. The unmeasured

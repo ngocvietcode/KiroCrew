@@ -6,7 +6,7 @@ A single asyncio background loop, started from ``register_routes(app)`` via
 
   1. **new-item notification** — each repo that has opted in (per-repo setting
      ``notify_on_new_issue``) is checked for tracked items (GitHub/GitLab issues,
-     Azure DevOps work items) created since the last check, and a Kiro Crew
+     Azure DevOps work items) created since the last check, and a Sao Khuê
      dashboard notification is pushed (``state.notify`` — the bell, persisted to
      the notification history) when new ones appear;
   2. **crew sweep** (:func:`crew_runtime.sweep_repo`) — every repo with a live crew
@@ -31,7 +31,7 @@ fallback link comes from ``provider.tracked_items_url``. Nothing here assumes
 GitHub: this module names no client directly.
 
 This is NOT a cron job: it lives entirely inside the gateway process and only
-runs while KiroCrew is running (and the machine is awake). It is also
+runs while SaoKhue is running (and the machine is awake). It is also
 zero-LLM/zero-token — it shells out to the user's existing provider CLI session
 (``gh`` / ``glab`` / ``az``, via the dispatched client's
 ``list_recent_open_issues``) and compares item numbers against a per-repo

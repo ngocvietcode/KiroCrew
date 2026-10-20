@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Detach a per-app backend from the shared KiroCrew CloudFront distribution.
+"""Detach a per-app backend from the shared SaoKhue CloudFront distribution.
 
 Inverse of attach_backend.py: removes the '<slug>/api/*' cache behavior and the
 origin it targeted (only if no other behavior / the default still uses it).
@@ -27,7 +27,7 @@ def aws(profile, region, *args):
     except ImportError:
         sys.stderr.write(
             "error: kiro_crew package not importable — refusing to spawn AWS "
-            "commands unsandboxed. Run this script with the KiroCrew venv "
+            "commands unsandboxed. Run this script with the SaoKhue venv "
             "python (see skills/artifact-deploy/SKILL.md).\n"
         )
         sys.exit(1)

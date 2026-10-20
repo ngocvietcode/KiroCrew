@@ -1,6 +1,6 @@
-"""Example dynamic workflow: Kiro Crew's own scheduled morning triage.
+"""Example dynamic workflow: Sao Khuê's own scheduled morning triage.
 
-Shows the primitives that make Kiro Crew workflows MORE than an external agent
+Shows the primitives that make Sao Khuê workflows MORE than an external agent
 CLI's workflows — persistence, cron self-scheduling, memory-aware behavior,
 nudges, and Slack delivery. Illustrative only — DSL not implemented yet.
 

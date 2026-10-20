@@ -1,7 +1,7 @@
 """``kirocrew cron add --managed-by KEY`` and ``cron remove --managed-by KEY``.
 
 An external installer owns a cron under a key it can recompute without reading
-Kiro Crew state. These tests pin the contract it relies on, against the real
+Sao Khuê state. These tests pin the contract it relies on, against the real
 store: the key is unique (a second add refuses with nothing written), uninstall
 by key removes exactly that job, and a re-install is remove then add, which
 mints a fresh id. There is deliberately no replace-in-place.

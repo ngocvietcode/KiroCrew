@@ -1,7 +1,7 @@
 """Which sibling may share a ``settings.local.json`` seed, and the create race for one.
 
 A sibling of the same agent in the same ``work_dir`` whose payload matches the durable
-record and the bytes on disk shares the seed instead of running without Kiro Crew's MCP
+record and the bytes on disk shares the seed instead of running without Sao Khuê's MCP
 tools. These pin who may share and the share-validation lease that follows, and the
 create race: a loser shares only on a durable record of the winner's bytes, a vacant path
 is re-created only with the recorded bytes, and a refused record withdraws its file.

@@ -60,7 +60,7 @@ export interface KiroPrerequisiteStatus {
    */
   sandbox_remedy: string
   /**
-   * Kiro Crew's own agent spec files missing from the kiro-cli agents directory.
+   * Sao Khuê's own agent spec files missing from the kiro-cli agents directory.
    * Non-empty means kiro-cli will answer every session/set_mode with
    * "Mode '<name>' not found", so `ready` is forced false and `repair_required`
    * true — a viable binary and a good `whoami` are NOT sufficient on their own.
@@ -84,10 +84,10 @@ export interface KiroPrerequisiteStatus {
    */
   agent_spec_repair_error: string
   /**
-   * Kiro Crew's own specs that are PRESENT on disk but which the installed
+   * Sao Khuê's own specs that are PRESENT on disk but which the installed
    * kiro-cli refuses to load. Presence and acceptance are different questions: a
    * rejected spec is dropped from kiro-cli's agent table, so `--agent kirocrew`
-   * resolves to the default agent with none of Kiro Crew's MCP servers — the
+   * resolves to the default agent with none of Sao Khuê's MCP servers — the
    * same total failure as an absent spec, which statting the file cannot detect.
    * Non-empty forces `ready` false and `repair_required` true.
    *
@@ -100,7 +100,7 @@ export interface KiroPrerequisiteStatus {
    */
   agent_spec_rejection_detail?: string
   /**
-   * Whether the installed kiro-cli exposes the `acp` subcommand every Kiro Crew
+   * Whether the installed kiro-cli exposes the `acp` subcommand every Sao Khuê
    * session is launched through. False means the CLI runs and is signed in but
    * is too OLD to start a session, so `ready` is forced false. The remedy is an
    * update, not a reinstall. Optional because a gateway older than this field
@@ -109,7 +109,7 @@ export interface KiroPrerequisiteStatus {
   acp_supported?: boolean
   /**
    * The command that updates the CLI in place (`kiro-cli update`). Unlike
-   * `login_command`, Kiro Crew also runs this FOR the owner via the update-cli
+   * `login_command`, Sao Khuê also runs this FOR the owner via the update-cli
    * POST — it is the CLI's own self-update. Rendered verbatim in a `<code>`.
    */
   update_command?: string
@@ -144,11 +144,11 @@ export interface ConfigSetHintsV1 {
   }>
 }
 
-/** `GET /api/kas-bundle`: Kiro Crew's own KAS engine (the `agent.kas_bundle` route). */
+/** `GET /api/kas-bundle`: Sao Khuê's own KAS engine (the `agent.kas_bundle` route). */
 export interface KasBundleStatus {
   /** `agent.kas_bundle` as saved. */
   enabled: boolean
-  /** The engine version this Kiro Crew release pins. */
+  /** The engine version this Sao Khuê release pins. */
   pinned_version: string
   /** The version the harness runs: the pin, unless the gateway's environment overrides it. */
   runs_version: string
@@ -271,7 +271,7 @@ export interface AgentImportSelection {
   categories: string[]
 }
 
-/** Skip keeps Kiro Crew's item; rename installs alongside; overwrite replaces it
+/** Skip keeps Sao Khuê's item; rename installs alongside; overwrite replaces it
  *  after the backend writes a restore copy. Omitting the field means 'skip'. */
 export type AgentImportConflictStrategy = 'skip' | 'rename' | 'overwrite'
 
@@ -366,7 +366,7 @@ export function createOnboardingEndpoints({ get, post, put, j, jNullable }: Clie
     // afterwards, which is the single authority on state.
     kasLoginLogout: (identity: string) =>
       post('/api/kas-login/logout', { identity }).then(j) as Promise<{ ok: boolean }>,
-    // Kiro Crew's own KAS engine. The switch is the ordinary config PATCH of
+    // Sao Khuê's own KAS engine. The switch is the ordinary config PATCH of
     // `agent.kas_bundle`; these two only read and install the pinned engine. The
     // install answers 202 with the same status shape and runs in the background.
     kasBundleStatus: () => get('/api/kas-bundle').then(j) as Promise<KasBundleStatus>,

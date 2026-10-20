@@ -273,7 +273,7 @@ def schemas() -> list[dict[str, Any]]:
         {
             "name": "send_notification",
             "description": (
-                "Publish a notification to the Kiro Crew notification center "
+                "Publish a notification to the Sao Khuê notification center "
                 "(bell feed) through the system.agent channel. Unlike "
                 "send_message, this is a pure notification: "
                 "it never sends chat messages or DMs. "
@@ -344,7 +344,7 @@ def schemas() -> list[dict[str, Any]]:
             "name": "delete_message",
             "description": (
                 "Delete a message previously sent by this bot. Only works on "
-                "messages authored by the Kiro Crew bot itself (Slack API constraint). "
+                "messages authored by the Sao Khuê bot itself (Slack API constraint). "
                 "Use to clean up transient notifications after the user acknowledges them."
             ),
             "inputSchema": {
@@ -366,7 +366,7 @@ def schemas() -> list[dict[str, Any]]:
             "name": "update_message",
             "description": (
                 "Edit a message previously sent by this bot, in place. Only works "
-                "on messages authored by the Kiro Crew bot itself (Slack API "
+                "on messages authored by the Sao Khuê bot itself (Slack API "
                 "constraint). Use for a rolling status message — progress, a live "
                 "checklist, a result that supersedes an earlier one — instead of "
                 "posting a follow-up that buries the original. Either text or "

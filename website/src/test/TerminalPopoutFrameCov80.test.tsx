@@ -56,7 +56,7 @@ describe('TerminalPopoutFrame', () => {
   it('sets the OS window title', () => {
     tabsBox.tabs = [{ id: 't1' }]
     render(<TerminalPopoutFrame />)
-    expect(document.title).toBe('Terminal — Kiro Crew')
+    expect(document.title).toBe('Terminal — Sao Khuê')
   })
 
   it('mints a tab when deep-linked with none', () => {

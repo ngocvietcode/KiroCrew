@@ -8,7 +8,7 @@ export const KIRO_MODEL_SETTINGS_URL = 'https://app.kiro.dev/settings/model'
  * Note above the fallback settings: on the Kiro CLI and kiro-agent harnesses the
  * fallbacks managed on app.kiro.dev run inside the harness first, and the
  * settings on this page apply on top. Renders nothing on other harnesses, where
- * Kiro Crew's own fallback is the only one.
+ * Sao Khuê's own fallback is the only one.
  */
 export function KiroHarnessFallbackNote({ cfg }: { cfg: AcpBackendConfig | undefined }) {
   if (!isKiroHarness(cfg)) return null

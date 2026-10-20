@@ -1,4 +1,4 @@
-"""Kiro Crew's own generated agent specs are never offered, or accepted, as sub-agents.
+"""Sao Khuê's own generated agent specs are never offered, or accepted, as sub-agents.
 
 A side turn publishes ``~/.kiro/agents/<agent>--readonly.json``
 (``dashboard.side_readonly_spec``) because that directory is the only place
@@ -107,7 +107,7 @@ class TestTheGateRefusesIt:
         assert name == ""
         assert code == sa.AGENT_INTERNAL_CODE
         assert err == (
-            "agent 'scout--readonly' is the read-only spec Kiro Crew derives from 'scout' "
+            "agent 'scout--readonly' is the read-only spec Sao Khuê derives from 'scout' "
             "for side replies, not a sub-agent; name 'scout' to spawn that agent; "
             "available: scout"
         )
@@ -216,7 +216,7 @@ class TestTheModeRefusalExplanation:
     def test_the_name_alone_does_not_decide(self, registry: Path) -> None:
         """A user's own ``mine--readonly`` (no owner marker) and a derived-shaped
         name with no file both keep the ordinary answer: the wording is keyed on
-        the marker, so it never tells a user their own agent is Kiro Crew's."""
+        the marker, so it never tells a user their own agent is Sao Khuê's."""
         (registry / "mine--readonly.json").write_text(
             json.dumps({"name": "mine--readonly", "description": "mine"}), encoding="utf-8"
         )

@@ -1,5 +1,5 @@
 /**
- * ChatPanel — mounts the full KiroCrew ChatPage inside an app.
+ * ChatPanel — mounts the full SaoKhue ChatPage inside an app.
  *
  * ChatPage accepts `embedded` prop which skips URL sync effects.
  * ChatPanel dispatches switchSlot() to activate the workspace session.

@@ -110,7 +110,7 @@ def schemas() -> list[dict[str, Any]]:
         {
             "name": "workflow_library_list",
             "description": (
-                "List reusable workflows explicitly saved in the global Kiro Crew library. "
+                "List reusable workflows explicitly saved in the global Sao Khuê library. "
                 "Pass search to find local workflows relevant to a new request before authoring."
             ),
             "inputSchema": {

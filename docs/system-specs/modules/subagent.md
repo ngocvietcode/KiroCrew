@@ -475,7 +475,7 @@ A row parked at the spawn-approval prompt is registered and owes its price while
 it waits for an answer.
 
 What the prices are measured against (a `kiro-cli acp` 2.26.1 process driven
-with Kiro Crew's own `initialize` / `session/new` shape, sessions added one at a
+with Sao Khuê's own `initialize` / `session/new` shape, sessions added one at a
 time, process-tree USS/PSS, which count shared code pages once): an extra session
 on a running runtime costs ~0.01 GiB with no MCP servers and ~0.45-0.6 GiB with
 the default `kirocrew` agent's roster, every server a fresh process per session;
@@ -792,7 +792,7 @@ tell its own load from foreign load (a browser, a build). So with one
 long-lived dedicated subagent of ours running (a `keep` conversation, say) on a
 Mac held at WARN by other apps, every new root start waits, up to its bound,
 even though ending our runtime might not end the episode. That is the chosen
-side: a new runtime under WARN slows the whole machine, not just Kiro Crew, and
+side: a new runtime under WARN slows the whole machine, not just Sao Khuê, and
 the per-row bound caps the wait at `agent.subagent_queue_max_wait_secs` (30
 minutes by default),
 after which the start is ended rather than launched into the pressure. A
@@ -1385,7 +1385,7 @@ made; no gate reads it back. Two consumers:
 
 kiro-cli defines `toolsSettings.subagent.availableAgents` for its own built-in
 `subagent` tool: a glob list of the agents an agent may spawn, and **omitting it
-allows all**. Kiro Crew's sub-agents come through `spawn_run` /
+allows all**. Sao Khuê's sub-agents come through `spawn_run` /
 `spawn_sub_agents` rather than that tool, so the gate honours the same
 declaration itself (`subagent._vet_parent_available_agents`, called from
 `spawn_impl` right after `_vet_spawn_governance`):
@@ -1505,9 +1505,9 @@ declaration forbids and say so
 server resolves its own session's template best-effort and filters nothing
 when it cannot — and the gate above is the decision.
 
-### Kiro Crew's own generated specs are not sub-agents
+### Sao Khuê's own generated specs are not sub-agents
 
-Two kinds of spec Kiro Crew writes into the user-level agents directory — the
+Two kinds of spec Sao Khuê writes into the user-level agents directory — the
 only place kiro-cli loads a spec from — exist for its own machinery:
 the side turn's derived read-only spec (`<agent>--readonly`, recognised by the
 owner marker its `description` opens with; `side.md`) and a skill-view alias
@@ -3624,7 +3624,7 @@ Parameters:
 - `reasoning_effort` (str, optional): per-call reasoning-effort override (`low`/`medium`/`high`/`xhigh`/`max`), batch-wide like `model`. Precedence: per-call value → `agent.role_efforts['subagent']` pin → provider default; `""`/absent changes nothing. Like a model/effort role pin, a non-empty value forces the dedicated-process path (the parent's shared runtime cannot switch effort per session), so a wide fan-out pays a full process per subagent — and that cost is paid even when the resolved model turns out not to support effort (the level is then dropped at the provider factory). Carried through the stagger queue and the retry endpoint like the context-group flags. Inherited by a continuation (`spawn_continue`, a `spawn_steer` follow-up): a continuation is another turn of the same run, so it keeps the model the caller pinned at spawn (`SubagentInfo.model`; a model the run took from `agent.role_models['subagent']` or a `model.route` tier is not a pin and resolves again) and the run's effort. Effort follows the model, as in [rfc-worker-model-inheritance](../../request-for-change/rfc-worker-model-inheritance.md) rule 4: when `spawn_continue` names a model, the run's effort is not carried and the effort resolves for that model (role pin, else default). After a gateway restart both come from the run's `state.json`: `pinned_model` and `reasoning_effort`; a record written before they were recorded has neither and requests neither. When the requested effort cannot take effect, the gateway says so: `/api/spawn` resolves the model the factory's effort gate will see (per-call value, else the subagent role pin, else the selected member's own model pin, the provider template's pin, and the global fallback) and returns an `effort_dropped` reason on the success response, which the tool renders as one attributed line per distinct verdict — subagents sharing an identical verdict (the usual case, since the value is batch-wide) are collapsed into a single line naming all of them, while differing verdicts keep their own attributed lines. When the effort WILL apply, the response instead carries an `effort_applied` note naming the resolved model and the family-specific settings key (`reasoning` for GPT, `output_config` for Claude) it is delivered under, rendered the same way — so both outcomes of a requested effort are visible in the tool result. When nothing is pinned (the model resolves to `auto`), no model can be named at accept time on any backend: the factory carries the level unkeyed and the provider binds it at start to the model the backend reports serving (`AcpProvider._bind_unbound_effort`), and an unpinned kiro-cli serves its own `chat.defaultModel` when one is set and `auto` only when none is. So the response carries neither verdict but a third field, `effort_pending`, saying the level is bound at start and applied only if that model takes effort; the tool renders it as a neutral `ℹ` line with no `✓` and neither verdict word, and the provider logs the level as not applied when the served model takes none. For a requested effort whose selection resolves, exactly one of `effort_dropped`, `effort_applied` and `effort_pending` is set. A per-spawn `backend` keeps its own rules above that: one with no effort channel still reports the drop, and one that advertises its own levels still carries none of the three. A role-pinned effort that will be dropped (no per-call effort involved) still surfaces in the gateway log at warning level, since the tool caller never asked for it — that warning is emitted by the provider factory's effort gate itself (`config/loader.py`), the single authority that drops the level, so one log line covers every surface that funnels through it (spawn, dashboard slot, cron) and cannot drift from the decision it reports on. The provider factory remains the single dropping authority; the report never rejects or alters a spawn. A `tasks[]` object entry may override it for one task (see `tasks` above).
 - `backend` (str, optional): the agent harness the run starts on, spelled as a governance rule spells it (`kiro`, `claude`, `codex`, ...), batch-wide like `model`; a `tasks[]` object entry may override it for one task. `/api/spawn` maps the name to the backend id (`kiro` → `""`) and refuses one this gateway cannot start -- unknown, not in `selectable_backend_values()`, or reported `missing` (or `restart_required`: installed after the gateway cached its absence) by `backend_install.probe_backend` (run off-loop; an `unknown` probe does not block) -- with 400 `unknown_backend`, `backend_not_installed` plus the `install_command`, or `backend_restart_required` and the names that can start, before the manager counts it, rather than letting the factory degrade it to Kiro. The id rides `SubagentInfo.backend` (`None` = the gateway default) through the stagger queue, the run record (`state.json` `backend`), the retry endpoint and `spawn_continue`, which inherits it from the live record or `state.json` because the conversation lives on that harness. A value rules out the shared runtime (the parent's process, on the parent's backend) and reaches the provider factory as `backend_override`, the first tier of `members.select_provider_backend` (override → member-DM route → configured default); the allocator skips the warm pool for it (`pool_decision = "bypass_backend_override"`), since a pooled child runs the default backend.
 - `label` (str, optional): a short display name for the task, shown in place of the task text in the dashboard's task box (the subagent progress bar) and on the task's line in the tool's own result. Display only: the subagent receives the task text unchanged and nothing routes on the value. `spawn_label.normalize_spawn_label` holds it to one line of at most 80 characters (control characters become spaces, whitespace runs collapse, a longer value is cut), and `SubagentInfo` applies the same rule on construction, so a value reaching `/api/spawn` from another caller is bounded too. Batch-wide; a `tasks[]` object entry may set its own. A labelled row in the task box shows the start of the task text, muted, after the label, and keeps the whole task as its hover title. Label every member of a wave or none, so its rows read alike. Carried on `SubagentInfo.label` through the stagger queue and task-store recovery, and on the `subagent_spawn`, `subagent_done` and reconnect-snapshot frames (redacted like `task`). Absent means the task text names the row, as before.
-- `include_memory` / `include_lessons` / `include_project` (bool, optional, default `true`): which switchable context groups the subagent inherits, applied to every task in a batch spawn. All-on is byte-identical to the injection a normal session gets, so a caller that omits them changes nothing. `include_memory=false` drops preferences, projects, daily history, semantic and episodic memory, and prior-session provenance — the normal choice for fan-out whose task text is self-contained. `include_lessons=false` additionally drops the user's learned corrections and profile, so keep it on for any subagent that writes code, edits files, or runs git. `include_project=false` drops the docs pointer and the project-directory line. It also drops the injected steering block, but ONLY on the Claude Code backend: on the ACP/kiro backend `kiro-cli --agent` loads the agent's `resources` (including steering globs) itself, which Kiro Crew cannot suppress from here, so steering still reaches an ACP sub-agent regardless of this flag. The conduct group — critical output-format rules, date, agent identity, runtime, workspace identity, and the skills index — is never switchable, because a subagent without it cannot discover its own capabilities or format what it reports back. A subagent is told by name which groups were withheld (`[CONTEXT SCOPE]`) so it reports the gap rather than guessing. Resolved once at spawn, carried through the capacity-queue round-trip and `POST /api/spawn/{id}/retry` like `approval_mode`/`silent`/`keep`. `spawn_continue` does not take the flags but does **inherit** them from the run it continues: a continuation rebuilds session context (`get_or_create` reports `is_new=True` even when it restores the session via `session/load`), so without inheritance a scoped-down run would regain a group on its follow-up turn. See `memory-skills-hooks.md` § Switchable context groups for the section-by-section mapping.
+- `include_memory` / `include_lessons` / `include_project` (bool, optional, default `true`): which switchable context groups the subagent inherits, applied to every task in a batch spawn. All-on is byte-identical to the injection a normal session gets, so a caller that omits them changes nothing. `include_memory=false` drops preferences, projects, daily history, semantic and episodic memory, and prior-session provenance — the normal choice for fan-out whose task text is self-contained. `include_lessons=false` additionally drops the user's learned corrections and profile, so keep it on for any subagent that writes code, edits files, or runs git. `include_project=false` drops the docs pointer and the project-directory line. It also drops the injected steering block, but ONLY on the Claude Code backend: on the ACP/kiro backend `kiro-cli --agent` loads the agent's `resources` (including steering globs) itself, which Sao Khuê cannot suppress from here, so steering still reaches an ACP sub-agent regardless of this flag. The conduct group — critical output-format rules, date, agent identity, runtime, workspace identity, and the skills index — is never switchable, because a subagent without it cannot discover its own capabilities or format what it reports back. A subagent is told by name which groups were withheld (`[CONTEXT SCOPE]`) so it reports the gap rather than guessing. Resolved once at spawn, carried through the capacity-queue round-trip and `POST /api/spawn/{id}/retry` like `approval_mode`/`silent`/`keep`. `spawn_continue` does not take the flags but does **inherit** them from the run it continues: a continuation rebuilds session context (`get_or_create` reports `is_new=True` even when it restores the session via `session/load`), so without inheritance a scoped-down run would regain a group on its follow-up turn. See `memory-skills-hooks.md` § Switchable context groups for the section-by-section mapping.
 
 Effort receipts retain the runner's selection namespace. An explicit `agent`,
 including a template already resolved from `crew`, uses an empty crew claim;
@@ -3670,13 +3670,13 @@ text, with the call's identity installed. Cancellation discards a collect result
 without suppressing those children's completion events. The audited wrapper
 writes the tool's terminal invocation row once.
 
-Each sub-agent runs as its own Kiro Crew-owned ACP session (via
+Each sub-agent runs as its own Sao Khuê-owned ACP session (via
 `SubagentManager`), so its text and tool calls stream live to the Activity
 tab (`subagent_spawn` / `subagent_chunk` / `subagent_tool` / `subagent_done`
 WS events) while the parent blocks.
 
 Native kiro-cli `subagent`/`use_subagent` crews run inside the parent's
-kiro-cli process rather than as Kiro Crew-owned sessions. Kiro Crew surfaces
+kiro-cli process rather than as Sao Khuê-owned sessions. Sao Khuê surfaces
 those in the Activity tab too, by observing kiro-cli's sub-agent
 notifications — one card per sub-agent, with each inner tool call and its
 output attributed to the right card.
@@ -4209,7 +4209,7 @@ machine-readable `code` beside the advisory `error` prose (plus `counted: true` 
 see Wave liveness above): `agent_not_found` for a named-but-unknown agent,
 `agent_not_available` for a target the parent agent spec's
 `toolsSettings.subagent.availableAgents` forbids (§ Parent agent spec allowlist),
-`agent_internal` for one of Kiro Crew's own generated specs (§ Kiro Crew's own
+`agent_internal` for one of Sao Khuê's own generated specs (§ Sao Khuê's own
 generated specs are not sub-agents),
 `spawn_rejected` for every other kind (empty task, low memory, cwd refusal,
 governance). `code` is the contract and `error` is advisory (RFC 9457 3.1.3),
@@ -4479,13 +4479,13 @@ sub-agent, read the file back from it):
 | Host | What the run showed | Not verified |
 |---|---|---|
 | Linux, namespace sandbox | The shared window is mounted and the sub-agent reads the parent's staged file (the path #12782 was built and tested on). | — |
-| macOS 26.7.1, arm64 | The sub-agent got the same `$KIROCREW_SCRATCH` path, read the parent's staged file, and wrote a new file there. | Which sandbox layer the sub-agent ran in. The helper ran under kiro-cli's agent server and no Kiro Crew sandbox was seen above it, which fits the delegated path leaving private windows out. The Seatbelt profile carve-out is pinned at profile-text level by tests only; no `sandbox-exec` run has shown it. |
+| macOS 26.7.1, arm64 | The sub-agent got the same `$KIROCREW_SCRATCH` path, read the parent's staged file, and wrote a new file there. | Which sandbox layer the sub-agent ran in. The helper ran under kiro-cli's agent server and no Sao Khuê sandbox was seen above it, which fits the delegated path leaving private windows out. The Seatbelt profile carve-out is pinned at profile-text level by tests only; no `sandbox-exec` run has shown it. |
 | Windows | The sub-agent got the same `$KIROCREW_SCRATCH` value and read a staged marker back by that path. | The sandbox layer the spawn got (not surfaced in the run's output). Isolation differs on Windows (#19601). |
 
 So on all three hosts a dedicated sub-agent reached the parent's staged file.
 Only on Linux is the sandbox layer known. On macOS and Windows the runs do not
 show the sub-agent was sandboxed at all, so they say the path works, not that
-it works inside a Kiro Crew sandbox; that question is tracked in #19601.
+it works inside a Sao Khuê sandbox; that question is tracked in #19601.
 
 ### Parent end ends the children, on every backend
 

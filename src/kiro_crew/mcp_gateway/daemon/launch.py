@@ -517,7 +517,7 @@ def env_target_resolver(pool_key: PoolKey) -> Optional[tuple[str, list[str], dic
     # A reserved control plane receives the session token only after every
     # launcher-injection namespace is gone. Third-party backends never receive
     # that token and keep settings outside the four Python interpreter roots
-    # that can make them load Kiro Crew's packages instead of their own.
+    # that can make them load Sao Khuê's packages instead of their own.
     if pool_key.server_name in CONTROL_PLANE_BACKENDS:
         for key in tuple(env):
             if any(key.upper().startswith(prefix) for prefix in _SPEC_ENV_DENIED_PREFIXES):

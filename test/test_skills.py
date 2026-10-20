@@ -667,8 +667,8 @@ class TestRepoScope:
         assert "repo-only" in inside
 
     def test_kiro_crew_dev_skills_load_globally_and_say_so(self) -> None:
-        # Maintainer decision: the Kiro Crew developer skills load in
-        # every session like any other skill, so a Kiro Crew PR written from any
+        # Maintainer decision: the Sao Khuê developer skills load in
+        # every session like any other skill, so a Sao Khuê PR written from any
         # folder still gets them. The description is what keeps them out of other
         # repositories, so each one must state that it is for this repository.
         from kiro_crew import skills as skills_mod
@@ -680,14 +680,14 @@ class TestRepoScope:
             / "builtins"
             / "dev_fleet"
             / "skills"
-            / "pod-e2e": "ONLY for developing Kiro Crew itself",
-            pkg / "builtin_skills" / "kirocrew-dev" / "kirocrew-prepare-pr": "Kiro Crew repo only",
+            / "pod-e2e": "ONLY for developing Sao Khuê itself",
+            pkg / "builtin_skills" / "kirocrew-dev" / "kirocrew-prepare-pr": "Sao Khuê repo only",
             pkg
             / "builtin_skills"
             / "kirocrew-dev"
-            / "kirocrew-worktree-dev": "Kiro Crew source repo ITSELF",
-            pkg / "builtin_skills" / "kirocrew-dev" / "writing-tests": "Kiro Crew repo only",
-            pkg / "builtin_skills" / "kirocrew-dev" / "dashboard-template": "Kiro Crew repo only",
+            / "kirocrew-worktree-dev": "Sao Khuê source repo ITSELF",
+            pkg / "builtin_skills" / "kirocrew-dev" / "writing-tests": "Sao Khuê repo only",
+            pkg / "builtin_skills" / "kirocrew-dev" / "dashboard-template": "Sao Khuê repo only",
         }
         for skill_dir, statement in expected.items():
             head = (skill_dir / "SKILL.md").read_text(encoding="utf-8")[:2048]

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - install the in-account scheduled reaper ONCE per
+# SaoKhue One-Click Deploy - install the in-account scheduled reaper ONCE per
 # account. Provisions an EventBridge-triggered Lambda that deletes expired
 # non-persistent deploys. Reliable: runs in-account on a timer, no local creds.
 #

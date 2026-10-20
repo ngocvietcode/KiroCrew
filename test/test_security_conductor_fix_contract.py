@@ -533,7 +533,7 @@ class TestAnUnstagedEditIsStillTheFix:
         assert payload(result)["changed"] == ["test/test_x.py"]
 
     def test_only_the_named_test_run_residue_is_exempt(self, repo) -> None:
-        """A Kiro Crew test run drops a data home and a breadcrumb into the tree.
+        """A Sao Khuê test run drops a data home and a breadcrumb into the tree.
 
         Refusing those would reject every fixer that ran the suite, which is the false
         rejection this gate exists to avoid one level up -- so they are exempt BY NAME,

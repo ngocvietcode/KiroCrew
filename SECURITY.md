@@ -24,5 +24,5 @@ running the most recent version.
 
 ## Scope
 
-This policy covers the Kiro Crew source code and its bundled dependencies. It does not cover
-third-party services (LLM providers, etc.) that Kiro Crew connects to.
+This policy covers the Sao Khuê source code and its bundled dependencies. It does not cover
+third-party services (LLM providers, etc.) that Sao Khuê connects to.

@@ -495,12 +495,12 @@ EXPECTED_EXTENTS = {
     "[CURRENT DATE]": 48,
     "[CURRENT AGENT]": 196,
     "[WORKSPACE IDENTITY]": 376,
-    "[DOCUMENTATION]": 235,
+    "[DOCUMENTATION]": 233,
     "[Memory —": 2008,
     "[Skills:]": 413,
     "[Learned corrections": 320,
 }
-EXPECTED_TOTAL = 6788
+EXPECTED_TOTAL = 6786
 
 
 def test_session_context_char_extents(seeded: Seeded) -> None:

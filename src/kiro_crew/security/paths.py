@@ -514,7 +514,7 @@ def write_protected_home_paths() -> tuple[str, ...]:
 def crew_home_prefixes() -> tuple[str, ...]:
     """Public view of the known crew data-home prefixes.
 
-    Used to classify a sensitive path as a Kiro Crew trust root vs. a third-party
+    Classifies a sensitive path as a Sao Khuê trust root vs. a third-party
     credential store when describing the posture.
     """
     return tuple(_CREW_HOME_PREFIXES)

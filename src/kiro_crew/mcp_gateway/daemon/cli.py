@@ -41,7 +41,7 @@ def _default_cli_socket_path() -> Path:
 
     This is used ONLY when ``python -m kiro_crew.mcp_gateway.gatewayd`` is
     invoked without an explicit ``--socket`` flag — a rare operator path,
-    typically ad-hoc debugging. The Kiro Crew production path always
+    typically ad-hoc debugging. The Sao Khuê production path always
     derives the socket from ``McpGatewayConfig.socket_path`` / the
     ``default_socket_path()`` in :mod:`kiro_crew.mcp_gateway.rewriter`,
     which returns ``$KIROCREW_HOME/mcp-gateway/gateway.sock``.
@@ -68,7 +68,7 @@ def _default_cli_socket_path() -> Path:
 def _build_argparser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="mc-mcp-gatewayd",
-        description="KiroCrew MCP gateway daemon — pools MCP backends across sessions",  # brand-ok
+        description="Sao Khuê MCP gateway daemon — pools MCP backends across sessions",
     )
     p.add_argument(
         "--socket",

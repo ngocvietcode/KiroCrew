@@ -162,7 +162,7 @@ def _is_read_only_tool(event_title: str) -> bool:
 #: The one server the heartbeat spec always mounts.
 _HEARTBEAT_CORE_SERVER = "kirocrew-core"
 
-#: Kiro Crew core reads (no side effects) served by :data:`_HEARTBEAT_CORE_SERVER`.
+#: Sao Khuê core reads (no side effects) served by :data:`_HEARTBEAT_CORE_SERVER`.
 #: Matched ONLY as the qualified ``@kirocrew-core/<name>`` identity, never bare: any
 #: MCP server, an edition's included, could expose a tool with one of these names,
 #: and a same-named tool on any other server is denied.

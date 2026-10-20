@@ -1,7 +1,7 @@
 """Behavioural tests for scripts/check_builtin_skill_scope.py.
 
 Local backlog f-20260818-08. Everything under ``src/kiro_crew/builtin_skills/``
-installs on every machine that installs Kiro Crew, so a skill body naming THIS
+installs on every machine that installs Sao Khuê, so a skill body naming THIS
 repository resolves for exactly one reader and points an agent at a path that does
 not exist for anyone else. ``kirocrew-prepare-pr`` already solved it -- repository
 specifics live in a profile keyed by repository -- and this gate keeps the rest of

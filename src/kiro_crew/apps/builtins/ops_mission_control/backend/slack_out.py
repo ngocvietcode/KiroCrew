@@ -6,13 +6,13 @@ state, so anyone could read the room's health without opening a tool. That is wh
 this reproduces.
 
 **No new credential.** This deliberately does NOT add a bot token to the app's
-secret store. Kiro Crew already holds one for its Slack gateway, and the live
+secret store. Sao Khuê already holds one for its Slack gateway, and the live
 ``SlackClientOps`` is reachable in-process off gateway state — so this reuses it and
 introduces zero new secret material, no second rotation obligation, and no second
 copy to leak. Governance guidance on credential storage puts "prefer no secret to
 rotate" first and permits a stored third-party token only where no such path
 exists; here one does. The consequence is a real constraint, not a shortcut: if the
-operator has not configured Slack for Kiro Crew itself, this channel is simply
+operator has not configured Slack for Sao Khuê itself, this channel is simply
 unavailable, and ``configured()`` says so rather than prompting for a token.
 
 **One message per incident, edited in place.** The pin board is only readable if an
@@ -112,7 +112,7 @@ _MAX_TITLE_CHARS = 160
 def configured() -> bool:
     """True when the operator enabled this channel AND named a destination.
 
-    Does not check that Kiro Crew's own Slack client exists — that is a runtime
+    Does not check that Sao Khuê's own Slack client exists — that is a runtime
     condition (it depends on gateway boot), reported by ``status()``.
     """
     return bool(policy_store.get(_ENABLED_KEY)) and bool(channel())
@@ -140,7 +140,7 @@ def client_from_state(state: Any | None) -> Any | None:
     """Pull the live Slack client off gateway state, tolerating its absence.
 
     The client is passed in from the route layer (``request.app["state"]``) rather
-    than fetched from a module global, because Kiro Crew has no global state
+    than fetched from a module global, because Sao Khuê has no global state
     accessor — state is per-application. That makes the dependency explicit and
     lets every send be tested without a gateway.
     """
@@ -152,7 +152,7 @@ def status(client: Any | None = None) -> dict[str, Any]:
 
     Distinguishes the three failure modes, because they need three different
     fixes: not enabled (flip the toggle), no channel (name one), and no Slack on
-    Kiro Crew itself (configure the gateway's Slack integration — this app cannot
+    Sao Khuê itself (configure the gateway's Slack integration — this app cannot
     fix that for you, by design, since it holds no token of its own).
     """
     enabled = bool(policy_store.get(_ENABLED_KEY))
@@ -164,7 +164,7 @@ def status(client: Any | None = None) -> dict[str, Any]:
         detail = "No channel set — enter a channel ID (e.g. C0123456789)."
     elif not has_client:
         detail = (
-            "Kiro Crew's own Slack integration is not connected, so there is "
+            "Sao Khuê's own Slack integration is not connected, so there is "
             "nothing to post with. This app deliberately stores no Slack token "
             "of its own — configure Slack in Settings and it will work here."
         )

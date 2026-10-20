@@ -1,7 +1,7 @@
 """Install-inventory observable instruments -- what this install has configured.
 
 ``process_gauges`` answers "how is this process behaving"; nothing answers "what
-does this install actually have set up". An operator running Kiro Crew across
+does this install actually have set up". An operator running Sao Khuê across
 more than one machine has no way to see that a host stopped scheduling crons, or
 that skills and knowledge documents are piling up on one box and absent on
 another: the dashboard shows one machine's counts on request, and nothing samples
@@ -208,7 +208,7 @@ ALL_METRIC_NAMES = (
 #: :mod:`kiro_crew.metrics.process_gauges`, and declared the same way so the
 #: dashboard aggregator reduces them window-relative instead of reporting a
 #: running total as a current reading. ``probe.failures`` was an observable
-#: COUNTER, which made it the last CUMULATIVE series Kiro Crew exported: one is
+#: COUNTER, which made it the last CUMULATIVE series Sao Khuê exported: one is
 #: enough to force every consumer into stateful whole-hour aggregation, since a
 #: cumulative counter's hourly increment is last-minus-first across the whole
 #: hour per host and per process lifetime. The DELTA route is not the

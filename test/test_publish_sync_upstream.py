@@ -587,12 +587,12 @@ async def test_refresh_does_not_flag_upstream_ahead(store, fake_client):
 
 @pytest.mark.asyncio
 async def test_pull_upstream_widget_unwraps_and_stays_widget(store, fake_client, tmp_path):
-    """A Kiro Crew-published widget pulled back is unwrapped from its standalone
+    """A Sao Khuê-published widget pulled back is unwrapped from its standalone
     document to the original inner fragment and STAYS a widget — so it remains
     inline-embeddable in chat (no html regression)."""
     art = store.create(name="W", content="<b>inner</b>", kind="widget")
     _track_publication(store, art.slug)
-    # The remote bytes are what Kiro Crew uploads: the sentinel-wrapped doc.
+    # The remote bytes are what Sao Khuê uploads: the sentinel-wrapped doc.
     wrapped = publish_sync.wrap_widget_html("<b>collab edit</b>")
     fake_client.get_response = _remote_get(
         tmp_path, wrapped, version=2, sha="sha-v2", ctype="text/html"

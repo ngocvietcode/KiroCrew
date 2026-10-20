@@ -217,7 +217,7 @@ def _masked_config_dict(cfg: KiroCrewConfig) -> dict:
     return masked
 
 
-# ── Kiro Crew Config API ──
+# ── Sao Khuê Config API ──
 # The security-relevant ceilings (SUBAGENT_AUTO_MAX_CEILING,
 # SUBAGENT_MAX_TURNS_CEILING) are imported from ``config.loader`` — the single
 # source of truth shared by this API-write gate and the loader's load-time
@@ -264,7 +264,7 @@ async def _hot_apply_after_write() -> None:
 
 
 async def api_kirocrew_config(request: web.Request) -> web.Response:
-    """GET/PUT /api/config/kirocrew — read or update Kiro Crew config."""
+    """GET/PUT /api/config/kirocrew — read or update Sao Khuê config."""
     # Re-imported at call time (not reused from the module-level binding) so a
     # test that redirects ``kiro_crew.config.loader.config_path`` at a temp path
     # is observed by this handler.

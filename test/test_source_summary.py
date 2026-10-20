@@ -52,7 +52,7 @@ class TestGenerateSourceSummary:
     async def test_stores_topic_and_themes(self, pipeline, store):
         """Should parse LLM response and store topic + themes."""
         sid = store.add_source("test", "local_file", "/tmp/test.md")
-        store.add_item("title", "content", "doc", source_id=sid, summary="KiroCrew is an AI agent platform")
+        store.add_item("title", "content", "doc", source_id=sid, summary="SaoKhue is an AI agent platform")
         pipeline.extractor._pool.send.return_value = '{"topic": "AI agent platform overview", "themes": ["AI", "agents", "orchestration"]}'
         await pipeline.generate_source_summary(sid)
         row = store.db.execute("SELECT summary_topic, summary_themes FROM sources WHERE id = ?", (sid,)).fetchone()

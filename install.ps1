@@ -1,11 +1,11 @@
 # ======================================================================
-#  KiroCrew — Windows setup (cloud mode)
+#  SaoKhue — Windows setup (cloud mode)
 # ======================================================================
-#  This is the CLOUD path: Kiro Crew runs on an EC2 Linux instance in YOUR OWN
+#  This is the CLOUD path: Sao Khuê runs on an EC2 Linux instance in YOUR OWN
 #  AWS account and this machine is the thin client. Use it when you want the
 #  gateway always-on and off your laptop.
 #
-#  It is NOT the only Windows option. Kiro Crew also builds and runs natively
+#  It is NOT the only Windows option. Sao Khuê also builds and runs natively
 #  on Windows from source (`.\make.ps1 build`, then `kirocrew gateway`) — see
 #  docs/guides/windows-install.md, which is the supported default and covers
 #  the per-feature limits.
@@ -52,8 +52,8 @@ function Ensure-WingetOrChoco {
 }
 
 Write-Host ""
-Write-Host "  KiroCrew — Windows setup (cloud mode)" -ForegroundColor Magenta
-Write-Host "  Runs KiroCrew on your own AWS EC2; this PC is the client." -ForegroundColor DarkGray
+Write-Host "  SaoKhue — Windows setup (cloud mode)" -ForegroundColor Magenta
+Write-Host "  Runs SaoKhue on your own AWS EC2; this PC is the client." -ForegroundColor DarkGray
 Write-Host "  For a native local install instead: .\make.ps1 build" -ForegroundColor DarkGray
 $arch = Get-RealArch
 Write-Info "Detected architecture: $arch"
@@ -124,12 +124,12 @@ if (Have "session-manager-plugin") {
     Write-Ok "session-manager-plugin installed (restart the shell if not yet on PATH)"
 }
 
-# --- 4. KiroCrew client + launch ------------------------------------------
-Write-Step 4 4 "KiroCrew client"
+# --- 4. SaoKhue client + launch ------------------------------------------
+Write-Step 4 4 "SaoKhue client"
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $repoRoot
 try {
-    Write-Info "Installing the Kiro Crew client (pip)..."
+    Write-Info "Installing the Sao Khuê client (pip)..."
     & $PyExe -m pip install --upgrade pip *> $null
     $env:KIROCREW_SKIP_FRONTEND = "1"
     & $PyExe -m pip install -e . 2>&1 | Select-Object -Last 5
@@ -141,7 +141,7 @@ try {
         Write-Warn "pip install failed (exit $LASTEXITCODE) - fix the error above, then re-run this installer."
         exit 1
     }
-    Write-Ok "KiroCrew client installed"
+    Write-Ok "SaoKhue client installed"
 } finally {
     Pop-Location
 }
@@ -176,7 +176,7 @@ if ($NonInteractive) {
 }
 
 Write-Host ""
-Write-Host "  Launching KiroCrew on AWS..." -ForegroundColor Cyan
+Write-Host "  Launching SaoKhue on AWS..." -ForegroundColor Cyan
 if ($Size -ne "") {
     & $PyExe -m kiro_crew cloud launch --size $Size
 } else {

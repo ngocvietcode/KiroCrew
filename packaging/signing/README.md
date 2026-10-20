@@ -1,11 +1,11 @@
 # Signing Infrastructure
 
 This directory contains the macOS code signing and notarization scaffolding
-for the Kiro Crew desktop app, using an enterprise code-signing service.
+for the Sao Khuê desktop app, using an enterprise code-signing service.
 
 ## Why identifiers are committed here
 
-Kiro Crew is distributed as a signed desktop application under a shared Apple
+Sao Khuê is distributed as a signed desktop application under a shared Apple
 Developer identity. The bundle identifier and team ID are required by Apple's
 code signing infrastructure and are not secrets — they're embedded in every
 signed `.app` bundle users download.

@@ -1115,7 +1115,7 @@ def control_plane_declarations(tools: Any, servers: Any) -> dict[str, dict[str, 
         if entry is None:
             raise ControlPlaneNotDeclarable(
                 name,
-                f"Could not add {name}: Kiro Crew cannot find how to start it on this "
+                f"Could not add {name}: Sao Khuê cannot find how to start it on this "
                 "install, so the tool would never load. The Logs panel in a chat shows why.",
             )
         if registry_mode:

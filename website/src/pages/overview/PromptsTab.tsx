@@ -271,7 +271,7 @@ export default function PromptsTab() {
         // Opt out of the client's global `staleTime: Infinity`, which is tuned
         // for data the server pushes invalidations for. Nothing pushes when a
         // prompt file changes underneath us — an editor, a git checkout, another
-        // Kiro Crew window — so an indefinitely fresh cache entry would seed the
+        // Sao Khuê window — so an indefinitely fresh cache entry would seed the
         // editor from a copy older than the file, and Save would write it back
         // over the newer content. Our own writes already invalidate (the
         // `['prompts']` prefix covers these keys); this covers the edits we

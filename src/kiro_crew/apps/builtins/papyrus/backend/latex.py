@@ -356,7 +356,7 @@ async def _run(
 
     Strict on its own is NOT enough. Its credential list covers third-party
     locations (``~/.aws``, ``~/.gnupg``, ``~/.config/gcloud``) plus
-    ``~/.kiro/crew/.env`` — but not the REST of KiroCrew's own trust root. The
+    ``~/.kiro/crew/.env`` — but not the REST of SaoKhue's own trust root. The
     gateway's ``.local_secret``, ``sel_hmac.key``, ``security_policy.json``,
     ``profiles/`` and the other keystone files sit beside it, and TeX reads files:
     ``\\verbatiminput{~/.kiro/crew/.local_secret}`` would typeset the gateway's own

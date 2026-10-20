@@ -1425,7 +1425,7 @@ initI18n()
 const host = document.getElementById('companion-root')
 if (host) {
   // Await the theme before the first paint: the panel is styled entirely from
-  // Kiro Crew's variables, and rendering ahead of them shows fallback colours and
+  // Sao Khuê's variables, and rendering ahead of them shows fallback colours and
   // then snaps to the real ones.
   void adoptDashboardTheme().then(() => {
     watchThemeChanges()

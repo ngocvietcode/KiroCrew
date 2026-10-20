@@ -1,6 +1,6 @@
-"""The one KAS engine build this Kiro Crew release runs on the bundle route.
+"""The one KAS engine build this Sao Khuê release runs on the bundle route.
 
-Each Kiro Crew version pins exactly one engine version, and the pin is the
+Each Sao Khuê version pins exactly one engine version, and the pin is the
 sha256 of that version's published ``manifest.json``. The manifest in turn pins
 every artifact (engine tarball and Node build, per platform) by sha256 and size,
 so this one digest fixes every byte the installer can lay down: a republished or
@@ -11,8 +11,8 @@ Crew adapts to (``acp/kas_wire.py``, ``acp/harness/kas.py``), and an engine
 newer than the adapter was tested against is a silent behavior change on the
 operator's next install. Pinning makes the engine version a property of the Kiro
 Crew version, the same contract ``packaging/kiro-cli-version`` holds for a
-``BUNDLE_KIRO_CLI=1`` desktop build: an update of Kiro Crew is what moves the engine, and a
-rollback of Kiro Crew moves it back (each version is its own directory under
+``BUNDLE_KIRO_CLI=1`` desktop build: an update of Sao Khuê is what moves the engine, and a
+rollback of Sao Khuê moves it back (each version is its own directory under
 ``engines/kas/``, so both stay installed).
 
 Bumping: publish with ``scripts/kas_bundle_publish.py``, test against it, then

@@ -538,12 +538,12 @@ class TestDragTool:
     ):
         """The one retained refusal applies to the new verb like every other one.
 
-        Retargeted from a terminal (not refused) onto Kiro Crew's own window,
+        Retargeted from a terminal (not refused) onto Sao Khuê's own window,
         which stays refused because driving our own Settings UI would route around
         the keystone that holds the primary enable.
         """
         _enable(keystone)
-        result = _dispatch(TOOL_DRAG, app="Kiro Crew", from_x=1, from_y=2, to_x=3, to_y=4)
+        result = _dispatch(TOOL_DRAG, app="Sao Khuê", from_x=1, from_y=2, to_x=3, to_y=4)
         assert result.startswith(ERROR_PREFIX)
         assert not [args for name, args in fake_backend.calls if name == "drag"]
 

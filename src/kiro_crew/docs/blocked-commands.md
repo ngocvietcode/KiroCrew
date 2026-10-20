@@ -1,6 +1,6 @@
 # Blocked commands and credential access
 
-Kiro Crew gives an agent real tool access, so some commands are refused at the
+Sao Khuê gives an agent real tool access, so some commands are refused at the
 runtime boundary rather than by asking the model to behave. This page explains
 what gets refused, what the agent is told to do instead, and how to check your
 own credential setup when something looks unavailable.
@@ -28,7 +28,7 @@ its **Credentials** section reports whether anything is actually configured.
 | The governance trust root | `security_policy.json`, `profiles/`, `admission_policy.json`, `denied_commands.json` | This is the ceiling the agent is governed by. File tools and the tool gate refuse these files, and the OS sandbox makes them read-only to agent code, so the agent cannot write (and so cannot disable) its own ceiling. Reading them is allowed by design. |
 | Exfiltration shapes | `curl -d @file`, `--upload-file`, `wget --post-file`, `/dev/tcp/` redirects | Reading a local file into an outbound request body is indistinguishable from exfiltration, whatever the destination. |
 | Destructive operations | `rm -rf /`, `terraform destroy`, `TRUNCATE TABLE`, `aws … delete-*` | Irreversible. These are disable-able if you want them (see below); the credential ones are not. The SQL rules match the statement's text anywhere on the line, so a heredoc or `printf` that merely writes the words is refused too — see **Statement text, not just statements** below. |
-| Self-protection | minting a dashboard token, killing the gateway, an inline interpreter that imports Kiro Crew | Prevents the agent from escalating its own access or shutting down its supervisor. |
+| Self-protection | minting a dashboard token, killing the gateway, an inline interpreter that imports Sao Khuê | Prevents the agent from escalating its own access or shutting down its supervisor. |
 | ssh to this machine | `ssh` to `localhost`, `scp`/`sftp`/`rsync` to a loopback address or one of this host's own names | sshd runs outside the agent sandbox, so a connection back to this host is an unsandboxed login shell. A target not yet classified as remote is refused too. |
 
 The full built-in rule list, with a human-readable description per rule, is in
@@ -109,7 +109,7 @@ The **Credentials** section reports:
   some managed and enterprise editions install
 
 Nothing in that section reads a secret value, and it never fails the overall
-`doctor` run — a missing AWS setup is not a Kiro Crew fault.
+`doctor` run — a missing AWS setup is not a Sao Khuê fault.
 
 ## Adjusting the rules
 

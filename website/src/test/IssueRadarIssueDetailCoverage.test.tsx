@@ -9,7 +9,7 @@ import type {
 } from '../apps/issue-radar/api'
 
 // Behaviour pins for the ISSUE detail pane (IssueDetail.tsx) — the right column
-// of Kiro Crew's Issue Radar issues surface. Its sibling PrDetail is pinned by
+// of Sao Khuê's Issue Radar issues surface. Its sibling PrDetail is pinned by
 // IssueRadarPrDetailCoverage.test.tsx; this file covers the parts that are
 // issue-specific and therefore have no analogue there.
 //

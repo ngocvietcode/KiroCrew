@@ -34,7 +34,7 @@ import { i18nT } from '../../i18n/t'
 export { groupByPhase, latestBudget }
 export type { WfEvent, AgentRow, PhaseGroup }
 
-// Proxied base for the workflows builtin-app backend (KiroCrew reverse-proxies
+// Proxied base for the workflows builtin-app backend (SaoKhue reverse-proxies
 // /apps/workflows/api/* to the app's HTTP server).
 const API_BASE = '/apps/workflows/api'
 

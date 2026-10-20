@@ -448,7 +448,7 @@ def _session_token_header() -> dict[str, str]:
 
     A pooled backend is spawned from gatewayd's own environment, so the
     per-session token is not in ``os.environ``; gatewayd forwards it inside the
-    per-call caller block for Kiro Crew's control-plane servers instead, and the
+    per-call caller block for Sao Khuê's control-plane servers instead, and the
     caller block wins because it is stamped per CALL and cannot go stale. The
     header itself is spelled once, in :mod:`kiro_crew.session_token_sig`, beside
     the verifier that reads it.
@@ -500,7 +500,7 @@ def _refused_message(refused_base: str, exc: BaseException) -> str:
     """
     host = refused_base.split("//", 1)[-1].rstrip("/") or refused_base
     return (
-        f"Kiro Crew gateway not reachable on {host} — it may be down or "
+        f"Sao Khuê gateway not reachable on {host} — it may be down or "
         f"restarting; retry shortly ({exc})"
     )
 
@@ -513,7 +513,7 @@ def _http_error_body(exc: urllib.error.HTTPError) -> dict:
     ``str(exc)`` — so a non-JSON or empty error response still yields a usable
     ``{"error": ...}`` payload instead of an opaque ``"HTTP Error 400"``.
 
-    An HTTP response body is content originating outside Kiro Crew, so the
+    An HTTP response body is content originating outside Sao Khuê, so the
     decoded message is redacted (``redact_exfiltration_urls`` +
     ``redact_credentials``) before it is handed back to a caller that may echo
     it to the LLM / dashboard / Slack. Redaction leaves plain markers like
@@ -559,7 +559,7 @@ def _http_error_body(exc: urllib.error.HTTPError) -> dict:
         # per tool -- and it is keyed on the CODE, since a genuine permission
         # denial produces the same body and must not be given this explanation.
         message = (
-            "this client authenticated against the wrong Kiro Crew instance. "
+            "this client authenticated against the wrong Sao Khuê instance. "
             "The credential it read does not match the gateway now serving that "
             "port, usually because a second gateway started on this machine and "
             "replaced the shared credential file. Restart the gateway (or target "

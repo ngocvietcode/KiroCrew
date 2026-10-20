@@ -40,7 +40,7 @@ describe('buildThemeFontCss — role routing', () => {
     const css = buildThemeFontCss('pack', theme([face({ role: 'sans' })]))
     expect(css).toContain('--theme-font-sans:')
     expect(css).not.toContain('--theme-font-mono:')
-    // An unset token means the var() fallback applies, i.e. Kiro Crew's own
+    // An unset token means the var() fallback applies, i.e. Sao Khuê's own
     // monospace stack — the "theme ships only one role" case.
   })
 

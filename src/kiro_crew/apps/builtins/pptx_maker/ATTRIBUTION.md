@@ -2,8 +2,8 @@
 
 ## Original app
 
-**PPTX Maker** was written by **sktok**, as a standalone KiroCrew-family app
-(`app-pptx-maker`, MIT-0). This directory is that app ported into the KiroCrew
+**PPTX Maker** was written by **sktok**, as a standalone SaoKhue-family app
+(`app-pptx-maker`, MIT-0). This directory is that app ported into the SaoKhue
 open-source repository as a first-party builtin. The design is the original
 author's: the Spec / Vibe / Style agent split, the deck-plus-library studio
 layout, the animated SVG slide preview, the tabbed deliverable viewer that

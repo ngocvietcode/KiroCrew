@@ -17,7 +17,7 @@
  *   4. Renderer/preload paths -> the gateway origin + this directory's preload.
  *
  * NOT ported, because the host already owns them: `createTray` /
- * `rebuildTrayMenu` (a second tray icon would appear beside KiroCrew's) and
+ * `rebuildTrayMenu` (a second tray icon would appear beside SaoKhue's) and
  * `toggleHideAll`'s `app.hide()` (it would hide the dashboard too — main.js
  * hides Mochi's windows individually instead).
  *

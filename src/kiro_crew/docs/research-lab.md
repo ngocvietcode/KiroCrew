@@ -6,7 +6,7 @@ Research Lab (the `auto-research` builtin app) runs autonomous, multi-cycle camp
 
 > **Research Lab is not a permission boundary.** Its `kirocrew-research` worker is
 > generated from the shipped agent template, your `~/.kiro/crew/agent.json` overrides
-> and Kiro Crew's managed MCP servers — it can write files, run commands, and mutate
+> and Sao Khuê's managed MCP servers — it can write files, run commands, and mutate
 > systems. Research-only is the *intent* of the prompt it is given, not a restriction
 > the code enforces. Review those tools before leaving a campaign to run unattended.
 > See [Scope and permissions](#scope-and-permissions).

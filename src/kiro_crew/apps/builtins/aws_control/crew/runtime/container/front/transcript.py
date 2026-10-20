@@ -33,7 +33,7 @@ construction rather than by review.
 
 **The filename, which is the part that was found the hard way.** The object is
 ``<thread>_<slot>.jsonl``, not ``<slot>.jsonl``, and for this deployment the
-thread is always ``dashboard``. Verified in the Kiro Crew wheel this image ships
+thread is always ``dashboard``. Verified in the Sao Khuê wheel this image ships
 (``vendor/kirocrew-0.6.0-py3-none-any.whl``):
 
 * ``dashboard/openai_compat.py:257`` takes the turn's ``id`` as the slot id and

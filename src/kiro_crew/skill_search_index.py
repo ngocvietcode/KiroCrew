@@ -63,7 +63,7 @@ from kiro_crew.owner_only_files import mkdirs_owner_only, prepare_owner_only_sql
 
 logger = logging.getLogger(__name__)
 
-#: Co-located with ``skill_usage.json`` in the Kiro Crew home, so runtime state
+#: Co-located with ``skill_usage.json`` in the Sao Khuê home, so runtime state
 #: travels together and a home copy carries a warm index.
 SKILL_SEARCH_INDEX_FILENAME = "skill_search_index.sqlite3"
 

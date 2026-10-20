@@ -3,14 +3,14 @@
 ``kirocrew`` is NOT published on any index, so the obvious advice --
 ``pip install "kirocrew[feishu]"`` -- is not merely unhelpful, it cannot resolve
 at all: pip fails with *No matching distribution found for kirocrew* however the
-user installed Kiro Crew. On a hypothetical index it would be worse than an
+user installed Sao Khuê. On a hypothetical index it would be worse than an
 error, because installing ``kirocrew[extra]`` REPLACES an editable/source
 install with a released wheel -- the command reports success while swapping the
 gateway out from under the user.
 
 So the advice names the extra's own distributions with the pins declared in
 ``setup.cfg``. Those resolve from PyPI for every install layout, and they add
-exactly the missing dependency without touching Kiro Crew itself.
+exactly the missing dependency without touching Sao Khuê itself.
 
 :data:`REQUIREMENTS` is that list, transcribed once here with self-referential
 extras expanded, and pinned against ``setup.cfg`` by ``test/test_extras.py`` so

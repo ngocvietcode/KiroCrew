@@ -1,15 +1,15 @@
 """The session watchdog must not recycle a session whose harness is still working.
 
-A free semaphore only proves Kiro Crew's OWN prompt returned. Claude Code, behind
+A free semaphore only proves Sao Khuê's OWN prompt returned. Claude Code, behind
 claude-agent-acp, runs a backgrounded Bash command or a Workflow in the session's
 own process tree after the prompt has answered ``end_turn``. The RSS recycle and
-the idle sweep read the free semaphore, the Kiro Crew sub-agent probe and the
+the idle sweep read the free semaphore, the Sao Khuê sub-agent probe and the
 injection counter -- none of which can see that work -- so a session whose tree
 crossed ``session.watchdog_rss_max_mb`` while its workflow ran was reset on the
 next tick, killing the workflow it had promised to report on.
 
 What a live capture off claude-agent-acp 0.84.0 (driven over stdio, no AIR
-capabilities declared, the shape Kiro Crew's client sends) establishes:
+capabilities declared, the shape Sao Khuê's client sends) establishes:
 
 1. The launch is reported on the launching call's PostToolUse ``tool_call_update``
    as ``_meta.claudeCode.toolResponse``: a Bash command carries

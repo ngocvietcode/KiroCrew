@@ -231,7 +231,7 @@ class AcpSessionHandle:
         bound_cwd: str = "",
     ) -> None:
         self._session_id = session_id
-        # The Kiro Crew session that OWNS this ACP session, threaded from the
+        # The Sao Khuê session that OWNS this ACP session, threaded from the
         # runtime's create/load paths the way ``crew_agent`` is, and rebound on a
         # warm-pool claim. The hooks execute path keys its listed-id record and
         # its governance resolution by it; the ACP ``sessionId`` a request names is
@@ -938,7 +938,7 @@ class AcpSessionHandle:
         the roster notifications — kiro-cli ``subagent_list`` when this handle
         is the roster's sole owner, KAS ``agentSubtaskId`` / pipeline stages
         (``_handle_kas_subagent``). A ``spawn_run`` child of this session is
-        NOT here: it is a Kiro Crew task row with its own handle, and native
+        NOT here: it is a Sao Khuê task row with its own handle, and native
         grandchildren under it are counted on THAT handle (parity row H16).
         """
         return frozenset(self._native_child_sids)

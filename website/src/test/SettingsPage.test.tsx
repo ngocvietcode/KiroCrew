@@ -2,7 +2,7 @@
  * Tests for the Settings page tab roster.
  *
  * Asserts SettingsPage *lists* its tabs (panel tests only cover the panels).
- * The Browser tab is present; there is no Provider tab because KiroCrew has a
+ * The Browser tab is present; there is no Provider tab because SaoKhue has a
  * single KiroACP / kiro-cli provider with nothing to select.
  *
  * The five chat integrations live under ONE Channels tab (rows inside

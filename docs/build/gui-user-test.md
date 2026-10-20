@@ -261,7 +261,7 @@ logged, or fail with none.
 - **Persona.** The tester runs as `scenarios.PERSONAS["new-user"]` unless the YAML sets
   `persona: none` (the bare tester, no friction tool -- for a scenario about the expert
   path, or to measure the channel's own cost). The persona text is spliced into the
-  harness system prompt: first time using Kiro Crew, no documentation, used ordinary
+  harness system prompt: first time using Sao Khuê, no documentation, used ordinary
   chat apps and an editor before; and a standing instruction to call `report_friction`
   the moment it pauses for more than a glance, cannot find a control, clicks the wrong
   thing, does not understand a label / icon / message, does not know what is

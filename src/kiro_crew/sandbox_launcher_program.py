@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Namespace sandbox launcher — spawned by Kiro Crew.
+"""Namespace sandbox launcher — spawned by Sao Khuê.
 
 The program a sandboxed agent spawn runs first on Linux. ``kiro_crew.sandbox_launcher``
 renders this module's own source with ONE substitution, the plan's data (``_PLAN``

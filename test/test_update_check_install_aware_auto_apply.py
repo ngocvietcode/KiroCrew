@@ -81,7 +81,7 @@ class TestAutoApplyGuard:
                     ):
                         # Runtime ownership is authoritative. Old managed wheels
                         # predate the build stamp and report "source", while a
-                        # foreign wheel must never be rewritten by Kiro Crew.
+                        # foreign wheel must never be rewritten by Sao Khuê.
                         with patch(
                             "kiro_crew.platform.wheel_engine.running_from_managed_venv",
                             return_value=managed_venv,

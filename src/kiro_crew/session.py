@@ -359,7 +359,7 @@ def detect_provider_switch(session_map: "SessionMap", session_key: str, new_prov
 
     This guards against attempting to resume incompatible session IDs across
     providers (kiro session IDs vs Claude Code UUIDs). Cross-provider continuity
-    is achieved via KiroCrew's own history replay (build_session_replay), never
+    is achieved via SaoKhue's own history replay (build_session_replay), never
     via session_id translation.
     """
     stored_provider = session_map.get_provider(session_key) or PROVIDER_LABEL_DEFAULT
@@ -1078,7 +1078,7 @@ class SessionManager:
         """Arm the durable FRESH first-turn history debt.
 
         The ``first_turn`` observation is consumed at claim time, so a turn that
-        assembled Kiro Crew history and then failed before the provider accepted
+        assembled Sao Khuê history and then failed before the provider accepted
         it loses the record that history was still owed. The dashboard runner
         arms this from the FRESH observation; it is read (not cleared) each turn
         and settled once a non-slash context-bearing turn KEEPS its history with

@@ -486,7 +486,7 @@ class SkillsLoader:
                 logger.debug("Edition skill path does not exist: %s", edition_path)
 
         # Persistent usage ledger for hotness-ranked lazy skill injection.
-        # Co-located with the skills root's parent (the KiroCrew home) so it
+        # Co-located with the skills root's parent (the SaoKhue home) so it
         # travels with runtime state. Best-effort: a failure here must not break
         # skill loading — ranking then falls back to recency/unweighted order.
         self._usage: SkillUsageLedger | None
@@ -714,7 +714,7 @@ class SkillsLoader:
         return _catalog._owning_app(self, name, skill_file)
 
     def _owned_hint(self, skill_file: Path) -> bool:
-        """Whether *skill_file* sits under the directory Kiro Crew owns."""
+        """Whether *skill_file* sits under the directory Sao Khuê owns."""
         return _listing._owned_hint(self, skill_file)
 
     def _served_key_by_realpath(self) -> dict[str, str]:

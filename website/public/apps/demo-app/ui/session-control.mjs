@@ -1,4 +1,4 @@
-// Demo Kiro Crew session control — proves the composer-bar contribution works
+// Demo Sao Khuê session control — proves the composer-bar contribution works
 // end-to-end. Loaded dynamically by SessionControlHost via
 // import('/apps/demo-app/ui/session-control.mjs'), so the module's DEFAULT export
 // must be a component: the host mounts it with React.lazy.

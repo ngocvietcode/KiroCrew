@@ -1,6 +1,6 @@
-# Installing & Testing Kiro Crew on Windows
+# Installing & Testing Sao Khuê on Windows
 
-Kiro Crew runs **natively on Windows** through the desktop installer or a
+Sao Khuê runs **natively on Windows** through the desktop installer or a
 supported Python **source install**. The cross-platform process / signal /
 file-lock / metrics behavior is routed through `kiro_crew.platform_compat`, so
 macOS + Linux behavior is unchanged and the same code path also runs on Windows.
@@ -73,26 +73,26 @@ Current status:
   deregisters the identity the *other* channel's desktop and Start Menu
   shortcuts still carry, and the shell then reports that app as relocated or
   missing even though its `.exe` is untouched. Either mode leaves
-  the Kiro Crew home alone (`deleteAppDataOnUninstall` stays false, and
+  the Sao Khuê home alone (`deleteAppDataOnUninstall` stays false, and
   `~/.kiro/crew` is outside the install directory).
 - **Auto-updates stay visible without becoming interactive** — after the app
   stops its local gateway and closes, the update path skips Welcome, install
   scope, and Finish, but leaves the native NSIS extraction page on screen with
-  real progress. At 100% it reopens Kiro Crew and closes automatically. A
+  real progress. At 100% it reopens Sao Khuê and closes automatically. A
   persistent message on that progress page warns that the handoff can take
-  several minutes; a Windows notification tells the user to reopen Kiro Crew
+  several minutes; a Windows notification tells the user to reopen Sao Khuê
   from the Start menu if the relaunch does not happen. New clients call
   `quitAndInstall(false, true)` so NSIS is visible;
   the installer also converts a legacy `/S --updated` launch back to this same
   visible path, which covers the first upgrade from clients that predate the
   change.
-- **Guided Kiro Crew artwork** — the welcome and finish pages use the existing
-  Kiro Crew logo and ghost family in the native NSIS sidebar, and intermediate
+- **Guided Sao Khuê artwork** — the welcome and finish pages use the existing
+  Sao Khuê logo and ghost family in the native NSIS sidebar, and intermediate
   pages retain a compact branded header. Buttons, progress, install-mode copy,
   keyboard behavior, and localization remain the standard Windows experience.
   On a fresh install, the Finish page also says that the default Kiro agent
   needs Kiro CLI, names `kiro-cli login`, and links to the official external
-  setup guide before offering to launch Kiro Crew. The installer performs
+  setup guide before offering to launch Sao Khuê. The installer performs
   neither prerequisite step. Auto-updates still skip this page.
   Native page boundaries use a short Win32 alpha-blended cross-fade and honor
   Windows' client-area animation setting. The fade contains no timer-driven
@@ -131,7 +131,7 @@ Current status:
   so an Insider install is not quietly moved to Stable. A preference you have
   already changed is never overwritten.
   **Deliberately kept:** `~/.kiro/crew` — sessions, memory,
-  the database and config. Delete it by hand to remove Kiro Crew's data too.
+  the database and config. Delete it by hand to remove Sao Khuê's data too.
   Also kept, because it belongs to a different product:
   `%LOCALAPPDATA%\Kiro-Cli`.
 - **Integrated Windows chrome** — the desktop shell uses the
@@ -206,7 +206,7 @@ The source install below remains the fully supported path.
 
 No admin is required — everything installs user-scoped under `%USERPROFILE%`.
 
-Avoid the Microsoft Store `python` alias stub: Kiro Crew's interpreter finder
+Avoid the Microsoft Store `python` alias stub: Sao Khuê's interpreter finder
 (`platform_compat.find_python_interpreter`) rejects it, but a Store-only `python`
 on `PATH` can still confuse other tooling. Prefer a real CPython install.
 
@@ -266,11 +266,11 @@ kirocrew setup
 kirocrew gateway
 ```
 
-Open the dashboard URL printed by the gateway. On first launch, Kiro Crew checks
+Open the dashboard URL printed by the gateway. On first launch, Sao Khuê checks
 the **Windows gateway host** for a runnable and authenticated Kiro CLI. If it is
 missing, follow the link to the official Kiro CLI setup guide and install it
 yourself; if it is signed out, run `kiro-cli login` (or the organization SSO
-command shown by the setup page) yourself. Kiro Crew does not download a remote
+command shown by the setup page) yourself. Sao Khuê does not download a remote
 installer or start a login process. The dashboard opens automatically after its
 read-only `kiro-cli whoami` probe succeeds. Run the prerequisite steps on the
 gateway machine, which may be different from the computer running the browser.
@@ -292,8 +292,8 @@ spawned.
 
 ## Kiro sandbox delegation and the unsandboxed-exec opt-in
 
-Windows has no Kiro Crew OS sandbox backend. The official Kiro CLI does have its
-own sandbox, so Kiro Crew delegates the Kiro CLI chat backend, model list, account
+Windows has no Sao Khuê OS sandbox backend. The official Kiro CLI does have its
+own sandbox, so Sao Khuê delegates the Kiro CLI chat backend, model list, account
 identity and usage reads to it automatically.
 
 **The default chat harness, KAS, runs UNCONFINED on Windows.** KAS has no OS
@@ -307,12 +307,12 @@ With the opt-out below declared, a KAS chat is refused with a message naming
 
 Everything else — scripts, hooks, third-party ACP backends, app backends, MCP
 probes and the `gh`/`glab` provider CLIs — has no proven internal sandbox to
-delegate to, and on Windows there is nothing installable that would give Kiro Crew
+delegate to, and on Windows there is nothing installable that would give Sao Khuê
 one: no Linux user namespace, no macOS `sandbox-exec`. **Those paths therefore run
 UNCONFINED by default on Windows.** That is this platform's documented default,
 not a bypass you enabled and not a failure. It means an agent-driven subprocess
 can read your home directory, including `.aws` and `.ssh`, with no OS
-confinement; Kiro Crew still scrubs credential environment variables and records
+confinement; Sao Khuê still scrubs credential environment variables and records
 every such spawn in the audit log, but it cannot stop a hostile repo or document
 from reading files.
 
@@ -818,7 +818,7 @@ supervision is a separate piece of work, proposed in
   <details>
   <summary>How to pass a flag or set the variable on Windows</summary>
 
-  **Fully exit Kiro Crew first.** This step is not optional: the app is
+  **Fully exit Sao Khuê first.** This step is not optional: the app is
   single-instance, and a second launch hands its arguments to the instance
   already running and then exits, so the flag is silently ignored while the
   broken window still appears. Close it from the tray icon, then confirm no
@@ -854,7 +854,7 @@ supervision is a separate piece of work, proposed in
 
   </details>
 
-  **The fix is a process exclusion for the Kiro Crew executable** in the
+  **The fix is a process exclusion for the Sao Khuê executable** in the
   endpoint security product managing the device. That addresses the cause and
   leaves the sandbox intact. To identify what to exclude, open Event Viewer >
   Windows Logs > Application and read the faulting module name in the
@@ -882,7 +882,7 @@ supervision is a separate piece of work, proposed in
 - **Desktop gateway recovery refuses to force-stop the port** - the Electron
   launcher uses `netstat -ano` to identify the listener, PowerShell
   (`Get-CimInstance`) with a WMIC fallback to read its command line, and
-  `taskkill /F /PID` only after confirming a Kiro Crew executable or
+  `taskkill /F /PID` only after confirming a Sao Khuê executable or
   `python -m kiro_crew` process. Localized listener-state text is ignored.
   SSH forwards and unrelated processes are never terminated, and a failed or
   timed-out `netstat` probe is treated as unknown rather than as a free port.
@@ -908,7 +908,7 @@ supervision is a separate piece of work, proposed in
 - **"Python was not found" (Microsoft Store)** — a bare `python`/`python3` was
   resolving the Store alias stub; install a real CPython and ensure it precedes
   the stub on `PATH`.
-- **`kirocrew stop` reports "No Kiro Crew gateway currently running"** — a
+- **`kirocrew stop` reports "No Sao Khuê gateway currently running"** — a
   localized Windows edition is *not* the cause: `find_listening_pids` identifies
   a listening row by its wildcard foreign address (`0.0.0.0:0` / `[::]:0`), which
   no edition translates, and treats the English `LISTENING` literal only as a

@@ -382,7 +382,7 @@ export function salientMcpArg(args: Record<string, unknown> | undefined): string
   return undefined
 }
 
-/** The `Tool.title` Kiro Crew's own servers declare (the table their `tools/list`
+/** The `Tool.title` Sao Khuê's own servers declare (the table their `tools/list`
  *  serves), keyed by server so a same-named third-party tool keeps its
  *  humanised name. Own-property lookups only: a tool named `constructor` has none. */
 export function declaredMcpToolTitle(server: string, tool: string): string | undefined {

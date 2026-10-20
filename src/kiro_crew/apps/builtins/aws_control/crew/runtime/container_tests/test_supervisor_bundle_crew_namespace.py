@@ -1,16 +1,16 @@
 """The installed crew spec lives in the crew namespace, and the front addresses it there.
 
-An install at ``<agents>/<crew_name>.json`` would collide with Kiro Crew's own
+An install at ``<agents>/<crew_name>.json`` would collide with Sao Khuê's own
 agent-spec derivation, which owns three of those names. The crew this deployment ships
 is called ``kirocrew-worker``, so such an install lands ON the mirror
 ``rebuild_agent_config`` derives from the default spec, and the next spawn-path
-re-derivation replaces the shared crew's prompt and tools with Kiro Crew's own -- no
+re-derivation replaces the shared crew's prompt and tools with Sao Khuê's own -- no
 error, no log line naming the crew.
 
 Two properties are pinned here, and they are one fix rather than two:
 
 * the install goes to ``crew-<crew_name>.json`` and DECLARES ``crew-<crew_name>``,
-  because the declared name is what dispatches -- kiro-cli and Kiro Crew's snapshot of
+  because the declared name is what dispatches -- kiro-cli and Sao Khuê's snapshot of
   dispatchable agents both enumerate by it, so namespacing only the filename leaves the
   spec reachable under no id at all;
 * the front forwards that SAME id, so the process that installs the spec and the
@@ -19,7 +19,7 @@ Two properties are pinned here, and they are one fix rather than two:
   pass every other test in this suite.
 
 The reserved-namespace pin at the bottom is the third copy of a rule the container
-cannot import: ``crew-`` must stay free of the names Kiro Crew manages.
+cannot import: ``crew-`` must stay free of the names Sao Khuê manages.
 """
 
 from __future__ import annotations
@@ -114,7 +114,7 @@ def test_the_front_addresses_the_id_the_installer_wrote(tmp_path: Path) -> None:
 def test_a_crew_name_too_long_for_the_namespace_is_refused_at_install(tmp_path: Path) -> None:
     """A name that cannot become an agent id fails the BOOT, not every turn.
 
-    Kiro Crew caps a dispatchable agent name at 64 characters. Without this check the
+    Sao Khuê caps a dispatchable agent name at 64 characters. Without this check the
     task boots reporting a healthy install and then answers 400 to every request,
     which is a fault with no visible cause on the only surface an operator reads.
     """
@@ -153,7 +153,7 @@ def test_the_crew_namespace_is_free_of_every_name_kirocrew_manages() -> None:
     crew's filename back.
 
     The length cap is mirrored the same way and checked against the grammar itself, so
-    a widened agent-name regex does not leave the installer refusing names Kiro Crew
+    a widened agent-name regex does not leave the installer refusing names Sao Khuê
     would accept.
     """
     from kiro_crew import agent_files, validation

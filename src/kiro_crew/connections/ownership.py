@@ -113,7 +113,7 @@ def _census_source_name(label: str) -> str:
     Only the ``agent:`` prefix comes off: what remains is a spec filename or, for a
     project source, its full path -- a place the user can go and look. Scope names
     (``kirocrew``, the edition's extra scopes) and ``mirror:`` labels are left
-    verbatim, because they name a Kiro Crew-managed source rather than a file the
+    verbatim, because they name a Sao Khuê-managed source rather than a file the
     user wrote, and stripping their prefix would make them read like one.
     """
     return label[len("agent:") :] if label.startswith("agent:") else label
@@ -188,14 +188,14 @@ def agent_spec_sources(project_dirs: tuple[Path, ...] = ()) -> list[tuple[str, P
     committed in the user's repo therefore holds a grant exactly like a
     hand-written user-level one, and reading only the user-level directory
     revoked it. Project specs are ordinary ``agent:`` sources: sharers that can
-    block a revoke, never purge targets (nothing in Kiro Crew writes a
+    block a revoke, never purge targets (nothing in Sao Khuê writes a
     version-controlled file) and never mirrors (nothing here reflects them).
     Their labels carry the full path, because two checkouts can both hold a
     ``dev.json`` and one label per file is what keeps their entries in separate
     census buckets instead of letting the first one read hide the second.
 
     The whole directory is globbed rather than an allowlist consulted: the point
-    is the specs Kiro Crew does NOT own. Provider agent sidecars
+    is the specs Sao Khuê does NOT own. Provider agent sidecars
     (``scope.agent_mcp_file``) are included for the same reason -- the purge
     strips them, so they must be able to speak for their own entries.
     """
@@ -216,7 +216,7 @@ def agent_spec_sources(project_dirs: tuple[Path, ...] = ()) -> list[tuple[str, P
     # rendered ``kirocrew.json`` and from every ``scope.agent_mcp_file`` itself,
     # so those entries are REFLECTIONS of the scopes this transaction is purging,
     # not independent grant holders. A hand-written agent spec is the opposite:
-    # Kiro Crew never writes it, so its entry keeps its own grant and must be
+    # Sao Khuê never writes it, so its entry keeps its own grant and must be
     # able to block a revoke. Labelling both ``agent:`` made an ordinary
     # Disconnect count its own reflection as a sharer and never revoke anything.
     sources.extend(
@@ -347,7 +347,7 @@ async def remove_provider_entry(
     separate data-loss paths:
 
     * a census that missed custom agent configs revoked a grant an agent outside
-      Kiro Crew was authorized by (see :func:`agent_spec_sources`);
+      Sao Khuê was authorized by (see :func:`agent_spec_sources`);
     * a purge that removed the name from EVERY scope while ownership was judged
       from the merged winner deleted a same-named entry in another scope that
       pointed somewhere else -- so the purge now names the scopes it matched
@@ -441,7 +441,7 @@ async def remove_provider_entry(
         All answers come out of the same walk over the same census, so they
         cannot be taken from two different readings of the store. Only mcp.json
         scope labels can be purged, so an agent spec contributes sharers but never
-        a purge target -- Kiro Crew does not own a user's agent file.
+        a purge target -- Sao Khuê does not own a user's agent file.
 
         TWO passes, because ownership is endpoint-keyed (slash-insensitive) while
         grants are artifact-keyed (slash-sensitive): an owned entry at ``<url>/``

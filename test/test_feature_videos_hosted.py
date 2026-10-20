@@ -320,7 +320,7 @@ class TestManifestParsing:
         """A cap tighter than the publisher's would discard a valid release WHOLE.
 
         ``scripts/feature-videos/_manifest.py`` accepts a bare numeric version of
-        any depth; Kiro Crew's own releases are always three components, and the
+        any depth; Sao Khuê's own releases are always three components, and the
         fetch path only ever asks for those.
         """
         parsed = manifest_mod.parse_manifest(_document(release=release))

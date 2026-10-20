@@ -3,7 +3,7 @@
 Replaces the upstream app's review-service client, which spoke to an internal
 service over ``curl`` with a cookie from disk (303 lines of auth plumbing, SSO
 redirect handling, and a proprietary analyzer-status vocabulary). None of that survives:
-Kiro Crew already ships a provider-neutral GitHub/GitLab PR reader at
+Sao Khuê already ships a provider-neutral GitHub/GitLab PR reader at
 ``kiro_crew.dashboard.handlers.source_providers``, which is cached (30 s TTL),
 coalesces concurrent fetches for one URL, redacts credentials out of provider
 payloads, and resolves the ``gh``/``glab`` binaries through a validated

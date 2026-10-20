@@ -189,7 +189,7 @@ def _wire_handler(
 
     if inst == "__present__":
         inst = SimpleNamespace(
-            name="Kiro Crew Cloud (l2crew)",
+            name="Sao Khuê Cloud (l2crew)",
             provisioner_id="microvm",
             # The row shape the lane really registers: the id is a slug of the
             # launch tag, the node id is in ``ssm_target``. See ``test_crew_turn_proxy._lane_row``.

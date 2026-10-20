@@ -523,7 +523,7 @@ def build_session_context(
     #    them again here would duplicate every mapped skill's content —
     #    exactly the reason the steering block below is CC-only. On the CC
     #    backend (claude-agent-acp) nothing reads agent ``resources``, so
-    #    Kiro Crew injects the mapped set itself, scoped by ``only=``.
+    #    Sao Khuê injects the mapped set itself, scoped by ``only=``.
     # 2. No mapping + the kirocrew agent -> bounded discovery and project bodies.
     # 3. No mapping + a custom agent -> on kiro-cli, the skill trees it
     #    inherits (kiro-cli's own inheritance is off on native launches);

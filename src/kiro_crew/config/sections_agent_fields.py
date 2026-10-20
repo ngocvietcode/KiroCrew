@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("kiro_crew.config.loader")
 
 
-#: Where ``kirocrew kas install`` looks by default. The bucket the Kiro Crew
+#: Where ``kirocrew kas install`` looks by default. The bucket the Sao Khuê
 #: project publishes its pinned KAS engine builds to; a mirror goes in
 #: ``agent.kas_bundle_url``. The manifest's sha256 pins are the trust anchor,
 #: not this host.

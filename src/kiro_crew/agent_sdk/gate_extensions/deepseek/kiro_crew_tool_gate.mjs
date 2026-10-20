@@ -1,11 +1,11 @@
 /**
- * Kiro Crew tool gate for the DeepSeek Harness (`dsh`).
+ * Sao Khuê tool gate for the DeepSeek Harness (`dsh`).
  *
  * dsh decides its own tool calls: its sandbox permits an in-policy action
  * silently and denies an out-of-policy one with the denial inside the tool
  * result, and `session/request_permission` carries only a MODEL-INITIATED ask to
  * escalate past that sandbox. So a session runs every in-policy side effect
- * without Kiro Crew's PreToolUse gate ever executing. This plugin closes that:
+ * without Sao Khuê's PreToolUse gate ever executing. This plugin closes that:
  * it answers dsh's own `tools/pre-execute` waterfall with `{kind: 'ask'}` for
  * every call, passive reads included, which makes dsh's tools core resolve
  * the call through `ctx.approval.request` -- and the ACP bridge answers that
@@ -18,7 +18,7 @@
  * non-conforming answerer normalized to `unavailable` rather than to a grant (the
  * harness's own user-approval subsystem documentation).
  *
- * Composed by Kiro Crew through a per-launch patch file passed as
+ * Composed by Sao Khuê through a per-launch patch file passed as
  * `dsh --profile acp --patch <file>`, never from the operator's own
  * configuration, and verified after load through the marker written below. The
  * marker also snapshots every root-bus `approval/request` answerer and the
@@ -27,14 +27,14 @@
  * tool presentation the tools service composed, which must be `native` for the
  * gate to read the calls it is asked about; and a PROOF, taken on a real child
  * spawned through the harness's own subprocess service, that each provider-key
- * name Kiro Crew feeds this harness is withheld from the shells the model drives.
+ * name Sao Khuê feeds this harness is withheld from the shells the model drives.
  *
  * NO tool-call envelope, unlike the pi gate beside it. That one exists because
  * pi-acp can only forward a generic confirm dialog, so the tool call has to ride
  * inside the dialog's message. dsh streams the real ACP `tool_call` update --
  * `title`, `kind` and `rawInput` -- immediately BEFORE the permission request,
  * and its permission frame names the same `toolCallId`, which is the shape
- * Kiro Crew's dispatch already resolves tool input, shell identity and raw
+ * Sao Khuê's dispatch already resolves tool input, shell identity and raw
  * params from. Writing a second copy into the frame would add a channel the
  * host does not need and a parser it already has.
  */
@@ -42,27 +42,27 @@
 import { readFileSync, realpathSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-/** What Kiro Crew's load read-back looks for in the marker. */
+/** What Sao Khuê's load read-back looks for in the marker. */
 const PROBE = "kiro-crew-tool-gate";
 
 /** The waterfall whose sole answerer must be the ACP bridge. */
 const APPROVAL_EVENT = "approval/request";
 
-/** Absolute path Kiro Crew names for the marker, and the per-session nonce. */
+/** Absolute path Sao Khuê names for the marker, and the per-session nonce. */
 const MARKER_ENV = "KIROCREW_DSH_GATE_MARKER";
 const NONCE_ENV = "KIROCREW_DSH_GATE_SESSION";
 
 /**
- * The provider-key names Kiro Crew feeds this harness, `:`-joined. Each is a POSIX
+ * The provider-key names Sao Khuê feeds this harness, `:`-joined. Each is a POSIX
  * identifier (the harness's own credential-reference grammar), so the separator
- * cannot occur inside one. Kiro Crew sets every listed name in the PROBE's
+ * cannot occur inside one. Sao Khuê sets every listed name in the PROBE's
  * environment to a canary rather than to the key -- the probe boots a plugin host
  * that needs no provider key -- because the property below can only be observed
  * for a name that is set: an absent name proves nothing about the scrub.
  */
 const SCRUB_NAMES_ENV = "KIROCREW_DSH_GATE_SCRUB_NAMES";
 
-/** Bound on the child-env check, well under Kiro Crew's read-back budget. */
+/** Bound on the child-env check, well under Sao Khuê's read-back budget. */
 const CHILD_CHECK_TIMEOUT_MS = 20_000;
 
 export const name = PROBE;
@@ -74,7 +74,7 @@ export const name = PROBE;
  * itself the evidence that dsh composed a tool runtime, an approval service and a
  * subprocess service -- which is what makes the marker below worth reading.
  * Without `approval` every gated call would resolve `unavailable` and deny, which
- * is safe but useless, and Kiro Crew would have no way to tell that apart from a
+ * is safe but useless, and Sao Khuê would have no way to tell that apart from a
  * gate that works. `subprocess` is the seam the child-env proof spawns through:
  * the property under test belongs to THAT service (its `scrubbedParentEnv()` is
  * what every bash and terminal child starts from), so a child spawned any other
@@ -89,7 +89,7 @@ export const inject = ["tools", "approval", "appReady", "subprocess"];
  * do retain the exact owning context, while callbacks are reflection proxies
  * with no stable source identity. Loader entry id + module and runtime name are
  * therefore the strongest identity available. Any Cordis shape change produces
- * null fields that Kiro Crew rejects instead of silently trusting the route.
+ * null fields that Sao Khuê rejects instead of silently trusting the route.
  */
 function approvalOwner(hook) {
   const fiber = hook?.ctx?.fiber;
@@ -116,12 +116,12 @@ function approvalRouting(ctx) {
 /**
  * The tool presentation the tools service COMPOSED, read off the service itself.
  *
- * Kiro Crew's patch pins `tools.mode: native`, and the pin holds because a
+ * Sao Khuê's patch pins `tools.mode: native`, and the pin holds because a
  * `--patch` overlay is applied after the operator layer -- an ordering observed at
  * one harness version. This reads what the service actually resolved
  * (`defaultMode`, the process-global presentation the `mode` row selects), so a
  * release that reorders the layers, or a plugin that rewrites the mode after
- * composition, is refused by Kiro Crew rather than trusted to precedence. A
+ * composition, is refused by Sao Khuê rather than trusted to precedence. A
  * per-agent `presentAs()` scope cannot exist yet at load and is not visible here.
  */
 function toolsSnapshot(ctx) {
@@ -145,10 +145,10 @@ const READ_ONLY_TOOL_NAMES = ["read", "grep", "glob"];
  * whether the global layer holds it and whether a scoped layer present at load
  * shadows it. A global name is unique (a second global registration throws), so
  * the entry owning it is the one module that registers it, running without
- * error. A per-agent scope created after load is not visible here, so Kiro Crew
+ * error. A per-agent scope created after load is not visible here, so Sao Khuê
  * grants the allowance only when every composed entry is a stock module, which
  * leaves no other code that could register a shadow. Any shape this cannot read
- * is reported as null, and Kiro Crew refuses the allowance on it.
+ * is reported as null, and Sao Khuê refuses the allowance on it.
  */
 function compositionSnapshot(ctx) {
   let entries = null;
@@ -189,7 +189,7 @@ function compositionSnapshot(ctx) {
 /**
  * The harness's own version, read from the package the running entry script
  * belongs to. Recorded so a refusal or an accepted proof names the release it was
- * observed on; `null` when it cannot be read, which Kiro Crew records rather than
+ * observed on; `null` when it cannot be read, which Sao Khuê records rather than
  * judges -- the property below is the decision, the version is its label.
  */
 function harnessVersion() {
@@ -218,7 +218,7 @@ function scrubNames() {
  * process is certain to have (it is running on it) and it needs no shell. The
  * result is per name: which were not even set here (nothing verified for them)
  * and which reached the child (the key would reach the model's shells). Any
- * failure to run or read the child is recorded as `error`; Kiro Crew refuses on
+ * failure to run or read the child is recorded as `error`; Sao Khuê refuses on
  * every non-clean field, so nothing here has to decide.
  */
 async function childEnvProof(ctx, names) {
@@ -267,7 +267,7 @@ async function childEnvProof(ctx, names) {
 
 /**
  * Write the marker in one publish: the bytes land beside the path and are renamed
- * onto it, so Kiro Crew -- which polls for the file while this process is still
+ * onto it, so Sao Khuê -- which polls for the file while this process is still
  * alive -- never reads a half-written one.
  */
 function publishMarker(marker, body) {
@@ -280,15 +280,15 @@ export function apply(ctx) {
   // EVERY tool asks. There is no name allowlist, and that is deliberate on two
   // counts. A name list would have to spell this harness's passive reads, and a
   // scoped tool registered later under one of those names shadows the global one,
-  // so the list would exempt an implementation nobody checked. And Kiro Crew's
+  // so the list would exempt an implementation nobody checked. And Sao Khuê's
   // PreToolUse gate is the ONLY governance point this harness has: its own sandbox
   // self-decides every in-policy action, so a call that never becomes a
-  // permission frame is a call no rule of Kiro Crew's -- the denied-command floor,
+  // permission frame is a call no rule of Sao Khuê's -- the denied-command floor,
   // the sensitive-path block -- ever sees. That holds for the reads as much as
   // for bash: the harness's own credential files stay masked for its whole
-  // process tree (its key arrives from Kiro Crew's vault instead), but the read
+  // process tree (its key arrives from Sao Khuê's vault instead), but the read
   // gate is what stands in front of every OTHER sensitive path, and it only
-  // stands there for a read that asks. A read that Kiro Crew judges benign is
+  // stands there for a read that asks. A read that Sao Khuê judges benign is
   // auto-approved on its side, AFTER that check, which is where the decision
   // belongs.
   //
@@ -297,7 +297,7 @@ export function apply(ctx) {
   // policy, and a `deny` from it is preserved as a deny. Only an `allow` is
   // upgraded to `ask`. Returning `ask` without awaiting would have discarded
   // every later deny listener, turning this harness's own refusal into a call
-  // Kiro Crew is merely asked about.
+  // Sao Khuê is merely asked about.
   ctx.on(
     "tools/pre-execute",
     async (exec, next) => {
@@ -307,7 +307,7 @@ export function apply(ctx) {
       const tool = String(exec?.name ?? "");
       return {
         kind: "ask",
-        reason: `Kiro Crew's tool gate decides this ${tool} call`,
+        reason: `Sao Khuê's tool gate decides this ${tool} call`,
       };
     },
     { prepend: true },
@@ -318,11 +318,11 @@ export function apply(ctx) {
   // that barrier the gate can load before the ACP bridge and snapshot an empty
   // answerer set even though the bridge registers later in the same boot.
   //
-  // Written ONLY when Kiro Crew named a marker path: the read-back probe does,
+  // Written ONLY when Sao Khuê named a marker path: the read-back probe does,
   // the session it speaks for does not, and a session without one runs the gate
   // exactly the same way. The barrier calls the listener without awaiting it, so
   // the async proof is wrapped to write a marker on EVERY outcome -- a rejection
-  // escaping here would be an unhandled rejection, not a refusal Kiro Crew names.
+  // escaping here would be an unhandled rejection, not a refusal Sao Khuê names.
   const marker = process.env[MARKER_ENV];
   if (!marker) return;
   return ctx.appReady.onReady(() => {
@@ -352,7 +352,7 @@ export function apply(ctx) {
       )
       .then(() => publishMarker(marker, body))
       .catch(() => {
-        // The marker could not be published at all; Kiro Crew reads its absence as
+        // The marker could not be published at all; Sao Khuê reads its absence as
         // a refusal, and there is nowhere else this plugin may report to.
       });
   });

@@ -37,7 +37,7 @@ This module MUST NOT import ``kiro_crew.dashboard.*`` (at module scope or
 lazily): it exists to dissolve that cross-layer dependency. Heavy runtime deps
 (``kiro_crew.sel``, ``kiro_crew.apps.registry``, ``kiro_crew.config.loader``)
 are imported lazily inside functions so Code Review Sage's standalone import
-path (``sage_lib`` without the Kiro Crew runtime) keeps working for callers
+path (``sage_lib`` without the Sao Khuê runtime) keeps working for callers
 that guard their import of this module.
 """
 

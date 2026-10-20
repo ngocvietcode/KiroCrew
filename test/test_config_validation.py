@@ -204,7 +204,7 @@ class TestValidateConfigData:
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         # ``meta`` is written by KiroCrewConfig.save() itself, so warning about
-        # it means every launch scolds the user for KiroCrew's own bookkeeping —
+        # it means every launch scolds the user for SaoKhue's own bookkeeping —
         # on stdout of `kirocrew token`, whose URL the user has to copy.
         data = {
             "meta": {"lastTouchedVersion": "1.2.3", "lastTouchedAt": "2026-01-01T00:00:00+00:00"},

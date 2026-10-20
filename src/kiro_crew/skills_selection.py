@@ -125,7 +125,7 @@ def _repo_scope_satisfied(relpath: str, project_dir: str | Path | None) -> bool:
     A skill carrying ``repo_scope: <relpath>`` is only eligible for
     injection when *project_dir* (or an ancestor of it) contains *relpath*
     — e.g. ``repo_scope: src/kiro_crew`` restricts a skill to sessions
-    whose active project IS the Kiro Crew source tree. This is the
+    whose active project IS the Sao Khuê source tree. This is the
     loader-enforced counterpart to a prose "ignore this skill elsewhere"
     scope guard: prose depends on probabilistic LLM obedience, while this
     check runs before the skill ever reaches the context (destructive
@@ -314,7 +314,7 @@ def get_triggered_skills(
 
 
 def _is_user_authored(self, s: dict) -> bool:
-    """Whether *s* is a skill the user wrote rather than one Kiro Crew shipped.
+    """Whether *s* is a skill the user wrote rather than one Sao Khuê shipped.
 
     Shipped means a packaged built-in (by key, or by the provenance marker
     the builtin sync writes into every copy it installs — which also covers

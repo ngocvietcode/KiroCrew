@@ -624,7 +624,7 @@ async def api_chat_slot_project(request: web.Request) -> web.Response:
             )
             return web.json_response({"error": "Access denied"}, status=403)
         # Pre-flight the voice-runtime workspace guard: a
-        # workspace that contains (or sits inside) the Kiro Crew data home is
+        # workspace that contains (or sits inside) the Sao Khuê data home is
         # refused at agent spawn anyway, but only after the session exists and
         # with a spawn-time stack trace. Reject it here, at the moment of
         # choice, with the same actionable message. Off-loop: the check primes

@@ -66,7 +66,7 @@ class TestPageAndAssets:
         resp = await core_mod.api_branding(_req())
         body = json.loads(resp.body)
         assert body == {
-            "bot_name": "Kiro Crew",
+            "bot_name": "Sao Khuê",
             "avatar": "/logo.png",
             "direct_local": True,
         }
@@ -280,7 +280,7 @@ class TestSttPrereqCommands:
     """What the user still has to run themselves, per provider.
 
     There is no install button behind this list any more: the only thing a
-    provider can need beyond an installed Kiro Crew is the optional ``voice``
+    provider can need beyond an installed Sao Khuê is the optional ``voice``
     extra in this interpreter, which includes the decoder. An empty list is the
     steady state.
 

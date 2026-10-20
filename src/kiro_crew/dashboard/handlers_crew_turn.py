@@ -1,6 +1,6 @@
 """Chat with a HEADLESS remote crew, through the gateway rather than the browser.
 
-A remote Kiro Crew GATEWAY is reached by embedding its own dashboard: the hub
+A remote Sao Khuê GATEWAY is reached by embedding its own dashboard: the hub
 opens a tunnel, mints a dashboard token, and the iframe does the rest. A headless
 crew has no dashboard to embed. It serves one turn route -- the OpenAI-shaped
 ``POST /v1/chat/completions`` of
@@ -100,7 +100,7 @@ def control_secret_id(inst: Any) -> str:
     cannot be allowed to choose a secret: see ``_record_for`` for the relabelling
     it would otherwise permit. The record holds the reference the LAUNCH minted,
     which is also the only value guaranteed to name the right secret, since the
-    Fargate lane's own label (``Kiro Crew Cloud (<tag>)``) is not a valid secret
+    Fargate lane's own label (``Sao Khuê Cloud (<tag>)``) is not a valid secret
     name at all.
 
     Derives the name from the operator's configured prefix -- not the hardcoded
@@ -238,7 +238,7 @@ def served_crew_name(inst: Any) -> str:
     bundle manifest the image was built from -- and the guest's front compares
     ``model`` against that name and answers 404 ``crew_not_served_here`` for
     anything else. The display name is a label: this lane's is the launch tag
-    (``kc-22d27f``) and Fargate's is ``Kiro Crew Cloud (<tag>)``, so on both lanes
+    (``kc-22d27f``) and Fargate's is ``Sao Khuê Cloud (<tag>)``, so on both lanes
     the label addresses nobody.
 
     Resolved from the record the LAUNCH wrote, the same way
@@ -263,7 +263,7 @@ def served_crew_name(inst: Any) -> str:
 #: This module deliberately holds no tag-from-display-name parser.
 #:
 #: ``instances.json`` is not write-protected, so an instance's display name is
-#: agent-supplied. Recovering a launch tag from ``Kiro Crew Cloud (<tag>)`` and
+#: agent-supplied. Recovering a launch tag from ``Sao Khuê Cloud (<tag>)`` and
 #: resolving a crew by it therefore lets a relabelled row name whichever crew's
 #: secret its label claims, while the credential travels down that row's own
 #: tunnel. ``_record_for`` matches on the node the row's tunnel dials, and a row

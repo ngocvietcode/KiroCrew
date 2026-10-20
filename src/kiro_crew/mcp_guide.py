@@ -271,7 +271,7 @@ def _tool_definitions() -> list[dict[str, Any]]:
         {
             "name": "diagnose_settings",
             "description": (
-                "Explain why Kiro Crew behaves differently from its defaults. Returns "
+                "Explain why Sao Khuê behaves differently from its defaults. Returns "
                 "JSON: findings (read-only symptom checks of this install, problems "
                 "first: id, status ok|warn|problem|unknown, summary, evidence, and "
                 "fix, either {card: {kind, params}} to propose or {steps: [...]} for "
@@ -334,7 +334,7 @@ def _tool_definitions() -> list[dict[str, Any]]:
         {
             "name": "search_docs",
             "description": (
-                "Search the Kiro Crew user documentation for how a feature works or "
+                "Search the Sao Khuê user documentation for how a feature works or "
                 "how to set something up, e.g. 'connect Slack' or 'one-time "
                 "reminder'. Returns up to 5 pages: page, title and the matching "
                 "lines. Pass `page` (a name from the results) to read that page; "

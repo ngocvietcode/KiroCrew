@@ -29,12 +29,12 @@ superseded-by: []
 
 ## Summary
 
-Any crewmate can answer "where is X?" and "how do I do Y?" about Kiro Crew by
+Any crewmate can answer "where is X?" and "how do I do Y?" about Sao Khuê by
 pointing at the real control on the user's screen, and can prepare a change as
 a card that applies only when the user presses it. Both come from one MCP
 server, `kirocrew-guide`, that only reads or offers.
 
-On top of that, Kiro Crew creates one ordinary crewmate, Mate, so a person who
+On top of that, Sao Khuê creates one ordinary crewmate, Mate, so a person who
 opens the Crewmates page meets a crewmate that speaks first, explains what
 crewmates are, and asks to be named.
 
@@ -98,7 +98,7 @@ assistant.
 
 ### Part 2: Mate, a first crewmate
 
-**Created once.** On startup Kiro Crew creates one ordinary crewmate, Mate (key
+**Created once.** On startup Sao Khuê creates one ordinary crewmate, Mate (key
 `mate`), once, on fresh and existing installs alike. It is built from the
 ordinary `kirocrew` template and has its own private memory. The user can
 rename it and delete it. A deleted Mate is never re-created. Mate replaces the
@@ -114,7 +114,7 @@ main's ordinary landing.
 
 **The first welcome.** Mate's first turn is a hidden kickoff. The model writes
 the welcome from principles, not from a fixed text. It says who it is, what a
-crewmate is compared with a session, and that it can help set up Kiro Crew, fix
+crewmate is compared with a session, and that it can help set up Sao Khuê, fix
 problems in it, or show the user around. It asks what the user wants to call
 it, never the user's own name. This changes rfc-crewmate-greeting §6 for Mate's
 first welcome only. Other crewmates keep one greeting mechanism per create path.

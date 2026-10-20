@@ -191,9 +191,9 @@ logger = logging.getLogger(__name__)
 # alias that was written for it.
 EmittedAlias = tuple[str, str, str]
 
-# Sidecar under the Kiro Crew data home. kiro-cli validates agent specs with
+# Sidecar under the Sao Khuê data home. kiro-cli validates agent specs with
 # ``deny_unknown_fields``, so an in-spec ownership marker is impossible -- the
-# record lives out of band in a directory Kiro Crew owns outright, mirroring the
+# record lives out of band in a directory Sao Khuê owns outright, mirroring the
 # ``owned-mcp-keys.json`` manifest that answers the same question for MCP server
 # keys (see :mod:`kiro_crew.browser.setup`).
 _RECORD_FILENAME = "connections-tool-aliases.json"

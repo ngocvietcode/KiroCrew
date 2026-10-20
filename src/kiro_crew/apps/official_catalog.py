@@ -1,6 +1,6 @@
 """Fetch the official app catalog and annotate registry rows with it.
 
-WHAT THIS IS. The catalog at ``apps.crew.kiro.dev`` is the list Kiro Crew
+WHAT THIS IS. The catalog at ``apps.crew.kiro.dev`` is the list Sao Khuê
 publishes, delivered as a document rather than baked into the wheel. The bundled
 ``app-registry.json`` answers the same question offline -- it is the seed -- so
 both carry ``provenance: "official"``; see ``_apply_trust_fields``.

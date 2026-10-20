@@ -266,7 +266,7 @@ describe('isSafeName — lone surrogates', () => {
 
 describe('shellEscape', () => {
   it('leaves a safe name untouched', () => {
-    expect(shellEscape('KiroCrew-terminal_v2.1')).toBe('KiroCrew-terminal_v2.1')
+    expect(shellEscape('SaoKhue-terminal_v2.1')).toBe('SaoKhue-terminal_v2.1')
   })
 
   it('leaves letters and digits of any script untouched', () => {

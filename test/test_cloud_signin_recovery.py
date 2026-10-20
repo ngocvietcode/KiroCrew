@@ -359,7 +359,7 @@ class TestUnreadableIdentityGuard:
     def test_an_ordinary_error_is_still_cleared(self, tmp_path):
         s = _store(tmp_path)
         job = s.create(profile="dev", region="us-east-1", size_key="balanced")
-        job.error = "Interrupted — Kiro Crew restarted while this setup was running."
+        job.error = "Interrupted — Sao Khuê restarted while this setup was running."
         lj.mark_signed_in(job)
         assert job.error == ""
 
@@ -1615,7 +1615,7 @@ class TestSigninPromptReprobe:
         signed in at once is the state this feature exists to remove."""
         state, job = await self._preserved(tmp_path)
         store = state.cloud_launch_store
-        job.error = "Interrupted — Kiro Crew restarted while the Kiro sign-in was running."
+        job.error = "Interrupted — Sao Khuê restarted while the Kiro sign-in was running."
         job.step(lj.STEP_CONNECT).detail = (
             "Added to Your crews. Sign in to Kiro on the crew after you connect."
         )

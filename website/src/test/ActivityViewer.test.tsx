@@ -171,7 +171,7 @@ describe('ActivityViewer', () => {
               { url: prUrl, type: 'cr', label: 'PR #42', msgIdx: 0 },
               // Not in `sources` (a code-review host Changes can't render) — must stay reachable.
               { url: 'https://git.example.com/reviews/CR-1', type: 'cr', label: 'CR-1', msgIdx: 0 },
-              { url: 'https://git.example.com/packages/KiroCrew', type: 'other', label: 'KiroCrew repo', msgIdx: 0 },
+              { url: 'https://git.example.com/packages/KiroCrew', type: 'other', label: 'SaoKhue repo', msgIdx: 0 },
             ]}
           />
         </QueryClientProvider>
@@ -179,7 +179,7 @@ describe('ActivityViewer', () => {
     )
     expect(screen.getByText('Resources')).toBeInTheDocument()
     // Non-Changes links stay in Resources.
-    expect(screen.getByText('KiroCrew repo')).toBeInTheDocument()
+    expect(screen.getByText('SaoKhue repo')).toBeInTheDocument()
     expect(screen.getByText('CR-1')).toBeInTheDocument()
     // The link already shown in the Changes tab is hidden from Resources.
     expect(screen.queryByText('PR #42')).not.toBeInTheDocument()

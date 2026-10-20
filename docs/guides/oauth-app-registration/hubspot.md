@@ -1,40 +1,40 @@
-# Register a HubSpot OAuth app for Kiro Crew Connections
+# Register a HubSpot OAuth app for Sao Khuê Connections
 
-*Who this is for: a HubSpot Super Admin (or a user with App Marketplace Access permission) of the HubSpot account whose CRM data Kiro Crew should read. You need a browser and access to that account's Development area. Expected time: 15 minutes.*
+*Who this is for: a HubSpot Super Admin (or a user with App Marketplace Access permission) of the HubSpot account whose CRM data Sao Khuê should read. You need a browser and access to that account's Development area. Expected time: 15 minutes.*
 
 **HubSpot has no Connections entry yet** — see the
 [index](README.md) for the providers pre-registered on this build — so its card
 and its **Connect** button appear once that entry ships. Registering the redirect
 URI below now means it already matches when it does.
 
-This runbook covers the **remote HubSpot MCP server** at `https://mcp.hubspot.com`, which lets Kiro Crew query CRM records, activities, conversations and marketing content as the signed-in HubSpot user. It is not the local "Developer MCP server" used for building HubSpot apps with the HubSpot CLI.
+This runbook covers the **remote HubSpot MCP server** at `https://mcp.hubspot.com`, which lets Sao Khuê query CRM records, activities, conversations and marketing content as the signed-in HubSpot user. It is not the local "Developer MCP server" used for building HubSpot apps with the HubSpot CLI.
 
 ## Before you start
 
 - A HubSpot account on the current Developer Platform. The remote MCP server is "available across all hubs and tiers" (HubSpot changelog, January 2026); no paid tier or developer test account is required. A free CRM account works.
 - Permission to create apps: the **Development** item in HubSpot's main navigation. HubSpot's OAuth guide says installers "must either be a Super Admin or have HubSpot Marketplace Access permissions"; assume the same for creating the app.
-- Kiro Crew installed and its dashboard reachable, so you can open **Settings → OAuth Apps**.
+- Sao Khuê installed and its dashboard reachable, so you can open **Settings → OAuth Apps**.
 - Facts you will need to type exactly:
   - Redirect URI: `http://localhost:48107/callback`
-  - MCP endpoint: `https://mcp.hubspot.com` (HubSpot's inspector walkthrough writes it with a trailing slash, `https://mcp.hubspot.com/`; Kiro Crew handles this, you do not type it anywhere)
-  - HubSpot does not support Dynamic Client Registration for this server; the Client ID and Client secret must be created by hand and entered into Kiro Crew.
-  - HubSpot requires PKCE on every MCP OAuth flow. Kiro Crew's OAuth client sends the PKCE parameters; nothing for you to configure.
+  - MCP endpoint: `https://mcp.hubspot.com` (HubSpot's inspector walkthrough writes it with a trailing slash, `https://mcp.hubspot.com/`; Sao Khuê handles this, you do not type it anywhere)
+  - HubSpot does not support Dynamic Client Registration for this server; the Client ID and Client secret must be created by hand and entered into Sao Khuê.
+  - HubSpot requires PKCE on every MCP OAuth flow. Sao Khuê's OAuth client sends the PKCE parameters; nothing for you to configure.
 
 ## 1. Create the app
 
 HubSpot has a dedicated app type for this, the **MCP auth app**. Do not create a "public app", "private app" or a Projects-based app; those exist for other purposes and would need scopes configured by hand.
 
-1. Sign in to HubSpot and open the account Kiro Crew should read. If you belong to several accounts, pick the right one from the account switcher first; the app is created per account.
+1. Sign in to HubSpot and open the account Sao Khuê should read. If you belong to several accounts, pick the right one from the account switcher first; the app is created per account.
 2. In the main navigation bar, click **Development**.
 3. In the left sidebar, click **MCP Auth Apps**. (Direct link: [https://app.hubspot.com/l/mcp-auth-apps/](https://app.hubspot.com/l/mcp-auth-apps/).)
 4. In the upper right, click **Create MCP auth app**.
 5. Fill in the dialog:
-   - **App name**: something recognisable, for example `Kiro Crew Connections`.
+   - **App name**: something recognisable, for example `Sao Khuê Connections`.
    - **Description**: optional.
    - **Redirect URL**: `http://localhost:48107/callback` (see section 2 for why this host name).
    - **Icon**: optional.
 6. Click **Create**.
-7. HubSpot opens the app's details page. Under the client credentials section, copy the **Client ID** and reveal and copy the **Client secret**. You will paste both into Kiro Crew in section 5. Treat the client secret like a password.
+7. HubSpot opens the app's details page. Under the client credentials section, copy the **Client ID** and reveal and copy the **Client secret**. You will paste both into Sao Khuê in section 5. Treat the client secret like a password.
 
 You can change the name, description, icon and redirect URLs later with **Edit info** in the upper right of the details page.
 
@@ -46,11 +46,11 @@ The redirect URL is entered in the **Create MCP auth app** dialog (step 5 above)
 http://localhost:48107/callback
 ```
 
-Kiro Crew registers this provider's callback on the host name `localhost` because that is the only host name HubSpot exempts from its HTTPS rule. HubSpot's OAuth documentation for redirect URLs says: "For security reasons, this URL must use `https` in production. (When testing using `localhost`, `http` can be used.) You also must use a domain, as IP addresses are not supported." A `127.0.0.1` literal, which most other Kiro Crew providers use, would fall under the IP-address refusal, so HubSpot is one of the providers whose callback is registered on `localhost` instead. HubSpot's own MCP page documents `http://localhost:6274/oauth/callback/debug` as a valid redirect for the MCP Inspector, which confirms http on `localhost` is accepted.
+Sao Khuê registers this provider's callback on the host name `localhost` because that is the only host name HubSpot exempts from its HTTPS rule. HubSpot's OAuth documentation for redirect URLs says: "For security reasons, this URL must use `https` in production. (When testing using `localhost`, `http` can be used.) You also must use a domain, as IP addresses are not supported." A `127.0.0.1` literal, which most other Sao Khuê providers use, would fall under the IP-address refusal, so HubSpot is one of the providers whose callback is registered on `localhost` instead. HubSpot's own MCP page documents `http://localhost:6274/oauth/callback/debug` as a valid redirect for the MCP Inspector, which confirms http on `localhost` is accepted.
 
-If you add more than one redirect URL, HubSpot uses the first one as the default. Keep the Kiro Crew URI first.
+If you add more than one redirect URL, HubSpot uses the first one as the default. Keep the Sao Khuê URI first.
 
-Kiro Crew's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and the port is fixed per provider (HubSpot is 48107). Remote, tailnet or Docker installs do not need a second redirect URI. After you approve the app, the browser is sent to that loopback URL, which is unreachable from your laptop when the gateway runs on another host; copy the full landing URL from the browser's address bar, paste it into the Kiro Crew dashboard when prompted, and the gateway replays it to its own loopback listener.
+Sao Khuê's OAuth callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible, and the port is fixed per provider (HubSpot is 48107). Remote, tailnet or Docker installs do not need a second redirect URI. After you approve the app, the browser is sent to that loopback URL, which is unreachable from your laptop when the gateway runs on another host; copy the full landing URL from the browser's address bar, paste it into the Sao Khuê dashboard when prompted, and the gateway replays it to its own loopback listener.
 
 ## 3. Scopes and permissions
 
@@ -58,7 +58,7 @@ There is nothing to configure. HubSpot: "When creating an MCP auth app, it's imp
 
 What this means in practice:
 
-- The consent screen (section 6) lists the data the MCP server can reach; the connecting user grants some or all of it. To keep Kiro Crew read-mostly, grant the read items and decline write items on that screen.
+- The consent screen (section 6) lists the data the MCP server can reach; the connecting user grants some or all of it. To keep Sao Khuê read-mostly, grant the read items and decline write items on that screen.
 - Every action is further limited by the connecting user's own HubSpot permissions: "All actions respect your existing HubSpot user permissions."
 - Read access covers CRM records (contacts, companies, deals, tickets, leads, users, carts, invoices, orders, line items, products, quotes, subscriptions, custom objects, lists), activities (calls, emails, meetings, notes, tasks), content and marketing (blog posts, landing pages, site pages, campaigns, marketing events, marketing emails and their analytics), conversations, and user/account details.
 - Write access, if granted, covers CRM records, activities, content, campaigns and marketing email drafts.
@@ -74,9 +74,9 @@ Because the classic CRM scope names (`crm.objects.contacts.read` and friends) ar
 - **Installer permissions**: the user who clicks Connect must be a Super Admin or have HubSpot Marketplace Access, per HubSpot's general OAuth rule. HubSpot's MCP FAQ adds: "The admin of the HubSpot account needs to connect first, to allow other users in the account to connect thereafter." Have an admin do the first connection.
 - **Distribution limits**: "Apps built with the HubSpot MCP server follow the same distribution limits as other HubSpot apps." For a single-account install this does not matter; only multi-account distribution would run into HubSpot's install-count limits or a Marketplace listing.
 
-## 5. Enter the credentials in Kiro Crew
+## 5. Enter the credentials in Sao Khuê
 
-1. Open the Kiro Crew dashboard and go to **Settings → OAuth Apps**.
+1. Open the Sao Khuê dashboard and go to **Settings → OAuth Apps**.
 2. Find the **HubSpot** card.
 3. Paste the **Client ID** from the MCP auth app details page into **Client ID**.
 4. Paste the **Client secret** into **Client secret**.
@@ -98,15 +98,15 @@ Container or CI alternative: set the environment variables `KIROCREW_CONNECTIONS
 |---------|--------------|-----|
 | Authorization page shows a redirect URL error | The URI saved on the app does not exactly match `http://localhost:48107/callback` (scheme, host name, port and path all count) | Re-check section 2 and fix the value with **Edit info** |
 | Authorization fails before the consent screen | Connecting user lacks Super Admin / App Marketplace Access, or no admin has connected yet | Have an admin connect first (section 4) |
-| PKCE error during token exchange | Client did not send `code_challenge` / `code_verifier` | Kiro Crew sends them; report the exact error text to the Kiro Crew team |
+| PKCE error during token exchange | Client did not send `code_challenge` / `code_verifier` | Sao Khuê sends them; report the exact error text to the Sao Khuê team |
 | Worked, then stopped after a period of idleness | Refresh token invalidated | Click **Connect** again to re-run the flow |
 | Activities or conversations missing | Account has Sensitive Data turned on | Expected; HubSpot blocks these through MCP |
 
-To revoke the grant later: **settings icon → Integrations → Connected Apps**, click the app, then use its **Actions → Uninstall** menu. Uninstalling invalidates the refresh token; Kiro Crew's card returns to **Connect**. Deleting the MCP auth app itself under **Development → MCP Auth Apps** revokes every user's grant at once.
+To revoke the grant later: **settings icon → Integrations → Connected Apps**, click the app, then use its **Actions → Uninstall** menu. Uninstalling invalidates the refresh token; Sao Khuê's card returns to **Connect**. Deleting the MCP auth app itself under **Development → MCP Auth Apps** revokes every user's grant at once.
 
 ## Known limits
 
-- Plain-http redirects are accepted only on the host name `localhost` ("IP addresses are not supported"), which is why Kiro Crew registers `http://localhost:48107/callback` rather than a `127.0.0.1` literal for this provider.
+- Plain-http redirects are accepted only on the host name `localhost` ("IP addresses are not supported"), which is why Sao Khuê registers `http://localhost:48107/callback` rather than a `127.0.0.1` literal for this provider.
 - PKCE is mandatory: "HubSpot's MCP server requires PKCE (Proof Key for Code Exchange) for all OAuth authentication flows."
 - Access tokens expire and must be refreshed with the refresh token; if the refresh token is invalidated the user must reconnect. HubSpot has announced single-use (rotating) refresh tokens for MCP clients.
 - No Dynamic Client Registration; credentials come from the MCP auth app.

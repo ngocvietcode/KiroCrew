@@ -1,6 +1,6 @@
 # Memory benchmarks (LongMemEval, LoCoMo)
 
-`kirocrew bench` measures the Kiro Crew memory layer against two published benchmarks.
+`kirocrew bench` measures the Sao Khuê memory layer against two published benchmarks.
 It exists to answer one question the existing `kirocrew eval` cannot: **did this
 change make the agent's memory better or worse?**
 
@@ -61,7 +61,7 @@ usefulness. `recall_any`, `recall_micro` and `ndcg` are reported alongside it.
 
 One deliberate divergence: upstream stems with nltk's `PorterStemmer`, which
 defaults to `NLTK_EXTENSIONS` (an irregular-form table, and words of length ≤ 2 left
-alone). nltk is not a Kiro Crew dependency, so the port uses `snowballstemmer`'s
+alone). nltk is not a Sao Khuê dependency, so the port uses `snowballstemmer`'s
 original Porter algorithm, already a hard dependency. They agree on the large
 majority of English tokens but are not bit-identical, so a LoCoMo number from this
 harness can differ from a published one in the third decimal.
@@ -335,7 +335,7 @@ through the FTS5 keyword fallback.
 ### The embedder identity describes the live embedder
 
 It is read from the running embedder, not from the module constants.
-`KIROCREW_EMBED_MODEL_PATH` (and `memory.embed_model_path`) make Kiro Crew run a
+`KIROCREW_EMBED_MODEL_PATH` (and `memory.embed_model_path`) make Sao Khuê run a
 different model, and the vector width can be adopted from the model file itself.
 Since `compare_reports` refuses only when two identities **differ**, recording the
 bundled constants for a custom run would let two different vector spaces be

@@ -30,7 +30,7 @@ superseded-by: []
 
 ## 1. Summary
 
-Agents in Kiro Crew draw two kinds of live HTML: inline `<mcwidget>` explainers in
+Agents in Sao Khuê draw two kinds of live HTML: inline `<mcwidget>` explainers in
 chat, and the one-page Dashboard tab a crewmate writes for its person. Both are
 correct and themed today, but most of them sit still and read like a form. This
 RFC proposes **Living UI**: a way to make them pleasant to look at and easy to

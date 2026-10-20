@@ -1,7 +1,7 @@
 """A project spec that declares a managed agent name refuses the kiro spawn.
 
 kiro-cli resolves ``--agent`` against the session's cwd before the installed agents
-directory, so a checkout carrying a spec under a name Kiro Crew writes would run in
+directory, so a checkout carrying a spec under a name Sao Khuê writes would run in
 place of the installed one. These tests pin the decision function and the kiro
 harness's enforcement of it; ``test_agent_admission_paths_ratchet.py`` pins every
 spawn path that must call it.

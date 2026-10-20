@@ -82,7 +82,7 @@ export function extractDenyDetail(rowContent: string): string {
  * the end of the row, since the host appends its reason after the title.
  */
 const GATE_CRASH_NOTICE =
-  / — (Blocked: the safety check crashed while judging this call \([A-Za-z_][\w.]*\), so the call was refused and nothing ran\. This is a Kiro Crew bug, not a policy rule and not a user action\.)$/
+  / — (Blocked: the safety check crashed while judging this call \([A-Za-z_][\w.]*\), so the call was refused and nothing ran\. This is a Sao Khuê bug, not a policy rule and not a user action\.)$/
 
 /**
  * The host's gate-crash refusal sentence, for a blocked row that carries NO

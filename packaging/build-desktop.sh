@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the standalone KiroCrew desktop app end-to-end.
+# Build the standalone SaoKhue desktop app end-to-end.
 #
 # Pipeline (uses the python-build-standalone approach):
 #   1. Build the React dashboard (npm)         -> website/dist
@@ -1300,7 +1300,7 @@ print(p["sha256"])' "$cache/manifest.json" "$file")"
   # clean room -- empty HOME, minimal PATH -- so no user install on the build
   # machine can answer for it (the launcher used to pass this gate that way).
   # Three probes: `--version`, `login --help`, then one ACP `initialize` round trip,
-  # the call every Kiro Crew session opens with. A binary that answers it here,
+  # the call every Sao Khuê session opens with. A binary that answers it here,
   # alone in its directory, is self-contained on THIS platform, which is the
   # premise the resolver rests on when it hands sessions exactly this file.
   # Enforced on EVERY platform: the Linux zip is selected by the build host's
@@ -1551,7 +1551,7 @@ log "Packaging desktop app (electron-builder, version: $KC_VERSION)…"
       # paths from that internal name, so changing it while productName stays
       # space-free makes the packaged app abort with "Unable to find helper
       # app". Nightly re-overrides the static display name to keep its suffix.
-      "-c.mac.extendInfo.CFBundleDisplayName=Kiro Crew Nightly"
+      "-c.mac.extendInfo.CFBundleDisplayName=Sao Khuê Nightly"
       # Linux packages key their INSTALL identity off the package name, so
       # nightly needs its own or dpkg/rpm treat a nightly install as an UPGRADE
       # of stable and remove it -- the same hazard as the nsis.guid below, from

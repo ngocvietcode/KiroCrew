@@ -1,4 +1,4 @@
-"""Kiro Crew's own agent config (``kirocrew.json``), where app MCP servers are written.
+"""Sao Khuê's own agent config (``kirocrew.json``), where app MCP servers are written.
 
 Its path, the file lock every reader and writer takes (``_mcp_lock``), the unlocked
 reads and writes made under that lock, and the guard that serializes a writer against
@@ -30,16 +30,16 @@ logger = logging.getLogger("kiro_crew.apps.bridges")
 # ---------------------------------------------------------------------------
 
 
-# App MCP servers are written to Kiro Crew's OWN agent config, not to the shared
+# App MCP servers are written to Sao Khuê's OWN agent config, not to the shared
 # ~/.kiro/settings/mcp.json. That shared file is read by everything else living
 # under ~/.kiro — Kiro IDE and any other kiro-cli agent — so registering an app's
 # tools there leaks them into surfaces that never installed the app (and a dead
 # HTTP entry there breaks EVERY kiro session, see the boot-reconcile warning in
-# backend_runtime/startup.py). Kiro Crew sessions read only the agent config
+# backend_runtime/startup.py). Sao Khuê sessions read only the agent config
 # (``includeMcpJson`` pinned False in agent.py), so this is both sufficient and
 # correctly scoped.
 def _mcp_json_path() -> Path:
-    """Kiro Crew's own agent config. A function, not an import-time constant:
+    """Sao Khuê's own agent config. A function, not an import-time constant:
     the path must track the live data home, and freezing it at import would
     write to the real ``~/.kiro`` from an isolated run. Goes through
     :func:`_kiro_agents_dir` so the module-level override honoured by every
@@ -53,7 +53,7 @@ def _mcp_lock(*, exclusive: bool = True, target: Optional[Path] = None) -> Itera
 
     Uses a single ``.lock`` sidecar file for both shared and exclusive
     locks so that readers and writers coordinate properly. ``target`` selects
-    WHICH file's sidecar to lock (default: Kiro Crew's own agent config); pass the
+    WHICH file's sidecar to lock (default: Sao Khuê's own agent config); pass the
     legacy shared ``mcp.json`` so its read-modify-write serializes against any
     other writer of THAT file, which sits under a different sidecar.
 

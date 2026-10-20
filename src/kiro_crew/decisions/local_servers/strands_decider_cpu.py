@@ -1,7 +1,7 @@
-"""Serve Strands Decider 2B on this machine's CPU for Kiro Crew's decision seam.
+"""Serve Strands Decider 2B on this machine's CPU for Sao Khuê's decision seam.
 
 Runs inside the model's own environment, never the gateway's: it imports torch,
-transformers, peft and strands_decider, which Kiro Crew does not depend on. The
+transformers, peft and strands_decider, which Sao Khuê does not depend on. The
 checkpoint is the LoRA adapter and head; the Qwen base it adapts is mirrored
 beside it in ``base/``. Both were downloaded and verified by the gateway, so
 nothing here reaches the network.
@@ -86,7 +86,7 @@ def _attest() -> PlainTextResponse:
 
 
 def _blank_null_criteria(body: bytes) -> bytes:
-    # Kiro Crew sends an option with no rubric as ``null``; Strands' schema
+    # Sao Khuê sends an option with no rubric as ``null``; Strands' schema
     # types every rubric as a string and answers 422 to a null one, which would
     # skip every decision. An empty rubric means the same thing to it.
     try:

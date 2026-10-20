@@ -1,6 +1,6 @@
 # Ops Mission Control
 
-An autonomous ops first responder, shipped as a built-in Kiro Crew app. It polls your
+An autonomous ops first responder, shipped as a built-in Sao Khuê app. It polls your
 signal providers, claims what is firing, investigates it in a chat session you can watch
 and reply to, matches it against a knowledge ledger that gets better the longer you run
 it, and proposes a fix.
@@ -54,7 +54,7 @@ are safe to close unread; a stranger's first install cannot.
 
 - **AWS** uses your ambient credential chain. No key is ever stored.
 - **Other providers'** tokens use a keystone-protected secret backend. The default
-  backend is an owner-only file the agent cannot read or overwrite (it is on Kiro Crew's
+  backend is an owner-only file the agent cannot read or overwrite (it is on Sao Khuê's
   sensitive-path floor). The API never returns a stored secret — only whether a field is
   set.
 - With the default backend, that file lives outside the app's folder, which is what makes
@@ -64,12 +64,12 @@ are safe to close unread; a stranger's first install cannot.
 ## Slack
 
 Mirrors incidents to a channel as a live board: one message per incident whose state
-updates in place, diagnosis in the thread. It uses the Slack connection **Kiro Crew
-already has** and stores no token of its own — so if Slack is not set up for Kiro Crew,
+updates in place, diagnosis in the thread. It uses the Slack connection **Sao Khuê
+already has** and stores no token of its own — so if Slack is not set up for Sao Khuê,
 this channel is unavailable and Settings says so.
 
 **Replies reach the investigation.** Once an incident has a chat slot, its board thread is
-registered with Kiro Crew's session map, so answering in the thread steers the running
+registered with Sao Khuê's session map, so answering in the thread steers the running
 agent. `POST /incident/transition` reports `slack_thread_replyable` so you can tell
 whether that link is live rather than assuming it: a ts recorded only on the app's own
 record would leave a reply resolving to no session, dropped in silence.
@@ -113,7 +113,7 @@ recheck against a source that did not answer records "could not check", never "i
 ## Extending it: the companion contract
 
 Internal or bespoke adapters live in a **separate package** you install alongside
-Kiro Crew. The public core never imports it and never branches on which edition is
+Sao Khuê. The public core never imports it and never branches on which edition is
 running.
 
 Register an entry point:

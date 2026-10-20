@@ -62,7 +62,7 @@ class TestStopViaService:
         with pytest.raises(SystemExit) as exc:
             cli_server._stop(8123)
         assert exc.value.code == 1
-        assert "No Kiro Crew gateway currently running on port 8123" in capsys.readouterr().out
+        assert "No Sao Khuê gateway currently running on port 8123" in capsys.readouterr().out
         assert sel_rec.calls[-1]["outcome"] == "no_target"
 
 
@@ -152,14 +152,14 @@ class TestStopLockHolderFallback:
         with pytest.raises(SystemExit) as exc:
             cli_server._stop(None)
         assert exc.value.code == 1
-        assert "No Kiro Crew gateway currently running" in capsys.readouterr().out
+        assert "No Sao Khuê gateway currently running" in capsys.readouterr().out
         assert sel_rec.calls[-1]["outcome"] == "no_target"
 
     def test_live_lock_holder_is_refused_without_a_port_tool(
         self, monkeypatch, sel_rec, capsys, signals
     ) -> None:
         """The lock file needs no `lsof`: with the port tool unavailable and a
-        live Kiro Crew holder, stop names the holder instead of exiting on the
+        live Sao Khuê holder, stop names the holder instead of exiting on the
         tool diagnostic. The diagnostic is for the case where nothing found a
         gateway, not a gate in front of the fallbacks that need no tool."""
         monkeypatch.setattr(platform_compat, "listening_pid_tool_available", lambda: False)
@@ -217,7 +217,7 @@ class TestStopLockHolderFallback:
         assert exc.value.code == 1
         assert signals == []
         out = capsys.readouterr().out
-        assert "does not look like a Kiro Crew gateway" in out
+        assert "does not look like a Sao Khuê gateway" in out
         assert "kill -TERM 99" in out
         assert len(sel_rec.calls) == 1
         assert sel_rec.calls[0]["operation"] == "gateway_stop"

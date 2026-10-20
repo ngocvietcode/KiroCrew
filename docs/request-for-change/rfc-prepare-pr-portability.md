@@ -27,19 +27,19 @@ superseded-by: []
 
 ## 1. Problem
 
-The `prepare-pr` skill is one of the most valuable pieces of Kiro Crew's own dev workflow: it drives a working tree to a review-ready PR (commit → sync → squash → open/update → poll CI + review bots → fix legitimate Critical/High findings → converge), and it standardizes how we ship changes to Kiro Crew.
+The `prepare-pr` skill is one of the most valuable pieces of Sao Khuê's own dev workflow: it drives a working tree to a review-ready PR (commit → sync → squash → open/update → poll CI + review bots → fix legitimate Critical/High findings → converge), and it standardizes how we ship changes to Sao Khuê.
 
-But the skill reads today as specific to **Kiro Crew**. Its prose bakes in one project's conventions, so an agent running it in any other repo would follow instructions that don't apply. We want two things at once, and they appear to be in tension:
+But the skill reads today as specific to **Sao Khuê**. Its prose bakes in one project's conventions, so an agent running it in any other repo would follow instructions that don't apply. We want two things at once, and they appear to be in tension:
 
-1. Keep the skill **built-in** and keep it **standardizing Kiro Crew development** (the tuned setup, gates, review bots, labels, and single-commit rule that make our PRs consistent).
+1. Keep the skill **built-in** and keep it **standardizing Sao Khuê development** (the tuned setup, gates, review bots, labels, and single-commit rule that make our PRs consistent).
 2. Make the skill **useful in any `gh`-based repo**, so other projects benefit from the same commit→green loop.
 
 This doc shows the tension is only in the *prose*, not the mechanism, and proposes a pluggable **project profile** layer that resolves both goals without forking the skill.
 
 ## 2. Why it matters
 
-- **Reuse.** The commit→sync→squash→open→poll→fix→converge loop is genuinely project-agnostic. Locking it to Kiro Crew wastes a good abstraction.
-- **Standardization stays intact.** A profile lets Kiro Crew keep its exact setup/gates/reviewers/labels as *data*, so Kiro Crew devs get zero-config standardization while other repos get a working default.
+- **Reuse.** The commit→sync→squash→open→poll→fix→converge loop is genuinely project-agnostic. Locking it to Sao Khuê wastes a good abstraction.
+- **Standardization stays intact.** A profile lets Sao Khuê keep its exact setup/gates/reviewers/labels as *data*, so Sao Khuê devs get zero-config standardization while other repos get a working default.
 - **No parallel systems.** Evolving the one proven skill outward (a discovered profile layer) beats spawning a second `kirocrew-prepare-pr` skill that drifts from the generic one.
 
 ## 3. Current state — what is actually coupled
@@ -48,7 +48,7 @@ Grounded in a read of the skill's scripts and `SKILL.md`:
 
 ### 3.1 The scripts are already ~95% generic
 
-| Script | Coupling to Kiro Crew |
+| Script | Coupling to Sao Khuê |
 | --- | --- |
 | `preflight.py` | **None.** Base branch is auto-detected: existing PR's base → `origin/HEAD` → `main`. Pure `git`/`gh`. |
 | `diff_signals.py` | **None.** Changed-file + flagged-signal reporting over `git diff`. |
@@ -63,7 +63,7 @@ So the executable core already runs anywhere `git` + `gh` are present. Decisions
 
 Everything project-specific is prose the agent reads, not code:
 
-- **Local gates** hardcoded to Kiro Crew's stack: `pytest / isort / flake8 / mypy` + `tsc -b / vitest`.
+- **Local gates** hardcoded to Sao Khuê's stack: `pytest / isort / flake8 / mypy` + `tsc -b / vitest`.
 - **Reviewers** hardcoded to mirror named workflows: `.github/workflows/{codex,claude,code}-review.yml` (no way to add a repo's own reviewers).
 - **Rule sources:** `AUTOSDE.yaml` + `website/AUTOSDE.yaml`, `CLAUDE.md`, `AGENTS.md`.
 - **Conventions:** the single-commit-per-PR invariant; the `readiness: passed` / `readiness: action required` status + labels; base branch `main`.
@@ -76,14 +76,14 @@ Everything project-specific is prose the agent reads, not code:
 **Goals**
 - One generic core loop, driven by a **project profile** that supplies the parts that vary per repo.
 - The profile is **discovered or configured**, never hardcoded in the core prose.
-- **Zero-config for Kiro Crew:** a bundled `kirocrew` profile is auto-selected when the skill detects it is running in the Kiro Crew repo.
+- **Zero-config for Sao Khuê:** a bundled `kirocrew` profile is auto-selected when the skill detects it is running in the Sao Khuê repo.
 - **Working default anywhere else** via auto-detection, degrading to the generic fallback the scripts already implement.
 - Keep the skill **built-in** (shipped via `package_data`), **dormant** until invoked, with narrow **intent-phrased triggers**.
 
 **Non-goals**
 - Not rewriting the scripts (only a small optional readiness-context override in `pr_status.py`).
 - Not forking into two skills.
-- Not changing Kiro Crew's actual CI workflows or labels.
+- Not changing Sao Khuê's actual CI workflows or labels.
 - Not building a general plugin marketplace — profiles are simple bundled/local files, not installable third-party packages.
 
 ## 5. Design — the pluggable project profile
@@ -92,7 +92,7 @@ Everything project-specific is prose the agent reads, not code:
 
 The profile is the single home for everything that varies per repo. The review bots are just the most visible slice:
 
-1. **Local setup and gates** — ordered setup commands that provision prerequisites once per worktree without judging the diff, followed by pure test/lint/type gates on every Phase-2 iteration (Kiro Crew: Playwright browser setup, then `pytest`, `isort`, `flake8`, `mypy`, `tsc -b`, `vitest`).
+1. **Local setup and gates** — ordered setup commands that provision prerequisites once per worktree without judging the diff, followed by pure test/lint/type gates on every Phase-2 iteration (Sao Khuê: Playwright browser setup, then `pytest`, `isort`, `flake8`, `mypy`, `tsc -b`, `vitest`).
 2. **Local reviewers** — a list of local review subagents, **one spawned per entry** (each pinned to a concrete `spawn_run` **model id**, with a `model_tier` fallback). A reviewer is either **contract-backed** (it mirrors a specific CI gate by reading that workflow's contract, e.g. `codex-review.yml`) or **standalone** (it reviews against an inline `rubric` with no CI counterpart). Reviewers do **not** have to bind to CI — a repo can add local-only reviewers (security, performance, a11y, house style) that no server gate mirrors, and a repo with no CI reviewers at all can still define reviewers by rubric. All reviewers inherit the shared `rule_files` (AUTOSDE / AGENTS.md).
 3. **Conventions** — single-commit rule (on/off), the readiness status context name + managed labels, an optional long-term-defer label, and the base branch override.
 
@@ -100,12 +100,12 @@ The profile is the single home for everything that varies per repo. The review b
 
 ```
 1. Explicit config   →  .prepare-pr.toml at repo root                (highest precedence)
-2. Kiro Crew markers  →  load bundled profiles/kirocrew.json
+2. Sao Khuê markers  →  load bundled profiles/kirocrew.json
 3. Auto-detect stack →  infer gates + glob reviewers from *review*.yml
 4. Generic fallback  →  scripts' built-in behavior                   (lowest precedence)
 ```
 
-Key nuance: **the `kirocrew` profile is NOT an unconditional global default.** It is auto-selected only when the skill detects it is in the Kiro Crew repo (see markers in §5.4). This prevents Kiro Crew's setup/gates/labels from misfiring in an unrelated repo.
+Key nuance: **the `kirocrew` profile is NOT an unconditional global default.** It is auto-selected only when the skill detects it is in the Sao Khuê repo (see markers in §5.4). This prevents Sao Khuê's setup/gates/labels from misfiring in an unrelated repo.
 
 ### 5.3 Auto-detection rules (config-free path)
 
@@ -121,9 +121,9 @@ When there is no `.prepare-pr.toml`:
 - **Reviewers:** glob `.github/workflows/*review*.yml` and create one contract-backed reviewer per gate found. A repo may also declare standalone `rubric` reviewers with no CI counterpart. If neither exists, skip local review and rely on the server poll (the scripts still gate via exit codes).
 - **Conventions:** default to single-commit *off* unless a marker says otherwise; base branch from `preflight.py`'s existing detection; readiness context via the `pr_status.py` fallback (full rollup) unless a profile names one.
 
-### 5.4 Kiro Crew marker detection
+### 5.4 Sao Khuê marker detection
 
-The `kirocrew` profile auto-selects when the repo root contains all three markers (`_KIROCREW_MARKERS` in `resolve_profile.py`, every one required): `AUTOSDE.yaml`, `.github/workflows/codex-review.yml` and `.github/workflows/claude-review.yml`. Presence of these is a strong, low-false-positive signal that we are in Kiro Crew (or a faithful fork), so loading the tuned profile is safe.
+The `kirocrew` profile auto-selects when the repo root contains all three markers (`_KIROCREW_MARKERS` in `resolve_profile.py`, every one required): `AUTOSDE.yaml`, `.github/workflows/codex-review.yml` and `.github/workflows/claude-review.yml`. Presence of these is a strong, low-false-positive signal that we are in Sao Khuê (or a faithful fork), so loading the tuned profile is safe.
 
 ### 5.5 Profile schema (`.prepare-pr.toml`)
 
@@ -152,7 +152,7 @@ commands = [
 ]
 
 [review]
-# Shared rule files EVERY reviewer inherits. Both Kiro Crew CI gates
+# Shared rule files EVERY reviewer inherits. Both Sao Khuê CI gates
 # (codex-review.yml AND claude-review.yml) load base-ref AUTOSDE and read the
 # AGENTS.md conventions (root = backend, website/ = frontend). CLAUDE.md is
 # intentionally omitted — it holds no rules, only an `@AGENTS.md` import pointer.
@@ -193,15 +193,15 @@ status_context = "PR Readiness"   # optional override; else pr_status.py falls b
 defer_label = ""                  # optional: a label that formally defers a gate
 ```
 
-The TOML above is illustrative, and its model ids are as of 2026-07-28. The bundled `profiles/kirocrew.json` is the Kiro Crew configuration as a machine-readable profile, and it holds the current model ids; the resolver loads it directly the resolver loads directly, so Kiro Crew needs no in-repo `.prepare-pr.toml`.
+The TOML above is illustrative, and its model ids are as of 2026-07-28. The bundled `profiles/kirocrew.json` is the Sao Khuê configuration as a machine-readable profile, and it holds the current model ids; the resolver loads it directly the resolver loads directly, so Sao Khuê needs no in-repo `.prepare-pr.toml`.
 
 > **Why mirror + multi-model by default (not dimension-split).** Contract-backed reviewers reproduce each CI gate's bar locally, so blocking findings surface pre-push instead of a CI round later; pinning each reviewer to a different vendor buys cross-model blind-spot coverage (the same principle the `llm-council` skill is built on — a same-model panel echoes one bias). Splitting one model across dimensions (correctness vs contracts, the pre-#616 A/B design) adds little as models get stronger, since one capable reviewer covers both in a pass — so the default spends the parallel budget on **model diversity**, not dimension slices.
 >
-> **This is a default, not a constraint.** The `[[review.reviewers]]` mechanism does not stop anyone from building dimension-based review: a user can define standalone `rubric` reviewers split by concern (a correctness reviewer + a contracts reviewer, exactly the old A/B charters) — with or without any CI gate to mirror. Kiro Crew simply *chooses* to mirror its CI gates by default. Per-dimension charters are especially worth adding for very large diffs, where a single reviewer's attention/context is the bottleneck.
+> **This is a default, not a constraint.** The `[[review.reviewers]]` mechanism does not stop anyone from building dimension-based review: a user can define standalone `rubric` reviewers split by concern (a correctness reviewer + a contracts reviewer, exactly the old A/B charters) — with or without any CI gate to mirror. Sao Khuê simply *chooses* to mirror its CI gates by default. Per-dimension charters are especially worth adding for very large diffs, where a single reviewer's attention/context is the bottleneck.
 
 ### 5.6 Script changes
 
-- **`resolve_profile.py`** (NEW): implements the §5.2 resolution order and emits the resolved profile as JSON (`{source, base_branch, single_commit, setup[], gates[], rule_files[], reviewers[], readiness{}}`). Stdlib only; parses an external `.prepare-pr.toml` via `tomllib` (3.11+) or `tomli`, and errors loudly (exit 2) rather than silently ignoring a config it cannot parse. The bundled Kiro Crew profile ships as `profiles/kirocrew.json` (stdlib `json`, so the marker path needs no TOML parser). Missing `setup` is normalized to `[]` for backward compatibility.
+- **`resolve_profile.py`** (NEW): implements the §5.2 resolution order and emits the resolved profile as JSON (`{source, base_branch, single_commit, setup[], gates[], rule_files[], reviewers[], readiness{}}`). Stdlib only; parses an external `.prepare-pr.toml` via `tomllib` (3.11+) or `tomli`, and errors loudly (exit 2) rather than silently ignoring a config it cannot parse. The bundled Sao Khuê profile ships as `profiles/kirocrew.json` (stdlib `json`, so the marker path needs no TOML parser). Missing `setup` is normalized to `[]` for backward compatibility.
 - **`pr_status.py`:** accepts an optional readiness-context name (`--readiness-context` / `PREPARE_PR_READINESS_CONTEXT`) so a profile can name a non-default aggregate status; **keeps today's fallback** to the full rollup when unset or absent.
 - **`_review_contract.py`:** owns the reviewer-marker, finding, and disposition computation once. `pr_status.py` and `pr_findings.py` expose pure helpers as direct aliases; only helpers that execute `gh` retain thin entry-local adapters that pass the command runner.
 - All other scripts: unchanged.
@@ -211,7 +211,7 @@ The TOML above is illustrative, and its model ids are as of 2026-07-28. The bund
 | Situation | Behavior |
 | --- | --- |
 | `.prepare-pr.toml` present | Use it verbatim. |
-| Kiro Crew markers present | Load bundled `kirocrew` profile. |
+| Sao Khuê markers present | Load bundled `kirocrew` profile. |
 | Other repo, detectable stack | Auto-detected gates + globbed reviewers. |
 | Profile omits `setup` | Normalize it to `[]`; existing profiles keep their previous behavior. |
 | No reviewers (no workflows to mirror, none declared) | Skip local review; rely on server poll (scripts still gate via exit codes). |
@@ -277,7 +277,7 @@ Resolution is most-specific-wins (amber decisions); the resolved profile (gold) 
 flowchart TB
     C1{{".prepare-pr.toml at repo root?"}}
     C1 -->|"yes"| P1["parse TOML via tomllib"]
-    C1 -->|"no"| C2{{"Kiro Crew markers present?"}}
+    C1 -->|"no"| C2{{"Sao Khuê markers present?"}}
     C2 -->|"yes"| P2["load bundled profiles/kirocrew.json"]
     C2 -->|"no"| C3{{"detectable stack?"}}
     C3 -->|"yes"| P3["auto-detect gates<br/>glob review workflows"]
@@ -424,7 +424,7 @@ Built-in and portable are **not** in conflict:
 
 - Ship the generic `SKILL.md` + scripts + `profiles/kirocrew.json` via `package_data` (matches the "skills ship as builtins" convention).
 - Keep the trigger **intent-phrased and narrow** ("prepare PR", "make it review-ready", "fix CI", …) so the skill stays **dormant** until explicitly invoked and never hijacks unrelated frontend/CSS/generic work.
-- Other users get the generic behavior + auto-detection; Kiro Crew devs get the tuned profile with zero config.
+- Other users get the generic behavior + auto-detection; Sao Khuê devs get the tuned profile with zero config.
 
 ## 7. Proposed layout after refactor
 
@@ -435,7 +435,7 @@ scripts; the layout below is the proposal's core subset.
 src/kiro_crew/builtin_skills/kirocrew-dev/kirocrew-prepare-pr/
   SKILL.md                    # generic core loop + "Project profile" section
   profiles/
-    kirocrew.json             # bundled Kiro Crew profile (setup, gates, reviewers, labels, single-commit)
+    kirocrew.json             # bundled Sao Khuê profile (setup, gates, reviewers, labels, single-commit)
   scripts/
     preflight.py
     resolve_profile.py        # NEW — resolves the profile to JSON
@@ -450,15 +450,15 @@ src/kiro_crew/builtin_skills/kirocrew-dev/kirocrew-prepare-pr/
 
 ## 8. Migration & backward compatibility
 
-- Kiro Crew validation behavior is **unchanged**: the `kirocrew` profile preserves the same setup/check commands, reviewers and labels, auto-selected by markers; it now distinguishes provisioning from verdict-producing gates.
+- Sao Khuê validation behavior is **unchanged**: the `kirocrew` profile preserves the same setup/check commands, reviewers and labels, auto-selected by markers; it now distinguishes provisioning from verdict-producing gates.
 - Existing profiles remain compatible: an omitted `setup` section resolves to `setup = []`.
-- No `.prepare-pr.toml` is added to the Kiro Crew repo (the bundled profile covers it) — but one *may* be added later to make the config explicit/self-documenting.
+- No `.prepare-pr.toml` is added to the Sao Khuê repo (the bundled profile covers it) — but one *may* be added later to make the config explicit/self-documenting.
 - Within the supported complete-skill-directory distribution, the entry CLIs remain backward-compatible: the readiness override is opt-in with the existing fallback intact, helper names and signatures remain available, and direct execution works from any current working directory. A lone copied entry file is not a supported distribution; deployments copy the complete `kirocrew-prepare-pr/` directory so `_review_contract.py` is present.
 
 ## 9. Alternatives considered
 
 1. **Fork into `prepare-pr` (generic) + `kirocrew-prepare-pr` (specific).** Rejected: two skills drift; violates the "evolve one abstraction outward, don't spawn a parallel system" principle. The profile layer gives the same separation without duplication.
-2. **Extract only the scripts as a generic builtin; leave the prose tuned to Kiro Crew.** Rejected: the scripts are already generic — the *value* being generalized is the loop/prose, so this leaves the actual coupling in place.
+2. **Extract only the scripts as a generic builtin; leave the prose tuned to Sao Khuê.** Rejected: the scripts are already generic — the *value* being generalized is the loop/prose, so this leaves the actual coupling in place.
 3. **Demote the skill to local-only (non-builtin).** Rejected: conflicts with the "ship skills as builtins" convention and needlessly gives up standardization; the coupling is prose, solvable without changing distribution.
 4. **Keep as-is.** Rejected: blocks reuse for no benefit; the refactor is modest (prose split + one small script hook).
 
@@ -474,7 +474,7 @@ src/kiro_crew/builtin_skills/kirocrew-dev/kirocrew-prepare-pr/
 ## 11. Scope of work (if approved)
 
 - Split `SKILL.md`: generic core loop + a "Project profile resolution" section (§5.2–5.5).
-- Add `profiles/kirocrew.json` carrying the current Kiro Crew specifics.
+- Add `profiles/kirocrew.json` carrying the current Sao Khuê specifics.
 - Add the optional readiness-context override to `pr_status.py` (keep the fallback).
 - Decide the profile-resolution mechanism (prose vs `resolve_profile.py`; §5.6) and implement it.
 - Document `.prepare-pr.toml` for external repos.

@@ -97,7 +97,7 @@ def clean_backend(monkeypatch):
     dev box where ``~/.kiro/settings/amazon-internal.json`` has
     ``{"sandbox": true}``, the darwin kiro-delegation branch in ``wrap_argv``
     preempts the mocked ``detect_backend`` and these unit tests — which exercise
-    Kiro Crew's OWN backend selection / fail-closed path — never reach the code
+    Sao Khuê's OWN backend selection / fail-closed path — never reach the code
     they assert on. Point the settings path at a non-existent file so delegation
     is off by default; the dedicated delegation tests set
     ``_KIRO_INTERNAL_SETTINGS_PATH`` explicitly and are unaffected.

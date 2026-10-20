@@ -1,6 +1,6 @@
 # Migration Guide — Adopting the App SDK
 
-For apps that already talk to the Kiro Crew Gateway via raw `fetch()`,
+For apps that already talk to the Sao Khuê Gateway via raw `fetch()`,
 `urllib`, or custom HTTP wrappers, this guide shows how to migrate to the
 supported integration paths step by step:
 
@@ -141,7 +141,7 @@ custom HTTP client, WS manager, and auth helper files.
 ### Step 1: Install
 
 The package is not published to PyPI or included in the main wheel. Install it
-from a Kiro Crew source checkout:
+from a Sao Khuê source checkout:
 
 ```bash
 python -m pip install -e /path/to/KiroCrew/packages/kirocrew-client-py
@@ -181,7 +181,7 @@ Key differences:
 
 | Scenario | Recommended |
 |----------|-------------|
-| App backend managed by Kiro Crew (behind the gateway reverse proxy) | `kirocrew_client` (async) for outbound calls |
+| App backend managed by Sao Khuê (behind the gateway reverse proxy) | `kirocrew_client` (async) for outbound calls |
 | External CLI tool or service (Python) | `kirocrew_client` (async, standalone) |
 | Dashboard UI page (TypeScript/React) | `@kirocrew/app-sdk` hooks (host-provided) |
 | Electron / Node.js app | Call the Gateway REST/WS endpoints directly via `fetch()` / a WebSocket |

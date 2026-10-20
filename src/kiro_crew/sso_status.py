@@ -1,6 +1,6 @@
 """SSO credential status (OSS stub).
 
-Enterprise single-sign-on is not available in the public KiroCrew distribution.
+Enterprise single-sign-on is not available in the public SaoKhue distribution.
 These functions are retained as no-op stubs so that callers (dashboard, Slack
 handlers/events) keep importing and awaiting the same symbols without behavioral
 surprises.  An enterprise companion package composes a real identity provider

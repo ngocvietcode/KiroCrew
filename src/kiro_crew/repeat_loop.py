@@ -39,7 +39,7 @@ def build_repeat_loop_notice(title: str, count: int) -> str:
     """The in-band notice for a call repeated *count* times with one result."""
     shown = " ".join((title or "").split())[:_TITLE_LIMIT] or "a tool call"
     return (
-        f"[Kiro Crew host notice] You have made the same tool call {count} times "
+        f"[Sao Khuê host notice] You have made the same tool call {count} times "
         f"this turn and got the same result each time: {shown}\n\n"
         "Running it again will not change the outcome. Stop and diagnose: read "
         "the result, check what you assumed, then try a genuinely different "

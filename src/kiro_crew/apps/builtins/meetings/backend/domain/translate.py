@@ -101,7 +101,7 @@ async def run_oneshot_translation(sessions: Any, prompt: str) -> str:
     so no ``kiro-cli`` subprocess leaks — one per translated line would otherwise
     accumulate for the length of the meeting.
 
-    It reuses the user's own Kiro Crew backend, so live translation needs no
+    It reuses the user's own Sao Khuê backend, so live translation needs no
     separate API key or cloud account.
 
     BACKGROUND, like any start no caller claims: the live stream runs unattended,

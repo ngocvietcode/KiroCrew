@@ -63,7 +63,7 @@ def _is_unknown_agent_refusal(resp: Mapping[str, Any], agent: str) -> bool:
 
     Reads the response's machine-readable ``code`` (``AGENT_NOT_FOUND_CODE`` for a
     name it cannot load, ``AGENT_NOT_AVAILABLE_CODE`` for one the parent agent's
-    spec forbids, ``AGENT_INTERNAL_CODE`` for one of Kiro Crew's own generated
+    spec forbids, ``AGENT_INTERNAL_CODE`` for one of Sao Khuê's own generated
     specs -- each spelled once in ``subagent`` and imported here), not its prose. The
     refusal text is advisory and free to be reworded; before this it WAS the
     contract, so any rewording silently disabled the wave short-circuit until a

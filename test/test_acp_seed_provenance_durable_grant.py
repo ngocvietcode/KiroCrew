@@ -1,6 +1,6 @@
 """The durable grant behind a ``settings.local.json`` seed.
 
-A sidecar entry is the grant Kiro Crew adopts a file on, so no write floor lets the agent
+A sidecar entry is the grant Sao Khuê adopts a file on, so no write floor lets the agent
 add one. A claim moves only once the write or the unlink it names has happened, and a
 seed and its durable record commit or roll back together, a cancelled teardown included.
 Shared fixtures and helpers live in ``acp_seed_provenance_helpers.py``.

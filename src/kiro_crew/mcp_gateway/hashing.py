@@ -258,12 +258,12 @@ def runs_install_code(command: str, args: list[str]) -> bool:
     """Whether a launch executes THIS install's own Python code.
 
     True when the command is the interpreter alias (:func:`install_resident`)
-    AND the argv names Kiro Crew code: ``-m kiro_crew`` / ``-m kiro_crew.<mod>``
+    AND the argv names Sao Khuê code: ``-m kiro_crew`` / ``-m kiro_crew.<mod>``
     (the host-CLI pin, a gateway module) or the ``deps_boot`` shim alias. A
     third-party app server that merely RUNS on the gateway's interpreter
     (``sys.executable server.py``) is not included: its code is the file in
     argv, which the identity already fingerprints, and re-keying it on every
-    Kiro Crew release -- or on every commit of an editable install -- would
+    Sao Khuê release -- or on every commit of an editable install -- would
     cold-start a pool and discard a measurement for no reason.
     """
     if not install_resident(command):
@@ -289,7 +289,7 @@ def install_resident(command: str) -> bool:
 
     True exactly when the hash names the install rather than the versioned
     directory the interpreter lives in. :func:`runs_install_code` narrows it to
-    the launches whose argv also names Kiro Crew code; those need the code
+    the launches whose argv also names Sao Khuê code; those need the code
     fingerprint beside the hash (``evaluate.identity_for``,
     ``stub.pool_binary_version``), or an upgrade that replaces the code behind
     an unchanged argv would keep a stale measurement.

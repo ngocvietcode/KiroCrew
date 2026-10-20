@@ -3,7 +3,7 @@
 # the text for a text box seeded with the current title, fully selected, and
 # Enter (or leaving the box) commits the rename; the sidebar row follows at
 # once because header and sidebar read the same slot title. The subject is the
-# seeded "Welcome to KiroCrew" session -- pinned and outside the Demos folder,  (brand-ok: fixture title)
+# seeded "Welcome to SaoKhue" session -- pinned and outside the Demos folder,  (brand-ok: fixture title)
 # so its row is always on screen without expanding anything.
 #
 # The rename is persisted, and the same un-reseeded gateway serves the retry
@@ -31,13 +31,13 @@ preconditions:
   members: [nova-sky]
   start_url: /chat
 steps:
-  - You are on the chat page. In the left sidebar's session list click the pinned row titled "Welcome to KiroCrew" (it sits below the "Demos" folder, outside it). Its conversation opens and the bar above the transcript shows the same title.  # brand-ok: verbatim seeded session title from the rich fixture
+  - You are on the chat page. In the left sidebar's session list click the pinned row titled "Welcome to SaoKhue" (it sits below the "Demos" folder, outside it). Its conversation opens and the bar above the transcript shows the same title.  # brand-ok: verbatim seeded session title from the rich fixture
   - Click once on that title text in the bar above the transcript (not on the row in the sidebar). The text turns into a text box holding the current title, with the whole title selected.
   - Type exactly "Welcome renamed by gui test" so that the box holds only that text, then press Enter. The box closes, and both the header and the sidebar row now read "Welcome renamed by gui test".
-  - Click the title in the header once more. The text box opens again, this time holding "Welcome renamed by gui test". Type exactly "Welcome to KiroCrew" so that the box holds only that text, then press Enter. Do nothing else after that.  # brand-ok: verbatim seeded session title from the rich fixture
+  - Click the title in the header once more. The text box opens again, this time holding "Welcome renamed by gui test". Type exactly "Welcome to SaoKhue" so that the box holds only that text, then press Enter. Do nothing else after that.  # brand-ok: verbatim seeded session title from the rich fixture
 expectations:
-  - The bar above the transcript reads "Welcome to KiroCrew" as plain text, with no text box open.  # brand-ok: verbatim seeded session title from the rich fixture
-  - The pinned row in the sidebar also reads "Welcome to KiroCrew", and no row anywhere in the sidebar reads "Welcome renamed by gui test".  # brand-ok: verbatim seeded session title from the rich fixture
+  - The bar above the transcript reads "Welcome to SaoKhue" as plain text, with no text box open.  # brand-ok: verbatim seeded session title from the rich fixture
+  - The pinned row in the sidebar also reads "Welcome to SaoKhue", and no row anywhere in the sidebar reads "Welcome renamed by gui test".  # brand-ok: verbatim seeded session title from the rich fixture
   - In the screenshot taken right after you clicked the title the second time, the text box held "Welcome renamed by gui test" and the sidebar row read "Welcome renamed by gui test" as well.
   - No red error banner (for example one starting "Couldn't rename") is visible.
 max_steps: 12

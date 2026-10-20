@@ -1,15 +1,15 @@
-# Register a GitHub OAuth app for Kiro Crew Connections
+# Register a GitHub OAuth app for Sao Khuê Connections
 
-*Who this is for: the person who operates a Kiro Crew install and wants agents to reach GitHub through GitHub's hosted MCP server. Expected time: 15 minutes, plus any wait for an organization owner's approval.*
+*Who this is for: the person who operates a Sao Khuê install and wants agents to reach GitHub through GitHub's hosted MCP server. Expected time: 15 minutes, plus any wait for an organization owner's approval.*
 
-Kiro Crew connects to the remote GitHub MCP server at `https://api.githubcopilot.com/mcp/`. That server does not issue credentials itself and does not support Dynamic Client Registration, so every MCP client needs its own GitHub app registration. GitHub's host-integration guide states it directly: "Dynamic Client Registration is NOT supported by Remote GitHub MCP Server at this time" and "Each MCP host application needs to configure a GitHub App or OAuth App to support remote access via OAuth." This runbook registers a plain **OAuth App** (not a GitHub App), because that is the registration type whose credentials are exactly a client ID and a client secret, which is what the Kiro Crew Connections card asks for.
+Sao Khuê connects to the remote GitHub MCP server at `https://api.githubcopilot.com/mcp/`. That server does not issue credentials itself and does not support Dynamic Client Registration, so every MCP client needs its own GitHub app registration. GitHub's host-integration guide states it directly: "Dynamic Client Registration is NOT supported by Remote GitHub MCP Server at this time" and "Each MCP host application needs to configure a GitHub App or OAuth App to support remote access via OAuth." This runbook registers a plain **OAuth App** (not a GitHub App), because that is the registration type whose credentials are exactly a client ID and a client secret, which is what the Sao Khuê Connections card asks for.
 
 ## Before you start
 
 - A GitHub account. If the repositories you want to reach belong to an organization, you also need to know whether that organization has "OAuth app access restrictions" turned on (it is on by default for new organizations). If it is, an organization owner must approve the app before it can read organization data; plan for that hand-off.
-- A running Kiro Crew gateway with the dashboard open, so you can copy the redirect URI from the card and paste credentials back in.
+- A running Sao Khuê gateway with the dashboard open, so you can copy the redirect URI from the card and paste credentials back in.
 - Decide who owns the registration. An OAuth app can be created under your personal account or under any organization where you have admin rights. A registration owned by the organization is automatically trusted when the organization enables OAuth app access restrictions.
-- Note the exact redirect URI you will register: `http://127.0.0.1:48101/callback`. It is plain HTTP on the loopback interface. Kiro Crew's callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible.
+- Note the exact redirect URI you will register: `http://127.0.0.1:48101/callback`. It is plain HTTP on the loopback interface. Sao Khuê's callback listener runs inside kiro-cli on the loopback interface over plain HTTP only; an https loopback is not possible.
 - Optional alternative: GitHub's MCP documentation also accepts a fine-grained Personal Access Token (PAT) in the `Authorization: Bearer` header for any host that supports remote MCP servers. This runbook covers the OAuth path; a PAT is not entered through the Connections card.
 
 ## 1. Create the app
@@ -18,26 +18,26 @@ Kiro Crew connects to the remote GitHub MCP server at `https://api.githubcopilot
 2. In the left sidebar, click **Developer settings**.
 3. In the left sidebar, click **OAuth apps**.
 4. Click **New OAuth App** (GitHub labels the button **Register a new application** if you have never created one).
-5. In **Application name**, type a name your teammates will recognize on the consent screen, for example `Kiro Crew Connections`.
-6. In **Homepage URL**, type any public URL that describes the install, for example your team's Kiro Crew documentation page. GitHub requires a value here.
+5. In **Application name**, type a name your teammates will recognize on the consent screen, for example `Sao Khuê Connections`.
+6. In **Homepage URL**, type any public URL that describes the install, for example your team's Sao Khuê documentation page. GitHub requires a value here.
 7. Optionally fill in **Application description**. Users see it on the authorization page.
 8. In **Authorization callback URL**, type exactly `http://127.0.0.1:48101/callback`. Section 2 explains why.
-9. Leave **Enable Device Flow** unchecked. Kiro Crew uses the browser redirect flow.
-10. **Expire user access tokens** is checked by default. Leave it checked: GitHub then issues an 8-hour access token plus a refresh token that expires after six months without use. If your Kiro Crew build predates refresh-token support for this provider, uncheck it; the runbook does not know your build, so check the release notes.
+9. Leave **Enable Device Flow** unchecked. Sao Khuê uses the browser redirect flow.
+10. **Expire user access tokens** is checked by default. Leave it checked: GitHub then issues an 8-hour access token plus a refresh token that expires after six months without use. If your Sao Khuê build predates refresh-token support for this provider, uncheck it; the runbook does not know your build, so check the release notes.
 11. Click **Register application**.
 12. On the app page, copy the **Client ID**. Then click **Generate a new client secret**, and copy the secret immediately; GitHub shows it only once.
 
-Why not a GitHub App? GitHub's host guide marks GitHub Apps as the recommended registration type because their tokens expire and use fine-grained permissions. A GitHub App also yields a client ID and client secret, and its user-authorization flow accepts the same callback URL, so it could be entered on the same card. It comes with two costs that matter for a per-install tool: a GitHub App "must be installed on a GitHub Organization before they can be used", with installation normally approved by an organization admin, and it ignores the `scope` parameter, using the permissions fixed in the registration instead. GitHub notes that "OAuth Apps don't require installation and, typically, can be used immediately." Kiro Crew's documentation does not state whether its GitHub connector has been exercised against a GitHub App registration; stay with an OAuth App unless your organization policy forbids OAuth Apps entirely.
+Why not a GitHub App? GitHub's host guide marks GitHub Apps as the recommended registration type because their tokens expire and use fine-grained permissions. A GitHub App also yields a client ID and client secret, and its user-authorization flow accepts the same callback URL, so it could be entered on the same card. It comes with two costs that matter for a per-install tool: a GitHub App "must be installed on a GitHub Organization before they can be used", with installation normally approved by an organization admin, and it ignores the `scope` parameter, using the permissions fixed in the registration instead. GitHub notes that "OAuth Apps don't require installation and, typically, can be used immediately." Sao Khuê's documentation does not state whether its GitHub connector has been exercised against a GitHub App registration; stay with an OAuth App unless your organization policy forbids OAuth Apps entirely.
 
 ## 2. Redirect URI
 
-Register exactly `http://127.0.0.1:48101/callback`. The Kiro Crew card shows the same string with a copy button.
+Register exactly `http://127.0.0.1:48101/callback`. The Sao Khuê card shows the same string with a copy button.
 
-GitHub accepts a loopback HTTP redirect. Its "Loopback redirect urls" passage says: "The optional `redirect_uri` parameter can also be used for loopback URLs, which is useful for native applications running on a desktop computer. If the application specifies a loopback URL and a port, then after authorizing the application users will be redirected to the provided URL and port. The `redirect_uri` does not need to match the port specified in the callback URL for the app." GitHub also notes that the OAuth RFC "recommends not to use `localhost`, but instead to use loopback literal `127.0.0.1`", which is what Kiro Crew uses. Because the port is not compared for loopback URLs, registering the port explicitly is harmless and keeps the entry readable.
+GitHub accepts a loopback HTTP redirect. Its "Loopback redirect urls" passage says: "The optional `redirect_uri` parameter can also be used for loopback URLs, which is useful for native applications running on a desktop computer. If the application specifies a loopback URL and a port, then after authorizing the application users will be redirected to the provided URL and port. The `redirect_uri` does not need to match the port specified in the callback URL for the app." GitHub also notes that the OAuth RFC "recommends not to use `localhost`, but instead to use loopback literal `127.0.0.1`", which is what Sao Khuê uses. Because the port is not compared for loopback URLs, registering the port explicitly is harmless and keeps the entry readable.
 
-GitHub added a per-callback **wildcard matching** toggle on August 3, 2026. Leave it disabled for this app: the registered value and the value Kiro Crew sends are identical, so exact matching is sufficient and safer.
+GitHub added a per-callback **wildcard matching** toggle on August 3, 2026. Leave it disabled for this app: the registered value and the value Sao Khuê sends are identical, so exact matching is sufficient and safer.
 
-Remote, tailnet and Docker installs do not need a second redirect URI. After the user approves on github.com, the browser is sent to `http://127.0.0.1:48101/callback?code=...`, which is unreachable from the user's laptop when the gateway runs elsewhere. The user copies that landing URL from the browser's address bar and pastes it into the Kiro Crew dashboard; the gateway replays it to its own loopback listener and completes the exchange.
+Remote, tailnet and Docker installs do not need a second redirect URI. After the user approves on github.com, the browser is sent to `http://127.0.0.1:48101/callback?code=...`, which is unreachable from the user's laptop when the gateway runs elsewhere. The user copies that landing URL from the browser's address bar and pastes it into the Sao Khuê dashboard; the gateway replays it to its own loopback listener and completes the exchange.
 
 ## 3. Scopes and permissions
 
@@ -70,17 +70,17 @@ have the same shape, for example
 
 - No GitHub review, listing or Marketplace submission is needed. An OAuth App works as soon as it is registered.
 - Organization approval: when an organization has "OAuth app access restrictions" enabled (the default for new organizations), "organization members and outside collaborators cannot authorize OAuth app access to organization resources." Apps owned by the organization itself are trusted automatically. For an app owned by a personal account, the hand-off is:
-  1. The connecting user clicks **Connect** in Kiro Crew and, on GitHub's consent page, clicks **Request** next to the restricted organization before clicking **Authorize**. GitHub notifies the owners.
+  1. The connecting user clicks **Connect** in Sao Khuê and, on GitHub's consent page, clicks **Request** next to the restricted organization before clicking **Authorize**. GitHub notifies the owners.
   2. An organization owner opens **Organization Settings → Third-party Access → OAuth app policy** (`https://github.com/organizations/<ORG>/settings/oauth_application_policy`), finds the pending request, and clicks **Grant**.
-  3. GitHub's documentation does not state whether a token issued before the approval gains organization access afterwards. If the card already shows **Connected** but organization data is still missing after the owner grants access, disconnect in Kiro Crew and connect once more.
+  3. GitHub's documentation does not state whether a token issued before the approval gains organization access afterwards. If the card already shows **Connected** but organization data is still missing after the owner grants access, disconnect in Sao Khuê and connect once more.
   Owners can also pre-approve the app before anyone connects, and can later revoke it from the same page ("Denying access to a previously approved OAuth app").
 - Enterprise Cloud with SAML/SSO: the user must have an active SSO session for the organization when authorizing, or the token cannot reach SSO-protected resources.
 - Copilot policies: the "MCP servers in Copilot" enterprise/organization policy governs first-party Copilot editors only; GitHub's governance document says it does not affect third-party hosts, whose access is controlled by the OAuth App, GitHub App and PAT policies above.
 - GitHub Enterprise Server is not supported by the remote server. GitHub Enterprise Cloud with data residency uses `https://copilot-api.<SUBDOMAIN>.ghe.com/mcp` instead.
 
-## 5. Enter the credentials in Kiro Crew
+## 5. Enter the credentials in Sao Khuê
 
-1. Open the Kiro Crew dashboard and go to **Settings → OAuth Apps → GitHub card**.
+1. Open the Sao Khuê dashboard and go to **Settings → OAuth Apps → GitHub card**.
 2. Paste the value from step 1.12 into **Client ID**.
 3. Paste the generated secret into **Client secret**.
 4. Use the card's copy button for the redirect URI to double-check that GitHub holds exactly `http://127.0.0.1:48101/callback`.
@@ -88,7 +88,7 @@ have the same shape, for example
 
 Container or CI alternative: set the environment variables `KIROCREW_CONNECTIONS_GITHUB_CLIENT_ID` and `KIROCREW_CONNECTIONS_GITHUB_CLIENT_SECRET` on the gateway process. Environment variables override dashboard values.
 
-GitHub's host guide warns that "end users will be able to discover your 'client secret'" when a client runs on customer hardware, and recommends a registration "exclusively dedicated" to that client. Keep this app for Kiro Crew only, and rotate the secret with **Generate a new client secret** if it leaks.
+GitHub's host guide warns that "end users will be able to discover your 'client secret'" when a client runs on customer hardware, and recommends a registration "exclusively dedicated" to that client. Keep this app for Sao Khuê only, and rotate the secret with **Generate a new client secret** if it leaks.
 
 ## 6. Verify the connection
 
@@ -105,9 +105,9 @@ Revoking: the user opens **Settings → Applications → Authorized OAuth Apps**
 
 - No read-only scope for repositories: both `public_repo` and `repo` permit writes. The `/readonly` endpoint constrains tools, but using it requires a separate custom MCP entry because the Connections card uses the full endpoint.
 - `client_secret` is required at token exchange ("Required" in GitHub's table) even when PKCE is used; the app is a confidential client, so the secret must live on the gateway.
-- Expiring tokens: with the default setting, access tokens last 8 hours and refresh tokens 6 months without use. If Kiro Crew is not run for six months, the user must reconnect.
+- Expiring tokens: with the default setting, access tokens last 8 hours and refresh tokens 6 months without use. If Sao Khuê is not run for six months, the user must reconnect.
 - GitHub limits a user/app/scope combination to ten live tokens and ten new tokens per hour; repeated reconnects can hit this.
-- The GitHub discovery documents are in public preview and "subject to change". Kiro Crew should follow the `WWW-Authenticate` `resource_metadata` URL rather than hard-coding endpoints, as GitHub's host guide recommends.
+- The GitHub discovery documents are in public preview and "subject to change". Sao Khuê should follow the `WWW-Authenticate` `resource_metadata` URL rather than hard-coding endpoints, as GitHub's host guide recommends.
 - Organization approval is per organization; in a multi-organization enterprise an OAuth App cannot be approved at the enterprise level (only GitHub Apps can).
 - SSO overlay: on GitHub Enterprise Cloud, an OAuth token only reaches SSO-protected organizations if the user had a valid SSO session when authorizing. A user who authorized while signed out of SSO must revoke and reconnect.
 - GitHub Enterprise Server has no hosted MCP server; this runbook applies to github.com and to `ghe.com` data-residency tenants only.

@@ -9,13 +9,13 @@ export interface ArtifactPublication {
   view_url: string
   /** Publishing provider name (registry key of the destination). */
   provider?: string
-  /** Sync authority: 'mirror' (authoritative in Kiro Crew) | 'live' (remote CRDT). */
+  /** Sync authority: 'mirror' (authoritative in Sao Khuê) | 'live' (remote CRDT). */
   collab_mode?: 'mirror' | 'live'
   visibility: 'PRIVATE' | 'SHARED' | 'PUBLIC'
   shared_with: string[]
   auto_sync: boolean
   last_synced_kirocrew_version: number
-  /** Maps Kiro Crew version (as string) -> provider version number. */
+  /** Maps Sao Khuê version (as string) -> provider version number. */
   version_map: Record<string, number>
   published_at: string
   published_by: string

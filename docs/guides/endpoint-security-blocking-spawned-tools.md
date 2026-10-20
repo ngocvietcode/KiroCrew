@@ -24,9 +24,9 @@ occur there — if you are on Windows and the agent's tools are blocked, read a
 real detection entry (see below) to find the actual trigger rather than assuming
 the cause described here.
 
-On macOS and Linux, for safety reasons Kiro Crew does not launch tools directly.
+On macOS and Linux, for safety reasons Sao Khuê does not launch tools directly.
 It starts each one through a tiny exec-shim — a short run of the Python
-interpreter Kiro Crew itself runs under — that applies the child's process setup
+interpreter Sao Khuê itself runs under — that applies the child's process setup
 (resource limits, working directory, controlling terminal) and then replaces
 itself with the real command. The reason is a deadlock- and fd-leak class that
 the obvious "configure the child, then run it" approach reintroduces on the
@@ -52,7 +52,7 @@ spawns — and those are exactly the processes that act on untrusted external
 content, so you do not want them unmonitored.
 
 The process that starts and then replaces itself is **the Python interpreter
-Kiro Crew runs under**, not a `kirocrew` launcher. Security products key
+Sao Khuê runs under**, not a `kirocrew` launcher. Security products key
 exceptions on the image path, so the exception must name that interpreter's real
 path — the path reported by `sys.executable` for the running gateway, typically
 the `python3` inside the install's virtual environment — otherwise the exception
@@ -64,20 +64,20 @@ To build an accurate exception:
    detection entry: note the **detection id** that fired and the **exact image
    path** of the process it blocked.
 2. Confirm the running interpreter path with `python3 -c "import sys; print(sys.executable)"`
-   from the same environment Kiro Crew runs in, and check it matches the blocked
+   from the same environment Sao Khuê runs in, and check it matches the blocked
    image path from the detection entry.
 3. Hand the detection id and that image path to whoever administers endpoint
    security on the device, and ask for an exception scoped to that pair.
 
 That ownership usually sits with an endpoint-security or IT team rather than with
-the Kiro Crew user, because adding the exception requires policy access the user
+the Sao Khuê user, because adding the exception requires policy access the user
 does not have.
 
 ## Interim workaround
 
 If you cannot get the exception added right away, run `git` and `cr` **from your
 own terminal, outside the agent.** Those commands are not blocked when you run
-them yourself, and doing so changes nothing about your Kiro Crew install, so it
+them yourself, and doing so changes nothing about your Sao Khuê install, so it
 is safe to leave in place for as long as you need. You lose the convenience of
 the agent running them for you, but you are not blocked on migrating or working.
 
@@ -87,7 +87,7 @@ the agent running them for you, but you are not blocked on migrating or working.
   shows up as a `publickey`/permission-denied failure on `fetch` and `push`.
   `git branch` needs no SSH at all, so a sensor killing `git branch` is this
   behavioral-block issue, not an SSH one — do not wait on an SSH fix for it.
-- **Not something a Kiro Crew setting can turn off.** On macOS and Linux there
+- **Not something a Sao Khuê setting can turn off.** On macOS and Linux there
   is deliberately no switch to make the agent spawn tools "unwrapped": the shim
   exists to prevent a gateway deadlock and a listening-socket fd leak, and
   removing it to appease a false positive would reintroduce both. The exception

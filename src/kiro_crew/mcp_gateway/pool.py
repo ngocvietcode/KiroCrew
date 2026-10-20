@@ -97,7 +97,7 @@ boundary and never was a usable proxy for one:
   onto every forwarded ``tools/call``, so a channel-aware backend learns the
   channel PER CALL and does not need a process to itself.
 
-There is deliberately NO per-principal dimension either. Kiro Crew is
+There is deliberately NO per-principal dimension either. Sao Khuê is
 single-operator: a Slack bot and a cron job are the same operator's
 automations, not separate principals, so a multi-principal shared gateway
 is not a supported deployment model. A ``user_identity`` key field would be

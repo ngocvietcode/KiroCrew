@@ -33,7 +33,7 @@ _FULL_KEY = bytes(range(1, ts._MIN_KEY_BYTES + 1))
 @pytest.fixture(autouse=True)
 def _outside_the_agent_sandbox(_floor_monkeypatch):
     """These tests model the HOST (gateway boot, an operator's shell). The suite
-    itself may run inside a Kiro Crew agent sandbox, where the launcher exports the
+    itself may run inside a Sao Khuê agent sandbox, where the launcher exports the
     marker and places the process under ``kirocrew-agents.slice``; neutralise both
     so a real file is judged by its size. The tests about the masked state set the
     signals back on purpose."""

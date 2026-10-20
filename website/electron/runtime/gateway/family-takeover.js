@@ -59,7 +59,7 @@ function createFamilyTakeover({
       const { response } = await dialog.showMessageBox({
         type: "warning",
         title: `${other.displayName} is running`,
-        message: `${other.displayName} (${otherVersion}) is already running with your Kiro Crew data.`,
+        message: `${other.displayName} (${otherVersion}) is already running with your Sao Khuê data.`,
         detail: round === 1
           ? `Quit ${other.displayName}, then choose “I quit it — Retry”.`
           : `${other.displayName} was still running a moment ago. Quit it, then choose “I quit it — Retry”.`,
@@ -104,8 +104,8 @@ function createFamilyTakeover({
     const { response } = await dialog.showMessageBox({
       type: "warning",
       title: `${other.displayName} is running`,
-      message: `${other.displayName} (${decision.otherVersion}) is already running with your Kiro Crew data.`,
-      detail: `Only one Kiro Crew app can use ~/.kiro/crew at a time. Quit ${other.displayName} and continue here?`,
+      message: `${other.displayName} (${decision.otherVersion}) is already running with your Sao Khuê data.`,
+      detail: `Only one Sao Khuê app can use ~/.kiro/crew at a time. Quit ${other.displayName} and continue here?`,
       buttons: [`Quit ${other.displayName} & Continue`, "Cancel"],
       defaultId: 0,
       cancelId: 1,

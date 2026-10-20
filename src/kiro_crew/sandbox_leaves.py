@@ -40,7 +40,7 @@ _CREW_HOME_PREFIXES: tuple[str, ...] = (".kiro/crew", ".kirocrew")
 # ceiling itself (``security_policy.json``) readable and WRITABLE from an app lifecycle
 # script, a script hook, or a command cron.
 #
-# Reconciling the two is NOT a union, and the reason is specific: Kiro Crew's own MCP
+# Reconciling the two is NOT a union, and the reason is specific: Sao Khuê's own MCP
 # servers (``mcp_core``, ``mcp_cron``, ``mcp_computer``) are spawned by kiro-cli UNDER
 # this launcher and share the agent's mount namespace, as does a script cron's
 # ``boot_platform()``. Whatever they open at OS level cannot be masked. So each crew-home
@@ -546,7 +546,7 @@ _CREW_READONLY_LEAVES: tuple[str, ...] = (
     # an owner address-bar launch. The gateway installer runs outside the agent
     # sandbox, so it can still replace the managed copy.
     "playwright-cli",
-    # The KAS engine bundles Kiro Crew installs itself (``acp.kas_bundle``): a
+    # The KAS engine bundles Sao Khuê installs itself (``acp.kas_bundle``): a
     # pinned ``@kiro/agent`` tree and the Node runtime that executes it. Same
     # class as ``playwright-cli``: a sandboxed KAS process must read and execute
     # this directory, while a write would choose the code every later KAS

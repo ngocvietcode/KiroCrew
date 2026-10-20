@@ -118,7 +118,7 @@ rollback is removed.
 A session's kiro-cli files are **enumerated, not assumed**. A session is identified
 by its `.json` / `.jsonl` pair, but reclaiming takes every file whose stem matches
 the session id, so a lock file or a sidecar a future kiro-cli version adds follows
-its session instead of being orphaned. Kiro Crew is a co-owner of that directory's
+its session instead of being orphaned. Sao Khuê is a co-owner of that directory's
 layout here, and this is what keeps an unrecognised file from becoming a partial
 removal.
 

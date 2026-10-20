@@ -1,12 +1,12 @@
 # Harness plugin mapping
 
-How the plugin models of four other agent harnesses land on Kiro Crew's extension
+How the plugin models of four other agent harnesses land on Sao Khuê's extension
 points, and where they need an out-of-process contributor instead.
 
 [harness-parity.md](harness-parity.md) states the rule for agent harnesses: an added
 harness adapts itself to the seams the Kiro harness already runs through. This file
 applies the same rule one layer up, to plugins: a foreign plugin model adapts itself
-to the extension points Kiro Crew already has, and those points do not grow a branch
+to the extension points Sao Khuê already has, and those points do not grow a branch
 per runtime. Where a foreign model needs something they lack, that is a change to the
 extension points themselves and belongs in docs/request-for-change/, not a local
 exception here.
@@ -20,7 +20,7 @@ architecture cards and are marked `[card]` where a claim rests only on the card.
 
 Every foreign contribution kind lands in exactly one:
 
-- **(a) existing extension point** — an `app.json` field a Kiro Crew app already
+- **(a) existing extension point** — an `app.json` field a Sao Khuê app already
   declares today, consumed by `kiro_crew.apps.bridges`. Named per row.
 - **(b) out-of-process contributor** — needs a mechanism this repo does not have: a
   live foreign process reading and writing a unit's state through a published surface.
@@ -44,7 +44,7 @@ Two mechanisms carry (a) and (b):
 A kind is only as good as its mechanism: `(a) via runtime adapter` means the target
 field exists but a foreign process has to be alive to fill it.
 
-## 2. What Kiro Crew already has
+## 2. What Sao Khuê already has
 
 The mapping targets, from this tree (`src/kiro_crew/apps/manifest.py`, consumed at
 the `kiro_crew.apps.bridges` owners):
@@ -96,9 +96,9 @@ under the package root. In-process extensions are Rust contributor traits collec
 | `interface` icons, `logo`, `screenshots`, `defaultPrompt`, `brandColor` | (c) partial | No installed-app manifest field. Carried in `extra` as provenance; nothing renders them. |
 | `keywords` | (c) | `tags`. Pure converter. |
 | `hooks` -- `command` handlers | (d) today | 4 of their 11 event names (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) exist on the agent hook surface, but that surface is operator config and takes an absolute path to a metacharacter-free file, so a shell-line command needs materializing as a script the operator installs. No app can declare it. Closing it needs a new app-declarable hook surface. |
-| `hooks` -- `mcp_tool`, `prompt`, `agent` handlers | (d) | Handler kinds with no Kiro Crew counterpart; `prompt` and `agent` are loop-internal. |
-| `hooks` -- `PermissionRequest`, `Pre/PostCompact`, `Session*`, `Subagent*` | (d) | No app-facing event for these. `SessionStart` is not reported as `agentSpawn`, though the kiro-cli trigger map pairs them; whether plugin import should is open (#13243). Kiro Crew's own PreToolUse gate (`agent_sdk/tool_gate.py`) is core and not app-extensible. |
-| `apps` (connectors, a single path) | (d) | A foreign connector concept with no Kiro Crew equivalent. |
+| `hooks` -- `mcp_tool`, `prompt`, `agent` handlers | (d) | Handler kinds with no Sao Khuê counterpart; `prompt` and `agent` are loop-internal. |
+| `hooks` -- `PermissionRequest`, `Pre/PostCompact`, `Session*`, `Subagent*` | (d) | No app-facing event for these. `SessionStart` is not reported as `agentSpawn`, though the kiro-cli trigger map pairs them; whether plugin import should is open (#13243). Sao Khuê's own PreToolUse gate (`agent_sdk/tool_gate.py`) is core and not app-extensible. |
+| `apps` (connectors, a single path) | (d) | A foreign connector concept with no Sao Khuê equivalent. |
 | Contributor traits: thread/turn/tool lifecycle, prompt/context, config, MCP-server, skill-invocation | (d) | Agent-loop internals. They run inside their own agent process; hosting them would not put them in our loop. |
 | Contributor traits: token-usage, turn-item | (b) | Observation only. An adapter that hosts them can append their output as namespaced events and publish a projection. Runtime adapter. |
 | `ApprovalReviewContributor` decision chain | (d) | Their tool gate, inside their loop. |
@@ -119,12 +119,12 @@ deep subpath imports off the plugin SDK plus an injected `api`.
 | HTTP routes (`api.registerHttpRoute`) | (a) via runtime adapter | The adapter's own backend, reached through the gateway app proxy under `permissions.api`. |
 | gateway RPC methods (`api.registerGatewayMethod`) | (a) via runtime adapter | Same backend; their WS RPC shape becomes HTTP routes on the adapter. Not a wire-compatible mapping. |
 | control-UI descriptors (tabs, widgets) | (a) shell + (b) data | `contributes.panelTabs` or `ui.pages` carry the shell. The values behind a widget need a live contributor, so only the shell half converts. |
-| channels (Slack, Telegram, ...) | (d) | Kiro Crew's channel layer is core and not app-extensible. |
+| channels (Slack, Telegram, ...) | (d) | Sao Khuê's channel layer is core and not app-extensible. |
 | model and capability providers (LLM, TTS, STT, image, embedding, web-search) | (d) | The provider registry is core; `harness-parity` H14 keeps provider capability declared on `LLMProvider`, not probed off an adapter. |
 | CLI command groups (`api.registerCli`) | (d) | No app-contributed CLI surface exists. |
 | services (`api.registerService`) | (d) | In-process service registry. |
 | hooks (`api.on`) | (d) today | Same gap as the Codex hook rows. |
-| `activation.{onStartup,onCommands,onCapabilities}` | (d), and a gap in ours | Kiro Crew has no lazy activation: backends are eager. Their plugin declares when it should wake; ours cannot. |
+| `activation.{onStartup,onCommands,onCapabilities}` | (d), and a gap in ours | Sao Khuê has no lazy activation: backends are eager. Their plugin declares when it should wake; ours cannot. |
 | declared-surface hash + `diffDeclaredSurfaceWidening` re-consent | -- | Not a contribution kind, and not a converter question: it is how a widened declaration would be re-consented, which nothing here decides. |
 | per-plugin state quota keyed `(plugin_id, namespace, entry_key)` | -- | Not a contribution kind. A per-contributor quota has no equivalent here. |
 
@@ -211,7 +211,7 @@ that a foreign plugin "works" through an adapter must exclude its hooks.
 
 [plugin-import.md](plugin-import.md) specifies the converter built against this matrix:
 it reads a manifest-declared plugin package (the format in section 3.1, which
-grok-build's bundle also fits) and emits an installable Kiro Crew app. It covers the
+grok-build's bundle also fits) and emits an installable Sao Khuê app. It covers the
 (a)+(c) rows -- skills, MCP servers, identity fields -- enforces the same root
 containment the source format does, and *reports* every kind it could not map with the
 bucket and reason from this file, including the hook rows. It runs no foreign code.

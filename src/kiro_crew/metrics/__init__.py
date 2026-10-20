@@ -1,4 +1,4 @@
-"""KiroCrew telemetry metrics — public API.
+"""SaoKhue telemetry metrics — public API.
 
 OSS-CLEAN: No internal-only dependencies.
 """

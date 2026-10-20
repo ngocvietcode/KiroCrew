@@ -144,9 +144,9 @@ class ArtifactPublication:
     visibility: str = "PRIVATE"  # PRIVATE | SHARED | PUBLIC
     shared_with: _List[str] = field(default_factory=list)  # aliases (role EDITOR)
     auto_sync: bool = True  # push a new remote version on every local version bump
-    #: Sync authority for the bound provider: ``"mirror"`` (Kiro Crew is the sole
+    #: Sync authority for the bound provider: ``"mirror"`` (Sao Khuê is the sole
     #: writer; remote is a guarded/blind mirror — a mirror provider) or
-    #: ``"live"`` (the remote owns a live CRDT; Kiro Crew is a participant —
+    #: ``"live"`` (the remote owns a live CRDT; Sao Khuê is a participant —
     #: a live CRDT provider). Derived from ``provider.sync_model().collab_mode`` at publish /
     #: clone time. Gates the push path (CRDT edit vs guarded blob replace) and
     #: the conflict/Force-push UI. Tolerant-loaded; legacy meta.json defaults to
@@ -187,7 +187,7 @@ class ArtifactPublication:
 class ArtifactComment:
     """A durable comment on an artifact (the canonical store).
 
-    Comments can be local-only (never leave Kiro Crew) or synced to/from a
+    Comments can be local-only (never leave Sao Khuê) or synced to/from a
     provider (the publishing provider). The ``origin`` + ``scope`` fields determine sync
     behavior.
     """

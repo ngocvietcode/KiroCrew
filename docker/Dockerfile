@@ -1,4 +1,4 @@
-# KiroCrew gateway image — headless dashboard + channel bots (Slack/Discord/
+# SaoKhue gateway image — headless dashboard + channel bots (Slack/Discord/
 # Telegram/WeCom/Webex) in a container.
 #
 # Build contract: the image consumes the CI-BUILT WHEEL from dist/ (the same
@@ -56,7 +56,7 @@ ARG KIRO_CLI_VERSION=latest
 ARG SOURCE_REPO_URL="https://github.com/kirodotdev/KiroCrew"
 
 LABEL org.opencontainers.image.source="${SOURCE_REPO_URL}" \
-      org.opencontainers.image.description="KiroCrew gateway — personal AI agent crew (dashboard + Slack/Discord/Telegram/WeCom/Webex)" \
+      org.opencontainers.image.description="SaoKhue gateway — personal AI agent crew (dashboard + Slack/Discord/Telegram/WeCom/Webex)" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${KIROCREW_VERSION}" \
       org.opencontainers.image.revision="${VCS_REF}" \
@@ -77,7 +77,7 @@ RUN apt-get update \
         unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# kiro-cli — the agent runtime KiroCrew drives over ACP; chat sessions
+# kiro-cli — the agent runtime SaoKhue drives over ACP; chat sessions
 # require it. Global install (Q_INSTALL_GLOBAL) places kiro-cli,
 # kiro-cli-chat, kiro-cli-term into /usr/local/bin; Q_SKIP_SETUP skips
 # dotfile/shell integrations that are meaningless in a container.

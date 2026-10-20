@@ -1,7 +1,7 @@
 """Harness-native subtask boundary (RFC §14.8, SPEC-ADDENDUM §7, parity row H16).
 
 kiro-cli ``use_subagent`` children and KAS ``agentSubtaskId`` subtasks run
-INSIDE the parent's harness process. Kiro Crew can see them (a session id, a
+INSIDE the parent's harness process. Sao Khuê can see them (a session id, a
 roster, attributable tool events) but cannot cancel, pause or resume one alone.
 The contract pinned here:
 
@@ -13,7 +13,7 @@ The contract pinned here:
   resurrects nothing;
 * the Claude backend exposes no per-child identity, so its counter stays 0 and
   the liveness oracle still bounds the parent (declared gap, not a defect);
-* a Kiro Crew ``spawn_run`` child is the boundary for its OWN native
+* a Sao Khuê ``spawn_run`` child is the boundary for its OWN native
   grandchildren -- they are counted on that child's handle only;
 * a 200-child parent inflates neither ``HostBudget`` nor the adaptive
   controller's timeout-rate signal;
@@ -106,7 +106,7 @@ from kiro_crew.metrics.events import CHILD_PERMISSION_DENIED
 pytestmark = pytest.mark.timeout(30)
 
 PARENT = "sA"
-CHILD_RUN = "sB"  # a Kiro Crew spawn_run child: its own handle, its own task row
+CHILD_RUN = "sB"  # a Sao Khuê spawn_run child: its own handle, its own task row
 N_CHILDREN = 200
 
 
@@ -157,7 +157,7 @@ def _status_meta(**fields) -> dict:
 def _claude_task_call(tool_call_id: str = "task-1") -> dict:
     """What the Claude adapter emits for its in-harness Task tool: an ordinary
     ``tool_call`` on the PARENT sessionId. No child sessionId, no roster, no
-    ``_meta.kiro`` -- the child has no identity Kiro Crew can name."""
+    ``_meta.kiro`` -- the child has no identity Sao Khuê can name."""
     return {
         "sessionUpdate": "tool_call",
         "toolCallId": tool_call_id,
@@ -660,13 +660,13 @@ def test_claude_frames_carrying_a_child_status_are_rejected_like_any_other():
     assert handle.status_rejections == {"session_mismatch": 1}
 
 
-# ── (4) nested: the Kiro Crew spawn_run child is the boundary ─────────────────
+# ── (4) nested: the Sao Khuê spawn_run child is the boundary ─────────────────
 
 
 def test_nested_spawn_run_child_is_the_boundary_for_its_native_grandchildren():
     """S (parent, its own handle) -> spawn_run child B (its own handle, a task
     row) -> B's native ``use_subagent`` grandchildren. The grandchildren are
-    counted on B only; S counts nothing for them (B is S's Kiro Crew child,
+    counted on B only; S counts nothing for them (B is S's Sao Khuê child,
     not a native one), and each handle refuses to resume the other's ids."""
     parent = _handle(session=PARENT)
     child_run = _handle(session=CHILD_RUN)
@@ -732,7 +732,7 @@ async def test_shared_runtime_with_two_owners_drops_an_unannounced_grandchild_fr
 
 def test_two_hundred_children_do_not_trip_the_timeout_rate_signal():
     """The controller learns about work through ``record_start`` /
-    ``record_completion`` (one per Kiro Crew run) and the daemon's budget
+    ``record_completion`` (one per Sao Khuê run) and the daemon's budget
     snapshot. A parent with 200 native children contributes exactly ONE
     start and ONE completion, and the budget's charged ``procs`` is unchanged,
     so ``attributable_timeout_rate`` is 0 and no ``timeouts`` signal fires.

@@ -117,7 +117,7 @@ AGENT_TYPES = ("freestyle",)
 # a failing call and a false claim about its own tool set.
 
 _BG_PREAMBLE = (
-    "You are Mochi background agent running inside KiroCrew with full Mochi "
+    "You are Mochi background agent running inside SaoKhue with full Mochi "
     "MCP tool access. "
     "The Mochi tools (perform_pet_action, update_watchlist, get_watchlist, "
     "read_mochi_file, ...) are available to you — call them directly as tool "

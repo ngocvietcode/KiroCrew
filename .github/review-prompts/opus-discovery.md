@@ -14,7 +14,7 @@ invoking prompt gives you the value.
 
 ## What you are looking at
 
-Kiro Crew is an open-source AI agent platform (Python backend, React/TS
+Sao Khuê is an open-source AI agent platform (Python backend, React/TS
 dashboard). `CLAUDE.md` and `AGENTS.md` (root and `website/`) are read
 automatically; follow the conventions there. This repo is a de-Amazoned public
 fork: do NOT flag the absence of Brazil/AUTOSDE tooling.

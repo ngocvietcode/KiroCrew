@@ -1,4 +1,4 @@
-"""App management REST API endpoints for the KiroCrew dashboard.
+"""App management REST API endpoints for the SaoKhue dashboard.
 
 All endpoints are registered under ``/api/apps`` by the dashboard handler
 setup. These are aiohttp-compatible handler functions.
@@ -211,7 +211,7 @@ _OPEN_COMMAND_DESKTOP_ENV_KEYS = (
 
 
 def _check_min_version(manifest_data: dict[str, Any]) -> str | None:
-    """Check if the app requires a newer KiroCrew version.
+    """Check if the app requires a newer SaoKhue version.
 
     Returns an error message if the current version is too old, or None if OK.
     """
@@ -1101,7 +1101,7 @@ async def handle_register_external(request: web.Request) -> web.Response:
     """POST /api/apps/register — register a self-managed app.
 
     Self-managed apps handle their own agent/skill/MCP registration.
-    KiroCrew only tracks metadata so the dashboard can display them.
+    SaoKhue only tracks metadata so the dashboard can display them.
     Idempotent — calling again with a newer version updates the entry.
 
     Body: { name, version, displayName, source?, manifest? }
@@ -2478,7 +2478,7 @@ async def handle_open_app(request: web.Request) -> web.Response:
                 "name": name,
                 "remote": True,
                 "command": open_cmd,
-                "message": f"Kiro Crew is running remotely. Run this on your local machine: {open_cmd}",
+                "message": f"Sao Khuê is running remotely. Run this on your local machine: {open_cmd}",
             }
         )
 
@@ -4901,7 +4901,7 @@ async def handle_registries(request: web.Request) -> web.Response:
         # `label` and `review` are DROPPED rather than stored, mirroring `trust`:
         # both are claims about a registry that only the build may make, and
         # `config.json` is agent-writable, so a value persisted here would let a
-        # hand-edited file relabel a source or stamp it "Reviewed by the Kiro Crew
+        # hand-edited file relabel a source or stamp it "Reviewed by the Sao Khuê
         # team" in the UI. Dropped rather than refused with a 400, because unlike
         # `trust: owner` there is no grant to withhold — the fields are display
         # text, so the save still does what the operator asked and simply carries

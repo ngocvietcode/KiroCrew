@@ -79,7 +79,7 @@ def _create_stacked_dump(dumps_dir: Path, *, age_secs: float = 0.0) -> Path:
     """Create a dump with real stack content (a wedge), aged *age_secs*."""
     p = dumps_dir / f"{DUMP_PREFIX}20260810T010000Z{DUMP_SUFFIX}"
     p.write_text(
-        "# Kiro Crew loop-stall crash dump — opened 20260810T010000Z\n"
+        "# Sao Khuê loop-stall crash dump — opened 20260810T010000Z\n"
         "# PID: 12345\n"
         "# If thread stacks appear below, the event loop wedged and faulthandler fired.\n"
         "\n"
@@ -96,7 +96,7 @@ def _create_header_only_dump(dumps_dir: Path) -> Path:
     """Create a header-only dump (clean exit — no wedge)."""
     p = dumps_dir / f"{DUMP_PREFIX}20260810T020000Z{DUMP_SUFFIX}"
     p.write_text(
-        "# Kiro Crew loop-stall crash dump — opened 20260810T020000Z\n"
+        "# Sao Khuê loop-stall crash dump — opened 20260810T020000Z\n"
         "# PID: 12345\n"
         "# If thread stacks appear below, the event loop wedged and faulthandler fired.\n"
         "\n"
@@ -302,7 +302,7 @@ def _create_owned_dump(
     """A stacked dump whose header carries the full identity triple."""
     p = dumps_dir / f"{DUMP_PREFIX}20260810T030000Z{DUMP_SUFFIX}"
     p.write_text(
-        "# Kiro Crew loop-stall crash dump — opened 20260810T030000Z\n"
+        "# Sao Khuê loop-stall crash dump — opened 20260810T030000Z\n"
         f"# PID: {pid} @ {domain} start={start_id}\n"
         "# If thread stacks appear below, the event loop wedged and faulthandler fired.\n"
         "\n"

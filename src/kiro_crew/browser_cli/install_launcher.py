@@ -240,7 +240,7 @@ def agent_writable_root_over_data_home(data_home: Path | None = None) -> Path | 
 
 def _data_home_overlap_remedy(root: Path) -> str:
     return (
-        f"the workspace root or project directory {root} contains the Kiro Crew data "
+        f"the workspace root or project directory {root} contains the Sao Khuê data "
         f"home ({config_dir()}), so a launcher installed there is inside the "
         "agent-writable tree and would be refused. Point it at a directory outside "
         "the data home and restart the gateway"

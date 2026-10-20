@@ -445,9 +445,9 @@ describe('approval_resolved and toolLog mutations', () => {
     // then a tool_call_update with the refined title/input.
     let state = reducer(withSlot, sseToolActivity({ slot: 'slot-1', tool: 'Terminal', kind: 'execute', purpose: '', input_preview: '', tool_call_id: 'tc-bash-1' }))
     expect(state.toolLog).toHaveLength(1)
-    state = reducer(state, sseToolActivity({ slot: 'slot-1', tool: 'List Kiro Crew modules', kind: 'execute', purpose: '', input_preview: '{"command":"ls"}', tool_call_id: 'tc-bash-1', is_update: true }))
+    state = reducer(state, sseToolActivity({ slot: 'slot-1', tool: 'List Sao Khuê modules', kind: 'execute', purpose: '', input_preview: '{"command":"ls"}', tool_call_id: 'tc-bash-1', is_update: true }))
     expect(state.toolLog).toHaveLength(1)
-    expect(state.toolLog[0].text).toBe('List Kiro Crew modules')
+    expect(state.toolLog[0].text).toBe('List Sao Khuê modules')
     expect(state.toolLog[0].input).toBe('{"command":"ls"}')
   })
 

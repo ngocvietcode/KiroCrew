@@ -4,7 +4,7 @@ Holds ``_resolve_tool_policy``, which asks the gateway for the calling session's
 with its per-session cache, its failure backoff and the reasons an unresolved policy
 refuses a call, ``ToolPolicy``, the identity notes recorded when a server runs without a
 gateway identity, and ``serves_managed_tools``, which decides whether a server's tools
-are Kiro Crew's own and so under the policy at all.
+are Sao Khuê's own and so under the policy at all.
 
 Split out of ``kiro_crew.mcp_shared``, which stays the import path and the patch target: every
 name here is reached as ``kiro_crew.mcp_shared.<name>``, and a patch through that facade
@@ -249,7 +249,7 @@ def external_client_identity_note(server: str = "kirocrew-core") -> str:
 
     Two clauses are per-server. The read-only tools named are kirocrew-core's,
     so they appear only for it. The "leftover from an older install" clause
-    holds only for the names Kiro Crew itself once wrote into the shared config
+    holds only for the names Sao Khuê itself once wrote into the shared config
     (``mcp_cleanup.STALE_MANAGED_MCP_SERVERS``); an opt-in server found there
     is the user's own wiring, and calling it residue would invite a deletion
     ``clean_stale_managed_mcp`` itself refuses to make.
@@ -257,12 +257,12 @@ def external_client_identity_note(server: str = "kirocrew-core") -> str:
     if server == "kirocrew-core":
         read_only = (
             " Remove it and the read-only tools (learn_list, local_knowledge_search) "
-            "work without a session; use a Kiro Crew session (dashboard or a "
+            "work without a session; use a Sao Khuê session (dashboard or a "
             "messaging channel) for the rest."
         )
     else:
         read_only = (
-            " Remove it; use a Kiro Crew session (dashboard or a messaging channel) "
+            " Remove it; use a Sao Khuê session (dashboard or a messaging channel) "
             "for the tools that need one."
         )
     if server in STALE_MANAGED_MCP_SERVERS:
@@ -273,7 +273,7 @@ def external_client_identity_note(server: str = "kirocrew-core") -> str:
     else:
         entry = " (docs/architecture/mcp.md)."
     return (
-        f" If this {server} was not started by a Kiro Crew session -- for example "
+        f" If this {server} was not started by a Sao Khuê session -- for example "
         f"it is listed in an editor's own MCP config such as ~/.kiro/settings/mcp.json "
         f"-- the tools that need a session identity (memory writes, memory recall, "
         f"session control) are not supported from it: only a server the gateway "
@@ -283,7 +283,7 @@ def external_client_identity_note(server: str = "kirocrew-core") -> str:
         f"processes, not a credential: setting it by hand identifies nothing and makes "
         f"the gateway refuse every tool call from this server (identity_unattested)."
         f"{read_only} The supported direction for an editor is to connect INTO a "
-        f"Kiro Crew session, not to spawn {server} itself{entry}"
+        f"Sao Khuê session, not to spawn {server} itself{entry}"
     )
 
 
@@ -950,15 +950,15 @@ _UNRESOLVED_REFUSES_CALL = frozenset(
 )
 
 #: The directory this package's own code lives in. A tool handler whose code is
-#: under it belongs to a server Kiro Crew ships: its own control plane, and the
+#: under it belongs to a server Sao Khuê ships: its own control plane, and the
 #: builtin apps under ``apps/builtins``.
 _PACKAGE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 def serves_managed_tools(call_tool_fn: Callable[..., Any]) -> bool:
-    """True when *call_tool_fn* is Kiro Crew's own code, so the tool policy applies.
+    """True when *call_tool_fn* is Sao Khuê's own code, so the tool policy applies.
 
-    ``managedToolPolicy`` names the tools of Kiro Crew's managed servers that a
+    ``managedToolPolicy`` names the tools of Sao Khuê's managed servers that a
     session may not reach (``src/kiro_crew/docs/agent-spec-fields.md``). A user-installed app that serves its own tools through
     :func:`run_mcp_stdio_loop` is not one of those servers, and on the shared ACP
     runtime it is never handed a session token -- identity rides only the control
@@ -968,7 +968,7 @@ def serves_managed_tools(call_tool_fn: Callable[..., Any]) -> bool:
 
     The check runs inside the app's own process, so it is not a boundary an app
     could be held to: an app that wanted to skip it could skip this loop. What it
-    must NOT do is let Kiro Crew's own servers out, so every answer it cannot
+    must NOT do is let Sao Khuê's own servers out, so every answer it cannot
     establish is True: a handler with no readable code location, or one outside
     every known shape, keeps the policy.
     """

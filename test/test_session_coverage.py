@@ -272,7 +272,7 @@ class TestAdoptProvider:
         """Only the RESUMED half of the observation is stale on a replacement.
         The production caller recycles a mid-life, already-claimed session
         (NOTHING_ARMED): re-arming it here would make the next turn report
-        ``is_new=True`` and re-inject Kiro Crew history onto a live
+        ``is_new=True`` and re-inject Sao Khuê history onto a live
         transcript — the exact failure shape the one-shot state exists to
         prevent."""
         sess = _Session(provider=_stub_provider(), first_turn=start)

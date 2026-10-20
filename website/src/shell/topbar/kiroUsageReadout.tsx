@@ -130,7 +130,7 @@ export function kiroUsageSegment({ kiroUsageState, usageSegmentHidden, setKiroUs
   // One predicate gates the whole chain rather than being re-stated per
   // branch: the branches below are states of a segment that EXISTS.
   if (usageSegmentHidden) return null
-  // Usage segment — Kiro credit plan from Kiro Crew's own usage
+  // Usage segment — Kiro credit plan from Sao Khuê's own usage
   // cache. Spinner while the cache warms, a dash when the fetch
   // failed or when the gateway holds no reading. On the Kiro
   // backend every state keeps the segment on screen: the account

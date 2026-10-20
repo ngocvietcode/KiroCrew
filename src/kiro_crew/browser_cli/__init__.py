@@ -15,7 +15,7 @@ Three concerns, one per module, with no shared mutable state:
   CLI's own dashboard, as a long-lived loopback-only child process.
 - :mod:`kiro_crew.browser_cli.launcher` — opens a URL the dashboard OWNER typed
   in the Browser panel in the gateway host's browser (``-s=panel-<owner6>-<slot8> goto`` or
-  ``open``), the one place Kiro Crew itself runs a browsing verb.
+  ``open``), the one place Sao Khuê itself runs a browsing verb.
 - :mod:`kiro_crew.browser_cli.snapshots` — retention for the timestamped YAML
   the CLI writes per command, which it never prunes itself.
 

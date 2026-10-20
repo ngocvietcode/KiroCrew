@@ -108,7 +108,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-#: Canonical kiro-cli agent name for KiroCrew. Used as the final agent
+#: Canonical kiro-cli agent name for SaoKhue. Used as the final agent
 #: fallback so the transport session loads the same MCP surface (incl. the
 #: kirocrew-core server that provides ``spawn_run``) as the dashboard/native
 #: path. Without it, an empty ``agent.default_agent`` config makes kiro-cli
@@ -134,7 +134,7 @@ def _redacted_error_detail(exc: BaseException) -> str:
     credential scan reads what Slack DISPLAYS as well as the bytes
     (``_display_safe``): ``AKIA*<rest>*`` matches no pattern as written, yet
     Slack renders the emphasis away and shows an intact key. The text
-    comes from outside Kiro Crew (a provider error can echo arbitrary input), so
+    comes from outside Sao Khuê (a provider error can echo arbitrary input), so
     Slack's entity characters are escaped last: ``<!channel>`` or ``<@U…>`` in it
     must show as text, not notify anyone. Escaping after the cut means the cut can
     never split an escape sequence.

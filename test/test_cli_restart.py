@@ -487,7 +487,7 @@ class TestRestart:
     def test_lock_holder_alive_kirocrew_refuses_to_restart_and_names_the_pid(self, capsys):
         """The split-brain this fixes: the port probe finds nothing (a
         unix-socket-only gateway, or a blind spot) but gateway.lock is held by
-        a live Kiro Crew pid. Restart must not report "nothing running" and
+        a live Sao Khuê pid. Restart must not report "nothing running" and
         must not spawn a replacement the lock would refuse -- and it must not
         signal through the lock either: a gateway neither the port nor the
         API could reach is refused and NAMED, with the manual command, so the
@@ -520,7 +520,7 @@ class TestRestart:
         assert "reason=lock_holder_kirocrew" in audit["resources"]
 
     def test_lock_holder_alive_but_foreign_refuses_without_stopping_it(self, capsys):
-        """A live holder that is not a Kiro Crew process must never be signaled
+        """A live holder that is not a Sao Khuê process must never be signaled
         -- refuse with the same wording ``kirocrew gateway`` would give for this
         holder, audited as denied, rather than silently spawning a competitor
         the lock refuses."""
@@ -538,7 +538,7 @@ class TestRestart:
         mocks["tree"].assert_not_called()
         mocks["spawn"].assert_not_called()
         out = capsys.readouterr().out
-        assert "does not look like a Kiro Crew gateway" in out
+        assert "does not look like a Sao Khuê gateway" in out
         assert "kill -TERM 99" in out
         mock_sel.log_api_access.assert_called_once()
         audit = mock_sel.log_api_access.call_args.kwargs
@@ -593,7 +593,7 @@ class TestRestart:
 
     def test_tool_absent_unacked_shutdown_live_holder_refuses_to_restart(self, capsys):
         """Port tool absent, no gateway answers the API, yet the lock is held by
-        a live Kiro Crew pid: ``_stop`` refuses (its exit is swallowed, as for
+        a live Sao Khuê pid: ``_stop`` refuses (its exit is swallowed, as for
         "nothing running") and restart must NOT read that as a free lock --
         it re-reads the holder, refuses too, waits on nothing and spawns
         nothing. Both refusals are audited under their own operation."""
@@ -921,7 +921,7 @@ class TestRestart:
         ):
             cli_server._restart(None)
 
-        # _stop still runs (it owns the "not a Kiro Crew gateway" diagnostic)...
+        # _stop still runs (it owns the "not a Sao Khuê gateway" diagnostic)...
         mock_stop.assert_called_once_with(None)
         # ...but nothing is waited on, and the spawn proceeds.
         mock_exited.assert_not_called()
@@ -1208,7 +1208,7 @@ class TestRestart:
         mock_kill.assert_not_called()
         assert mock_wait.call_args.args[0] == [50519]
         mock_spawn.assert_called_once()
-        assert "does not look like a Kiro Crew gateway" not in capsys.readouterr().out
+        assert "does not look like a Sao Khuê gateway" not in capsys.readouterr().out
 
     def test_an_alias_holding_the_name_is_refused_before_the_foreground_path(self, capsys):
         """When ``kirocrew.service`` is an alias of another unit, ``restart_service()``

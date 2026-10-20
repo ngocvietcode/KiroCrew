@@ -1,12 +1,12 @@
 # Agent Spec Field Reference
 
-The fields Kiro Crew reads or writes on an agent spec, what each one does, and
+The fields Sao Khuê reads or writes on an agent spec, what each one does, and
 how that answer changes per backend.
 
 Not a closed list, and deliberately not claimed as one: kiro-cli owns the schema,
-Kiro Crew adds fields as features land, and an app or an edition can write one
+Sao Khuê adds fields as features land, and an app or an edition can write one
 this page has never seen. To check a field missing here, grep the spelling under
-`src/kiro_crew/`; a field kiro-cli accepts but Kiro Crew ignores has no entry
+`src/kiro_crew/`; a field kiro-cli accepts but Sao Khuê ignores has no entry
 below because there is nothing Crew-side to describe.
 
 **How to read every statement here.** Each one is what the cited symbol does on
@@ -385,7 +385,7 @@ paragraph. It is the only system-role text Crew controls on these harnesses, and
 the harness's own system prompt tells the model to refuse non-system content that
 claims an identity for it — the exact shape of the injected block, which opens
 the first user turn, is labelled a system prompt and starts with a persona. So
-the stub does more than point: it says the Kiro Crew gateway writes the block
+the stub does more than point: it says the Sao Khuê gateway writes the block
 (not the person typing), that it arrives inside the first user turn and again
 after a compaction, that its persona extends the native identity rather than
 replacing it, that the memory, lessons, skills and tool names following it are
@@ -431,7 +431,7 @@ product contract, so member essentials must not try to read it as a project
 document; the current contract is injected at session start instead. Custom
 persona paths outside those managed locations retain their normal handling.
 
-`systemPrompt` is not a field Kiro Crew reads. Use `prompt`.
+`systemPrompt` is not a field Sao Khuê reads. Use `prompt`.
 
 *Unverified:* kiro-cli v3's own on-disk loader is sometimes described as
 requiring a relative `file://` prompt ref. Nothing in this repository asserts
@@ -579,7 +579,7 @@ On kiro-cli, a workspace that
 sets `chat.disableInheritingDefaultResources` gets none, and so does an agent that
 excludes or disables `skill_search`.
 
-Every spec Kiro Crew generates for itself is a `custom` row, so a generated agent
+Every spec Sao Khuê generates for itself is a `custom` row, so a generated agent
 whose prompt names a skill must MAP that skill — the row above is why, and
 `agent_materialization/skill_resources.py` is how. `map_prompt_skills` renders one
 `skill://` entry per catalog key through `skills_dir()` at install time, never as a
@@ -621,7 +621,7 @@ every other mirrored harness.
 |---|---|---|---|
 | `name` | resolves `--agent` | wire `id` | roster only |
 | `description` | roster only | wire field | roster only |
-| `prompt` | read from disk | inlined over the wire | Crew injects it at session start; the built-in agent gets the Kiro Crew persona |
+| `prompt` | read from disk | inlined over the wire | Crew injects it at session start; the built-in agent gets the Sao Khuê persona |
 | `model` | honoured, `"auto"` resolvable | not projected | `cc_model` sidecar instead |
 | `tools` | honoured | wire field; absent means NO tools | roster only |
 | `allowedTools` | honoured | translated to `permissions` | not read |
@@ -640,7 +640,7 @@ every other mirrored harness.
 
 ## Ownership and refresh
 
-Kiro Crew owns and rewrites these thirteen filenames in `~/.kiro/agents/`
+Sao Khuê owns and rewrites these thirteen filenames in `~/.kiro/agents/`
 (`src/kiro_crew/agent_files.py`, `OWNED_KIRO_AGENT_FILES`); this table is that
 list's one copy in the docs.
 
@@ -744,7 +744,7 @@ grants, through the same governance ceiling the shipped grants pass
 (`agent_materialization/conductor_agents.py`, `_governed_grants`), so an entry
 you approved on `kirocrew-conductor.json` is still approved at the next start
 while an entry the ceiling forbids is still removed. What tells your entry apart
-from the installer's own is the history of every grant any release of Kiro Crew
+from the installer's own is the history of every grant any release of Sao Khuê
 has ever shipped on that spec (`_SHIPPED_GRANT_HISTORY`, a table in the code
 that a test keeps complete): an entry on disk that history names is Crew's and
 comes back or goes with the current release — so a grant one release shipped and
@@ -781,7 +781,7 @@ kiro-cli could not have loaded that file either, so keeping it would have left
 you without the conductor (a session that names it would run the default agent
 instead) and left the ceiling with nothing to re-filter. A spec with a second
 hard link on it (a hardlink-based dotfile layout) is written over too, for the
-opposite reason: Kiro Crew's hardened reader refuses a multiply-linked file for
+opposite reason: Sao Khuê's hardened reader refuses a multiply-linked file for
 good while kiro-cli loads it as it is, so leaving it in place would leave the one
 list kiro-cli reads out of the ceiling's reach. The rewrite replaces the name in
 the agents directory with a fresh file and never writes through the shared
@@ -922,7 +922,7 @@ other. Each view's `description` says so and names the agent to pick instead.
 Views are pruned the moment the session that used them ends (and on every
 spawn and gateway start), so the list shows only the live sessions' views;
 everything else the projection keeps -- its lock, lease records and ownership
-sidecars -- lives under the Kiro Crew data home (`<data_home>/skill-projection/`),
+sidecars -- lives under the Sao Khuê data home (`<data_home>/skill-projection/`),
 never in the agents directory. Earlier builds wrote those side files into the
 agents directory too; the first gateway start on a newer build moves this
 home's over. Picking a view in the IDE is harmless but pointless: it is the

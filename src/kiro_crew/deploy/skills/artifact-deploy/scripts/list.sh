@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KiroCrew One-Click Deploy - list all deploys (from per-slug manifests).
+# SaoKhue One-Click Deploy - list all deploys (from per-slug manifests).
 # Usage: list.sh [--profile P] [--region R]
 set -uo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_common.sh"

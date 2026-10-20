@@ -39,7 +39,7 @@ preconditions:
   members: [nova-sky]
   start_url: /chat
 steps:
-  - You are on the chat page. In the left sidebar's session list click the pinned row titled "Welcome to KiroCrew" (below the "Demos" folder, outside it) so that its conversation opens, with a header bar above the transcript showing that title.  # brand-ok: verbatim seeded session title from the rich fixture
+  - You are on the chat page. In the left sidebar's session list click the pinned row titled "Welcome to SaoKhue" (below the "Demos" folder, outside it) so that its conversation opens, with a header bar above the transcript showing that title.  # brand-ok: verbatim seeded session title from the rich fixture
   - Make sure the Activity panel is open. If nothing is showing to the right of the transcript, click the "Open activity panel" button -- a small panel icon at the right end of that header bar, near the pop-out icon -- once. A panel appears beside the transcript.
   - In the panel's top strip, next to the highlighted "Changes" tab, click the icon-only tab named "Files" (a folders icon). The panel body changes to a header reading "Files" with a file tree beneath it listing the project's folders and files -- a folder row "docs" and a file row "README.md".
   - In that tree click the folder row "docs" (the row with a chevron) once, so it expands in place and its children -- indented rows, each a file name ending in ".md" -- appear beneath it. Do not click a file row.

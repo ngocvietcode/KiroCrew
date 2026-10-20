@@ -1,4 +1,4 @@
-"""Regression gates for the packaged-install path of the Kiro Crew installer.
+"""Regression gates for the packaged-install path of the Sao Khuê installer.
 
 Two properties only a *packaged* install can violate — a dev or source tree
 satisfies both by accident, which is why these gates exist:

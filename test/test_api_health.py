@@ -26,7 +26,7 @@ async def test_health_returns_ok_with_identity() -> None:
     """The payload carries identity fields (app, version) for the desktop
     shell's cross-app instance guard: nightly and production apps share
     ~/.kirocrew and the gateway port, so the shell must be able to tell
-    WHICH KiroCrew-family gateway owns the port."""
+    WHICH SaoKhue-family gateway owns the port."""
     from kiro_crew import __version__
 
     resp = await core_mod.api_health(_probe_req())

@@ -28,7 +28,7 @@ superseded-by: []
 
 ## 1. Summary
 
-Add a global, user-managed library of reusable workflows to Kiro Crew.
+Add a global, user-managed library of reusable workflows to Sao Khuê.
 The library is the durable second layer above the existing automatic run
 snapshots:
 
@@ -37,16 +37,16 @@ snapshots:
 2. A workflow becomes reusable by name only when the user explicitly chooses
    **Save to library** in a dashboard confirmation flow.
 
-Saved definitions live in the protected global Kiro Crew data-home directory,
+Saved definitions live in the protected global Sao Khuê data-home directory,
 normally `~/.kiro/crew/workflow_library/`. They are not scoped to one repository,
 harness, or configured run-snapshot directory. Each definition has a stable id,
 a slash-command slug, immutable revision history, and optional lineage to the
 saved revision from which it was adapted.
 
-When Kiro Crew authors a new workflow from an intent, it searches the local
+When Sao Khuê authors a new workflow from an intent, it searches the local
 library for relevant examples. The model may adapt a match into a new draft, but
 it never mutates the matched definition. If the user explicitly invokes a saved
-workflow by id or slug, Kiro Crew executes the exact saved source instead of
+workflow by id or slug, Sao Khuê executes the exact saved source instead of
 asking the harness to reinterpret the request.
 
 The Agent Capabilities page gains a Workflows surface for listing, searching,
@@ -106,11 +106,11 @@ The missing layer creates four product problems:
 4. A named request may be reinterpreted by whichever harness receives the chat
    turn instead of executing the definition the user selected.
 
-### 2.3 Harness support needs one Kiro Crew-owned contract
+### 2.3 Harness support needs one Sao Khuê-owned contract
 
 Kiro is the first-class harness and KAS is an adapted harness. A workflow library
 must not become a per-harness feature directory or a second provider system.
-Definitions, lookup, validation, and invocation belong to Kiro Crew so every
+Definitions, lookup, validation, and invocation belong to Sao Khuê so every
 supported harness sees the same names and exact source.
 
 The command therefore resolves before harness session acquisition. No harness
@@ -138,7 +138,7 @@ plan is another format whose control loop runs in trusted host code.
 1. Preserve automatic per-run script persistence and resume behavior.
 2. Make durable reuse an explicit user choice rather than an automatic side
    effect of authoring.
-3. Store reusable definitions globally under the Kiro Crew data home.
+3. Store reusable definitions globally under the Sao Khuê data home.
 4. Let new authoring search and adapt relevant saved local workflows.
 5. Preserve adaptation lineage without modifying or aliasing the parent.
 6. Keep every saved edit as a new revision with optimistic conflict detection.
@@ -184,12 +184,12 @@ The implementation and tests use these design invariants:
 |---|---|
 | WFL1 | Every invocation persists through the existing run store whether or not the workflow is saved by name |
 | WFL2 | Promotion into the named library requires an explicit user action |
-| WFL3 | Definitions are global in a dedicated agent-protected Kiro Crew data-home directory |
+| WFL3 | Definitions are global in a dedicated agent-protected Sao Khuê data-home directory |
 | WFL4 | Adapting a definition creates a separate identity and records the exact parent id and revision |
 | WFL5 | Updating a definition appends a revision and rejects a stale expected revision |
 | WFL6 | Intent authoring receives only a bounded set of locally matched definitions |
 | WFL7 | An explicit id or slug executes exact validated saved source without harness reinterpretation |
-| WFL8 | `/workflow` is Kiro Crew-owned and has the same behavior for Kiro, KAS, and future adapted harnesses |
+| WFL8 | `/workflow` is Sao Khuê-owned and has the same behavior for Kiro, KAS, and future adapted harnesses |
 | WFL9 | Persisted and returned LLM-derived strings pass through credential and exfiltration-url redaction |
 | WFL10 | A new gateway TaskRunner project is attached to exactly one workflow run; the workflow registry owns its common lifecycle projection |
 | WFL11 | TaskRunner uses the host-side workflow run API and never generates or executes sandboxed Python for a task plan |
@@ -213,7 +213,7 @@ use the fixed `<KIROCREW_HOME>/workflow_library` trust root. That directory is
 listed in `security._CREW_SECRET_LEAVES`, so agent file tools and shell commands
 cannot plant or rewrite executable definitions while the dashboard and service
 can still perform the user's explicit management actions directly. “Global”
-means Kiro Crew-user scope rather than repository scope.
+means Sao Khuê-user scope rather than repository scope.
 
 Run snapshots remain best-effort because an I/O failure must not terminate an
 active run. Definition writes are user-requested management operations and fail
@@ -290,7 +290,7 @@ The authoring prompt distinguishes two cases:
 - If a match is useful, adapt it into a new draft and set
   `META["adapted_from"] = "<workflow-id>@<revision>"`.
 
-Kiro Crew accepts reported lineage only when the id and current revision exactly
+Sao Khuê accepts reported lineage only when the id and current revision exactly
 match one of the candidates supplied to that authoring call. Historical revisions
 present in a candidate's stored history are not prompt references. A fabricated or
 unsupplied reference is discarded. The result remains an unsaved draft until the
@@ -322,7 +322,7 @@ the meaning of an already completed or resumable run.
 
 ### 6.5 Slash-command contract
 
-Kiro Crew registers `/workflow` as a static slash command:
+Sao Khuê registers `/workflow` as a static slash command:
 
 ```text
 /workflow
@@ -343,7 +343,7 @@ worktree). This is the critical harness-neutrality boundary: Kiro and KAS cannot
 assign different meanings to the same saved name.
 
 One namespace command is preferred over registering each definition as its own
-top-level command. It avoids collisions with harness and Kiro Crew commands,
+top-level command. It avoids collisions with harness and Sao Khuê commands,
 keeps command discovery bounded, and makes rename behavior explicit.
 
 ### 6.6 HTTP API
@@ -404,7 +404,7 @@ The library view contains:
   save-revision action, run input, and the started run id. Presentation never
   reformats the source bytes that revision checks and exact invocation use.
 
-The create path starts with a natural-language intent. Kiro Crew authors and
+The create path starts with a natural-language intent. Sao Khuê authors and
 validates an unsaved draft, displays any verified lineage, and presents a
 separate **Save to library** action. Closing or abandoning the draft does not
 promote it.
@@ -467,7 +467,7 @@ run.finish(result)
 run.fail(error)
 ```
 
-This is trusted Python called by Kiro Crew itself. It does not enter the
+This is trusted Python called by Sao Khuê itself. It does not enter the
 restricted script namespace and does not broaden the DSL available to saved
 Python. `step()` wraps TaskRunner's existing task operation: the workflow layer
 emits start/finish events, records the settled result, and preserves cancellation
@@ -547,13 +547,13 @@ enters the library or a run.
 
 ### Missing definition
 
-HTTP and slash callers receive a clear not-found result. Kiro Crew does not fall
+HTTP and slash callers receive a clear not-found result. Sao Khuê does not fall
 back to intent authoring because that would violate exact-reference semantics.
 
 ### Authoring model omits or fabricates lineage
 
 The draft remains valid, but lineage is recorded only when the reported parent
-matches a candidate supplied by Kiro Crew. The user may still save the draft as
+matches a candidate supplied by Sao Khuê. The user may still save the draft as
 an independent definition.
 
 ### TaskRunner integration is unavailable
@@ -578,7 +578,7 @@ resume behavior retain their existing guarantees.
 
 The library directory is created owner-only and each temporary definition file
 is restricted before atomic replacement. File names derive from sanitized
-Kiro Crew-generated ids, with a hash suffix if sanitization changes an input, so
+Sao Khuê-generated ids, with a hash suffix if sanitization changes an input, so
 a malformed reference cannot escape the library directory.
 
 Credential and exfiltration-url redaction runs recursively before normalization
@@ -615,7 +615,7 @@ A task-plan definition is parsed as data with `yaml.safe_load`, the existing
 size, key, task-count, dependency, and acyclic-graph checks, and TaskRunner's
 normal approval and governance path. It never reaches `exec` and never receives
 the Python workflow namespace. The host-side run API is callable only by trusted
-Kiro Crew code and is not exposed as an MCP or dashboard mutation surface.
+Sao Khuê code and is not exposed as an MCP or dashboard mutation surface.
 
 ### 8.4 Local examples are prompt input
 
@@ -628,7 +628,7 @@ itself or another definition during authoring.
 ### 8.5 Harness parity
 
 The feature does not add a new `agent.provider` value or infer Kiro identity from
-the absence of another harness. Library and command behavior are Kiro Crew-owned.
+the absence of another harness. Library and command behavior are Sao Khuê-owned.
 Any future harness opts into existing workflow execution seams; it does not gain
 a special storage directory, sandbox waiver, or reinterpretation path.
 
@@ -760,7 +760,7 @@ needed for same-session and post-restart iteration.
 ### 12.2 Store definitions as repository `.py` files
 
 Rejected for this version. Repository files are attractive for review and
-version control, but the settled scope is global to the Kiro Crew user and shared
+version control, but the settled scope is global to the Sao Khuê user and shared
 across harnesses. A JSON envelope keeps source, revision history, lineage, and
 metadata atomic. Exporting a definition into a repository can be added later
 without changing the library identity.
@@ -841,7 +841,7 @@ Adopt the two-layer model:
 - Reusable definitions are global and explicitly promoted.
 - New intent authoring may adapt bounded local matches into separate lineaged
   drafts.
-- Explicit saved references execute exact source through Kiro Crew.
+- Explicit saved references execute exact source through Sao Khuê.
 - `/workflow <name> [input]` is the cross-harness invocation contract.
 - Agent Capabilities → Workflows is the human management surface.
 - The workflow system owns the common run substrate and definition identity.

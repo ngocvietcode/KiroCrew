@@ -280,7 +280,7 @@ class _FakePage:
         Path(path).write_bytes(b"")
 
     def text_content(self, _sel):
-        return "KiroCrew dashboard shell rendered fine"
+        return "SaoKhue dashboard shell rendered fine"
 
     def unroute_all(self):
         self.unrouted = True

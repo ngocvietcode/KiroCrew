@@ -384,7 +384,7 @@ would fail every iteration for a structural reason unrelated to safety.
 
 The profile declares which reviewers run and which contract each mirrors. A branch
 that could edit its own profile could drop the lane that reviews it. Reading
-`.prepare-pr.toml`, the Kiro Crew markers, and the workflow globs from the base ref
+`.prepare-pr.toml`, the Sao Khuê markers, and the workflow globs from the base ref
 closes that. A ref resolving to nothing is a hard error rather than a silent fall
 back to the checkout, because the fall-back case is exactly the attack.
 
@@ -648,7 +648,7 @@ later cycle reads it.
 
 ## How the profile resolves, and what its JSON carries
 
-Most-specific-wins: repo-root `.prepare-pr.toml` → Kiro Crew markers (auto-loads
+Most-specific-wins: repo-root `.prepare-pr.toml` → Sao Khuê markers (auto-loads
 `profiles/kirocrew.json`) → stack auto-detect → generic fallback. The JSON always
 has `setup[]`, `gates[]`, `reviewers[]` (each
 `{name, model, model_tier, contract, rubric}`), `rule_files[]`, `single_commit`,

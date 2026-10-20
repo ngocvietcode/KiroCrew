@@ -497,7 +497,7 @@ class LivenessOracle:
         shell tool's background tunnel elsewhere in the tree never tags this
         call. The server root is found by :meth:`_own_server_root`; a server that
         cannot be found exactly once answers None. A loopback peer is a local
-        service (Kiro Crew's gateway above all), not a remote call.
+        service (Sao Khuê's gateway above all), not a remote call.
 
         On darwin a backend without ``established_tcp``, and a host with neither
         backend (Windows), answer None.

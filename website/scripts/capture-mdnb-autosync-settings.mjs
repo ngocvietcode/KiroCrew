@@ -6,7 +6,7 @@
  * Two frames on the shipped default theme:
  *
  *   01 off - the switch at rest, with the help line stating that syncing keeps
- *            running with Notes closed while Kiro Crew is open
+ *            running with Notes closed while Sao Khuê is open
  *   02 on  - switched on, revealing the interval field the backend loop reads
  *
  * The vault carries a REMOTE, unlike the shared local-only fixture: auto-sync

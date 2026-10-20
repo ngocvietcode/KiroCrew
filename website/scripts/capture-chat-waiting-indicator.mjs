@@ -43,7 +43,7 @@ const now = Math.floor(Date.now() / 1000)
 // caret, the stopping text, or the compacting text.
 const SLOTS = [{
   key: ACTIVE,
-  title: 'Where does Kiro Crew store my data?',
+  title: 'Where does Sao Khuê store my data?',
   running: true,
   messages: 1,
   agent: 'kirocrew',
@@ -51,7 +51,7 @@ const SLOTS = [{
   modified: now,
   last_ts: '2026-09-25T00:10:00Z',
   folder_id: '',
-  last_message: 'Where does Kiro Crew store my data?',
+  last_message: 'Where does Sao Khuê store my data?',
   source_links: [],
   source_links_total: 0,
 }]
@@ -62,7 +62,7 @@ const detail = {
   total: 1,
   queue: [],
   messages: [
-    { role: 'user', ts: now - 3, content: 'Where does Kiro Crew store my data?' },
+    { role: 'user', ts: now - 3, content: 'Where does Sao Khuê store my data?' },
   ],
 }
 

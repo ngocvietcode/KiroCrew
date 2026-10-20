@@ -1,7 +1,7 @@
 import type { CSSProperties, SVGProps } from 'react'
 
 /**
- * Hand-rolled panel / sidebar icons — KiroCrew's replacement for lucide's
+ * Hand-rolled panel / sidebar icons — SaoKhue's replacement for lucide's
  * PanelLeft / PanelLeftClose / PanelRight / PanelRightClose / PanelBottom.
  *
  * Each glyph is an outlined frame with the pane drawn as a filled rounded

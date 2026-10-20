@@ -40,7 +40,7 @@ const thirdParty = {
 
 /** Builtin row — never carries the field, so the badge must be absent. */
 const builtin = {
-  name: 'research-lab', displayName: 'Research Lab', author: 'Kiro Crew',
+  name: 'research-lab', displayName: 'Research Lab', author: 'Sao Khuê',
   description: 'A built-in app that lives in the product repository.',
   tags: ['research'], version: '3.1.0', installed: true, enabled: true,
   origin: 'builtin', provenance: 'builtin', verified: true,

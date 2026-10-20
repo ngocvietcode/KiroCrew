@@ -1,7 +1,7 @@
 """Mochi — desktop companion builtin app.
 
 Mochi is a desktop pet that lives on the user's screen: it chats through a
-dedicated KiroCrew session, tells the user when a turn finishes or needs them,
+dedicated SaoKhue session, tells the user when a turn finishes or needs them,
 watches things on their behalf, and plans its own day.
 
 Architecture (see the migration notes on the Mochi builtin issue):
@@ -16,7 +16,7 @@ Architecture (see the migration notes on the Mochi builtin issue):
   exactly like the ``workflows`` builtin page).
 * ``website/electron/mochi/`` owns the **window layer** — the transparent,
   always-on-top, click-through overlay per display, plus the tray and global
-  shortcuts. These need Electron main-process APIs, so they live in KiroCrew's
+  shortcuts. These need Electron main-process APIs, so they live in SaoKhue's
   existing shell rather than shipping a second Electron runtime.
 
 Porting discipline: modules moved from the original TypeScript implementation

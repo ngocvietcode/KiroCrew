@@ -208,7 +208,7 @@ def _register_config_watch(
                         "agent",
                         "Default model could not be applied",
                         "The setting was saved but new sessions will keep using the "
-                        "previous model. Kiro Crew retries automatically; "
+                        "previous model. Sao Khuê retries automatically; "
                         "check the gateway logs if this persists.",
                     )
                 except Exception:

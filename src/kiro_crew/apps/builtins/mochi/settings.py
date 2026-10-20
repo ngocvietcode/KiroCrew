@@ -3,7 +3,7 @@
 NEW MODULE — no upstream counterpart. The original app kept user settings in
 its Electron ``configService`` (a JSON file in the app's own data dir); as a
 builtin the gateway owns config, but these are Mochi-scoped preferences that do
-not belong in KiroCrew's global ``config.json``, so they live in the app's data
+not belong in SaoKhue's global ``config.json``, so they live in the app's data
 dir under the same atomic-write discipline as the watch list.
 
 Currently one setting: ``petInstance``.
@@ -106,7 +106,7 @@ ACTIVITY_TIERS = ("economy", "balanced", "active", "unlimited")
 #: the set WAS the truth. It now has ten, and a second list here would drift the
 #: moment an eleventh was added.
 #:
-#: Empty means "follow KiroCrew" — the renderer passes it through to
+#: Empty means "follow SaoKhue" — the renderer passes it through to
 #: ``initI18n()``, which resolves the language the dashboard persisted and only
 #: then falls back to the browser locale.
 LANG_FOLLOW_SYSTEM = ""

@@ -193,7 +193,7 @@ class RealLaunchEngine:
         # crew must name the same port or the tunnel forwards to nothing.
         registered = connect_mod.register_instance(
             instance_id,
-            name=f"Kiro Crew Cloud ({tag})",
+            name=f"Sao Khuê Cloud ({tag})",
             profile=profile,
             region=region,
         )

@@ -156,7 +156,7 @@ def thread_count() -> int:
     Whisper decoding is autoregressive: thousands of tiny parallel regions, each
     ending in a barrier that completes only when its slowest worker arrives. Wide
     pools therefore cost latency per step rather than buying throughput, and on a
-    host with other work (a Kiro Crew host runs the gateway and agent sessions
+    host with other work (a Sao Khuê host runs the gateway and agent sessions
     alongside) the workers are time-sliced, so a barrier waits on threads the
     scheduler has not run yet.
 
@@ -758,7 +758,7 @@ class WhisperEngine:
 
         Passing an absolute path as ``model`` keeps the library's own resolver
         from treating the value as a catalog name and downloading anything: every
-        fetch in Kiro Crew goes through the sha256-pinned store instead.
+        fetch in Sao Khuê goes through the sha256-pinned store instead.
         """
         from pywhispercpp.model import Model
 

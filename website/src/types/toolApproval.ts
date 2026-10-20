@@ -23,7 +23,7 @@ import type { PendingApproval } from './index'
 //
 // `ToolInvocationState` mirrors the shape of the Vercel AI SDK `UIToolInvocation`
 // lifecycle as a STATE MODEL ONLY — a way to reason about the phases of one tool
-// call, NOT a claim that Kiro Crew's transport carries a typed `tool-<name>` part
+// call, NOT a claim that Sao Khuê's transport carries a typed `tool-<name>` part
 // stream (it does not; the transport is markdown + <mcwidget> opaque strings).
 
 /**

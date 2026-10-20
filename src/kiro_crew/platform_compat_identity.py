@@ -778,7 +778,7 @@ def process_command_line(pid: int) -> str:
     Linux: ``/proc/<pid>/cmdline`` (NUL-joined → spaces).
     macOS: ``ps -o command= -p <pid>``.
     Windows: ``Win32_Process.CommandLine`` via WMI (PowerShell ``Get-CimInstance``).
-    It confirms a listener PID is actually a Kiro Crew gateway when the image
+    It confirms a listener PID is actually a Sao Khuê gateway when the image
     name alone is ambiguous (the venv ``kirocrew.exe`` re-execs ``python.exe``).
     """
     try:

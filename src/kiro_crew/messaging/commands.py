@@ -507,14 +507,14 @@ def compact_refusal_plain_text(backend: str) -> str:
     if arm == COMPACT_ARM_RECYCLED:
         return (
             "This backend has no way to compact a conversation; there is no /compact to "
-            "run, and it summarizes nothing on its own. BECAUSE of that, Kiro Crew starts "
+            "run, and it summarizes nothing on its own. BECAUSE of that, Sao Khuê starts "
             "a fresh session for you when the context fills up: there is nothing else "
             "that can keep it from overflowing. The chat keeps working and the agent "
             "stops remembering the earlier turns. Send /new to start fresh on your own "
             "terms before that happens."
         )
     return (
-        "Manual /compact isn't available on this backend, and Kiro Crew can't compact "
+        "Manual /compact isn't available on this backend, and Sao Khuê can't compact "
         "it for you either. Send /new to start a new chat before the context fills up."
     )
 
@@ -560,14 +560,14 @@ def compact_unsupported_reply(backend: str) -> str:
         return (
             f"ℹ️ The `{backend}` backend has no way to compact a conversation — "
             "there is no `/compact` to run, and it summarizes nothing on its own. "
-            "BECAUSE of that, Kiro Crew starts a fresh session for you when the context "
+            "BECAUSE of that, Sao Khuê starts a fresh session for you when the context "
             "fills up: there is nothing else that can keep it from overflowing. The chat "
             "keeps working and the agent stops remembering the earlier turns. Use `/new` "
             "to start fresh on your own terms before that happens."
         )
     return (
         f"ℹ️ Manual `/compact` isn't available on the `{backend}` backend, and "
-        "Kiro Crew can't compact it for you either. Start a new chat with `/new` before "
+        "Sao Khuê can't compact it for you either. Start a new chat with `/new` before "
         "the context fills up."
     )
 
@@ -636,7 +636,7 @@ def context_recycle_warning(new_command: str = "/new") -> str:
     """
     return (
         "⚠️ This conversation's context is getting long. This backend can't compact "
-        "it, so Kiro Crew will start a fresh session when the context fills up: the "
+        "it, so Sao Khuê will start a fresh session when the context fills up: the "
         "chat keeps working, but the agent stops remembering the earlier turns. "
         f"Send {new_command} to start fresh on your own terms first."
     )
@@ -645,7 +645,7 @@ def context_recycle_warning(new_command: str = "/new") -> str:
 def context_recycle_warning_zh() -> str:
     """:func:`context_recycle_warning` for the three Chinese surfaces, said once."""
     return (
-        "⚠️ 对话上下文已较长。当前后端无法压缩上下文，上下文快满时 Kiro Crew 会替你开一个新会话："
+        "⚠️ 对话上下文已较长。当前后端无法压缩上下文，上下文快满时 Sao Khuê 会替你开一个新会话："
         "对话可以继续，但助手不再记得之前的内容。你也可以先发 /new 自己开新会话。"
     )
 
@@ -669,12 +669,12 @@ def compact_unsupported_reply_zh(backend: str) -> str:
     if arm == COMPACT_ARM_RECYCLED:
         return (
             "ℹ️ 当前后端没有压缩上下文的办法：既没有 /compact 可用，"
-            "也不会自动摘要。正因为如此，上下文快满时 Kiro Crew 会替你开一个新会话："
+            "也不会自动摘要。正因为如此，上下文快满时 Sao Khuê 会替你开一个新会话："
             "除此之外，没有别的办法阻止上下文溢出。对话可以继续，"
             "但助手不再记得之前的内容。你也可以在那之前发 /new 自己开新会话。"
         )
     return (
-        "ℹ️ 当前后端不支持手动 /compact，Kiro Crew 也无法替它压缩上下文。"
+        "ℹ️ 当前后端不支持手动 /compact，Sao Khuê 也无法替它压缩上下文。"
         "上下文快满之前，请发 /new 开始新会话。"
     )
 

@@ -1,7 +1,7 @@
 """Tests for the kiro-cli hooks an installed spec carries.
 
 ``agent.kiro_hooks`` merged into the spec (validation, dedup, caps), and the
-hook keys internal to Kiro Crew that are stripped from it.
+hook keys internal to Sao Khuê that are stripped from it.
 """
 
 from __future__ import annotations
@@ -365,7 +365,7 @@ class TestKiroHooksMerge:
 
 
 class TestKiroHooksFiltering:
-    """Tests that hook keys internal to Kiro Crew are stripped from kiro-cli agent config."""
+    """Tests that hook keys internal to Sao Khuê are stripped from kiro-cli agent config."""
 
     def test_auto_approve_tools_stripped_from_agent_config(self, tmp_path: Path):
         """auto_approve_tools must not appear in kirocrew.json (kiro-cli rejects it)."""
@@ -420,7 +420,7 @@ class TestKiroHooksFiltering:
         actually meant to be internal (kiro-cli would then reject the whole spec at
         runtime). This ratchet forces an explicit choice: adding a bundled hook key
         means updating either this set (a real event) or _INTERNAL_HOOK_KEYS
-        (Kiro-Crew-internal), never neither (a fail-loud guard)."""
+        (SaoKhue-internal), never neither (a fail-loud guard)."""
         from kiro_crew.agent import _BUNDLED_CFG_DIR, _load_json
 
         bundled = _load_json(_BUNDLED_CFG_DIR / "defaults.json")
@@ -428,12 +428,12 @@ class TestKiroHooksFiltering:
         assert bundled_hook_keys == {"auto_approve_tools", "postToolUse"}, (
             f"bundled defaults.json hooks keys changed to {bundled_hook_keys} -- "
             "classify any new key as a real kiro-cli event (covered automatically "
-            "via _VALID_HOOK_EVENTS) or Kiro-Crew-internal (add to "
+            "via _VALID_HOOK_EVENTS) or SaoKhue-internal (add to "
             "_INTERNAL_HOOK_KEYS), then update this pinned set."
         )
 
     def test_sanitize_agent_hooks_repairs_owned_files_subtractively(self, tmp_path: Path):
-        """The repair removes only Kiro Crew's legacy key from every owned spec."""
+        """The repair removes only Sao Khuê's legacy key from every owned spec."""
         from kiro_crew.agent import _hooks_sanitized_mtimes, _sanitize_agent_hooks
         from kiro_crew.agent_files import OWNED_KIRO_AGENT_FILES
 

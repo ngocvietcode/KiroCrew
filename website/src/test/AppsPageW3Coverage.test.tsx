@@ -530,7 +530,7 @@ describe('AppsPage — uninstall dialog', () => {
     expect(within(dialog).getByText(/the downloaded source code will be removed/)).toBeInTheDocument()
   })
 
-  it('warns about a self-managed app whose resources live outside Kiro Crew', async () => {
+  it('warns about a self-managed app whose resources live outside Sao Khuê', async () => {
     listApps.mockResolvedValue([{ ...SECRETARY, origin: 'local', resources: 'app' }])
     const dialog = await openDialog()
     expect(within(dialog).getByText(/This is a self-managed app/)).toBeInTheDocument()
@@ -872,7 +872,7 @@ describe('AppsPage — sources rail', () => {
     expect(within(rail).getByText('Built-in · kirocrew')).toBeInTheDocument()
     expect(within(rail).getByText('kirodotdev-labs')).toBeInTheDocument()
     expect(within(rail).getByText('ghost-registry')).toBeInTheDocument()
-    expect(within(rail).getByText('Kiro Crew registry')).toBeInTheDocument()
+    expect(within(rail).getByText('Sao Khuê registry')).toBeInTheDocument()
     expect(within(rail).getByText('0 apps')).toBeInTheDocument()
   })
 })

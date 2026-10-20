@@ -47,7 +47,7 @@ class TestOptionsLine:
     def test_a_realistic_mid_label_split_point_is_caught(self):
         """A prefix cut inside an option label, the shape a live wave produces."""
         text = (
-            "an-out onward I'll use Kiro Crew's own path.\n\n"
+            "an-out onward I'll use Sao Khuê's own path.\n\n"
             + _OPEN
             + " Let it finish, then post the cards | Kill it and relaun"
         )

@@ -862,7 +862,7 @@ _CC_FILES: list[str] = [
     ".pypirc",
     ".netrc",
     ".git-credentials",
-    # Kiro Crew's channel-credential file. The data home moved to ~/.kiro/crew,
+    # Sao Khuê's channel-credential file. The data home moved to ~/.kiro/crew,
     # so the live .env is now ~/.kiro/crew/.env; the legacy ~/.kirocrew/.env is
     # kept covered too (a not-yet-migrated box still holds real secret bytes).
     ".kiro/crew/.env",
@@ -892,9 +892,9 @@ _SENSITIVE_ENV_PREFIXES: list[str] = [
 # launched under the sandbox (e.g. the MCP servers kiro-cli spawns, such as
 # ord-mcp, which bundle their own interpreter + deps, or any Python the agent's
 # shell runs).
-#  - PYTHONPATH / PYTHONHOME: Kiro Crew's runtime may export PYTHONPATH
+#  - PYTHONPATH / PYTHONHOME: Sao Khuê's runtime may export PYTHONPATH
 #    pointing at its own site-packages; a foreign server that inherits it
-#    prepends Kiro Crew's site-packages to sys.path and imports Kiro Crew's
+#    prepends Sao Khuê's site-packages to sys.path and imports Sao Khuê's
 #    fastmcp/cryptography instead of its own -> ABI collision + init hang.
 #  - PYTHONPYCACHEPREFIX: the packaged desktop app exports it at
 #    ``<data home>/cache/pycache`` so the embedded interpreter keeps bytecode
@@ -915,7 +915,7 @@ _SENSITIVE_ENV_PREFIXES: list[str] = [
 #    struggle to attribute to the desktop app.
 # Stripped ONLY when the caller passes ``strip_python_env=True`` (the
 # kiro-cli / agent spawn path). It is deliberately NOT part of
-# ``_SENSITIVE_ENV_PREFIXES`` because Kiro Crew's OWN sandboxed Python
+# ``_SENSITIVE_ENV_PREFIXES`` because Sao Khuê's OWN sandboxed Python
 # subprocesses (cron scripts, app backends, code-review workers) import
 # ``kiro_crew`` via PYTHONPATH -- and on the packaged app run the BUNDLED
 # interpreter, which must keep the bytecode settings so it never writes into
@@ -935,7 +935,7 @@ _PYTHON_ENV_PREFIXES: list[str] = [
 # is pinned by regression test.
 _AGENT_DENIED_ENV_KEYS: list[str] = [
     # The ACP frame recorder's switch. A child agent that inherited it (a
-    # nested Kiro Crew, or any tool that honours the variable) would record
+    # nested Sao Khuê, or any tool that honours the variable) would record
     # its own frames into the SAME per-backend file, interleaving another
     # process's transcript with this gateway's. The recorder is a gateway-side
     # development aid; the children it observes must not see the switch.
@@ -1015,7 +1015,7 @@ def configured_sandbox_mode() -> str:
     with the shipped ``agent.sandbox`` default but ignores what the operator
     actually configured. Where ``agent.sandbox`` is an explicit ``"off"`` —
     isolation deferred to kiro-cli's own internal sandbox, which cannot nest
-    inside Kiro Crew's (macOS Seatbelt returns EPERM) — a spawn that takes the
+    inside Sao Khuê's (macOS Seatbelt returns EPERM) — a spawn that takes the
     parameter default asks for a STRICTER tier than the operator configured. On
     a backend-less host an unclassified spawn then fail-closes while a delegated
     Kiro chat path can run; the reviewed Windows Kiro sites carry explicit
@@ -1054,7 +1054,7 @@ def configured_sandbox_mode() -> str:
 
 
 # The single environment marker that proves this process is already INSIDE a
-# Kiro Crew namespace sandbox. Deny-by-default: the gate keys ONLY on the
+# Sao Khuê namespace sandbox. Deny-by-default: the gate keys ONLY on the
 # explicit, single-purpose ``KIROCREW_SANDBOX_ACTIVE``, which is exported at
 # exactly one site — the namespace launcher's ``scrub_env`` stage
 # (``sandbox_launcher_program``, which ``_build_launcher_script`` renders). We
@@ -1069,7 +1069,7 @@ def configured_sandbox_mode() -> str:
 # loop) and the macOS ``env`` prefix built by :func:`sandbox_exec_argv` (after its
 # ``env -u`` flags, derived from the SAME prefix lists — see
 # :func:`_sandbox_env_unset_args`). A marked process therefore always has an
-# environment Kiro Crew already sanitised, which is what makes the passthrough
+# environment Sao Khuê already sanitised, which is what makes the passthrough
 # below safe for callers that use ``wrap_argv`` directly rather than
 # ``sandboxed_spawn_argv``.
 _IN_SANDBOX_MARKER = "KIROCREW_SANDBOX_ACTIVE"
@@ -1077,7 +1077,7 @@ _IN_SANDBOX_MARKER = "KIROCREW_SANDBOX_ACTIVE"
 # Companion to ``_IN_SANDBOX_MARKER``: records WHICH tier the outer sandbox was
 # built at (``standard``/``cc``/``strict``), exported at the same two launcher
 # sites and with the same non-droppable placement (after each platform's env
-# scrub / ``-u`` flags). The marker alone proves "a Kiro Crew sandbox is active"
+# scrub / ``-u`` flags). The marker alone proves "a Sao Khuê sandbox is active"
 # but not its tier; without this record the nested passthrough is tier-blind —
 # an in-sandbox caller requesting ``strict`` under a ``standard`` outer sandbox
 # silently runs at ``standard``. The passthrough compares this against the

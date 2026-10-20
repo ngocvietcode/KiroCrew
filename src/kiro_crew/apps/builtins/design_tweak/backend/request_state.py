@@ -153,7 +153,7 @@ def request_file(runtime: Any, base: Path, request_id: str) -> Path:
 
 
 def is_kirocrew_internal(runtime: Any, target: Path) -> bool:
-    """Return whether ``target`` resolves within a private Kiro Crew tree."""
+    """Return whether ``target`` resolves within a private Sao Khuê tree."""
 
     real = runtime.os.path.realpath(target)
     for base in runtime._KIROCREW_INTERNAL_DIRS:

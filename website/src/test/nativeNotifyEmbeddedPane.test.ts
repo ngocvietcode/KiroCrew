@@ -178,7 +178,7 @@ describe('embedded instance pane relays native notifications to the parent', () 
       function wrapper({ children }: { children: React.ReactNode }) {
         return createElement(Provider, { store }, children)
       }
-      renderHook(() => useNativeNotification('Kiro Crew', '/avatar.png'), { wrapper })
+      renderHook(() => useNativeNotification('Sao Khuê', '/avatar.png'), { wrapper })
       act(() => {
         store.dispatch(addNotification({ kind: 'approval', title: 'T', body: 'B', ts: '1.0', approval_id: 'ap-pane-4' } as AppNotification))
       })
@@ -202,7 +202,7 @@ describe('embedded instance pane relays native notifications to the parent', () 
     function wrapper({ children }: { children: React.ReactNode }) {
       return createElement(Provider, { store }, children)
     }
-    renderHook(() => useNativeNotification('Kiro Crew', '/avatar.png'), { wrapper })
+    renderHook(() => useNativeNotification('Sao Khuê', '/avatar.png'), { wrapper })
 
     act(() => {
       store.dispatch(addNotification({

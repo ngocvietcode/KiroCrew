@@ -1,4 +1,4 @@
-"""The launch config that selects the engine Kiro Crew actually installs."""
+"""The launch config that selects the engine Sao Khuê actually installs."""
 
 from __future__ import annotations
 
@@ -236,7 +236,7 @@ def test_launch_config_shell_protection_matches_an_existing_protected_leaf() -> 
 
 
 def test_gateway_startup_merges_the_override(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The variable has to reach a command line Kiro Crew never constructs, so the
+    """The variable has to reach a command line Sao Khuê never constructs, so the
     wiring is what delivers the fix -- an unwired module changes nothing."""
     import inspect
 
@@ -330,7 +330,7 @@ def test_a_blank_operator_session_is_not_treated_as_a_choice() -> None:
 def test_both_agent_spawn_paths_name_their_browser_session(tmp_path) -> None:
     """Wiring assertion: an unwired helper isolates nothing.
 
-    Kiro Crew spawns an agent through two independent drivers -- ``AcpClient``
+    Sao Khuê spawns an agent through two independent drivers -- ``AcpClient``
     for a session and ``AcpRuntime`` for a subagent -- and a fix applied to one
     leaves the other sharing. Both hand their child to the one launch tail, which
     calls the driver's OWN ``browser_session_env`` binding, so the name minted

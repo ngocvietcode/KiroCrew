@@ -109,10 +109,10 @@ test("a generic give-up names the cause, the count and the log, and offers retry
   });
   assert.strictEqual(blockedSandbox, false);
   assert.strictEqual(options.type, "error");
-  assert.strictEqual(options.message, "Kiro Crew's window has stopped working.");
+  assert.strictEqual(options.message, "Sao Khuê's window has stopped working.");
   // Three reloads spent means the renderer died four times; the reason is
   // said in plain words before the raw codes.
-  assert.match(options.detail, /stopped working 4 times in a row \(it ran out of memory\), so Kiro Crew stopped retrying/);
+  assert.match(options.detail, /stopped working 4 times in a row \(it ran out of memory\), so Sao Khuê stopped retrying/);
   // The details line says who it is for and carries raw codes only: the plain
   // words were said once, in the first sentence.
   assert.match(options.detail, /Details for IT or a bug report: reason: oom, exit code: 137\./);
@@ -138,7 +138,7 @@ test("every recoverable reason has plain words, and an unknown one shows no pare
     assert.match(options.detail, new RegExp(`\\(${PLAIN_REASONS[reason]}\\)`));
   }
   const { options } = buildRendererExhaustedNotice({ reason: "something-new", attempts: 3, platform: "linux" });
-  assert.match(options.detail, /stopped working 4 times in a row, so Kiro Crew stopped retrying/);
+  assert.match(options.detail, /stopped working 4 times in a row, so Sao Khuê stopped retrying/);
   assert.match(options.detail, /reason: something-new/);
 });
 
@@ -151,18 +151,18 @@ test("a blocked-sandbox give-up adds the cause, the supported fix, and leads wit
   });
   assert.strictEqual(blockedSandbox, true);
   // The heading names the cause, since it is the most prominent line.
-  assert.strictEqual(options.message, "Security software is blocking Kiro Crew's window.");
+  assert.strictEqual(options.message, "Security software is blocking Sao Khuê's window.");
   // Try again is explained as useful only once IT has acted.
   assert.match(options.detail, /Try again reloads the window once more; it helps only after IT has added the app to the allow list/);
-  assert.match(options.detail, /Kiro Crew's display process exited 4 times/);
+  assert.match(options.detail, /Sao Khuê's display process exited 4 times/);
   // Cause first, then who to ask and for what, then the codes a report needs.
   assert.match(options.detail, /^Most likely, security software on this Windows device is blocking/);
-  assert.match(options.detail, /ask your IT team to add the Kiro Crew app to that software's allow list \(a "process exclusion"\)/);
+  assert.match(options.detail, /ask your IT team to add the Sao Khuê app to that software's allow list \(a "process exclusion"\)/);
   assert.match(options.detail, /reason: crashed, exit code: -2147483645 \/ 0x80000003/);
   assert.ok(options.detail.indexOf("ask your IT team") < options.detail.indexOf("-2147483645"));
   assert.ok(options.detail.indexOf("Try again reloads") < options.detail.indexOf("Details for IT"));
   // The posture is stated to the user, not just kept in code, and "security"
-  // names only the software, never Kiro Crew's own side.
+  // names only the software, never Sao Khuê's own side.
   assert.match(options.detail, /will not weaken its own safeguards/);
   assert.strictEqual(options.detail.match(/security/g).length, 1);
   // The guide button says a browser will open.

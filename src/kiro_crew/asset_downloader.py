@@ -2,7 +2,7 @@
 
 Extracted from :mod:`kiro_crew.embeddings`, which had the only copy: a streamed
 GET whose bytes are hashed as they arrive, an atomic install, and an error string
-per failure mode. The embedding model was the first pinned artifact Kiro Crew
+per failure mode. The embedding model was the first pinned artifact Sao Khuê
 fetches at runtime; feature-video clips are the second, and a second private
 downloader would mean two places for "did we verify this before installing it?"
 to be answered differently.
@@ -119,7 +119,7 @@ _ERROR_PREFIX = "HTTPS download failed"
 PART_SUFFIX = ".part"
 
 #: Ceiling applied when a caller declares neither an exact *size* nor a
-#: *max_bytes*. Generous — the largest thing Kiro Crew fetches is a ~610MB model —
+#: *max_bytes*. Generous — the largest thing Sao Khuê fetches is a ~610MB model —
 #: because its job is only to make "unbounded" unreachable: bytes are written as
 #: they arrive, so without a ceiling an endless body fills the disk long before the
 #: end-of-stream digest gets to reject it. A caller that knows its payload passes a

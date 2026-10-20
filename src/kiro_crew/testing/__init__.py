@@ -1,4 +1,4 @@
-"""Test utilities for KiroCrew consumers.
+"""Test utilities for SaoKhue consumers.
 
 Everything under ``kiro_crew.testing`` is intended for downstream test
 suites that want to exercise code against a populated ``$KIROCREW_HOME``

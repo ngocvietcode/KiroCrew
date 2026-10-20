@@ -53,7 +53,7 @@ class AuthConfig(TypedDict, total=False):
     ``mode`` is ``"dcr"`` (the default when the block is absent: kiro-cli
     registers a public client at runtime, RFC 7591) or ``"preregistered"``: the
     provider refuses dynamic registration, so an OPERATOR registers an OAuth app
-    in the vendor console and hands Kiro Crew its client id (and, for a
+    in the vendor console and hands Sao Khuê its client id (and, for a
     confidential client, its secret) through Settings → OAuth Apps. Which
     providers are which is a vendor fact, not a preference, so it lives in the
     registry rather than in config.

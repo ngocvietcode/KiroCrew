@@ -222,7 +222,7 @@ def replay_frames(
     runtime's per-session caches, so a ``tool_call_update`` recovers the input
     its originating ``tool_call`` recorded.
 
-    ``gate_envelope_nonce`` is what a session running Kiro Crew's gate extension
+    ``gate_envelope_nonce`` is what a session running Sao Khuê's gate extension
     hands the permission builder; a fixture recorded on such a session declares
     the value its extension echoed as ``_meta.gate_envelope_nonce`` so the replay
     reads its permission frames the way the live session did. Absent, as on every

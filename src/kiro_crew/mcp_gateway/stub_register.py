@@ -234,13 +234,13 @@ def _binary_version(command: str) -> str:
         return "unknown"
 
 
-#: Kiro Crew's own MCP servers, as the subcommand a stub's target args name.
+#: Sao Khuê's own MCP servers, as the subcommand a stub's target args name.
 #: For these the target binary is the ``kirocrew`` console-script shim, whose
 #: bytes never change across a ``git pull`` of an editable install, so its
 #: hash alone let a pooled backend from a two-day-old checkout keep answering
 #: stubs from a freshly restarted gateway. The package's own fingerprint is
 #: folded in for exactly these, and only these: a third-party MCP binary is
-#: what its bytes say it is, and re-partitioning its pool on every Kiro Crew
+#: what its bytes say it is, and re-partitioning its pool on every Sao Khuê
 #: commit would cold-start it for no reason.
 #:
 #: Spelled out rather than imported from ``mcp_discovery``, whose module-level
@@ -275,19 +275,19 @@ def _pool_binary_identity(command: str, target_args: list[str]) -> tuple[str, st
     its existing argv-based identity.
     """
     base = _binary_version(command)
-    # Two ways a target runs Kiro Crew's own code: one of the reserved
+    # Two ways a target runs Sao Khuê's own code: one of the reserved
     # subcommands, or the gateway interpreter pinned by ``apps/bridges_mcp.py``
     # with ``-m kiro_crew...`` / the deps_boot shim in argv
     # (``hashing.runs_install_code``). The second needs the fold here too: with
     # the versioned directory gone from ``command_args_hash``, this token is
     # the only identity dimension left that can see the code change. A
     # third-party server that merely runs ON that interpreter is excluded, so
-    # its pool is not re-partitioned on every Kiro Crew commit.
+    # its pool is not re-partitioned on every Sao Khuê commit.
     managed = any(a in _KIROCREW_MCP_SUBCOMMANDS for a in target_args)
     if not managed and not runs_install_code(command, target_args):
         return base, ""
     # Imported here, not at module top: the stub's cold-start path is timed
-    # and this module is only needed on the Kiro Crew branch.
+    # and this module is only needed on the Sao Khuê branch.
     from kiro_crew.code_fingerprint import code_fingerprint
 
     fingerprint = code_fingerprint()
@@ -298,7 +298,7 @@ def _pool_binary_identity(command: str, target_args: list[str]) -> tuple[str, st
 
 def pool_binary_version(command: str, target_args: list[str]) -> str:
     """The ``binary_version`` a stub registers: the binary's hash, plus the Kiro
-    Crew code fingerprint when the target is one of Kiro Crew's own servers.
+    Crew code fingerprint when the target is one of Sao Khuê's own servers.
     """
     return _pool_binary_identity(command, target_args)[0]
 

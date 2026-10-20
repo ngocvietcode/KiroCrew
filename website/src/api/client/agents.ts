@@ -1,6 +1,6 @@
 /**
  * Crew agents: installed agents, agent templates and spec
- * detail/patch/fork/publish/reset, Kiro Crew agent CRUD, the catalog and
+ * detail/patch/fork/publish/reset, Sao Khuê agent CRUD, the catalog and
  * resolved model, the members roster and drawer reads, crew teams, appearance
  * packs and avatar upload.
  */
@@ -260,7 +260,7 @@ export function createAgentsEndpoints({ post, put, del, j, jfetch: fetch, sessio
     // vice versa). May reject with origin_missing / stale_binding / not_a_private_copy
     // / ambiguous_template_name / rebind_failed.
     agentReset: (name: string, crew: string) => fetch('/api/agents/detail/' + encodeURIComponent(name) + '/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ crew }) }).then(j),
-    // Kiro Crew agents
+    // Sao Khuê agents
     // sessionKey identifies the CHAT SLOT whose project scope applies. The
     // server resolves project-local agents through
     // active_project_dir(state, session_key); with no key it falls back to
@@ -272,7 +272,7 @@ export function createAgentsEndpoints({ post, put, del, j, jfetch: fetch, sessio
       fetch('/api/agents', {
         headers: sessionKey ? { 'X-Session-Key': sessionKey } : { ..._sk },
       }).then(j),
-    /** The model a new session on this Kiro Crew agent would run on. Empty
+    /** The model a new session on this Sao Khuê agent would run on. Empty
      *  `agent` resolves the configured default agent; `app` adds the owning
      *  app's own model setting. */
     agentResolvedModel: (agent: string, app?: string) =>

@@ -111,7 +111,7 @@ conflict — so each pairing is argued.
 | 2 Build in the open | Openness | No real conflict. Openness already requires the placement reasoning be written down, which is what this tenet asks for. |
 | 3 Easy to use | Easy to use | Real conflict. A composable product can be an unusable one, so "productive in 60 seconds" must beat replaceability. This is why the shipped set is a curated opinion rather than an empty shell. |
 | 4 The gateway, not the replacement | Gateway | No conflict; both point outward. |
-| 5 Built as a community | Community | No conflict. This tenet is the mechanism for tenet 5's promise that "skills, agents, and apps exist so anyone can shape Kiro Crew around how they already work", and a mechanism belongs after the commitment it serves. |
+| 5 Built as a community | Community | No conflict. This tenet is the mechanism for tenet 5's promise that "skills, agents, and apps exist so anyone can shape Sao Khuê around how they already work", and a mechanism belongs after the commitment it serves. |
 | 6 Knowledge that flows, with boundaries | Boundaries | Real conflict. An app wanting broad memory access loses to memory boundaries and the right to forget. |
 | 7 Teammates, not tools | Teammates | No conflict. |
 
@@ -176,7 +176,7 @@ audience for this rule is a reviewer deciding where a new surface goes, and they
 are not reading the app-boundary section first.
 
 **Rewrite an existing tenet instead of adding one.** Tenet 5 is the closest
-("skills, agents, and apps exist so anyone can shape Kiro Crew"). Widening it
+("skills, agents, and apps exist so anyone can shape Sao Khuê"). Widening it
 would bury a testable rule inside a broader commitment and would edit a sentence
 other people have already relied on.
 

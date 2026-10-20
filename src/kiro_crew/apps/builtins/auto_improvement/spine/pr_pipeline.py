@@ -33,7 +33,7 @@ system"). The CR is DRAFT-only / never published-or-merged — that policy is en
 the spine boundary, realized by the recipe (§4, §5.3; 08_safety §6).
 
 Target-agnostic (10_roadmap M5 generalization note; M0/M1 grep): this module names no build
-tool, no provider, no config flag, no Kiro Crew path. The CR-recipe (how/where to draft) and
+tool, no provider, no config flag, no Sao Khuê path. The CR-recipe (how/where to draft) and
 the ruler field names are profile-shaped; the verify→reproduce→draft→ledger control flow and
 the fingerprint contract are spine.
 

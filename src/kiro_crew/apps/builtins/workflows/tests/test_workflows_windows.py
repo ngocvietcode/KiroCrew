@@ -132,7 +132,7 @@ def test_backend_entry_point_is_module_style_not_a_shell_launcher(
 
 def test_app_backend_spawns_no_external_process() -> None:
     """ "Functionally complete on Windows" holds only while the app shells out to
-    nothing: Kiro Crew has no native OS sandbox backend on Windows, so a
+    nothing: Sao Khuê has no native OS sandbox backend on Windows, so a
     subprocess-dependent feature would fail closed there.
     """
     src = (APP_ROOT / "server.py").read_text(encoding="utf-8")

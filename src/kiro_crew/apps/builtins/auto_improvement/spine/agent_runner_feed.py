@@ -21,7 +21,7 @@ _LINE_FLUSH_LEN = 200
 class _LineBuffer:
     """Coalesce a stream of tiny text chunks into COHERENT lines for the activity feed.
 
-    The Kiro Crew provider streams assistant text as many sub-word fragments ("ismatched-",
+    The Sao Khuê provider streams assistant text as many sub-word fragments ("ismatched-",
     "ncation would"). Emitting one feed event per fragment makes the live log unreadable
     (the exact symptom the user reported). This buffers fragments and flushes a line only
     on a real boundary — a newline, a sentence end (``. ``/``! ``/``? ``), or when the

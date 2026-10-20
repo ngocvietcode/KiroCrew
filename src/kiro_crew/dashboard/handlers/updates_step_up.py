@@ -159,7 +159,7 @@ async def _arm_packaged_app(request: web.Request) -> web.Response:
         state.notify(
             "update",
             "An agent requested an app update",
-            f"{requested_by} asked to update Kiro Crew to {label}. Approve it in Settings › About.",
+            f"{requested_by} asked to update Sao Khuê to {label}. Approve it in Settings › About.",
             url="/settings/about",
         )
     await _audit_update_event(
@@ -507,7 +507,7 @@ async def api_update_approve(request: web.Request) -> web.Response:
             if reattach:
                 state.notify(
                     "update",
-                    f"Kiro Crew {pending.version}: re-attach the sandbox profile",
+                    f"Sao Khuê {pending.version}: re-attach the sandbox profile",
                     wheel_apply.userns_reattach_after_apply(pending.version),
                 )
             if not await asyncio.to_thread(wheel_apply.restart_reaches, pending.version):

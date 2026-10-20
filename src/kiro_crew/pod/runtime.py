@@ -670,7 +670,7 @@ def _systemctl_env() -> dict[str, str]:
 
     The session-bus backfill is :func:`kiro_crew.service.common.systemctl_user_env`
     (why it exists and what it never overrides is documented there). Pods add one
-    thing on top: Kiro Crew's CLI and error classifier use English diagnostics,
+    thing on top: Sao Khuê's CLI and error classifier use English diagnostics,
     so the service-manager tools are pinned to their stable C messages and a host
     locale cannot turn Permission denied or No medium found into the generic
     failure class.
@@ -1323,9 +1323,9 @@ def build_pod_env(
         # install's specs -- and, just as importantly, stops a pod that was merely
         # BLOCKED from rewriting them falling back to the shared spec, whose env
         # pins the LIVE data home (so a pod's ``learn_add`` would have written the
-        # real lessons). Safe only because every KiroCrew reader of the transcripts
+        # real lessons). Safe only because every SaoKhue reader of the transcripts
         # dir now resolves through ``kiro_sessions_dir()``; without that the pod
-        # would write sessions somewhere KiroCrew never looks and lose resume.
+        # would write sessions somewhere SaoKhue never looks and lose resume.
         # Inside the pod HOME so ``pod down``'s teardown reclaims it.
         "KIRO_HOME": str(home_dir / "kiro"),
         # Give the pod its OWN workspace root. Without this, `workspace_root()`

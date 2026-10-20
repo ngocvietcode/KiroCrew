@@ -8,14 +8,14 @@ docs/system-specs/modules/onboarding-import.md, "Conflict strategy" and
   and rewritten whole;
 * the conflict strategies (``skip`` / ``rename`` / ``overwrite``), their rename
   derivation, and the restore copies an overwrite writes first;
-* the writers whose destination is a file Kiro Crew already reads:
+* the writers whose destination is a file Sao Khuê already reads:
   workspaces and settings through ``config.json`` (one locked
   read-modify-write each), MCP servers through ``mcp.json`` under the
   dashboard's MCP lock, and skill packages staged in a sibling directory and
   swapped in atomically, with every path re-checked for a symlink component
   immediately before the write.
 
-The writers into Kiro Crew's own stores -- lessons, memories and schedules --
+The writers into Sao Khuê's own stores -- lessons, memories and schedules --
 and the per-item dispatch loop stay in :mod:`kiro_crew.onboarding_import`, next
 to the persistence and cron ratchets that pin them there.
 """
@@ -330,7 +330,7 @@ def _write_workspace(
 
 @contextmanager
 def _mcp_lock(_path: Path) -> Iterator[None]:
-    """Coordinate with dashboard and app writers of the Kiro Crew MCP file."""
+    """Coordinate with dashboard and app writers of the Sao Khuê MCP file."""
     # The dashboard's MCP handlers write the same data-home file while holding
     # the global Kiro MCP sidecar lock. Reuse that lock here so import cannot
     # race a manual enable/edit operation. This is imported lazily because the

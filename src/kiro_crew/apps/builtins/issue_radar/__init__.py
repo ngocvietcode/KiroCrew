@@ -2,7 +2,7 @@
 
 Investigates issues and surfaces linked PR/commit status, keeping findings in a
 local per-repo ledger. Authenticates via the user's existing ``gh`` CLI
-session; no GitHub App, no PAT management, no KiroCrew-hosted storage.
+session; no GitHub App, no PAT management, no SaoKhue-hosted storage.
 """
 
 # Required re-export: dashboard/server.py's startup route registration does

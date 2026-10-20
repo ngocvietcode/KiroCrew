@@ -630,7 +630,7 @@ export function AboutPanel() {
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-[13px] font-medium text-text flex items-center gap-1.5">
             <ArrowUp size={13} className="lucide-inline text-accent" />
-            {botName || 'Kiro Crew'} {updateState?.version || i18nT('pages.settings.aboutPanel.update_noun')}
+            {botName || 'Sao Khuê'} {updateState?.version || i18nT('pages.settings.aboutPanel.update_noun')}
           </span>
           <span className="text-[12px] text-muted">
             {channel ? `${channel} channel` : i18nT('pages.settings.aboutPanel.update_noun')}
@@ -931,7 +931,7 @@ export function AboutPanel() {
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-[19px] font-extrabold tracking-tight text-text-strong">{botName || 'Kiro Crew'}</span>
+              <span className="text-[19px] font-extrabold tracking-tight text-text-strong">{botName || 'Sao Khuê'}</span>
               <span className="text-[12px] font-mono font-semibold text-accent rounded-full px-2.5 py-0.5 border" style={ACCENT_TINT}
                     title={versionLanesDiffer ? i18nT('pages.settings.aboutPanel.app_lane_title') : undefined}
                     data-testid="about-version">
@@ -1342,7 +1342,7 @@ export function AboutPanel() {
                 </div>
               )}
               <p className="text-sm text-muted">
-                {botName || 'Kiro Crew'} {i18nT('pages.settings.aboutPanel.checks_for_updates_automatically_you_can_also_ch')}
+                {botName || 'Sao Khuê'} {i18nT('pages.settings.aboutPanel.checks_for_updates_automatically_you_can_also_ch')}
               </p>
               <div>
                 <Btn primary onClick={() => checkMutation.mutate()} disabled={checking}>

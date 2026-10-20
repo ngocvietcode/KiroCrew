@@ -1,6 +1,6 @@
 """The admission layer and the cold-start handshake see the agents slice.
 
-Kiro Crew caps every agent process on a Linux host inside one cgroup,
+Sao Khuê caps every agent process on a Linux host inside one cgroup,
 ``kirocrew-agents.slice``, with a ``memory.high`` the kernel throttles at. Two
 things must see that ceiling, and these tests pin both:
 

@@ -136,7 +136,7 @@ test("the feed lane's deferred install quits without installing while a bundled 
   assert.strictEqual(calls.notifications[0].title, "Update not installed");
   assert.match(
     calls.notifications[0].body,
-    /run “kirocrew stop --port 5476” in Terminal, then reopen Kiro Crew/,
+    /run “kirocrew stop --port 5476” in Terminal, then reopen Sao Khuê/,
     "the notification names the step that lets the next install through",
   );
   assert.match(

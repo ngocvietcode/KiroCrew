@@ -333,7 +333,7 @@ async def _handle_config(
     view = {
         "type": "modal",
         "callback_id": "mc_config_panel",
-        "title": {"type": "plain_text", "text": "Kiro Crew Config"},
+        "title": {"type": "plain_text", "text": "Sao Khuê Config"},
         "submit": {"type": "plain_text", "text": "Save"},
         "close": {"type": "plain_text", "text": "Cancel"},
         "blocks": blocks,
@@ -361,7 +361,7 @@ async def _handle_allowlist_cmd(
 ) -> None:
     """Multi-user access disabled — user management is blocked."""
     await respond(
-        "⛔ Multi-user access is disabled for security. Only the owner can use Kiro Crew via Slack."
+        "⛔ Multi-user access is disabled for security. Only the owner can use Sao Khuê via Slack."
     )
 
 
@@ -753,7 +753,7 @@ async def _handle_slash(orch: GatewayOrchestrator, payload: dict) -> None:
             if is_allowed_user(caller_id):
                 _spawn(
                     _respond(
-                        f"⚠️ Kiro Crew is set up for `{slash_command}`, so `{cmd}` did "
+                        f"⚠️ Sao Khuê is set up for `{slash_command}`, so `{cmd}` did "
                         f"nothing. To use `{cmd}`, run `{fix}` and restart the gateway."
                     )
                 )
@@ -802,9 +802,7 @@ async def _handle_slash(orch: GatewayOrchestrator, payload: dict) -> None:
     user_match = re.search(r"<@([A-Z0-9]+)(?:\|([^>]+))?>", cmd_text)
     if user_match:
         _spawn(
-            _respond(
-                "⛔ Multi-user access is disabled. Only the owner can use Kiro Crew via Slack."
-            )
+            _respond("⛔ Multi-user access is disabled. Only the owner can use Sao Khuê via Slack.")
         )
         return
 

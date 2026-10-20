@@ -98,7 +98,7 @@ def register_setup_parser(sub: _Commands) -> None:
     setup_parser.add_argument(
         "--electron-only",
         action="store_true",
-        help="Only install the Kiro Crew desktop app (macOS), skip other setup",
+        help="Only install the Sao Khuê desktop app (macOS), skip other setup",
     )
     setup_parser.add_argument(
         "--clean",
@@ -246,7 +246,7 @@ Only needed on hosts with kernel.apparmor_restrict_unprivileged_userns=1
 
 
 def register_kas_parser(sub: _Commands) -> None:
-    # kas — Kiro Crew's own KAS engine bundle (agent.kas_bundle route).
+    # kas — Sao Khuê's own KAS engine bundle (agent.kas_bundle route).
     kas_parser = cli_help.add_command(
         sub,
         "kas",
@@ -259,7 +259,7 @@ Examples:
   kirocrew kas remove
 
 Then: kirocrew config set agent.kas_bundle true && kirocrew restart
-The engine signs in through Kiro Crew's own login (dashboard → Sign in).
+The engine signs in through Sao Khuê's own login (dashboard → Sign in).
 """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

@@ -1,6 +1,6 @@
 """The PlatformContext composition object and the active-context accessor.
 
-KiroCrew uses the Composed Platform Providers (CPP) model to share one core
+SaoKhue uses the Composed Platform Providers (CPP) model to share one core
 between the public open-source edition and the Amazon-internal companion.  The
 public core defines a set of *extension points* — interfaces in
 ``kiro_crew.platform.interfaces`` — and ships a ``Default*`` adapter for each

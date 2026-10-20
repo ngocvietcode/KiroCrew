@@ -1239,7 +1239,7 @@ class TestTerminalWsIntegration:
     @pytest.mark.asyncio
     async def test_ws_bash_runs_a_login_guarded_profile(self, monkeypatch, tmp_path):
         """A profile stanza behind a login-shell guard must
-        run in a Kiro Crew terminal.
+        run in a Sao Khuê terminal.
 
         The shell is spawned with ``-l``, so ``shopt -q login_shell`` is true and
         the guard passes. Emulating the profile chain from an rc file (what an ``--init-file`` rc file did) cannot substitute: the option is read-only,
@@ -1632,7 +1632,7 @@ class TestTerminalWsIntegration:
             "the gateway's exported PROMPT_COMMAND was not restored after the "
             f"readiness hook withdrew. PTY tail: {tail[-500:]!r}"
         )
-        # The Kiro Crew names are gone from the session either way.
+        # The Sao Khuê names are gone from the session either way.
         assert b"KIROCREW_TERMINAL_READY" not in tail
 
     @pytest.mark.asyncio

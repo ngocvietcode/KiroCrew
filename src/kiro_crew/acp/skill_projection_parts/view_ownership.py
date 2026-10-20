@@ -33,7 +33,7 @@ from kiro_crew.config.paths import kiro_home
 from kiro_crew.hooks import FileTooLargeError, safe_read_file_bytes
 
 # Generated specs stay in Kiro's shared agents directory, so metadata identifies
-# them for direct scanners and scopes cleanup to the owning Kiro Crew data home.
+# them for direct scanners and scopes cleanup to the owning Sao Khuê data home.
 _MANAGED_MARKER = "x-kirocrew-managed"
 _MANAGED_MARKER_VALUE = "skill-view"
 _MANAGED_CREW_HOME = "x-kirocrew-home"
@@ -53,19 +53,19 @@ _MANAGED_VIEW_SHA256 = "x-kirocrew-view-sha256"
 # so this display field is the ONE place a view can say what it is to a reader
 # that lists the agents directory as agents (the Kiro IDE drop-down): it names
 # the agent to pick instead. The eight-hex tag after the agent is a digest of
-# the publishing data home (:func:`_home_tag`). Two Kiro Crew homes share one
+# the publishing data home (:func:`_home_tag`). Two Sao Khuê homes share one
 # agents directory whenever they share ``~/.kiro``, and with the ownership
 # sidecars under each home's own data home a view of the OTHER home has no
 # sidecar this home can see -- which is exactly what a view from a build before
 # any sidecar looked like, and the legacy reclaim deletes those. The tag tells
 # the two apart: a sidecar-less view carrying another home's tag is that home's
 # live view and is left alone; one carrying no tag at all is the legacy case.
-_MANAGED_VIEW_DESCRIPTION_PREFIX = "Kiro Crew managed view of "
+_MANAGED_VIEW_DESCRIPTION_PREFIX = "Sao Khuê managed view of "
 _MANAGED_VIEW_DESCRIPTION_RE = re.compile(
     re.escape(_MANAGED_VIEW_DESCRIPTION_PREFIX) + r"(?P<agent>\S+) \[(?P<home>[0-9a-f]{8})\]"
 )
 _MANAGED_VIEW_DESCRIPTION_TEMPLATE = (
-    "{prefix}{agent} [{home}]: auto-managed and auto-pruned by Kiro Crew; "
+    "{prefix}{agent} [{home}]: auto-managed and auto-pruned by Sao Khuê; "
     "do not pick it. Use {agent} instead."
 )
 _HOME_TAG_HEX_CHARS = 8

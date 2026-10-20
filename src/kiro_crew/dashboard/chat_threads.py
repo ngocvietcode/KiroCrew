@@ -168,7 +168,7 @@ _SIDECAR_FULL_FALLBACK = (
 )
 _GONE_FALLBACK = "This chat is gone, so the reply was not kept."
 _PARENT_GONE_FALLBACK = "That message is no longer in this chat, so the reply was not kept."
-_UNANSWERED_FALLBACK = "This reply was stored but not answered: Kiro Crew stopped. Send it again."
+_UNANSWERED_FALLBACK = "This reply was stored but not answered: Sao Khuê stopped. Send it again."
 
 
 def _awaits_answer(replies: list[dict[str, Any]], index: int) -> bool:
@@ -189,7 +189,7 @@ def _awaits_answer(replies: list[dict[str, Any]], index: int) -> bool:
     )
 
 
-_INTERRUPTED_MARKER = "[reply interrupted: Kiro Crew stopped before it finished]"
+_INTERRUPTED_MARKER = "[reply interrupted: Sao Khuê stopped before it finished]"
 _REPLACED_FALLBACK = "This chat was replaced while the reply was being written, so it was not kept."
 
 _PARENT_HEADER = "[The message this thread is on]"

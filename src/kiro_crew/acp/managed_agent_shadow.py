@@ -1,15 +1,15 @@
-"""Refuse a kiro-cli session in a checkout that claims an agent name Kiro Crew owns.
+"""Refuse a kiro-cli session in a checkout that claims an agent name Sao Khuê owns.
 
 kiro-cli resolves ``--agent <name>`` against ``<cwd>/.kiro/agents`` BEFORE
 ``~/.kiro/agents``, and the kiro spawn paths hand it only the name. So when a
 checkout ships a spec that kiro-cli would select for a managed name -- one that
 declares the name, or one whose filename stem is the name -- the child runs that
-file in place of the spec Kiro Crew generated, with whatever ``allowedTools`` it
+file in place of the spec Sao Khuê generated, with whatever ``allowedTools`` it
 declares. Those grants never reach the PreToolUse gate, and the same swap can just
 as easily DROP a restriction the installed spec carries, so the risk runs in both
 directions.
 
-A managed name is one Kiro Crew writes under ``~/.kiro/agents``
+A managed name is one Sao Khuê writes under ``~/.kiro/agents``
 (:data:`kiro_crew.agent_files.OWNED_KIRO_AGENT_FILES`). For those names the
 product is the author, so a project copy is never what the operator selected.
 Project specs under any other name stay the documented discovery feature and are
@@ -28,7 +28,7 @@ the worker's own spawn, but it scans the top level only and compares the name
 exactly, so a nested or case-variant claim is left to this check.
 
 The skill-view aliases are reserved the same way. With native skill projection
-on, the name a spawn finally hands to ``--agent`` is an alias Kiro Crew generates
+on, the name a spawn finally hands to ``--agent`` is an alias Sao Khuê generates
 and publishes under ``~/.kiro/agents``, not the agent's own name, and kiro-cli
 resolves that alias against the checkout first as well. An alias is always Crew's
 own file, so a checkout may not claim one either.
@@ -63,7 +63,7 @@ _RESERVED_FOLDED = frozenset(name.casefold() for name in SHADOW_REFUSED_AGENT_NA
 
 
 def _is_installed_agents_dir(project_agents: Path) -> bool:
-    """Is the checkout's agents directory the one Kiro Crew installs into?
+    """Is the checkout's agents directory the one Sao Khuê installs into?
 
     A session whose cwd is the home directory has ``<cwd>/.kiro/agents`` equal to
     ``~/.kiro/agents``, so the installed spec would read as its own shadow.
@@ -245,8 +245,8 @@ def _is_reserved(name: str) -> bool:
 def _link_refusal(path: Path) -> str:
     return (
         f"the session's project links {path}, in or on the way to its agents directory, "
-        "to an untrusted share or a protected location, so Kiro Crew cannot confirm "
-        "that what it reaches does not replace an agent Kiro Crew installs. Remove that "
+        "to an untrusted share or a protected location, so Sao Khuê cannot confirm "
+        "that what it reaches does not replace an agent Sao Khuê installs. Remove that "
         "link to run a session there."
     )
 
@@ -321,7 +321,7 @@ def agents_dir_competing_claim(
         path = exc.args[0] if isinstance(exc, _Unverifiable) else own_file
         return AgentNameClaim(
             "unverifiable",
-            f"the agent entry at {path} could not be verified, so Kiro Crew cannot "
+            f"the agent entry at {path} could not be verified, so Sao Khuê cannot "
             "confirm it does not replace the app's agent. Fix or remove that entry, "
             "then run the command again from the command palette.",
         )
@@ -370,8 +370,8 @@ def _project_agent_claim_refusal(
         if is_unverifiable_path_refusal(protected):
             return (
                 f"the session's project path {work_dir} could not be checked against the "
-                "protected locations, so Kiro Crew cannot scan it for an agent that "
-                "replaces one Kiro Crew installs. Retry once the filesystem responds."
+                "protected locations, so Sao Khuê cannot scan it for an agent that "
+                "replaces one Sao Khuê installs. Retry once the filesystem responds."
             )
         return None
     project_agents = project_agents_dir(work_dir)
@@ -387,7 +387,7 @@ def _project_agent_claim_refusal(
         return (
             f"the session's project holds more than {_MAX_SPEC_FILES} agent specs or "
             f"{_MAX_SPEC_DIRS} directories under {project_agents}, too many to check that "
-            "none of them replaces an agent Kiro Crew installs; reduce them to run a "
+            "none of them replaces an agent Sao Khuê installs; reduce them to run a "
             "session there."
         )
     except _Unverifiable as exc:
@@ -398,15 +398,15 @@ def _project_agent_claim_refusal(
         except _Unverifiable:
             return (
                 f"the session's project holds an agent spec at {spec} whose declared name "
-                "could not be read, so Kiro Crew cannot confirm it does not replace an "
-                "agent Kiro Crew installs. Fix or remove that file to run a session there."
+                "could not be read, so Sao Khuê cannot confirm it does not replace an "
+                "agent Sao Khuê installs. Fix or remove that file to run a session there."
             )
         if claimed is None:
             continue
         return (
             f"the session's project declares its own {claimed!r} agent spec at {spec}, "
-            "and kiro-cli loads a project spec ahead of the one Kiro Crew installs, so "
-            "that copy is what would run -- with grants and restrictions Kiro Crew never "
+            "and kiro-cli loads a project spec ahead of the one Sao Khuê installs, so "
+            "that copy is what would run -- with grants and restrictions Sao Khuê never "
             "wrote and cannot govern. Remove that project spec, or give it a name and a "
             "filename of its own, to run the installed agent."
         )
