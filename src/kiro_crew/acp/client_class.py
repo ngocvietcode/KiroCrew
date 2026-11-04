@@ -1177,10 +1177,11 @@ class AcpClient:
             return
         if self._confirmed_capability_session == self._session_id:
             return
-        if (
-            self.backend not in ACP_BACKENDS_MEMBER_CAPABILITIES
-            or self.backend not in ACP_BACKENDS_SESSION_MCP_ARRAY
-        ):
+        if self.backend not in ACP_BACKENDS_MEMBER_CAPABILITIES:
+            return
+        if self.backend not in ACP_BACKENDS_SESSION_MCP_ARRAY:
+            self._loaded_capability_template = self._agent
+            self._confirmed_capability_session = self._session_id
             return
         await asyncio.to_thread(self._confirm_member_projection, self._session_agent_spec)
         self._confirmed_capability_session = self._session_id

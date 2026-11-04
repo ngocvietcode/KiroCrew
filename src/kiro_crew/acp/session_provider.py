@@ -1090,9 +1090,13 @@ class AcpSessionProvider(LLMProvider):
     def loaded_capability_template(self) -> str:
         if not (self._owns_runtime and self._runtime.is_alive()):
             return ""
-        from kiro_crew.acp.types import ACP_BACKEND_KAS  # noqa: PLC0415
+        from kiro_crew.acp.types import ACP_BACKEND_KAS, ACP_BACKEND_LITELLM  # noqa: PLC0415
 
-        if self._runtime.acp_backend in (ACP_BACKEND_KIRO, ACP_BACKEND_KAS):
+        if self._runtime.acp_backend in (
+            ACP_BACKEND_KIRO,
+            ACP_BACKEND_KAS,
+            ACP_BACKEND_LITELLM,
+        ):
             if self._handle.active_agent == self._runtime._agent:
                 return self._handle.active_agent
             return ""

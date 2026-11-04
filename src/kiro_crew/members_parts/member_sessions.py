@@ -169,7 +169,12 @@ def select_provider_backend(
     harness-parity H3/H13 allow exactly one selection gate on the construction
     path, and this function is an input to that gate, not a second one.
     """
-    from kiro_crew.acp_backends import resolve_selected_backend
+    from kiro_crew.acp_backends import (
+        ACP_BACKEND_KAS,
+        ACP_BACKEND_KIRO,
+        ACP_BACKEND_LITELLM,
+        resolve_selected_backend,
+    )
 
     if backend_override is not None:
         backend = resolve_selected_backend(backend_override)
@@ -182,6 +187,11 @@ def select_provider_backend(
         return backend
     if crew_backend is not None:
         backend = crew_backend.backend
+        if configured_default == ACP_BACKEND_LITELLM and backend in (
+            ACP_BACKEND_KIRO,
+            ACP_BACKEND_KAS,
+        ):
+            backend = ACP_BACKEND_LITELLM
         logger.info(
             "crewmate session %s: routing to acp_backend=%r (agents.%s.acp_backend=%r)",
             session_key,
@@ -192,6 +202,11 @@ def select_provider_backend(
         return backend
     if is_member_session_key(session_key) or is_crewmate_worker_session(session_key):
         backend = resolve_selected_backend(member_backend)
+        if configured_default == ACP_BACKEND_LITELLM and backend in (
+            ACP_BACKEND_KIRO,
+            ACP_BACKEND_KAS,
+        ):
+            backend = ACP_BACKEND_LITELLM
         logger.info(
             "member session %s: routing to acp_backend=%r " "(agent.member_acp_backend=%r)",
             session_key,

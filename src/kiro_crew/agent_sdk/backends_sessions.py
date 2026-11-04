@@ -22,6 +22,7 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
+    ACP_BACKEND_LITELLM,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
     ACP_BACKEND_STRANDS,
@@ -159,6 +160,7 @@ ACP_BACKENDS_ACP_CLIENT_SPAWNABLE = frozenset(
         ACP_BACKEND_DEEPSEEK,
         ACP_BACKEND_COPILOT,
         ACP_BACKEND_STRANDS,
+        ACP_BACKEND_LITELLM,
     }
 )
 
@@ -269,6 +271,7 @@ ACP_BACKENDS_HARNESS_OWNED_SESSIONS = frozenset(
         # module's ``session`` option) and restores it on ``session/load`` by id:
         # ``test/fixtures/acp_frames/strands/session-load-live.jsonl``.
         ACP_BACKEND_STRANDS,
+        ACP_BACKEND_LITELLM,
     }
 )
 
@@ -296,7 +299,7 @@ ACP_BACKENDS_HARNESS_OWNED_SESSIONS = frozenset(
 # after replaying the restored history
 # (``test/fixtures/acp_frames/strands/session-load-live.jsonl``).
 ACP_BACKENDS_LOAD_WITHOUT_MODES = frozenset(
-    {ACP_BACKEND_OPENCODE, ACP_BACKEND_DEEPSEEK, ACP_BACKEND_STRANDS}
+    {ACP_BACKEND_OPENCODE, ACP_BACKEND_DEEPSEEK, ACP_BACKEND_STRANDS, ACP_BACKEND_LITELLM}
 )
 
 # Backends that restore a session with ``session/resume`` instead of

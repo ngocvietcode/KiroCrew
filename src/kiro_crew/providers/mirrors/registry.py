@@ -37,6 +37,7 @@ from kiro_crew.acp_backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
+    ACP_BACKEND_LITELLM,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
     ACP_BACKEND_STRANDS,
@@ -408,6 +409,15 @@ PROJECTIONS: dict[str, McpProjection] = {
         # No per-call deny path is verified for this harness, so a narrowed server is
         # withheld whole, the direction that cannot leave a switched-off tool reachable.
         per_tool_deny=PerToolDeny.WHOLE_SERVER,
+    ),
+    ACP_BACKEND_LITELLM: McpProjection(
+        kind=ProjectionKind.NATIVE,
+        reason=(
+            "litellm_server.py is handed --agent and reads ~/.kiro/agents/<name>.json "
+            "itself at session start, mounting both the spec's own stdio MCP servers and "
+            "any pooled broker stubs sent on session/new, while asking "
+            "session/request_permission before every tool call."
+        ),
     ),
 }
 

@@ -663,7 +663,11 @@ def _member_mount_withheld(
     # An unenforced routing is the ONLY case the governed-surface fallback answers
     # for; see the precondition paragraph above for why an enforced one must not
     # read it.
-    if not acp_tool_gate.is_enforced(self.backend) and not self._permission_surface_governed:
+    if (
+        not acp_tool_gate.is_enforced(self.backend)
+        and acp_tool_gate.routing_for(self.backend) is not acp_tool_gate.Routing.BY_DESIGN
+        and not self._permission_surface_governed
+    ):
         logger.warning(
             "member session %s: permission surface not Crew-owned -- %s is not mounted",
             self._session_key,

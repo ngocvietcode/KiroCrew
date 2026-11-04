@@ -489,6 +489,7 @@ def _read_backend_choice(section: _sections.SectionReader, agent_data: dict, key
     from kiro_crew.acp_backends import (
         ACP_BACKEND_KAS,
         ACP_BACKEND_KIRO,
+        ACP_BACKEND_LITELLM,
         backend_from_stored,
         kiro_cli_pick_backend,
         selectable_backends,
@@ -502,7 +503,14 @@ def _read_backend_choice(section: _sections.SectionReader, agent_data: dict, key
 
         return GOVERNANCE_FLOOR_BACKEND
     value = backend_from_stored(agent_data.get(key))
-    if value is None:
+    primary_backend = backend_from_stored(agent_data.get("acp_backend"))
+    if (
+        key == _MEMBER_HARNESS_KEY
+        and primary_backend == ACP_BACKEND_LITELLM
+        and value in (None, ACP_BACKEND_KIRO, ACP_BACKEND_KAS)
+    ):
+        value = ACP_BACKEND_LITELLM
+    elif value is None:
         default = section.default(key)
         value = default if default in selectable_backends() else None
     elif key == _MEMBER_HARNESS_KEY and value == ACP_BACKEND_KIRO:
