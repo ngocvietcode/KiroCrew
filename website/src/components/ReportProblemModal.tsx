@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
-  ExternalLink,
   Loader2,
   Lock,
 } from 'lucide-react'
@@ -168,15 +167,6 @@ export default function ReportProblemModal({ open, onClose, initialNote = '' }: 
                 {i18nT('components.reportProblemModal.download_zip')}
               </Btn>
             </a>
-            <a href={result.github_issue_url} target="_blank" rel="noopener noreferrer">
-              <Btn primary>
-                <ExternalLink size={13} className="lucide-inline" />{' '}
-                {i18nT('components.reportProblemModal.open_github_issue')}
-              </Btn>
-            </a>
-          </div>
-          <div className="text-[12px] text-muted">
-            {i18nT('components.reportProblemModal.prefill_hint')}
           </div>
         </div>
       )}

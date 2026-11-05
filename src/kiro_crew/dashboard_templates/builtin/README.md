@@ -8,7 +8,7 @@ navigate itself, so it comes from one of two places a person put it: this direct
 which went through review, or the operator's own folder (see "An operator's own page"
 below). Thirteen ship: the first four are below, five more are in "The round-7 set"
 further down, then `office` in "A desk that ships decks and mail", two in
-"The two views", and `kirocrew-conductor` in "A page named for its crewmate".
+"The two views", and `saokhue-conductor` in "A page named for its crewmate".
 
 | id | folds it reads | what it answers |
 |---|---|---|
@@ -342,7 +342,7 @@ rather than a page one. `test_dashboard_template_views.py` asserts neither page 
 
 | id | folds it reads | the question it answers | agentic |
 |---|---|---|---|
-| `kirocrew-conductor` | `work`, `panel` | what is my conductor running, and what does it need from me | `needs_you` |
+| `saokhue-conductor` | `work`, `panel` | what is my conductor running, and what does it need from me | `needs_you` |
 
 A crewmate that adopted nothing gets the page whose id is its own slug, when one ships,
 and no page otherwise (`instance.default_template_id`). This is the crew
@@ -350,7 +350,7 @@ panel's rule that a template named after a crew is that crew's view, so a crewma
 named like a shipped page gets that page. No page here may be named `default`: a
 crewmate can be.
 
-`kirocrew-conductor` is the conductor's task board. Its tasks, states, goal and round
+`saokhue-conductor` is the conductor's task board. Its tasks, states, goal and round
 come from the `work` fold, bound the way `goal-board` binds them, so the board is
 current even when the conductor publishes nothing. `needs_you` is the conductor's own
 list of lines the person must act on; tasks whose worker asked or is stuck join it from

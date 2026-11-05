@@ -422,7 +422,7 @@ describe('MembersPage Profile card — New schedule', () => {
     // `/schedule` labels the job by. `member_id` is the roster row's NAME, never a
     // derived id: slugification is lossy and a derived id can collide.
     mockRoster([row({
-      name: 'radar', slug: 'radar', slot_key: 'member-radar', kiro_agent: 'kirocrew-worker',
+      name: 'radar', slug: 'radar', slot_key: 'member-radar', kiro_agent: 'saokhue-worker',
       memory_version: 2, memory_owner: 'radar',
     })])
     renderWithProviders(<NavigationLeaveGuardProvider><MembersPage /><LeaveProbe /></NavigationLeaveGuardProvider>)
@@ -436,11 +436,11 @@ describe('MembersPage Profile card — New schedule', () => {
 
     await waitFor(() => expect(api.createCron).toHaveBeenCalled())
     const submitted = vi.mocked(api.createCron).mock.calls[0][0] as { agent?: string; member_id?: string }
-    expect(submitted.agent).toBe('kirocrew-worker')
+    expect(submitted.agent).toBe('saokhue-worker')
     expect(submitted.member_id).toBe('radar')
     // And the record the server would keep is listed back under this crewmate.
     expect(wakesCrew(
-      { id: 'j-new', name: 'Check the board', member_id: 'radar', agent: 'kirocrew-worker' } as never,
+      { id: 'j-new', name: 'Check the board', member_id: 'radar', agent: 'saokhue-worker' } as never,
       'radar', false, 'radar',
     )).toBe(true)
   })
@@ -451,7 +451,7 @@ describe('MembersPage Profile card — New schedule', () => {
     // display name. Writing the provider template there matched neither field.
     mockRoster([row({
       name: 'Radar One', slug: 'radar-one', slot_key: 'member-radar-one',
-      kiro_agent: 'kirocrew-worker', memory_version: 1, memory_owner: '',
+      kiro_agent: 'saokhue-worker', memory_version: 1, memory_owner: '',
     })])
     renderWithProviders(<NavigationLeaveGuardProvider><MembersPage /><LeaveProbe /></NavigationLeaveGuardProvider>)
     fireEvent.click(await screen.findByText('Radar One'))

@@ -1,6 +1,6 @@
-"""Built-in LiteLLM ACP server, launched one process per session by ``AcpClient``.
+"""Built-in Sao Khuê CLI ACP server, launched one process per session by ``AcpClient``.
 
-Runs Kiro Crew's own Python ACP server (:mod:`kiro_crew.acp.litellm_server`) over stdio
+Runs Kiro Crew's own Python ACP server (:mod:`kiro_crew.acp.saokhue_server`) over stdio
 with no external CLI binary required. Pre-spawn governance checks mirror the first-party
 ``--agent`` spawn path so fork governance, shared-template ceilings, and managed-agent
 shadowing are enforced before the subprocess starts.
@@ -19,31 +19,41 @@ from kiro_crew.acp.child_env_defaults import apply_child_env_defaults
 from kiro_crew.acp.harness.base import ProcessAdapter, SpawnContext, SpawnPlan
 from kiro_crew.acp.transport_errors import AcpError
 from kiro_crew.agent import ForkGovernanceUnresolved
-from kiro_crew.agent_sdk.backends import ACP_BACKEND_LITELLM
+from kiro_crew.agent_sdk.backends import ACP_BACKEND_SAOKHUE
 
 logger = logging.getLogger("kiro_crew.acp.client")
 
-__all__ = ["LITELLM_SERVER_MODULE", "LITELLM_SERVER_SCRIPT", "LitellmLaunch"]
+__all__ = ["SAOKHUE_SERVER_MODULE", "SAOKHUE_SERVER_SCRIPT", "SaokhueLaunch"]
 
-LITELLM_SERVER_MODULE = "kiro_crew.acp.litellm_server"
-LITELLM_SERVER_SCRIPT = str(Path(__file__).resolve().parents[1] / "litellm_server.py")
+SAOKHUE_SERVER_MODULE = "kiro_crew.acp.saokhue_server"
+SAOKHUE_SERVER_SCRIPT = str(Path(__file__).resolve().parents[1] / "saokhue_server.py")
 
-_LITELLM_ENV_KEYS: tuple[str, ...] = (
-    "LITELLM_CLI_HOME",
-    "LITELLM_BASE_URL",
-    "LITELLM_PROXY_URL",
-    "LITELLM_ACCESS_TOKEN",
-    "LITELLM_API_KEY",
-    "LITELLM_MODEL",
-    "LITELLM_TIMEOUT",
+_SAOKHUE_ENV_KEYS: tuple[str, ...] = (
+    "SAOKHUE_CLI_HOME",
+    "SAOKHUE_BASE_URL",
+    "SAOKHUE_PROXY_URL",
+    "SAOKHUE_ACCESS_TOKEN",
+    "SAOKHUE_API_KEY",
+    "SAOKHUE_MODEL",
+    "SAOKHUE_TIMEOUT",
+    "SAOKHUE_OIDC_AUTHORIZE_URL",
+    "SAOKHUE_OIDC_DEVICE_AUTH_URL",
+    "SAOKHUE_OIDC_TOKEN_URL",
+    "SAOKHUE_OIDC_USERINFO_URL",
+    "SAOKHUE_OIDC_REVOKE_URL",
+    "SAOKHUE_CLIENT_ID",
+    "SAOKHUE_OIDC_SCOPE",
+    "SAOKHUE_OIDC_RESOURCE",
+    "SAOKHUE_SSL_VERIFY",
+    "SAOKHUE_REQUIRE_LOGIN",
     "OPENAI_BASE_URL",
     "OPENAI_API_BASE",
     "OPENAI_API_KEY",
 )
 
 
-def _read_dotenv_litellm_vars(dotenv_path: Path) -> dict[str, str]:
-    """Read LiteLLM-related variables from *dotenv_path* without mutating os.environ."""
+def _read_dotenv_saokhue_vars(dotenv_path: Path) -> dict[str, str]:
+    """Read Sao Khuê CLI-related variables from *dotenv_path* without mutating os.environ."""
     found: dict[str, str] = {}
     try:
         if not dotenv_path.is_file():
@@ -59,7 +69,7 @@ def _read_dotenv_litellm_vars(dotenv_path: Path) -> dict[str, str]:
             line = line[len("export ") :].strip()
         key, _, val = line.partition("=")
         key = key.strip()
-        if key not in _LITELLM_ENV_KEYS:
+        if key not in _SAOKHUE_ENV_KEYS:
             continue
         val = val.strip()
         if len(val) >= 2 and val[0] == val[-1] and val[0] in ("'", '"'):
@@ -69,23 +79,23 @@ def _read_dotenv_litellm_vars(dotenv_path: Path) -> dict[str, str]:
     return found
 
 
-def inject_litellm_env(env: dict[str, str]) -> None:
-    """Populate *env* with LiteLLM settings from ``<config_dir>/.env`` when unset."""
+def inject_saokhue_env(env: dict[str, str]) -> None:
+    """Populate *env* with Sao Khuê CLI settings from ``<config_dir>/.env`` when unset."""
     from kiro_crew.config.paths import config_dir
 
-    dotenv_vars = _read_dotenv_litellm_vars(config_dir() / ".env")
+    dotenv_vars = _read_dotenv_saokhue_vars(config_dir() / ".env")
     for key, val in dotenv_vars.items():
         if not env.get(key):
             env[key] = val
 
 
-class LitellmLaunch(ProcessAdapter):
-    """Built-in LiteLLM ACP server launched via ``sys.executable -m kiro_crew.acp.litellm_server``."""
+class SaokhueLaunch(ProcessAdapter):
+    """Built-in Sao Khuê CLI ACP server launched via ``sys.executable -m kiro_crew.acp.saokhue_server``."""
 
-    backend = ACP_BACKEND_LITELLM
+    backend = ACP_BACKEND_SAOKHUE
 
     async def resolve_spawn(self, ctx: SpawnContext) -> SpawnPlan:
-        """Build the ``python -m kiro_crew.acp.litellm_server`` argv after agent gates."""
+        """Build the ``python -m kiro_crew.acp.saokhue_server`` argv after agent gates."""
         if ctx.agent:
             try:
                 await asyncio.to_thread(agent_mod.ensure_agent_materialized, ctx.agent)
@@ -103,7 +113,7 @@ class LitellmLaunch(ProcessAdapter):
                 await asyncio.to_thread(
                     agent_mod.require_shared_template_within_ceiling,
                     ctx.agent,
-                    ACP_BACKEND_LITELLM,
+                    ACP_BACKEND_SAOKHUE,
                 )
             except agent_mod.SharedTemplateOverCeiling as exc:
                 raise AcpError(str(exc)) from exc
@@ -114,20 +124,20 @@ class LitellmLaunch(ProcessAdapter):
             if shadowed:
                 raise AcpError(shadowed)
 
-        argv = [sys.executable, LITELLM_SERVER_SCRIPT, "acp"]
+        argv = [sys.executable, SAOKHUE_SERVER_SCRIPT, "acp"]
         if ctx.agent:
             argv += ["--agent", ctx.agent]
         if ctx.model and ctx.model != "auto":
             argv += ["--model", ctx.model]
         return SpawnPlan(
             argv=argv,
-            spawn_label="litellm-cli acp",
-            stderr_label="litellm-cli",
+            spawn_label="saokhue-cli acp",
+            stderr_label="saokhue-cli",
         )
 
     def apply_spawn_env(self, env: dict[str, str], *, spawned_binary: str | None = None) -> None:
-        """Forward LiteLLM configuration from ``~/.kiro/crew/.env`` and child env defaults."""
-        inject_litellm_env(env)
+        """Forward Sao Khuê CLI configuration from ``~/.kiro/crew/.env`` and child env defaults."""
+        inject_saokhue_env(env)
         apply_child_env_defaults(env)
 
     def record_session_projection(
@@ -136,4 +146,3 @@ class LitellmLaunch(ProcessAdapter):
         """Stamp ``active_agent`` and ``confirmed_projection_template`` on *handle*."""
         setattr(handle, "active_agent", active_agent)
         setattr(handle, "confirmed_projection_template", active_agent)
-

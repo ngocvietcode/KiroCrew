@@ -628,7 +628,7 @@ export default function AgentTemplatesTab() {
         className={`flex flex-col gap-0.5 px-3 py-2 rounded-md cursor-pointer mb-1 transition-colors ${isSel ? 'list-selected bg-accent-subtle' : 'hover:bg-bg-hover'}`}
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className={`text-[13px] font-semibold font-mono truncate flex-1 ${isSel ? 'text-accent' : 'text-text'}`}>{r.name}</span>
+          <span className={`text-[13px] font-semibold font-mono truncate flex-1 ${isSel ? 'text-accent' : 'text-text'}`}>{r.name === 'kirocrew' ? 'saokhue' : r.name}</span>
           {r.read_only && <span className="inline-flex shrink-0" title={readOnlyHint(r.read_only)}><Lock className="lucide-inline text-muted" aria-label={readOnlyHint(r.read_only)} /></span>}
         </div>
         {/* An override row is described in this tab's own word, not the
@@ -858,7 +858,7 @@ export default function AgentTemplatesTab() {
                   {isMobile && <div className="px-4 pt-2.5 shrink-0"><ListDetailBack label={i18nT('pages.overview.agentTemplatesTab.title')} onBack={closeDetail} /></div>}
                   <div className="flex items-start justify-between gap-3 flex-wrap px-4 py-3 border-b border-border shrink-0">
                     <div className="min-w-0">
-                      <div className="text-[17px] font-mono font-semibold text-text-strong truncate">{selected.name}</div>
+                      <div className="text-[17px] font-mono font-semibold text-text-strong truncate">{selected.name === 'kirocrew' ? 'saokhue' : selected.name}</div>
                       <div className="text-[12px] text-muted mt-0.5">
                         {selected.read_only ? i18nT('pages.overview.agentTemplatesTab.read_only_short') : i18nT('pages.overview.agentTemplatesTab.your_template')}
                         {' · '}<code className="text-[11.5px]">~/.kiro/agents/{selected.filename}</code>

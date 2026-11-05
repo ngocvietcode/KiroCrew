@@ -2,7 +2,7 @@
 
 An install at ``<agents>/<crew_name>.json`` would collide with Kiro Crew's own
 agent-spec derivation, which owns three of those names. The crew this deployment ships
-is called ``kirocrew-worker``, so such an install lands ON the mirror
+is called ``saokhue-worker``, so such an install lands ON the mirror
 ``rebuild_agent_config`` derives from the default spec, and the next spawn-path
 re-derivation replaces the shared crew's prompt and tools with Kiro Crew's own -- no
 error, no log line naming the crew.
@@ -36,7 +36,7 @@ from container.supervisor import bundle as bundle_mod
 from .test_supervisor_bundle import build_bundle, make_settings
 
 # The crew that broke: the deployed name, which is also the mirror's own.
-COLLIDING_CREW = "kirocrew-worker"
+COLLIDING_CREW = "saokhue-worker"
 
 
 def _installed(agents: Path) -> list[str]:
@@ -66,7 +66,7 @@ def test_the_installed_spec_lands_in_the_crew_namespace(tmp_path: Path) -> None:
 
 
 def test_the_crew_named_after_the_mirror_does_not_land_on_the_mirror(tmp_path: Path) -> None:
-    """The reproduction from the issue, as a pin: ``kirocrew-worker`` is now installable.
+    """The reproduction from the issue, as a pin: ``saokhue-worker`` is now installable.
 
     The deployed crew IS called this -- its ECR repository, its secret and its
     cloud.json block all carry the name -- so the fix had to keep the name legal rather
@@ -78,8 +78,8 @@ def test_the_crew_named_after_the_mirror_does_not_land_on_the_mirror(tmp_path: P
 
     payload = bundle_mod.install_bundle(settings, agents_dir=agents)
 
-    assert _installed(agents) == ["crew-kirocrew-worker.json"]
-    assert not (agents / "kirocrew-worker.json").exists()
+    assert _installed(agents) == ["crew-saokhue-worker.json"]
+    assert not (agents / "saokhue-worker.json").exists()
     assert not (agents / "kirocrew.json").exists()
     # The crew keeps its own name everywhere the operator sees it; only the agent id is
     # namespaced.

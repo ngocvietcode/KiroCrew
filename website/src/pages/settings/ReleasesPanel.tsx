@@ -29,7 +29,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { CircleDot, FileText, GitCommitHorizontal, Loader2 } from 'lucide-react'
+import { CircleDot, FileText, Loader2 } from 'lucide-react'
 import { api } from '../../api/client'
 import { sanitize } from '../../api/helpers'
 import MarkdownRenderer from '../../components/MarkdownRenderer'
@@ -52,7 +52,6 @@ interface ReleasesPayload {
   stale: boolean
 }
 
-const REPO = 'https://github.com/kirodotdev/KiroCrew'
 
 /** Small-print state note for a row, or `''` when the row needs none.
  *
@@ -123,7 +122,6 @@ export default function ReleasesPanel() {
   // "what changed since" range below. Skipping `active` matters for a RELEASED
   // version that shipped without notes: it is not in progress, so it would
   // otherwise select itself and the range would collapse to a bare commit list.
-  const prevStable = releases.find(r => !r.in_progress && r.version !== active?.version)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
@@ -238,26 +236,6 @@ export default function ReleasesPanel() {
                   ? i18nT('pages.settings.releases.empty_in_progress')
                   : i18nT('pages.settings.releases.empty_released')}
               </p>
-              <a
-                className="inline-flex items-center gap-2 text-accent hover:underline"
-                href={
-                  prevStable
-                    // An in-progress version has NO tag yet -- `compare/v0.1.2...v0.2.0`
-                    // 404s while 0.2.0 is unreleased, which is the one row every
-                    // prerelease reader lands on. Compare against the branch instead.
-                    // The base is the newest release WITH notes, so a release that
-                    // shipped without a section widens the range; that is a known
-                    // over-report, and the alternative (guessing tags) needs the
-                    // network this page deliberately does not use.
-                    ? `${REPO}/compare/v${prevStable.version}...${active?.in_progress ? 'main' : `v${active?.version}`}`
-                    : `${REPO}/commits`
-                }
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                <GitCommitHorizontal className="lucide-inline" aria-hidden="true" />
-                {i18nT('pages.settings.releases.view_commits')}
-              </a>
             </div>
           )}
         </article>

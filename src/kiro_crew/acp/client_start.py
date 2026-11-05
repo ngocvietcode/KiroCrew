@@ -284,7 +284,7 @@ async def _spawn(self: AcpClient) -> None:
         except Exception:
             logger.warning("pre-spawn agent materialization failed", exc_info=True)
         # ALSO not best-effort, and for the same reason as the fork gate below: a
-        # DERIVED spec (kirocrew-worker, kirocrew-heartbeat) that predates the default
+        # DERIVED spec (saokhue-worker, saokhue-heartbeat) that predates the default
         # agent's still mounts and auto-approves a server the default does not have, so
         # proceeding would run ungoverned grants. Repairs first and refuses only
         # when it cannot -- a refused dispatch is recoverable and reportable,

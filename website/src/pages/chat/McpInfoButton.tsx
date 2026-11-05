@@ -108,7 +108,7 @@ export default function McpInfoButton({ agent }: { agent?: string }) {
           <div className="mt-2 pt-2 border-t border-border text-[11px] text-muted leading-snug">
             {agent && agent !== 'kirocrew'
               ? i18nT('pages.chat.mcpInfoButton.agent_loads_only_its_own_mcp_servers', { name: agent })
-              : i18nT('pages.chat.mcpInfoButton.default_agent_loads_all_mcp_servers', { name: 'kirocrew' })}
+              : i18nT('pages.chat.mcpInfoButton.default_agent_loads_all_mcp_servers', { name: 'saokhue' })}
           </div>
         </div>
       }</OverlayPortal>}

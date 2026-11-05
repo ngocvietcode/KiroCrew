@@ -107,7 +107,7 @@ def _member_record_agent(bound_kiro_agent: str, template_id: str) -> str:
 
     The conductor when the member's CURRENT bound ``kiro_agent`` from config owns a
     crewmate file (``mate_worker.member_record_template``), whatever older template
-    the record kept (a pre-conductor ``kirocrew-conductor``). Any other member runs
+    the record kept (a pre-conductor ``saokhue-conductor``). Any other member runs
     its recorded *template_id* through ``mate_worker.member_chat_agent``, so a
     record naming the crewmate's own file still chats on the conductor and a
     shared-agent crewmate keeps the agent its thread recorded. No record is

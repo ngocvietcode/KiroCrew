@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="sk-bg" x1="18%" y1="4%" x2="82%" y2="96%">
+      <stop offset="0%" stop-color="#00C454" />
+      <stop offset="100%" stop-color="#00722F" />
+    </linearGradient>
+    <filter id="sk-flower-shadow" x="-12%" y="-12%" width="124%" height="128%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#01381B" flood-opacity="0.28" />
+    </filter>
+  </defs>
+  <!-- Rounded Squircle Background (VPBank Prosperity Green Gradient) -->
+  <rect x="28" y="28" width="456" height="456" rx="118" fill="url(#sk-bg)" />
+  <rect x="31" y="31" width="450" height="450" rx="115" fill="none" stroke="#FFFFFF" stroke-opacity="0.24" stroke-width="3" />
+  <!-- Centered VPBank Prosperity Flower (Bông Hoa Thịnh Vượng) -->
+  <g transform="translate(120, 142)" fill="#FFFFFF" filter="url(#sk-flower-shadow)">
+    <!-- Left Upper-Inner Petal -->
+    <path d="M 73 4.5 C 73 0 75.5 -0.8 78.5 1.8 L 132.5 62 L 132.5 150.5 L 82.5 92.5 C 75.5 84.5 73 76 73 66 Z" />
+    <!-- Right Upper-Inner Petal -->
+    <path d="M 199 4.5 C 199 0 196.5 -0.8 193.5 1.8 L 139.5 62 L 139.5 150.5 L 189.5 92.5 C 196.5 84.5 199 76 199 66 Z" />
+    <!-- Left Outer-Lower Petal -->
+    <path d="M 3.5 84 C -0.5 84 -1 88.5 1.8 92 L 112 219.5 C 118 225.5 125 228 132.5 228 L 132.5 163.5 L 79.5 101.5 C 67 87.5 52 84 32 84 Z" />
+    <!-- Right Outer-Lower Petal -->
+    <path d="M 268.5 84 C 272.5 84 273 88.5 270.2 92 L 160 219.5 C 154 225.5 147 228 139.5 228 L 139.5 163.5 L 192.5 101.5 C 205 87.5 220 84 240 84 Z" />
+  </g>
+</svg>

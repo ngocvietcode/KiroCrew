@@ -1659,7 +1659,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ws = Workspace(
         os.path.expanduser(args.root),
         os.path.abspath(args.git_proxy_port_file) if args.git_proxy_port_file else "",
-        lock_dir=os.path.join(os.path.expanduser("~"), ".kirocrew-worker", "file-locks"),
+        lock_dir=os.path.join(os.path.expanduser("~"), ".saokhue-worker", "file-locks"),
         git_proxy_secret=secret,
         git_proxy_starting=starting,
     )

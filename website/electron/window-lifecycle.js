@@ -452,7 +452,7 @@ function createWindowLifecycle(options) {
       const remoteName = getRemoteHostDefaultNameForUrl(store, windowBackendUrl);
       if (!IS_WIN) {
         const suffix = customName || remoteName || `[:${windowPort}]`;
-        win.setTitle(`Kiro Crew ${suffix}`);
+        win.setTitle(`Sao Khuê ${suffix}`);
         return;
       }
       // Windows omits the default local port; secondary/remote windows retain a
@@ -461,7 +461,7 @@ function createWindowLifecycle(options) {
       if (!suffix && windowPort && String(windowPort) !== "5476") {
         suffix = `[:${windowPort}]`;
       }
-      win.setTitle(suffix ? `Kiro Crew ${suffix}` : "Kiro Crew");
+      win.setTitle(suffix ? `Sao Khuê ${suffix}` : "Sao Khuê");
     }
 
     win._mcSetCustomName = (name) => {
@@ -666,6 +666,35 @@ function createWindowLifecycle(options) {
     return opts;
   }
 
+  function applyWindowsWindowIcon(win) {
+    if (!IS_WINDOWS || !win || typeof win.setIcon !== "function") return;
+    const isNightly = identityFamily(app.getVersion()) === "nightly";
+    const icoName = isNightly ? "icon-nightly.ico" : "icon.ico";
+    const pngName = isNightly && fs.existsSync(path.join(__dirname, "icon-nightly.png"))
+      ? "icon-nightly.png"
+      : "icon.png";
+    const unpackedDir = __dirname.includes("app.asar")
+      ? __dirname.replace("app.asar", "app.asar.unpacked")
+      : __dirname;
+    const candidates = [
+      process.resourcesPath ? path.join(process.resourcesPath, icoName) : "",
+      path.join(unpackedDir, icoName),
+      path.join(__dirname, pngName),
+    ].filter(Boolean);
+    for (const candidate of candidates) {
+      try {
+        if (!fs.existsSync(candidate)) continue;
+        const img = nativeImage.createFromPath(candidate);
+        if (img && (typeof img.isEmpty !== "function" || !img.isEmpty())) {
+          win.setIcon(img);
+          return;
+        }
+      } catch {
+        /* try next candidate */
+      }
+    }
+  }
+
   function persistMainWindowState() {
     const state = captureWindowState(mainWindow, {
       // DOM fullscreen belongs to the playing element, not the user's launch
@@ -706,6 +735,7 @@ function createWindowLifecycle(options) {
     if (IS_WINDOWS && typeof mainWindow.setMenuBarVisibility === "function") {
       mainWindow.setMenuBarVisibility(false);
     }
+    applyWindowsWindowIcon(mainWindow);
     setupWindowContents(mainWindow, backendUrl);
 
     // Persist continuously (debounced), then synchronously on real quit so the
@@ -1279,11 +1309,12 @@ function createWindowLifecycle(options) {
       minWidth: 550,
       minHeight: 600,
       backgroundColor: "#0f1117",
-    });
+    }, { includeIcon: true });
     const connWin = new BaseWindow(connOpts);
     if (IS_WINDOWS && typeof connWin.setMenuBarVisibility === "function") {
       connWin.setMenuBarVisibility(false);
     }
+    applyWindowsWindowIcon(connWin);
     setupWindowContents(connWin, connectionBackendUrl);
 
     // initialPath can carry a one-shot intent (/chat?new=1). The retry target

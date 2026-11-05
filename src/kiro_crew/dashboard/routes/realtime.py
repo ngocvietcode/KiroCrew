@@ -112,6 +112,31 @@ def register(app: web.Application) -> None:
     app.router.add_post("/api/kas-login/cancel", _lazy_kas("api_kas_login_cancel"))
     app.router.add_post("/api/kas-login/logout", _lazy_kas("api_kas_login_logout"))
 
+    # Sao Khuê CLI (saokhue-cli) interactive dashboard login: lazy-imported on
+    # first request so route registration adds zero gateway-boot work.
+    def _lazy_saokhue(handler_name: str):
+        async def _dispatch(request):
+            from kiro_crew.dashboard.handlers import saokhue_login
+
+            return await getattr(saokhue_login, handler_name)(request)
+
+        return _dispatch
+
+    app.router.add_get("/api/saokhue-login", _lazy_saokhue("api_saokhue_login_status"))
+    app.router.add_post("/api/saokhue-login/sso", _lazy_saokhue("api_saokhue_login_sso"))
+    app.router.add_post(
+        "/api/saokhue-login/device/start", _lazy_saokhue("api_saokhue_login_device_start")
+    )
+    app.router.add_post(
+        "/api/saokhue-login/device/poll", _lazy_saokhue("api_saokhue_login_device_poll")
+    )
+    app.router.add_post(
+        "/api/saokhue-login/password", _lazy_saokhue("api_saokhue_login_password")
+    )
+    app.router.add_post("/api/saokhue-login/token", _lazy_saokhue("api_saokhue_login_token"))
+    app.router.add_post("/api/saokhue-login/model", _lazy_saokhue("api_saokhue_login_model"))
+    app.router.add_post("/api/saokhue-login/logout", _lazy_saokhue("api_saokhue_login_logout"))
+
     # Kiro Crew's own KAS engine bundle (agent.kas_bundle). Lazy for the same
     # boot-path reason as kas_login above.
     def _lazy_kas_bundle(handler_name: str):

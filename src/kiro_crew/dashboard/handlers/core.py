@@ -301,7 +301,7 @@ async def api_branding(request: web.Request) -> web.Response:
     # fixed system path), and no part of the request decides it.
     return web.json_response(
         {
-            "bot_name": cfg.dashboard.bot_name or "Kiro Crew",
+            "bot_name": cfg.dashboard.bot_name or "Sao Khuê",
             "avatar": "/logo.png",
             "direct_local": is_direct_local_request(request),
             "desktop_launcher": await asyncio.to_thread(platform_compat.desktop_launcher_available),

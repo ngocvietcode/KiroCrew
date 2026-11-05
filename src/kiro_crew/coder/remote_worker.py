@@ -25,7 +25,7 @@ from kiro_crew.session_environment import WORKSPACE_SERVER_NAME
 
 logger = logging.getLogger(__name__)
 
-WORKER_DIR = "$HOME/.kirocrew-worker"
+WORKER_DIR = "$HOME/.saokhue-worker"
 #: Beside a launch's git-proxy port file: the number of a proxy start that failed.
 #: Mirrors ``workspace_tools.GIT_PROXY_FAILED_SUFFIX``.
 GIT_PROXY_FAILED_SUFFIX = ".failed"
@@ -173,7 +173,7 @@ class CoderShell:
 # All worker files in one ``coder ssh``: a JSON [name, length] header, then bytes.
 _INSTALL_PROGRAM = (
     "import json,os,sys\n"
-    "d=os.path.join(os.environ['HOME'],'.kirocrew-worker')\n"
+    "d=os.path.join(os.environ['HOME'],'.saokhue-worker')\n"
     "os.makedirs(os.path.join(d,'sessions'),exist_ok=True)\n"
     "s=sys.stdin.buffer\n"
     "for n,k in json.loads(s.readline()):\n"
@@ -221,8 +221,8 @@ def _start_command(session_id: str, remote_argv: Sequence[str], orphan_timeout: 
     engine = shlex.join(["env", "-u", "KIRO_API_KEY", *remote_argv])
     # sid is validated, so unquoted; cd first so a child argv may name siblings relatively.
     launcher = (
-        f'cd "$HOME/.kirocrew-worker" && S="$HOME/.kirocrew-worker/sessions"; '
-        f'exec python3 "$HOME/.kirocrew-worker/worker.py" '
+        f'cd "$HOME/.saokhue-worker" && S="$HOME/.saokhue-worker/sessions"; '
+        f'exec python3 "$HOME/.saokhue-worker/worker.py" '
         f'--session-id {sid} --secret-file "$S/{sid}.key" --listen 127.0.0.1:0 '
         f'--port-file "$S/{sid}.port" --orphan-timeout {int(orphan_timeout)} -- {engine}'
     )
@@ -605,7 +605,7 @@ class RemoteWorkerLaunch:
         marker = shlex.quote(self.git_proxy_port_file + GIT_PROXY_FAILED_SUFFIX)
         with contextlib.suppress(Exception):
             await self.shell.run(
-                f'cd "$HOME/.kirocrew-worker" && printf %s {int(generation)} > {marker}'
+                f'cd "$HOME/.saokhue-worker" && printf %s {int(generation)} > {marker}'
             )
 
     async def start_git_proxy(

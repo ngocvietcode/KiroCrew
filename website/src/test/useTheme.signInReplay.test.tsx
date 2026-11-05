@@ -620,7 +620,7 @@ describe('useTheme: installed-theme catalog after token sign-in and boot races',
       const { result } = renderHook(() => useTheme(), { wrapper })
       await settle()
       await settle()
-      expect(result.current.colorTheme).toBe('kiro')
+      expect(result.current.colorTheme).toBe('saokhue')
     })
 
     it('exposes whether a catalog has loaded, so a surface can word a failure correctly', async () => {

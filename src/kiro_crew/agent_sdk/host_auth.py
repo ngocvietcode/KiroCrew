@@ -71,9 +71,9 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
-    ACP_BACKEND_LITELLM,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
+    ACP_BACKEND_SAOKHUE,
     ACP_BACKEND_STRANDS,
     ACP_BACKENDS_KNOWN,
 )
@@ -834,22 +834,22 @@ AGENT_AUTH_DECLARATIONS: Tuple[AgentAuthDeclaration, ...] = (
         signed_out_signature="Authentication required",
     ),
     AgentAuthDeclaration(
-        backend=ACP_BACKEND_LITELLM,
-        credential_leaves=(".litellm-cli/auth.json",),
-        home_override_env_vars=("LITELLM_CLI_HOME",),
+        backend=ACP_BACKEND_SAOKHUE,
+        credential_leaves=(".saokhue-cli/auth.json",),
+        home_override_env_vars=("SAOKHUE_CLI_HOME",),
         override_relative_leaves=("auth.json",),
         adapter_own_leaves=(),
         sign_in_remedy=(
-            "LiteLLM CLI signs in per user — run litellm-cli login in a terminal "
-            "to sign in to your LiteLLM server, then start a new chat."
+            "Sao Khuê CLI signs in per user — sign in from Settings → Agent Harness "
+            "or run saokhue-cli login in a terminal, then start a new chat."
         ),
         signed_out_message=(
-            "LiteLLM CLI is not signed in. Run `litellm-cli login` in your terminal "
-            "and complete sign-in, then start a new chat."
+            "Sao Khuê CLI is not signed in. Sign in from Settings > Agent Harness "
+            "or run `saokhue-cli login` in your terminal, then start a new chat."
         ),
         host_logout_retires_children=False,
         entitlement_source=ENTITLEMENT_OWN_CREDENTIAL_FILE,
-        signed_out_signature="Not signed in to LiteLLM",
+        signed_out_signature="Not signed in to Sao Khuê",
     ),
 )
 

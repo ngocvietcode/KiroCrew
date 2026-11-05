@@ -355,7 +355,7 @@ def mate_worker_projection(
 ) -> dict[str, Any]:
     """The worker spec a crewmate's worker session on *session_key* is handed.
 
-    *base* is the source-defined ``kirocrew-mate-worker`` spec. KAS's own part is
+    *base* is the source-defined ``saokhue-mate-worker`` spec. KAS's own part is
     the prompt, resolved the way KAS resolves every prompt; the kit is the
     harness-neutral seam :func:`kiro_crew.mate_worker.worker_session_spec`, which
     reads the crewmate from the session's own execution record. Blocking file

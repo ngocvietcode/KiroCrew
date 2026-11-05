@@ -412,7 +412,7 @@ def worker_summary(member: str, catalog: dict[str, str]) -> dict[str, list[dict]
 
     # A row is ``local`` (the removable "Added to mate" band) only when the
     # crewmate's own file carries it BEYOND the worker SOURCE BASE
-    # (``kirocrew-mate-worker``, derived from the default template in source and
+    # (``saokhue-mate-worker``, derived from the default template in source and
     # materialized at boot). Everything the base already provides is ``inherited``
     # (the read-only "Comes with" band) — a newly-created mate is a near-copy of
     # that base, so its baseline tools/servers read as "comes with", and only what

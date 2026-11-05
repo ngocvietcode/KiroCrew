@@ -1365,7 +1365,7 @@ async def _call_llm(
                 background_turn(
                     self._sessions,
                     task="consolidation",
-                    agent="kirocrew-lite",
+                    agent="saokhue-lite",
                     session_key=CONSOLIDATE_KEY,
                     # Every job starts on an empty conversation of the same warm
                     # runtime, so no job's request carries an earlier job's text.
@@ -1400,7 +1400,7 @@ async def _call_llm(
         stats_before = _billing_stats(client)
         reply: list[str] = []
         # Reject all tools: this is a text/JSON-only generation turn. kiro
-        # scopes the kirocrew-lite session to tools:[] via set_mode, but the
+        # scopes the saokhue-lite session to tools:[] via set_mode, but the
         # Claude Code backend skips set_mode and injects the full
         # kirocrew-core/cron toolset — without REJECT_ALL a background
         # consolidation turn could fire side-effecting tools (send_message,

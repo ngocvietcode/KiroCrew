@@ -4,7 +4,7 @@ Research Lab (the `auto-research` builtin app) runs autonomous, multi-cycle camp
 
 `auto-research` is disabled by default. App enablement is the activation gate: a disabled app contributes no agents, skills, crons, or routes.
 
-> **Research Lab is not a permission boundary.** Its `kirocrew-research` worker is
+> **Research Lab is not a permission boundary.** Its `saokhue-research` worker is
 > generated from the shipped agent template, your `~/.kiro/crew/agent.json` overrides
 > and Kiro Crew's managed MCP servers — it can write files, run commands, and mutate
 > systems. Research-only is the *intent* of the prompt it is given, not a restriction
@@ -13,7 +13,7 @@ Research Lab (the `auto-research` builtin app) runs autonomous, multi-cycle camp
 
 ## Execution modes
 
-In the default **agent** mode, a live agent (`kirocrew-research`) drives the loop via the **autonudge** mechanism. Each cycle it reads the brief plus any pending guidance, decides the next highest-value direction from prior findings, performs one research cycle, and writes a structured finding. A Python **watchdog** polls every ~5s and deterministically enforces stagnation detection, limits, reserve-and-finalize, and success-criteria verification.
+In the default **agent** mode, a live agent (`saokhue-research`) drives the loop via the **autonudge** mechanism. Each cycle it reads the brief plus any pending guidance, decides the next highest-value direction from prior findings, performs one research cycle, and writes a structured finding. A Python **watchdog** polls every ~5s and deterministically enforces stagnation detection, limits, reserve-and-finalize, and success-criteria verification.
 
 A campaign can instead use **workflow** mode, which runs the Dynamic Workflow template and translates workflow events into the same findings and report files. Workflow mode does not support in-progress guidance or adding questions after launch.
 
@@ -101,6 +101,6 @@ cancels the workflow run and resume starts a new one that appends to the same fi
 
 ## Scope and permissions
 
-Research Lab writes campaign state, findings, and reports in its campaign directory. Its `kirocrew-research` worker is built from the shipped agent template, `~/.kiro/crew/agent.json` and the managed MCP servers, rather than a research-only tool allowlist. It does not copy what you added to your main agent's own `kirocrew.json`: MCP servers, app registrations and the model you picked there stay off the research worker on purpose, because the campaign loop runs unattended with tool auto-approval. To give a campaign a specific model, pick it on the campaign. Treat Research Lab as an orchestration feature, not a permission boundary; review the tools enabled for the generated agent before running an unattended campaign.
+Research Lab writes campaign state, findings, and reports in its campaign directory. Its `saokhue-research` worker is built from the shipped agent template, `~/.kiro/crew/agent.json` and the managed MCP servers, rather than a research-only tool allowlist. It does not copy what you added to your main agent's own `kirocrew.json`: MCP servers, app registrations and the model you picked there stay off the research worker on purpose, because the campaign loop runs unattended with tool auto-approval. To give a campaign a specific model, pick it on the campaign. Treat Research Lab as an orchestration feature, not a permission boundary; review the tools enabled for the generated agent before running an unattended campaign.
 
 Actions surfaced by a campaign still require the normal tool-approval flow when the configured tool requires approval.

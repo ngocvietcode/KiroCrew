@@ -208,15 +208,15 @@ const PORT = resolvePort();
 const BACKEND_URL = "http://localhost:" + PORT;
 
 app.name = identityFamily(app.getVersion()) === "nightly"
-  ? "Kiro Crew Nightly"
-  : "Kiro Crew";
+  ? "Sao Khuê Nightly"
+  : "Sao Khuê";
 
 // Windows groups and pins the live window by this ID. Nightly must remain
 // side-by-side with stable, matching the packaged app IDs.
 if (process.platform === "win32") {
   const appUserModelId = identityFamily(app.getVersion()) === "nightly"
-    ? "com.amazon.kiro.crew.nightly"
-    : "com.amazon.kiro.crew";
+    ? "vn.com.vpbank.saokhue.nightly"
+    : "vn.com.vpbank.saokhue";
   app.setAppUserModelId(appUserModelId);
 }
 
@@ -346,7 +346,7 @@ function scanCrashArtifacts() {
       // BOTH names, because they are different strings and neither derives from
       // the other: `electron/package.json` sets `executableName` to
       // `kirocrew-desktop` (and the nightly channel overrides it again), while
-      // `getName()` is `Kiro Crew`. Off darwin a minidump is our only crash
+      // `getName()` is `Sao Khuê`. Off darwin a minidump is our only crash
       // channel, so recognising the executable name is what makes Linux work.
       execName: path.basename(process.execPath),
       fs,
@@ -373,7 +373,7 @@ const requestQuit = () => {
 if (!app.requestSingleInstanceLock()) {
   const userDataDir = app.getPath("userData");
   glog(
-    "single-instance lock held by another process; exiting. If no Kiro Crew window is open, "
+    "single-instance lock held by another process; exiting. If no Sao Khuê window is open, "
       + "a crash may have left a stale SingletonLock in " + userDataDir + ". "
       + describeSingletonLock({ userDataDir }),
   );
@@ -598,7 +598,7 @@ async function offerRelocationIfUnupdatable() {
   try {
     ({ response } = await dialog.showMessageBox({
       type: "warning",
-      title: "Move Kiro Crew to Applications?",
+      title: "Move Sao Khuê to Applications?",
       message: describeLocation(location, { bundleWritable }),
       detail: "Move it to your Applications folder to receive updates. "
         + "You can keep using it from here for now, but it will not update itself.",
@@ -630,8 +630,8 @@ async function offerRelocationIfUnupdatable() {
   try {
     await dialog.showMessageBox({
       type: "error",
-      message: "Could not move Kiro Crew automatically.",
-      detail: "Drag Kiro Crew into your Applications folder, then reopen it from there.",
+      message: "Could not move Sao Khuê automatically.",
+      detail: "Drag Sao Khuê into your Applications folder, then reopen it from there.",
       buttons: ["OK"],
     });
   } catch {

@@ -1,7 +1,7 @@
-"""Built-in ACP server backed by LiteLLM / OpenAI-compatible Chat Completions API.
+"""Built-in ACP server backed by Sao Khuê / OpenAI-compatible Chat Completions API.
 
-Runs as a subprocess over stdio JSON-RPC 2.0 (``python -m kiro_crew.acp.litellm_server``)
-so Kiro Crew can connect directly to a LiteLLM Proxy (or any OpenAI-compatible API)
+Runs as a subprocess over stdio JSON-RPC 2.0 (``python -m kiro_crew.acp.saokhue_server``)
+so Kiro Crew can connect directly to Sao Khuê Gateway (or any OpenAI-compatible API)
 on any platform, including Windows without external CLI binaries or OS sandboxes.
 
 Every tool execution (built-in workspace tools and MCP tools alike) emits an ACP
@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 import sys
 
-# When invoked directly as ``python .../kiro_crew/acp/litellm_server.py``, Python puts
+# When invoked directly as ``python .../kiro_crew/acp/saokhue_server.py``, Python puts
 # ``.../kiro_crew/acp`` on ``sys.path[0]``, where sibling ``types.py`` would shadow
 # stdlib ``types``. Replace that directory entry with the package root (``src/``) before
 # importing any stdlib module that imports ``types``.
@@ -44,6 +44,7 @@ import urllib.parse
 import urllib.request
 import uuid
 import webbrowser
+from collections.abc import MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -86,13 +87,13 @@ UPDATE_TOOL_CALL = "tool_call"
 UPDATE_TOOL_CALL_UPDATE = "tool_call_update"
 UPDATE_USAGE = "usage_update"
 
-logger = logging.getLogger("kiro_crew.acp.litellm_server")
+logger = logging.getLogger("kiro_crew.acp.saokhue_server")
 
 PROTOCOL_VERSION = "2025-08-22"
-SERVER_NAME = "kirocrew-litellm"
+SERVER_NAME = "saokhue-cli"
 SERVER_VERSION = "1.0.0"
 
-DEFAULT_LITELLM_BASE_URL = "https://portal.aws.rpa.vpbank.dev/api/ai-llm"
+DEFAULT_SAOKHUE_BASE_URL = "https://portal.aws.rpa.vpbank.dev/api/ai-llm"
 DEFAULT_OIDC_ISSUER = "https://portal.aws.rpa.vpbank.dev/api"
 DEFAULT_OIDC_AUTHORIZE_URL = "https://portal.aws.rpa.vpbank.dev/api/idpOAuth/authorize"
 DEFAULT_OIDC_DEVICE_AUTH_URL = "https://portal.aws.rpa.vpbank.dev/api/idpOAuth/device/auth"
@@ -104,7 +105,7 @@ DEFAULT_OIDC_REGISTER_URL = "https://portal.aws.rpa.vpbank.dev/api/idpOAuth/regi
 DEFAULT_OIDC_CLIENT_ID = "app:test-crew"
 DEFAULT_OIDC_SCOPE = "openid offline_access profile email api"
 DEFAULT_OIDC_RESOURCE = "https://portal.aws.rpa.vpbank.dev/api/"
-DEFAULT_FALLBACK_MODEL = "litellm-default"
+DEFAULT_FALLBACK_MODEL = "saokhue-default"
 DEFAULT_CONTEXT_WINDOW_TOKENS = 128_000
 MAX_AGENT_TURNS = 40
 MCP_CONNECT_TIMEOUT_SECS = 15.0
@@ -307,16 +308,144 @@ def _is_ssl_cert_error(exc: BaseException) -> bool:
     return False
 
 
+_SYSTEM_CA_BUNDLE_CACHE: str | None = None
+_SYSTEM_SSL_CONTEXT_CACHE: ssl.SSLContext | None = None
+
+_CA_BUNDLE_ENV_VARS: tuple[str, ...] = (
+    "SSL_CERT_FILE",
+    "NODE_EXTRA_CA_CERTS",
+    "AWS_CA_BUNDLE",
+    "REQUESTS_CA_BUNDLE",
+    "CURL_CA_BUNDLE",
+)
+
+
+def ensure_system_ca_bundle(environ: MutableMapping[str, str] | None = None) -> str | None:
+    """Export OS/Windows Global CA certificates (`ROOT` + `CA` + certifi) to a PEM bundle and set CA env vars.
+
+    Allows Python (`urllib`, `aiohttp`, `requests`), Node.js (`kiro-cli` KAS engine via
+    ``NODE_EXTRA_CA_CERTS``), OpenSSL (`kiro-cli` via ``SSL_CERT_FILE``), and AWS SDK
+    (``AWS_CA_BUNDLE``) to automatically trust corporate/global Root and Intermediate CAs
+    installed in the machine's certificate store.
+    """
+    global _SYSTEM_CA_BUNDLE_CACHE
+    target_env = os.environ if environ is None else environ
+
+    if _SYSTEM_CA_BUNDLE_CACHE and os.path.isfile(_SYSTEM_CA_BUNDLE_CACHE):
+        for var in _CA_BUNDLE_ENV_VARS:
+            if not target_env.get(var):
+                target_env[var] = _SYSTEM_CA_BUNDLE_CACHE
+        return _SYSTEM_CA_BUNDLE_CACHE
+
+    pem_blocks: list[str] = []
+    seen_blocks: set[str] = set()
+
+    def _add_pem_text(text: str) -> None:
+        marker_begin = "-----BEGIN CERTIFICATE-----"
+        marker_end = "-----END CERTIFICATE-----"
+        pos = 0
+        while True:
+            start = text.find(marker_begin, pos)
+            if start == -1:
+                break
+            end = text.find(marker_end, start)
+            if end == -1:
+                break
+            block = text[start : end + len(marker_end)].strip()
+            if block and block not in seen_blocks:
+                seen_blocks.add(block)
+                pem_blocks.append(block)
+            pos = end + len(marker_end)
+
+    # 1. Existing CA bundle from certifi or OpenSSL default verify paths
+    with contextlib.suppress(Exception):
+        import certifi  # type: ignore[import-not-found]
+
+        cafile = certifi.where()
+        if cafile and os.path.isfile(cafile):
+            _add_pem_text(Path(cafile).read_text(encoding="utf-8", errors="ignore"))
+
+    with contextlib.suppress(Exception):
+        default_paths = ssl.get_default_verify_paths()
+        for candidate in (default_paths.cafile, os.environ.get("SSL_CERT_FILE")):
+            if candidate and os.path.isfile(candidate):
+                _add_pem_text(Path(candidate).read_text(encoding="utf-8", errors="ignore"))
+
+    # 2. Windows Certificate Store (ROOT and Intermediate CA stores)
+    if hasattr(ssl, "enum_certificates"):
+        for store_name in ("ROOT", "CA"):
+            with contextlib.suppress(Exception):
+                for cert_bytes, encoding_type, trust in ssl.enum_certificates(store_name):
+                    if encoding_type != "x509_asn" or trust is False:
+                        continue
+                    with contextlib.suppress(Exception):
+                        pem_str = ssl.DER_cert_to_PEM_cert(cert_bytes)
+                        _add_pem_text(pem_str)
+
+    # 3. Standard POSIX system CA bundles
+    for posix_ca in (
+        "/etc/ssl/certs/ca-certificates.crt",
+        "/etc/pki/tls/certs/ca-bundle.crt",
+        "/etc/ssl/cert.pem",
+    ):
+        if os.path.isfile(posix_ca):
+            with contextlib.suppress(Exception):
+                _add_pem_text(Path(posix_ca).read_text(encoding="utf-8", errors="ignore"))
+            break
+
+    if not pem_blocks:
+        return None
+
+    try:
+        bundle_dir = saokhue_cli_home()
+        bundle_dir.mkdir(parents=True, exist_ok=True)
+        bundle_path = bundle_dir / "system-ca-bundle.pem"
+        combined = "\n".join(pem_blocks) + "\n"
+        existing = ""
+        if bundle_path.is_file():
+            with contextlib.suppress(OSError):
+                existing = bundle_path.read_text(encoding="utf-8", errors="ignore")
+        if existing != combined:
+            tmp_bundle = bundle_path.with_suffix(".pem.tmp")
+            tmp_bundle.write_text(combined, encoding="utf-8")
+            tmp_bundle.replace(bundle_path)
+        _SYSTEM_CA_BUNDLE_CACHE = str(bundle_path)
+        for var in _CA_BUNDLE_ENV_VARS:
+            if not target_env.get(var):
+                target_env[var] = _SYSTEM_CA_BUNDLE_CACHE
+        return _SYSTEM_CA_BUNDLE_CACHE
+    except Exception:
+        logger.debug("Could not write system CA bundle file", exc_info=True)
+        return None
+
+
+def _build_system_ssl_context() -> ssl.SSLContext:
+    """Create an ``ssl.SSLContext`` trusted with the OS/Windows Global CA store and certifi."""
+    global _SYSTEM_SSL_CONTEXT_CACHE
+    if _SYSTEM_SSL_CONTEXT_CACHE is not None:
+        return _SYSTEM_SSL_CONTEXT_CACHE
+
+    ctx = ssl.create_default_context()
+    with contextlib.suppress(Exception):
+        ctx.load_default_certs(ssl.Purpose.SERVER_AUTH)
+    bundle_path = ensure_system_ca_bundle()
+    if bundle_path and os.path.isfile(bundle_path):
+        with contextlib.suppress(Exception):
+            ctx.load_verify_locations(cafile=bundle_path)
+    _SYSTEM_SSL_CONTEXT_CACHE = ctx
+    return ctx
+
+
 def _urlopen_resilient(
     req: urllib.request.Request | str, timeout: float = 15.0
 ) -> Any:
-    """Open *req* via ``urllib.request.urlopen``, falling back to unverified SSL on internal CA errors."""
-    if os.environ.get("LITELLM_SSL_VERIFY", "").strip().lower() in ("0", "false", "no"):
+    """Open *req* via ``urllib.request.urlopen`` using the machine's Global CA store, falling back to unverified SSL if needed."""
+    if os.environ.get("SAOKHUE_SSL_VERIFY", "").strip().lower() in ("0", "false", "no"):
         return urllib.request.urlopen(
             req, timeout=timeout, context=ssl._create_unverified_context()
         )
     try:
-        return urllib.request.urlopen(req, timeout=timeout)
+        return urllib.request.urlopen(req, timeout=timeout, context=_build_system_ssl_context())
     except Exception as exc:
         if _is_ssl_cert_error(exc):
             logger.debug("Retrying %s with unverified SSL context after %s", req, exc)
@@ -343,10 +472,10 @@ def _is_likely_chat_model(model_id: str) -> bool:
     return not any(tok in lower for tok in _NON_CHAT_MODEL_SUBSTRINGS)
 
 
-def _select_valid_litellm_model(
+def _select_valid_saokhue_model(
     requested: str, available_models: list[str], env_model: str = ""
 ) -> str:
-    """Resolve *requested* against *available_models* so unserved Kiro model IDs or 'auto' fall back to a real LiteLLM model."""
+    """Resolve *requested* against *available_models* so unserved Kiro model IDs or 'auto' fall back to a real Sao Khuê model."""
     req = (requested or "").strip()
     if req in ("auto", DEFAULT_FALLBACK_MODEL):
         req = ""
@@ -381,40 +510,40 @@ def _select_valid_litellm_model(
 
 
 def _persist_preferred_model(model_id: str, environ: dict[str, str] | None = None) -> None:
-    """Save *model_id* as ``default_model`` in ``~/.litellm-cli/auth.json`` so Mates and future sessions inherit it."""
+    """Save *model_id* as ``default_model`` in ``~/.saokhue-cli/auth.json`` so Mates and future sessions inherit it."""
     clean = (model_id or "").strip()
     if not clean or clean in ("auto", DEFAULT_FALLBACK_MODEL):
         return
     try:
-        auth = load_litellm_user_auth(environ, auto_refresh=False)
+        auth = load_saokhue_user_auth(environ, auto_refresh=False)
         if not auth:
             return
         if auth.get("default_model") != clean:
             auth["default_model"] = clean
-            save_litellm_user_auth(auth, environ)
+            save_saokhue_user_auth(auth, environ)
     except Exception:
         logger.debug("Could not persist preferred model %s to auth.json", clean, exc_info=True)
 
 
-def litellm_cli_home(environ: dict[str, str] | None = None) -> Path:
-    """Return the per-user ``litellm-cli`` home directory (``~/.litellm-cli`` or ``$LITELLM_CLI_HOME``)."""
+def saokhue_cli_home(environ: dict[str, str] | None = None) -> Path:
+    """Return the per-user ``saokhue-cli`` home directory (``~/.saokhue-cli`` or ``$SAOKHUE_CLI_HOME``)."""
     env = os.environ if environ is None else environ
-    override = (env.get("LITELLM_CLI_HOME") or "").strip()
+    override = (env.get("SAOKHUE_CLI_HOME") or "").strip()
     if override:
         return Path(override).expanduser()
-    return Path.home() / ".litellm-cli"
+    return Path.home() / ".saokhue-cli"
 
 
-def litellm_auth_path(environ: dict[str, str] | None = None) -> Path:
-    """Return the per-user credential file ``~/.litellm-cli/auth.json``."""
-    return litellm_cli_home(environ) / "auth.json"
+def saokhue_auth_path(environ: dict[str, str] | None = None) -> Path:
+    """Return the per-user credential file ``~/.saokhue-cli/auth.json``."""
+    return saokhue_cli_home(environ) / "auth.json"
 
 
-def save_litellm_user_auth(
+def save_saokhue_user_auth(
     auth_data: dict[str, Any], environ: dict[str, str] | None = None
 ) -> Path:
-    """Persist per-user login state to ``~/.litellm-cli/auth.json`` with 0600 permissions."""
-    path = litellm_auth_path(environ)
+    """Persist per-user login state to ``~/.saokhue-cli/auth.json`` with 0600 permissions."""
+    path = saokhue_auth_path(environ)
     path.parent.mkdir(parents=True, exist_ok=True)
     with contextlib.suppress(OSError):
         os.chmod(path.parent, 0o700)
@@ -430,9 +559,9 @@ def save_litellm_user_auth(
     return path
 
 
-def clear_litellm_user_auth(environ: dict[str, str] | None = None) -> bool:
-    """Delete ``~/.litellm-cli/auth.json``. Return True if a credential file was removed."""
-    path = litellm_auth_path(environ)
+def clear_saokhue_user_auth(environ: dict[str, str] | None = None) -> bool:
+    """Delete ``~/.saokhue-cli/auth.json``. Return True if a credential file was removed."""
+    path = saokhue_auth_path(environ)
     try:
         if path.is_file():
             path.unlink()
@@ -472,11 +601,11 @@ def resolve_oidc_endpoints(
 ) -> dict[str, str]:
     """Resolve OIDC / OAuth2 endpoints and client_id (defaults to VPBank IdP ``app:test-crew``)."""
     env = os.environ if environ is None else environ
-    norm_base = _normalize_base_url(base_url or DEFAULT_LITELLM_BASE_URL)
+    norm_base = _normalize_base_url(base_url or DEFAULT_SAOKHUE_BASE_URL)
     parsed = urllib.parse.urlparse(norm_base)
     origin = f"{parsed.scheme}://{parsed.netloc}" if parsed.scheme and parsed.netloc else ""
 
-    if origin and "vpbank.dev" not in origin and norm_base != DEFAULT_LITELLM_BASE_URL:
+    if origin and "vpbank.dev" not in origin and norm_base != DEFAULT_SAOKHUE_BASE_URL:
         default_auth = f"{origin}/api/idpOAuth/authorize"
         default_device = f"{origin}/api/idpOAuth/device/auth"
         default_token = f"{origin}/api/idpOAuth/token"
@@ -493,38 +622,38 @@ def resolve_oidc_endpoints(
 
     return {
         "authorize_url": (
-            authorize_url or env.get("LITELLM_OIDC_AUTHORIZE_URL") or default_auth
+            authorize_url or env.get("SAOKHUE_OIDC_AUTHORIZE_URL") or default_auth
         ).strip(),
         "device_auth_url": (
-            device_auth_url or env.get("LITELLM_OIDC_DEVICE_AUTH_URL") or default_device
+            device_auth_url or env.get("SAOKHUE_OIDC_DEVICE_AUTH_URL") or default_device
         ).strip(),
         "token_url": (
-            token_url or env.get("LITELLM_OIDC_TOKEN_URL") or default_token
+            token_url or env.get("SAOKHUE_OIDC_TOKEN_URL") or default_token
         ).strip(),
         "userinfo_url": (
-            userinfo_url or env.get("LITELLM_OIDC_USERINFO_URL") or default_userinfo
+            userinfo_url or env.get("SAOKHUE_OIDC_USERINFO_URL") or default_userinfo
         ).strip(),
         "revoke_url": (
-            revoke_url or env.get("LITELLM_OIDC_REVOKE_URL") or default_revoke
+            revoke_url or env.get("SAOKHUE_OIDC_REVOKE_URL") or default_revoke
         ).strip(),
         "client_id": (
-            client_id or env.get("LITELLM_CLIENT_ID") or DEFAULT_OIDC_CLIENT_ID
+            client_id or env.get("SAOKHUE_CLIENT_ID") or DEFAULT_OIDC_CLIENT_ID
         ).strip(),
         "scope": (
-            scope or env.get("LITELLM_OIDC_SCOPE") or DEFAULT_OIDC_SCOPE
+            scope or env.get("SAOKHUE_OIDC_SCOPE") or DEFAULT_OIDC_SCOPE
         ).strip(),
         "resource": (
-            resource or env.get("LITELLM_OIDC_RESOURCE") or default_resource
+            resource or env.get("SAOKHUE_OIDC_RESOURCE") or default_resource
         ).strip(),
     }
 
 
-def refresh_litellm_user_token(
+def refresh_saokhue_user_token(
     auth_data: dict[str, Any], environ: dict[str, str] | None = None
 ) -> dict[str, Any]:
     """Refresh ``access_token`` using ``refresh_token`` when ``token_url`` is configured."""
     refresh_tok = str(auth_data.get("refresh_token") or "").strip()
-    base_url = str(auth_data.get("base_url") or DEFAULT_LITELLM_BASE_URL).rstrip("/")
+    base_url = str(auth_data.get("base_url") or DEFAULT_SAOKHUE_BASE_URL).rstrip("/")
     token_url = str(auth_data.get("token_url") or DEFAULT_OIDC_TOKEN_URL).strip()
     if not refresh_tok or not token_url:
         return auth_data
@@ -567,18 +696,18 @@ def refresh_litellm_user_token(
                     updated["id_token"] = str(res["id_token"]).strip()
                 if res.get("expires_in"):
                     updated["expires_at"] = int(time.time()) + int(res["expires_in"])
-                save_litellm_user_auth(updated, environ)
+                save_saokhue_user_auth(updated, environ)
                 return updated
     except Exception:
         logger.debug("Token refresh against %s failed", token_url, exc_info=True)
     return auth_data
 
 
-def load_litellm_user_auth(
+def load_saokhue_user_auth(
     environ: dict[str, str] | None = None, *, auto_refresh: bool = True
 ) -> dict[str, Any]:
-    """Load per-user login state from ``~/.litellm-cli/auth.json``, refreshing if near expiry."""
-    path = litellm_auth_path(environ)
+    """Load per-user login state from ``~/.saokhue-cli/auth.json``, refreshing if near expiry."""
+    path = saokhue_auth_path(environ)
     try:
         if not path.is_file():
             return {}
@@ -593,7 +722,7 @@ def load_litellm_user_auth(
         try:
             expires_at = float(data["expires_at"])
             if time.time() >= (expires_at - 60.0):
-                data = refresh_litellm_user_token(data, environ)
+                data = refresh_saokhue_user_token(data, environ)
         except (TypeError, ValueError):
             pass
     return data
@@ -620,47 +749,47 @@ def _load_dotenv_into_dict() -> dict[str, str]:
             if key:
                 out[key] = val
     except Exception:
-        logger.debug("Failed to read .env for litellm config", exc_info=True)
+        logger.debug("Failed to read .env for saokhue config", exc_info=True)
     return out
 
 
 def _normalize_base_url(raw_url: str) -> str:
-    base_url = (raw_url or DEFAULT_LITELLM_BASE_URL).strip().rstrip("/")
+    base_url = (raw_url or DEFAULT_SAOKHUE_BASE_URL).strip().rstrip("/")
     if base_url.endswith("/v1"):
         base_url = base_url[:-3].rstrip("/")
-    return base_url or DEFAULT_LITELLM_BASE_URL
+    return base_url or DEFAULT_SAOKHUE_BASE_URL
 
 
-def resolve_litellm_settings(environ: dict[str, str] | None = None) -> tuple[str, str, str, float]:
+def resolve_saokhue_settings(environ: dict[str, str] | None = None) -> tuple[str, str, str, float]:
     """Return ``(base_url, access_token, default_model, timeout_secs)`` from user login or env."""
     env = dict(_load_dotenv_into_dict())
     env.update(os.environ if environ is None else environ)
-    user_auth = load_litellm_user_auth(env)
+    user_auth = load_saokhue_user_auth(env)
 
     raw_url = (
-        env.get("LITELLM_BASE_URL")
-        or env.get("LITELLM_PROXY_URL")
+        env.get("SAOKHUE_BASE_URL")
+        or env.get("SAOKHUE_PROXY_URL")
         or str(user_auth.get("base_url") or "")
         or env.get("OPENAI_BASE_URL")
         or env.get("OPENAI_API_BASE")
-        or DEFAULT_LITELLM_BASE_URL
+        or DEFAULT_SAOKHUE_BASE_URL
     ).strip()
     base_url = _normalize_base_url(raw_url)
 
     access_token = (
         str(user_auth.get("access_token") or user_auth.get("token") or "").strip()
-        or (env.get("LITELLM_ACCESS_TOKEN") or "").strip()
-        or (env.get("LITELLM_API_KEY") or "").strip()
+        or (env.get("SAOKHUE_ACCESS_TOKEN") or "").strip()
+        or (env.get("SAOKHUE_API_KEY") or "").strip()
         or (env.get("OPENAI_API_KEY") or "").strip()
     )
 
     default_model = (
-        (env.get("LITELLM_MODEL") or "").strip()
+        (env.get("SAOKHUE_MODEL") or "").strip()
         or str(user_auth.get("default_model") or "").strip()
     )
     try:
         timeout_secs = float(
-            env.get("LITELLM_TIMEOUT") or user_auth.get("timeout") or 300.0
+            env.get("SAOKHUE_TIMEOUT") or user_auth.get("timeout") or 300.0
         )
     except (TypeError, ValueError):
         timeout_secs = 300.0
@@ -733,7 +862,7 @@ def _extract_token_from_response(
         for cookie_hdr in set_cookies:
             for part in cookie_hdr.split(";"):
                 k, _, v = part.strip().partition("=")
-                if k.strip().lower() in ("token", "access_token", "litellm_token") and v.strip():
+                if k.strip().lower() in ("token", "access_token", "saokhue_token") and v.strip():
                     access_token = v.strip().strip('"')
                     break
 
@@ -866,7 +995,7 @@ def login_with_password(
     timeout_secs: float = 30.0,
     environ: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Authenticate a user with ``username`` and ``password`` against LiteLLM and save ``auth.json``."""
+    """Authenticate a user with ``username`` and ``password`` against Sao Khuê and save ``auth.json``."""
     norm_url = _normalize_base_url(base_url)
     endpoints = (
         [login_endpoint]
@@ -961,7 +1090,7 @@ def login_with_password(
             resolved_email = probed_email
 
     chosen_model = default_model.strip() or (
-        _select_valid_litellm_model("", models) if models else ""
+        _select_valid_saokhue_model("", models) if models else ""
     )
     auth_record: dict[str, Any] = {
         "base_url": norm_url,
@@ -974,7 +1103,7 @@ def login_with_password(
         "default_model": chosen_model,
         "models": models,
     }
-    save_litellm_user_auth(auth_record, environ)
+    save_saokhue_user_auth(auth_record, environ)
     return auth_record
 
 
@@ -1015,7 +1144,7 @@ def login_with_token(
                 ) from exc
 
     chosen_model = default_model.strip() or (
-        _select_valid_litellm_model("", models) if models else ""
+        _select_valid_saokhue_model("", models) if models else ""
     )
     auth_record: dict[str, Any] = {
         "base_url": norm_url,
@@ -1028,7 +1157,7 @@ def login_with_token(
         "default_model": chosen_model,
         "models": models,
     }
-    save_litellm_user_auth(auth_record, environ)
+    save_saokhue_user_auth(auth_record, environ)
     return auth_record
 
 
@@ -1095,7 +1224,7 @@ def login_with_browser_sso(
                 result_box["error"] = err
                 self._send_html(
                     400,
-                    f"<h3>LiteLLM CLI Sign-In Failed</h3><p>{err}</p>",
+                    f"<h3>Sao Khuê CLI Sign-In Failed</h3><p>{err}</p>",
                 )
                 done_event.set()
                 return True
@@ -1121,8 +1250,8 @@ def login_with_browser_sso(
                 ).strip()
                 self._send_html(
                     200,
-                    "<h2>LiteLLM CLI Sign-In Successful</h2>"
-                    "<p>You are now signed in. You may close this browser tab and return to your terminal.</p>",
+                    "<h2>Sao Khuê CLI Sign-In Successful</h2>"
+                    "<p>You are now signed in. You may close this browser tab and return to Sao Khuê.</p>",
                 )
                 done_event.set()
                 return True
@@ -1137,9 +1266,9 @@ def login_with_browser_sso(
             # If the SSO provider returned the token in the URL hash fragment (#access_token=...),
             # serve a small bridge script that redirects the fragment query to /callback.
             bridge_html = """<!doctype html>
-<html><head><meta charset="utf-8"><title>LiteLLM CLI Sign-In</title></head>
+<html><head><meta charset="utf-8"><title>Sao Khuê CLI Sign-In</title></head>
 <body style="font-family: sans-serif; padding: 2rem;">
-<h3>Completing LiteLLM CLI sign-in...</h3>
+<h3>Completing Sao Khuê CLI sign-in...</h3>
 <script>
 (function() {
   var hash = window.location.hash ? window.location.hash.substring(1) : "";
@@ -1201,7 +1330,7 @@ def login_with_browser_sso(
     srv_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     srv_thread.start()
     try:
-        print(f"\nOpening browser for LiteLLM OAuth2 sign-in:\n  {full_auth_url}\n", flush=True)
+        print(f"\nOpening browser for Sao Khuê OAuth2 sign-in:\n  {full_auth_url}\n", flush=True)
         if open_browser:
             with contextlib.suppress(Exception):
                 webbrowser.open(full_auth_url)
@@ -1280,7 +1409,7 @@ def login_with_browser_sso(
         models = _query_models_endpoint_sync(norm_url, access_token, timeout_secs=10.0)
 
     chosen_model = default_model.strip() or (
-        _select_valid_litellm_model("", models) if models else ""
+        _select_valid_saokhue_model("", models) if models else ""
     )
     auth_record: dict[str, Any] = {
         "base_url": norm_url,
@@ -1301,8 +1430,223 @@ def login_with_browser_sso(
         "default_model": chosen_model,
         "models": models,
     }
-    save_litellm_user_auth(auth_record, environ)
+    save_saokhue_user_auth(auth_record, environ)
     return auth_record
+
+
+def start_device_code_flow(
+    base_url: str = "",
+    *,
+    device_auth_url: str = "",
+    token_url: str = "",
+    userinfo_url: str = "",
+    client_id: str = "",
+    scope: str = "",
+    resource: str = "",
+    default_model: str = "",
+    environ: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Start an OAuth 2.0 Device Authorization Grant (RFC 8628) without blocking.
+
+    Returns a dictionary containing ``device_code``, ``user_code``,
+    ``verification_uri``, ``verification_uri_complete``, ``interval``,
+    ``expires_in``, and the resolved OIDC endpoints needed by
+    :func:`poll_device_code_once`.
+    """
+    norm_url = _normalize_base_url(base_url)
+    oidc = resolve_oidc_endpoints(
+        norm_url,
+        device_auth_url=device_auth_url,
+        token_url=token_url,
+        userinfo_url=userinfo_url,
+        client_id=client_id,
+        scope=scope,
+        resource=resource,
+        environ=environ,
+    )
+    resolved_client_id = oidc["client_id"]
+    resolved_device_url = oidc["device_auth_url"]
+    resolved_token_url = oidc["token_url"]
+    resolved_userinfo_url = oidc["userinfo_url"]
+    resolved_scope = oidc["scope"]
+    resolved_resource = oidc["resource"]
+
+    req_form: dict[str, str] = {"client_id": resolved_client_id}
+    if resolved_scope:
+        req_form["scope"] = resolved_scope
+    if resolved_resource:
+        req_form["resource"] = resolved_resource
+
+    req = urllib.request.Request(
+        resolved_device_url,
+        data=urllib.parse.urlencode(req_form).encode("utf-8"),
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with _urlopen_resilient(req, timeout=20.0) as resp:
+            raw = resp.read().decode("utf-8", errors="replace")
+            dev_data = json.loads(raw) if raw.strip() else {}
+    except urllib.error.HTTPError as exc:
+        err_body = ""
+        with contextlib.suppress(Exception):
+            err_body = exc.read().decode("utf-8", errors="replace")[:300]
+        raise RuntimeError(
+            f"Device authorization request to {resolved_device_url} failed (HTTP {exc.code}): "
+            f"{err_body or exc.reason}"
+        ) from exc
+
+    if not isinstance(dev_data, dict) or not dev_data.get("device_code"):
+        raise RuntimeError(
+            f"Invalid device authorization response from {resolved_device_url}: {dev_data!r}"
+        )
+
+    device_code = str(dev_data["device_code"]).strip()
+    user_code = str(dev_data.get("user_code") or "").strip()
+    verification_uri = str(
+        dev_data.get("verification_uri") or dev_data.get("verification_url") or ""
+    ).strip()
+    verification_uri_complete = str(dev_data.get("verification_uri_complete") or "").strip()
+    interval = max(1.0, float(dev_data.get("interval") or 5.0))
+    expires_in = float(dev_data.get("expires_in") or 300.0)
+
+    return {
+        "base_url": norm_url,
+        "device_code": device_code,
+        "user_code": user_code,
+        "verification_uri": verification_uri,
+        "verification_uri_complete": verification_uri_complete,
+        "interval": interval,
+        "expires_in": expires_in,
+        "token_url": resolved_token_url,
+        "userinfo_url": resolved_userinfo_url,
+        "revoke_url": oidc["revoke_url"],
+        "client_id": resolved_client_id,
+        "scope": resolved_scope,
+        "resource": resolved_resource,
+        "default_model": default_model,
+    }
+
+
+def poll_device_code_once(
+    pending: dict[str, Any], environ: dict[str, str] | None = None
+) -> dict[str, Any]:
+    """Perform one non-blocking poll of a pending Device Code session.
+
+    Returns ``{"status": "pending", "slow_down": bool}`` while awaiting user
+    approval, or ``{"status": "authorized", "auth": auth_record}`` once the token
+    is issued and saved to ``~/.saokhue-cli/auth.json``.
+    """
+    norm_url = _normalize_base_url(str(pending.get("base_url") or ""))
+    device_code = str(pending.get("device_code") or "").strip()
+    resolved_client_id = str(pending.get("client_id") or DEFAULT_OIDC_CLIENT_ID).strip()
+    resolved_token_url = str(pending.get("token_url") or DEFAULT_OIDC_TOKEN_URL).strip()
+    resolved_userinfo_url = str(pending.get("userinfo_url") or DEFAULT_OIDC_USERINFO_URL).strip()
+    resolved_scope = str(pending.get("scope") or DEFAULT_OIDC_SCOPE).strip()
+    resolved_resource = str(pending.get("resource") or DEFAULT_OIDC_RESOURCE).strip()
+    revoke_url = str(pending.get("revoke_url") or DEFAULT_OIDC_REVOKE_URL).strip()
+    default_model = str(pending.get("default_model") or "").strip()
+
+    poll_form: dict[str, str] = {
+        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+        "device_code": device_code,
+        "client_id": resolved_client_id,
+    }
+    if resolved_resource:
+        poll_form["resource"] = resolved_resource
+    poll_req = urllib.request.Request(
+        resolved_token_url,
+        data=urllib.parse.urlencode(poll_form).encode("utf-8"),
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    token_payload: dict[str, Any] = {}
+    try:
+        with _urlopen_resilient(poll_req, timeout=20.0) as poll_resp:
+            raw_poll = poll_resp.read().decode("utf-8", errors="replace")
+            parsed_poll = json.loads(raw_poll) if raw_poll.strip() else {}
+            if isinstance(parsed_poll, dict) and (
+                parsed_poll.get("access_token")
+                or parsed_poll.get("token")
+                or parsed_poll.get("id_token")
+            ):
+                token_payload = parsed_poll
+    except urllib.error.HTTPError as exc:
+        err_raw = ""
+        with contextlib.suppress(Exception):
+            err_raw = exc.read().decode("utf-8", errors="replace")
+        err_code = ""
+        err_desc = ""
+        with contextlib.suppress(Exception):
+            err_json = json.loads(err_raw) if err_raw.strip() else {}
+            if isinstance(err_json, dict):
+                err_code = str(err_json.get("error") or "").strip()
+                err_desc = str(err_json.get("error_description") or "").strip()
+        if err_code in ("authorization_pending", "slow_down"):
+            return {"status": "pending", "slow_down": err_code == "slow_down"}
+        if err_code in ("expired_token", "access_denied"):
+            raise RuntimeError(
+                f"Device authorization {err_code}: {err_desc or 'request was denied or expired.'}"
+            ) from exc
+        raise RuntimeError(
+            f"Device token exchange failed (HTTP {exc.code}): {err_desc or err_code or err_raw[:200]}"
+        ) from exc
+
+    if not token_payload:
+        return {"status": "pending", "slow_down": False}
+
+    id_token = str(token_payload.get("id_token") or "").strip()
+    granted_scope = str(token_payload.get("scope") or "").strip()
+    access_token, refresh_token, expires_at, user_id, email = _extract_token_from_response(
+        token_payload
+    )
+    if not access_token:
+        raise RuntimeError("Device token response did not include an access_token.")
+
+    oauth_access_token = access_token
+    if not user_id or not email:
+        uid_info, mail_info = _probe_oidc_userinfo_sync(
+            oauth_access_token, userinfo_url=resolved_userinfo_url, timeout_secs=8.0
+        )
+        if uid_info and not user_id:
+            user_id = uid_info
+        if mail_info and not email:
+            email = mail_info
+
+    models: list[str] = []
+    with contextlib.suppress(Exception):
+        models = _query_models_endpoint_sync(norm_url, access_token, timeout_secs=10.0)
+
+    chosen_model = default_model or (
+        _select_valid_saokhue_model("", models) if models else ""
+    )
+    auth_record: dict[str, Any] = {
+        "base_url": norm_url,
+        "access_token": access_token,
+        "oauth_access_token": oauth_access_token,
+        "id_token": id_token,
+        "granted_scope": granted_scope or resolved_scope,
+        "resource": resolved_resource,
+        "refresh_token": refresh_token,
+        "token_url": resolved_token_url,
+        "userinfo_url": resolved_userinfo_url,
+        "revoke_url": revoke_url,
+        "client_id": resolved_client_id,
+        "expires_at": expires_at,
+        "user_id": user_id or "device-user",
+        "email": email,
+        "auth_method": "device_code",
+        "default_model": chosen_model,
+        "models": models,
+    }
+    save_saokhue_user_auth(auth_record, environ)
+    return {"status": "authorized", "auth": auth_record}
 
 
 def login_with_device_code(
@@ -1382,7 +1726,7 @@ def login_with_device_code(
     deadline = time.monotonic() + min(timeout_secs, expires_in)
 
     target_browser_url = verification_uri_complete or verification_uri
-    print("\nTo sign in to LiteLLM, complete device verification in your browser:", flush=True)
+    print("\nTo sign in to Sao Khuê, complete device verification in your browser:", flush=True)
     if verification_uri:
         print(f"  Verification URL: {verification_uri}", flush=True)
     if user_code:
@@ -1476,7 +1820,7 @@ def login_with_device_code(
         models = _query_models_endpoint_sync(norm_url, access_token, timeout_secs=10.0)
 
     chosen_model = default_model.strip() or (
-        _select_valid_litellm_model("", models) if models else ""
+        _select_valid_saokhue_model("", models) if models else ""
     )
     auth_record: dict[str, Any] = {
         "base_url": norm_url,
@@ -1497,7 +1841,7 @@ def login_with_device_code(
         "default_model": chosen_model,
         "models": models,
     }
-    save_litellm_user_auth(auth_record, environ)
+    save_saokhue_user_auth(auth_record, environ)
     return auth_record
 
 
@@ -1648,7 +1992,7 @@ class StdioMcpClient:
 
 
 @dataclass
-class LitellmSession:
+class SaokhueSession:
     session_id: str
     cwd: str
     agent_name: str
@@ -1690,7 +2034,7 @@ def _extract_usage_fields(
     prev_cache_write: int = 0,
     prev_cost: float = 0.0,
 ) -> tuple[int, int, int, int, float]:
-    """Extract ``(input_tokens, output_tokens, cache_read, cache_write, cost_usd)`` from an OpenAI/LiteLLM payload."""
+    """Extract ``(input_tokens, output_tokens, cache_read, cache_write, cost_usd)`` from an OpenAI/Sao Khuê payload."""
     in_tok = prev_in
     out_tok = prev_out
     cache_read = prev_cache_read
@@ -1699,9 +2043,9 @@ def _extract_usage_fields(
 
     usage = chunk_or_data.get("usage")
     if not isinstance(usage, dict):
-        x_litellm = chunk_or_data.get("x_litellm") or chunk_or_data.get("_hidden_params")
-        if isinstance(x_litellm, dict) and isinstance(x_litellm.get("usage"), dict):
-            usage = x_litellm["usage"]
+        x_meta = chunk_or_data.get("x_saokhue") or chunk_or_data.get("_hidden_params")
+        if isinstance(x_meta, dict) and isinstance(x_meta.get("usage"), dict):
+            usage = x_meta["usage"]
 
     if isinstance(usage, dict):
         raw_in = (
@@ -1754,13 +2098,13 @@ def _extract_usage_fields(
     return in_tok, out_tok, cache_read, cache_write, cost_usd
 
 
-class LitellmAcpServer:
-    """JSON-RPC 2.0 ACP server communicating over stdin/stdout and calling LiteLLM."""
+class SaokhueAcpServer:
+    """JSON-RPC 2.0 ACP server communicating over stdin/stdout and calling Sao Khuê."""
 
     def __init__(self, *, agent_name: str = "kirocrew", initial_model: str = "") -> None:
         self._default_agent = agent_name or "kirocrew"
         self._initial_model = initial_model
-        self._sessions: dict[str, LitellmSession] = {}
+        self._sessions: dict[str, SaokhueSession] = {}
         self._next_server_req_id = 10_000
         self._pending_client_replies: dict[int | str, asyncio.Future[dict[str, Any]]] = {}
         self._write_lock = asyncio.Lock()
@@ -1835,7 +2179,7 @@ class LitellmAcpServer:
                 logger.debug("Could not resolve file:// prompt %s", p, exc_info=True)
         return prompt
 
-    async def _fetch_litellm_models(self, base_url: str, api_key: str) -> list[str]:
+    async def _fetch_saokhue_models(self, base_url: str, api_key: str) -> list[str]:
         """Query ``GET {base_url}/v1/models`` for available model IDs, with SSL fallback and cached auth fallback."""
         headers: dict[str, str] = {"Accept": "application/json"}
         if api_key:
@@ -1846,7 +2190,7 @@ class LitellmAcpServer:
                 timeout = aiohttp.ClientTimeout(total=8.0)
                 ssl_opt: Any = (
                     False
-                    if os.environ.get("LITELLM_SSL_VERIFY", "").strip().lower()
+                    if os.environ.get("SAOKHUE_SSL_VERIFY", "").strip().lower()
                     in ("0", "false", "no")
                     else None
                 )
@@ -1888,7 +2232,7 @@ class LitellmAcpServer:
                     return models
         except Exception:
             logger.debug("Could not fetch /v1/models from %s", url, exc_info=True)
-        user_auth = load_litellm_user_auth(auto_refresh=False)
+        user_auth = load_saokhue_user_auth(auto_refresh=False)
         cached = user_auth.get("models")
         if isinstance(cached, list):
             cached_models = [
@@ -1986,7 +2330,7 @@ class LitellmAcpServer:
 
     async def _mount_mcp_servers(
         self,
-        session: LitellmSession,
+        session: SaokhueSession,
         entries: list[dict[str, Any]],
     ) -> None:
         """Start stdio MCP servers concurrently and populate ``session.mcp_clients``."""
@@ -2029,7 +2373,7 @@ class LitellmAcpServer:
         if entries:
             await asyncio.gather(*(_start_one(e) for e in entries), return_exceptions=True)
 
-    def _session_response_payload(self, session: LitellmSession) -> dict[str, Any]:
+    def _session_response_payload(self, session: SaokhueSession) -> dict[str, Any]:
         models_list = session.available_models or [session.model]
         if session.model and session.model not in models_list:
             models_list = [session.model, *models_list]
@@ -2062,9 +2406,9 @@ class LitellmAcpServer:
         }
 
     def _transcript_path(self, session_id: str) -> Path:
-        return config_dir() / "litellm_sessions" / f"{session_id}.json"
+        return config_dir() / "saokhue_sessions" / f"{session_id}.json"
 
-    def _save_transcript(self, session: LitellmSession) -> None:
+    def _save_transcript(self, session: SaokhueSession) -> None:
         try:
             path = self._transcript_path(session.session_id)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -2111,10 +2455,10 @@ class LitellmAcpServer:
     ) -> dict[str, Any]:
         cwd = str(params.get("cwd") or os.getcwd())
         sid = session_id or uuid.uuid4().hex
-        base_url, api_key, env_model, _ = resolve_litellm_settings()
-        models = await self._fetch_litellm_models(base_url, api_key)
+        base_url, api_key, env_model, _ = resolve_saokhue_settings()
+        models = await self._fetch_saokhue_models(base_url, api_key)
 
-        chosen_model = _select_valid_litellm_model(self._initial_model, models, env_model)
+        chosen_model = _select_valid_saokhue_model(self._initial_model, models, env_model)
         if chosen_model not in models:
             models = [chosen_model, *models]
 
@@ -2124,7 +2468,7 @@ class LitellmAcpServer:
         mcp_entries, disabled_tools, zero_tools = self._normalize_mcp_entries(spec, wire_servers)
 
         restored_messages = self._load_transcript_messages(sid) if session_id else []
-        session = LitellmSession(
+        session = SaokhueSession(
             session_id=sid,
             cwd=cwd,
             agent_name=self._default_agent,
@@ -2160,8 +2504,8 @@ class LitellmAcpServer:
         model_id = str(params.get("modelId") or "").strip()
         session = self._sessions.get(sid)
         if session is not None and model_id and model_id != "auto":
-            _, _, env_model, _ = resolve_litellm_settings()
-            resolved_model = _select_valid_litellm_model(
+            _, _, env_model, _ = resolve_saokhue_settings()
+            resolved_model = _select_valid_saokhue_model(
                 model_id, session.available_models, env_model
             )
             session.model = resolved_model
@@ -2177,8 +2521,8 @@ class LitellmAcpServer:
         value = str(params.get("value") or "").strip()
         session = self._sessions.get(sid)
         if session is not None and config_id == MODEL_CONFIG_ID and value and value != "auto":
-            _, _, env_model, _ = resolve_litellm_settings()
-            resolved_model = _select_valid_litellm_model(
+            _, _, env_model, _ = resolve_saokhue_settings()
+            resolved_model = _select_valid_saokhue_model(
                 value, session.available_models, env_model
             )
             session.model = resolved_model
@@ -2210,7 +2554,7 @@ class LitellmAcpServer:
             if session.active_turn_task is not None and not session.active_turn_task.done():
                 session.active_turn_task.cancel()
 
-    def _build_openai_tools(self, session: LitellmSession) -> list[dict[str, Any]]:
+    def _build_openai_tools(self, session: SaokhueSession) -> list[dict[str, Any]]:
         if session.zero_tools:
             return []
         tools: list[dict[str, Any]] = list(BUILTIN_TOOL_SCHEMAS)
@@ -2266,7 +2610,7 @@ class LitellmAcpServer:
 
     async def _request_tool_permission(
         self,
-        session: LitellmSession,
+        session: SaokhueSession,
         *,
         tool_call_id: str,
         title: str,
@@ -2330,7 +2674,7 @@ class LitellmAcpServer:
         return False
 
     async def _execute_builtin_tool(
-        self, session: LitellmSession, tool_name: str, args: dict[str, Any]
+        self, session: SaokhueSession, tool_name: str, args: dict[str, Any]
     ) -> tuple[str, bool]:
         ws = workspace_tools.Workspace(session.cwd)
         try:
@@ -2377,18 +2721,19 @@ class LitellmAcpServer:
                     return "command must not be empty", True
                 rel_cwd = str(args.get("cwd") or ".")
                 workdir = ws.resolve(rel_cwd)
-                if not workdir.is_dir():
+                if not os.path.isdir(workdir):
                     return f"Not a directory: {rel_cwd}", True
                 timeout_s = max(1, min(int(args.get("timeout") or 120), 600))
                 child_env = {
                     k: v
                     for k, v in os.environ.items()
-                    if k not in ("LITELLM_API_KEY", "LITELLM_ACCESS_TOKEN", "OPENAI_API_KEY")
+                    if k not in ("SAOKHUE_API_KEY", "SAOKHUE_ACCESS_TOKEN", "OPENAI_API_KEY")
                 }
                 proc = await asyncio.create_subprocess_shell(
                     command,
                     cwd=str(workdir),
                     env=child_env,
+                    stdin=asyncio.subprocess.DEVNULL,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.STDOUT,
                 )
@@ -2406,20 +2751,20 @@ class LitellmAcpServer:
         except Exception as exc:
             return f"Tool execution error: {exc}", True
 
-    async def _stream_litellm_turn(
+    async def _stream_saokhue_turn(
         self,
-        session: LitellmSession,
+        session: SaokhueSession,
         openai_messages: list[dict[str, Any]],
         tools: list[dict[str, Any]],
     ) -> tuple[str, list[dict[str, Any]], int, int]:
-        """Stream one Chat Completions call from LiteLLM and emit ACP text/thought chunks."""
-        base_url, api_key, env_model, timeout_secs = resolve_litellm_settings()
-        user_auth = load_litellm_user_auth()
+        """Stream one Chat Completions call from Sao Khuê and emit ACP text/thought chunks."""
+        base_url, api_key, env_model, timeout_secs = resolve_saokhue_settings()
+        user_auth = load_saokhue_user_auth()
         user_id = str(user_auth.get("user_id") or "").strip()
-        if not api_key and os.environ.get("LITELLM_REQUIRE_LOGIN") == "1":
+        if not api_key and os.environ.get("SAOKHUE_REQUIRE_LOGIN") == "1":
             raise RuntimeError(
-                "Not signed in to LiteLLM. Run `litellm-cli login` in your terminal "
-                "and complete sign-in, then start a new chat."
+                "Not signed in to Sao Khuê. Sign in from Settings > Agent Harness "
+                "or run `saokhue-cli login` in your terminal, then start a new chat."
             )
 
         real_avail = [
@@ -2428,10 +2773,10 @@ class LitellmAcpServer:
             if isinstance(m, str) and m.strip() and m.strip() not in ("auto", DEFAULT_FALLBACK_MODEL)
         ]
         if not real_avail:
-            fetched = await self._fetch_litellm_models(base_url, api_key)
+            fetched = await self._fetch_saokhue_models(base_url, api_key)
             if fetched:
                 session.available_models = fetched
-        session.model = _select_valid_litellm_model(
+        session.model = _select_valid_saokhue_model(
             session.model, session.available_models, env_model
         )
 
@@ -2460,7 +2805,7 @@ class LitellmAcpServer:
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
         if user_id:
-            headers["X-LiteLLM-User"] = user_id
+            headers["X-SaoKhue-User"] = user_id
 
         payload: dict[str, Any] = {
             "model": candidate_models[0],
@@ -2494,7 +2839,7 @@ class LitellmAcpServer:
                     else:
                         payload.pop("stream_options", None)
                     try:
-                        res = await self._stream_litellm_turn_urllib(
+                        res = await self._stream_saokhue_turn_urllib(
                             session=session,
                             url=url,
                             headers=headers,
@@ -2508,13 +2853,13 @@ class LitellmAcpServer:
                         return res
                     except Exception as exc:
                         last_urllib_err = exc
-                        if "Not signed in to LiteLLM" in str(exc):
+                        if "Not signed in to Sao Khuê" in str(exc):
                             raise
                         if include_stream_opts and "stream_options" in str(exc).lower():
                             continue
                         break
                 logger.warning(
-                    "LiteLLM model %r failed (%s); trying next candidate if available",
+                    "Sao Khuê model %r failed (%s); trying next candidate if available",
                     cand_model,
                     last_urllib_err,
                 )
@@ -2524,9 +2869,9 @@ class LitellmAcpServer:
         timeout = aiohttp.ClientTimeout(total=timeout_secs)
         ssl_opt: Any = (
             False
-            if os.environ.get("LITELLM_SSL_VERIFY", "").strip().lower()
+            if os.environ.get("SAOKHUE_SSL_VERIFY", "").strip().lower()
             in ("0", "false", "no")
-            else None
+            else _build_system_ssl_context()
         )
         last_model_err: Exception | None = None
         for cand_idx, cand_model in enumerate(candidate_models):
@@ -2534,7 +2879,7 @@ class LitellmAcpServer:
             session.model = cand_model
             payload["stream_options"] = {"include_usage": True}
             succeeded = False
-            for attempt_ssl in ([ssl_opt] if ssl_opt is False else [None, False]):
+            for attempt_ssl in ([ssl_opt] if ssl_opt is False else [ssl_opt, False]):
                 content_parts.clear()
                 tool_calls_by_index.clear()
                 input_tokens = 0
@@ -2545,15 +2890,15 @@ class LitellmAcpServer:
                 try:
                     async with aiohttp.ClientSession(timeout=timeout) as http:
                         post_kwargs: dict[str, Any] = {"headers": headers, "json": payload}
-                        if attempt_ssl is False:
-                            post_kwargs["ssl"] = False
+                        if attempt_ssl is not None:
+                            post_kwargs["ssl"] = attempt_ssl
                         async with http.post(url, **post_kwargs) as resp:
                             if resp.status in (401, 403):
                                 err_body = await resp.text()
                                 raise RuntimeError(
-                                    "Not signed in to LiteLLM (HTTP "
-                                    f"{resp.status}). Run `litellm-cli login` in your terminal "
-                                    f"and complete sign-in, then start a new chat. Details: {err_body[:300]}"
+                                    "Not signed in to Sao Khuê (HTTP "
+                                    f"{resp.status}). Sign in from Settings > Agent Harness "
+                                    f"or run `saokhue-cli login` in your terminal, then start a new chat. Details: {err_body[:300]}"
                                 )
                             if resp.status >= 400:
                                 err_body = await resp.text()
@@ -2568,10 +2913,10 @@ class LitellmAcpServer:
                                         if resp2.status >= 400:
                                             err_body2 = await resp2.text()
                                             raise RuntimeError(
-                                                f"LiteLLM status={resp2.status} from {url} (model={cand_model!r}): "
+                                                f"Sao Khuê status={resp2.status} from {url} (model={cand_model!r}): "
                                                 f"{err_body2[:500]}"
                                             )
-                                        resp_cost_hdr = resp2.headers.get("x-litellm-response-cost")
+                                        resp_cost_hdr = resp2.headers.get("x-saokhue-response-cost")
                                         if resp_cost_hdr:
                                             with contextlib.suppress(TypeError, ValueError):
                                                 turn_cost_usd = max(turn_cost_usd, float(resp_cost_hdr))
@@ -2660,10 +3005,10 @@ class LitellmAcpServer:
                                     succeeded = True
                                     break
                                 raise RuntimeError(
-                                    f"LiteLLM status={resp.status} from {url} (model={cand_model!r}): "
+                                    f"Sao Khuê status={resp.status} from {url} (model={cand_model!r}): "
                                     f"{err_body[:500]}"
                                 )
-                            resp_cost_hdr = resp.headers.get("x-litellm-response-cost")
+                            resp_cost_hdr = resp.headers.get("x-saokhue-response-cost")
                             if resp_cost_hdr:
                                 with contextlib.suppress(TypeError, ValueError):
                                     turn_cost_usd = max(turn_cost_usd, float(resp_cost_hdr))
@@ -2811,10 +3156,10 @@ class LitellmAcpServer:
                     succeeded = True
                     break
                 except Exception as exc:
-                    if attempt_ssl is None and _is_ssl_cert_error(exc):
+                    if attempt_ssl is not False and _is_ssl_cert_error(exc):
                         logger.debug("Retrying POST %s with ssl=False after %s", url, exc)
                         continue
-                    if "Not signed in to LiteLLM" in str(exc):
+                    if "Not signed in to Sao Khuê" in str(exc):
                         raise
                     last_model_err = exc
                     break
@@ -2823,7 +3168,7 @@ class LitellmAcpServer:
                     _persist_preferred_model(cand_model)
                 break
             logger.warning(
-                "LiteLLM model %r failed (%s); trying next candidate if available",
+                "Sao Khuê model %r failed (%s); trying next candidate if available",
                 cand_model,
                 last_model_err,
             )
@@ -2855,10 +3200,10 @@ class LitellmAcpServer:
             turn_cost_usd,
         )
 
-    async def _stream_litellm_turn_urllib(
+    async def _stream_saokhue_turn_urllib(
         self,
         *,
-        session: LitellmSession,
+        session: SaokhueSession,
         url: str,
         headers: dict[str, str],
         payload: dict[str, Any],
@@ -2875,7 +3220,7 @@ class LitellmAcpServer:
             req = urllib.request.Request(url, data=body_bytes, headers=headers, method="POST")
             try:
                 with _urlopen_resilient(req, timeout=timeout_secs) as resp:
-                    resp_cost_hdr = resp.headers.get("x-litellm-response-cost")
+                    resp_cost_hdr = resp.headers.get("x-saokhue-response-cost")
                     if resp_cost_hdr:
                         loop.call_soon_threadsafe(line_queue.put_nowait, ("cost_hdr", resp_cost_hdr))
                     ctype = (resp.headers.get("Content-Type") or "").lower()
@@ -2896,13 +3241,13 @@ class LitellmAcpServer:
                     err_body = str(exc)
                 if exc.code in (401, 403):
                     err_obj = RuntimeError(
-                        "Not signed in to LiteLLM (HTTP "
-                        f"{exc.code}). Run `litellm-cli login` in your terminal "
-                        f"and complete sign-in, then start a new chat. Details: {err_body[:300]}"
+                        "Not signed in to Sao Khuê (HTTP "
+                        f"{exc.code}). Sign in from Settings > Agent Harness "
+                        f"or run `saokhue-cli login` in your terminal, then start a new chat. Details: {err_body[:300]}"
                     )
                 else:
                     err_obj = RuntimeError(
-                        f"LiteLLM status={exc.code} from {url} (model={session.model!r}): "
+                        f"Sao Khuê status={exc.code} from {url} (model={session.model!r}): "
                         f"{err_body[:500]}"
                     )
                 loop.call_soon_threadsafe(
@@ -3134,7 +3479,7 @@ class LitellmAcpServer:
                     c_read,
                     c_write,
                     step_cost,
-                ) = await self._stream_litellm_turn(session, openai_messages, tools)
+                ) = await self._stream_saokhue_turn(session, openai_messages, tools)
                 total_in += in_tok
                 total_out += out_tok
                 total_cache_read += c_read
@@ -3407,12 +3752,12 @@ class LitellmAcpServer:
 
 
 def _cli_login(args: argparse.Namespace) -> int:
-    existing = load_litellm_user_auth(auto_refresh=False)
+    existing = load_saokhue_user_auth(auto_refresh=False)
     default_url = (
         args.url
-        or os.environ.get("LITELLM_BASE_URL")
+        or os.environ.get("SAOKHUE_BASE_URL")
         or str(existing.get("base_url") or "")
-        or f"{DEFAULT_LITELLM_BASE_URL}/v1"
+        or f"{DEFAULT_SAOKHUE_BASE_URL}/v1"
     )
     use_device_flow = bool(getattr(args, "use_device_flow", False))
     device_auth_url = str(getattr(args, "device_auth_url", "") or "")
@@ -3426,7 +3771,7 @@ def _cli_login(args: argparse.Namespace) -> int:
             base_url = default_url
         else:
             try:
-                entered = input(f"LiteLLM Server URL [{default_url}]: ").strip()
+                entered = input(f"Sao Khuê Server URL [{default_url}]: ").strip()
             except EOFError:
                 entered = ""
             base_url = entered or default_url
@@ -3443,7 +3788,7 @@ def _cli_login(args: argparse.Namespace) -> int:
         elif args.token:
             method = "token"
         else:
-            print("\nSelect LiteLLM sign-in method:", flush=True)
+            print("\nSelect Sao Khuê sign-in method:", flush=True)
             print(
                 f"  [1] Browser OAuth2 / SSO (PKCE -> {DEFAULT_OIDC_AUTHORIZE_URL}, client_id={DEFAULT_OIDC_CLIENT_ID})",
                 flush=True,
@@ -3452,7 +3797,7 @@ def _cli_login(args: argparse.Namespace) -> int:
                 f"  [2] Device Code Flow ({DEFAULT_OIDC_DEVICE_AUTH_URL}, client_id={DEFAULT_OIDC_CLIENT_ID})",
                 flush=True,
             )
-            print("  [3] Username & Password (POST /login on LiteLLM server)", flush=True)
+            print("  [3] Username & Password (POST /login on Sao Khuê server)", flush=True)
             print("  [4] Personal Access Token / Virtual Key (paste user token)", flush=True)
             try:
                 choice = input("Choice [1]: ").strip() or "1"
@@ -3528,9 +3873,9 @@ def _cli_login(args: argparse.Namespace) -> int:
         print(f"Sign-in failed: {exc}", file=sys.stderr)
         return 1
 
-    auth_file = litellm_auth_path()
+    auth_file = saokhue_auth_path()
     models = record.get("models") or []
-    print(f"\nSigned in to LiteLLM ({record.get('base_url')}/v1) as {record.get('user_id') or 'user'}!")
+    print(f"\nSigned in to Sao Khuê ({record.get('base_url')}/v1) as {record.get('user_id') or 'user'}!")
     print(f"  Method:      {record.get('auth_method')}")
     if record.get("client_id"):
         print(f"  Client ID:   {record.get('client_id')}")
@@ -3545,7 +3890,7 @@ def _cli_login(args: argparse.Namespace) -> int:
 
 
 def _cli_logout() -> int:
-    auth = load_litellm_user_auth(auto_refresh=False)
+    auth = load_saokhue_user_auth(auto_refresh=False)
     if auth:
         revoke_url = str(auth.get("revoke_url") or DEFAULT_OIDC_REVOKE_URL).strip()
         client_id = str(auth.get("client_id") or DEFAULT_OIDC_CLIENT_ID).strip()
@@ -3562,23 +3907,23 @@ def _cli_logout() -> int:
                 )
                 with _urlopen_resilient(req, timeout=5.0):
                     pass
-    path = litellm_auth_path()
-    if clear_litellm_user_auth():
-        print(f"Signed out of LiteLLM (removed {path}).")
+    path = saokhue_auth_path()
+    if clear_saokhue_user_auth():
+        print(f"Signed out of Sao Khuê (removed {path}).")
     else:
         print(f"Already signed out (no credential file at {path}).")
     return 0
 
 
 def _cli_status() -> int:
-    auth = load_litellm_user_auth()
-    path = litellm_auth_path()
+    auth = load_saokhue_user_auth()
+    path = saokhue_auth_path()
     if not auth or not auth.get("access_token"):
         print("Status: NOT SIGNED IN")
-        print(f"Run `litellm-cli login` to sign in (credentials stored at {path}).")
+        print(f"Run `saokhue-cli login` to sign in (credentials stored at {path}).")
         return 1
 
-    base_url = str(auth.get("base_url") or DEFAULT_LITELLM_BASE_URL)
+    base_url = str(auth.get("base_url") or DEFAULT_SAOKHUE_BASE_URL)
     user_id = str(auth.get("user_id") or "user")
     email = str(auth.get("email") or "")
     method = str(auth.get("auth_method") or "unknown")
@@ -3624,9 +3969,9 @@ def _cli_status() -> int:
 
 
 def _cli_models() -> int:
-    base_url, token, default_model, _ = resolve_litellm_settings()
+    base_url, token, default_model, _ = resolve_saokhue_settings()
     if not token:
-        print("Not signed in to LiteLLM. Run `litellm-cli login` first.", file=sys.stderr)
+        print("Not signed in. Run `saokhue-cli login` first.", file=sys.stderr)
         return 1
     try:
         models, _, _ = _probe_user_and_models_sync(base_url, token, timeout_secs=10.0)
@@ -3643,9 +3988,11 @@ def _cli_models() -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    with contextlib.suppress(Exception):
+        ensure_system_ca_bundle()
     raw_argv = list(sys.argv[1:] if argv is None else argv)
 
-    # Support `litellm-cli auth login` / `litellm-cli auth logout` / `litellm-cli auth status`
+    # Support `saokhue-cli auth login` / `saokhue-cli auth logout` / `saokhue-cli auth status`
     if len(raw_argv) >= 2 and raw_argv[0] == "auth" and raw_argv[1] in ("login", "logout", "status", "whoami"):
         raw_argv = raw_argv[1:]
 
@@ -3653,13 +4000,13 @@ def main(argv: list[str] | None = None) -> int:
         cmd = raw_argv[0]
         sub_argv = raw_argv[1:]
         if cmd == "login":
-            p = argparse.ArgumentParser(prog="litellm-cli login", description="Sign in to LiteLLM per user")
+            p = argparse.ArgumentParser(prog="saokhue-cli login", description="Sign in to Sao Khuê per user")
             p.add_argument(
                 "--url",
                 "--server",
                 dest="url",
                 default="",
-                help=f"LiteLLM Server URL (default: {DEFAULT_LITELLM_BASE_URL}/v1)",
+                help=f"Sao Khuê Server URL (default: {DEFAULT_SAOKHUE_BASE_URL}/v1)",
             )
             p.add_argument(
                 "--method",
@@ -3723,17 +4070,17 @@ def main(argv: list[str] | None = None) -> int:
             return _cli_models()
 
     parser = argparse.ArgumentParser(
-        prog="litellm-cli",
+        prog="saokhue-cli",
         description=(
-            "Kiro Crew built-in LiteLLM CLI & ACP server.\n"
-            f"Default Server: {DEFAULT_LITELLM_BASE_URL}/v1 (IdP client_id: {DEFAULT_OIDC_CLIENT_ID})\n\n"
+            "Sao Khuê built-in CLI & ACP server.\n"
+            f"Default Server: {DEFAULT_SAOKHUE_BASE_URL}/v1 (IdP client_id: {DEFAULT_OIDC_CLIENT_ID})\n\n"
             "Commands:\n"
-            "  litellm-cli login                    Sign in via Browser OAuth2 (PKCE) or Device Flow\n"
-            "  litellm-cli login --use-device-flow  Sign in via OAuth2 Device Code (/api/idpOAuth/device/auth)\n"
-            "  litellm-cli logout                   Revoke token & remove ~/.litellm-cli/auth.json\n"
-            "  litellm-cli status                   Show current signed-in user and test connection\n"
-            "  litellm-cli models                   List available models for the signed-in user\n"
-            "  litellm-cli acp                      Run the JSON-RPC 2.0 ACP server over stdio"
+            "  saokhue-cli login                    Sign in via Browser OAuth2 (PKCE) or Device Flow\n"
+            "  saokhue-cli login --use-device-flow  Sign in via OAuth2 Device Code (/api/idpOAuth/device/auth)\n"
+            "  saokhue-cli logout                   Revoke token & remove ~/.saokhue-cli/auth.json\n"
+            "  saokhue-cli status                   Show current signed-in user and test connection\n"
+            "  saokhue-cli models                   List available models for the signed-in user\n"
+            "  saokhue-cli acp                      Run the JSON-RPC 2.0 ACP server over stdio"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -3743,15 +4090,15 @@ def main(argv: list[str] | None = None) -> int:
     if not raw_argv:
         parser.print_help()
         print("", flush=True)
-        auth = load_litellm_user_auth(auto_refresh=False)
+        auth = load_saokhue_user_auth(auto_refresh=False)
         if auth and auth.get("access_token"):
             print(
                 f"Current status: SIGNED IN as {auth.get('user_id') or 'user'} "
-                f"({auth.get('base_url') or DEFAULT_LITELLM_BASE_URL}/v1)",
+                f"({auth.get('base_url') or DEFAULT_SAOKHUE_BASE_URL}/v1)",
                 flush=True,
             )
             return 0
-        print(f"Current status: NOT SIGNED IN ({litellm_auth_path()})", flush=True)
+        print(f"Current status: NOT SIGNED IN ({saokhue_auth_path()})", flush=True)
         if sys.stdin.isatty():
             try:
                 ans = input("\nWould you like to sign in now? [Y/n]: ").strip().lower()
@@ -3791,7 +4138,7 @@ def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdin, "reconfigure"):
         sys.stdin.reconfigure(encoding="utf-8")
 
-    server = LitellmAcpServer(agent_name=args.agent, initial_model=args.model)
+    server = SaokhueAcpServer(agent_name=args.agent, initial_model=args.model)
     try:
         asyncio.run(server.serve_stdio())
     except KeyboardInterrupt:

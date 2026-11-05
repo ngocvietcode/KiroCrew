@@ -214,6 +214,7 @@ from kiro_crew.agent_parts.spec_rebuild import (
     sync_aim_packages,
 )
 from kiro_crew.agent_parts.spec_upgrades import (
+    _LEGACY_KIROCREW_AGENT_FILES,
     _claim_propagated_model,
     _hooks_sanitized_mtimes,
     _load_existing_config,
@@ -610,7 +611,7 @@ _MANAGED_MCP_SERVERS: dict[str, dict] = {
     # rest the only reachable answer is ``not_bound`` or ``no_ledger`` — so both
     # spec-writing loops skip it and a session that never references the server
     # spends no context on four schemas it cannot use. The two agents that need it
-    # (``kirocrew-worker`` and the two conductors) hand-build the entry, which IS
+    # (``saokhue-worker`` and the two conductors) hand-build the entry, which IS
     # the explicit per-agent assignment an opt-in set requires.
     #
     # No ``autoApprove`` key, and none may ever be added — the same prohibition
@@ -1431,7 +1432,7 @@ _KNOWLEDGE_SYSTEM_PROMPT = (
 
 _RESEARCH_SYSTEM_PROMPT = """# KiroCrew Research Worker
 
-You are `kirocrew-research`, an autonomous research worker. You run ONE research
+You are `saokhue-research`, an autonomous research worker. You run ONE research
 cycle per turn inside an autonudge loop, then end your turn — the next cycle fires
 automatically. The Research Lab app drives you; the nudge names the campaign and dir.
 
@@ -1504,7 +1505,7 @@ automatically. The Research Lab app drives you; the nudge names the campaign and
 
 _HEARTBEAT_SYSTEM_PROMPT = """# KiroCrew Heartbeat Worker
 
-You are `kirocrew-heartbeat`, an unattended polling worker that runs one task
+You are `saokhue-heartbeat`, an unattended polling worker that runs one task
 per heartbeat cycle. You are dispatched by HeartbeatService when a task line in
 `HEARTBEAT.md` is due to run; the gateway delivers your response text directly
 to the user as a notification (no `send_message` call required, no chat panel

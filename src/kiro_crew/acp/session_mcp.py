@@ -709,7 +709,7 @@ def _crewmate_worker_spec(
 ) -> dict[str, Any] | None:
     """*spec*, or for a crewmate's worker session the worker spec it runs on.
 
-    The on-disk ``kirocrew-mate-worker`` is the base every crewmate's worker shares;
+    The on-disk ``saokhue-mate-worker`` is the base every crewmate's worker shares;
     the session's own worker is that base plus its crewmate's file
     (``mate_worker.worker_session_spec``, read from the session's execution record,
     the seam KAS's projection reads too). Every later read below is of THIS spec, so
@@ -785,7 +785,7 @@ def _agent_spec_and_snapshot_for(
     at all, and the claude spawn path -- unlike kiro-cli's ``--agent`` one -- has
     no other reason to write it. Best-effort and never raises.
 
-    A DERIVED agent (``kirocrew-worker``, ``kirocrew-heartbeat``) is answered from the
+    A DERIVED agent (``saokhue-worker``, ``saokhue-heartbeat``) is answered from the
     freshness gate's own snapshot and reads nothing here -- see the comment at that
     branch for why a read after the gate is a second observation rather than a tighter
     one.

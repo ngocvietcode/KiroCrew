@@ -83,7 +83,7 @@ _BACKGROUND_TASKS: set[asyncio.Task[Any]] = set()
 DEFAULT_POOL_SIZE = 3
 DEFAULT_TIMEOUT = 60.0
 FETCH_TIMEOUT = 120.0
-AGENT_NAME = "kirocrew-knowledge"
+AGENT_NAME = "saokhue-knowledge"
 # Knowledge extraction is deliberately high-effort by default. URL fetching uses
 # a separate pool and passes no explicit effort, so it retains provider default.
 DEFAULT_EXTRACTION_EFFORT = "high"
@@ -431,7 +431,7 @@ class Worker(ABC):
 
 
 class AcpWorker(Worker):
-    """Long-lived AcpClient session with kirocrew-knowledge agent."""
+    """Long-lived AcpClient session with saokhue-knowledge agent."""
 
     def __init__(
         self,

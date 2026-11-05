@@ -20,9 +20,9 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
-    ACP_BACKEND_LITELLM,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
+    ACP_BACKEND_SAOKHUE,
 )
 
 # Backends that can verify an enrolled member's saved spec at spawn.
@@ -90,7 +90,7 @@ ACP_BACKENDS_MEMBER_CAPABILITIES = frozenset(
         ACP_BACKEND_CODEX,
         ACP_BACKEND_DEEPSEEK,
         ACP_BACKEND_PI,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
     }
 )
 
@@ -101,7 +101,7 @@ ACP_BACKENDS_MEMBER_CAPABILITIES = frozenset(
 # there with those tools on. A saved spec that uses it is refused before spawn on
 # a non-member (``capability_tool_limits_unsupported``) rather than run wider than
 # it was saved.
-ACP_BACKENDS_MEMBER_TOOL_LIMITS = frozenset({ACP_BACKEND_KIRO, ACP_BACKEND_LITELLM})
+ACP_BACKENDS_MEMBER_TOOL_LIMITS = frozenset({ACP_BACKEND_KIRO, ACP_BACKEND_SAOKHUE})
 
 # Backends that honour a crewmate WORKER's single-tool limits. The worker's spec
 # is built per session (``mate_worker.worker_session_spec``), with every tool the
@@ -115,7 +115,7 @@ ACP_BACKENDS_MEMBER_TOOL_LIMITS = frozenset({ACP_BACKEND_KIRO, ACP_BACKEND_LITEL
 # ``test/fixtures/acp_frames/kas/worker-kit-live.jsonl``. A crewmate file's
 # ``excludedTools [shell]``, carried in the worker's customAgents entry, withheld
 # ``shell``: the model listed only the ``read`` tools.
-ACP_BACKENDS_MATE_WORKER_TOOL_LIMITS = frozenset({ACP_BACKEND_KAS, ACP_BACKEND_LITELLM})
+ACP_BACKENDS_MATE_WORKER_TOOL_LIMITS = frozenset({ACP_BACKEND_KAS, ACP_BACKEND_SAOKHUE})
 
 # Backends that carry a crewmate WORKER's per-session spec (its kit): a spec built
 # per session from the worker base plus that crewmate's own file
@@ -139,7 +139,7 @@ ACP_BACKENDS_MATE_WORKER_TOOL_LIMITS = frozenset({ACP_BACKEND_KAS, ACP_BACKEND_L
 # the worker's ``kirocrew-core`` would run inside the sandbox with the gateway
 # credential hidden by the enforced mask, so its control plane would be refused. A
 # worker allocated on strands is refused before spawn (``capability_harness_unsupported``).
-ACP_BACKENDS_MATE_WORKER_KIT = frozenset({ACP_BACKEND_KAS, ACP_BACKEND_CLAUDE, ACP_BACKEND_LITELLM})
+ACP_BACKENDS_MATE_WORKER_KIT = frozenset({ACP_BACKEND_KAS, ACP_BACKEND_CLAUDE, ACP_BACKEND_SAOKHUE})
 
 # Backends of the set above whose worker gets its prompt only from the
 # ``[AGENT SYSTEM PROMPT]`` context block: their mirrors project no spec prompt
@@ -375,7 +375,7 @@ ACP_BACKENDS_MEMBER_DISPATCH = frozenset(
         ACP_BACKEND_GOOSE,
         ACP_BACKEND_DEEPSEEK,
         ACP_BACKEND_PI,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
     }
 )
 
@@ -454,6 +454,6 @@ ACP_BACKENDS_MEMBER_PANEL = frozenset(
         ACP_BACKEND_GOOSE,
         ACP_BACKEND_DEEPSEEK,
         ACP_BACKEND_PI,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
     }
 )

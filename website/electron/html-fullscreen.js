@@ -1,4 +1,4 @@
-// Bridge DOM fullscreen to real window fullscreen for the Kiro Crew shell.
+// Bridge DOM fullscreen to real window fullscreen for the Sao Khuê shell.
 //
 // Why this exists: the dashboard renders inside a WebContentsView whose bounds
 // are clamped to the host window's content rect (main.js updateViewBounds). When

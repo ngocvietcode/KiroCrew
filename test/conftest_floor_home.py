@@ -131,7 +131,11 @@ def _real_data_homes() -> "tuple[pathlib.Path, ...]":
     return tuple(
         base / leaf
         for base in bases
-        for leaf in (pathlib.Path(".kiro", "crew"), pathlib.Path(".kirocrew"))
+        for leaf in (
+            pathlib.Path(".vpbank", "saokhue"),
+            pathlib.Path(".kiro", "crew"),
+            pathlib.Path(".kirocrew"),
+        )
     )
 
 
@@ -583,9 +587,13 @@ def _breadcrumb_guard(real):
 
 
 def _is_the_operators_default_home(path) -> bool:
-    """Whether *path* is the real ``~/.kiro/crew`` (not a tmp stand-in for it)."""
+    """Whether *path* is the real default home (not a tmp stand-in for it)."""
     try:
-        return pathlib.Path(path).resolve() == (_REAL_USER_HOME / ".kiro" / "crew").resolve()
+        resolved = pathlib.Path(path).resolve()
+        return resolved in {
+            (_REAL_USER_HOME / ".vpbank" / "saokhue").resolve(),
+            (_REAL_USER_HOME / ".kiro" / "crew").resolve(),
+        }
     except OSError:
         return False
 

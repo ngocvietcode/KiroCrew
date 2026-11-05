@@ -489,7 +489,7 @@ def _read_backend_choice(section: _sections.SectionReader, agent_data: dict, key
     from kiro_crew.acp_backends import (
         ACP_BACKEND_KAS,
         ACP_BACKEND_KIRO,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
         backend_from_stored,
         kiro_cli_pick_backend,
         selectable_backends,
@@ -506,10 +506,10 @@ def _read_backend_choice(section: _sections.SectionReader, agent_data: dict, key
     primary_backend = backend_from_stored(agent_data.get("acp_backend"))
     if (
         key == _MEMBER_HARNESS_KEY
-        and primary_backend == ACP_BACKEND_LITELLM
+        and primary_backend == ACP_BACKEND_SAOKHUE
         and value in (None, ACP_BACKEND_KIRO, ACP_BACKEND_KAS)
     ):
-        value = ACP_BACKEND_LITELLM
+        value = ACP_BACKEND_SAOKHUE
     elif value is None:
         default = section.default(key)
         value = default if default in selectable_backends() else None
@@ -636,7 +636,10 @@ def _crew_mode_agent_or_default(value: object) -> str:
     from kiro_crew.crew_mode import DEFAULT_CREW_MODE_AGENT
 
     if isinstance(value, str) and value.strip():
-        return value.strip()
+        cleaned = value.strip()
+        if cleaned == "kirocrew-conductor":
+            return DEFAULT_CREW_MODE_AGENT
+        return cleaned
     return DEFAULT_CREW_MODE_AGENT
 
 

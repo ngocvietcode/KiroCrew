@@ -625,7 +625,7 @@ async def _heartbeat_approval(
         sel().log_tool_invocation(
             session_key=HEARTBEAT_KEY,
             source="heartbeat",
-            agent="kirocrew-heartbeat",
+            agent="saokhue-heartbeat",
             tool_name=audit_label,
             tool_kind=event.tool_kind,
             outcome=outcome,
@@ -653,7 +653,7 @@ async def _heartbeat_approval(
                 name_grant.log_decline(
                     source="heartbeat",
                     session_key=HEARTBEAT_KEY,
-                    agent="kirocrew-heartbeat",
+                    agent="saokhue-heartbeat",
                     event=event,
                     refusal=_ng_refusal,
                     tier="heartbeat_safe_tool",

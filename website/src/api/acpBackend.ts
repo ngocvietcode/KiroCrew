@@ -23,6 +23,9 @@ export const ACP_BACKEND_KIRO = 'kiro'
  *  which completes first-run setup on kiro-cli ACP support, not a kiro-cli login. */
 export const ACP_BACKEND_KAS = 'kas'
 
+/** The Sao Khuê CLI ACP backend's id (`ACP_BACKEND_SAOKHUE` on the gateway). */
+export const ACP_BACKEND_SAOKHUE = 'saokhue'
+
 /** kiro-cli and its KAS relay: the harnesses backed by the Kiro service. */
 export const KIRO_HARNESS_BACKENDS: readonly string[] = [ACP_BACKEND_KIRO, ACP_BACKEND_KAS]
 
@@ -104,6 +107,7 @@ export function acpBackendName(backend: { id: string; policy_id?: string }): str
     case 'opencode': return i18nT('pages.developer.agentBackendTab.opencode')
     case 'pi': return i18nT('pages.developer.agentBackendTab.pi')
     case 'strands': return i18nT('pages.developer.agentBackendTab.strands')
+    case 'saokhue': return 'Sao Khuê CLI'
     default: return backend.policy_id || backend.id
   }
 }

@@ -12,7 +12,7 @@ resolved by name, and the session runs in the record's workspace directory.
 This module is that same collapse for the Slack chat turn.
 
 Only a name that IS a ``config.agents`` key is collapsed. Anything else -- a
-plain kiro agent mode such as ``kirocrew-lite`` -- returns ``None`` and the
+plain kiro agent mode such as ``saokhue-lite`` -- returns ``None`` and the
 caller passes it through unchanged, exactly as before. The binding itself is
 not new: the channel already names the record and the session already resolved
 its member identity from that name; this only stops the mode and the working

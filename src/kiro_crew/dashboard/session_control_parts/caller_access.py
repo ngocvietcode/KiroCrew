@@ -77,7 +77,7 @@ APP_CRON_OWNER_PREFIX = "app:"
 # here rather than imported: this module sits below agent materialization, and the
 # names are persisted agent identifiers. A positive list: an agent is a conductor
 # by being named here, never by not being something else.
-CONDUCTOR_AGENTS: frozenset[str] = frozenset({"kirocrew-conductor", "kirocrew-ledger-conductor"})
+CONDUCTOR_AGENTS: frozenset[str] = frozenset({"saokhue-conductor", "saokhue-ledger-conductor"})
 
 # The key prefix of a person's own dashboard chat tab (``chat-<n>-<ts>``).
 OWNER_CHAT_SLOT_PREFIX = "chat-"

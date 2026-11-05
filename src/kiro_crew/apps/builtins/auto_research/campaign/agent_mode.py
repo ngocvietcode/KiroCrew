@@ -1,4 +1,4 @@
-"""Agent-mode execution: the autonudge-driven ``kirocrew-research`` worker.
+"""Agent-mode execution: the autonudge-driven ``saokhue-research`` worker.
 
 Owns the worker's run: preparing a launch (consuming the previous run's stop
 evidence before the campaign is published RUNNING), arming the autonudge loop
@@ -55,8 +55,8 @@ logger = logging.getLogger(LOGGER_NAME)
 FAILURE_STANDDOWN_REASONS = frozenset({CONSECUTIVE_FAILURE_REASON, SESSION_START_FAILURE_REASON})
 
 # Per-cycle trigger injected by the autonudge loop. The full methodology lives in
-# the kirocrew-research agent's system prompt, so this only needs to name the cycle.
-_RESEARCH_AGENT = "kirocrew-research"
+# the saokhue-research agent's system prompt, so this only needs to name the cycle.
+_RESEARCH_AGENT = "saokhue-research"
 _RESEARCH_NUDGE = (
     "Run the next research cycle for campaign {cid} "
     "(dir {dir}). Follow your per-cycle research "

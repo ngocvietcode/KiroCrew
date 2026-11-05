@@ -21,11 +21,11 @@ const nodeOs = require("os");
 const nodePath = require("path");
 
 function canonicalHome(os = nodeOs, path = nodePath) {
-  return path.join(os.homedir(), ".kiro", "crew");
+  return path.join(os.homedir(), ".vpbank", "saokhue");
 }
 
 /**
- * The resolved KIROCREW_HOME override iff set AND valid, else null. Mirrors
+ * The resolved SAOKHUE_HOME / KIROCREW_HOME override iff set AND valid, else null. Mirrors
  * paths.py _valid_override_home: the value is expanduser()'d + resolve()'d to a
  * normalized absolute path (so a literal "~/foo" or a relative override matches
  * Python instead of being read verbatim), then a filesystem/drive root or a
@@ -34,7 +34,7 @@ function canonicalHome(os = nodeOs, path = nodePath) {
  * @returns {string|null}
  */
 function validOverride(env, os, path) {
-  const raw = env.KIROCREW_HOME;
+  const raw = env.SAOKHUE_HOME || env.KIROCREW_HOME;
   if (!raw) return null;
   // Expand a leading "~" against the home dir (path.resolve treats "~" as a
   // literal segment, unlike Python's expanduser()), then normalize to absolute.

@@ -19,8 +19,9 @@ import {
   type AcpBackendProbe,
   type KiroPrerequisiteStatus,
 } from '../api/client'
-import { ACP_BACKEND_KAS, ACP_BACKEND_KIRO, acpBackendName, acpProbeConfirmsUse, agentChoiceSaved, configuredAcpBackend, setupMarkerErrorBody, setupMarkerErrorMessage } from '../api/acpBackend'
+import { ACP_BACKEND_KAS, ACP_BACKEND_KIRO, ACP_BACKEND_SAOKHUE, acpBackendName, acpProbeConfirmsUse, agentChoiceSaved, configuredAcpBackend, setupMarkerErrorBody, setupMarkerErrorMessage } from '../api/acpBackend'
 import { clearCachedModels } from '../providers/adapters/acp'
+import { SaoKhueSignInCard } from '../pages/developer/SaoKhueSignInCard'
 import { safeGetItem, safeSetItem } from '../utils/safeStorage'
 import { Btn, Card, SendBtn } from './ui'
 import ErrorNotice from './ErrorNotice'
@@ -1272,6 +1273,9 @@ function OtherCodingAgents({
                           {shown.auth?.signs_in_separately && shown.auth.sign_in_remedy ? (
                             <p className="text-[12px] leading-relaxed text-muted">{shown.auth.sign_in_remedy}</p>
                           ) : null}
+                          {shown.id === ACP_BACKEND_SAOKHUE && (
+                            <SaoKhueSignInCard compact />
+                          )}
                           {/* Nothing to re-check on an agent that is installed, ready
                               and allowed to start: the only action left is to use it.
                               Nothing to re-check either when the sandbox is off by

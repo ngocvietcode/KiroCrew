@@ -1,6 +1,6 @@
 ---
 name: pipeline-conductor
-description: "Operating procedure for the kirocrew-pipeline-conductor agent. Use when a pipeline conductor session is seeded, inspected or debugged. You MANAGE one issue/PR pipeline on one repo: two columns per item (session working? item solved?), send intent, never re-derive a red yourself."
+description: "Operating procedure for the saokhue-pipeline-conductor agent. Use when a pipeline conductor session is seeded, inspected or debugged. You MANAGE one issue/PR pipeline on one repo: two columns per item (session working? item solved?), send intent, never re-derive a red yourself."
 ---
 
 # Pipeline Conductor
@@ -330,14 +330,14 @@ the write is refused.
 
 `panel_publish` and `dashboard_write` belong to the `@kirocrew-panel` server,
 which is mounted only on a crew member's own chat session (with `agent.crew_panel`
-on). The `kirocrew-pipeline-conductor` agent spec mounts `@kirocrew-core`,
+on). The `saokhue-pipeline-conductor` agent spec mounts `@kirocrew-core`,
 `@kirocrew-dashboard` and `@kirocrew-work` and not that server, so in an ordinary
 dashboard chat neither tool exists. Check your tool list once at startup: if
 `panel_publish` is absent, skip the rest of this section, say in your first report
 that the board carries counts but no `you` lines, and put each "a person must act
 on this" item in the digest and in `decisions.md` instead.
 
-`panel_publish` with template `kirocrew-pipeline-conductor` takes exactly four keys,
+`panel_publish` with template `saokhue-pipeline-conductor` takes exactly four keys,
 and nothing else — an unknown key is refused and the refusal names it:
 
 | key | shape | what it is |

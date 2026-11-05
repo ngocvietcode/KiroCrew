@@ -752,7 +752,7 @@ def _resolve_cron_agent(
         # identity to pin to: ONLY collapse a real Kiro Crew alias.
         # resolve_agent_bindings falls back to the default agent for
         # an unknown name, so resolving unconditionally would rewrite
-        # a legitimate kiro mode (e.g. 'kirocrew-lite') into the
+        # a legitimate kiro mode (e.g. 'saokhue-lite') into the
         # default. A name that is not an alias is either a real mode
         # or unset — leave it untouched.
         elif alias not in agents:

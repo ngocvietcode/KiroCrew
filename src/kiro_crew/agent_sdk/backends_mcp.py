@@ -25,9 +25,9 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
-    ACP_BACKEND_LITELLM,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
+    ACP_BACKEND_SAOKHUE,
     ACP_BACKEND_STRANDS,
 )
 
@@ -226,7 +226,7 @@ ACP_BACKENDS_USER_LEVEL_AGENT_SPECS_ONLY = frozenset({ACP_BACKEND_KAS})
 # gets Crew's projection of the spec, which filters both lists (KAS) or forwards
 # neither (the adapted harnesses), so its starts are never refused for them. A
 # harness that reads the file's grants itself must join.
-ACP_BACKENDS_SPEC_FILE_GRANTS = frozenset({ACP_BACKEND_KIRO, ACP_BACKEND_LITELLM})
+ACP_BACKENDS_SPEC_FILE_GRANTS = frozenset({ACP_BACKEND_KIRO, ACP_BACKEND_SAOKHUE})
 
 
 def overlay_project_scope(backend: str, work_dir: Any) -> dict[str, Any]:
@@ -317,7 +317,7 @@ def overlay_project_scope(backend: str, work_dir: Any) -> dict[str, Any]:
 # (same run: the projected probe server's tool ran off the empty array). In each
 # the model called ``@probe/probe_codeword`` and it returned ``tangerine-42``.
 ACP_BACKENDS_SPEC_SERVERS_OFF_WIRE = frozenset(
-    {ACP_BACKEND_KIRO, ACP_BACKEND_KAS, ACP_BACKEND_LITELLM}
+    {ACP_BACKEND_KIRO, ACP_BACKEND_KAS, ACP_BACKEND_SAOKHUE}
 )
 
 # Backends on which an agent spec's ``"tools": []`` is honoured as a total ban --
@@ -394,7 +394,7 @@ ACP_BACKENDS_HONOR_ZERO_TOOL_BAN = frozenset(
     {
         ACP_BACKEND_KIRO,
         ACP_BACKEND_KAS,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
         ACP_BACKEND_OPENCODE,
         ACP_BACKEND_GOOSE,
         ACP_BACKEND_DEEPSEEK,

@@ -971,7 +971,7 @@ def shows_suggestions(slug: str, record: Any, *, package_slug: str) -> bool:
     True only for the template instance (no package page is being served) and an
     UNADOPTED record (``state: empty``) with no page named for the crewmate -- a
     shipped page named for it (``default_template_id``'s slug pick, e.g.
-    ``kirocrew-conductor``'s board) is drawn as before. Such a crewmate has no page in
+    ``saokhue-conductor``'s board) is drawn as before. Such a crewmate has no page in
     force at all, so its record is the stored one, with no template.
     """
     from kiro_crew.dashboard_templates import instance as instance_store

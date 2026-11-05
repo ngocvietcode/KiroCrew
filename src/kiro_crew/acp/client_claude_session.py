@@ -408,7 +408,7 @@ def _claude_session_meta(self: AcpClient) -> dict[str, Any]:
     widening direction.
 
     A session whose spec declares ``"tools": []`` (``_spec_zero_tools``, the
-    background ``kirocrew-lite`` helpers) gets ``strictMcpConfig``, so only the
+    background ``saokhue-lite`` helpers) gets ``strictMcpConfig``, so only the
     wire array mounts: the harness's own user, project and plugin servers stay
     out of a session that must run no tool.
 
@@ -435,7 +435,7 @@ def _claude_session_meta(self: AcpClient) -> dict[str, Any]:
         if isinstance(inline, dict) and inline:
             options["settings"] = dict(inline)
     if getattr(self, "_spec_zero_tools", False):
-        # The spec declares ``"tools": []`` (the background ``kirocrew-lite``
+        # The spec declares ``"tools": []`` (the background ``saokhue-lite``
         # helpers): without this the harness mounts the user's, the project's and
         # plugins' servers beside the wire array, and starts them on every call.
         options["strictMcpConfig"] = True

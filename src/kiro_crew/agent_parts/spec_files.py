@@ -40,7 +40,7 @@ def _declined_foreign_spec_write(path: Path) -> bool:
 
     ``rebuild_agent_config`` consults :func:`_decline_shared_agent_home` and
     returns without writing when the answer is yes. The DERIVED specs had no
-    such check: ``kirocrew-worker.json`` (``worker_agent``), the conductor
+    such check: ``saokhue-worker.json`` (``worker_agent``), the conductor
     agents, the service agents (guest, lite, knowledge, research) and the
     read-only side spec are each written straight through
     :func:`_atomic_json_write`, and most of them on DISPATCH rather than at

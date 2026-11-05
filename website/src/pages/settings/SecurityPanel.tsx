@@ -16,7 +16,7 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  ShieldCheck, EyeOff, Terminal, Layers, ExternalLink, Gavel, Gauge, Boxes, BookOpen,
+  ShieldCheck, EyeOff, Terminal, Layers, ExternalLink, Gavel, Gauge, Boxes,
   Network, GitBranch,
 } from 'lucide-react'
 import { useAppSelector } from '../../store'
@@ -130,7 +130,6 @@ const SECURITY_SECTIONS: readonly SecuritySectionDef[] = [
   { key: 'redaction', icon: <EyeOff size={15} />, group: 'yours' },
   { key: 'layers', icon: <Layers size={15} />, group: 'enforced' },
   { key: 'governance', icon: <Gavel size={15} />, group: 'enforced' },
-  { key: 'docs', icon: <BookOpen size={15} />, group: 'reference' },
 ]
 
 /** One rail row. `summary` is a live, FACTUAL value (a count, an on/off) — never

@@ -1,6 +1,6 @@
 ---
 name: security-conductor
-description: Operating procedure for the kirocrew-security-conductor agent. Use when a security conductor session is seeded, inspected or debugged. Run vulnerability discovery on one target as a supervised fleet — one auditor per attack surface, an independent verifier per finding, two human gates.
+description: Operating procedure for the saokhue-security-conductor agent. Use when a security conductor session is seeded, inspected or debugged. Run vulnerability discovery on one target as a supervised fleet — one auditor per attack surface, an independent verifier per finding, two human gates.
 ---
 
 # Security Conductor

@@ -434,13 +434,13 @@ describe('CrewDynamicDashboard', () => {
   })
 
   it('draws the page it was sent when the gateway does not say suggestions', async () => {
-    // The shipped page named for the crewmate (`kirocrew-conductor` gets its board)
+    // The shipped page named for the crewmate (`saokhue-conductor` gets its board)
     // reads `empty` without the flag: the gateway decides, the tab does not re-derive.
     vi.spyOn(api, 'memberDashboard').mockResolvedValue(
-      page({ ...unadopted(), suggestions: false, template: { id: 'kirocrew-conductor', version: 1 } }),
+      page({ ...unadopted(), suggestions: false, template: { id: 'saokhue-conductor', version: 1 } }),
     )
     renderWithProviders(
-      <CrewDynamicDashboard target={{ kind: 'member', slug: 'kirocrew-conductor', member: 'kirocrew-conductor' }} displayName="Conductor" />,
+      <CrewDynamicDashboard target={{ kind: 'member', slug: 'saokhue-conductor', member: 'saokhue-conductor' }} displayName="Conductor" />,
     )
     expect(await screen.findByTestId('crew-dashboard-frame')).toBeInTheDocument()
     expect(screen.queryByTestId('crew-dashboard-suggestions')).toBeNull()

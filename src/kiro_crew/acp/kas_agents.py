@@ -297,7 +297,7 @@ class KasAgentSpecAbsent(KasAgentTranslationError):
         self.agent_id = agent_id
 
 
-#: The prompt Crew's own background agent ``kirocrew-lite`` gets on KAS. It is the
+#: The prompt Crew's own background agent ``saokhue-lite`` gets on KAS. It is the
 #: ONLY agent that gets it (:data:`_KAS_FALLBACK_PROMPT_AGENTS`): lite runs small
 #: system-issued text tasks (titles, summaries, tags, rephrases), so a short
 #: "do exactly the request, nothing else" brief keeps those replies to their
@@ -363,7 +363,7 @@ def resolve_prompt(
 
     A spec with no prompt (missing or blank) resolves to ``""``, which KAS runs
     on its own default prompt alone, as kiro-cli does for the same spec. Crew's
-    background agent ``kirocrew-lite`` is the one exception: it gets the small
+    background agent ``saokhue-lite`` is the one exception: it gets the small
     inline :data:`_KAS_FALLBACK_PROMPT` brief. That text is a literal, not a file
     read, so it carries none of the ``file://`` path's exfiltration / decode risk.
     Only KAS reaches this — the kiro-cli path keeps its empty-prompt behaviour
@@ -1632,7 +1632,7 @@ def build_kas_custom_agents(
     configuration have no effect.
 
     A prompt-less spec is projected with ``"prompt": ""``, so it runs on KAS's
-    own default prompt as it does on kiro-cli; only ``kirocrew-lite`` gets the
+    own default prompt as it does on kiro-cli; only ``saokhue-lite`` gets the
     small :data:`_KAS_FALLBACK_PROMPT` (see :func:`resolve_prompt`).
 
     *stub_server_names* is forwarded to :func:`_project_mcp_servers`; the caller

@@ -1062,7 +1062,7 @@ class KiroCrewConfig:
         """The effort a NEW session resolves to, short of an explicit override.
 
         The crew's own pin first, then the role-aware default: a background
-        worker agent (``kirocrew-lite`` / ``kirocrew-heartbeat``) takes the
+        worker agent (``saokhue-lite`` / ``saokhue-heartbeat``) takes the
         ``background`` role effort, everything else the chat default. A pin the
         operator typed on the crew therefore outranks BOTH defaults, including
         the role one — the pin is a choice, the role effort is a built-in.

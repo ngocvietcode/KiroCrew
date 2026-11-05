@@ -30,12 +30,12 @@ logger = logging.getLogger("kiro_crew.messaging.dispatch")
 #: agent auto-approves. That is the only enforcement that holds on the stock kiro
 #: backend, where a tool named in ``allowedTools`` raises no permission request
 #: and therefore never reaches the driver's ``deny_all_tools`` branch. A spec of
-#: its own, not the background ``kirocrew-lite``: that helper may grow a tool one
+#: its own, not the background ``saokhue-lite``: that helper may grow a tool one
 #: day and its empty prompt reads as "no user to address" on backends that need
 #: one, while this agent talks to a person. The spec pin in
 #: ``test_messaging_dispatch.py::TestToollessAgentSpecIsTheBoundary`` makes any
 #: drift loud.
-TOOLLESS_TURN_AGENT = "kirocrew-guest"
+TOOLLESS_TURN_AGENT = "saokhue-guest"
 
 
 #: What a sender whose turn was refused as un-tool-less-able reads. One line, no

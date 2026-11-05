@@ -98,7 +98,7 @@ function createWindowPrompts({
     </style></head><body>
       <label>Gateway port</label>
       <input id="p" type="number" value="7778" min="1" max="65535" autofocus>
-      <div class="hint">Connect to a Kiro Crew gateway running on another port</div>
+      <div class="hint">Connect to a Sao Khuê gateway running on another port</div>
       <div class="row"><button class="ok" onclick="go()">Connect</button>
       <button class="cancel" onclick="window.close()">Cancel</button></div>
       <script>

@@ -6,7 +6,7 @@ description: Deprecated alias of goal-conductor, removed next release. The work-
 # Goal Ledger Conductor (deprecated)
 
 This skill's procedure is now `goal-conductor`, and this name stays for one
-release only. `kirocrew-conductor` IS the ledger conductor: it mounts
+release only. `saokhue-conductor` IS the ledger conductor: it mounts
 `@kirocrew-work`, dispatches with bind-before-seed, and settles every `done`
 claim with `scripts/accept_eval.py` — so the split this skill existed to hold
 open is closed. Read `goal-conductor` and follow it; nothing new should name

@@ -13,12 +13,12 @@ import { i18nT } from '../../i18n/t'
 export const DEFAULT_TEMPLATE = 'kirocrew'
 
 /** Source-defined agents a crewmate runs on that are not templates anyone picks. */
-const SOURCE_DEFINED = new Set(['kirocrew-mate-conductor', 'kirocrew-mate-worker'])
+const SOURCE_DEFINED = new Set(['saokhue-mate-conductor', 'saokhue-mate-worker'])
 
 /** A template's name as the user sees it: the default one is labelled as such. */
 export function templateDisplayName(name: string): string {
   if (!name || name === DEFAULT_TEMPLATE || SOURCE_DEFINED.has(name)) {
-    return i18nT('pages.membersPage.built_from_default', { agent: DEFAULT_TEMPLATE })
+    return i18nT('pages.membersPage.built_from_default', { agent: 'saokhue' })
   }
   return name
 }

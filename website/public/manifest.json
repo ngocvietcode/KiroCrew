@@ -1,17 +1,17 @@
 {
-  "name": "Kiro Crew",
-  "short_name": "Kiro Crew",
-  "description": "Autonomous AI agent dashboard",
+  "name": "Sao Khuê",
+  "short_name": "Sao Khuê",
+  "description": "Sao Khuê — VPBank AI Agent Dashboard",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d0f12",
-  "theme_color": "#0d0f12",
+  "background_color": "#0b1410",
+  "theme_color": "#008542",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ],
   "screenshots": [
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide", "label": "Kiro Crew Dashboard" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "label": "Kiro Crew Dashboard" }
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide", "label": "Sao Khuê Dashboard" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "label": "Sao Khuê Dashboard" }
   ]
 }

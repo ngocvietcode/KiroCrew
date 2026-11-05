@@ -49,9 +49,9 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_CODEX,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
-    ACP_BACKEND_LITELLM,
     ACP_BACKEND_PI,
     ACP_BACKEND_PROCESS_NAMES,
+    ACP_BACKEND_SAOKHUE,
     ACP_BACKEND_STRANDS,
     ACP_BACKENDS_KNOWN,
     ACP_BACKENDS_SELF_SERVED_ACP,
@@ -504,9 +504,9 @@ def _probe_strands() -> BackendInstallState:
     return state
 
 
-def _probe_litellm() -> BackendInstallState:
+def _probe_saokhue() -> BackendInstallState:
     """Built-in Python ACP harness; always installed with Kiro Crew."""
-    return BackendInstallState(ACP_BACKEND_LITELLM, _policy_id(ACP_BACKEND_LITELLM), INSTALLED)
+    return BackendInstallState(ACP_BACKEND_SAOKHUE, _policy_id(ACP_BACKEND_SAOKHUE), INSTALLED)
 
 
 #: Backend id -> its probe. A probe that answers by calling :func:`probe_backend`
@@ -521,7 +521,7 @@ _PROBES: Dict[str, Callable[[], BackendInstallState]] = {
     ACP_BACKEND_CLAUDE: _probe_claude,
     ACP_BACKEND_CODEX: _probe_codex,
     ACP_BACKEND_PI: _probe_pi,
-    ACP_BACKEND_LITELLM: _probe_litellm,
+    ACP_BACKEND_SAOKHUE: _probe_saokhue,
     # Every harness that serves ACP from its own binary is probed by the one function
     # above, bound to its id. Generated from the membership rather than listed, so
     # onboarding a harness of that shape adds no row here at all -- and a harness with

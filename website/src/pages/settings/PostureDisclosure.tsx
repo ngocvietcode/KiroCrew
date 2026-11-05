@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, AlertTriangle, ExternalLink } from 'lucide-react'
+import { ChevronRight, AlertTriangle } from 'lucide-react'
 import { Badge, SearchInput } from '../../components/ui'
 import Clickable from '../../components/Clickable'
 import ErrorNotice from '../../components/ErrorNotice'
@@ -290,15 +290,9 @@ export function PostureDisclosureRow({
               )}
 
               {control.source && (
-                <a
-                  href={`${CODE_BASE}/${control.source}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[12px] text-accent hover:underline mt-2 ml-6 no-underline"
-                >
-                  <ExternalLink className="lucide-inline" />
+                <div className="inline-flex items-center gap-1.5 text-[12px] text-muted mt-2 ml-6">
                   <span className="font-mono">{control.source}</span>
-                </a>
+                </div>
               )}
             </div>
           </motion.div>

@@ -26,7 +26,7 @@ _PLAIN_TEMPLATE = "kirocrew"
 #: The template the first crewmate gets when the config names no default one:
 #: its chat runs on the conductor (rfc-mate-owned-agent-config.md, migration
 #: step 1). Never the ``default`` binding's: a plain chat is not a crewmate.
-_ORDINARY_TEMPLATE = "kirocrew-mate-conductor"
+_ORDINARY_TEMPLATE = "saokhue-mate-conductor"
 
 
 def _configured_template(*sections: object) -> str:

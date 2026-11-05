@@ -68,6 +68,7 @@ _SRC = _REPO_ROOT / "src" / "kiro_crew"
 #: Windows shards. These roots are what the fixtures actually protect, and the narrower
 #: form is true on all four targets.
 _GUARDED_ROOTS: tuple[pathlib.Path, ...] = (
+    pathlib.Path.home() / ".vpbank",
     pathlib.Path.home() / ".kiro",
     pathlib.Path.home() / ".kirocrew",
     pathlib.Path.home() / ".claude.json",

@@ -46,10 +46,10 @@ _WIDGET_TOKEN = "{{WIDGET_BLOCK}}"
 
 #: Built-in agents whose spec prompt asks for widgets (the conductor's
 #: introduction card and task board) and so get the per-surface widget pointer
-#: in their ``[AGENT SYSTEM PROMPT]`` block. ``kirocrew-ledger-conductor`` is the
-#: conductor's deprecated alias with the same body. ``kirocrew-worker`` is absent
+#: in their ``[AGENT SYSTEM PROMPT]`` block. ``saokhue-ledger-conductor`` is the
+#: conductor's deprecated alias with the same body. ``saokhue-worker`` is absent
 #: on purpose: it reports to the work ledger, not to a person.
-WIDGET_BLOCK_AGENTS = frozenset({"kirocrew-conductor", "kirocrew-ledger-conductor"})
+WIDGET_BLOCK_AGENTS = frozenset({"saokhue-conductor", "saokhue-ledger-conductor"})
 
 
 def steering_target_admissible(resolved: Path, base: Path | None = None) -> bool:

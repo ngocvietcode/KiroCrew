@@ -204,7 +204,7 @@ async def _is_stale(self: AcpRuntime) -> str | None:
 
     Distinct from is_alive(): a runtime can be perfectly healthy (process
     running, protocol responsive) yet still be "stale" — e.g. the
-    kirocrew-lite background runtime observed growing unbounded (multi-GB
+    saokhue-lite background runtime observed growing unbounded (multi-GB
     RSS) over ~24h of uptime because the multiplexed design has no per-turn
     compaction or lifetime cap. Callers should check this alongside
     is_alive() and stop reusing a stale process: kill() and respawn when the

@@ -2,7 +2,7 @@
 
 ``JevOracle`` answers in ~100 ms over HTTP against a System One model. This module
 answers the SAME protocol -- ``ask(state, questions) -> Answers``, raise on any
-failure -- from one text-only model call on the ``kirocrew-lite`` agent, so a
+failure -- from one text-only model call on the ``saokhue-lite`` agent, so a
 machine with no Jev key still has a judge. It is slower (seconds, not
 milliseconds) and it costs a small model call; both are far below the
 main-session turn the judge exists to avoid.
@@ -37,7 +37,7 @@ The runner the gateway registers takes the one-shot paths the session layer alre
 has. Where the backend has a shared background runtime, that is the path every
 background one-liner takes -- titles, summaries, STT endpointing:
 ``run_bg_oneliner``, which opens a fresh ``session/new`` on the one warm
-``kirocrew-lite`` process, rejects and audits any tool request, and destroys the
+``saokhue-lite`` process, rejects and audits any tool request, and destroys the
 handle afterwards. Elsewhere it is a tool-less session of its own, released AND
 destroyed so no subprocess outlives the call. This module does not invent a
 model-call path; see :func:`build_session_runner`.
@@ -65,7 +65,7 @@ logger = logging.getLogger(__name__)
 #: already states more completely on each call -- including the rule that the
 #: evidence is data and not instructions. A second spec written to every install to
 #: say what the call already says is a file to keep in sync for no behaviour.
-JUDGE_AGENT_NAME = "kirocrew-lite"
+JUDGE_AGENT_NAME = "saokhue-lite"
 
 #: What ``decisions.nudge_wake.llm_model`` resolves to when it is empty, which is
 #: the shipped default: INHERIT. The runner then asks for the agent's own model,
@@ -175,7 +175,7 @@ def has_runner() -> bool:
 def _background_role_model() -> str:
     """The judge agent's own model, or ``""`` when the config cannot be read.
 
-    ``kirocrew-lite`` is written with ``agent.role_models.background``, but a session
+    ``saokhue-lite`` is written with ``agent.role_models.background``, but a session
     opened on the shared runtime does not start on its template's model (KAS opens
     every session on its own ``auto``), so inheriting means asking for this id. The
     live snapshot is read rather than the file, because this runs on the event loop.
@@ -257,7 +257,7 @@ def build_session_runner(sessions: Any, *, model: str = "") -> Runner:
 
     The gateway calls this with its session manager when it registers the factory.
     On a backend with a shared runtime (kiro-cli, KAS, codex), each call is one
-    ``run_bg_oneliner``: a fresh ``session/new`` on the warm ``kirocrew-lite``
+    ``run_bg_oneliner``: a fresh ``session/new`` on the warm ``saokhue-lite``
     runtime, text only, any tool request rejected and audited, the handle destroyed
     afterwards. Not a session of its own there: that spawns a backend process, then
     waits out the MCP drain's no-report ceiling (6 s) for an agent that mounts no

@@ -76,7 +76,7 @@ function defaultPayload() {
       {
         id: 'task-1',
         task: 'Research subtask',
-        agent: 'kirocrew-research',
+        agent: 'saokhue-research',
         parent: 'dashboard:chat-1',
         rss_mb: 64,
         peak_rss_mb: 80,

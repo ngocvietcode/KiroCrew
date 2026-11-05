@@ -7,6 +7,7 @@ they explain structure and rationale and link out to
 | Document | Covers |
 |---|---|
 | [overview.md](overview.md) | System diagrams, the component map, and the subsystem-to-spec index. Start here. |
+| [sao-khue-architecture.md](sao-khue-architecture.md) | Kiến trúc tổng thể Sao Khuê (VPBank Personal AI Agent), phân tích `saokhue-cli` ACP server, cấu hình CLI độc lập/VIP LLM endpoint, và lợi ích triển khai. |
 | [mcp.md](mcp.md) | MCP server discovery, tool management, the MCP-first rule, and the tool-statelessness invariant. |
 | [dashboard-iframe-hosts.md](dashboard-iframe-hosts.md) | The four dashboard iframe hosts, their differing sandboxes, why they are not interchangeable, and how to add a panel tab kind. |
 | [app-platform-trust-model.md](app-platform-trust-model.md) | Why an enabled app runs in-process with the gateway's privileges, the confinement that does apply, and what each layer is worth. |

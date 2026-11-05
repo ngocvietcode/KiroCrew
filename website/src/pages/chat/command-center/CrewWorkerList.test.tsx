@@ -16,7 +16,7 @@ import UltraCrewPanel from './UltraCrewPanel'
 import { crewModePreviewOn } from '../../../test/crewModePreview'
 
 const W = (key: string, title: string, status: string, group: string) =>
-  ({ key, title, agent: 'kirocrew-worker', status, group, last_activity: '', ledger_item: '', created_by: 'root-1' })
+  ({ key, title, agent: 'saokhue-worker', status, group, last_activity: '', ledger_item: '', created_by: 'root-1' })
 
 const WORKERS = {
   root: 'root-1',
@@ -100,7 +100,7 @@ describe('Ultra Mode Crew tab', () => {
   it('List: shows the open rows from the slot store when the gateway does not serve the list', async () => {
     api.crewWorkers.mockRejectedValue(new ApiError(404, 'not found', ''))
     renderWith(<UltraCrewPanel root="root-1" viewing="root-1" active />, [
-      { key: 'w-live', title: 'Live worker', agent: 'kirocrew-worker', messages: 2, running: true, crew_root: 'root-1', created_by: 'root-1' },
+      { key: 'w-live', title: 'Live worker', agent: 'saokhue-worker', messages: 2, running: true, crew_root: 'root-1', created_by: 'root-1' },
     ])
     await toList()
     expect(await screen.findByRole('button', { name: /Live worker/ })).toBeInTheDocument()

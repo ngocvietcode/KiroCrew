@@ -48,7 +48,7 @@ describe('every shipped language translates every phrase', () => {
 describe('localizeCrewMainData', () => {
   const english = {
     turns: '12 turns finished',
-    agent: 'kirocrew-conductor',
+    agent: 'saokhue-conductor',
     items_open: '3 of 5 items not yet done',
     lede: 'Working through the queue.',
   }
@@ -62,7 +62,7 @@ describe('localizeCrewMainData', () => {
     const out = localizeCrewMainData({ ...english, [CREW_MAIN_PHRASES_FIELD]: phrases })
     expect(out).toEqual({
       turns: '12 Runden abgeschlossen',
-      agent: 'kirocrew-conductor',
+      agent: 'saokhue-conductor',
       items_open: '3 von 5 Aufgaben noch nicht erledigt',
       lede: 'Working through the queue.',
     })

@@ -148,7 +148,7 @@ _STATELESS_KEYS = frozenset({CONSOLIDATE_KEY})
 # only the factory got it, ``_Session.agent`` stayed at its "" default, so every
 # consumer reading ``sess.agent`` (e.g. ``runtime_pids``) saw the background
 # session as agent-less.
-BACKGROUND_AGENT = "kirocrew-lite"
+BACKGROUND_AGENT = "saokhue-lite"
 
 
 # Backends the _bg runtime path may spawn under: runtime-capable AND

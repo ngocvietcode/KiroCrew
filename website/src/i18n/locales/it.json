@@ -287,7 +287,7 @@
     "signed_in_with": "Accesso effettuato con {{provider}}",
     "skip_to_content": "Vai al contenuto",
     "social_login": "Accesso social",
-    "star_kirocrew_on_github": "Metti una stella a Kiro Crew su GitHub",
+    "star_kirocrew_on_github": "Metti una stella a Sao Khuê su GitHub",
     "star_us": "Mettici una stella",
     "starting_update": "Avvio dell'aggiornamento…",
     "subagent_cap_explained_many": "Al momento possono essere eseguiti al massimo {{count}} subagenti alla volta. Gli altri aspettano il loro turno.",
@@ -383,7 +383,7 @@
     },
     "agentWorlds": {
       "manifest": {
-        "description": "Trasforma gli agenti in esecuzione in personaggi di una scena animata in pixel art: un’occhiata ti dice quanto è occupato Kiro Crew. Ogni agente attivo appare come uno sprite che reagisce quando il lavoro inizia e finisce, in scene a tema che vanno da un ufficio classico a una torre da mago o a un laboratorio sottomarino. Aprila in una finestra separata per tenerla su un secondo schermo mentre lavori.",
+        "description": "Trasforma gli agenti in esecuzione in personaggi di una scena animata in pixel art: un’occhiata ti dice quanto è occupato Sao Khuê. Ogni agente attivo appare come uno sprite che reagisce quando il lavoro inizia e finisce, in scene a tema che vanno da un ufficio classico a una torre da mago o a un laboratorio sottomarino. Aprila in una finestra separata per tenerla su un secondo schermo mentre lavori.",
         "display_name": "Agent Worlds",
         "highlight_1": "Vista in tempo reale di quali agenti sono in esecuzione, come personaggi anziché come elenco",
         "highlight_2": "Scene a tema tra cui Office, Panda Den, Neural Net, Wizard Tower e Deep Lab",
@@ -1460,7 +1460,7 @@
         "title": "Crew Companion"
       },
       "manifest": {
-        "description": "Un compagno da scrivania per Kiro Crew che ti aiuta a dare ritmo alla giornata: ti invita a fare pause, conserva i promemoria che imposti in linguaggio naturale e propone un breve esercizio di respirazione quando hai bisogno di ricaricarti. Ti avvisa anche quando una sessione finisce, va in errore o attende un tuo OK.",
+        "description": "Un compagno da scrivania per Sao Khuê che ti aiuta a dare ritmo alla giornata: ti invita a fare pause, conserva i promemoria che imposti in linguaggio naturale e propone un breve esercizio di respirazione quando hai bisogno di ricaricarti. Ti avvisa anche quando una sessione finisce, va in errore o attende un tuo OK.",
         "display_name": "Crew Companion",
         "highlight_1": "Inviti gentili a fare una pausa — bere, allungarsi, guardare lontano — con l’intervallo che scegli tu",
         "highlight_2": "Promemoria che imposti in linguaggio naturale, come «bere acqua tra 20 minuti»",
@@ -1469,7 +1469,7 @@
         "highlight_5": "Galleggia sulla scrivania con un avatar sostituibile",
         "page_label": "Crew Companion",
         "use_case_1": "Usa un compagno desktop per promemoria delle pause, promemoria in linguaggio semplice, esercizi di respirazione e notifiche delle sessioni.",
-        "configuration_1": "Usa Kiro Crew Desktop, attiva l'app, quindi imposta nella sua pagina l'intervallo delle pause e le notifiche di completamento; gli avatar si scelgono nella Gallery del compagno."
+        "configuration_1": "Usa Sao Khuê Desktop, attiva l'app, quindi imposta nella sua pagina l'intervallo delle pause e le notifiche di completamento; gli avatar si scelgono nella Gallery del compagno."
       },
       "memories": {
         "days_together_many": "{{count}} giorni insieme",
@@ -1821,18 +1821,18 @@
     },
     "devFleet": {
       "manifest": {
-        "description": "Un pannello di controllo per lavorare su Kiro Crew stesso. Elenca ogni worktree di funzionalità con lo stato della sua pull request, il numero di commit e lo spazio occupato su disco, e può avviarne uno qualsiasi come pod: un’istanza di anteprima completa, su una porta e una cartella dati proprie, così puoi provare una modifica non finita senza disturbare il gateway attivo. Si occupa anche delle incombenze che ne derivano — fare pull di main e ricompilare, fare il rebase di un branch, seguire i log dei pod ed eliminare i worktree il cui lavoro è già stato unito.",
+        "description": "Un pannello di controllo per lavorare su Sao Khuê stesso. Elenca ogni worktree di funzionalità con lo stato della sua pull request, il numero di commit e lo spazio occupato su disco, e può avviarne uno qualsiasi come pod: un’istanza di anteprima completa, su una porta e una cartella dati proprie, così puoi provare una modifica non finita senza disturbare il gateway attivo. Si occupa anche delle incombenze che ne derivano — fare pull di main e ricompilare, fare il rebase di un branch, seguire i log dei pod ed eliminare i worktree il cui lavoro è già stato unito.",
         "display_name": "Dev Fleet",
         "highlight_1": "Avvia qualsiasi worktree come pod isolato, su una porta e una cartella dati proprie, lasciando intatto il gateway attivo",
         "highlight_2": "Vista della flotta con stato della PR per branch, numero di commit e spazio su disco",
         "highlight_3": "Sincronizza (pull di main e ricompilazione) o fai il rebase di un branch senza uscire dalla dashboard",
         "highlight_4": "«Elimina i worktree uniti» si rifiuta di cancellare un worktree con lavoro non committato o non tracciato, invece di buttarlo via",
         "highlight_5": "Segui i log dei pod e genera le chiavi di accesso ai pod dall’interfaccia",
-        "highlight_6": "Pensata per chi sviluppa Kiro Crew stesso — non serve per l’uso quotidiano",
+        "highlight_6": "Pensata per chi sviluppa Sao Khuê stesso — non serve per l’uso quotidiano",
         "highlight_7": "I pod funzionano su Linux (systemd --user) e macOS (launchd) — ma il pod su macOS non ha un limite di memoria/CPU imposto; Make Live prepara il puntatore su ogni piattaforma, e il riavvio automatico richiede un’unità systemd --user o un LaunchAgent di macOS; vista della flotta, stato della PR, sincronizzazione, rebase ed eliminazione funzionano su qualsiasi piattaforma",
         "page_label": "Dev Fleet",
-        "use_case_1": "Gestisci i worktree delle funzionalità di Kiro Crew e pod di anteprima isolati senza modificare il gateway live.",
-        "configuration_1": "Indica all'app un checkout di Kiro Crew; le azioni sulle PR richiedono gh autenticato, mentre i pod richiedono systemd --user su Linux o launchd su macOS e devono prima essere predisposti."
+        "use_case_1": "Gestisci i worktree delle funzionalità di Sao Khuê e pod di anteprima isolati senza modificare il gateway live.",
+        "configuration_1": "Indica all'app un checkout di Sao Khuê; le azioni sulle PR richiedono gh autenticato, mentre i pod richiedono systemd --user su Linux o launchd su macOS e devono prima essere predisposti."
       }
     },
     "designTweak": {
@@ -2004,7 +2004,7 @@
         "truncated": "· troncato"
       },
       "manifest": {
-        "description": "Sfoglia e leggi i file sulla macchina che esegue Kiro Crew senza uscire dalla dashboard. Tieni aperti più file in schede, percorri l’albero delle cartelle con accanto lo stato git di ciascun file, cerca una stringa in un’intera cartella e leggi il markdown formattato anziché grezzo. È di sola lettura per scelta: apre e cerca nei file ma non li modifica, non li sposta e non li elimina mai, e può raggiungere solo la tua home, la directory temporanea di sistema e, su Linux e macOS, gli alberi /home, /opt e /workplace.",
+        "description": "Sfoglia e leggi i file sulla macchina che esegue Sao Khuê senza uscire dalla dashboard. Tieni aperti più file in schede, percorri l’albero delle cartelle con accanto lo stato git di ciascun file, cerca una stringa in un’intera cartella e leggi il markdown formattato anziché grezzo. È di sola lettura per scelta: apre e cerca nei file ma non li modifica, non li sposta e non li elimina mai, e può raggiungere solo la tua home, la directory temporanea di sistema e, su Linux e macOS, gli alberi /home, /opt e /workplace.",
         "display_name": "File",
         "highlight_1": "Sola lettura: apre e cerca nei file, e non li scrive, sposta o elimina mai",
         "highlight_2": "Più file aperti contemporaneamente in schede, con evidenziazione della sintassi",
@@ -3435,7 +3435,7 @@
       "manifest": {
         "description": "Un assistente AI per le riunioni. Trascrive la riunione dal vivo, tiene note e diagrammi strutturati mentre procede, estrae le azioni da fare e ti lascia rivederle prima di registrarle.",
         "display_name": "Riunioni",
-        "highlight_1": "Trascrizione dal vivo con il riconoscimento vocale integrato di Kiro Crew — nessun daemon aggiuntivo, nessun account cloud oltre a quelli che usi già",
+        "highlight_1": "Trascrizione dal vivo con il riconoscimento vocale integrato di Sao Khuê — nessun daemon aggiuntivo, nessun account cloud oltre a quelli che usi già",
         "highlight_2": "Un gruppo di agenti lavora sulla riunione in parallelo: note strutturate, un diagramma HTML/Mermaid e un elenco di azioni da fare",
         "highlight_3": "Correggi una volta sola gli errori ricorrenti del riconoscimento vocale con un dizionario di dominio e tutte le riunioni successive li scriveranno bene",
         "highlight_4": "Rivedi le azioni estratte prima che qualcosa venga registrato — archivia il rumore, registra il resto",
@@ -3846,7 +3846,7 @@
         "highlight_6": "Il nucleo autonomo è interamente nello stesso processo — nessuna seconda app, nessun runtime aggiuntivo",
         "page_label": "Mochi",
         "use_case_1": "Tieni un discreto animaletto desktop che conversa, segue promemoria e modifiche delle pagine pubbliche e si adatta agli eventi del calendario collegato.",
-        "configuration_1": "Usa Kiro Crew Desktop, attiva Mochi, scegline aspetto e comportamento, quindi aggiungi gli obiettivi da seguire nella chat o nella dashboard; la pianificazione basata sugli impegni richiede uno strumento MCP di calendario collegato."
+        "configuration_1": "Usa Sao Khuê Desktop, attiva Mochi, scegline aspetto e comportamento, quindi aggiungi gli obiettivi da seguire nella chat o nella dashboard; la pianificazione basata sugli impegni richiede uno strumento MCP di calendario collegato."
       },
       "menu": {
         "clear_screen": "Svuota schermo",
@@ -4312,7 +4312,7 @@
         "highlight_6": "Conosce i turni: il livello di automazione in servizio si arma e si disarma da sé",
         "page_label": "Mission Control",
         "use_case_1": "Monitora i segnali operativi, indaga sugli incidenti, riutilizza le correzioni collaudate e consegna una traccia di controllo locale completa.",
-        "configuration_1": "Aggiungi provider nelle Impostazioni con credenziali d'ambiente o token, mantieni Observe per l'uso in sola lettura e abilita esplicitamente le azioni Propose o Act consentite; l'output Slack riutilizza una connessione Kiro Crew esistente."
+        "configuration_1": "Aggiungi provider nelle Impostazioni con credenziali d'ambiente o token, mantieni Observe per l'uso in sola lettura e abilita esplicitamente le azioni Propose o Act consentite; l'output Slack riutilizza una connessione Sao Khuê esistente."
       },
       "opsMissionControlPage": {
         "act": "Act",
@@ -4678,7 +4678,7 @@
         "no_source_files": "Nessun file sorgente."
       },
       "manifest": {
-        "description": "Un editor per articoli in LaTeX con anteprima PDF dal vivo e un coautore AI. Scrivi in un editor a due riquadri, premi Cmd+S (Ctrl+S su Windows e Linux) per compilare con pdflatex o tectonic e leggi il PDF prodotto accanto al sorgente. Gli errori di compilazione vengono raccolti in un elenco cliccabile che salta alla riga incriminata. Clona un articolo esistente da qualsiasi remoto git, poi fai commit e push dalla barra degli strumenti. Il pannello del coautore è una vera sessione di chat di Kiro Crew limitata all’articolo, così l’agente può leggere e modificare il tuo LaTeX mentre guardi il PDF aggiornarsi.",
+        "description": "Un editor per articoli in LaTeX con anteprima PDF dal vivo e un coautore AI. Scrivi in un editor a due riquadri, premi Cmd+S (Ctrl+S su Windows e Linux) per compilare con pdflatex o tectonic e leggi il PDF prodotto accanto al sorgente. Gli errori di compilazione vengono raccolti in un elenco cliccabile che salta alla riga incriminata. Clona un articolo esistente da qualsiasi remoto git, poi fai commit e push dalla barra degli strumenti. Il pannello del coautore è una vera sessione di chat di Sao Khuê limitata all’articolo, così l’agente può leggere e modificare il tuo LaTeX mentre guardi il PDF aggiornarsi.",
         "display_name": "Papyrus",
         "highlight_1": "Editor LaTeX a due riquadri con l’anteprima PDF dal vivo accanto",
         "highlight_2": "Compilazione al salvataggio (Cmd+S, o Ctrl+S su Windows e Linux) con pdflatex o tectonic, e il ciclo bibtex eseguito per te",
@@ -5244,7 +5244,7 @@
         }
       },
       "manifest": {
-        "description": "Sviluppo guidato dalle spec dentro Kiro Crew: trasforma l’idea di una funzionalità in Requisiti → Progettazione → Attività con un agente integrato, rivedi il markdown nell’app e poi affida il piano approvato a una sessione di esecuzione autonoma.",
+        "description": "Sviluppo guidato dalle spec dentro Sao Khuê: trasforma l’idea di una funzionalità in Requisiti → Progettazione → Attività con un agente integrato, rivedi il markdown nell’app e poi affida il piano approvato a una sessione di esecuzione autonoma.",
         "display_name": "Spec Builder",
         "page_label": "Spec Builder",
         "use_case_1": "Trasforma una funzionalità, un bug o un'attività rapida in requisiti, progettazione e passaggi di implementazione legati al repository e pronti da revisionare.",
@@ -5257,7 +5257,7 @@
     },
     "workflows": {
       "manifest": {
-        "description": "Scrivi, esegui e osserva workflow dinamici: script Python, di solito scritti per te da un agente a partire da un obiettivo in linguaggio naturale, che guidano più agenti Kiro Crew attraverso fasi ordinate. Prima che venga eseguito qualcosa lo script viene verificato contro un insieme di comandi di workflow in sandbox, così gli errori emergono senza esecuzione, e poi la pagina trasmette ogni fase e ogni evento degli agenti mentre l’esecuzione procede. In un checkout del codice sorgente ci sono esempi eseguibili da cui partire; le installazioni pacchettizzate non ne includono.",
+        "description": "Scrivi, esegui e osserva workflow dinamici: script Python, di solito scritti per te da un agente a partire da un obiettivo in linguaggio naturale, che guidano più agenti Sao Khuê attraverso fasi ordinate. Prima che venga eseguito qualcosa lo script viene verificato contro un insieme di comandi di workflow in sandbox, così gli errori emergono senza esecuzione, e poi la pagina trasmette ogni fase e ogni evento degli agenti mentre l’esecuzione procede. In un checkout del codice sorgente ci sono esempi eseguibili da cui partire; le installazioni pacchettizzate non ne includono.",
         "display_name": "Workflow",
         "highlight_1": "Convalida un workflow prima di eseguirlo — gli errori emergono senza che nulla venga eseguito",
         "highlight_2": "Osserva l’esecuzione dal vivo, fase per fase, con eventi di progresso per ogni agente",
@@ -5439,7 +5439,7 @@
     },
     "awsControl": {
       "manifest": {
-        "description": "I tuoi account cloud, in parole semplici. Vedi ogni account AWS che Kiro Crew può usare, con una spia di stato per account e indicazioni di riconnessione su misura, oltre a un drive cloud basato su S3 — file, una libreria di artefatti cloud e backup — con link di condivisione a tempo. Nulla è pubblico se non lo decidi tu, e ogni servizio a pagamento chiede la tua conferma prima di poterti addebitare qualcosa.",
+        "description": "I tuoi account cloud, in parole semplici. Vedi ogni account AWS che Sao Khuê può usare, con una spia di stato per account e indicazioni di riconnessione su misura, oltre a un drive cloud basato su S3 — file, una libreria di artefatti cloud e backup — con link di condivisione a tempo. Nulla è pubblico se non lo decidi tu, e ogni servizio a pagamento chiede la tua conferma prima di poterti addebitare qualcosa.",
         "display_name": "AWS Control",
         "highlight_1": "Una spia di stato per account, ciascuna con indicazioni di riconnessione adatte al modo in cui il profilo si autentica",
         "highlight_2": "Spazio di archiviazione privato, cifrato e con versioni, creato solo dopo la tua conferma",
@@ -5447,7 +5447,7 @@
         "highlight_4": "I link di condivisione scadono sempre — nulla è pubblico se non lo decidi tu",
         "highlight_5": "Ogni servizio a pagamento è confermato per account prima del primo utilizzo, e ogni modifica è registrata",
         "page_label": "AWS Control",
-        "use_case_1": "Guarda ogni account AWS che Kiro Crew può raggiungere, quali sono in salute e quanto ti sta costando questo mese, senza aprire la console AWS.",
+        "use_case_1": "Guarda ogni account AWS che Sao Khuê può raggiungere, quali sono in salute e quanto ti sta costando questo mese, senza aprire la console AWS.",
         "configuration_1": "Aggiungi un account dai profili già presenti su questa macchina, poi conferma ogni servizio a pagamento una volta per account prima del primo utilizzo."
       },
       "console": {
@@ -6142,7 +6142,7 @@
       "choose_sources": "Scegli le origini",
       "continue": "Continua",
       "could_not_save_onboarding_state": "Impossibile salvare lo stato dell'introduzione.",
-      "config_unreadable_onboarding_state": "{{productName}} non riesce a leggere il proprio config.json (in ~/.kiro/crew per impostazione predefinita), quindi non può segnare la configurazione come completata. Gli elementi importati non sono stati toccati. Chiudi la configurazione per ora e chiedi all'agente di riparare il file.",
+      "config_unreadable_onboarding_state": "{{productName}} non riesce a leggere il proprio config.json (in ~/.vpbank/saokhue per impostazione predefinita), quindi non può segnare la configurazione come completata. Gli elementi importati non sono stati toccati. Chiudi la configurazione per ora e chiedi all'agente di riparare il file.",
       "close_setup_for_now": "Chiudi la configurazione per ora",
       "close_setup_for_now_hint": "Gli elementi importati restano. La configurazione si riaprirà la prossima volta.",
       "credentials_remain_with_their_source_rules_hooks": "Le credenziali restano presso la loro origine. Cronologia delle conversazioni, hook, definizioni degli agenti e l'identità della persona di un'origine non vengono importati. Le tue regole e istruzioni scritte vengono importate come memoria ad alta priorità.",
@@ -8272,7 +8272,7 @@
       "back_to_chat": "Torna alla chat"
     },
     "onboardingFlow": {
-      "answers_set_how_kiro_explains_things_plain_langu": "Le risposte determinano come Kiro spiega le cose — in linguaggio semplice o con dettagli tecnici completi. Salvato su questo dispositivo; modificabile in qualsiasi momento in Impostazioni → Chat.",
+      "answers_set_how_kiro_explains_things_plain_langu": "Le risposte determinano come Sao Khuê spiega le cose — in linguaggio semplice o con dettagli tecnici completi. Salvato su questo dispositivo; modificabile in qualsiasi momento in Impostazioni → Chat.",
       "back": "Indietro",
       "change_anything_later_in_settings": "Puoi modificare tutto più tardi nelle Impostazioni.",
       "choose_a_color_theme_and_mode_you_can_change_it": "Scegli una modalità, un tema colore e i pannelli traslucidi — puoi cambiarli in qualsiasi momento.",
@@ -8310,7 +8310,7 @@
       "tech_codes": "Scrivo codice",
       "tech_non_technical": "Non tecnico",
       "tech_somewhat": "In parte",
-      "tell_kiro_about_you": "Parla di te a Kiro",
+      "tell_kiro_about_you": "Parla di te a Sao Khuê",
       "your_role": "Il tuo ruolo",
       "translucent_panels_short_desc": "Lascia che il contenuto si veda attraverso la barra in alto e la casella del messaggio, come vetro smerigliato."
     },
@@ -8926,7 +8926,7 @@
     },
     "sessionPulseSurveyCard": {
       "dismiss": "Ignora il sondaggio",
-      "email_disclosure": "Potremmo volerti contattare riguardo al tuo feedback. La tua valutazione e gli eventuali commenti vengono inviati al team di Kiro Crew.",
+      "email_disclosure": "Potremmo volerti contattare riguardo al tuo feedback. La tua valutazione e gli eventuali commenti vengono inviati al team di Sao Khuê.",
       "email_placeholder": "tu@esempio.com (facoltativo)",
       "email_prompt": "Condividi la tua email per unirti al nostro panel di ricerca",
       "feedback_question": "Hai altri commenti su questa esperienza?",
@@ -9659,7 +9659,7 @@
       "copied": "Copiato!",
       "copyFailed": "Copia non riuscita",
       "copyCommand": "Copia comando",
-      "orEditConfigJson": "In alternativa, modifica direttamente ~/.kiro/crew/config.json.",
+      "orEditConfigJson": "In alternativa, modifica direttamente ~/.vpbank/saokhue/config.json.",
       "openSettingsAriaLabel": "Apri {{key}} in Impostazioni → {{tab}}",
       "fileSettingAriaLabel": "Impostazione solo file {{key}}",
       "commandValueLabel": "Valore per il comando",
@@ -9998,7 +9998,7 @@
       "confirm_stop": "Conferma arresto",
       "description": "Controlla a basso costo e attiva l’agente solo quando il lavoro di revisione è eseguibile.",
       "enter_pull_request_url": "Inserisci l’URL di una richiesta pull.",
-      "gitlab_host_not_allowed": "Questo host GitLab non è ancora consentito. Aggiungilo a dashboard.gitlab_hosts in ~/.kiro/crew/config.json.",
+      "gitlab_host_not_allowed": "Questo host GitLab non è ancora consentito. Aggiungilo a dashboard.gitlab_hosts in ~/.vpbank/saokhue/config.json.",
       "invalid_pull_request_url": "Inserisci l’URL di una richiesta pull supportata.",
       "latest_classification": "Classificazione più recente",
       "latest_decision": "Decisione più recente",
@@ -10813,6 +10813,7 @@
       "no_microphone_found_connect_one_or_pick_a_differ": "Nessun microfono trovato. Collegane uno o scegli un dispositivo diverso in Impostazioni."
     },
     "theme": {
+      "saokhue": "🌟 {{productName}}",
       "high_contrast": "🔆 Contrasto elevato",
       "nu_disco": "🪩 Nu Disco",
       "amethyst_oled": "💜 Amethyst OLED",
@@ -10905,7 +10906,7 @@
       "deny": "Nega",
       "failed": "non riuscito",
       "idle": "Inattivo",
-      "kiro_is_working": "Kiro sta lavorando…",
+      "kiro_is_working": "Sao Khuê sta lavorando…",
       "loading_thread": "Caricamento del thread…",
       "message": "Messaggio {{name}}",
       "message_sent": "Messaggio inviato",
@@ -14311,7 +14312,7 @@
       "cutover_staged_run_cmd_to_finish_or_cancel": "Passaggio preparato: questo worktree diventerà attivo al prossimo avvio del gateway. Esegui `{{cmd}}` per completarlo, oppure usa il menu di questa riga → Annulla il passaggio preparato per annullarlo. Fino ad allora il gateway continua a eseguire il checkout precedente.",
       "keeps_the_live_checkout_the_live_target_and_disc": "Mantiene il checkout attivo come destinazione attiva e scarta il passaggio preparato verso {{staged}} (non viene riavviato nulla)",
       "restarting_completes_the_pending_cutover_boots": "Il riavvio completa il passaggio in sospeso: il gateway ripartirà su \"{{staged}}\", non sul checkout attuale. La dashboard si disconnetterà brevemente e si riconnetterà automaticamente. Per annullare, usa invece Annulla il passaggio preparato.",
-      "no_checkout_found_action": "Aggiungi dev_fleet.repo_path al config.json nella directory dati di {{productName}} (~/.kiro/crew per impostazione predefinita) e questa pagina lo rileva al prossimo aggiornamento. Anche la variabile d'ambiente qui sotto funziona, ma un gateway già avviato non vede una variabile impostata dopo l'avvio, quindi quella strada richiede un riavvio.",
+      "no_checkout_found_action": "Aggiungi dev_fleet.repo_path al config.json nella directory dati di {{productName}} (~/.vpbank/saokhue per impostazione predefinita) e questa pagina lo rileva al prossimo aggiornamento. Anche la variabile d'ambiente qui sotto funziona, ma un gateway già avviato non vede una variabile impostata dopo l'avvio, quindi quella strada richiede un riavvio.",
       "pr_closed_not_on_main": "PR chiusa — non è su main",
       "pr_closed_uncommitted_changes": "PR chiusa — modifiche non salvate",
       "remove_closed_pr": "Rimuovi — PR chiusa (non è su main)",
@@ -14480,8 +14481,8 @@
         "decisions_judge_model_desc": "Usato solo quando il giudice sopra è il modello piccolo. Lascialo sul modello proprio dell'agente giudice, a meno che non ne voglia uno più economico.",
         "decisions_judge_model_inherit": "Mantieni il modello proprio dell'agente giudice",
         "decisions_points_unavailable": "Il {{productName}} che esegue questa dashboard non elenca ancora ciò che Jev decide. Aggiornalo da <0>Impostazioni › Releases</0>.",
-        "decisions_pointer_skills_max_triggered": "Quante skill un turno può caricare si imposta con skills.max_triggered in ~/.kiro/crew/config.json.",
-        "decisions_endpoint_pointer": "Questo indirizzo si imposta con decisions.provider.endpoint in ~/.kiro/crew/config.json. La dashboard lo mostra e non lo cambia.",
+        "decisions_pointer_skills_max_triggered": "Quante skill un turno può caricare si imposta con skills.max_triggered in ~/.vpbank/saokhue/config.json.",
+        "decisions_endpoint_pointer": "Questo indirizzo si imposta con decisions.provider.endpoint in ~/.vpbank/saokhue/config.json. La dashboard lo mostra e non lo cambia.",
         "decisions_provider_label": "Modello decisionale",
         "decisions_provider_desc": "Quale modello risponde alle decisioni. Un modello locale gira su questo computer, quindi niente di ciò che gli viene chiesto esce da qui; {{productName}} lo scarica e lo esegue per te.",
         "decisions_provider_jev": "Jev, ospitato da TypeSafe",
@@ -14503,7 +14504,7 @@
         "decisions_provider_unavailable": "Impossibile leggere quale modello decisionale è configurato.",
         "decisions_provider_memory_unavailable": "Impossibile leggere la memoria di questa macchina, quindi nessun modello è indicato come consigliato.",
         "decisions_custom_loopback_no_key": "Questo indirizzo è su questa macchina, quindi non gli viene inviata alcuna chiave API di Jev. Un proxy locale verso Jev ospitato deve aggiungere la chiave da sé.",
-        "decisions_history_pointer": "È il massimo che una singola decisione può portare, salvato insieme al tuo consenso. {{productName}} chiede decisions.history_budget_chars in ~/.kiro/crew/config.json e non invia mai più del numero indicato qui.",
+        "decisions_history_pointer": "È il massimo che una singola decisione può portare, salvato insieme al tuo consenso. {{productName}} chiede decisions.history_budget_chars in ~/.vpbank/saokhue/config.json e non invia mai più del numero indicato qui.",
         "decisions_history_off": "Ha effetto quando l'interruttore principale di Jev è attivo.",
         "decisions_scope_is_the_ok": "L'interruttore qui sotto è il consenso che manca.",
         "decisions_what_compaction_keep": "Valuta quali chiamate agli strumenti della sessione una compattazione terrebbe. Solo misurazione: la compattazione non cambia.",
@@ -14832,7 +14833,7 @@
       "memory_label_shared": "In comune",
       "memory_label_check": "Apri per controllare",
       "shown_across_the_dashboard_instead_of_the_name_l": "Mostrato in tutta la dashboard al posto del nome ({{name}}). Lascia vuoto per mostrare il nome stesso.",
-      "subdirectory_inside_kiro_crew_where_this_workspa": "Sottodirectory in ~/.kiro/crew dove questo workspace archivia i suoi dati (cronologia delle chat, lezioni, progetti). Ogni workspace ha la propria directory isolata.",
+      "subdirectory_inside_kiro_crew_where_this_workspa": "Sottodirectory in ~/.vpbank/saokhue dove questo workspace archivia i suoi dati (cronologia delle chat, lezioni, progetti). Ogni workspace ha la propria directory isolata.",
       "triggers": "Triggers",
       "triggers_hint": "Quando affidare il lavoro a questo compagno: testo libero che {{productName}} legge per sceglierlo. Lascialo vuoto per escludere questo compagno dalla selezione automatica.",
       "triggers_hint_member": "Situazioni in cui {{productName}} dovrebbe affidare un compito a questo compagno: indicazioni in testo libero che legge quando ne sceglie uno. Lascia vuoto per escludere questo compagno dalla selezione automatica.",
@@ -15491,7 +15492,7 @@
       "displayTab": {
         "auto": "Automatico",
         "change_the_dashboard_font_family_persists_across": "Cambia il carattere della dashboard. Persiste tra le sessioni.",
-        "choose_a_color_palette_each_theme_supports_dark": "Scegli una palette di colori. Ogni tema supporta la modalità scura e chiara. I temi personalizzati sono salvati in ~/.kiro/crew/themes/.",
+        "choose_a_color_palette_each_theme_supports_dark": "Scegli una palette di colori. Ogni tema supporta la modalità scura e chiara. I temi personalizzati sono salvati in ~/.vpbank/saokhue/themes/.",
         "color_theme": "Tema colori",
         "creating": "Creazione in corso…",
         "dark": "Scuro",
@@ -15640,7 +15641,7 @@
         "applied_change_one": "{{count}} modifica applicata",
         "applied_change_other": "{{count}} modifiche applicate",
         "apply": "Applica",
-        "apply_commits_to_kirocrew_mcp_json_provider_glob": "— \"Applica\" scrive su ~/.kiro/crew/mcp.json + i valori globali del provider secondo le tue scelte.",
+        "apply_commits_to_kirocrew_mcp_json_provider_glob": "— \"Applica\" scrive su ~/.vpbank/saokhue/mcp.json + i valori globali del provider secondo le tue scelte.",
         "applying": "Applicazione in corso…",
         "clear_search": "Cancella ricerca",
         "click_to_disable_pending_until_apply": "Clicca per disattivare (in attesa fino ad Applica)",
@@ -16340,7 +16341,7 @@
         "active_projects": "Progetti su cui hai lavorato",
         "coding_time": "Tempo di programmazione",
         "connect_body": "WakaTime è uno strumento gratuito che registra il tempo che passi a programmare nel tuo editor.",
-        "connect_hint": "Prima imposta wakatime.enabled su true in $KIROCREW_HOME/config.json (predefinito: ~/.kiro/crew/config.json), quindi in Impostazioni → Secret imposta la chiave API WakaTime in Usate automaticamente da {{productName}}. Ottieni una chiave su wakatime.com/settings/account.",
+        "connect_hint": "Prima imposta wakatime.enabled su true in $SAOKHUE_HOME/config.json (predefinito: ~/.vpbank/saokhue/config.json), quindi in Impostazioni → Secret imposta la chiave API WakaTime in Usate automaticamente da {{productName}}. Ottieni una chiave su wakatime.com/settings/account.",
         "connect_title": "Connetti WakaTime",
         "daily_average": "Media giornaliera",
         "export_csv": "Esporta ore (CSV)",
@@ -17258,7 +17259,7 @@
         "automatic_updates_unavailable_platform": "Gli aggiornamenti automatici non sono disponibili in questa build su questa piattaforma.",
         "automatic_updates_unavailable_translocated": "Gli aggiornamenti automatici non sono disponibili perché macOS sta eseguendo questa app da una copia temporanea di sola lettura. Spostala nella cartella Applicazioni e riaprila.",
         "automatic_updates_unavailable_volume": "Gli aggiornamenti automatici non sono disponibili perché questa app è in esecuzione da un'immagine disco di sola lettura. Spostala nella cartella Applicazioni e riaprila.",
-        "autonomous_agent_management_runs_locally_open_so": "Gestione autonoma degli agenti · esecuzione locale · open source",
+        "autonomous_agent_management_runs_locally_open_so": "Nền tảng quản trị AI Agent tự hành của VPBank — phát triển kế thừa (fork) từ KiroCrew theo giấy phép Apache 2.0",
         "browse_this_branch_on_github": "Sfoglia questo branch su GitHub",
         "channel_explainer_gateway_switch_note": "Cambiare canale modifica solo quale canale viene controllato per gli aggiornamenti. Esegui il comando qui sotto per spostare davvero questa installazione.",
         "channel_explainer_insider": "Build anticipate, pubblicate da giorni a settimane prima di Stable. Le nuove funzionalità arrivano qui per prime, e con loro i nuovi bug.",
@@ -17291,7 +17292,7 @@
         "manual_install_fallback": "Se l'aggiornamento non funziona, puoi {{link}} e reinstallare sopra questa copia. Le tue impostazioni, chat e file vengono mantenuti.",
         "nightly": "Nightly",
         "not_checked_yet": "Non ancora controllato",
-        "open_source_under_the_apache_2_0_license": "Open source con licenza Apache 2.0",
+        "open_source_under_the_apache_2_0_license": "Bản fork từ KiroCrew theo giấy phép bản quyền Apache 2.0",
         "platform": "Piattaforma",
         "prerelease_report_prompt": "Grazie per usare le build anticipate. Sono testate meno di Stable, quindi qualcosa si rompe — quando qualcosa non va, <report>segnalalo su GitHub</report> così viene corretto prima che arrivi a tutti.",
         "published": "pubblicato {{when}}",
@@ -17699,8 +17700,8 @@
         "immediate_mode_shows_raw_chunks_as_they_arrive_s": "La modalità immediata mostra i blocchi grezzi appena arrivano. La modalità fluida li mette in buffer e fa comparire il testo con un ritmo costante.",
         "it_ops": "IT / Ops",
         "keep_your_computer_awake_while_a_task_is_running": "Mantieni il computer attivo mentre è in esecuzione un'attività. Su alcuni portatili Windows (Modern Standby), bloccare lo schermo può comunque mandarlo in sospensione, quindi lascia lo schermo acceso per le attività lunghe.",
-        "kiro_matches_vocabulary_and_examples_to_your_pro": "Kiro adatta il vocabolario e gli esempi al tuo background professionale",
-        "kiro_quotes_this_back_to_itself_when_calibrating": "Kiro usa questa descrizione per adattare vocabolario ed esempi al tuo ruolo.",
+        "kiro_matches_vocabulary_and_examples_to_your_pro": "Sao Khuê adatta il vocabolario e gli esempi al tuo background professionale",
+        "kiro_quotes_this_back_to_itself_when_calibrating": "Sao Khuê usa questa descrizione per adattare vocabolario ed esempi al tuo ruolo.",
         "knowledge_library": "Libreria delle conoscenze",
         "less_only_when_needed": "Meno (solo quando serve)",
         "let_the_agent_add_documents_it_reads_while_workin": "Consenti all’agente di aggiungere alla tua libreria delle conoscenze i documenti che legge durante il lavoro, così resteranno ricercabili in seguito. L’agente legge i documenti con gli strumenti da te approvati; {{productName}} non li recupera direttamente. I documenti aggiunti compaiono in un’unica fonte 'Aggiunti automaticamente' che puoi rimuovere con un clic.",
@@ -18796,7 +18797,7 @@
         "copied": "Copiato",
         "copy_manifest_yaml": "Copia il manifest YAML",
         "create_slack_app": "Crea app Slack",
-        "create_the_slack_app_from_the_manifest": "Crea l'app Slack dal manifest precompilato qui sotto (modalità Socket e permessi\n            inclusi, denominata KiroCrew-{{alias}}). Installala nel tuo\n            workspace, poi incolla qui il token del bot e il token a livello di app.",
+        "create_the_slack_app_from_the_manifest": "Crea l'app Slack dal manifest precompilato qui sotto (modalità Socket e permessi\n            inclusi, denominata Sao Khuê-{{alias}}). Installala nel tuo\n            workspace, poi incolla qui il token del bot e il token a livello di app.",
         "e0123abc456": "E0123ABC456",
         "enterprise_grid_org_ids_to_allow_starts_with_e_o": "ID Slack da consentire: gli ID delle organizzazioni iniziano con E, quelli delle aree di lavoro con T. Su Enterprise Grid, elenca l'ID E… dell'organizzazione e l'ID T… di ogni area di lavoro: i messaggi vengono verificati per area di lavoro, quindi un elenco con il solo ID E… rifiuta ogni messaggio. Lascia vuoto per consentire tutte le organizzazioni.",
         "from_oauth_permissions_after_installing_your_sla": "Da OAuth & Permissions dopo l'installazione della tua app Slack (inizia con xoxb-).",
@@ -19797,7 +19798,7 @@
       "bearer_token_proves_who_is_calling": "Bearer token — dimostra chi sta chiamando",
       "call_this_hook": "Chiama questo hook",
       "caller_name": "Nome del chiamante",
-      "calls_must_send_signature_headers_detail": "Le chiamate con questo token devono inviare X-KiroCrew-Timestamp e X-KiroCrew-Signature. La firma copre \"<timestamp>.<raw body>\", il timestamp deve rientrare in ±{{seconds}}s e ogni firma è accettata una volta per processo del gateway.",
+      "calls_must_send_signature_headers_detail": "Le chiamate con questo token devono inviare X-Sao Khuê-Timestamp e X-Sao Khuê-Signature. La firma copre \"<timestamp>.<raw body>\", il timestamp deve rientrare in ±{{seconds}}s e ogni firma è accettata una volta per processo del gateway.",
       "calls_using_it_start_failing_with_401": "Le chiamate che lo usano iniziano a fallire con 401.",
       "chars": "caratteri",
       "completed": "Completato",
@@ -20546,8 +20547,8 @@
     "dataNeverSentBody": "Prompt, risposte, file, credenziali, nomi host, nomi utente né il tuo sistema operativo. Il tuo IP non viene memorizzato.",
     "dataNeverSentTitle": "Mai inviato",
     "governanceOverrideNote": "I criteri di sicurezza del tuo amministratore lo disattivano. Non è modificabile qui.",
-    "installReceiptBody": "Dopo un’installazione o un aggiornamento riuscito dal catalogo ufficiale di Kiro Crew, viene inviata una ricevuta anonima. Registri esterni, app locali e app autoregistrate non vengono mai segnalati.",
-    "installReceiptFields": "slug dell’app ufficiale · token anonimo per app (non collegabile tra app) · nuova installazione/aggiornamento · versione di Kiro Crew",
+    "installReceiptBody": "Dopo un’installazione o un aggiornamento riuscito dal catalogo ufficiale di Sao Khuê, viene inviata una ricevuta anonima. Registri esterni, app locali e app autoregistrate non vengono mai segnalati.",
+    "installReceiptFields": "slug dell’app ufficiale · token anonimo per app (non collegabile tra app) · nuova installazione/aggiornamento · versione di Sao Khuê",
     "installReceiptTitle": "Ricevute di installazione delle app ufficiali",
     "localDataBody": "Registri di utilizzo e contesto. Le metriche di prestazione sono disattivate per impostazione predefinita.",
     "localDataTitle": "Resta sul tuo dispositivo",
@@ -20702,9 +20703,9 @@
       "custom_description": "Chiavi cifrate per server MCP e impostazioni .env. Fai riferimento a una come secret://YOUR_KEY; il valore non viene mai mostrato nella chat.",
       "custom_authorize": "Per consentire a un agente in una chat di un membro di chiamare un’API approvata con un segreto, concedi all’agente {{server}}, poi esegui il comando qui sotto in una shell o nella pagina Terminale.",
       "custom_empty": "Nessun segreto personalizzato ancora archiviato. Aggiungine uno per farvi riferimento da un server MCP come secret://YOUR_KEY.",
-      "managed_config_error": "Alcune credenziali automatiche sono nascoste perché non è stato possibile leggere $KIROCREW_HOME/config.json (predefinito: ~/.kiro/crew/config.json).",
+      "managed_config_error": "Alcune credenziali automatiche sono nascoste perché non è stato possibile leggere $SAOKHUE_HOME/config.json (predefinito: ~/.vpbank/saokhue/config.json).",
       "managed_name_hint": "Salvando qui, {{name}} viene aggiornato nella sezione delle credenziali automatiche. — {{productName}}",
-      "managed_unconfigured_hint": "Per usare WakaTime o Jira automaticamente, abilita WakaTime o aggiungi un host Jira in $KIROCREW_HOME/config.json (predefinito: ~/.kiro/crew/config.json).",
+      "managed_unconfigured_hint": "Per usare WakaTime o Jira automaticamente, abilita WakaTime o aggiungi un host Jira in $SAOKHUE_HOME/config.json (predefinito: ~/.vpbank/saokhue/config.json).",
       "managed_setup_guide": "Apri la guida alla configurazione dei secret",
       "delete_managed_confirm": "Eliminare definitivamente «{{name}}»? Il valore attuale non può essere recuperato.",
       "delete_managed_name": "Elimina {{name}}",
@@ -21591,7 +21592,7 @@
     "invite_key_remove_body": "Non si può annullare. Per invitare di nuovo serve una nuova chiave.",
     "invite_single_use": "Link monouso",
     "trigger_scheduled": "Pianificato: {{name}}",
-    "question_waiting": "Kiro attende la risposta di {{name}}",
+    "question_waiting": "Sao Khuê attende la risposta di {{name}}",
     "first_share_title": "Condividere questo Crew?",
     "setup_body": "Scegli come i colleghi raggiungono questa Crew.",
     "first_share_stop_tailscale": "Per smettere di condividere, revoca il loro invito in Inviti in questa pagina, oppure rimuovile dal tuo tailnet in Tailscale.",
@@ -21718,7 +21719,7 @@
     "preview_save_failed": "Impossibile salvare l’impostazione della Crew condivisa.",
     "preview_restart_failed": "Impossibile riavviare il gateway.",
     "approval_waiting_you": "La tua azione attende l'approvazione",
-    "question_waiting_you": "Kiro attende la tua risposta"
+    "question_waiting_you": "Sao Khuê attende la tua risposta"
   },
   "milestone": {
     "crew_mode": {

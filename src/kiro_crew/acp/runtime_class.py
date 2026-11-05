@@ -357,7 +357,7 @@ class AcpRuntime:
         self._mcp_gateway_socket = str(mcp_gateway_socket) if mcp_gateway_socket else None
         # Whether sessions on this runtime should hold drain_init() open for
         # slow MCP servers (the no-report ceiling). A runtime whose agent is
-        # KNOWN to have zero MCP servers — the kirocrew-lite background runtime,
+        # KNOWN to have zero MCP servers — the saokhue-lite background runtime,
         # whose config Kiro Crew itself writes with an empty mcpServers map —
         # opts out so hot one-liner paths (chat titles, suggestions, STT
         # endpointing) don't pay a full ceiling wait that can never be armed.
@@ -393,7 +393,7 @@ class AcpRuntime:
         self._derived_spec_snapshot: Any = None
 
         # Recycling thresholds — see _is_stale(). Long-lived multiplexed
-        # runtimes (e.g. the kirocrew-lite background runtime) have no
+        # runtimes (e.g. the saokhue-lite background runtime) have no
         # per-turn compaction, so age/RSS are the only signals available to
         # bound unbounded growth.
         #

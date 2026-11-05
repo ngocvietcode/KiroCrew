@@ -65,7 +65,7 @@ export interface KiroCrewAgent {
  *  not be). The built-in Assistant (see `isAssistantMember`) with no label of
  *  its own reads as its localized name rather than its config key. */
 export function crewDisplayName(a: Pick<KiroCrewAgent, 'name' | 'display_name'> & { kiro_agent?: unknown }): string {
-  return a.display_name?.trim() || (isAssistantMember(a) ? i18nT('components.assistantWelcome.default_name') : a.name)
+  const raw = a.display_name?.trim() || (isAssistantMember(a) ? i18nT('components.assistantWelcome.default_name') : a.name); return raw === 'kirocrew' ? 'saokhue' : raw
 }
 
 interface Props {

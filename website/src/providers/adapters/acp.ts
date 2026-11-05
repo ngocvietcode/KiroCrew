@@ -228,7 +228,7 @@ export class AcpAdapter implements ProviderAdapter {
   readonly labels: ProviderLabels = {
     sessionProcess: 'ACP subprocess',
     processCountLabel: 'acp_cli',
-    configFile: 'kirocrew.json',
+    configFile: 'saokhue.json',
     pluginRegistryName: 'Packages',
     hooksSection: 'ACP Agent Hooks',
   }

@@ -262,7 +262,7 @@ def _project_shadow_of(
     other consumer). There is no parent walk to match: a spec one directory up is not
     dispatchable, so it is not a shadow. The declared ``name`` beats the filename, which
     is why the comparison goes through :func:`agent_discovery.project_agent_name` rather
-    than the stem -- a file called anything at all can declare ``kirocrew-worker``.
+    than the stem -- a file called anything at all can declare ``saokhue-worker``.
 
     Two keywords narrow WHICH project files count, and the default of each is the
     behaviour this function had before they existed. Both matter to a caller asking

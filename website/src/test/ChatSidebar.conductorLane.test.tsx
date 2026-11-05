@@ -227,7 +227,7 @@ afterEach(() => {
 describe('chat sidebar — conductor lane', () => {
   it('draws a Ultra Mode root as a plain row with an inline ghost, eyebrow, worker ghosts and what needs you', async () => {
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
       { key: 'k-w2', title: 'W2', messages: 0, running: false, pending_approval: true, modified: 2000, created_by: 'k-root', crew_root: 'k-root' },
       { key: 'k-plain', title: 'Plain chat', agent: 'kirocrew', messages: 1, running: false, modified: 1000 },
@@ -249,7 +249,7 @@ describe('chat sidebar — conductor lane', () => {
     expect(bolt.getAttribute('class')).toContain('lucide-zap')
     expect(bolt.getAttribute('width')).toBe('12')
     // The conductor's name is not shown: Crew Mode chooses it.
-    expect(within(card).queryByText('kirocrew-conductor')).toBeNull()
+    expect(within(card).queryByText('saokhue-conductor')).toBeNull()
     // The server's groups, not a guess from the rows: two sessions, none working.
     // No ghost per worker: one small ghost with the counts.
     await waitFor(() => {
@@ -276,7 +276,7 @@ describe('chat sidebar — conductor lane', () => {
 
   it('flows the Ultra Mode tag only while the crew root has live work', () => {
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: true, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: true, modified: 4000, crew_mode_root: true },
       { key: 'k-plain', title: 'Plain chat', agent: 'kirocrew', messages: 1, running: false, modified: 1000 },
     ]
     const { container } = renderSidebar(slots, [], null, {}, [], slots)
@@ -286,7 +286,7 @@ describe('chat sidebar — conductor lane', () => {
 
   it('flows the Ultra Mode tag while a crew member runs, even with the root idle', () => {
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: true, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
       { key: 'k-plain', title: 'Plain chat', agent: 'kirocrew', messages: 1, running: false, modified: 1000 },
     ]
@@ -297,7 +297,7 @@ describe('chat sidebar — conductor lane', () => {
 
   it('keeps an Ultra Mode row compact: its own state is one word, the sentence in the tooltip', async () => {
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, needs_input: true, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, needs_input: true, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
       { key: 'k-w2', title: 'W2', messages: 0, running: false, modified: 2000, created_by: 'k-root', crew_root: 'k-root' },
     ]
@@ -311,7 +311,7 @@ describe('chat sidebar — conductor lane', () => {
     // The live rows stand in for a gateway that serves no crew list.
     mocks.crewWorkersNotServed = true
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: true, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
     ]
     const { getByTestId } = renderSidebar(slots, [], null, {}, [], slots)
@@ -327,7 +327,7 @@ describe('chat sidebar — conductor lane', () => {
   it('counts the crew on the root row: working, waiting and needs you, each its own glyph and a number', async () => {
     mocks.crewWorkersNotServed = true
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: true, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
       // A question sits with the conductor: it counts as working, never as needs you.
       { key: 'k-w2', title: 'W2', messages: 2, running: false, needs_input: true, modified: 2900, created_by: 'k-root', crew_root: 'k-root' },
@@ -360,7 +360,7 @@ describe('chat sidebar — conductor lane', () => {
   it('reads "Running", not "Waiting", beside a working count of a worker whose question sits with its conductor', async () => {
     mocks.crewWorkersNotServed = true
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, needs_input: true, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
     ]
     const { getByTestId } = renderSidebar(slots, [], null, {}, [], slots)
@@ -376,7 +376,7 @@ describe('chat sidebar — conductor lane', () => {
     })
     try {
       const slots = [
-        { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+        { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
         { key: 'k-w1', title: 'W1', messages: 2, running: true, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
         { key: 'k-w2', title: 'W2', messages: 2, running: false, modified: 2900, created_by: 'k-root', crew_root: 'k-root' },
       ]
@@ -393,7 +393,7 @@ describe('chat sidebar — conductor lane', () => {
       { key: 'k-w1', title: 'W1', agent: '', status: 'idle', group: 'done', last_activity: '', ledger_item: '', created_by: 'k-root' },
       { key: 'k-w2', title: 'W2', agent: '', status: 'idle', group: 'done', last_activity: '', ledger_item: '', created_by: 'k-root' },
     ]
-    const slots = [{ key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true }]
+    const slots = [{ key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true }]
     const { getByTestId, queryByTestId } = renderSidebar(slots, [], null, {}, [], slots)
     await waitFor(() => expect(getByTestId('crew-root-counts')).toHaveAccessibleName('2 sessions'))
     expect(queryByTestId('crew-root-breakdown')).toBeNull()
@@ -401,7 +401,7 @@ describe('chat sidebar — conductor lane', () => {
 
   it('marks the root row as the parent while one of its unlisted workers is in the pane', async () => {
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
       { key: 'k-plain', title: 'Plain chat', agent: 'kirocrew', messages: 1, running: false, modified: 1000 },
     ]
@@ -418,7 +418,7 @@ describe('chat sidebar — conductor lane', () => {
   it('marks no crew parent with the Ultra Mode preview off', async () => {
     localStorage.removeItem('mc-preview-crew-mode')
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
     ]
     const { container } = renderSidebar(slots, [], null, { activeSlot: 'k-w1' }, [], slots)
@@ -429,7 +429,7 @@ describe('chat sidebar — conductor lane', () => {
 
   it('marks no parent while a plain chat is in the pane', async () => {
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true },
       { key: 'k-plain', title: 'Plain chat', agent: 'kirocrew', messages: 1, running: false, modified: 1000 },
     ]
     const { container } = renderSidebar(slots, [], null, { activeSlot: 'k-plain' }, [], slots)
@@ -442,7 +442,7 @@ describe('chat sidebar — conductor lane', () => {
     // the crew summary; the crew member's own row is not in the list. The wait
     // must outrank the work, as the row's own approval does.
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: true, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: true, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, pending_approval: true, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
     ]
     const { container } = renderSidebar(slots, [], null, {}, [], slots)
@@ -461,7 +461,7 @@ describe('chat sidebar — conductor lane', () => {
 
   it("folds the workers summary into the row's one status line, in place of its last message", async () => {
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true, last_message: 'Dispatched two workers' },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true, last_message: 'Dispatched two workers' },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
     ]
     const { container } = renderSidebar(slots, [], null, {}, [], slots)
@@ -477,7 +477,7 @@ describe('chat sidebar — conductor lane', () => {
     // not asked again.
     mocks.crewWorkersNotServed = true
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true, last_message: 'Dispatched two workers' },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true, last_message: 'Dispatched two workers' },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, modified: 3000, created_by: 'k-root', crew_root: 'k-root', pending_approval: true },
     ]
     const { qc } = renderSidebar(slots, [], null, {}, [], slots)
@@ -491,7 +491,7 @@ describe('chat sidebar — conductor lane', () => {
   it('a failed crew read keeps the row\'s own Needs you beside the failure', async () => {
     mocks.crewWorkersFail = true
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, needs_input: true, modified: 4000, crew_mode_root: true },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, needs_input: true, modified: 4000, crew_mode_root: true },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
     ]
     renderSidebar(slots, [], null, {}, [], slots)
@@ -501,7 +501,7 @@ describe('chat sidebar — conductor lane', () => {
 
   it('keeps an Ultra Mode row compact before it has any crew member', async () => {
     mocks.crewWorkersNotServed = true
-    const slots = [{ key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, needs_input: true, modified: 4000, crew_mode_root: true }]
+    const slots = [{ key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, needs_input: true, modified: 4000, crew_mode_root: true }]
     renderSidebar(slots, [], null, {}, [], slots)
     await waitFor(() => expect(screen.getByTestId('crew-root-state')).toHaveTextContent(/^Needs you$/))
     expect(screen.queryByTestId('crew-root-counts')).toBeNull()
@@ -524,7 +524,7 @@ describe('chat sidebar — conductor lane', () => {
 
   it('a failed workers poll keeps the ghosts and says the read failed on the row', async () => {
     const slots = [
-      { key: 'k-root', title: 'Crew root', agent: 'kirocrew-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true, last_message: 'Dispatched two workers' },
+      { key: 'k-root', title: 'Crew root', agent: 'saokhue-conductor', messages: 1, running: false, modified: 4000, crew_mode_root: true, last_message: 'Dispatched two workers' },
       { key: 'k-w1', title: 'W1', messages: 2, running: false, modified: 3000, created_by: 'k-root', crew_root: 'k-root' },
     ]
     // A failed poll after a good read: the ghosts stay, the counts give way to the
@@ -1464,7 +1464,7 @@ describe('chat sidebar — conductor lane', () => {
        that says its creator CLOSED -- about a session that was open and dispatching. */
     const MEMBER: TestSlot = {
       key: 'member-pipeline', title: 'Pipeline Work Focus On Issues', messages: 40, running: true,
-      modified: 5000, mode: 'member', surface: 'member', agent: 'kirocrew-pipeline-conductor',
+      modified: 5000, mode: 'member', surface: 'member', agent: 'saokhue-pipeline-conductor',
     }
     const WORKERS: TestSlot[] = [
       { key: 'k-fix-1', title: 'issue-fix: #1', messages: 1, running: true, modified: 4000, parent: { slot: 'member-pipeline', key: 'member-pipeline' } },
@@ -1524,12 +1524,12 @@ describe('chat sidebar — conductor lane', () => {
       const { getByTestId, store } = renderSidebar(listed, [], null, {}, [], inStore)
       const row = getByTestId('conductor-view-lane').querySelector('[data-session-row="member-pipeline"]') as HTMLElement
       fireEvent.click(row)
-      expect(mocks.navigate).toHaveBeenCalledWith('/members?member=kirocrew-pipeline-conductor')
+      expect(mocks.navigate).toHaveBeenCalledWith('/members?member=saokhue-pipeline-conductor')
       expect(store.getState().chat.activeSlot).toBeNull()
       // Enter does the same as click, per WCAG 2.1.1.
       mocks.navigate.mockReset()
       fireEvent.keyDown(row, { key: 'Enter' })
-      expect(mocks.navigate).toHaveBeenCalledWith('/members?member=kirocrew-pipeline-conductor')
+      expect(mocks.navigate).toHaveBeenCalledWith('/members?member=saokhue-pipeline-conductor')
     })
 
     it("shows the mate's name as the anchor title, not the stored generated one", () => {
@@ -1539,8 +1539,8 @@ describe('chat sidebar — conductor lane', () => {
       const { getByTestId } = renderSidebar(listed, [], null, {}, [], inStore)
       const anchor = getByTestId('conductor-view-lane').querySelector('[data-session-row="member-pipeline"]') as HTMLElement
       const title = anchor.querySelector('[data-session-title]') as HTMLElement
-      expect(title.textContent).toBe('kirocrew-pipeline-conductor')
-      expect(title.getAttribute('title')).toBe('kirocrew-pipeline-conductor: Pipeline Work Focus On Issues')
+      expect(title.textContent).toBe('saokhue-pipeline-conductor')
+      expect(title.getAttribute('title')).toBe('saokhue-pipeline-conductor: Pipeline Work Focus On Issues')
       // A listed worker beside it keeps its own title.
       const worker = getByTestId('conductor-view-lane').querySelector('[data-session-row="k-fix-1"] [data-session-title]') as HTMLElement
       expect(worker.textContent).toBe('issue-fix: #1')
@@ -1571,7 +1571,7 @@ describe('chat sidebar — conductor lane', () => {
       // The crewmate is on the roster, so the row says WHO it is: the same avatar the
       // Crewmates page draws, leading the name. The destination stays in the row's
       // content for a screen reader, outside the title text the scroll peek copies.
-      mocks.roster = [{ name: 'kirocrew-pipeline-conductor', slug: 'kirocrew-pipeline-conductor', slot_key: 'member-pipeline', running: false, avatar: { kind: 'ghost' } }]
+      mocks.roster = [{ name: 'saokhue-pipeline-conductor', slug: 'saokhue-pipeline-conductor', slot_key: 'member-pipeline', running: false, avatar: { kind: 'ghost' } }]
       try {
         localStorage.setItem('mc-sidebar-lane', 'conductor')
         const { getByTestId, findByTestId } = renderSidebar(listed, [], null, {}, [], inStore)
@@ -1581,19 +1581,19 @@ describe('chat sidebar — conductor lane', () => {
         const face = title.querySelector('[data-testid="member-row-face"]') as HTMLElement
         expect(face).not.toBeNull()
         expect(face.querySelector('svg, img')).not.toBeNull()
-        expect(title.textContent).toBe('kirocrew-pipeline-conductor')
+        expect(title.textContent).toBe('saokhue-pipeline-conductor')
         expect(anchor.querySelector('[data-testid="members-page-chip"]')).toBeNull()
         expect(anchor.querySelector('[data-testid="members-page-sr"]')?.textContent).toBe('Members page')
         // The click still lands on the Members page.
         fireEvent.click(anchor)
-        expect(mocks.navigate).toHaveBeenCalledWith('/members?member=kirocrew-pipeline-conductor')
+        expect(mocks.navigate).toHaveBeenCalledWith('/members?member=saokhue-pipeline-conductor')
       } finally {
         mocks.roster = []
       }
     })
 
     it('draws the face and name on the first line, beside the time, with no second title line', async () => {
-      mocks.roster = [{ name: 'kirocrew-pipeline-conductor', slug: 'kirocrew-pipeline-conductor', slot_key: 'member-pipeline', running: false }]
+      mocks.roster = [{ name: 'saokhue-pipeline-conductor', slug: 'saokhue-pipeline-conductor', slot_key: 'member-pipeline', running: false }]
       try {
         localStorage.setItem('mc-sidebar-lane', 'conductor')
         const { getByTestId, findByTestId } = renderSidebar(listed, [], null, {}, [], inStore)
@@ -1648,7 +1648,7 @@ describe('chat sidebar — conductor lane', () => {
     it('keeps the crewmate row free of a rename box: no hidden editor can trap it', async () => {
       // The head hides the title line, which is where the rename box lives; rename must
       // never start on this row, so a double-click on the head opens nothing.
-      mocks.roster = [{ name: 'kirocrew-pipeline-conductor', slug: 'kirocrew-pipeline-conductor', slot_key: 'member-pipeline', running: false }]
+      mocks.roster = [{ name: 'saokhue-pipeline-conductor', slug: 'saokhue-pipeline-conductor', slot_key: 'member-pipeline', running: false }]
       try {
         localStorage.setItem('mc-sidebar-lane', 'conductor')
         const { getByTestId, findByTestId } = renderSidebar(listed, [], null, {}, [], inStore)

@@ -12,7 +12,7 @@ reads it as another home's, declines to write, and never creates the DEFAULT spe
 
     kiro_crew.agent.DerivedSpecStale: the default agent spec
     /var/lib/crew/.kiro/agents/kirocrew.json is missing, so the
-    kirocrew-worker.json mirror cannot be verified or rebuilt
+    saokhue-worker.json mirror cannot be verified or rebuilt
 
 The fix does not touch that guard. It uses the guard's own documented private-target
 case: ``<data home>/kiro/agents`` is exactly ``config.paths.isolated_agents_dir(data
@@ -44,7 +44,7 @@ from ._settings_helper import make_settings
 
 #: The crew this deployment ships. It is also one of the spec names Kiro Crew derives for
 #: itself, which is what puts the installed spec in front of the guard's ownership probe.
-DEPLOYED_CREW = "kirocrew-worker"
+DEPLOYED_CREW = "saokhue-worker"
 
 
 def _install_crew_spec(agents_dir, crew: str):
@@ -234,7 +234,7 @@ def test_the_guard_stands_aside_for_the_container_layout(tmp_path, monkeypatch):
 
     The crew name is the one the deployment ships, because it decides whether the guard
     looks at the installed spec at all: the ownership probe reads only the spec names Kiro
-    Crew owns, and ``kirocrew-worker.json`` is one of them. A crew named anything else
+    Crew owns, and ``saokhue-worker.json`` is one of them. A crew named anything else
     leaves the shared directory holding no spec the probe recognises, which reads as
     "nothing to preserve" and lets the write through -- into a directory this task has no
     business writing. The layout is what fixes that, for every crew name.

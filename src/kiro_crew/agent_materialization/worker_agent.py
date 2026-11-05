@@ -1,6 +1,6 @@
 """The worker spec: a mirror of the default agent, and the gate that keeps it current.
 
-``kirocrew-worker`` is the default agent as it stands ON DISK plus the work-ledger
+``saokhue-worker`` is the default agent as it stands ON DISK plus the work-ledger
 server, minus cron scheduling and any opt-in set nobody assigned it.
 :func:`_write_worker_spec` derives it inside one critical section holding both files'
 writer locks, and records the generation it mirrored. :func:`require_fresh_derived_spec`
@@ -66,7 +66,7 @@ _WORKER_MIRRORED_SHAPES: dict[str, type | tuple[type, ...]] = {
 _WORKER_MIRRORED_KEYS: tuple[str, ...] = tuple(_WORKER_MIRRORED_SHAPES)
 
 #: The agent names whose spec is DERIVED from the default spec, and so can be stale
-#: against it. ``kirocrew-worker`` mirrors the keys above; ``kirocrew-heartbeat`` copies
+#: against it. ``saokhue-worker`` mirrors the keys above; ``saokhue-heartbeat`` copies
 #: the default's :func:`heartbeat_mirrored_servers` entries (see
 #: ``agent._install_heartbeat_agent``). Every other agent mirrors nothing.
 _WORKER_AGENT = Path(_WORKER_AGENT_FILENAME).stem
@@ -457,7 +457,7 @@ def _worker_model_is_user_pinned() -> bool:
     already states for its mutators, applied here because this answer feeds a write.
     """
     try:
-        return agent_state.get_model_managed("kirocrew-worker", strict=True) is False
+        return agent_state.get_model_managed("saokhue-worker", strict=True) is False
     except (OSError, ValueError):
         agent_mod.logger.warning(
             "Agent state sidecar unreadable; keeping the worker spec's own model rather "
@@ -556,7 +556,7 @@ def _refuse_foreign_worker_spec(path: Path, spec: dict[str, Any] | None) -> None
 
 
 def _install_worker_agent() -> None:
-    """Generate and install the kirocrew-worker agent config.
+    """Generate and install the saokhue-worker agent config.
 
         The SUPERSET of the default agent, which is the whole distinction worth
         keeping: everything the default agent already grants, plus the opt-in
@@ -564,7 +564,7 @@ def _install_worker_agent() -> None:
         NARROWED worker spec was considered and rejected — a worker writes files, runs
         builds and drives git, so anything a narrowed spec withheld would be something
         some work item needs, which is the same defect an omitted ``agent`` on
-        ``session_create`` produces by handing the child ``kirocrew-conductor``
+        ``session_create`` produces by handing the child ``saokhue-conductor``
         (no ``fs_write``, cannot do the work).
 
         "The default agent" is the spec ON DISK, not the template it was assembled
@@ -608,7 +608,7 @@ def _install_worker_agent() -> None:
     # whole-server grant on the default agent is replaced by — see
     # ``_apply_worker_exclusions``.
     template_grants = [ref for ref in (config.get("allowedTools") or []) if isinstance(ref, str)]
-    config["name"] = "kirocrew-worker"
+    config["name"] = "saokhue-worker"
     config["description"] = (
         "A dispatched worker: does one work item's actual work with the full "
         "default toolset, and reports status against that item as structured "
@@ -625,7 +625,7 @@ def _install_worker_agent() -> None:
     #
     # ``agents_spec_lock`` is the template-spec lock every other read-modify-writer
     # in this module holds (the reset path, the fork refresh, the dashboard PATCH):
-    # it serializes against anyone editing ``kirocrew-worker.json`` under us.
+    # it serializes against anyone editing ``saokhue-worker.json`` under us.
     # ``bridges._mcp_lock`` is ``kirocrew.json``'s OWN writer lock -- the one the app
     # MCP registration path takes for its read-modify-write of that file, as the
     # comment above ``_finalize_and_write`` spells out. Without it, a deregistration
@@ -945,7 +945,7 @@ DerivedSpecStale.__module__ = "kiro_crew.agent"
 class ForeignAgentSpec(DerivedSpecStale):
     """A spec at a path this derivation owns was written by somebody else.
 
-    The mirror path ``kirocrew-worker.json`` is a NAME, and a name can be claimed. A
+    The mirror path ``saokhue-worker.json`` is a NAME, and a name can be claimed. A
     crew shared through the Fargate runtime installs its own spec into the same
     directory, so a file sitting at that path is not necessarily a mirror. A
     re-derivation that read one anyway would judge it a stale mirror of the default
@@ -1348,7 +1348,7 @@ def _require_fresh_worker_spec(work_dir: str | Path | None) -> None:
 
 
 def rederive_worker_agent(reason: str) -> bool:
-    """Re-derive ``kirocrew-worker.json`` after the DEFAULT spec changed out of band.
+    """Re-derive ``saokhue-worker.json`` after the DEFAULT spec changed out of band.
 
     The worker spec is a function of ``kirocrew.json``, and for most of its life the
     only writer of that file was ``rebuild_agent_config`` -- which re-derives the
@@ -1564,7 +1564,7 @@ def _require_fresh_heartbeat_spec(work_dir: str | Path | None) -> None:
 
 
 def rederive_heartbeat_agent(reason: str) -> bool:
-    """Re-derive ``kirocrew-heartbeat.json`` from the default spec. Never raises.
+    """Re-derive ``saokhue-heartbeat.json`` from the default spec. Never raises.
 
     Returns whether the re-derive ran. A failure leaves the previous copy in place, and
     the spawn gate that called this refuses the start.
@@ -1594,7 +1594,7 @@ _DASHBOARD_AUTHOR_SPEC_PATH: Path = (
 #: The agent NAME the dashboard-author spec declares. The install writes it as
 #: ``config["name"]``; ownership is confirmed by the installer-recorded digest keyed on
 #: this name (:func:`kiro_crew.agent_state.get_managed_digest`), not by the name itself.
-_MANAGED_OWNED_NAME = "kirocrew-dashboard-author"
+_MANAGED_OWNED_NAME = "saokhue-dashboard-author"
 
 
 def _foreign_dashboard_author_spec_reason(spec: dict[str, Any] | None) -> str | None:
@@ -1604,7 +1604,7 @@ def _foreign_dashboard_author_spec_reason(spec: dict[str, Any] | None) -> str | 
 
     PROVENANCE by an installer-recorded digest in the ``agent_state`` sidecar, NOT by
     content marks. The dashboard-author stem was a user-creatable template name before it
-    became owned, so a user could hand-place a ``kirocrew-dashboard-author.json`` -- and,
+    became owned, so a user could hand-place a ``saokhue-dashboard-author.json`` -- and,
     as review found, so could a copy of ANOTHER owned agent (``kirocrew``, a conductor)
     renamed onto the stem, which would forge any mark chosen from the managed spec's own
     shape (its name, its ``kirocrew-core`` reference, even a narrowed server map). Content
@@ -1685,7 +1685,7 @@ def _is_confirmed_managed_dashboard_author(spec: dict[str, Any] | None) -> bool:
 
 
 def _install_dashboard_author_agent() -> None:
-    """Generate and install the kirocrew-dashboard-author agent config.
+    """Generate and install the saokhue-dashboard-author agent config.
 
     A dispatched, worker-shaped agent, but NOT the default-mirroring worker: it carries
     its own charter and its own tool surface, so it is built from scratch the way each
@@ -1697,7 +1697,7 @@ def _install_dashboard_author_agent() -> None:
     ``filesystem.write``, a second path to two capabilities already mounted).
 
     ``fs_write`` and ``execute_bash`` are MOUNTED but never auto-approved, the line
-    ``kirocrew-conductor`` draws and for the same reason: ``allowedTools`` has no argument
+    ``saokhue-conductor`` draws and for the same reason: ``allowedTools`` has no argument
     matching, so a blanket write or shell grant cannot be told apart from "write anywhere"
     / "run anything", and the author's whole safety story is that a human reads its diff
     before it lands. Every auto-approved entry only READS or recalls -- the frontmatter

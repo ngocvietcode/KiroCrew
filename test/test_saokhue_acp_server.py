@@ -1,4 +1,4 @@
-"""Tests for the built-in LiteLLM ACP server and harness registration."""
+"""Tests for the built-in Sao Khuê ACP server (saokhue-cli) and harness registration."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from typing import Any
 
 from kiro_crew.agent_sdk import backend_install, host_auth, native_allow_stores
 from kiro_crew.agent_sdk.backends import (
-    ACP_BACKEND_LITELLM,
     ACP_BACKEND_ROUTING,
+    ACP_BACKEND_SAOKHUE,
     ACP_BACKENDS_ACP_CLIENT_SPAWNABLE,
     ACP_BACKENDS_ACP_RUNTIME,
     ACP_BACKENDS_ADVERTISED_MODEL_SELECTION,
@@ -29,13 +29,13 @@ from kiro_crew.agent_sdk.backends import (
 )
 
 
-def _load_litellm_server_module() -> Any:
+def _load_saokhue_server_module() -> Any:
     import sys
 
     script_path = (
-        Path(__file__).resolve().parents[1] / "src" / "kiro_crew" / "acp" / "litellm_server.py"
+        Path(__file__).resolve().parents[1] / "src" / "kiro_crew" / "acp" / "saokhue_server.py"
     )
-    spec = importlib.util.spec_from_file_location("kiro_crew_litellm_server", script_path)
+    spec = importlib.util.spec_from_file_location("kiro_crew_saokhue_server", script_path)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = mod
@@ -43,73 +43,73 @@ def _load_litellm_server_module() -> Any:
     return mod
 
 
-litellm_server = _load_litellm_server_module()
+saokhue_server = _load_saokhue_server_module()
 
 
-def test_litellm_backend_vocabulary_and_declarations() -> None:
+def test_saokhue_backend_vocabulary_and_declarations() -> None:
     from kiro_crew import security
 
-    assert ACP_BACKEND_LITELLM == "litellm"
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_KNOWN
-    assert ACP_BACKEND_LITELLM in BASELINE_SELECTABLE_BACKENDS
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_INDEPENDENT_SETUP
-    assert ACP_BACKEND_LITELLM not in ACP_BACKENDS_ACP_RUNTIME
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_ACP_CLIENT_SPAWNABLE
-    assert POLICY_ID_BY_BACKEND[ACP_BACKEND_LITELLM] == "litellm"
-    assert ACP_BACKEND_ROUTING[ACP_BACKEND_LITELLM] is Routing.AGENT_SPEC
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_SPEC_FILE_GRANTS
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_SPEC_SERVERS_OFF_WIRE
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_HONOR_ZERO_TOOL_BAN
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_MODEL_VIA_CONFIG_OPTION
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_ADVERTISED_MODEL_SELECTION
-    assert ACP_BACKEND_LITELLM in ACP_BACKENDS_REPORT_USAGE
-    assert model_registry_namespace(ACP_BACKEND_LITELLM) == "litellm"
+    assert ACP_BACKEND_SAOKHUE == "saokhue"
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_KNOWN
+    assert ACP_BACKEND_SAOKHUE in BASELINE_SELECTABLE_BACKENDS
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_INDEPENDENT_SETUP
+    assert ACP_BACKEND_SAOKHUE not in ACP_BACKENDS_ACP_RUNTIME
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_ACP_CLIENT_SPAWNABLE
+    assert POLICY_ID_BY_BACKEND[ACP_BACKEND_SAOKHUE] == "saokhue"
+    assert ACP_BACKEND_ROUTING[ACP_BACKEND_SAOKHUE] is Routing.AGENT_SPEC
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_SPEC_FILE_GRANTS
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_SPEC_SERVERS_OFF_WIRE
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_HONOR_ZERO_TOOL_BAN
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_MODEL_VIA_CONFIG_OPTION
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_ADVERTISED_MODEL_SELECTION
+    assert ACP_BACKEND_SAOKHUE in ACP_BACKENDS_REPORT_USAGE
+    assert model_registry_namespace(ACP_BACKEND_SAOKHUE) == "saokhue"
 
     assert host_auth.missing_declarations() == ()
-    decl = host_auth.declaration_for(ACP_BACKEND_LITELLM)
-    assert decl.backend == ACP_BACKEND_LITELLM
+    decl = host_auth.declaration_for(ACP_BACKEND_SAOKHUE)
+    assert decl.backend == ACP_BACKEND_SAOKHUE
     assert decl.entitlement_source == host_auth.ENTITLEMENT_OWN_CREDENTIAL_FILE
-    assert decl.credential_leaves == (".litellm-cli/auth.json",)
-    assert decl.home_override_env_vars == ("LITELLM_CLI_HOME",)
+    assert decl.credential_leaves == (".saokhue-cli/auth.json",)
+    assert decl.home_override_env_vars == ("SAOKHUE_CLI_HOME",)
     assert decl.override_relative_leaves == ("auth.json",)
-    assert ".litellm-cli/auth.json" in security.sensitive_home_dirs()
-    assert "litellm-cli login" in decl.sign_in_remedy
-    assert "litellm-cli login" in decl.signed_out_message
+    assert ".saokhue-cli/auth.json" in security.sensitive_home_dirs()
+    assert "saokhue-cli login" in decl.sign_in_remedy
+    assert "saokhue-cli login" in decl.signed_out_message
     assert "--" not in decl.sign_in_remedy
     assert "`" not in decl.sign_in_remedy
     assert host_auth.reports_signed_out(
-        ACP_BACKEND_LITELLM,
-        "Not signed in to LiteLLM (HTTP 401). Run `litellm-cli login` in your terminal.",
+        ACP_BACKEND_SAOKHUE,
+        "Not signed in to Sao Khuê (HTTP 401). Run `saokhue-cli login` in your terminal.",
     )
 
-    assert ACP_BACKEND_LITELLM in native_allow_stores.NATIVE_ALLOW_STORES_NONE
-    state = backend_install.probe_backend(ACP_BACKEND_LITELLM)
+    assert ACP_BACKEND_SAOKHUE in native_allow_stores.NATIVE_ALLOW_STORES_NONE
+    state = backend_install.probe_backend(ACP_BACKEND_SAOKHUE)
     assert state.installed == backend_install.INSTALLED
-    assert state.policy_id == "litellm"
+    assert state.policy_id == "saokhue"
 
 
-def test_resolve_litellm_settings_normalizes_url_and_env(tmp_path: Path) -> None:
-    cli_home = str(tmp_path / "litellm_cli")
-    base_url, api_key, default_model, timeout = litellm_server.resolve_litellm_settings(
+def test_resolve_saokhue_settings_normalizes_url_and_env(tmp_path: Path) -> None:
+    cli_home = str(tmp_path / "saokhue_cli")
+    base_url, api_key, default_model, timeout = saokhue_server.resolve_saokhue_settings(
         {
-            "LITELLM_CLI_HOME": cli_home,
-            "LITELLM_BASE_URL": "http://127.0.0.1:4000/v1/",
-            "LITELLM_API_KEY": "sk-litellm-test",
-            "LITELLM_MODEL": "my-proxy-model",
-            "LITELLM_TIMEOUT": "90",
+            "SAOKHUE_CLI_HOME": cli_home,
+            "SAOKHUE_BASE_URL": "http://127.0.0.1:4000/v1/",
+            "SAOKHUE_API_KEY": "sk-saokhue-test",
+            "SAOKHUE_MODEL": "my-proxy-model",
+            "SAOKHUE_TIMEOUT": "90",
         }
     )
     assert base_url == "http://127.0.0.1:4000"
-    assert api_key == "sk-litellm-test"
+    assert api_key == "sk-saokhue-test"
     assert default_model == "my-proxy-model"
     assert timeout == 90.0
 
 
-def test_litellm_cli_per_user_login_password_token_and_logout(tmp_path: Path) -> None:
-    cli_home = str(tmp_path / "user_litellm_home")
-    old_urlopen = litellm_server.urllib.request.urlopen
-    old_cli_home = litellm_server.os.environ.get("LITELLM_CLI_HOME")
-    litellm_server.os.environ["LITELLM_CLI_HOME"] = cli_home
+def test_saokhue_cli_per_user_login_password_token_and_logout(tmp_path: Path) -> None:
+    cli_home = str(tmp_path / "user_saokhue_home")
+    old_urlopen = saokhue_server.urllib.request.urlopen
+    old_cli_home = saokhue_server.os.environ.get("SAOKHUE_CLI_HOME")
+    saokhue_server.os.environ["SAOKHUE_CLI_HOME"] = cli_home
 
     class _FakeResp:
         def __init__(self, status: int, body: dict[str, Any]) -> None:
@@ -162,13 +162,13 @@ def test_litellm_cli_per_user_login_password_token_and_logout(tmp_path: Path) ->
             return _FakeResp(200, {"revoked": True})
         raise AssertionError(f"Unexpected URL: {url}")
 
-    litellm_server.urllib.request.urlopen = _fake_urlopen  # type: ignore[assignment]
+    saokhue_server.urllib.request.urlopen = _fake_urlopen  # type: ignore[assignment]
     try:
-        rc = litellm_server.main(
+        rc = saokhue_server.main(
             [
                 "login",
                 "--url",
-                "http://litellm.company.local:4000",
+                "http://saokhue.company.local:4000",
                 "--method",
                 "password",
                 "--username",
@@ -188,35 +188,35 @@ def test_litellm_cli_per_user_login_password_token_and_logout(tmp_path: Path) ->
         assert saved["auth_method"] == "password"
         assert saved["default_model"] == "company-claude-sonnet"
 
-        # Verify resolve_litellm_settings reads the logged-in user's token
-        url, tok, model, _ = litellm_server.resolve_litellm_settings({"LITELLM_CLI_HOME": cli_home})
-        assert url == "http://litellm.company.local:4000"
+        # Verify resolve_saokhue_settings reads the logged-in user's token
+        url, tok, model, _ = saokhue_server.resolve_saokhue_settings({"SAOKHUE_CLI_HOME": cli_home})
+        assert url == "http://saokhue.company.local:4000"
         assert tok == "jwt-user-viet-123"
         assert model == "company-claude-sonnet"
 
         # Status and models commands succeed
-        assert litellm_server.main(["status"]) == 0
-        assert litellm_server.main(["models"]) == 0
+        assert saokhue_server.main(["status"]) == 0
+        assert saokhue_server.main(["models"]) == 0
 
         # Logout removes auth.json
-        assert litellm_server.main(["logout"]) == 0
+        assert saokhue_server.main(["logout"]) == 0
         assert not auth_file.exists()
-        assert litellm_server.main(["status"]) == 1
+        assert saokhue_server.main(["status"]) == 1
     finally:
-        litellm_server.urllib.request.urlopen = old_urlopen  # type: ignore[assignment]
+        saokhue_server.urllib.request.urlopen = old_urlopen  # type: ignore[assignment]
         if old_cli_home is None:
-            litellm_server.os.environ.pop("LITELLM_CLI_HOME", None)
+            saokhue_server.os.environ.pop("SAOKHUE_CLI_HOME", None)
         else:
-            litellm_server.os.environ["LITELLM_CLI_HOME"] = old_cli_home
+            saokhue_server.os.environ["SAOKHUE_CLI_HOME"] = old_cli_home
 
 
-def test_litellm_cli_vpbank_oidc_device_flow_and_userinfo(tmp_path: Path) -> None:
+def test_saokhue_cli_vpbank_oidc_device_flow_and_userinfo(tmp_path: Path) -> None:
     cli_home = str(tmp_path / "vpbank_oidc_home")
-    old_urlopen = litellm_server.urllib.request.urlopen
-    old_sleep = litellm_server.time.sleep
-    old_cli_home = litellm_server.os.environ.get("LITELLM_CLI_HOME")
-    litellm_server.os.environ["LITELLM_CLI_HOME"] = cli_home
-    litellm_server.time.sleep = lambda _s: None  # type: ignore[assignment]
+    old_urlopen = saokhue_server.urllib.request.urlopen
+    old_sleep = saokhue_server.time.sleep
+    old_cli_home = saokhue_server.os.environ.get("SAOKHUE_CLI_HOME")
+    saokhue_server.os.environ["SAOKHUE_CLI_HOME"] = cli_home
+    saokhue_server.time.sleep = lambda _s: None  # type: ignore[assignment]
 
     class _FakeResp:
         def __init__(self, status: int, body: dict[str, Any]) -> None:
@@ -290,9 +290,9 @@ def test_litellm_cli_vpbank_oidc_device_flow_and_userinfo(tmp_path: Path) -> Non
             return _FakeResp(200, {"status": "ok"})
         raise AssertionError(f"Unexpected URL: {url}")
 
-    litellm_server.urllib.request.urlopen = _fake_urlopen  # type: ignore[assignment]
+    saokhue_server.urllib.request.urlopen = _fake_urlopen  # type: ignore[assignment]
     try:
-        rc = litellm_server.main(["login", "--use-device-flow", "--no-browser"])
+        rc = saokhue_server.main(["login", "--use-device-flow", "--no-browser"])
         assert rc == 0
 
         auth_file = Path(cli_home) / "auth.json"
@@ -306,18 +306,18 @@ def test_litellm_cli_vpbank_oidc_device_flow_and_userinfo(tmp_path: Path) -> Non
         assert saved["auth_method"] == "device_code"
         assert saved["models"] == ["claude-sonnet-4", "gpt-4.1"]
 
-        assert litellm_server.main(["logout"]) == 0
+        assert saokhue_server.main(["logout"]) == 0
         assert not auth_file.exists()
     finally:
-        litellm_server.urllib.request.urlopen = old_urlopen  # type: ignore[assignment]
-        litellm_server.time.sleep = old_sleep  # type: ignore[assignment]
+        saokhue_server.urllib.request.urlopen = old_urlopen  # type: ignore[assignment]
+        saokhue_server.time.sleep = old_sleep  # type: ignore[assignment]
         if old_cli_home is None:
-            litellm_server.os.environ.pop("LITELLM_CLI_HOME", None)
+            saokhue_server.os.environ.pop("SAOKHUE_CLI_HOME", None)
         else:
-            litellm_server.os.environ["LITELLM_CLI_HOME"] = old_cli_home
+            saokhue_server.os.environ["SAOKHUE_CLI_HOME"] = old_cli_home
 
 
-def test_litellm_acp_server_session_and_tool_permission_roundtrip(tmp_path: Path) -> None:
+def test_saokhue_acp_server_session_and_tool_permission_roundtrip(tmp_path: Path) -> None:
     sample_file = tmp_path / "hello.txt"
     sample_file.write_text("Hello from workspace!", encoding="utf-8")
 
@@ -412,24 +412,24 @@ def test_litellm_acp_server_session_and_tool_permission_roundtrip(tmp_path: Path
 
             raise AssertionError(f"Unexpected URL: {url}")
 
-        old_url = litellm_server.os.environ.get("LITELLM_BASE_URL")
-        old_key = litellm_server.os.environ.get("LITELLM_API_KEY")
-        old_home = litellm_server.os.environ.get("KIROCREW_HOME")
-        old_aiohttp = litellm_server.aiohttp
-        old_urlopen = litellm_server.urllib.request.urlopen
+        old_url = saokhue_server.os.environ.get("SAOKHUE_BASE_URL")
+        old_key = saokhue_server.os.environ.get("SAOKHUE_API_KEY")
+        old_home = saokhue_server.os.environ.get("KIROCREW_HOME")
+        old_aiohttp = saokhue_server.aiohttp
+        old_urlopen = saokhue_server.urllib.request.urlopen
 
-        litellm_server.os.environ["LITELLM_BASE_URL"] = "http://litellm.local:4000"
-        litellm_server.os.environ["LITELLM_API_KEY"] = "sk-test-123"
-        litellm_server.os.environ["KIROCREW_HOME"] = str(tmp_path / "crew_home")
-        litellm_server.aiohttp = None
-        litellm_server.urllib.request.urlopen = _fake_urlopen  # type: ignore[assignment]
+        saokhue_server.os.environ["SAOKHUE_BASE_URL"] = "http://saokhue.local:4000"
+        saokhue_server.os.environ["SAOKHUE_API_KEY"] = "sk-test-123"
+        saokhue_server.os.environ["KIROCREW_HOME"] = str(tmp_path / "crew_home")
+        saokhue_server.aiohttp = None
+        saokhue_server.urllib.request.urlopen = _fake_urlopen  # type: ignore[assignment]
 
         sent_frames: list[dict[str, Any]] = []
-        server = litellm_server.LitellmAcpServer(agent_name="test_isolated_agent")
+        server = saokhue_server.SaokhueAcpServer(agent_name="test_isolated_agent")
 
         async def _fake_send(payload: dict[str, Any]) -> None:
             sent_frames.append(payload)
-            if payload.get("method") == litellm_server.METHOD_REQUEST_PERMISSION:
+            if payload.get("method") == saokhue_server.METHOD_REQUEST_PERMISSION:
                 req_id = payload["id"]
                 await server.handle_incoming_line(
                     json.dumps(
@@ -439,7 +439,7 @@ def test_litellm_acp_server_session_and_tool_permission_roundtrip(tmp_path: Path
                             "result": {
                                 "outcome": {
                                     "outcome": "selected",
-                                    "optionId": litellm_server.OPTION_ALLOW_ONCE,
+                                    "optionId": saokhue_server.OPTION_ALLOW_ONCE,
                                 }
                             },
                         }
@@ -450,7 +450,7 @@ def test_litellm_acp_server_session_and_tool_permission_roundtrip(tmp_path: Path
 
         try:
             init_res = await server.handle_initialize({})
-            assert init_res["protocolVersion"] == litellm_server.PROTOCOL_VERSION
+            assert init_res["protocolVersion"] == saokhue_server.PROTOCOL_VERSION
 
             new_res = await server._create_or_load_session({"cwd": str(tmp_path)})
             sid = new_res["sessionId"]
@@ -464,41 +464,193 @@ def test_litellm_acp_server_session_and_tool_permission_roundtrip(tmp_path: Path
                     "prompt": [{"type": "text", "text": "Read hello.txt please"}],
                 }
             )
-            assert prompt_res["stopReason"] == litellm_server.STOP_REASON_END_TURN
+            assert prompt_res["stopReason"] == saokhue_server.STOP_REASON_END_TURN
             assert prompt_res["usage"]["inputTokens"] == 37
             assert prompt_res["usage"]["outputTokens"] == 18
 
             updates = [
                 f["params"]["update"]
                 for f in sent_frames
-                if f.get("method") == litellm_server.METHOD_SESSION_UPDATE
+                if f.get("method") == saokhue_server.METHOD_SESSION_UPDATE
             ]
             update_kinds = [u["sessionUpdate"] for u in updates]
-            assert litellm_server.UPDATE_AGENT_THOUGHT_CHUNK in update_kinds
-            assert litellm_server.UPDATE_TOOL_CALL in update_kinds
-            assert litellm_server.UPDATE_TOOL_CALL_UPDATE in update_kinds
-            assert litellm_server.UPDATE_AGENT_MESSAGE_CHUNK in update_kinds
+            assert saokhue_server.UPDATE_AGENT_THOUGHT_CHUNK in update_kinds
+            assert saokhue_server.UPDATE_TOOL_CALL in update_kinds
+            assert saokhue_server.UPDATE_TOOL_CALL_UPDATE in update_kinds
+            assert saokhue_server.UPDATE_AGENT_MESSAGE_CHUNK in update_kinds
 
             text_chunks = [
                 u["content"]["text"]
                 for u in updates
-                if u["sessionUpdate"] == litellm_server.UPDATE_AGENT_MESSAGE_CHUNK
+                if u["sessionUpdate"] == saokhue_server.UPDATE_AGENT_MESSAGE_CHUNK
             ]
             assert "".join(text_chunks) == "File content is: Hello from workspace!"
+
+            # Verify execute_bash built-in tool resolves cwd (str from Workspace.resolve) and runs
+            session_obj = server._sessions[sid]
+            bash_out, bash_err = await server._execute_builtin_tool(
+                session_obj,
+                "execute_bash",
+                {"command": "echo test"},
+            )
+            assert not bash_err
+            assert "exit_code=0" in bash_out
+            assert "test" in bash_out
+
+            # Verify execute_bash rejects a file path passed as cwd
+            not_dir_out, not_dir_err = await server._execute_builtin_tool(
+                session_obj,
+                "execute_bash",
+                {"command": "echo test", "cwd": "hello.txt"},
+            )
+            assert not_dir_err
+            assert "Not a directory: hello.txt" in not_dir_out
         finally:
-            litellm_server.aiohttp = old_aiohttp
-            litellm_server.urllib.request.urlopen = old_urlopen  # type: ignore[assignment]
+            saokhue_server.aiohttp = old_aiohttp
+            saokhue_server.urllib.request.urlopen = old_urlopen  # type: ignore[assignment]
             if old_url is None:
-                litellm_server.os.environ.pop("LITELLM_BASE_URL", None)
+                saokhue_server.os.environ.pop("SAOKHUE_BASE_URL", None)
             else:
-                litellm_server.os.environ["LITELLM_BASE_URL"] = old_url
+                saokhue_server.os.environ["SAOKHUE_BASE_URL"] = old_url
             if old_key is None:
-                litellm_server.os.environ.pop("LITELLM_API_KEY", None)
+                saokhue_server.os.environ.pop("SAOKHUE_API_KEY", None)
             else:
-                litellm_server.os.environ["LITELLM_API_KEY"] = old_key
+                saokhue_server.os.environ["SAOKHUE_API_KEY"] = old_key
             if old_home is None:
-                litellm_server.os.environ.pop("KIROCREW_HOME", None)
+                saokhue_server.os.environ.pop("KIROCREW_HOME", None)
             else:
-                litellm_server.os.environ["KIROCREW_HOME"] = old_home
+                saokhue_server.os.environ["KIROCREW_HOME"] = old_home
 
     asyncio.run(_run())
+
+
+def test_saokhue_dashboard_login_handlers(tmp_path: Path, monkeypatch: Any) -> None:
+    from kiro_crew.acp import saokhue_server as pkg_saokhue_server
+    from kiro_crew.dashboard.handlers import saokhue_login
+
+    cli_home = str(tmp_path / "dashboard_saokhue_home")
+    monkeypatch.setenv("SAOKHUE_CLI_HOME", cli_home)
+    monkeypatch.setattr(saokhue_login, "is_owner_dashboard_request", lambda _req: True)
+
+    class _FakeResp:
+        def __init__(self, status: int, body: dict[str, Any]) -> None:
+            self.status = status
+            self.headers = {"Content-Type": "application/json"}
+            self._raw = json.dumps(body).encode("utf-8")
+
+        def read(self) -> bytes:
+            return self._raw
+
+        def __enter__(self) -> "_FakeResp":
+            return self
+
+        def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+            return None
+
+    def _fake_urlopen(req: Any, timeout: float = 0.0) -> _FakeResp:
+        url = req.full_url
+        if url.endswith("/v1/models"):
+            return _FakeResp(200, {"data": [{"id": "sk-model-1"}, {"id": "sk-model-2"}]})
+        if url.endswith("/user/info"):
+            return _FakeResp(200, {"user_id": "vietbn", "email": "vietbn@vpbank.com.vn"})
+        if url.endswith("/api/idpOAuth/device/auth"):
+            return _FakeResp(
+                200,
+                {
+                    "device_code": "dev-123",
+                    "user_code": "ABCD-9999",
+                    "verification_uri": "https://portal.aws.rpa.vpbank.dev/device",
+                    "verification_uri_complete": "https://portal.aws.rpa.vpbank.dev/device?user_code=ABCD-9999",
+                    "interval": 2,
+                    "expires_in": 300,
+                },
+            )
+        if url.endswith("/api/idpOAuth/token"):
+            return _FakeResp(
+                200,
+                {
+                    "access_token": "dev-jwt-token",
+                    "refresh_token": "dev-refresh-token",
+                    "expires_in": 3600,
+                    "user_id": "vietbn",
+                    "email": "vietbn@vpbank.com.vn",
+                },
+            )
+        if url.endswith("/api/idpOAuth/revoke"):
+            return _FakeResp(200, {"ok": True})
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    monkeypatch.setattr(pkg_saokhue_server.urllib.request, "urlopen", _fake_urlopen)
+
+    class _FakeReq:
+        def __init__(self, app: dict[str, Any], body: dict[str, Any] | None = None) -> None:
+            self.app = app
+            self.path = "/api/saokhue-login"
+            self.query: dict[str, str] = {}
+            self._body = body or {}
+
+        def get(self, key: str, default: Any = None) -> Any:
+            return default
+
+        async def json(self) -> dict[str, Any]:
+            return self._body
+
+    async def _run_dashboard() -> None:
+        app_state: dict[str, Any] = {}
+
+        # 1. Initial status is unauthenticated
+        r1 = await saokhue_login.api_saokhue_login_status(_FakeReq(app_state))  # type: ignore[arg-type]
+        d1 = json.loads(r1.body.decode("utf-8"))
+        assert d1["authenticated"] is False
+
+        # 2. Token login works without CMD
+        r2 = await saokhue_login.api_saokhue_login_token(
+            _FakeReq(
+                app_state,
+                {
+                    "base_url": "https://portal.aws.rpa.vpbank.dev/api/ai-llm",
+                    "token": "sk-personal-token-99",
+                    "user_id": "vietbn",
+                },
+            )  # type: ignore[arg-type]
+        )
+        d2 = json.loads(r2.body.decode("utf-8"))
+        assert d2["ok"] is True
+        assert d2["authenticated"] is True
+        assert d2["user_id"] == "vietbn"
+        assert d2["models"] == ["sk-model-1", "sk-model-2"]
+        assert "access_token" not in d2
+
+        # 3. Model update works
+        r3 = await saokhue_login.api_saokhue_login_model(
+            _FakeReq(app_state, {"default_model": "sk-model-2"})  # type: ignore[arg-type]
+        )
+        d3 = json.loads(r3.body.decode("utf-8"))
+        assert d3["default_model"] == "sk-model-2"
+
+        # 4. Device code start + poll works without CMD
+        r4 = await saokhue_login.api_saokhue_login_device_start(
+            _FakeReq(app_state, {"base_url": "https://portal.aws.rpa.vpbank.dev/api/ai-llm"})  # type: ignore[arg-type]
+        )
+        d4 = json.loads(r4.body.decode("utf-8"))
+        assert d4["ok"] is True
+        assert d4["user_code"] == "ABCD-9999"
+        login_id = d4["login_id"]
+
+        r5 = await saokhue_login.api_saokhue_login_device_poll(
+            _FakeReq(app_state, {"login_id": login_id})  # type: ignore[arg-type]
+        )
+        d5 = json.loads(r5.body.decode("utf-8"))
+        assert d5["ok"] is True
+        assert d5["status"] == "authorized"
+        assert d5["authenticated"] is True
+        assert d5["auth_method"] == "device_code"
+
+        # 5. Logout clears credentials
+        r6 = await saokhue_login.api_saokhue_login_logout(_FakeReq(app_state))  # type: ignore[arg-type]
+        d6 = json.loads(r6.body.decode("utf-8"))
+        assert d6["ok"] is True
+        assert d6["authenticated"] is False
+        assert not (Path(cli_home) / "auth.json").exists()
+
+    asyncio.run(_run_dashboard())

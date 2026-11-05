@@ -18,7 +18,7 @@ def crewmate_name_for(config: Any, execution: Any) -> str:
     """The ``config.agents`` name of the crewmate *execution* runs for, else ``""``.
 
     A conductor chat (``mate_worker.is_conductor_execution``) or a worker on
-    ``kirocrew-mate-worker`` with the crewmate's ``member_id``. Any other record,
+    ``saokhue-mate-worker`` with the crewmate's ``member_id``. Any other record,
     a missing one, or an id the config does not hold answers ``""``.
     """
     from kiro_crew.execution_context import member_config_for_id

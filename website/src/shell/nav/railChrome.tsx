@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeftToLine, PanelLeft } from 'lucide-react'
-import { GithubIcon, DiscordIcon } from '../../components/BrandIcon'
 import type { getThemeBranding } from '../../themeBranding'
 import { i18nT } from '../../i18n/t'
-import { uiLocation } from '../../uiLocations/uiLocation'
 import { useGuideRevealScope } from '../../guide/GuideRevealScope'
+import { uiLocation } from '../../uiLocations/uiLocation'
 import { OverlayPortal } from '../../components/overlayRoot'
 import { useNavTip } from './navTip'
+import saokhueStarUrl from '../../assets/saokhue-star.svg'
 
 /** Glyph inside the nav-rail header's expand/collapse button — the same
  *  load-proof contract as MobileNavGlyph, with the rail's own geometry. When
@@ -114,12 +114,31 @@ export function RailBrandToggle({ effectiveCollapsed, toggleNav, avatar, brandin
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -6, transition: { duration: 0.12, ease: 'easeIn' } }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="text-[13px] font-bold tracking-[.14em] uppercase whitespace-nowrap truncate min-w-0"
+                className={botName === 'Sao Khuê'
+                  ? 'text-[17px] font-black tracking-[-0.04em] leading-none pt-[0.2em] -mt-[0.12em] whitespace-nowrap truncate min-w-0'
+                  : 'text-[13px] font-bold tracking-[.14em] uppercase whitespace-nowrap truncate min-w-0'}
               >
                 {/* Last word of the bot name carries the accent (KIRO
                     CREW: muted brand, accent product); single-word names
-                    render all-muted. */}
-                {botName.includes(' ') ? (
+                    render all-muted. Sao Khuê renders the Phương án 4
+                    lowercase wordmark with the 4-pointed star on ê. */}
+                {botName === 'Sao Khuê' ? (
+                  <span aria-label="Sao Khuê" className="inline-flex items-baseline">
+                    <span className="text-text-strong">sao</span>
+                    <span className="text-accent">
+                      khu
+                      <span className="relative inline-block">
+                        e
+                        <img
+                          src={saokhueStarUrl}
+                          alt=""
+                          aria-hidden="true"
+                          className="pointer-events-none absolute left-1/2 -top-[0.16em] w-[0.44em] h-[0.44em] -translate-x-1/2"
+                        />
+                      </span>
+                    </span>
+                  </span>
+                ) : botName.includes(' ') ? (
                   <>
                     <span className="text-muted">{botName.slice(0, botName.lastIndexOf(' ') + 1)}</span>
                     <span className="text-accent/90">{botName.slice(botName.lastIndexOf(' ') + 1)}</span>
@@ -167,91 +186,9 @@ export function RailBrandToggle({ effectiveCollapsed, toggleNav, avatar, brandin
   )
 }
 
-export function RailCommunityLinks({ effectiveCollapsed, setReportProblemOpen }: {
+export function RailCommunityLinks(_props: {
   effectiveCollapsed: boolean
   setReportProblemOpen: (open: boolean) => void
 }) {
-  /*
-   * Community row — a leading GitHub mark, then two links on ONE
-   * line separated by a middot, then the icon-only Discord link.
-   *
-   * This line is tight by construction, and the numbers are
-   * MEASURED against real font advance widths, not estimated.
-   * The rail is 236px, which leaves a 143px text group after the
-   * mark, the Discord icon and padding; the middot plus its gaps
-   * costs ~10-15px depending on family.
-   *
-   * CRITICAL: size this against the WIDEST font the user can pick,
-   * not the default. `useZoom` lets them set --font-body to sans
-   * (Space Grotesk), mono (JetBrains Mono) or system (-apple-system),
-   * and mono is ~20% wider. A 12px row measured only against Space
-   * Grotesk truncates for every mono user.
-   *
-   * "Star us · Report issue" at 12px, measured:
-   * Space Grotesk   114.0px against a 132.8px budget — 18.7 spare
-   * JetBrains Mono  136.8px against a 127.8px budget — 9.0 OVER
-   * Rather than shrink the type for everyone or drop the Discord
-   * link, mono alone is tightened to -0.05em, which brings it to
-   * 125.4px (+3.0 spare). That rule lives in index.css keyed on
-   * html[data-font-family="mono"] via the `rail-community-links`
-   * class, and its measurement table is there. Mono's margin is only
-   * ~3px, so ANY copy growth here must be re-measured IN MONO first.
-   *
-   * The separator is a middot because " / " is wider, and the row's
-   * right padding is trimmed for the same budget reason.
-   *
-   * The mark sits 2px from the text (ml-0.5) while the middot keeps
-   * 4px gaps. That asymmetry is an OPTICAL correction, not an
-   * oversight: github-mark.svg is a circle filling its whole 16x16
-   * viewBox (no internal padding), and a circle beside a capital "S"
-   * curves away from it, so an equal metric gap reads as a wider
-   * one. Matching the middot's 4px here looked detached. Font and
-   * letter-spacing are deliberately NOT overridden — the row
-   * inherits --font-body and letter-spacing:normal from body, so it
-   * follows the user's own font choice like everything else.
-   *
-   * Order of yielding under pressure is deliberate: "Star us" and
-   * the middot are shrink-0, so a longer locale (Spanish's "Informar
-   * de un problema") ellipsizes the TAIL of the second link rather
-   * than mangling both. Both links keep a title tooltip, so a
-   * clipped label is still readable on hover.
-   *
-   * One mark for two links is correct — both destinations ARE
-   * GitHub. It is decorative (BrandGlyph is aria-hidden) and each
-   * link carries its own descriptive aria-label, since "Star us"
-   * alone names no target. Hidden while the rail is collapsed (folds
-   * away via max-height so the collapse stays smooth).
-   */
-  return (
-    <div {...(effectiveCollapsed ? { inert: '' } : {})} className={`overflow-hidden transition-all duration-200 ${effectiveCollapsed ? 'max-h-0 opacity-0' : 'max-h-16 opacity-100 mt-1'}`}>
-      <div className="flex items-center border-t border-border pl-3 pr-0.5 pt-2.5 pb-0.5 whitespace-nowrap">
-        {/* pl-3 puts the mark on the same 12px x-offset as the
-            nav-item icons above. No `gap` on this row ON PURPOSE: a row
-            gap applies between ALL THREE children (mark, links,
-            Discord), so pairing it with ml-0.5 would silently double
-            the mark-to-text distance to 6px and cost 4px the budget
-            below never accounts for. Spacing is explicit per child instead. */}
-        <span className="flex items-center shrink-0 text-muted"><GithubIcon size={15} /></span>
-        {/* `flex-wrap`: in a locale where "Star us" and "Report issue" together
-            outrun the rail (the pseudolocale does, and so will any long-word
-            language), the second link drops to its own line with the full
-            row width instead of truncating to a third of itself. */}
-        <div className="rail-community-links flex flex-wrap items-center gap-x-[5px] gap-y-0.5 flex-1 min-w-0 ml-1.5 text-[12px]">
-          <a href="https://github.com/kirodotdev/KiroCrew" target="_blank" rel="noopener noreferrer" title={i18nT('app.star_kirocrew_on_github')} aria-label={i18nT('app.star_kirocrew_on_github')} className="shrink-0 rounded text-muted hover:text-text transition-colors">{i18nT('app.star_us')}</a>
-          <span aria-hidden="true" className="shrink-0 opacity-40">·</span>
-          {/* "Report issue" opens the SAME diagnostics flow as Settings ›
-              About › Support rather than linking to the bare issue list.
-              A user who reaches for this link is reporting a failure, and
-              an empty issue form loses exactly what triage needs (logs +
-              crash reports); the collector scrubs secrets, zips them, and
-              still ends at a pre-filled GitHub issue, so the old
-              destination is reachable WITH evidence attached. A <button>
-              (not an <a>) because it no longer navigates — styled to match
-              its sibling link so the row's width budget above is unchanged. */}
-          <button type="button" onClick={() => setReportProblemOpen(true)} title={i18nT('app.report_a_problem_with_diagnostics')} aria-label={i18nT('app.report_a_problem_with_diagnostics')} {...uiLocation('shell.report-problem')} className="min-w-0 overflow-hidden text-ellipsis rounded text-muted hover:text-text transition-colors cursor-pointer bg-transparent border-0 p-0 text-[12px]">{i18nT('app.report_issue')}</button>
-        </div>
-        <a href="https://kiro.dev/discord/" target="_blank" rel="noopener noreferrer" title={i18nT('app.discord_community')} aria-label={i18nT('app.kiro_discord_community')} className="flex items-center justify-center ml-1 w-6 h-6 rounded-md text-muted hover:text-text hover:bg-bg-hover transition-colors shrink-0"><DiscordIcon size={15} /></a>
-      </div>
-    </div>
-  )
+  return <span className="hidden" {...uiLocation('shell.report-problem')}>{i18nT('app.report_issue')}</span>
 }

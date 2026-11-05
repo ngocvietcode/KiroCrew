@@ -30,7 +30,7 @@ function showNotice(Notification, title, body) {
 // the renderer catalogs, like the other update notifications here).
 function gatewayStillRunningNotificationBody(stopCommand) {
   const command = stopCommand || "kirocrew stop";
-  return `The background gateway Kiro Crew started earlier is still running. To install the update, run “${command}” in Terminal, then reopen Kiro Crew. It stops only that gateway; your chats and settings are kept.`;
+  return `The background gateway Sao Khuê started earlier is still running. To install the update, run “${command}” in Terminal, then reopen Sao Khuê. It stops only that gateway; your chats and settings are kept.`;
 }
 
 /**
@@ -580,7 +580,7 @@ function createFeedLane({
       if (stagingQuitHeld) return;
       stagingQuitHeld = true;
       log.info(`[update] quit requested while the installer stages the update (${reason}) — holding it`);
-      showNotice(Notification, "Finishing the update", "Kiro Crew is preparing the update and will restart by itself in a moment.");
+      showNotice(Notification, "Finishing the update", "Sao Khuê is preparing the update and will restart by itself in a moment.");
     };
     const timer = setTimeout(() => {
       log.error(`[update] installer did not take over within ${STAGING_QUIT_HOLD_MAX_MS}ms (${reason}) — no longer holding quits`);
@@ -617,10 +617,10 @@ function createFeedLane({
     if (osPlatform !== "win32") return;
     try {
       new Notification({
-        title: "Installing Kiro Crew update",
+        title: "Installing Sao Khuê update",
         // Timing and automatic relaunch stay on the installer window that they
         // explain. The toast carries only the unique recovery instruction.
-        body: "If Kiro Crew doesn’t reopen after the installer finishes, open it from the Start menu.",
+        body: "If Sao Khuê doesn’t reopen after the installer finishes, open it from the Start menu.",
       }).show();
     } catch { /* notifications optional */ }
   }
@@ -1136,21 +1136,21 @@ function createFeedLane({
     // session-end fires on shutdown, restart AND logout; use copy that
     // covers all three. Prepend the product name so the version is
     // readable in Action Center with no app context.
-    showNotice(Notification, "Kiro Crew update ready", `An update${stagedVersion ? ` (version ${stagedVersion})` : ""} is downloaded but was not installed, because Windows was closing. Quit Kiro Crew from the tray to install it.`);
+    showNotice(Notification, "Sao Khuê update ready", `An update${stagedVersion ? ` (version ${stagedVersion})` : ""} is downloaded but was not installed, because Windows was closing. Quit Sao Khuê from the tray to install it.`);
     log.info("[update] session-end — notified user of pending update (install on next quit)");
   }
 
   async function promptInstall(versionName, notes) {
     const handoffDetail = osPlatform === "win32"
-      ? "Installing can take several minutes. Kiro Crew will close, show Windows installation progress, and reopen automatically."
-      : "Installing can take several minutes. Kiro Crew will close and reopen automatically when the update is complete.";
+      ? "Installing can take several minutes. Sao Khuê will close, show Windows installation progress, and reopen automatically."
+      : "Installing can take several minutes. Sao Khuê will close and reopen automatically when the update is complete.";
     const { response } = await dialog.showMessageBox({
       type: "info",
       buttons: ["Install Update & Restart App", "Later"],
       defaultId: 0,
       cancelId: 1,
-      title: "Kiro Crew update ready",
-      message: `Kiro Crew ${versionName || ""} is ready to install.`.trim(),
+      title: "Sao Khuê update ready",
+      message: `Sao Khuê ${versionName || ""} is ready to install.`.trim(),
       detail:
         (notes || "").slice(0, 500) +
         `\n\n${handoffDetail}`,
@@ -1160,7 +1160,7 @@ function createFeedLane({
     } else {
       app.once("before-quit", deferredInstallOnQuit);
       armSessionEndNotice();
-      showNotice(Notification, "Update deferred", "Kiro Crew will finish updating the next time you quit.");
+      showNotice(Notification, "Update deferred", "Sao Khuê will finish updating the next time you quit.");
     }
   }
 

@@ -8,7 +8,7 @@ the sentence is still relevant and close to worthless ten minutes later.
 That is why this does not reuse the app's agent machinery. ``AgentQueue`` batches
 for 30 s and posts into a long-lived agent session with tools available — correct
 for note-taking, useless for this. Instead each line gets one tool-less model call
-on the cheap ``kirocrew-lite`` background agent (the lever workflows, title
+on the cheap ``saokhue-lite`` background agent (the lever workflows, title
 generation and memory consolidation already use for one-shot work), in an
 ephemeral session that is destroyed afterwards.
 
@@ -100,7 +100,7 @@ async def run_oneshot_translation(sessions: Any, prompt: str) -> str:
     """One tool-less model call in an isolated ephemeral session; raw text back.
 
     Mirrors issue-radar's ``_run_oneshot_model``, which is the sanctioned pattern
-    for this: ``kirocrew-lite`` scopes the session to ``tools: []`` and resolves a
+    for this: ``saokhue-lite`` scopes the session to ``tools: []`` and resolves a
     cheaper model than the interactive default, and ``REJECT_ALL`` means no tool
     can run even if one were offered. The session is destroyed as well as released
     so no ``kiro-cli`` subprocess leaks — one per translated line would otherwise
@@ -120,7 +120,7 @@ async def run_oneshot_translation(sessions: Any, prompt: str) -> str:
     key = f"{k.SLOT_PREFIX}-translate-{uuid.uuid4().hex}"
 
     async def _call() -> str:
-        provider, _is_new, _resumed = await sessions.get_or_create(key, agent="kirocrew-lite")
+        provider, _is_new, _resumed = await sessions.get_or_create(key, agent="saokhue-lite")
         return await stream_and_collect(
             provider, prompt, approval_policy=ToolApprovalPolicy.REJECT_ALL
         )

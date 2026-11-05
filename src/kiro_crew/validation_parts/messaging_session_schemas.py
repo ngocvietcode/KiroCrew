@@ -344,7 +344,7 @@ SESSION_CREATE_SCHEMA = ToolSchema(
         FieldSpec("agent", str, required=False, default="", max_len=MAX_SHORT_STRING),
         # The selection namespace for ``agent``, one value: ``template``. It
         # exists for a template that a same-named crew member shadows (the stock
-        # ``kirocrew-worker`` on installs where an older sync enrolled it as a
+        # ``saokhue-worker`` on installs where an older sync enrolled it as a
         # member): ``template`` dispatches the template on the caller's own
         # memory instead of selecting the member, which a bare name already does.
         # Omitted keeps name-first resolution; an empty string is not a namespace

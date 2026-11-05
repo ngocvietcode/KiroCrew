@@ -62,7 +62,7 @@ def _namespaced_agent_file_exists(agent_name: str) -> bool:
 async def api_agents_installed(request: web.Request) -> web.Response:
     """GET /api/agents/installed — list all installed kiro-cli agents.
 
-    kirocrew is always first; kirocrew-lite is excluded.
+    kirocrew is always first; saokhue-lite is excluded.
 
     Deliberately GLOBAL-only (no project scope): every frontend consumer of this
     endpoint is an agent CRUD/editor surface (Agents page, template editor) whose

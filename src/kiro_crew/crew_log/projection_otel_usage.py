@@ -45,22 +45,22 @@ OTEL_USAGE_FOLD_NAME: Final[str] = "otel_usage"
 #: than leaking its own stem. ``kirocrew`` (the bare default agent) is handled
 #: separately there, because it maps to ``default`` rather than to its own stem.
 _AGENT_KIND_BY_STEM: Final[dict[str, str]] = {
-    "kirocrew-lite": "lite",
-    "kirocrew-guest": "guest",
-    "kirocrew-conductor": "conductor",
-    "kirocrew-pipeline-conductor": "pipeline_conductor",
-    "kirocrew-ledger-conductor": "ledger_conductor",
-    "kirocrew-security-conductor": "security_conductor",
-    "kirocrew-worker": "worker",
-    "kirocrew-dashboard-author": "dashboard_author",
-    "kirocrew-knowledge": "knowledge",
-    "kirocrew-research": "research",
-    "kirocrew-team-lead": "team_lead",
-    "kirocrew-heartbeat": "heartbeat",
-    "kirocrew-dashboard-manager": "dashboard_manager",
+    "saokhue-lite": "lite",
+    "saokhue-guest": "guest",
+    "saokhue-conductor": "conductor",
+    "saokhue-pipeline-conductor": "pipeline_conductor",
+    "saokhue-ledger-conductor": "ledger_conductor",
+    "saokhue-security-conductor": "security_conductor",
+    "saokhue-worker": "worker",
+    "saokhue-dashboard-author": "dashboard_author",
+    "saokhue-knowledge": "knowledge",
+    "saokhue-research": "research",
+    "saokhue-team-lead": "team_lead",
+    "saokhue-heartbeat": "heartbeat",
+    "saokhue-dashboard-manager": "dashboard_manager",
     # A crewmate's conductor and its own worker (Crewmate 2.0).
-    "kirocrew-mate-conductor": "mate_conductor",
-    "kirocrew-mate-worker": "mate_worker",
+    "saokhue-mate-conductor": "mate_conductor",
+    "saokhue-mate-worker": "mate_worker",
 }
 
 #: The ``agent_kind`` value a session whose opening entry this fold has not yet folded

@@ -77,7 +77,7 @@ describe('CrewWakeSection', () => {
 
   it('shows the empty state when nothing is bound to this crew', async () => {
     H.crons.mockResolvedValue({ jobs: [JOB] })
-    wrap(<CrewWakeSection crew="kirocrew-research" memberId="kirocrew-research" isDefaultCrew={false} />)
+    wrap(<CrewWakeSection crew="saokhue-research" memberId="saokhue-research" isDefaultCrew={false} />)
     expect(await screen.findByText(/No schedules run this agent automatically/i)).toBeTruthy()
     expect(screen.queryAllByTestId('wake-row')).toHaveLength(0)
   })

@@ -452,8 +452,8 @@ _MEMBER_PANEL_GRANTS: tuple[str, ...] = (
 #: (``_CONDUCTOR_BASE_WORK_GRANTS``): every conductor records its items in the
 #: ledger, because the dashboard's ``workstreams`` fold mints a board only from
 #: ``work/recorded`` entries. This tuple is the goal conductor's superset, shipped
-#: by ``_conductor_spec``, which both ``kirocrew-conductor`` and its deprecated
-#: ``kirocrew-ledger-conductor`` alias call; the name stays because that alias is
+#: by ``_conductor_spec``, which both ``saokhue-conductor`` and its deprecated
+#: ``saokhue-ledger-conductor`` alias call; the name stays because that alias is
 #: still an installed spec.
 #:
 #: ``work_ledger_rebuild`` is the goal conductor's recovery step and no other

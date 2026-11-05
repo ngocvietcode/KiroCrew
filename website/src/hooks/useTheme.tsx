@@ -393,6 +393,7 @@ function applyThemeBranding(theme: CustomThemeData | undefined): ResolvedThemeBr
  * `scripts/check-i18n-keys.mjs` can resolve statically.
  */
 export const THEME_LABEL_KEY: Record<string, string> = {
+  saokhue: 'hooks.theme.saokhue',
   highcontrast: 'hooks.theme.high_contrast',
   'nu-disco': 'hooks.theme.nu_disco',
   'amethyst-oled': 'hooks.theme.amethyst_oled',
@@ -400,6 +401,7 @@ export const THEME_LABEL_KEY: Record<string, string> = {
 }
 
 export const THEMES: ThemeEntry[] = [
+  { value: 'saokhue', label: '🌟' },
   { value: 'emerald', label: '🌿 Emerald' },
   { value: 'monokai', label: '🎨 Monokai' },
   { value: 'solarized', label: '☀️ Solarized' },
@@ -455,7 +457,7 @@ function builtinThemes(): ThemeEntry[] {
 }
 
 /** Default color theme applied on first run when no preference is persisted. */
-export const DEFAULT_COLOR_THEME: ColorTheme = 'kiro'
+export const DEFAULT_COLOR_THEME: ColorTheme = 'saokhue'
 
 /**
  * Downstream-registered built-in themes.

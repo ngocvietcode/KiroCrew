@@ -189,7 +189,7 @@ function rearmBlankedCompanionWindows() {
  * macOS flips a window-owning app to the accessory activation policy — which drops
  * its Dock icon — when it shows a window shaped like this overlay (frameless,
  * transparent, always-on-top). Re-assert "regular" and the Dock icon right after
- * showing, so opening the companion never makes Kiro Crew vanish from the Dock.
+ * showing, so opening the companion never makes Sao Khuê vanish from the Dock.
  * Mirrors Mochi's assertHostStaysInDock (mochi/petOverlays.js), which carries the
  * same note; the crew-companion overlay was missing it.
  */

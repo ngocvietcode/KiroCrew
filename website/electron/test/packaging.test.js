@@ -218,7 +218,7 @@ describe("macOS bundle naming", () => {
   });
 
   it("uses CFBundleDisplayName for spaced stable and nightly names", () => {
-    assert.equal(extendInfo.CFBundleDisplayName, "Kiro Crew");
+    assert.equal(extendInfo.CFBundleDisplayName, "Sao Khu\u00ea");
     assert.match(
       buildScript,
       /-c\.mac\.extendInfo\.CFBundleDisplayName=Kiro Crew Nightly/

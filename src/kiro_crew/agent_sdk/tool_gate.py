@@ -130,6 +130,7 @@ _LABELS: dict = {
     ACP_BACKEND_PI: "Pi",
     **{backend: record.label for backend, record in sorted(ACP_BACKEND_LAUNCH.items())},
 }
+_LABELS["saokhue"] = "Sao Khuê CLI"
 
 #: The credential store an enforced harness that authenticates from a FILE must
 #: still be able to read.

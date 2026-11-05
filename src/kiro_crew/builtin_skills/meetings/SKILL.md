@@ -30,7 +30,7 @@ reopened to `active`, and a same-status POST is an idempotent no-op. Stop
 (`POST …/meetings/<id>/stop`) is the separate exit that ends a meeting outright.
 
 A live translation panel translates each transcript line as it lands, using one
-tool-less `kirocrew-lite` call per line in an ephemeral session — deliberately
+tool-less `saokhue-lite` call per line in an ephemeral session — deliberately
 NOT the agent batch path, because latency is the point. It is sequential per
 meeting and drops the oldest pending line when it falls behind, so gaps in
 `translations.json` are expected, not a bug.

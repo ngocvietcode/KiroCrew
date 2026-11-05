@@ -31,9 +31,9 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
-    ACP_BACKEND_LITELLM,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
+    ACP_BACKEND_SAOKHUE,
     ACP_BACKEND_STRANDS,
 )
 
@@ -398,7 +398,7 @@ class Routing(str, Enum):
 ACP_BACKEND_ROUTING: dict = {
     ACP_BACKEND_KIRO: Routing.AGENT_SPEC,
     ACP_BACKEND_KAS: Routing.AGENT_SPEC,
-    ACP_BACKEND_LITELLM: Routing.AGENT_SPEC,
+    ACP_BACKEND_SAOKHUE: Routing.AGENT_SPEC,
     # Declared, not enforced: nothing reads back whether the seeded settings took
     # effect, and ``SEEDED_SETTINGS`` is outside ``tool_gate.ENFORCED_ROUTINGS``, so
     # a claude session is not refused for it.

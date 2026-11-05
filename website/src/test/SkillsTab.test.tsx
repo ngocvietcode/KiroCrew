@@ -83,7 +83,7 @@ describe('SkillsTab', () => {
     mockApi.skills.mockResolvedValue([
       {
         key: 'foo', name: 'foo', description: 'a foo skill', source: 'kirocrew',
-        loaded_by_agents: ['kirocrew', 'kirocrew-lite'],
+        loaded_by_agents: ['kirocrew', 'saokhue-lite'],
       },
     ])
     renderWithQuery()

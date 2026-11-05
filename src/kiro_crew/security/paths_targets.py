@@ -872,7 +872,9 @@ def _resolved_env_root(name: str) -> str | None:
 
 def _expanded_env_root(name: str) -> str | None:
     """The ``~``-expanded value of an environment home override, or ``None``."""
-    raw = os.environ.get(name, "")
+    raw = os.environ.get(name, "") or (
+        os.environ.get("SAOKHUE_HOME", "") if name == "KIROCREW_HOME" else ""
+    )
     if not raw:
         return None
     return os.path.expanduser(raw)

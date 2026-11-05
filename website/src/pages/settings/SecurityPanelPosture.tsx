@@ -113,8 +113,7 @@ export function PostureSection() {
       <div data-setting-label={i18nT('pages.settings.securityPanel.live_security_posture')}>
       <SettingsCard>
         {/* Non-expandable rows: single-valued modes, not counted sets. */}
-        <StatusRow icon={<Lock size={14} />} label={i18nT('pages.settings.securityPanel.process_sandbox')} value={i18nT('pages.settings.securityPanel.standard')} variant="ok"
-          href={`${CODE_BASE}/src/kiro_crew/sandbox.py`} />
+        <StatusRow icon={<Lock size={14} />} label={i18nT('pages.settings.securityPanel.process_sandbox')} value={i18nT('pages.settings.securityPanel.standard')} variant="ok" />
         <StatusRow
           icon={yolo ? <ShieldAlert size={14} /> : <ShieldCheck size={14} />}
           label={i18nT('pages.settings.securityPanel.tool_approval')}

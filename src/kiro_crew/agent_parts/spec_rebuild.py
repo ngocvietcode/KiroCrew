@@ -804,14 +804,14 @@ def rebuild_agent_config(
     global _conductor_spec_held, _conductor_installers_held
     _rebuild_admitted_token = _rebuild_spec_install_admitted.set(True)
     try:
-        # Install Kiro Crew AIM capabilities package (includes kirocrew-lite)
+        # Install Kiro Crew AIM capabilities package (includes saokhue-lite)
         _install_aim_capabilities()
 
-        # Install kirocrew-knowledge agent (used by Knowledge Library LLMPool)
+        # Install saokhue-knowledge agent (used by Knowledge Library LLMPool)
         try:
             service_agents._install_knowledge_agent()
         except Exception:
-            logger.debug("kirocrew-knowledge agent install failed", exc_info=True)
+            logger.debug("saokhue-knowledge agent install failed", exc_info=True)
 
         # Tracks a failed research rewrite the same way ``team_lead_held`` below tracks
         # team-lead. ``_install_research_agent`` derives from ``build_agent_config()``,
@@ -825,13 +825,13 @@ def rebuild_agent_config(
         # grant list). Folded into ``conductor_held`` beside ``team_lead_held`` below.
         research_held = False
 
-        # Install kirocrew-research agent (used by the Research Lab campaign loop)
+        # Install saokhue-research agent (used by the Research Lab campaign loop)
         try:
             service_agents._install_research_agent()
         except Exception:
             research_held = True
             logger.warning(
-                "kirocrew-research agent install failed; marking the ceiling held so a "
+                "saokhue-research agent install failed; marking the ceiling held so a "
                 "tightened ceiling is retried rather than recorded as synced over the "
                 "stale grant list left on disk",
                 exc_info=True,
@@ -844,15 +844,15 @@ def rebuild_agent_config(
         # grant list on disk. Folded into ``conductor_held`` below.
         mate_conductor_held = False
 
-        # Install kirocrew-mate-conductor agent (the agent a crewmate's own chat
-        # runs on) and kirocrew-mate-worker (what its worker sessions run on).
+        # Install saokhue-mate-conductor agent (the agent a crewmate's own chat
+        # runs on) and saokhue-mate-worker (what its worker sessions run on).
         try:
             service_agents._install_mate_conductor_agent()
             service_agents._install_mate_worker_agent()
         except Exception:
             mate_conductor_held = True
             logger.warning(
-                "kirocrew-mate-conductor agent install failed; marking the ceiling held so "
+                "saokhue-mate-conductor agent install failed; marking the ceiling held so "
                 "a tightened ceiling is retried rather than recorded as synced over the "
                 "stale grant list left on disk",
                 exc_info=True,
@@ -864,7 +864,7 @@ def rebuild_agent_config(
         # otherwise clobber a hold set here (this installer runs before it).
         team_lead_held = False
 
-        # Install kirocrew-team-lead agent (a default agent an operator selects like
+        # Install saokhue-team-lead agent (a default agent an operator selects like
         # any other). Its ``allowedTools`` is re-filtered through the governance
         # ceiling on every boot, exactly like the conductor specs above -- it derives
         # from ``build_agent_config()`` and passes its added dispatch grants through
@@ -885,20 +885,20 @@ def rebuild_agent_config(
         except Exception:
             team_lead_held = True
             logger.warning(
-                "kirocrew-team-lead agent install failed; marking the ceiling held so a "
+                "saokhue-team-lead agent install failed; marking the ceiling held so a "
                 "tightened ceiling is retried rather than recorded as synced over the "
                 "stale grant list left on disk",
                 exc_info=True,
             )
 
-        # Install kirocrew-dashboard-manager agent (the subagent a crewmate hands page
+        # Install saokhue-dashboard-manager agent (the subagent a crewmate hands page
         # work to). Degrades to a debug line like the two above: with the spec absent a
         # crewmate still has `dashboard_fields` and `dashboard_write`, so the page it has
         # keeps working and only CHANGING the page is unavailable.
         try:
             service_agents._install_dashboard_manager_agent()
         except Exception:
-            logger.debug("kirocrew-dashboard-manager agent install failed", exc_info=True)
+            logger.debug("saokhue-dashboard-manager agent install failed", exc_info=True)
         # Every install, fresh or upgraded, creates its first crewmate once (a
         # one-time marker, so a deleted one is never re-created). The reserved
         # ``default`` member is never touched. Boot keeps going either way.
@@ -907,13 +907,13 @@ def rebuild_agent_config(
         except Exception:
             logger.warning("First crewmate creation failed", exc_info=True)
 
-        # Install kirocrew-heartbeat agent (used by HeartbeatService for unattended polling)
+        # Install saokhue-heartbeat agent (used by HeartbeatService for unattended polling)
         try:
             _install_heartbeat_agent()
         except Exception:
-            logger.debug("kirocrew-heartbeat agent install failed", exc_info=True)
+            logger.debug("saokhue-heartbeat agent install failed", exc_info=True)
 
-        # Install kirocrew-conductor agent (goal decomposition + session-control dispatch).
+        # Install saokhue-conductor agent (goal decomposition + session-control dispatch).
         # ``clean`` is passed through: the conductor installers carry the user's own
         # ``allowedTools`` entries forward across a rebuild, and a clean rebuild is the
         # explicit reset that drops them, as it drops every customization above. Each
@@ -928,17 +928,17 @@ def rebuild_agent_config(
             conductor_held |= not conductor_agents._install_conductor_agent(clean=clean)
         except Exception:
             conductor_held = True
-            logger.debug("kirocrew-conductor agent install failed", exc_info=True)
+            logger.debug("saokhue-conductor agent install failed", exc_info=True)
 
-        # Install kirocrew-pipeline-conductor agent (repository pipeline fleet supervision)
+        # Install saokhue-pipeline-conductor agent (repository pipeline fleet supervision)
         try:
             conductor_held |= not conductor_agents._install_pipeline_conductor_agent(clean=clean)
         except Exception:
             conductor_held = True
-            logger.debug("kirocrew-pipeline-conductor agent install failed", exc_info=True)
+            logger.debug("saokhue-pipeline-conductor agent install failed", exc_info=True)
 
-        # Install the deprecated kirocrew-ledger-conductor alias (the same spec as
-        # kirocrew-conductor above, under its old name, for one release). EAGER for
+        # Install the deprecated saokhue-ledger-conductor alias (the same spec as
+        # saokhue-conductor above, under its old name, for one release). EAGER for
         # the same forced reason spelled out on the worker below: ``session_create``
         # refuses an agent it cannot resolve, and resolution reads a boot-time
         # in-memory snapshot that no spec write refreshes — so a lazily-materialized
@@ -949,14 +949,14 @@ def rebuild_agent_config(
             conductor_held |= not conductor_agents._install_ledger_conductor_agent(clean=clean)
         except Exception:
             conductor_held = True
-            logger.debug("kirocrew-ledger-conductor alias install failed", exc_info=True)
+            logger.debug("saokhue-ledger-conductor alias install failed", exc_info=True)
 
-        # Install kirocrew-security-conductor agent (one security audit's worker fleet)
+        # Install saokhue-security-conductor agent (one security audit's worker fleet)
         try:
             conductor_held |= not conductor_agents._install_security_conductor_agent(clean=clean)
         except Exception:
             conductor_held = True
-            logger.debug("kirocrew-security-conductor agent install failed", exc_info=True)
+            logger.debug("saokhue-security-conductor agent install failed", exc_info=True)
         # Settled here, not at the end: ``prime_ceiling_projection`` seeds the ceiling
         # baseline from this after the boot rebuild, and a rebuild that raises further
         # down must still leave the installers' verdict behind, not the previous one.
@@ -969,7 +969,7 @@ def rebuild_agent_config(
         _conductor_spec_held = conductor_held
         _conductor_installers_held = conductor_held
 
-        # Install kirocrew-dashboard-author agent (authors one dashboard template and lands
+        # Install saokhue-dashboard-author agent (authors one dashboard template and lands
         # it as a PR). EAGER for the same forced reason spelled out on the worker above:
         # ``session_create`` refuses an agent it cannot resolve, resolution reads a boot-time
         # in-memory snapshot that no spec write refreshes, so a lazily-materialized spec is
@@ -1008,12 +1008,12 @@ def rebuild_agent_config(
             _conductor_spec_held = True
             _conductor_installers_held = True
             logger.warning(
-                "kirocrew-dashboard-author agent install failed; completing independent repairs "
+                "saokhue-dashboard-author agent install failed; completing independent repairs "
                 "then failing the rebuild so a tightened ceiling is retried, not marked synced",
                 exc_info=True,
             )
 
-        # Install kirocrew-worker agent (the default toolset plus the work-ledger set).
+        # Install saokhue-worker agent (the default toolset plus the work-ledger set).
         #
         # EAGER, like its six siblings above, and that placement is forced rather than
         # chosen. ``session_create`` refuses an agent it cannot resolve
@@ -1031,7 +1031,7 @@ def rebuild_agent_config(
         try:
             worker_agent._install_worker_agent()
         except Exception:
-            logger.debug("kirocrew-worker agent install failed", exc_info=True)
+            logger.debug("saokhue-worker agent install failed", exc_info=True)
 
         # Bidirectional sync: ensure packages installed for one provider
         # are also available for the other (agents↔plugins, skills).
@@ -1339,11 +1339,11 @@ def ensure_agent_materialized(agent: str | None) -> bool:
 
 
 def _install_aim_capabilities() -> None:
-    """Write a bare ``kirocrew-lite`` agent config.
+    """Write a bare ``saokhue-lite`` agent config.
 
     Symbol preserved for callers (``rebuild_agent_config``).  The previous
     AIM-package install path is omitted on public installs (AIM is an
-    internal package manager); the generic ``kirocrew-lite`` fallback
+    internal package manager); the generic ``saokhue-lite`` fallback
     config — used by the claude_code provider for cheap background work — is
     still written.
     """
@@ -1352,7 +1352,7 @@ def _install_aim_capabilities() -> None:
 
 
 def _install_heartbeat_agent() -> None:
-    """Generate and install the kirocrew-heartbeat agent config.
+    """Generate and install the saokhue-heartbeat agent config.
 
     A dedicated agent for HeartbeatService.  Minimal MCP surface: the default
     spec's ``kirocrew-core`` entry (learn/spawn list and status, artifact
@@ -1379,7 +1379,7 @@ def _install_heartbeat_agent() -> None:
     with agents_spec_lock(agents_dir), _mcp_lock():
         _write_heartbeat_spec(path, agents_dir / AGENT_FILENAME, model)
     # CC model for the heartbeat agent lives in the sidecar, not the kiro spec.
-    agent_state.set_cc_model("kirocrew-heartbeat", _background_cc_model())
+    agent_state.set_cc_model("saokhue-heartbeat", _background_cc_model())
     logger.info("Installed heartbeat agent config: %s", path)
 
 
@@ -1413,7 +1413,7 @@ def _write_heartbeat_spec(path: Path, main_path: Path, model: str) -> None:
         )
 
     config: dict[str, object] = {
-        "name": "kirocrew-heartbeat",
+        "name": "saokhue-heartbeat",
         "description": (
             "Unattended polling worker — runs one HeartbeatService task per "
             "cycle with a read-only MCP toolset. Tool approval is gated "

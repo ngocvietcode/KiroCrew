@@ -1,7 +1,7 @@
 """Point a crewmate's worker at the crewmate's own worktree, at the start of its turn.
 
 A worker session a crewmate opened (a ``template`` record on
-``kirocrew-mate-worker`` carrying the crewmate's ``member_id``) gets its
+``saokhue-mate-worker`` carrying the crewmate's ``member_id``) gets its
 ``slot.project`` -- its cwd and project scope -- set to the crewmate's own git
 worktree of the repository the turn is about (:mod:`kiro_crew.crewmate_worktree`).
 The repository is read from the paths this turn's message names, then from the

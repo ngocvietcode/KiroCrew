@@ -42,7 +42,7 @@ class TestConfigDir:
         monkeypatch.delenv("KIROCREW_HOME", raising=False)
         monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
         result = paths.config_dir()
-        assert result == tmp_path / ".kiro" / "crew"
+        assert result == tmp_path / ".vpbank" / "saokhue"
         assert result.is_dir()  # created on access
 
     def test_kirocrew_home_override(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -86,7 +86,7 @@ class TestConfigDir:
         monkeypatch.setenv("KIROCREW_HOME", system_dir)
         monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
         result = paths.config_dir()
-        assert result == tmp_path / ".kiro" / "crew"
+        assert result == tmp_path / ".vpbank" / "saokhue"
 
 
 class TestScratchRootOverride:

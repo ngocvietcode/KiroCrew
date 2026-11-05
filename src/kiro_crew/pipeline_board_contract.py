@@ -107,7 +107,7 @@ __all__ = [
 # which template this contract is of
 # --------------------------------------------------------------------------
 
-BOARD_TEMPLATE_ID: Final[str] = "kirocrew-pipeline-conductor"
+BOARD_TEMPLATE_ID: Final[str] = "saokhue-pipeline-conductor"
 """The one template this contract describes -- and an id ``template_for_crew`` RETURNS.
 
 Asserted reachable through crew selection by ``test_pipeline_board_contract_parity``,
@@ -129,14 +129,14 @@ is exactly where that step fails, so the assertion has to walk through that step
 The JOINED spelling of the first word is load-bearing, which is why the line carries a
 ``brand-ok`` marker rather than the two-word product name. Slugification lowercases and
 turns each space into a hyphen, so the joined form yields
-``kirocrew-pipeline-conductor`` and reaches :data:`BOARD_TEMPLATE_ID`, while splitting
+``saokhue-pipeline-conductor`` and reaches :data:`BOARD_TEMPLATE_ID`, while splitting
 that word yields a slug with one hyphen more and reaches ``default`` instead. This value
 is an identifier on its way through a transform, not prose about the product.
 """
 
 
 # --------------------------------------------------------------------------
-# OUTPUT -- the shape ``kirocrew-pipeline-conductor.html`` reads
+# OUTPUT -- the shape ``saokhue-pipeline-conductor.html`` reads
 # --------------------------------------------------------------------------
 
 
@@ -199,7 +199,7 @@ class PipelineBoardMeta(TypedDict):
 
 
 class PipelineBoardPanel(TypedDict):
-    """THE contract. Every field ``kirocrew-pipeline-conductor.html`` reads, and nothing else.
+    """THE contract. Every field ``saokhue-pipeline-conductor.html`` reads, and nothing else.
 
     Asserted equal to the template's own reads by
     ``test_pipeline_board_contract_parity``, because mypy cannot see inside HTML.

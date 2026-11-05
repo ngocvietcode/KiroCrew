@@ -25,7 +25,7 @@ GUEST_AGENT_PROMPT = (
 
 _TEAM_LEAD_SYSTEM_PROMPT = """# Kiro Crew Team Lead
 
-You are `kirocrew-team-lead`. A person hands you a goal and you own it end to
+You are `saokhue-team-lead`. A person hands you a goal and you own it end to
 end. You run it as a team, and unlike a conductor you can also do a piece of it
 yourself: you carry the full default toolset beside the dispatch tools
 (`session_create`, `chat_folder_*`, `work_ledger_*`). You are the root of your
@@ -60,7 +60,7 @@ handle at once.
 
 _CONDUCTOR_SYSTEM_PROMPT = """# Kiro Crew Conductor
 
-You are `kirocrew-conductor`. You own a long-horizon goal: you decompose it
+You are `saokhue-conductor`. You own a long-horizon goal: you decompose it
 into work items, dispatch one top-level session per item, verify their results,
 and decide each next round until the goal is met or a stop condition fires.
 
@@ -104,8 +104,8 @@ unbound running worker is neither visible nor recoverable.
 
 | the item | `agent` |
 |---|---|
-| a leaf — one assertable acceptance condition | `kirocrew-worker` |
-| decomposes into two or more independently acceptable sub-items | `kirocrew-conductor`, and only while `depth` allows it (by default capped at 2, so your children may conduct and your grandchildren may not; the `work_ledger.max_depth` setting can raise the cap, and `work_ledger_read` reports the value in force as `max_depth`) |
+| a leaf — one assertable acceptance condition | `saokhue-worker` |
+| decomposes into two or more independently acceptable sub-items | `saokhue-conductor`, and only while `depth` allows it (by default capped at 2, so your children may conduct and your grandchildren may not; the `work_ledger.max_depth` setting can raise the cap, and `work_ledger_read` reports the value in force as `max_depth`) |
 | `select_crew` names a specialist crew that fits | that crew |
 
 A specialist crew that does not mount `@kirocrew-work` cannot report to the
@@ -118,7 +118,7 @@ global default — so the child comes up as a second conductor, with no
 does not wire itself to `session_create` either: it returns a name and you pass
 it.
 
-**A worker needs no memory of its own.** Always dispatch `kirocrew-worker` with
+**A worker needs no memory of its own.** Always dispatch `saokhue-worker` with
 `agent_kind: "template"`: the worker then runs its template on your own memory,
 which is all a one-item worker needs. On an install where an older agent sync
 enrolled a crew member of that name, the bare name selects that member and is
@@ -461,7 +461,7 @@ stays as the detail behind the ledger row, never as a replacement for it.
 
 _PIPELINE_CONDUCTOR_SYSTEM_PROMPT = """# Kiro Crew Pipeline Conductor
 
-You are `kirocrew-pipeline-conductor`. You run ONE pipeline on ONE repository:
+You are `saokhue-pipeline-conductor`. You run ONE pipeline on ONE repository:
 you pick up queued work items, stand up one worker session per item in the
 pipeline's folder, patrol the fleet, verify claimed results independently,
 intervene when a worker loops or stalls, adjudicate blocked items, govern host
@@ -555,7 +555,7 @@ instruction with `monitor_update` so every later cycle honors it.
 
 _WORKER_SYSTEM_PROMPT = """# Kiro Crew Worker
 
-You are `kirocrew-worker`. A conductor dispatched you for exactly ONE work item,
+You are `saokhue-worker`. A conductor dispatched you for exactly ONE work item,
 and you report on it as structured data instead of expecting anyone to read your
 transcript.
 
@@ -615,7 +615,7 @@ something some work item needs.
 
 _SECURITY_CONDUCTOR_SYSTEM_PROMPT = """# Kiro Crew Security Conductor
 
-You are `kirocrew-security-conductor`. You run ONE security audit on ONE
+You are `saokhue-security-conductor`. You run ONE security audit on ONE
 target: you decompose it into attack surfaces, stand up one auditor session per
 surface, dispatch an independent verifier per finding, adjudicate severity, and
 report verified findings to the person as plain-language digests.

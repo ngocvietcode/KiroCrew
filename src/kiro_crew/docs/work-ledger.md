@@ -27,10 +27,10 @@ A piece qualifies as a work item only when all three hold:
 Fewer than two qualifying items means one long session is the better shape, and
 a conductor would only add overhead.
 
-To start one, open a session on the **`kirocrew-conductor`** agent (see
+To start one, open a session on the **`saokhue-conductor`** agent (see
 [Agents](agents.md) for the per-session, per-thread and per-cron selectors), which
 is what a Crew Mode chat runs on, and give it the goal. Its operating procedure ships as the `goal-conductor` skill.
-`kirocrew-ledger-conductor` is a deprecated alias of the same spec, kept for one
+`saokhue-ledger-conductor` is a deprecated alias of the same spec, kept for one
 release so an existing session or cron that names the old string keeps resolving.
 
 ## The item
@@ -308,9 +308,9 @@ session ledger for its goal, its current round, and the approaches it already
 rejected. Items never go in the session ledger — two records that can disagree
 is the failure that avoids.
 
-## The `kirocrew-worker` agent
+## The `saokhue-worker` agent
 
-A conductor names `kirocrew-worker` for a leaf item. That spec is a **superset**
+A conductor names `saokhue-worker` for a leaf item. That spec is a **superset**
 of your default agent, not a narrowed one: everything your default agent grants,
 plus the two reporting tools. A worker writes files, runs builds and drives git,
 so anything a narrowed spec withheld would be something some item needs.

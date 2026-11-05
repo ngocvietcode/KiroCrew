@@ -665,7 +665,7 @@ def _get_rss_tree_mb(
     not judge" answer this probe's caller already handles, so the age ceiling
     still governs while the RSS ceiling abstains.
 
-    On Linux the kirocrew-lite background runtime is spawned through the
+    On Linux the saokhue-lite background runtime is spawned through the
     namespace sandbox launcher, which ``fork()``s: ``self._pid`` is the
     launcher parent (small, stable, blocked in ``waitpid``) while the real
     kiro-cli that accumulates multi-GB RSS is a child. Measuring only

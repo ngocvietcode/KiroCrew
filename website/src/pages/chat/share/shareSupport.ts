@@ -8,7 +8,7 @@ import { clipboardRelayAvailable, clipboardWriteBlockedByPolicy, relayImageCopyT
 import { fetchDashboardConfig } from '../../../api/dashboardConfigQuery'
 
 /** Public repo link baked into the default caption and the card footer. */
-export const SHARE_REPO_URL = 'https://github.com/kirodotdev/KiroCrew'
+export const SHARE_REPO_URL = ''
 
 /** X's hard post limit; the caption editor shows "n / 280" against it. */
 export const X_POST_LIMIT = 280

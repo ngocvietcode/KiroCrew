@@ -1585,7 +1585,7 @@ class ContextBuilder:
             # The joined spelling is the {bot_name} value the prompt
             # substitutes, not prose about the product: respelling it would
             # change what the model is told to answer to.
-            self._bot_name = "KiroCrew" if is_claude_code(provider) else "Kiro"  # brand-ok
+            self._bot_name = "Sao Khuê"  # brand-ok
         # Register default memory in the workspace cache
         _memory_stores[_DEFAULT_KEY] = self.memory
 

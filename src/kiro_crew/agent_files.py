@@ -20,34 +20,34 @@ from __future__ import annotations
 AGENT_FILENAME = "kirocrew.json"
 
 # Background/auxiliary managed agent specs KiroCrew writes under ~/.kiro/agents/.
-LITE_AGENT_FILENAME = "kirocrew-lite.json"
+LITE_AGENT_FILENAME = "saokhue-lite.json"
 # The tool-less agent a non-operator channel sender talks to. Its own file so the
 # background helper (lite) may grow a tool one day without handing it to a guest.
-GUEST_AGENT_FILENAME = "kirocrew-guest.json"
-CONDUCTOR_AGENT_FILENAME = "kirocrew-conductor.json"
-PIPELINE_CONDUCTOR_AGENT_FILENAME = "kirocrew-pipeline-conductor.json"
+GUEST_AGENT_FILENAME = "saokhue-guest.json"
+CONDUCTOR_AGENT_FILENAME = "saokhue-conductor.json"
+PIPELINE_CONDUCTOR_AGENT_FILENAME = "saokhue-pipeline-conductor.json"
 # The goal conductor's work-ledger variant, and a SEPARATE spec rather than a flag
-# on ``kirocrew-conductor``. The ledger flow inverts that agent's dispatch order
+# on ``saokhue-conductor``. The ledger flow inverts that agent's dispatch order
 # (bind before seed) and replaces its patrol cycle (a ledger read instead of a
 # transcript read), so mounting it on the shipped conductor would move every
 # existing conductor user onto a different procedure without their asking. Same
 # installer and the same no-file-write properties; what differs is the
 # ``kirocrew-work`` mount and the prompt that drives it.
-LEDGER_CONDUCTOR_AGENT_FILENAME = "kirocrew-ledger-conductor.json"
-SECURITY_CONDUCTOR_AGENT_FILENAME = "kirocrew-security-conductor.json"
-WORKER_AGENT_FILENAME = "kirocrew-worker.json"
+LEDGER_CONDUCTOR_AGENT_FILENAME = "saokhue-ledger-conductor.json"
+SECURITY_CONDUCTOR_AGENT_FILENAME = "saokhue-security-conductor.json"
+WORKER_AGENT_FILENAME = "saokhue-worker.json"
 # The mate conductor: the agent a crewmate's own chat runs on. Derived from the
 # default template (same prompt, tools and mcpServers), so today it is behaviour-
 # identical to `kirocrew.json` -- only its definition now has its own name in
 # source rather than being an alias for the shared default. See
 # docs/request-for-change/rfc-mate-owned-agent-config.md, migration step 1: this
 # spec intentionally does not yet read or write `~/.kiro/mates/agents/` (step 3).
-MATE_CONDUCTOR_AGENT_FILENAME = "kirocrew-mate-conductor.json"
+MATE_CONDUCTOR_AGENT_FILENAME = "saokhue-mate-conductor.json"
 # The mate worker: the agent a crewmate's worker sessions run on (the session a
 # crewmate's own chat opens with ``session_create``). Source-defined like the
 # conductor; a crewmate's own file under ``~/.kiro/mates/agents/`` adds to it at
 # projection time (``kiro_crew.mate_worker``), never on disk here.
-MATE_WORKER_AGENT_FILENAME = "kirocrew-mate-worker.json"
+MATE_WORKER_AGENT_FILENAME = "saokhue-mate-worker.json"
 #: The two crewmate specs Crew generates. They live in ``~/.kiro/mates/agents/``
 #: beside the crewmates' own files, NOT in ``~/.kiro/agents/``: kiro-cli lists
 #: every spec in its agents folder, and these two are never picked by hand. The
@@ -71,17 +71,17 @@ def is_mate_service_agent(name: object) -> bool:
 # it is neither the default-mirroring worker nor a conductor. Its system prompt and
 # tool charter are the shipped ``dashboard-template/agent-spec.md`` (parsed at install);
 # its installer lives in ``worker_agent.py`` beside the other dispatched-agent installer.
-DASHBOARD_AUTHOR_AGENT_FILENAME = "kirocrew-dashboard-author.json"
-KNOWLEDGE_AGENT_FILENAME = "kirocrew-knowledge.json"
-RESEARCH_AGENT_FILENAME = "kirocrew-research.json"
+DASHBOARD_AUTHOR_AGENT_FILENAME = "saokhue-dashboard-author.json"
+KNOWLEDGE_AGENT_FILENAME = "saokhue-knowledge.json"
+RESEARCH_AGENT_FILENAME = "saokhue-research.json"
 # The team lead: owns a goal and does the focused work on it itself (running a
 # goal as a team is a planned follow-up). A DEFAULT agent beside research rather
 # than a kind of its own -- it derives the same ceiling, is written by the same
 # install sequence and is overwritten on every boot, so an operator who wants a
 # customized copy makes one under a different name.
-TEAM_LEAD_AGENT_FILENAME = "kirocrew-team-lead.json"
-HEARTBEAT_AGENT_FILENAME = "kirocrew-heartbeat.json"
-DASHBOARD_MANAGER_AGENT_FILENAME = "kirocrew-dashboard-manager.json"
+TEAM_LEAD_AGENT_FILENAME = "saokhue-team-lead.json"
+HEARTBEAT_AGENT_FILENAME = "saokhue-heartbeat.json"
+DASHBOARD_MANAGER_AGENT_FILENAME = "saokhue-dashboard-manager.json"
 
 # The dashboard manager's agent NAME, derived from its filename rather than spelled
 # a second time. kiro-cli resolves an agent by reading ``<agents dir>/<name>.json``,
@@ -109,20 +109,20 @@ ASSISTANT_DEFAULT_DISPLAY_NAME = "Mate"
 #: ``is_custom`` check whose question is "did a user replace the default
 #: agent", so it is keyed on NAME EQUALITY to ``AGENT_FILENAME``'s stem
 #: (``"kirocrew"``) rather than on content. A mate's own chat runs on
-#: ``kirocrew-mate-conductor`` -- a Crew-owned spec byte-identical to the
+#: ``saokhue-mate-conductor`` -- a Crew-owned spec byte-identical to the
 #: default template, not a user's custom agent -- so it belongs in this set:
 #: without it, a crewmate's chat loses its workspace identity block and docs
 #: pointer purely because its spec has its own filename. The crewmate's worker,
-#: ``kirocrew-mate-worker``, is the same kind of spec and is in the set for the
+#: ``saokhue-mate-worker``, is the same kind of spec and is in the set for the
 #: same reason: its sessions keep the workspace identity and docs pointer a
 #: crewmate's hand-off sessions always had. The
-#: ``kirocrew-research``/``kirocrew-worker``/``kirocrew-team-lead`` service and
+#: ``saokhue-research``/``saokhue-worker``/``saokhue-team-lead`` service and
 #: dispatch specs do NOT join this set: they are backend loops with their own
 #: context rules.
 KIROCREW_DEFAULT_AGENT_NAMES = frozenset(
     {
         AGENT_FILENAME[: -len(".json")],
-        "kirocrew-mate-conductor",
+        "saokhue-mate-conductor",
         MATE_WORKER_AGENT_FILENAME[: -len(".json")],
     }
 )
@@ -178,13 +178,13 @@ OWNED_KIRO_AGENT_FILES = (
 # every ``session/set_mode`` with "Mode '<name>' not found", so a missing entry
 # here fails EVERY turn rather than degrading one feature:
 #   * ``kirocrew.json``      — the agent behind user-facing chat.
-#   * ``kirocrew-lite.json`` — the cheap background agent (auto-titles,
+#   * ``saokhue-lite.json`` — the cheap background agent (auto-titles,
 #     compaction, heartbeat), reached via ``SessionManager.get_bg_session``.
 # The remaining OWNED_KIRO_AGENT_FILES entries are deliberately excluded because
 # each one only disables its own feature (guest replies, goal conducting,
 # Knowledge extraction, Research Lab, unattended heartbeat polling). Their
 # installer calls in ``agent_parts/spec_rebuild.py`` degrade to ``logger.debug`` on failure, except
-# ``kirocrew-guest.json``, which ``_install_aim_capabilities`` writes unguarded
+# ``saokhue-guest.json``, which ``_install_aim_capabilities`` writes unguarded
 # after the lite fallback.
 REQUIRED_KIRO_AGENT_FILES = (
     AGENT_FILENAME,
@@ -208,7 +208,7 @@ REQUIRED_KIRO_AGENT_FILES = (
 #   Default / DEFAULT / Vibe / Spec   the client entry        the client entry
 #     / PLAN / kiro_default / kiro    (origin: client)
 #     / kiro-default / default_agent
-#   kirocrew-conductor /              the client entry        the client entry: the
+#   saokhue-conductor /              the client entry        the client entry: the
 #     semantic_reviewer (also on      (origin: client)        wire definition replaces
 #     disk, advertised from there)                            the on-disk one
 #
@@ -252,7 +252,7 @@ def kas_wire_agent_id(agent_id: str) -> str:
 
     A session registers exactly one agent, so the alias cannot meet a second
     entry of the same id in its batch; an on-disk spec that happens to carry it
-    is replaced by the wire definition (the ``kirocrew-conductor`` row above).
+    is replaced by the wire definition (the ``saokhue-conductor`` row above).
     """
     if agent_id in KAS_RESERVED_AGENT_IDS:
         return f"{agent_id}{KAS_WIRE_ID_SUFFIX}"

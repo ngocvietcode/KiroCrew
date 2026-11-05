@@ -157,7 +157,7 @@ def scope_globs(
 ) -> list[str] | None:
     """The skill globs this session loads on kiro-cli, or ``None`` when KAS needs no rule.
 
-    ``None`` is the whole catalog (an unmapped ``kirocrew`` / ``kirocrew-worker``)
+    ``None`` is the whole catalog (an unmapped ``kirocrew`` / ``saokhue-worker``)
     or a scope that is exactly the default trees KAS loads by itself.
 
     The scope is read from *spec*, the spec this session is projected with, and

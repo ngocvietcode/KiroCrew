@@ -44,7 +44,7 @@ describe('useTheme — self-repair (decision 6)', () => {
     themesFn.mockResolvedValue({ themes: [] }) // the persisted theme is gone
     localStorage.setItem('mc-color-theme', 'custom-ghost')
     const { result } = renderHook(() => useTheme(), { wrapper })
-    await waitFor(() => expect(result.current.colorTheme).toBe('kiro'))
+    await waitFor(() => expect(result.current.colorTheme).toBe('saokhue'))
   })
 
   it('keeps a still-present installed selection', async () => {
@@ -66,7 +66,7 @@ describe('useTheme — self-repair (decision 6)', () => {
     // A value persisted by an older build whose built-in theme no longer exists.
     localStorage.setItem('mc-color-theme', 'lumon')
     const { result } = renderHook(() => useTheme(), { wrapper })
-    await waitFor(() => expect(result.current.colorTheme).toBe('kiro'))
+    await waitFor(() => expect(result.current.colorTheme).toBe('saokhue'))
   })
 
   it('keeps a downstream-registered (edition) theme selection', async () => {

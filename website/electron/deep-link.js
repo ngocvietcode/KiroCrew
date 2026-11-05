@@ -1,4 +1,4 @@
-// kirocrew:// deep links for the Kiro Crew Electron app.
+// kirocrew:// deep links for the Sao Khuê Electron app.
 //
 // Other programs on the machine (a companion app, a Slack button, a Raycast
 // script, `kirocrew open`) use this scheme to open the desktop app on one

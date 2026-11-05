@@ -84,7 +84,7 @@ def _is_background_only(agent: AgentInfo) -> bool:
     """A runtime-owned spec that exists for a background job, not a chat.
 
     Matched on the owned FILE, not the display name: a project checkout may
-    declare its own ``kirocrew-lite.json`` under ``.kiro/agents`` and that is
+    declare its own ``saokhue-lite.json`` under ``.kiro/agents`` and that is
     the user's file, an ordinary choice like any other project template.
     """
     return agent.kirocrew_owned and agent.filename in _BACKGROUND_ONLY_FILES

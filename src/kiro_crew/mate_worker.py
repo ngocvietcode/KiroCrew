@@ -1,7 +1,7 @@
 """The crewmate worker: a source-defined base plus the crewmate's own additions.
 
 ``rfc-mate-owned-agent-config`` §5.1, §5.4. A crewmate's chat runs on
-``kirocrew-mate-conductor`` and its hand-offs on ``kirocrew-mate-worker``, both
+``saokhue-mate-conductor`` and its hand-offs on ``saokhue-mate-worker``, both
 written from source on every start (``agent_materialization.service_agents``).
 The crewmate's file, ``~/.kiro/mates/agents/<id>.json``, extends the WORKER only,
 additively: its prompt after the base's, servers and skills the base lacks (a
@@ -142,7 +142,7 @@ def is_legacy_binding(name: str, binding: Any) -> bool:
     """Whether ``config.agents[name]`` is a legacy built-in binding, not a crewmate.
 
     Positive signature: a ``builtin`` binding that never got a member identity
-    (an older install's ``assistant``, the built-in ``kirocrew-conductor``).
+    (an older install's ``assistant``, the built-in ``saokhue-conductor``).
     ``GET /api/agents`` lists one only once its DM thread holds a message, the
     rule ``GET /api/members`` applies to every non-dashboard-created row. The
     reserved ``default`` member is excluded by name, and a user-created crewmate

@@ -159,7 +159,7 @@ describe('listedByDefault / rosterShows', () => {
     const upgraded = [
       { name: 'default', source: 'builtin', has_dm_message: true, has_user_dm_message: false },
       { name: 'mate', ...NO, source: 'builtin' },
-      { name: 'kirocrew-conductor', ...NO, source: 'builtin' },
+      { name: 'saokhue-conductor', ...NO, source: 'builtin' },
     ]
     expect(names(rosterPopulation(upgraded, EMPTY_QUERY))).toEqual(['mate'])
   })

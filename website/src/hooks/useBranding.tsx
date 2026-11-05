@@ -11,7 +11,7 @@ import { api } from '../api/client'
  */
 interface Branding { botName: string; avatar: string; directLocal: boolean; desktopLauncher: boolean }
 
-const defaults: Branding = { botName: 'Kiro Crew', avatar: '/logo.png', directLocal: false, desktopLauncher: false }
+const defaults: Branding = { botName: 'Sao Khuê', avatar: '/logo.png', directLocal: false, desktopLauncher: false }
 const BrandingContext = createContext<Branding>(defaults)
 
 export function BrandingProvider({ children }: { children: ReactNode }) {

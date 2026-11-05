@@ -1,8 +1,8 @@
 {
-  "name": "kirocrew-desktop",
-  "version": "0.13.0",
-  "description": "Kiro Crew \u2014 AI agent desktop app",
-  "homepage": "https://github.com/kirodotdev/KiroCrew",
+  "name": "saokhue-desktop",
+  "version": "0.14.0",
+  "description": "Sao Khuê — VPBank AI Agent Platform",
+  "homepage": "",
   "desktopName": "kirocrew-desktop.desktop",
   "main": "main.js",
   "scripts": {
@@ -10,6 +10,7 @@
     "test": "node --require ./test/_preload.cjs --test test/*.test.js mochi/test/*.test.js crew-companion/test/*.test.js",
     "postinstall": "node scripts/patch-nsis-template.js",
     "dist": "electron-builder",
+    "dist:win-dir": "electron-builder --win --dir",
     "dist:mac": "electron-builder --mac",
     "dist:linux": "electron-builder --linux"
   },
@@ -27,11 +28,11 @@
     "js-yaml": "4.3.2"
   },
   "build": {
-    "appId": "com.amazon.kiro.crew",
-    "productName": "KiroCrew",
+    "appId": "vn.com.vpbank.saokhue",
+    "productName": "SaoKhue",
     "protocols": [
       {
-        "name": "KiroCrew",
+        "name": "Sao Khuê",
         "schemes": [
           "kirocrew"
         ]
@@ -54,9 +55,9 @@
       "notarize": false,
       "x64ArchFiles": "{**/backend-dist/**,**/backend-dist/**/.*/**}",
       "extendInfo": {
-        "CFBundleDisplayName": "Kiro Crew",
-        "NSMicrophoneUsageDescription": "Kiro Crew uses the microphone for voice input and dictation in chat. Audio is captured only while you hold or toggle the mic button.",
-        "NSLocalNetworkUsageDescription": "Kiro Crew connects to devices on your local network so agent commands can reach your own servers, NAS, containers, and dev machines. Only the addresses a command names are contacted."
+        "CFBundleDisplayName": "Sao Khuê",
+        "NSMicrophoneUsageDescription": "Sao Khuê uses the microphone for voice input and dictation in chat. Audio is captured only while you hold or toggle the mic button.",
+        "NSLocalNetworkUsageDescription": "Sao Khuê connects to devices on your local network so agent commands can reach your own servers, NAS, containers, and dev machines. Only the addresses a command names are contacted."
       }
     },
     "afterSign": "scripts/notarize.js",
@@ -286,6 +287,8 @@
       "token-prompt.html",
       "icon.png",
       "icon-nightly.png",
+      "icon.ico",
+      "icon-nightly.ico",
       "trayTemplate.png",
       "trayTemplate@2x.png",
       "EXTERNALLY-MANAGED",
@@ -308,19 +311,10 @@
       }
     ],
     "win": {
-      "icon": "icon.png",
+      "icon": "icon.ico",
       "target": [
         "nsis"
-      ],
-      "signtoolOptions": {
-        "sign": "./scripts/sign-windows.js",
-        "signingHashAlgorithms": [
-          "sha256"
-        ],
-        "publisherName": [
-          "Amazon Web Services, Inc."
-        ]
-      }
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -332,5 +326,5 @@
       "installerHeader": "../../packaging/installer-assets/windows-installer-header.bmp"
     }
   },
-  "author": "Kiro Crew"
+  "author": "VPBank"
 }

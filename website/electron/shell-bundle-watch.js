@@ -249,10 +249,10 @@ async function promptRestartForPrunedBundle({ dialog, requestQuit, log = () => {
       // macOS does not render a message box title, so the instruction lives in
       // `message`. It says reopen because the app quits and does not relaunch
       // itself: the path it would relaunch is the one that was removed.
-      title: "Quit and reopen Kiro Crew",
-      message: "Kiro Crew was updated. Quit and reopen it to keep working.",
+      title: "Quit and reopen Sao Khuê",
+      message: "Sao Khuê was updated. Quit and reopen it to keep working.",
       detail: "This window may close at any moment. Copy any unsent message first.",
-      buttons: ["Quit Kiro Crew", "Later"],
+      buttons: ["Quit Sao Khuê", "Later"],
       // The dialog opens on a timer, not on anything the user did, so Return
       // pressed mid-sentence in the composer must not quit and lose the draft.
       defaultId: 1,

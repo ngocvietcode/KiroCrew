@@ -919,7 +919,7 @@ class WorkflowService:
         # never pollutes (or is polluted by) chat, consolidation, or other runs.
         #
         # Cost: authoring is pure text generation (intent → Python script), so it
-        # uses the tool-less ``kirocrew-lite`` agent. That is the lever that makes a
+        # uses the tool-less ``saokhue-lite`` agent. That is the lever that makes a
         # fresh session cheap: the dominant cold-start cost was loading the full
         # MCP toolset + system prompt; lite carries no tools, so the turn is just
         # the generation. REJECT_ALL is belt-and-suspenders against an alternate
@@ -935,7 +935,7 @@ class WorkflowService:
             try:
                 await memory_scope.prepare(self._context_builder, key)
                 provider, author_is_new, _resumed = await self._sessions.get_or_create(
-                    key, agent="kirocrew-lite", start_priority=start_priority
+                    key, agent="saokhue-lite", start_priority=start_priority
                 )
             except Exception as exc:
                 try:
@@ -1024,7 +1024,7 @@ class WorkflowService:
                     is_new=author_is_new,
                     provider=provider,
                     resumed=_resumed,
-                    agent="kirocrew-lite",
+                    agent="saokhue-lite",
                     cwd=None,
                     # Triggers read the operator's intent, not the authoring
                     # instructions or the reference workflows quoted around it.

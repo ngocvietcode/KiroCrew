@@ -17,7 +17,7 @@ const item = (over: Partial<WorkBoardItem>): WorkBoardItem => ({
 })
 
 const worker = (key: string, by: string): CrewWorker => ({
-  key, title: key, agent: 'kirocrew-worker', status: 'idle', group: 'working', last_activity: '', ledger_item: '',
+  key, title: key, agent: 'saokhue-worker', status: 'idle', group: 'working', last_activity: '', ledger_item: '',
   created_by: by, dispatched_by: by,
 })
 

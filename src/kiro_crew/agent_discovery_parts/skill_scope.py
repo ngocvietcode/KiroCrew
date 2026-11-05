@@ -42,7 +42,7 @@ SkillScopeResolutionError.__module__ = "kiro_crew.agent_discovery"
 #: The templates that see the whole catalog while they map no skill. The worker
 #: maps exactly the default's ``skill://`` entries (``_mirror_worker_skill_resources``),
 #: so an unmapped worker has an unmapped dispatcher and sees what it sees.
-WHOLE_CATALOG_TEMPLATES = frozenset({"kirocrew", "kirocrew-worker"})
+WHOLE_CATALOG_TEMPLATES = frozenset({"kirocrew", "saokhue-worker"})
 
 
 def skill_search_refusal(spec: dict[str, Any]) -> str | None:

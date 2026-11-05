@@ -462,7 +462,7 @@ def _usage_scrape_argv(kiro_bin: str) -> list[str] | None:
         if USAGE_SCRAPE_ENGINE not in engines:
             return None
         argv += ["--agent-engine", USAGE_SCRAPE_ENGINE]
-    return argv + ["--agent", "kirocrew-lite", "/usage"]
+    return argv + ["--agent", "saokhue-lite", "/usage"]
 
 
 def _wrap_argv_usage_scrape(kiro_bin: str) -> tuple[list[str] | None, str | None]:

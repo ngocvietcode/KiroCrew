@@ -3,14 +3,13 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trans } from 'react-i18next'
-import { RefreshCw, Scale, CheckCircle2, AlertCircle, Bug, GitBranch, GitCommitHorizontal, ExternalLink, ArrowUp, History, Download, Copy } from 'lucide-react'
+import { RefreshCw, Scale, CheckCircle2, AlertCircle, GitBranch, GitCommitHorizontal, ArrowUp, History, Download, Copy } from 'lucide-react'
 import { SettingsLink } from '../../components/SettingsLink'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardTitle, Btn } from '../../components/ui'
 import { SettingsToggle } from '../../components/settings'
 import { useBranding } from '../../hooks/useBranding'
 import { useAppSelector } from '../../store'
-import { codeBrowserBranchUrl, codeBrowserCommitUrl } from '../../lib/codeBrowser'
 import SegmentedControl from '../../components/SegmentedControl'
 import ReportProblemCard from './ReportProblemCard'
 import { ARM_POLL_FAILURE_THRESHOLD, AGENT_REQUEST_POLL_MS, AgentUpdateRequestCard, copyCommand } from './AboutPanelUpdateFlow'
@@ -33,6 +32,7 @@ import { gatewayStopCommand } from '../../hooks/useUpdateSubscription'
 import { useInstallDispatch } from '../../hooks/useInstallDispatch'
 import { foldStableStamp, sameBuildVersion } from '../../utils/displayVersion'
 import { bytesAreTheStableRelease as followedLanePublishesRunningBytes } from '../../utils/laneMembership'
+import saokhueStarUrl from '../../assets/saokhue-star.svg'
 
 /** Human-readable transfer rate for the progress label. */
 function formatRate(bps: number): string {
@@ -703,7 +703,7 @@ export function AboutPanel() {
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-[13px] font-medium text-text flex items-center gap-1.5">
             <ArrowUp size={13} className="lucide-inline text-accent" />
-            {botName || 'Kiro Crew'} {updateState?.version || i18nT('pages.settings.aboutPanel.update_noun')}
+            {botName || 'Sao Khuê'} {updateState?.version || i18nT('pages.settings.aboutPanel.update_noun')}
           </span>
           <span className="text-[12px] text-muted">
             {channel ? `${channel} channel` : i18nT('pages.settings.aboutPanel.update_noun')}
@@ -881,6 +881,8 @@ export function AboutPanel() {
   const isPrerelease = stampedLane === undefined
     ? !!info?.packaged && versionLooksPrerelease(info?.version)
     : !!stampedLane && stampedLane !== 'stable' && !bytesAreTheStableRelease
+  void isPrerelease
+  void reportIssueUrl
   // Update is available if either the redux status flag or the latest check
   // response says so — EXCEPT when the latest check said diverged. The redux
   // flag refreshes on the slower WS status push, so for up to one push interval
@@ -975,18 +977,16 @@ export function AboutPanel() {
   // places: beside the license chip when the lanes agree, or on the gateway's
   // own version line when they do not (see `versionLanesDiffer`).
   const branchChip = buildBranch && (
-    <a href={codeBrowserBranchUrl(buildBranch)} target="_blank" rel="noopener noreferrer"
-       title={i18nT('pages.settings.aboutPanel.browse_this_branch_on_github')}
-       className="inline-flex items-center gap-1.5 text-[12px] font-mono text-accent border rounded-lg px-2.5 py-1 no-underline hover:underline" style={ACCENT_TINT}>
-      <GitBranch size={12} className="shrink-0" /> <span className="truncate max-w-[220px]">{buildBranch}</span> <ExternalLink size={10} className="opacity-60 shrink-0" />
-    </a>
+    <span
+       className="inline-flex items-center gap-1.5 text-[12px] font-mono text-accent border rounded-lg px-2.5 py-1" style={ACCENT_TINT}>
+      <GitBranch size={12} className="shrink-0" /> <span className="truncate max-w-[220px]">{buildBranch}</span>
+    </span>
   )
   const commitChip = buildCommit && (
-    <a href={codeBrowserCommitUrl(buildCommit)} target="_blank" rel="noopener noreferrer"
-       title={i18nT('pages.settings.aboutPanel.view_this_commit_on_github')}
-       className="inline-flex items-center gap-1.5 text-[12px] font-mono text-accent border rounded-lg px-2.5 py-1 no-underline hover:underline" style={ACCENT_TINT}>
-      <GitCommitHorizontal size={12} className="shrink-0" /> {buildCommit} <ExternalLink size={10} className="opacity-60 shrink-0" />
-    </a>
+    <span
+       className="inline-flex items-center gap-1.5 text-[12px] font-mono text-accent border rounded-lg px-2.5 py-1" style={ACCENT_TINT}>
+      <GitCommitHorizontal size={12} className="shrink-0" /> {buildCommit}
+    </span>
   )
 
   return (
@@ -1004,7 +1004,25 @@ export function AboutPanel() {
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-[19px] font-extrabold tracking-tight text-text-strong">{botName || 'Kiro Crew'}</span>
+              {(!botName || botName === 'Sao Khuê') ? (
+                <span aria-label="Sao Khuê" className="inline-flex items-baseline text-[22px] font-black tracking-[-0.04em] leading-none pt-[0.18em] -mt-[0.1em]">
+                  <span className="text-text-strong">sao</span>
+                  <span className="text-accent">
+                    khu
+                    <span className="relative inline-block">
+                      e
+                      <img
+                        src={saokhueStarUrl}
+                        alt=""
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-1/2 -top-[0.16em] w-[0.44em] h-[0.44em] -translate-x-1/2"
+                      />
+                    </span>
+                  </span>
+                </span>
+              ) : (
+                <span className="text-[19px] font-extrabold tracking-tight text-text-strong">{botName}</span>
+              )}
               <span className="text-[12px] font-mono font-semibold text-accent rounded-full px-2.5 py-0.5 border" style={ACCENT_TINT}
                     title={versionLanesDiffer ? i18nT('pages.settings.aboutPanel.app_lane_title') : undefined}
                     data-testid="about-version">
@@ -1097,6 +1115,9 @@ export function AboutPanel() {
                 title={i18nT('pages.settings.aboutPanel.open_source_under_the_apache_2_0_license')}>
             <Scale size={12} className="shrink-0" /> {i18nT('pages.settings.aboutPanel.apache_2_0')}
           </span>
+        </div>
+        <div className="mt-3 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-[12px] text-muted leading-relaxed" data-testid="about-fork-attribution">
+          <strong className="font-semibold text-text">Sao Khuê (VPBank)</strong> là bản phát triển kế thừa (fork) từ dự án mã nguồn mở <strong className="font-semibold text-text">KiroCrew</strong>, được phân phối và cấp phép theo giấy phép bản quyền <strong className="font-semibold text-text">Apache License 2.0</strong>.
         </div>
 
         {isDesktop && channel && !isExternallyManaged && !isGatewayPolicyManaged && (
@@ -1324,41 +1345,6 @@ export function AboutPanel() {
             )}
           </div>
         )}
-        {isPrerelease && (
-          // NOT behind the disclosure: a user already running prerelease bytes
-          // is exactly who must see the ask, and hiding it behind a click means
-          // the people whose bug reports matter most never read it.
-          //
-          // NOT gated on `isDesktop` either, which is what it used to be: a
-          // wheel install is a first-class insider/nightly lane (release.yml
-          // publishes to cli/<channel>/), and gating on the desktop shell meant
-          // every CLI prerelease user — the ones with no updater and no app
-          // menu — saw nothing here at all.
-          // Deliberately NOT warn-tinted with an alert triangle: a first-time
-          // reader took that as "something is wrong with my installation" and
-          // was reluctant to click a link inside it. This is a request for help,
-          // so it speaks in the app's own accent voice, and the anchor names
-          // GitHub because the destination is a new-issue form — a surprise
-          // worth spending four words to avoid.
-          <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-[var(--accent-subtle)] text-[12px]"
-               data-testid="prerelease-report-note">
-            <Bug size={13} className="lucide-inline shrink-0 mt-0.5 text-accent" />
-            <span className="text-text leading-relaxed">
-              {/* ONE catalog string carrying the anchor: splitting it into
-                  fragments around the link would lock every language into
-                  English clause order. `Trans` (not a hand-rolled split on a
-                  mustache literal) is what lets the translator move the anchor
-                  to wherever the target grammar needs it. */}
-              <Trans
-                i18nKey="pages.settings.aboutPanel.prerelease_report_prompt"
-                components={{
-                  // eslint-disable-next-line jsx-a11y/anchor-has-content, jsx-a11y/control-has-associated-label
-                  report: <a href={reportIssueUrl()} target="_blank" rel="noreferrer" className="text-accent hover:underline" />,
-                }}
-              />
-            </span>
-          </div>
-        )}
         {isDesktop && info?.platform && <Row label={i18nT('pages.settings.aboutPanel.platform')}>{info.platform}</Row>}
       </Card>
 
@@ -1494,7 +1480,7 @@ export function AboutPanel() {
                 </div>
               )}
               <p className="text-sm text-muted">
-                {botName || 'Kiro Crew'} {i18nT('pages.settings.aboutPanel.checks_for_updates_automatically_you_can_also_ch')}
+                {botName || 'Sao Khuê'} {i18nT('pages.settings.aboutPanel.checks_for_updates_automatically_you_can_also_ch')}
               </p>
               <div>
                 <Btn primary onClick={() => checkMutation.mutate()} disabled={checking}>

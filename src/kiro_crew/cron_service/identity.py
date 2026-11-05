@@ -56,7 +56,7 @@ def split_cron_agent_member(agent_id: str, member_id: str) -> tuple[str, str]:
     rather than re-coding the precedence. The resolver checks the crew-member alias
     FIRST -- a name in ``config.agents`` is an alias hit regardless of whether a
     materialized provider template of the same name also exists -- so a member whose
-    name also ships a ``~/.kiro/agents/<name>.json`` spec (e.g. ``kirocrew-conductor``)
+    name also ships a ``~/.kiro/agents/<name>.json`` spec (e.g. ``saokhue-conductor``)
     still classifies as a member, not a template. When the resolver reports an alias
     hit carrying a durable ``member_id`` we return it as the member (``agent_id``
     cleared, ``member_id`` set); a name that resolves to a bare provider template, and

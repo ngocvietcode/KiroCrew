@@ -27,9 +27,9 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
-    ACP_BACKEND_LITELLM,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
+    ACP_BACKEND_SAOKHUE,
     ACP_BACKEND_STRANDS,
 )
 
@@ -105,7 +105,7 @@ NATIVE_ALLOW_STORES_NONE: Mapping[str, str] = {
     ACP_BACKEND_STRANDS: "in the Python-project ACP mode Crew runs, the CLI consults "
     "no allow list of its own (its ~/.strands/cli/config.json permissions apply to its "
     "terminal UI only); every call raises Crew's gate module interrupt",
-    ACP_BACKEND_LITELLM: "its stores, ~/.kiro/agents and ~/.kiro/settings/mcp.json, are "
+    ACP_BACKEND_SAOKHUE: "its stores, ~/.kiro/agents and ~/.kiro/settings/mcp.json, are "
     "fenced by name in security.paths_lists",
 }
 

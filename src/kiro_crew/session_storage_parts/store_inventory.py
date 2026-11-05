@@ -1031,7 +1031,7 @@ def reclaim_block_reason(*, cached: bool = False) -> str:
         # shares this store while keeping its own map, so ITS sessions read as
         # retired from here. Only checked when the store is the default one, since
         # that is the only store a pod reads.
-        if _norm(kiro_home()) == home / KIRO_BASE_DIR_NAME:
+        if _norm(kiro_home()) in {home / KIRO_BASE_DIR_NAME, home / ".kiro"}:
             _protected, refusals = cotenant_sids(cached=cached)
             if refusals:
                 # !r, not plain interpolation: the directory name is

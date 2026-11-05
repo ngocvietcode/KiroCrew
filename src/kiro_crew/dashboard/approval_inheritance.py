@@ -23,7 +23,7 @@ The rules:
   follows any recorded edge, since asking more often is the safe direction.
 * The walk stops at a descendant it does not change for that reason (an explicit
   mode, or a raise it may not make): nothing below such a node moves.
-* A crewmate's own worker (``kirocrew-mate-worker``) is skipped: its mode comes from
+* A crewmate's own worker (``saokhue-mate-worker``) is skipped: its mode comes from
   the crewmate's Profile Permissions (``crewmate_approval``), on every path.
 
 Pure: it reads slots and returns the plan; the caller writes it.

@@ -1042,3 +1042,56 @@
   --shadow-lg:0 12px 28px rgba(0,0,0,.12);
   color-scheme:light;
 }
+
+/* ── Sao Khuê (VPBank Prosperity Green & Lotus Red) ── */
+[data-theme="saokhue-dark"]{
+  --bg:#0b1410;--bg-accent:#101c16;--bg-elevated:#14241c;--bg-hover:#1c3227;
+  --card:#101c16;--card-fg:#e6f4ed;--card-hl:rgba(255,255,255,.04);
+  --panel:#0b1410;--panel-strong:#14241c;
+  --chrome:rgba(11,20,16,.95);
+  --text:#d1e8dc;--text-strong:#ffffff;--muted:#99b8a8;--muted-fg:#0b1410;--muted-strong:#b5d1c3;
+  --border:#1f382c;--border-strong:#2b4d3c;--border-hover:#3c6953;
+  --accent:#00d463;--accent-fg:#061a0e;--accent-hover:#26e37d;--accent-subtle:rgba(0,212,99,.15);
+  --accent-glow:rgba(0,212,99,.25);--ring:#00d463;
+  --ok:#22c55e;--ok-fg:#05190d;--ok-subtle:rgba(34,197,94,.12);
+  --warn:#f59e0b;--warn-fg:#1a1002;--warn-subtle:rgba(245,158,11,.12);
+  --danger:#ff4d63;--danger-fg:#1f0408;--danger-subtle:rgba(255,77,99,.14);
+  --info:#38bdf8;--info-fg:#041621;
+  --aim:#ff5c77;--aim-fg:#1f0408;--aim-subtle:rgba(255,92,119,.15);
+  --clarify:#f59e0b;--clarify-subtle:rgba(245,158,11,.08);
+  --diff-add:rgba(34,197,94,.15);--diff-add-text:#4ade80;
+  --diff-del:rgba(255,77,99,.15);--diff-del-text:#ff8090;
+  --diff-hunk:rgba(56,189,248,.15);--diff-hunk-text:#7dd3fc;
+  --diff-meta-text:#e6f4ed;
+  --json-key:#38bdf8;--json-str:#4ade80;--json-num:#fbbf24;--json-bool:#ff6b81;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  --shadow-md:0 4px 12px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.03);
+  --shadow-lg:0 12px 28px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+[data-theme="saokhue-light"]{
+  --search-highlight:rgba(255,167,38,.35);--search-highlight-current:rgba(255,120,0,.7);--search-highlight-current-border:rgba(0,0,0,.8);
+  --bg:#f7faf8;--bg-accent:#edf5f0;--bg-elevated:#ffffff;--bg-hover:#e2eee7;
+  --card:#ffffff;--card-fg:#0d2117;--card-hl:rgba(0,133,66,.04);
+  --panel:#f2f8f4;--panel-strong:#e6f1ea;
+  --chrome:rgba(247,250,248,.95);
+  --text:#183325;--text-strong:#06140c;--muted:#425e4f;--muted-fg:#ffffff;--muted-strong:#2b4537;
+  --border:#cfe0d6;--border-strong:#b4cec0;--border-hover:#7ea690;
+  --accent:#007a3d;--accent-fg:#ffffff;--accent-hover:#006331;--accent-subtle:rgba(0,122,61,.12);
+  --accent-glow:rgba(0,122,61,.18);--ring:#007a3d;
+  --ok:#057a44;--ok-fg:#ffffff;--ok-subtle:rgba(5,122,68,.10);
+  --warn:#b45309;--warn-fg:#ffffff;--warn-subtle:rgba(180,83,9,.10);
+  --danger:#c8102e;--danger-fg:#ffffff;--danger-subtle:rgba(200,16,46,.10);
+  --info:#0369a1;--info-fg:#ffffff;
+  --aim:#c8102e;--aim-fg:#ffffff;--aim-subtle:rgba(200,16,46,.12);
+  --clarify:#b45309;--clarify-subtle:rgba(180,83,9,.08);
+  --diff-add:rgba(5,122,68,.12);--diff-add-text:#046336;
+  --diff-del:rgba(200,16,46,.12);--diff-del-text:#a30b24;
+  --diff-hunk:rgba(3,105,161,.12);--diff-hunk-text:#025482;
+  --diff-meta-text:#0d2117;
+  --json-key:#0369a1;--json-str:#057a44;--json-num:#b45309;--json-bool:#c8102e;
+  --shadow-sm:0 1px 2px rgba(0,40,20,.06);
+  --shadow-md:0 4px 12px rgba(0,40,20,.08),0 0 0 1px rgba(0,60,30,.05);
+  --shadow-lg:0 12px 28px rgba(0,40,20,.12);
+  color-scheme:light;
+}

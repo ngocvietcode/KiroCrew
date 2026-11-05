@@ -1135,7 +1135,7 @@ def to_acp_id(canonical_or_id: str) -> str:
     no Haiku, so ``claude-haiku-4.5`` -> Sonnet). But kiro-cli serves every one of
     those as a DISTINCT real model (verified via ``kiro-cli chat --list-models``),
     so resolving the alias here would silently run e.g. the Haiku-pinned
-    ``kirocrew-knowledge`` agent on Sonnet. Only the canonical keys (which kiro
+    ``saokhue-knowledge`` agent on Sonnet. Only the canonical keys (which kiro
     cannot parse) need translating; kiro's native ids are already valid.
     """
     if canonical_or_id == "":

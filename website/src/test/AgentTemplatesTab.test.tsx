@@ -86,7 +86,7 @@ const MINE = row({ name: 'reviewer', filename: 'reviewer.json', description: 'Ca
 // The same template with nothing pointing at it: the row a delete can go through for.
 const FREE = { ...MINE, used_by: [] }
 const PKG = row({ name: 'atlas', filename: 'Pkg-atlas.json', source: 'package', package: 'Pkg', read_only: 'package' })
-const RUNTIME = row({ name: 'kirocrew-worker', filename: 'kirocrew-worker.json', kirocrew_owned: true, read_only: 'runtime' })
+const RUNTIME = row({ name: 'saokhue-worker', filename: 'saokhue-worker.json', kirocrew_owned: true, read_only: 'runtime' })
 const COPY = row({ name: 'pr-bot', filename: 'pr-bot.json', forked_from: 'reviewer', private_to: 'pr-bot', read_only: 'private_copy', default_eligible: false })
 
 function renderTab() {
@@ -435,8 +435,8 @@ describe('AgentTemplatesTab detail robustness', () => {
     }))
     renderTab()
     await waitFor(() => expect(mockApi.agentDetail).toHaveBeenCalledWith('reviewer'))
-    fireEvent.click(option('kirocrew-worker'))
-    await waitFor(() => expect(mockApi.agentDetail).toHaveBeenCalledWith('kirocrew-worker'))
+    fireEvent.click(option('saokhue-worker'))
+    await waitFor(() => expect(mockApi.agentDetail).toHaveBeenCalledWith('saokhue-worker'))
     await screen.findByText(/prompt is not stored in its file/)
     expect(screen.queryByRole('textbox', { name: 'Prompt' })).toBeNull()
     // No "0 characters" beside a note saying the prompt exists elsewhere.
@@ -898,8 +898,8 @@ describe('AgentTemplatesTab — the default custom agent bar (#18411)', () => {
     await pick('atlas')
     await waitFor(() => expect(mockApi.setDefaultAgent).toHaveBeenLastCalledWith('atlas', 'template'))
     await waitFor(() => expect(trigger()).not.toBeDisabled())
-    await pick('kirocrew-worker')
-    await waitFor(() => expect(mockApi.setDefaultAgent).toHaveBeenLastCalledWith('kirocrew-worker', 'template'))
+    await pick('saokhue-worker')
+    await waitFor(() => expect(mockApi.setDefaultAgent).toHaveBeenLastCalledWith('saokhue-worker', 'template'))
     expect(mockApi.setDefaultAgent).not.toHaveBeenCalledWith('', expect.anything())
   })
 

@@ -130,7 +130,10 @@ def _live_cfg() -> Any:
 
 def _agent_of(cfg: Any) -> str:
     value = getattr(getattr(cfg, "agent", None), "crew_mode_agent", "")
-    return value.strip() if isinstance(value, str) and value.strip() else DEFAULT_CREW_MODE_AGENT
+    cleaned = value.strip() if isinstance(value, str) and value.strip() else ""
+    if cleaned in ("", "kirocrew-conductor"):
+        return DEFAULT_CREW_MODE_AGENT
+    return cleaned
 
 
 #: ``{configured name: conductor in force}`` for a configured ``agent.crew_mode_agent``

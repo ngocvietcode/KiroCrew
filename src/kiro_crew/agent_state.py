@@ -20,7 +20,7 @@ rather than the kiro spec:
   crew's definition forks a copy instead of mutating the shared file).
 - ``managed_digest`` (str): the SHA-256 of the exact spec bytes the installer
   last wrote at an OWNED filename whose stem was a user-creatable name before it
-  became owned (today only ``kirocrew-dashboard-author``). It is the installer's
+  became owned (today only ``saokhue-dashboard-author``). It is the installer's
   record that THIS file is its own managed write: a rebuild overwrites the spec
   only when the file on disk reproduces this digest, so a user artefact that
   happens to sit at the stem -- or a copy of another agent renamed onto it -- is
@@ -31,7 +31,7 @@ State file (``~/.kiro/crew/agent_model_state.json``, honoring ``KIROCREW_HOME``)
 
     {
       "kirocrew":           {"model_managed": true},
-      "kirocrew-heartbeat": {"cc_model": "auto"}
+      "saokhue-heartbeat": {"cc_model": "auto"}
     }
 
 This is a near-leaf module: it imports only the stdlib plus the leaf
@@ -67,7 +67,7 @@ _MIRRORED_STAT = "mirrored_stat"
 _FORKED_FROM = "forked_from"
 _PRIVATE_TO = "private_to"
 # Installer-recorded ownership for a spec at an owned filename that was a
-# user-creatable name before it became owned (today: kirocrew-dashboard-author).
+# user-creatable name before it became owned (today: saokhue-dashboard-author).
 # Holds the SHA-256 of the exact spec bytes the installer last wrote there, so
 # "is this file our own managed write?" is answered by a digest the installer
 # recorded, not by marks a user artefact could carry by coincidence.
@@ -460,7 +460,7 @@ def set_cc_model(name: str, value: str | None) -> None:
 def get_mirrored_from(name: str) -> str | None:
     """Return the fingerprint of the default spec this agent was mirrored from.
 
-    A DERIVED agent (today only ``kirocrew-worker``) is a function of
+    A DERIVED agent (today only ``saokhue-worker``) is a function of
     ``kirocrew.json``, and this is the only durable record of WHICH generation of
     that file it was derived from. It lives in the sidecar rather than in the spec
     for the reason the whole sidecar exists: kiro-cli validates a spec with

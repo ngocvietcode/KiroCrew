@@ -452,7 +452,7 @@ def _create_refusal_remedy(refused: DashboardError, payload: dict[str, Any]) -> 
         " The agent you named is a crew member whose private memory this session may "
         "not bind; a member's memory binding cannot be changed in Settings. Re-send "
         'with `agent_kind: "template"` to run that agent\'s shared template on your own '
-        "memory (a kirocrew-worker needs no memory of its own), or ask the owner to run "
+        "memory (a saokhue-worker needs no memory of its own), or ask the owner to run "
         "this dispatch from their own chat tab."
     )
 

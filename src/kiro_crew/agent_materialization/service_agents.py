@@ -1,8 +1,8 @@
 """The agents Kiro Crew's own services drive: lite, guest, knowledge and research.
 
-``kirocrew-lite`` is the cheap background helper; ``kirocrew-guest`` is the tool-less
+``saokhue-lite`` is the cheap background helper; ``saokhue-guest`` is the tool-less
 agent a non-operator channel sender talks to, a trust boundary that mounts nothing;
-``kirocrew-knowledge`` runs the Knowledge Library's extraction; ``kirocrew-research``
+``saokhue-knowledge`` runs the Knowledge Library's extraction; ``saokhue-research``
 is the Research Lab's per-cycle worker, derived from the default template so it
 inherits the governance ceiling. Each is rewritten on every rebuild, and the
 knowledge spec also before each knowledge worker spawn when the file on disk is not
@@ -31,9 +31,9 @@ from kiro_crew.user_json import strict_json_equal
 
 
 def _install_guest_agent() -> None:
-    """Write the tool-less ``kirocrew-guest`` config a non-operator sender talks to.
+    """Write the tool-less ``saokhue-guest`` config a non-operator sender talks to.
 
-    Separate from ``kirocrew-lite`` on purpose: the lite agent is the background
+    Separate from ``saokhue-lite`` on purpose: the lite agent is the background
     helper (titles, extraction) and may one day need a tool; this one is a trust
     boundary and never may. Same model as the operator's chat so an admitted
     sender gets an ordinary answer, never a background worker's minimal default.
@@ -46,7 +46,7 @@ def _install_guest_agent() -> None:
         model = "auto"
     guest_path = agent_mod.kiro_agents_dir_path() / _GUEST_AGENT_FILENAME
     guest_config = {
-        "name": "kirocrew-guest",
+        "name": "saokhue-guest",
         "model": model,
         "tools": [],
         "mcpServers": {},
@@ -131,10 +131,10 @@ def _remove_user_level_copy(filename: str, config: dict) -> None:
 
 
 def _install_mate_conductor_agent() -> None:
-    """Generate and install the ``kirocrew-mate-conductor`` agent config.
+    """Generate and install the ``saokhue-mate-conductor`` agent config.
 
     The agent a crewmate's own chat runs on, derived from the default template
-    like ``kirocrew-research``. It excludes the sub-agent tools, ``task_run`` and
+    like ``saokhue-research``. It excludes the sub-agent tools, ``task_run`` and
     ``workflow_run`` (``mate_worker.MATE_CONDUCTOR_EXCLUDED_TOOLS``), keeps only
     the platform servers (``mate_worker.conductor_mcp_servers``) with
     ``includeMcpJson`` off, mounts the work ledger (``kirocrew-work``, the
@@ -147,7 +147,7 @@ def _install_mate_conductor_agent() -> None:
     )
 
     config = agent_mod.build_agent_config()
-    config["name"] = "kirocrew-mate-conductor"
+    config["name"] = "saokhue-mate-conductor"
     config["description"] = "The agent a crewmate's own chat runs on."
     # The conductor dispatches and the worker does the work: its hand-off is a
     # worker session, so the sub-agent tools are not in its tool list.
@@ -201,7 +201,7 @@ def _install_mate_conductor_agent() -> None:
 
 
 def _install_mate_worker_agent() -> None:
-    """Generate and install the ``kirocrew-mate-worker`` agent config.
+    """Generate and install the ``saokhue-mate-worker`` agent config.
 
     The agent a crewmate's worker sessions run on: the session its chat opens
     with ``session_create`` to hand work off. Derived from the default template
@@ -236,10 +236,10 @@ def _install_mate_worker_agent() -> None:
 
 
 def _install_lite_agent_fallback() -> None:
-    """Write a bare kirocrew-lite config (cheap background agent)."""
+    """Write a bare saokhue-lite config (cheap background agent)."""
     lite_path = agent_mod.kiro_agents_dir_path() / _LITE_AGENT_FILENAME
     lite_config = {
-        "name": "kirocrew-lite",
+        "name": "saokhue-lite",
         "model": agent_mod._background_agent_model(),
         "tools": [],
         "mcpServers": {},
@@ -257,11 +257,11 @@ def _install_lite_agent_fallback() -> None:
     # every tier); the CC seam needs a concrete model, so it falls back to the
     # cheap default when the role is unpinned. Stored in the sidecar (kiro spec
     # stays schema-clean).
-    agent_state.set_cc_model("kirocrew-lite", agent_mod._background_cc_model())
+    agent_state.set_cc_model("saokhue-lite", agent_mod._background_cc_model())
 
 
 def knowledge_agent_model() -> str:
-    """The model the kirocrew-knowledge agent runs on.
+    """The model the saokhue-knowledge agent runs on.
 
     ``knowledge.extraction_model``, else ``agent.model`` (extraction runs on the
     same model as chat), else ``"auto"``. One rule for both readers: the installer
@@ -282,7 +282,7 @@ def knowledge_agent_model() -> str:
 
 
 def _knowledge_agent_config() -> dict[str, Any]:
-    """The ``kirocrew-knowledge`` spec as both of its writers build it, before the tail.
+    """The ``saokhue-knowledge`` spec as both of its writers build it, before the tail.
 
     Its model follows :func:`knowledge_agent_model`, so the installer and the
     pre-spawn repair write the same document.
@@ -291,7 +291,7 @@ def _knowledge_agent_config() -> dict[str, Any]:
     model = knowledge_agent_model()
 
     return {
-        "name": "kirocrew-knowledge",
+        "name": "saokhue-knowledge",
         "description": (
             "Dedicated agent for knowledge extraction, categorization, " "and summarization."
         ),
@@ -304,7 +304,7 @@ def _knowledge_agent_config() -> dict[str, Any]:
 
 
 def _install_knowledge_agent() -> None:
-    """Generate and install the kirocrew-knowledge agent config.
+    """Generate and install the saokhue-knowledge agent config.
 
     This agent is used by the Knowledge Library's LLMPool for document
     extraction. By default it uses the user's configured agent.model (so
@@ -326,7 +326,7 @@ _REPAIR_DRIFT_KEYS_SHOWN = 8
 
 
 def repair_knowledge_agent_spec() -> bool:
-    """Rewrite ``kirocrew-knowledge.json`` from its template unless the file already is it.
+    """Rewrite ``saokhue-knowledge.json`` from its template unless the file already is it.
 
     The Knowledge Library's pool feeds untrusted document text to this agent, and
     ``knowledge.llm_pool.AcpWorker.start`` refuses to start a worker until the spec
@@ -443,7 +443,7 @@ def _without_guide_server(config: dict) -> dict:
 
 
 def _install_research_agent() -> None:
-    """Generate and install the kirocrew-research agent config.
+    """Generate and install the saokhue-research agent config.
 
     Built from :func:`build_agent_config` -- the shipped template, the operator's
     ``~/.kiro/crew/agent.json`` and the managed servers -- with a lean
@@ -459,7 +459,7 @@ def _install_research_agent() -> None:
     pick is pinned on its worker slot instead.
     """
     config = _without_guide_server(agent_mod.build_agent_config())
-    config["name"] = "kirocrew-research"
+    config["name"] = "saokhue-research"
     config["description"] = (
         "Autonomous research worker — runs one research cycle per turn "
         "in a Research Lab campaign loop."
@@ -558,7 +558,7 @@ def _mount_work_ledger(config: dict, grants: tuple[str, ...]) -> None:
 
 
 def _install_team_lead_agent() -> None:
-    """Generate and install the kirocrew-team-lead agent config.
+    """Generate and install the saokhue-team-lead agent config.
 
     Derives from the kirocrew agent (MCP servers, security, tools) and swaps in the
     team-lead charter + identity, leaving out the platform guide server
@@ -567,14 +567,14 @@ def _install_team_lead_agent() -> None:
     ``kirocrew-work`` (:func:`_mount_team_lead_dispatch`), granting the goal
     conductor's existing verb tuples through the governance ceiling.
 
-    Rewritten on every boot, like ``kirocrew-research`` and ``kirocrew-knowledge``:
+    Rewritten on every boot, like ``saokhue-research`` and ``saokhue-knowledge``:
     a spec this installer wrote is replaced in place with no ceremony -- no ownership
     digest, no refusal and no start gate, which is the whole point of the overwrite
     design. An operator who wants a lead with different rules copies it to a different
     agent name.
     """
     config = _without_guide_server(agent_mod.build_agent_config())
-    config["name"] = "kirocrew-team-lead"
+    config["name"] = "saokhue-team-lead"
     config["description"] = (
         "Owns a goal end to end and runs a team on it — splits it into work-ledger "
         "items, does the small focused ones itself, dispatches a session for every "
@@ -595,7 +595,7 @@ def _install_team_lead_agent() -> None:
 
 
 def _install_dashboard_manager_agent() -> None:
-    """Generate and install the ``kirocrew-dashboard-manager`` subagent config.
+    """Generate and install the ``saokhue-dashboard-manager`` subagent config.
 
     The agent a crewmate hands page work to. It is a SERVICE agent and not a
     conductor: it is installed here, beside guest and knowledge, because like them

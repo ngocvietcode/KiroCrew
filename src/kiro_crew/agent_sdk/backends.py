@@ -376,10 +376,10 @@ ACP_BACKEND_COPILOT = "copilot"
 # VERIFIED RANGE: @strands-agents/cli 0.2.3 over strands-harness 0.3.3 /
 # strands-agents 1.63.0 (``test/fixtures/acp_frames/strands/``).
 ACP_BACKEND_STRANDS = "strands"
-# Built-in LiteLLM ACP server (``python -m kiro_crew.acp.litellm_server``): speaks ACP v1
-# over stdio directly to a LiteLLM Proxy or OpenAI-compatible Chat Completions endpoint,
+# Built-in Sao Khuê CLI ACP server (``python -m kiro_crew.acp.saokhue_server``): speaks ACP v1
+# over stdio directly to a Sao Khuê / OpenAI-compatible Chat Completions endpoint,
 # requiring no external CLI binary and emitting ``session/request_permission`` per tool call.
-ACP_BACKEND_LITELLM = "litellm"
+ACP_BACKEND_SAOKHUE = "saokhue"
 # The kiro-cli backend is spelled as the empty string throughout, so name it
 # rather than leaving every call site to infer it from "not claude".
 ACP_BACKEND_KIRO = ""
@@ -425,7 +425,7 @@ ACP_BACKENDS_KNOWN: FrozenSet[str] = frozenset(
         ACP_BACKEND_GOOSE,
         ACP_BACKEND_DEEPSEEK,
         ACP_BACKEND_COPILOT,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
     }
 )
 
@@ -443,7 +443,7 @@ ACP_BACKENDS_INDEPENDENT_SETUP: FrozenSet[str] = frozenset(
         ACP_BACKEND_GOOSE,
         ACP_BACKEND_DEEPSEEK,
         ACP_BACKEND_COPILOT,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
     }
 )
 
@@ -572,7 +572,7 @@ BASELINE_SELECTABLE_BACKENDS: FrozenSet[str] = frozenset(
         ACP_BACKEND_GOOSE,
         ACP_BACKEND_DEEPSEEK,
         ACP_BACKEND_COPILOT,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
     }
 )
 
@@ -600,7 +600,7 @@ POLICY_ID_BY_BACKEND: dict = {
     ACP_BACKEND_GOOSE: ACP_BACKEND_GOOSE,
     ACP_BACKEND_DEEPSEEK: ACP_BACKEND_DEEPSEEK,
     ACP_BACKEND_COPILOT: ACP_BACKEND_COPILOT,
-    ACP_BACKEND_LITELLM: ACP_BACKEND_LITELLM,
+    ACP_BACKEND_SAOKHUE: ACP_BACKEND_SAOKHUE,
 }
 
 #: The backend a deployment policy may never deny.

@@ -3,7 +3,7 @@ import { Link, useInRouterContext, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Check, CircleHelp, X } from 'lucide-react'
 
-import { ACP_BACKEND_KAS, ACP_BACKEND_KIRO, acpBackendName, acpProbeBlocksUse, agentChoiceSaved, configuredAcpBackend, DEFAULT_ACP_BACKEND, mcpWholeServerDeny, setupMarkerErrorBody, setupMarkerErrorMessage } from '../../api/acpBackend'
+import { ACP_BACKEND_KAS, ACP_BACKEND_KIRO, ACP_BACKEND_SAOKHUE, acpBackendName, acpProbeBlocksUse, agentChoiceSaved, configuredAcpBackend, DEFAULT_ACP_BACKEND, mcpWholeServerDeny, setupMarkerErrorBody, setupMarkerErrorMessage } from '../../api/acpBackend'
 import { api } from '../../api/client'
 import type { AcpBackendProbe } from '../../api/client'
 import ErrorBoundary from '../../components/ErrorBoundary'
@@ -21,6 +21,7 @@ import { KIRO_SIGN_IN_HIGHLIGHT_ANCHOR } from '../../hooks/useSettingHighlight'
 import { i18nT } from '../../i18n/t'
 import { clearCachedModels } from '../../providers/adapters/acp'
 import { KiroSignInCard } from './KiroSignInCard'
+import { SaoKhueSignInCard } from './SaoKhueSignInCard'
 import { StrandsSetupCard } from './StrandsSetupCard'
 import { MCP_SERVERS_HREF } from '../connections/useConnectionsSubTab'
 import { KIRO_SIGN_IN_BACKEND, KIRO_SIGN_IN_SETTING_ID } from './kiroSignInLink'
@@ -34,6 +35,7 @@ const KIRO = ACP_BACKEND_KIRO
 const CLAUDE = 'claude'
 const KAS = ACP_BACKEND_KAS
 const STRANDS = 'strands'
+const SAOKHUE = ACP_BACKEND_SAOKHUE
 
 /**
  * The agents this frontend has a translated name and an icon for.
@@ -51,7 +53,7 @@ const NAMED = [KAS, KIRO, CLAUDE]
  * leads because it is the default, and Strands sits directly under the two Kiro
  * harnesses by the owner's ruling.
  */
-const PINNED_ORDER = [KAS, KIRO, STRANDS]
+const PINNED_ORDER = [KAS, KIRO, STRANDS, SAOKHUE]
 
 /**
  * The harnesses that never carry the Experimental tag: the default a new install
@@ -1617,6 +1619,11 @@ export function AgentBackendTab() {
                     {value === STRANDS && (
                       <ErrorBoundary scope="developer-strands-setup" fallback={null}>
                         <StrandsSetupCard />
+                      </ErrorBoundary>
+                    )}
+                    {value === SAOKHUE && (
+                      <ErrorBoundary scope="developer-saokhue-sign-in" fallback={null}>
+                        <SaoKhueSignInCard compact />
                       </ErrorBoundary>
                     )}
                     {facts(value)}

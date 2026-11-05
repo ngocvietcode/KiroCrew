@@ -299,7 +299,7 @@ def _companion_runtime_pids(self: SessionManager) -> set[int]:
       ``_draining_subagent_runtimes`` displaced by the spawn-identity gate
       while their in-flight work finishes.
     - ``self._bg_runtime`` — the background runtime backing ``get_bg_session``
-      (kirocrew-lite title-gen / memory consolidation), plus any
+      (saokhue-lite title-gen / memory consolidation), plus any
       ``_draining_bg_runtimes`` displaced by a backend switch or by
       staleness while their handles finish — killing one mid-drain is
       exactly what parking avoids.

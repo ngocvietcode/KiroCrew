@@ -92,6 +92,25 @@ def _load_existing_config(
     return config, False
 
 
+
+_LEGACY_KIROCREW_AGENT_FILES = frozenset({
+    "kirocrew-lite.json",
+    "kirocrew-guest.json",
+    "kirocrew-conductor.json",
+    "kirocrew-pipeline-conductor.json",
+    "kirocrew-ledger-conductor.json",
+    "kirocrew-security-conductor.json",
+    "kirocrew-worker.json",
+    "kirocrew-mate-conductor.json",
+    "kirocrew-mate-worker.json",
+    "kirocrew-dashboard-author.json",
+    "kirocrew-knowledge.json",
+    "kirocrew-research.json",
+    "kirocrew-team-lead.json",
+    "kirocrew-heartbeat.json",
+    "kirocrew-dashboard-manager.json",
+})
+
 def migrate_agent_specs() -> int:
     """Strip Kiro Crew bookkeeping keys from kiro agent specs into the sidecar.
 
@@ -109,6 +128,13 @@ def migrate_agent_specs() -> int:
     # JSON only, deliberately: this is a rewrite pass, and a markdown spec is
     # never rewritten by Kiro Crew. A bookkeeping key in a markdown
     # frontmatter is the author's to remove.
+    for legacy_name in _LEGACY_KIROCREW_AGENT_FILES:
+        legacy_path = agents_dir / legacy_name
+        if legacy_path.is_file() and _spec_path_is_safe(legacy_path, agents_dir):
+            try:
+                legacy_path.unlink()
+            except OSError:
+                pass
     for spec_path in sorted(agents_dir.glob("*.json")):
         # This read is followed by a rewrite, so the hardened reader's
         # sensitive-target refusal is not sufficient on its own: refuse every
@@ -410,7 +436,7 @@ def _sanitize_agent_hooks() -> None:
         f = agents_dir / filename
         # Refuse a symlink or out-of-dir resolution BEFORE touching the file: the sweep
         # reads every owned name, and following a link at an owned stem (e.g. one planted at
-        # kirocrew-dashboard-author.json pointing at ~/.docker/config.json) would read a
+        # saokhue-dashboard-author.json pointing at ~/.docker/config.json) would read a
         # file outside the agents dir. ``_spec_path_is_safe`` is the same no-follow fence the
         # install and reset paths use; an absent file simply is not safe-and-present, so it
         # is skipped here as before.

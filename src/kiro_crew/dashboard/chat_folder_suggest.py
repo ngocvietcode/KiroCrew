@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 # No model override. Picking one folder from a short list is a trivial
 # classification, and the shared background session this runs on is already the
-# cheap one: the ``kirocrew-lite`` spec's model is ``_background_agent_model()``,
+# cheap one: the ``saokhue-lite`` spec's model is ``_background_agent_model()``,
 # which resolves ``agent.role_models['background']`` -> ``"auto"`` and deliberately
 # does NOT inherit ``agent.model``
 # (docs/system-specs/common/model-selection.md). Pinning a concrete id here would both

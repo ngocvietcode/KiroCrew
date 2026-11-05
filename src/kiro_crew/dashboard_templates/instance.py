@@ -650,7 +650,7 @@ def default_template_id(slug: str, known: Iterable[str]) -> str | None:
 
     The page whose id IS the slug, when a shipped page has that id: the crew panel's rule
     that a template named after a crew is that crew's view, side effect included, and how
-    ``kirocrew-conductor`` gets its board. Otherwise a root session gets
+    ``saokhue-conductor`` gets its board. Otherwise a root session gets
     :data:`DEFAULT_TEMPLATE_ID` and a crewmate gets nothing. The slug is only ever
     compared against ids the catalog already loaded, and never names a directory.
     """

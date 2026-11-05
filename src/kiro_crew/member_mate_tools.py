@@ -144,7 +144,7 @@ def member_has_mate_tools(member: str) -> bool:
 #: The built-ins that write a file, in kiro-cli's names: governance's write class
 #: (``platform.governance.BUILTIN_TOOL_SCOPES`` files ``code`` there beside
 #: ``fs_write``, since it edits files as well as shelling out). The shell is not
-#: one: a template that mounts it with no writer (``kirocrew-conductor``) mounts it
+#: one: a template that mounts it with no writer (``saokhue-conductor``) mounts it
 #: for named scripts, and text that sent a crewmate there to keep a file would talk
 #: it past that template's no-write property.
 _FILE_WRITE_TOOLS = frozenset({"fs_write", "code"})

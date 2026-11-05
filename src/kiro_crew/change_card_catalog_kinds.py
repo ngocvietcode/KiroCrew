@@ -109,7 +109,7 @@ OP_UNDO = "undo"
 #: ``DEFAULT_CREWMATE_TEMPLATE``).
 #:
 #: Deliberately still "kirocrew", not the mate conductor
-#: (``kirocrew-mate-conductor``, rfc-mate-owned-agent-config.md migration step
+#: (``saokhue-mate-conductor``, rfc-mate-owned-agent-config.md migration step
 #: 1): this constant is user-visible (the dialog's "Built from" dropdown label
 #: and the API payload it sends), and a label/UI change is its own design
 #: decision, out of scope for step 1's pure sourcing move. The mate conductor

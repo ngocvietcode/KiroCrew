@@ -87,20 +87,20 @@ _lock = threading.RLock()
 #: The templates the record refuses because their own servers already come from the
 #: MCP page: the default agent's spec holds every server installed there, and the
 #: worker mirrors it.
-DEFAULT_TEMPLATES: frozenset[str] = frozenset({"kirocrew", "kirocrew-worker"})
+DEFAULT_TEMPLATES: frozenset[str] = frozenset({"kirocrew", "saokhue-worker"})
 #: Templates whose installer rebuilds their spec and merges the record into it.
 #: Every template Kiro Crew does not write is merged at spawn instead, never into its
 #: spec file (:func:`merge_at_spawn`).
 INSTALLER_MERGED_TEMPLATES: frozenset[str] = frozenset(
     {
-        "kirocrew-conductor",
-        "kirocrew-ledger-conductor",
-        "kirocrew-pipeline-conductor",
-        "kirocrew-security-conductor",
+        "saokhue-conductor",
+        "saokhue-ledger-conductor",
+        "saokhue-pipeline-conductor",
+        "saokhue-security-conductor",
     }
 )
 #: A deprecated alias emits its successor's spec, so it reads its successor's record.
-_TEMPLATE_ALIASES: dict[str, str] = {"kirocrew-ledger-conductor": "kirocrew-conductor"}
+_TEMPLATE_ALIASES: dict[str, str] = {"saokhue-ledger-conductor": "saokhue-conductor"}
 
 
 class AdditionError(ValueError):

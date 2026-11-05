@@ -114,7 +114,7 @@ describe('KiroPrerequisiteGate', () => {
     expect(acpBackendsRefetchInterval(status({ acp_supported: false }), true, kas)).toBe(30_000)
     // KAS loads Kiro Crew's agent specs: a missing or rejected spec keeps the
     // gate on its repair card instead of opening the dashboard.
-    expect(acpBackendsRefetchInterval(status({ missing_agent_specs: ['kirocrew-lite'] }), true, kas)).toBe(30_000)
+    expect(acpBackendsRefetchInterval(status({ missing_agent_specs: ['saokhue-lite'] }), true, kas)).toBe(30_000)
     expect(acpBackendsRefetchInterval(status({ rejected_agent_specs: ['kirocrew'] }), true, kas)).toBe(30_000)
     // Only KAS takes the acp_supported rule: any other backend without
     // independent_setup keeps polling, exactly as the marker refuses it.
@@ -493,7 +493,7 @@ describe('KiroPrerequisiteGate', () => {
       ready: false,
       initial_setup_complete: true,
       repair_required: true,
-      missing_agent_specs: ['kirocrew.json', 'kirocrew-lite.json'],
+      missing_agent_specs: ['kirocrew.json', 'saokhue-lite.json'],
     }))
 
     renderWithProviders(
@@ -504,7 +504,7 @@ describe('KiroPrerequisiteGate', () => {
     expect(screen.queryByText('Dashboard loaded')).not.toBeInTheDocument()
     // Names the actual files, so the user can see what to look for on disk.
     expect(screen.getByText(/kirocrew\.json/)).toBeInTheDocument()
-    expect(screen.getByText(/kirocrew-lite\.json/)).toBeInTheDocument()
+    expect(screen.getByText(/saokhue-lite\.json/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Check again' })).toBeEnabled()
   })
 
@@ -581,7 +581,7 @@ describe('KiroPrerequisiteGate', () => {
       authenticated: true,
       initial_setup_complete: true,
       missing_agent_specs: ['kirocrew.json'],
-      rejected_agent_specs: ['kirocrew-lite.json'],
+      rejected_agent_specs: ['saokhue-lite.json'],
     }))
 
     renderWithProviders(

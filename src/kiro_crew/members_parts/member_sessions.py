@@ -172,7 +172,7 @@ def select_provider_backend(
     from kiro_crew.acp_backends import (
         ACP_BACKEND_KAS,
         ACP_BACKEND_KIRO,
-        ACP_BACKEND_LITELLM,
+        ACP_BACKEND_SAOKHUE,
         resolve_selected_backend,
     )
 
@@ -187,11 +187,11 @@ def select_provider_backend(
         return backend
     if crew_backend is not None:
         backend = crew_backend.backend
-        if configured_default == ACP_BACKEND_LITELLM and backend in (
+        if configured_default == ACP_BACKEND_SAOKHUE and backend in (
             ACP_BACKEND_KIRO,
             ACP_BACKEND_KAS,
         ):
-            backend = ACP_BACKEND_LITELLM
+            backend = ACP_BACKEND_SAOKHUE
         logger.info(
             "crewmate session %s: routing to acp_backend=%r (agents.%s.acp_backend=%r)",
             session_key,
@@ -202,11 +202,11 @@ def select_provider_backend(
         return backend
     if is_member_session_key(session_key) or is_crewmate_worker_session(session_key):
         backend = resolve_selected_backend(member_backend)
-        if configured_default == ACP_BACKEND_LITELLM and backend in (
+        if configured_default == ACP_BACKEND_SAOKHUE and backend in (
             ACP_BACKEND_KIRO,
             ACP_BACKEND_KAS,
         ):
-            backend = ACP_BACKEND_LITELLM
+            backend = ACP_BACKEND_SAOKHUE
         logger.info(
             "member session %s: routing to acp_backend=%r " "(agent.member_acp_backend=%r)",
             session_key,

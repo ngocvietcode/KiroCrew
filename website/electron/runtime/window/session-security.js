@@ -43,11 +43,11 @@ function createSessionSecurity({
     dialog.showMessageBox({
       type: "info",
       title: "Screen Recording permission needed",
-      message: "Allow Kiro Crew to capture the screen",
+      message: "Allow Sao Khuê to capture the screen",
       detail:
         "The screen-snip tool needs macOS Screen Recording permission. "
         + "Open System Settings › Privacy & Security › Screen Recording, "
-        + "enable Kiro Crew, then try the snip again.",
+        + "enable Sao Khuê, then try the snip again.",
       buttons: ["Open System Settings", "Cancel"],
       defaultId: 0,
       cancelId: 1,
@@ -69,14 +69,14 @@ function createSessionSecurity({
       title: "Microphone permission needed",
       message: restricted
         ? "Microphone access is blocked by a policy"
-        : "Allow Kiro Crew to use the microphone",
+        : "Allow Sao Khuê to use the microphone",
       detail: restricted
         ? "Voice input needs macOS Microphone permission, but access is "
           + "restricted by a device-management policy on this Mac. Contact "
-          + "whoever manages it to allow microphone access for Kiro Crew."
+          + "whoever manages it to allow microphone access for Sao Khuê."
         : "Voice input needs macOS Microphone permission, and macOS will not "
           + "ask again once it has been denied. Open System Settings › Privacy "
-          + "& Security › Microphone, enable Kiro Crew, then try the mic again.",
+          + "& Security › Microphone, enable Sao Khuê, then try the mic again.",
       buttons: restricted ? ["OK"] : ["Open System Settings", "Cancel"],
       defaultId: 0,
       cancelId: restricted ? 0 : 1,

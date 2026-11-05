@@ -79,7 +79,7 @@ def _session_tools() -> tuple[Tool, ...]:
                             "this workspace's memory boundary. A conductor that omits it "
                             "therefore gets a second conductor, which has no fs_write and "
                             "cannot do the work. Name the agent the child needs "
-                            "explicitly \u2014 kirocrew-worker for a leaf work item. "
+                            "explicitly \u2014 saokhue-worker for a leaf work item. "
                             "In a crewmate's own chat this field is not used: the "
                             "session is always that crewmate's own worker."
                         ),
@@ -92,7 +92,7 @@ def _session_tools() -> tuple[Tool, ...]:
                             "on YOUR OWN memory, even when a crew member carries the "
                             "same name. Omit for the usual name-first resolution (a "
                             "member wins, with its own memory). Always pass 'template' "
-                            "for kirocrew-worker: a worker needs no memory of its own, "
+                            "for saokhue-worker: a worker needs no memory of its own, "
                             "and on installs where an older agent sync enrolled a crew "
                             "member of that name the bare name selects that member and "
                             "is refused `memory_delegation_denied`. Requires `agent`."

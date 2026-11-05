@@ -52,9 +52,9 @@ if TYPE_CHECKING:
 UNADVERTISED_AGENTS = frozenset(
     {
         "kirocrew",
-        "kirocrew-conductor",
-        "kirocrew-pipeline-conductor",
-        "kirocrew-security-conductor",
+        "saokhue-conductor",
+        "saokhue-pipeline-conductor",
+        "saokhue-security-conductor",
     }
 )
 
@@ -838,7 +838,7 @@ def parent_template_allowlists(
 def conductor_spawn_refusal(parent_template: str) -> str | None:
     """The refusal for a spawn whose parent runs on a crewmate's conductor, else ``None``.
 
-    A crewmate's own chat runs on ``kirocrew-mate-conductor`` and hands its work
+    A crewmate's own chat runs on ``saokhue-mate-conductor`` and hands its work
     to a worker session; it starts no sub-agents. Named positively by the
     parent's template, the one the spawn gate already resolves from the parent's
     execution record, so every entry point (``spawn_run``, ``spawn_sub_agents``,

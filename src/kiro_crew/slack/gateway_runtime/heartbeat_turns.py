@@ -158,13 +158,13 @@ async def _init_heartbeat(self: GatewayOrchestrator) -> None:
             # the heartbeat key to a crew and the shared session resolver
             # answers the default memory store.
             _memory_store = await session_store_for_turn(self.ctx_builder, session_key)
-            # Use the dedicated ``kirocrew-heartbeat`` agent — minimal
+            # Use the dedicated ``saokhue-heartbeat`` agent — minimal
             # MCP surface (kirocrew-core only on public installs) so cycle
             # cold-starts stay cheap.  Tool calls are still gated at
             # runtime by ``_heartbeat_approval``'s read-only allowlist.
             client, is_new, _resumed = await self.sessions.get_or_create(
                 session_key,
-                agent="kirocrew-heartbeat",
+                agent="saokhue-heartbeat",
             )
             _acquired = True
 
@@ -234,7 +234,7 @@ async def _init_heartbeat(self: GatewayOrchestrator) -> None:
                 session_key,
                 provider=(self._cfg.agent.provider if hasattr(self, "_cfg") else "acp"),
                 surface="heartbeat",
-                agent_fallback=lambda: "kirocrew-heartbeat",
+                agent_fallback=lambda: "saokhue-heartbeat",
                 t0=_turn_t0,
                 trigger="heartbeat",
             )
@@ -266,7 +266,7 @@ async def _init_heartbeat(self: GatewayOrchestrator) -> None:
                 session_key,
                 provider=(self._cfg.agent.provider if hasattr(self, "_cfg") else "acp"),
                 surface="heartbeat",
-                agent_fallback=lambda: "kirocrew-heartbeat",
+                agent_fallback=lambda: "saokhue-heartbeat",
                 t0=_turn_t0,
                 trigger="heartbeat",
             )

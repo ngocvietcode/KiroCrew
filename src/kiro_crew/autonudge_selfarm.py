@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 #: The agents whose patrol wake may drop its own chat: the goal conductor and its
 #: deprecated alias name (``conductor_agents.DEPRECATED_AGENT_SPECS``).
-WAKE_RESET_AGENTS: frozenset[str] = frozenset({"kirocrew-conductor", "kirocrew-ledger-conductor"})
+WAKE_RESET_AGENTS: frozenset[str] = frozenset({"saokhue-conductor", "saokhue-ledger-conductor"})
 
 SELF_ARM_RECORD_NAME = "autonudge-self-armed.json"
 _LOCK_NAME = SELF_ARM_RECORD_NAME + ".lock"

@@ -729,7 +729,7 @@ def rewrite_agents(
 
     # Read the GLOBAL ~/.kiro/settings/mcp.json FIRST. kiro-cli merges this
     # file into every agent at runtime — any bare-name server declared here
-    # bypasses the gateway unless wrapped (the "kirocrew-lite bypass" class of
+    # bypasses the gateway unless wrapped (the "saokhue-lite bypass" class of
     # bug: agents with empty mcpServers inherit the global's unwrapped entries).
     #
     # The fix is per-agent injection: each poolable settings server is added to

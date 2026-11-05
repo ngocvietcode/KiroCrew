@@ -10520,6 +10520,7 @@
       "unknown": "[Ùñķñøẁñ ···········]"
     },
     "theme": {
+      "saokhue": "[🌟 {{productName}} ·····]",
       "high_contrast": "[🔆 Ĥìğĥ Çøñţŕàşţ ··············]",
       "nu_disco": "[🪩 Ñù Ðìşçø ··········]",
       "amethyst_oled": "[💜 Àɱèţĥýşţ ØĹÈÐ ··············]",
@@ -16613,7 +16614,7 @@
         "agent_request_unknown_requester": "[Àñ àğèñţ ············]",
         "apache_2_0": "[Àþàçĥè 2.0 ···············]",
         "automatic_updates_are_unavailable_in_this_build": "[Àùţøɱàţìç ùþðàţèş àŕè ùñàṽàìĺàƀĺè ìñ ţĥìş ƀùìĺð ························]",
-        "autonomous_agent_management_runs_locally_open_so": "[Àùţøñøɱøùş àğèñţ ɱàñàğèɱèñţ · ŕùñş ĺøçàĺĺý · øþèñ şøùŕçè ····················]",
+        "autonomous_agent_management_runs_locally_open_so": "Nền tảng quản trị AI Agent tự hành của VPBank — phát triển kế thừa (fork) từ KiroCrew theo giấy phép Apache 2.0",
         "browse_this_branch_on_github": "[Ɓŕøẁşè ţĥìş ƀŕàñçĥ øñ ĞìţĤùƀ ····················]",
         "check_for_updates": "[Çĥèçķ ƒøŕ ùþðàţèş ···············]",
         "checking_for_updates": "[Çĥèçķìñğ ƒøŕ ùþðàţèş... ················]",
@@ -16628,7 +16629,7 @@
         "downloading": "[Ðøẁñĺøàðìñğ... ·············]",
         "is_available": "[ìş àṽàìĺàƀĺè. ············]",
         "loading_changelog": "[Ĺøàðìñğ çĥàñğèĺøğ… ················]",
-        "open_source_under_the_apache_2_0_license": "[Øþèñ şøùŕçè ùñðèŕ ţĥè Àþàçĥè 2.0 ĺìçèñşè ····················]",
+        "open_source_under_the_apache_2_0_license": "Bản fork từ KiroCrew theo giấy phép bản quyền Apache 2.0",
         "platform": "[Þĺàţƒøŕɱ ············]",
         "up_to_date": "[Ùþ ţø ðàţè ···············]",
         "update": "[Ùþðàţè ·········]",

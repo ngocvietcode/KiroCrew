@@ -539,7 +539,7 @@ describe('useRecentsProvider — Older is the full History inventory', () => {
     const { result } = renderHook(() => useRecentsProvider())
     await result.current.search('')
     expect(apiMock.sessions).toHaveBeenLastCalledWith(20, 0, true)
-    setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor'])
+    setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor'])
     await result.current.search('')
     expect(apiMock.sessions).toHaveBeenLastCalledWith(20, 0, true)
   })

@@ -18,7 +18,7 @@ import type { ChatFolder } from '../types'
 const FOLDERS = [
   { id: 'a', name: 'oss', parent_id: null },
   { id: 'b', name: 'ci-blockers', parent_id: 'a' },
-  { id: 'c', name: 'kirocrew-worker', parent_id: 'b' },
+  { id: 'c', name: 'saokhue-worker', parent_id: 'b' },
 ] as unknown as ChatFolder[]
 
 function mount(onClose = vi.fn()) {
@@ -35,7 +35,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('folderPath', () => {
   it('joins the parent chain and survives a cycle', () => {
-    expect(folderPath(FOLDERS, 'c')).toBe('oss / ci-blockers / kirocrew-worker')
+    expect(folderPath(FOLDERS, 'c')).toBe('oss / ci-blockers / saokhue-worker')
     const loop = [
       { id: 'x', name: 'x', parent_id: 'y' },
       { id: 'y', name: 'y', parent_id: 'x' },
@@ -50,13 +50,13 @@ describe('FolderCleanupPanel', () => {
       opts.dryRun ? { ids: ['b', 'c'], archived: { c: 2 } } : { deleted: ['b', 'c'] }
     ) as Awaited<ReturnType<typeof api.cleanupChatFolders>>)
     const onClose = mount()
-    expect(await screen.findByText('oss / ci-blockers / kirocrew-worker')).toBeTruthy()
+    expect(await screen.findByText('oss / ci-blockers / saokhue-worker')).toBeTruthy()
     expect(spy).toHaveBeenCalledWith({ dryRun: true, includeTopLevel: false })
     expect(screen.getByTestId('folder-cleanup-archived').getAttribute('aria-label')).toBe('2 archived sessions stay in Older Sessions')
     // The count reads as words, not a bare number beside a clock icon.
     expect(screen.getByTestId('folder-cleanup-archived').textContent).toBe('2 archived')
     // A truncated deep path can still be read in full on hover.
-    expect(screen.getByText('oss / ci-blockers / kirocrew-worker').getAttribute('title')).toBe('oss / ci-blockers / kirocrew-worker')
+    expect(screen.getByText('oss / ci-blockers / saokhue-worker').getAttribute('title')).toBe('oss / ci-blockers / saokhue-worker')
     expect(screen.getByTestId('folder-cleanup-confirm').textContent).toBe('Delete 2 empty folders')
 
     fireEvent.click(screen.getByTestId('folder-cleanup-top-level'))
@@ -76,7 +76,7 @@ describe('FolderCleanupPanel', () => {
       return { ids: previews === 1 ? ['b', 'c'] : ['b'], archived: {} } as Awaited<ReturnType<typeof api.cleanupChatFolders>>
     })
     const onClose = mount()
-    expect(await screen.findByText('oss / ci-blockers / kirocrew-worker')).toBeTruthy()
+    expect(await screen.findByText('oss / ci-blockers / saokhue-worker')).toBeTruthy()
     fireEvent.click(screen.getByTestId('folder-cleanup-confirm'))
     expect(await screen.findByTestId('folder-cleanup-notice')).toBeTruthy()
     expect(screen.getByTestId('folder-cleanup-notice').textContent).toBe('Some folders were kept: they are no longer empty.')

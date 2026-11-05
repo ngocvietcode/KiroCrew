@@ -204,9 +204,9 @@ async def create_session(
     and ``""`` keeps the name-first resolution (a crew member wins over a
     same-named template). It exists for the one case the bare name cannot
     express: a template that a crew member of the same name shadows. The stock
-    ``kirocrew-worker`` is such a name on installs where an older agent sync
+    ``saokhue-worker`` is such a name on installs where an older agent sync
     enrolled it as a crew member with its own private memory -- a bare
-    ``agent="kirocrew-worker"`` then selects the MEMBER, and a conductor that may
+    ``agent="saokhue-worker"`` then selects the MEMBER, and a conductor that may
     not bind that member's store (a member DM thread, a fenced deputy) is refused
     ``memory_delegation_denied`` for a worker that needs no memory of its own.
     ``agent_kind="template"`` dispatches the worker template on the caller's own

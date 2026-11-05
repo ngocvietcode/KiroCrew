@@ -381,7 +381,7 @@ async def handle_optimize(request: web.Request) -> web.Response:
             logger.debug("Optimizer: acquiring dedicated session")
             client, _is_new, _resumed = await state.sessions.get_or_create(
                 optimizer_session_key,
-                agent="kirocrew-lite",
+                agent="saokhue-lite",
                 # The owner is waiting on the composer (kiro_crew.start_priority).
                 start_priority=owner_start_priority(request),
             )
@@ -422,7 +422,7 @@ async def handle_optimize(request: web.Request) -> web.Response:
         text = await asyncio.wait_for(_optimize(), timeout=30.0)
     except asyncio.TimeoutError:
         logger.warning(
-            "Optimizer timed out (30s) — kirocrew-lite may be unresponsive or overloaded"
+            "Optimizer timed out (30s) — saokhue-lite may be unresponsive or overloaded"
         )
         return web.json_response({"optimized": prompt, "changed": False})
     except Exception:

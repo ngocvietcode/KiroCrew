@@ -1,7 +1,7 @@
 """The one-shot AI summaries: issue triage (``/issue-ai``) and PR summary (``/pull-ai``).
 
 Also owns what every AI surface shares: ``_run_oneshot_model`` (one tool-less,
-ephemeral ``kirocrew-lite`` session with ``REJECT_ALL`` approvals, released and
+ephemeral ``saokhue-lite`` session with ``REJECT_ALL`` approvals, released and
 destroyed on every path) and the output language (``_ui_language``,
 ``_resolve_ui_language``, ``_language_directive``). Untrusted repo text is fenced
 in the prompt as data, model output is redacted, and each cache is partitioned by
@@ -212,7 +212,7 @@ async def _run_oneshot_model(request: web.Request, key: str, prompt: str) -> str
     """Run ONE tool-less model call in an isolated ephemeral session; return the raw text.
 
     Shared by the issue-triage and PR-summary paths. Runs on the cheap, tool-less
-    ``kirocrew-lite`` background agent — the same lever workflows / title-gen /
+    ``saokhue-lite`` background agent — the same lever workflows / title-gen /
     memory-consolidation use for one-shot work: it scopes the session to
     ``tools:[]`` via ``set_mode`` and resolves a cheaper model than the
     interactive default. The session is ephemeral: ``get_or_create`` → stream with
@@ -233,7 +233,7 @@ async def _run_oneshot_model(request: web.Request, key: str, prompt: str) -> str
         # The owner's click is waiting on this answer; an app token or internal
         # caller is not a person (kiro_crew.start_priority).
         provider, _is_new, _resumed = await state.sessions.get_or_create(
-            key, agent="kirocrew-lite", start_priority=owner_start_priority(request)
+            key, agent="saokhue-lite", start_priority=owner_start_priority(request)
         )
         return await stream_and_collect(
             provider, prompt, approval_policy=ToolApprovalPolicy.REJECT_ALL

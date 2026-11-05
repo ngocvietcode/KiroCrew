@@ -65,7 +65,7 @@ function AgentButton({ a, active, isDefault, memoryTag, showSource, activeRef, o
   }
   // A crewmate reads under its label, like every other surface that names it;
   // a template has no label.
-  const label = a.selection_kind === 'template' ? a.name : crewDisplayName(a)
+  const rawLabel = a.selection_kind === 'template' ? a.name : crewDisplayName(a); const label = rawLabel === 'kirocrew' ? 'saokhue' : rawLabel
 
   return (
     <button
@@ -157,7 +157,7 @@ export function DefaultAgentRow({ agentName, isDefault, onSetDefault, memoryTag 
    *  label then says which one it names, matching the row the badge marks. */
   memoryTag?: MemorySource | null
 }) {
-  const shownName = withMemorySource(agentName, memoryTag)
+  const shownName = withMemorySource(agentName === 'kirocrew' ? 'saokhue' : agentName, memoryTag)
   // Wraps rather than truncates. The label's whole job is to name WHICH agent the
   // write targets, and that identifier sits mid-string — an ellipsis eats exactly
   // the part that carries the meaning. The pop-up caps at 340px and agent names

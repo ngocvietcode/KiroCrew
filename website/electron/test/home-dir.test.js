@@ -11,7 +11,7 @@ const { resolveHome, secretCandidates, canonicalHome } = require("../home-dir");
 // platform-independent, rather than about path syntax, which is not.
 const HOME = path.resolve(path.sep, "mock", "home");
 const fakeOs = { homedir: () => HOME };
-const CANONICAL = path.join(HOME, ".kiro", "crew");
+const CANONICAL = path.join(HOME, ".vpbank", "saokhue");
 const OVERRIDE = path.resolve(path.sep, "custom", "home");
 
 describe("resolveHome", () => {

@@ -44,9 +44,9 @@ logger = logging.getLogger(__name__)
 # ``~/.kiro/crew`` by default. ``CONFIG_DIR_NAME`` is the segment(s) appended to
 # ``~/`` — kept as a POSIX-style relative literal so downstream string checks
 # (e.g. the security keystone) can match it uniformly.
-KIRO_BASE_DIR_NAME = ".kiro"
-CONFIG_DIR_LEAF = "crew"
-CONFIG_DIR_NAME = f"{KIRO_BASE_DIR_NAME}/{CONFIG_DIR_LEAF}"  # ".kiro/crew"
+KIRO_BASE_DIR_NAME = ".vpbank"
+CONFIG_DIR_LEAF = "saokhue"
+CONFIG_DIR_NAME = f"{KIRO_BASE_DIR_NAME}/{CONFIG_DIR_LEAF}"  # ".vpbank/saokhue"
 
 # The pre-move top-level home (``~/.kirocrew``). Retained as a constant (not an
 # inline literal) so the security keystone, autonudge, seed and the other
@@ -356,7 +356,7 @@ def _valid_override_home() -> Path | None:
     :data:`_override_home_pin`.
     """
     global _override_home_pin
-    override = os.environ.get("KIROCREW_HOME")
+    override = os.environ.get("SAOKHUE_HOME") or os.environ.get("KIROCREW_HOME")
     if not override:
         return None
     pin = _override_home_pin
@@ -812,7 +812,7 @@ def shared_kiro_agents_writable() -> bool:
 
 def config_dir() -> Path:
     global _config_dir_memo
-    override_raw = os.environ.get("KIROCREW_HOME")
+    override_raw = os.environ.get("SAOKHUE_HOME") or os.environ.get("KIROCREW_HOME")
     memo = _config_dir_memo
     if memo is not None and memo[0] == override_raw and memo[1] is _resolved_home:
         return memo[2]
@@ -824,10 +824,10 @@ def config_dir() -> Path:
         p.mkdir(parents=True, exist_ok=True, mode=_HOME_CREATE_MODE)
         _config_dir_memo = (override_raw, _resolved_home, p)
         return p
-    if os.environ.get("KIROCREW_HOME"):
+    if override_raw:
         logger.warning(
             "KIROCREW_HOME=%s is a system directory, ignoring",
-            os.environ.get("KIROCREW_HOME"),
+            override_raw,
         )
     d = _resolve_default_home()
     d.mkdir(parents=True, exist_ok=True, mode=_HOME_CREATE_MODE)  # as above
