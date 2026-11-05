@@ -678,6 +678,43 @@ class TestInstallValidation:
         assert info["sessionApprovalConsentPending"] is True
 
     @pytest.mark.asyncio
+    async def test_local_install_reports_windows_exec_backend_refusal(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # On native Windows ``start_app_backend`` refuses an exec (shell
+        # launcher) backend with the None of "no backend declared". The install
+        # response names the refusal in ``backend_refused``; the install still lands.
+        import kiro_crew.apps.backend as bmod
+
+        _setup_env(tmp_path, monkeypatch)
+        src = _make_app_source(
+            tmp_path, backend={"entryPoint": "run.sh", "port": "auto", "type": "exec"}
+        )
+        (src / "run.sh").write_text("#!/bin/sh\necho hi\n")
+
+        async def _register(name: str):
+            return routes_mod.RegistrationResult()
+
+        monkeypatch.setattr(routes_mod, "_register_app_off_loop", _register)
+        monkeypatch.setattr(routes_mod, "start_app_backend", lambda n: None)
+        real_platform = bmod.platform_compat
+
+        class _NativeWindowsView:
+            # Only backend.py reads the host as native Windows; the install copy
+            # keeps the real host's code paths.
+            IS_POSIX = False
+
+            def __getattr__(self, name: str) -> Any:
+                return getattr(real_platform, name)
+
+        monkeypatch.setattr(bmod, "platform_compat", _NativeWindowsView())
+        async with TestClient(TestServer(_make_app(dashboard_user="owner"))) as client:
+            resp = await client.post("/api/apps/install", json={"source": str(src)})
+            body = await resp.json()
+        assert resp.status == 201
+        assert "not supported on native Windows" in body["backend_refused"]
+
+    @pytest.mark.asyncio
     async def test_unreadable_manifest_refuses_without_ownership_identity(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -727,6 +764,28 @@ class TestInstallValidation:
             "code": "manifest_not_object",
         }
         assert not (home / "apps").exists() or not any((home / "apps").iterdir())
+
+    @pytest.mark.asyncio
+    async def test_a_manifest_that_is_not_utf8_refuses_like_an_unreadable_one(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Bytes that do not decode read like a manifest that does not parse:
+        # the same retryable refusal, not a 500.
+        _setup_env(tmp_path, monkeypatch)
+        src = tmp_path / "source" / APP
+        src.mkdir(parents=True)
+        (src / APP_MANIFEST_FILENAME).write_bytes(b'\xff\xfe{"name": "x"}')
+
+        def _must_not_install(*args: Any, **kwargs: Any) -> AppResult:
+            raise AssertionError("install must not proceed without a stable app identity")
+
+        monkeypatch.setattr(routes_mod, "install_app", _must_not_install)
+        async with TestClient(TestServer(_make_app(dashboard_user="owner"))) as client:
+            resp = await client.post("/api/apps/install", json={"source": str(src)})
+            assert resp.status == 409
+            body = await resp.json()
+        assert body["code"] == "app_identity_unavailable"
+        assert body["retryable"] is True
 
     @pytest.mark.asyncio
     async def test_a_non_object_manifest_gets_the_answer_install_app_gives_it(

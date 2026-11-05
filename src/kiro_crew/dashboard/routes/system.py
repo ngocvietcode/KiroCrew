@@ -15,6 +15,7 @@ import os
 
 from aiohttp import web
 
+from kiro_crew.apps.builtin_unavailable import record_unavailable_builtin
 from kiro_crew.apps.builtins import BUILTIN_NAMES
 from kiro_crew.apps.routes import register_app_routes
 from kiro_crew.constants import env_flag_enabled
@@ -24,6 +25,12 @@ from kiro_crew.dashboard.handlers.tunnel import api_tunnel_status
 from kiro_crew.edition_locks import local_enable_locked
 
 _log = logging.getLogger(__name__)
+
+#: The ``BUILTIN_NAMES`` packages whose wheel copy is released on this boot
+#: (``builtin_adoption.released_builtin_packages``). ``start_dashboard`` sets it
+#: off the event loop, after APPLY and before ``register_all``; absent, every
+#: package registers as before.
+RELEASED_BUILTIN_PACKAGES = web.AppKey("released_builtin_packages", frozenset)
 
 
 def register(app: web.Application) -> None:
@@ -54,6 +61,7 @@ def register(app: web.Application) -> None:
     app.router.add_get("/api/changelog", handlers.api_changelog)
     app.router.add_get("/api/releases", handlers.api_releases)
     app.router.add_post("/api/update", handlers.api_update_apply)
+    app.router.add_get("/api/update/auto", handlers.api_update_auto_pin)
     app.router.add_post("/api/update/auto", handlers.api_update_auto)
     app.router.add_post("/api/update/channel", handlers.api_update_channel)
     # A terminal `kirocrew update` on a git checkout pokes this so the running
@@ -215,6 +223,7 @@ def register(app: web.Application) -> None:
     # legitimate caller is the owner's browser.
     app.router.add_get("/api/security/credential-redaction", handlers.api_credential_redaction_get)
     app.router.add_put("/api/security/credential-redaction", handlers.api_credential_redaction_put)
+    app.router.add_post("/api/security/redacted-value", handlers.api_owner_value_reveal)
     app.router.add_get("/api/approvals", handlers.api_approvals)
     app.router.add_post("/api/approvals/{id}/{action}", handlers.api_approval_resolve)
 
@@ -234,8 +243,14 @@ def register(app: web.Application) -> None:
     # App Platform
     register_app_routes(app)
 
-    # Built-in app routes — register at startup (handlers check enabled state)
+    # Built-in app routes — register at startup (handlers check enabled state).
+    # A released package (its app adopted from its own repository, or uninstalled
+    # after that) registers nothing: its routes, and its on_startup/on_cleanup
+    # callbacks, would otherwise serve beside the app that owns the name.
+    _released = app.get(RELEASED_BUILTIN_PACKAGES, frozenset())
     for _builtin_name in BUILTIN_NAMES:
+        if _builtin_name in _released:
+            continue
         try:
             _mod = importlib.import_module(f"kiro_crew.apps.builtins.{_builtin_name}")
             # A package may serve ``register_routes`` through a lazy module
@@ -261,6 +276,8 @@ def register(app: web.Application) -> None:
                 type(exc).__name__,
                 exc,
             )
+            # The App Store reads this to show the app as unavailable, with why.
+            record_unavailable_builtin(app, _builtin_name, exc)
             continue
         if _register is not None:
             _register(app)

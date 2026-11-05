@@ -215,8 +215,13 @@ class AcpProvider(LLMProvider):
         self.app_launch_agent = ""
         # The app that owns this session, set by session allocation from the chat
         # slot's own app (never from transcript metadata). The remote git proxy's
-        # egress check passes it to governance so an app-bound profile applies.
+        # egress check and the cloud start pass it to governance so an app-bound
+        # profile applies.
         self.owning_app = ""
+        # A Kiro Cloud start's (session_key, agent, app), which every later turn
+        # re-checks governance against (``acp_turns._readmit_cloud_session``);
+        # None for every other session, which then skips the check.
+        self._cloud_governance_scope: tuple[str, str, str] | None = None
         # Kept on the provider, not only on the placeholder client: on the kiro
         # path ``_start_kiro_runtime_impl`` replaces that client with an
         # ``AcpRuntime`` it constructs itself, and a dedicated subagent's
@@ -469,6 +474,17 @@ class AcpProvider(LLMProvider):
         return str(getattr(self._client, "agent_version", "") or "")
 
     @property
+    def prompts_written(self) -> int | None:
+        """Prompts this session's turns have written to the backend, or ``None``.
+
+        Forwarded from ``AcpSessionProvider``; a raw ``AcpClient`` keeps no such
+        count, and ``None`` tells a caller that it cannot know whether a turn's
+        prompt went out.
+        """
+        value = getattr(self._client, "prompts_written", None)
+        return value if isinstance(value, int) else None
+
+    @property
     def steer_upgrade_notice(self) -> str:
         """The notice when this session's adapter cannot steer, else ``""``.
 
@@ -504,6 +520,14 @@ class AcpProvider(LLMProvider):
         return notice if isinstance(notice, str) else ""
 
     @property
+    def withheld_credentials_notice(self) -> str:
+        """The notice naming MCP servers this session started without part of their
+        ``env`` or ``headers``, by key name only, else ``""``. Recorded when the
+        session registered its ``customAgents``."""
+        notice = getattr(self._client, "kas_withheld_credentials_notice", "")
+        return notice if isinstance(notice, str) else ""
+
+    @property
     def cwd(self) -> str:
         """Working directory this provider operates in.
 
@@ -521,6 +545,13 @@ class AcpProvider(LLMProvider):
         with no ``cwd``, so the fallback reads its ``_work_dir``.
         """
         return str(getattr(self._client, "cwd", "") or self._client._work_dir)
+
+    @property
+    def session_activity_at(self) -> float | None:
+        # AcpSessionProvider answers for the shared runtime's sessions. A
+        # transport that does not read between turns has no such attribute,
+        # which leaves the sweep on the turn clock.
+        return getattr(self._client, "session_activity_at", None)
 
     @property
     def is_claude_backend(self) -> bool:
@@ -721,6 +752,18 @@ class AcpProvider(LLMProvider):
         if not isinstance(backend, str) or backend not in ACP_BACKENDS_HARNESS_MANAGED:
             return None
         return backend
+
+    @property
+    def harness_compact_verb_advertised(self) -> bool:
+        """Whether the engine advertised the compaction verb Crew sends for ``/compact``.
+
+        Answered by the inner session provider (``AcpSessionProvider``, from the
+        KAS session handle's ``initialize`` record). Before startup
+        ``self._client`` is the placeholder ``AcpClient``, which has no such
+        attribute, so this reads False. Only a literal ``True`` passes, so a mock
+        never reads as advertised.
+        """
+        return getattr(self._client, "harness_compact_verb_advertised", False) is True
 
     @property
     def compaction_unmanaged_backend(self) -> str | None:
@@ -929,17 +972,25 @@ class AcpProvider(LLMProvider):
         always: bool = False,
         deadline: GrantDeadline | None = None,
         withdraw_if: Callable[[], bool] | None = None,
+        deny_waivers: frozenset[str] = frozenset(),
     ) -> bool:
-        # Passed on only when given, so a call without it reaches the client
-        # exactly as before.
+        # Passed on only when given, so a call without them reaches the client
+        # exactly as before. ``deny_waivers`` are the deny-rule keys a person
+        # overrode on the dashboard card (see ``AcpClient.approve_tool``).
         withdrawal: dict[str, Any] = {}
         if withdraw_if is not None:
             withdrawal["withdraw_if"] = withdraw_if
+        if deny_waivers:
+            withdrawal["deny_waivers"] = deny_waivers
         if deadline is None:
             return await self._client.approve_tool(request_id, always=always, **withdrawal)
         return await self._client.approve_tool(
             request_id, always=always, deadline=deadline, **withdrawal
         )
+
+    def take_batch_refusal(self, request_id: str | int) -> str | None:
+        """The client's batch-guard refusal reason for *request_id*, taken once."""
+        return self._client.take_batch_refusal(request_id)
 
     async def reject_tool(self, request_id: str | int) -> None:
         await self._client.reject_tool(request_id)
@@ -1089,6 +1140,12 @@ class AcpProvider(LLMProvider):
         if not self._client:
             return None
         return self._client.background_launch()
+
+    @property
+    def turn_survives_disconnect(self) -> bool:
+        return (
+            isinstance(self._client, AcpSessionProvider) and self._client.turn_survives_disconnect
+        )
 
     def has_unfinished_turn(self) -> bool:
         """True if the client reports a native turn that has NOT reached its

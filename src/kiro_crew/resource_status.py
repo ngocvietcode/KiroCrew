@@ -51,6 +51,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import sys
 import tempfile
 import threading
@@ -749,11 +750,18 @@ def temp_headroom(root: str) -> TempHeadroom | None:
 
     A filesystem without inode accounting (``f_files == 0``: btrfs, some FUSE
     mounts) cannot run out of inodes, so it reads as fully free on that axis
-    and never trips the absolute floor.
+    and never trips the absolute floor. A host without ``os.statvfs`` (native
+    Windows) still measures free space through ``shutil.disk_usage`` and reads
+    the same way, since NTFS keeps no inode limit to report.
     """
     statvfs = getattr(os, "statvfs", None)
     if statvfs is None:
-        return None
+        try:
+            usage = shutil.disk_usage(root)
+        except OSError:
+            return None
+        free_pct = 100.0 * usage.free / usage.total if usage.total else 100.0
+        return TempHeadroom(root, free_pct, 100.0, TEMP_FREE_INODES_FLOOR, counts_inodes=False)
     try:
         st = statvfs(root)
     except OSError:
@@ -771,8 +779,8 @@ def temp_headroom(root: str) -> TempHeadroom | None:
 def temp_headroom_lines() -> list[str]:
     """The pull tool's temp-space block, plus a guidance line when one is low.
 
-    Empty when no root can be measured, so a host without ``statvfs`` prints
-    nothing rather than an "unknown" line on every call.
+    Empty when no root can be measured, so an unreadable root prints nothing
+    rather than an "unknown" line on every call.
     """
     readings = [r for r in (temp_headroom(root) for root in temp_roots()) if r is not None]
     if not readings:
@@ -914,6 +922,7 @@ def adaptive_summary_lines(state: dict | None = None) -> list[str]:
             lines.append(
                 f"  Provider throttling (scoped, not a host signal): {', '.join(throttled)}"
             )
+    lines.extend(_health_lines(state.get("health"), state.get("last_sample")))
     recent = state.get("recent_decisions")
     if isinstance(recent, list) and recent:
         lines.append("  Recent cap changes (newest last):")
@@ -936,6 +945,43 @@ def adaptive_summary_lines(state: dict | None = None) -> list[str]:
     if counts:
         lines.append("  Decisions: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
     return lines
+
+
+def _health_reading(value: object, digits: int | None = None) -> str:
+    if not isinstance(value, (int, float)) or isinstance(value, bool) or value < 0:
+        return "-"
+    return f"{value:.{digits}f}" if digits is not None else f"{value}"
+
+
+def _health_lines(health: object, last_sample: object) -> list[str]:
+    if not isinstance(health, dict):
+        return []
+    sample = last_sample if isinstance(last_sample, dict) else {}
+    age = health.get("age_secs")
+    age_text = f"{age:.0f}s old" if isinstance(age, (int, float)) else "age unknown"
+    if health.get("stale"):
+        limit = health.get("max_age_secs")
+        limit_text = f", limit {limit:.0f}s" if isinstance(limit, (int, float)) else ""
+        return [f"  Health (advisory): sample stale ({age_text}{limit_text}); readings withheld"]
+    readings = (
+        f"sessions {_health_reading(sample.get('active_sessions'))}   "
+        f"cron queue {_health_reading(sample.get('cron_queue_depth'))}   "
+        f"cpu/core {_health_reading(sample.get('cpu_pressure'), 2)}   "
+        f"loop lag {_health_reading(sample.get('loop_lag_ms'), 0)}ms"
+    )
+    signals = ",".join(health.get("signals") or []) or "none"
+    suspected = [
+        name
+        for flag, name in (
+            (health.get("cron_collision_suspected"), "cron collision"),
+            (health.get("renderer_suspected"), "renderer"),
+        )
+        if flag
+    ]
+    return [
+        f"  Health (advisory, sample {age_text}): {readings}",
+        f"  Health signals: {signals}; suspected: {', '.join(suspected) or 'none'}",
+    ]
 
 
 def _resolve_thresholds(cfg: object | None) -> tuple[float, float]:

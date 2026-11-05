@@ -32,6 +32,10 @@ from kiro_crew.acp.image_dimension_wedge import (
     format_many_image_dimension_message,
     is_many_image_dimension,
 )
+from kiro_crew.acp.model_registry_errors import (
+    MODEL_REGISTRY_UNAVAILABLE_TEXT,
+    is_model_registry_unavailable,
+)
 from kiro_crew.acp.oversized_request_errors import (
     _RE_ADAPTER_INPUT_TOO_LONG,
     _RE_OVERSIZED_REQUEST,
@@ -43,6 +47,7 @@ from kiro_crew.acp.runtime_models import (
     model_is_unusable,
     resolve_pin_spelling_on,
 )
+from kiro_crew.acp.structured_error_data import provider_data_text, structured_data_prose
 from kiro_crew.acp.types import (
     ACP_BACKEND_KIRO,
     ACP_BACKENDS_HOST_AUTH_CALLBACK,
@@ -160,8 +165,8 @@ class AcpError(Exception):
         # Whether a TRANSIENT failure is the network path to the provider
         # (dispatch failure, connection reset or refused, DNS, TLS, connect
         # timeout) rather than a provider answer such as a 5xx or a throttle.
-        # Decided from the raw frame by :func:`_raise_acp_error`, because the
-        # formatter rewrites a dispatch failure into the generic 5xx prose.
+        # Decided from the raw frame by :func:`_raise_acp_error`, so the retry
+        # layer never parses the user-facing card wording.
         # ``None`` means unclassified: readers fall back to the message text.
         self.connection_failure: bool | None = None
         # Whether a TRANSIENT failure is the provider throttling (429, "Too many
@@ -584,10 +589,9 @@ _RE_CONNECTION = re.compile(
     r"|\bconnection (?:refused|reset|closed|error|timed ?out)\b",
     re.IGNORECASE,
 )
-# Connector-level failures that never produced a provider answer. Separate from
-# _RE_CONNECTION because a dispatch failure and a named connection reset sit in
-# the 5xx family for formatting, yet they say the network path dropped, not that
-# the provider answered with an error.
+# Connector-level failures that never produced a provider answer: the network
+# path dropped. They also match _RE_5XX_NAMED, so the formatter and classifier
+# both check this before the 5xx family (connection card, connection verdict).
 _RE_CONNECTOR_FAILURE = re.compile(
     rf"\b(?:dispatch{_5XX_SEP}failure|connection{_5XX_SEP}reset(?:{_5XX_SEP}error)?)\b",
     re.IGNORECASE,
@@ -1183,7 +1187,7 @@ def _is_transient_raw_error(error: object, available_models: Sequence[str] | Non
     """
     if not isinstance(error, dict):
         return False
-    data = str(error.get("data", "") or "")
+    data = provider_data_text(error)  # a structured `data` reads its prose from `message`
     message = str(error.get("message", "") or "")
     haystack = f"{data} {message}"
     if _model_is_unentitled(data, available_models):
@@ -1422,7 +1426,8 @@ def _format_acp_error_worded(
     """
     worded = True
     if isinstance(error, dict):
-        data = str(error.get("data", "") or "")
+        data = provider_data_text(error)  # a structured `data` reads its prose from `message`
+        prose = structured_data_prose(error)
         message = str(error.get("message", "") or "")
         haystack = f"{data} {message}"
 
@@ -1498,7 +1503,7 @@ def _format_acp_error_worded(
             # than paraphrasing it: it is the authoritative statement of WHICH
             # limit was hit, and the CLI shows exactly this, so the dashboard
             # matching it means the two surfaces cannot tell different stories.
-            _limit_detail = _provider_detail(data)
+            _limit_detail = _provider_detail(prose or data)
             # The provider sentence has no trailing period, so add one before
             # appending guidance or the two run together as one sentence.
             if _limit_detail and _limit_detail[-1] not in ".!?":
@@ -1639,7 +1644,9 @@ def _format_acp_error_worded(
                 "sign-in issue, not a backend error."
                 f"{req_id_suffix}"
             )
-        elif _RE_CONNECTION.search(haystack):
+        elif is_model_registry_unavailable(data):
+            formatted = MODEL_REGISTRY_UNAVAILABLE_TEXT + req_id_suffix
+        elif _RE_CONNECTION.search(haystack) or _RE_CONNECTOR_FAILURE.search(haystack):
             formatted = (
                 "Could not reach the model backend (connection refused, reset, "
                 "or timed out). Retry in a moment. If it keeps happening, check "
@@ -1760,7 +1767,7 @@ def _format_acp_error_worded(
             # Falls back to the raw dict only when there is no usable detail
             # (empty/odd data), so a genuinely opaque shape still loses nothing.
             # Redaction below scrubs any embedded secrets either way.
-            _detail = _provider_detail(data)
+            _detail = _provider_detail(prose or data)
             if _detail:
                 # Keep the JSON-RPC `message` too when it carries signal. For
                 # -32603 it is the fixed boilerplate "Internal error" (pure
@@ -1895,7 +1902,7 @@ def _raise_acp_error(
     # failure, the many-image pixel-dimension cap, and kiro-cli's own refusal of a
     # request it could not shrink to fit -- each reproduced exactly by re-sending
     # the same context.
-    raw_data_field = str(error.get("data", "") or "") if isinstance(error, dict) else ""
+    raw_data_field = provider_data_text(error)  # the same field the verdict above read
     raw_message_field = str(error.get("message", "") or "") if isinstance(error, dict) else ""
     # The claude adapter's overflow rides in ``message`` (anchored match, see
     # _RE_ADAPTER_INPUT_TOO_LONG), and the model service's size cap may ride in

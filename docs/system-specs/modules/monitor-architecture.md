@@ -794,7 +794,7 @@ committed store with the new one, logs each loop that stopped at WARNING with it
 `stopped_reason`, and appends the same record as one JSON line to
 `<data home>/logs/autonudge_stops.jsonl`. The log line is for reading live; grep
 `gateway.log` for `AutoNudge:`. Each gateway boot moves `gateway.log` to
-`gateway.log.prev`, keeping one copy, so the line is gone after two restarts. The JSONL file is the record that stays: it holds
+`gateway.log.prev` and keeps three older boots in `logs/gateway-boots/`, so the line is gone after five restarts. The JSONL file is the record that stays: it holds
 the same scrubbed fields, is size-rotated to one `.1` generation (about 2 MiB in
 total), and a failure to append costs that one record, never the store write.
 To see the last stops, newest last:
@@ -1114,9 +1114,15 @@ The limits a registrant must design for:
 - Owner credentials follow the built-in rule: never from a channel-created
   monitor, and from a dashboard one only through the recorded grant. The shadow
   path, which has no such gate, is refused to a contributed kind.
-- The dashboard's kind vocabulary is the checked-in contract snapshot, so a
-  contributed-kind monitor is shown as blocked even while it probes, with save
-  and restart disabled; stop works.
+- The dashboard prefers the gateway's runtime kind vocabulary over the
+  checked-in contract snapshot. `monitor_frontend_contract()` lists the live
+  kinds -- built-ins plus every contributed one -- and the gateway serves it at
+  the cookie-authed read `GET /api/monitor-contract`; the dashboard fetches it
+  once and installs its kind list, falling back to the bundled snapshot on a 404
+  (an older gateway) or any fetch error. So a contributed-kind monitor shows its
+  real state with save and restart enabled under the built-in rules. Before this,
+  the dashboard read only the snapshot, which lists the built-ins alone, and a
+  contributed-kind monitor was shown as blocked even while it probed.
 - A provider factory that raises is logged and fails only its own kind, whose
   monitors then stop as blocked on their first tick.
 
@@ -1313,8 +1319,7 @@ It is read in `mcp_tools/control_parts/schemas.py::schemas()`, which is the only
 read, and read afresh on every build: `mcp_tools.build_tool_list` rebuilds
 descriptors per call rather than caching them, so a Settings write needs no
 gateway restart. It does not reach a session already open, because kiro-cli
-caches a session's tool list for that session's life -- the same limitation
-`mcp_tools/browser.py` records for `dashboard.use_builtin_browser`. A config read
+caches a session's tool list for that session's life. A config read
 that raises resolves to the off position, since off is what ships.
 
 The key deliberately does not make `monitor_start` REFUSE a target the structured

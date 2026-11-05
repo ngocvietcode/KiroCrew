@@ -61,7 +61,7 @@ begin on its own line; the assembly newline-terminates the caller's
 | 9 | `[USER PROFILE]` | onboarding answers in config | non-empty, `lessons` group |
 | 10 | `[WORKSPACE IDENTITY]` | `workspace_dir_for` | `kirocrew` agent only |
 | 11 | `[DOCUMENTATION]` | `_build_docs_section`, the packaged docs dir | `kirocrew` agent, `project` group |
-| 12 | `[Steering resources]` | `_load_steering_resources` → `file://*.md` in `~/.kiro/agents/kirocrew.json` | **Claude Code backend**, `kirocrew` agent, `project` group |
+| 12 | `[Steering resources]` | `_load_steering_resources` → `file://*.md` in `~/.kiro/agents/kirocrew.json`, front matter stripped; a `manual`/`auto`/`fileMatch` document withheld (`folder_steering.every_session_body`) | **Claude Code backend**, `kirocrew` agent, `project` group |
 | 13 | `[THREAD CONVERSATION HISTORY]` | `build_session_replay` (lossless, newest first), else `_recall_rows` truncation | new, non-resumed session |
 | 14 | `[PREVIOUS TURN WAS CANCELLED …]` | `_build_stop_event_notes` | recent user stop |
 | 15 | `[Memory …]` + `[Memory activity index]` + `[Memory activity]` + `[Memory tools]` | `memory.py` → `get_context`, `activity_index`, `get_activity_context` | not temporary, `memory` group; the activity block also needs `memory.inject_activity` |
@@ -238,7 +238,7 @@ it adds:
 | Block | Source | When |
 |---|---|---|
 | `[RUNTIME]` refresh | trusted `runtime_source` | every follow-up; a channel turn also re-asserts the diff-block mandate |
-| `[ACTIVE MODEL]` refresh | the live provider's `served_model` | every follow-up on a goose session that reports a model, because a live `set_model` keeps the conversation and the session-start line would name the old model |
+| `[ACTIVE MODEL]` refresh | the live provider's `served_model` | every follow-up on a goose session that reports a model, because a live `set_model` keeps the conversation and the session-start line would name the old model. Inside one turn, a retry loop that switches the model before re-sending the prompt it built (`stream_and_collect`, the sub-agent ladder) sends it through `ActiveModelLine` (`llm_helpers_parts/model_fallback.py`), which rewrites the line to the model now serving. The dashboard restates it the same way after its start-of-turn restore probe and Jev routing (`_turn_dispatch_gates`); its throttle swap re-queues the user's text, so that prompt is rebuilt |
 | Channel history | `channel_history.context_for` | group-channel turns, except a thread turn that carries `[SLACK THREAD REPLIES]` |
 | `[SLACK THREAD CONTEXT]` | thread parent / metadata | Slack threads |
 | `[SLACK THREAD REPLIES]` | `slack/thread_replies.py`, fenced as untrusted | a Slack thread turn with replies it has not seen |
@@ -518,21 +518,25 @@ ownership rule: [subagent](../system-specs/modules/subagent.md#one-kirocrew_scra
 
 One function decides, for both session start and post-compaction re-injection:
 `context.py` → `_skills_injection_plan`. It returns `(inject?, globs)` from two
-facts — whether the agent's JSON maps skills, and whether the agent is the
-built-in `kirocrew` or the `kirocrew-worker` derived from it
-(`WHOLE_CATALOG_TEMPLATES`). The harness matters for one row of the table: an
+facts — whether the agent's JSON maps skills, and whether the agent is a default
+agent or the `kirocrew-worker` derived from one (`WHOLE_CATALOG_TEMPLATES`, built
+from `KIROCREW_DEFAULT_AGENT_NAMES` plus `kirocrew-worker`, so it names `kirocrew`
+and the crewmate's conductor and worker too). The harness matters for one row of the table: an
 unmapped custom agent on kiro-cli gets the skill trees kiro-cli lets it inherit,
 and nothing on any other harness (`src/kiro_crew/docs/agent-spec-fields.md` has
 the per-harness table). `is_cc` is accepted and ignored (steering, below, is the
-one block the backend does gate). A crewmate's conductor and worker are not
-custom either (`is_kirocrew_default_agent`), but they read their mapping from the
-crewmate folder (`mate_worker.mate_service_scope_spec`), so the table does not
-cover them.
+one block the backend does gate). `skill_search` (`session_skill_globs`) and KAS's
+skill rule (`kas_skill_scope`) read the same set, so an unmapped template in it
+searches the whole catalog its startup directory lists. A crewmate's conductor and
+worker read their mapping from the crewmate folder
+(`mate_worker.mate_service_scope_spec`) rather than the roster; on kiro-cli an
+unmapped one there takes the inherited trees, and on every other harness it takes
+the `kirocrew` rows of the table.
 
 | Agent | `skill://` mapping | Skills it sees | Why |
 |---|---|---|---|
-| `kirocrew`, `kirocrew-worker` | none | the whole catalog (bounded discovery) | the default path |
-| `kirocrew`, `kirocrew-worker` | mapped | only the mapped set, on **either** backend | bounded directory and scoped activation |
+| `kirocrew`, `kirocrew-worker`, crewmate conductor and worker | none | the whole catalog (bounded discovery) | the default path |
+| `kirocrew`, `kirocrew-worker`, crewmate conductor and worker | mapped | only the mapped set, on **either** backend | bounded directory and scoped activation |
 | custom | none | **nothing**, or on kiro-cli the inherited trees | the agent is expected to bring its own |
 | custom | mapped | only the mapped set, on **either** backend | bounded directory and scoped activation |
 

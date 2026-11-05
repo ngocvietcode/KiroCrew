@@ -47,6 +47,7 @@ from kiro_crew.acp.runtime import (
 )
 from kiro_crew.acp.session_handle import WatchdogSettings
 from kiro_crew.acp.types import (
+    ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
     ACP_BACKENDS_COMPACT,
     ACP_BACKENDS_CONTEXT_RECYCLE,
@@ -67,6 +68,7 @@ from kiro_crew.agent_sdk import host_auth
 from kiro_crew.agent_sdk.tool_gate import ADAPTER_EXPOSED_CREDENTIAL_LEAVES
 from kiro_crew.constants import COMPACT_WAIT_TIMEOUT_SECS
 from kiro_crew.mcp_gateway.claim import schedule_claim
+from kiro_crew.process_identity import record_live_children_after_turn
 from kiro_crew.providers.base import CancelOutcome, LLMEvent, LLMProvider
 from kiro_crew.recovery.ladder import InfraError
 from kiro_crew.runtime_ownership import (
@@ -80,6 +82,15 @@ from kiro_crew.session_token_sig import schedule_session_token_publish
 from kiro_crew.trust_patterns import GrantDeadline
 
 logger = logging.getLogger(__name__)
+
+
+def _prompts_since(turn: tuple[Any, Any]) -> int:
+    """Prompts written on *turn*'s handle since the turn began, or 0 when unknown."""
+    handle, before = turn
+    after = getattr(handle, "prompts_written", 0)
+    if isinstance(before, int) and isinstance(after, int):
+        return max(0, after - before)
+    return 0
 
 
 class AcpSessionProvider(LLMProvider):
@@ -97,6 +108,11 @@ class AcpSessionProvider(LLMProvider):
     """
 
     approval_withdrawable = True
+    # Class defaults, so a provider built without ``__init__`` (``__new__`` in
+    # tests, a copy) still counts from zero; ``stream`` sets the instance values.
+    _prompts_written: int = 0
+    # The open turn's handle and that handle's count when the turn began.
+    _open_turn_count: tuple[Any, Any] | None = None
 
     # Applying a dashboard MCP config change to this live session by re-sending
     # its projection: ``kiro_crew.acp.session_provider_mcp_reinject``.
@@ -487,6 +503,12 @@ class AcpSessionProvider(LLMProvider):
         return value if isinstance(value, str) else ""
 
     @property
+    def kas_withheld_credentials_notice(self) -> str:
+        """See ``AcpSessionHandle.kas_withheld_credentials_notice``."""
+        value = getattr(self._handle, "kas_withheld_credentials_notice", "")
+        return value if isinstance(value, str) else ""
+
+    @property
     def work_scratch_dir(self) -> Path | None:
         """The session tree's ``$KIROCREW_SCRATCH`` directory (see ``AcpRuntime.work_scratch_dir``)."""
         return self._runtime.work_scratch_dir
@@ -537,6 +559,10 @@ class AcpSessionProvider(LLMProvider):
             return
         self._runtime_lease = None
         await RUNTIME_OWNERSHIP.release(lease)
+
+    @property
+    def turn_survives_disconnect(self) -> bool:
+        return self._runtime.is_cloud_sandbox is True
 
     async def shutdown(self) -> None:
         """Destroy the session and optionally kill the runtime.
@@ -623,7 +649,7 @@ class AcpSessionProvider(LLMProvider):
             # `~/.kiro/sessions/cli/{sid}.json(+.jsonl)`, as the comment below
             # says. Nothing retries: every caller drops the provider afterwards.
             try:
-                if self._handle.is_turn_active:
+                if self._handle.is_turn_active and not self.turn_survives_disconnect:
                     try:
                         await asyncio.wait_for(self._handle.cancel(), timeout=5.0)
                     except Exception:
@@ -733,6 +759,15 @@ class AcpSessionProvider(LLMProvider):
             send = functools.partial(send, allow_image=False)
         if timeout is not None:
             send = functools.partial(send, timeout=timeout)
+        # The handle this turn writes through, read after the reinjection above
+        # may have replaced it, so its count is the one this turn moves.
+        handle = self._handle
+        # A turn whose generator was abandoned without being closed still holds
+        # the live slot; settle it before this turn takes the slot.
+        if self._open_turn_count is not None:
+            self._settle_turn_count(self._open_turn_count)
+        open_turn = (handle, getattr(handle, "prompts_written", 0))
+        self._open_turn_count = open_turn
         emitted = False
         try:
             async with aclosing(
@@ -772,7 +807,40 @@ class AcpSessionProvider(LLMProvider):
             # it instead of hitting its generic `except Exception`.
             raise AcpError(str(exc)) from exc
         finally:
+            self._settle_turn_count(open_turn)
+            # End the shared turn FIRST so the tenancy release is never delayed
+            # or skipped, then record any child this turn forked while the
+            # leader is still alive (it stays alive past the turn), so a leader
+            # that exits before teardown does not leave them unrecorded and
+            # their group reported "kill failed". The record is bounded and a
+            # cancel during it propagates, so releasing the claim first keeps
+            # that release off the record's cancel path.
             await self._end_shared_turn(claim)
+            await record_live_children_after_turn(self)
+
+    def _settle_turn_count(self, turn: tuple[Any, Any]) -> None:
+        """Fold *turn*'s prompts into the settled count, once, and free the slot."""
+        if self._open_turn_count is not turn:
+            return
+        self._open_turn_count = None
+        self._prompts_written += _prompts_since(turn)
+
+    @property
+    def prompts_written(self) -> int:
+        """Prompts this provider's turns have written to the backend.
+
+        A turn counts once its prompt request is written, whether or not it then
+        finishes. A caller whose turn timed out compares this against a snapshot
+        taken before the turn to tell a prompt the backend received from one that
+        never left, and so avoids sending the same prompt twice.
+
+        The open turn is read live off its handle. A caller cancelled while it
+        awaits something other than the next event leaves this generator
+        suspended at a ``yield`` and unclosed, so its cleanup has not run yet
+        when that caller reads the count.
+        """
+        turn = self._open_turn_count
+        return self._prompts_written + (_prompts_since(turn) if turn is not None else 0)
 
     async def discard_unanswered_prompt(self) -> bool:
         """Forward to the session handle: rewind KAS history to before the last prompt."""
@@ -852,6 +920,7 @@ class AcpSessionProvider(LLMProvider):
             raise AcpError(str(exc)) from exc
         finally:
             await self._end_shared_turn(claim)
+            await record_live_children_after_turn(self)
 
     async def _connection_failure_is_signed_out(self, exc: AcpError) -> bool:
         """Whether a pre-output connection failure is really a missing sign-in.
@@ -951,16 +1020,20 @@ class AcpSessionProvider(LLMProvider):
         always: bool = False,
         deadline: GrantDeadline | None = None,
         withdraw_if: Callable[[], bool] | None = None,
+        deny_waivers: frozenset[str] = frozenset(),
     ) -> bool:
         """Approve a pending tool permission request. Accepts an explicit
         option_id (signature parity with AcpClient.approve_tool); falls back to
         allow_always/allow_once from `always`. A ``deadline`` is passed on to
         the handle, which raises ``GrantEnded`` rather than send once it passes.
-        *withdraw_if* is the handle's (see AcpSessionHandle.approve_tool)."""
+        *withdraw_if* and *deny_waivers* are the handle's (see
+        AcpSessionHandle.approve_tool)."""
         resolved = option_id or ("allow_always" if always else "allow_once")
         withdrawal: dict[str, Any] = {}
         if withdraw_if is not None:
             withdrawal["withdraw_if"] = withdraw_if
+        if deny_waivers:
+            withdrawal["deny_waivers"] = deny_waivers
         if deadline is None:
             return await self._guarded(
                 self._handle.approve_tool(request_id, option_id=resolved, **withdrawal)
@@ -970,6 +1043,10 @@ class AcpSessionProvider(LLMProvider):
                 request_id, option_id=resolved, deadline=deadline, **withdrawal
             )
         )
+
+    def take_batch_refusal(self, request_id: str | int) -> str | None:
+        """The handle's batch-guard refusal reason for *request_id*, taken once."""
+        return self._handle.take_batch_refusal(request_id)
 
     async def reject_tool(self, request_id: str | int) -> None:
         """Reject a pending tool permission request."""
@@ -1024,6 +1101,11 @@ class AcpSessionProvider(LLMProvider):
     def session_id(self) -> str:
         """The ACP session ID."""
         return self._handle.session_id
+
+    @property
+    def session_activity_at(self) -> float | None:
+        """See AcpSessionHandle.session_activity_at."""
+        return self._handle.session_activity_at
 
     def is_alive(self) -> bool:
         """True if the underlying runtime is still alive.
@@ -1297,6 +1379,21 @@ class AcpSessionProvider(LLMProvider):
         if not isinstance(backend, str) or backend not in ACP_BACKENDS_HARNESS_MANAGED:
             return None
         return backend
+
+    @property
+    def harness_compact_verb_advertised(self) -> bool:
+        """Whether the KAS engine serving this session listed its compaction verb.
+
+        Identity is positive: only a KAS session asks its handle
+        (``AcpSessionHandle._kas_compact_advertised``, which fails closed on a
+        missing ``initialize`` record). Every other backend answers ``False``, the
+        ABC default. Only a literal ``True`` passes, so a mocked handle never
+        reads as advertised.
+        """
+        if self.backend == ACP_BACKEND_KAS:
+            probe = getattr(self._handle, "_kas_compact_advertised", None)
+            return callable(probe) and probe() is True
+        return False
 
     @property
     def compaction_unmanaged_backend(self) -> str | None:

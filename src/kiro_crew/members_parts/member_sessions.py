@@ -193,7 +193,7 @@ def select_provider_backend(
         ):
             backend = ACP_BACKEND_SAOKHUE
         logger.info(
-            "crewmate session %s: routing to acp_backend=%r (agents.%s.acp_backend=%r)",
+            "Bot session %s: routing to acp_backend=%r (agents.%s.acp_backend=%r)",
             session_key,
             backend,
             crew_backend.crew,

@@ -569,8 +569,10 @@ describe('LibraryPage — action dispatch', () => {
     const scope = await openTileMenu('secretary', 'Secretary')
     fireEvent.click(scope.getByRole('menuitem', { name: 'Uninstall' }))
     const dialog = await screen.findByRole('dialog', { name: 'Confirm uninstall' })
-    // Focus moves to the dialog's first control (the shared dialog contract).
-    expect(document.activeElement).toBe(within(dialog).getByLabelText('Keep app data'))
+    // Focus moves to the dialog's first control via useDialogFocusTrap's
+    // useEffect; waitFor awaits that effect's commit instead of reading
+    // activeElement synchronously before it runs.
+    await waitFor(() => expect(document.activeElement).toBe(within(dialog).getByLabelText('Keep app data')))
 
     // A re-render (here the checkbox's own state change) must not pull focus
     // back to the dialog box: the user's Tab position would reset each time.
@@ -645,6 +647,41 @@ describe('LaunchpadTile — the disabled gate is the tile’s own branch', () =>
     expect(scope.getByRole('menuitem', { name: 'Enable' })).toBeInTheDocument()
     expect(scope.queryByRole('menuitem', { name: 'Pin' })).toBeNull()
     expect(scope.queryByRole('menuitem', { name: 'Unpin' })).toBeNull()
+  })
+})
+
+describe('LaunchpadTile — a built-in app skipped at boot', () => {
+  it('says Unavailable, opens its detail page, and still offers Disable', async () => {
+    const { default: LaunchpadTile } = await import('../pages/apps/LaunchpadTile')
+    const onOpen = vi.fn()
+    const onDetail = vi.fn()
+    render(
+      <MemoryRouter>
+        <LaunchpadTile
+          app={installedApp('secretary', 'Secretary', {
+            unavailable: { reason: 'PermissionError: denied' },
+          }) as never}
+          pinned
+          pinnable
+          actionLoading={null}
+          onTogglePin={vi.fn()}
+          onAction={vi.fn()}
+          onOpen={onOpen}
+          onDetail={onDetail}
+        />
+      </MemoryRouter>,
+    )
+    const scope = within(screen.getByTestId('launchpad-tile-secretary'))
+    expect(scope.getByText('Unavailable')).toBeInTheDocument()
+    // Still enabled on disk, so the toolbar offers no Enable button.
+    expect(scope.queryByRole('button', { name: 'Enable' })).toBeNull()
+    fireEvent.click(scope.getByRole('button', { name: 'Secretary' }))
+    expect(onDetail).toHaveBeenCalledTimes(1)
+    expect(onOpen).not.toHaveBeenCalled()
+    fireEvent.click(scope.getByRole('button', { name: 'More actions for Secretary' }))
+    // Still enabled on disk, so the switch it offers is Disable, not Enable.
+    expect(scope.getByRole('menuitem', { name: 'Disable' })).toBeInTheDocument()
+    expect(scope.queryByRole('menuitem', { name: 'Enable' })).toBeNull()
   })
 })
 

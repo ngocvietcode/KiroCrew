@@ -47,6 +47,7 @@ import { useRowDeliveryWatchdog } from './websocket/rowDeliveryWatchdog'
 import { useApprovalRegistry } from './websocket/approvals'
 import { useComposerCards } from './websocket/composerCards'
 import { useAutomationSeed } from './websocket/automationSeed'
+import { useMonitorContract } from './useMonitorContract'
 import { useWorkflowRunReconcile } from './websocket/workflowRuns'
 import { useSlotListSync } from './websocket/slotList'
 import { useBundleReload, handleUpdateProgress } from './websocket/bundleReload'
@@ -65,8 +66,9 @@ import { DASHBOARD_FIELDS_FRAME, handleDashboardFields } from './websocket/dashb
 import { useChatStream } from './websocket/chatStream'
 import { useTurnCompletion } from './websocket/turnCompletion'
 import { attachFocusRelay, focusedSlotForCurrentSurface } from './websocket/attention'
-import { emitAppReload, emitChannelEvent, emitComputerUseFrame, emitCronHistory } from './websocket/browserEvents'
+import { emitAppReload, emitChannelEvent, emitComputerUseFrame, emitCronHistory, emitResumeAllDone } from './websocket/browserEvents'
 import { runFirstConnect, runReconnectCatchUp } from './websocket/reconnectCatchUp'
+import { browserLiveStore } from './useBrowserLive'
 import { applySharedCrewFrame, onSharedCrewSocketOpen, setSharedCrewSender } from './sharedCrew/sharedCrewSocket'
 import { batchedUnlessOpen } from '../lib/streamBatch'
 
@@ -147,6 +149,14 @@ export function useWebSocket() {
   const silentReconnectsRef = useRef(0)
   const voice = useVoicePlayback(dispatch)
   const automations = useAutomationSeed(dispatch, queryClient)
+  // Prefer the gateway's runtime monitor kind list over the bundled snapshot so
+  // a contributed kind is not shown as blocked. When it adds kinds,
+  // re-run the automation seed so the Redux projection (which a contributed-kind
+  // record entered as non-actionable before the contract arrived) is
+  // re-normalized. Fallback-safe: an older gateway 404s and the bundled list
+  // stays in force. Mounted here, beside the seed it drives, rather than at the
+  // app root.
+  useMonitorContract(automations.seedAutomations)
   const approvals = useApprovalRegistry(dispatch, queryClient)
   const cards = useComposerCards(dispatch)
   const syncWorkflowRuns = useWorkflowRunReconcile(dispatch, queryClient)
@@ -236,6 +246,10 @@ export function useWebSocket() {
     // handler context is shared; the other arms are written inline. One
     // try/catch covers the table: a throw ends that frame's effects and the
     // next frame routes normally.
+    // Binary messages arrive as ArrayBuffer, never Blob: a Blob needs an async
+    // read, which would reorder frames behind the JSON events that follow them.
+    ws.binaryType = 'arraybuffer'
+
     ws.onmessage = (e) => {
       if (socket.wsRef.current === ws) lastFrameAtRef.current = Date.now()
       // The look-preview frame (utils/lookPreview.ts) is a still picture of the
@@ -243,6 +257,19 @@ export function useWebSocket() {
       // user's real sessions, runs or notices. The socket stays open only so
       // the frame never shows a disconnected state.
       if (isLookPreviewFrame()) return
+      // The one binary family: a live-browser screencast frame (owner sockets
+      // only). It never touches the JSON router, the store or React: the
+      // live-browser store acks it, keeps it for Replay and paints it.
+      if (e.data instanceof ArrayBuffer) {
+        browserLiveStore.applyBinary(e.data)
+        return
+      }
+      if (typeof Blob !== 'undefined' && e.data instanceof Blob) {
+        // A socket that ignored `binaryType` (a test double, an old shim):
+        // still a frame, read asynchronously.
+        e.data.arrayBuffer().then((buf) => browserLiveStore.applyBinary(buf), () => {})
+        return
+      }
       try {
         const { type, data, msg } = decodeFrame(e.data)
         // App embeds watching this frame's slot re-read it (utils/appSlotPush.ts).
@@ -352,6 +379,11 @@ export function useWebSocket() {
           }
           case 'artifact_update':
             handleArtifactUpdate(queryClient, data)
+            break
+          case 'resume_all_done':
+            // Owner-only frame: one bulk Resume run's outcome. The sidebar row
+            // that started the run shows it; the slots push already moved the rows.
+            emitResumeAllDone(data)
             break
           case 'notification': {
             const n = data as Notification
@@ -1045,6 +1077,11 @@ export function useWebSocket() {
             break
           case 'computer_use_frame':
             emitComputerUseFrame(data)
+            break
+          case 'browser_live':
+            // The live-browser card's state (owner sockets only). The store
+            // checks every field; the card reads it through useBrowserLive.
+            browserLiveStore.applyEvent(data)
             break
         }
       } catch { /* ignore malformed */ }

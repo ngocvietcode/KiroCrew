@@ -116,12 +116,6 @@ Three structural facts explain most of the rest:
   `required_status_checks` rule, or the variable `true` while the ruleset has
   no `merge_queue` rule. `scheduled-failure-watch.yml` turns that red into one
   issue.
-  The same shape covers an npm fact no diff shows: the installer tracks
-  `@playwright/cli@latest`, so the daily `playwright-cli-banner.yml` launches
-  that release once (`show --port 0`) and fails when
-  `scripts/check_playwright_cli_banner.py` cannot parse its `Listening on`
-  banner with the Browser view's own parser, naming the CLI version and the
-  lines read.
 - **Merge queue:** the queue is off on main today, by the owner's decision,
   and the push-to-main path runs the full matrix. What follows is what happens
   once an admin enables it. Every test workflow runs on `merge_group`, the tree
@@ -443,6 +437,21 @@ issue" step, the hand-copied ancestor of this watcher) and `gui-user-test.yml`
 `schedule:` workflow is neither listed nor self-reporting, when one is both, or
 when a listed name matches no workflow -- a `workflow_run` trigger on a misspelt
 name never fires and never says so.
+
+### Scheduled workflows: a spent API rate limit
+
+A scheduled job's token shares the installation rate limit with the rest of the
+fleet, so one `gh` call made while it is spent fails the run, although the limit
+resets within the hour. `.github/actions/gh-rate-limit` puts a `gh` wrapper on
+PATH for the rest of the job: it retries only a call whose error names a rate
+limit, at most twice, waiting for the earliest reported reset (60 s for a
+secondary limit) inside one job-wide budget (`max-wait`, 20 minutes by default).
+Every other result passes through unchanged. A scheduled job that calls `gh`
+either installs it before its first call, with a job timeout that leaves room
+for the budget, or is listed in `test/test_scheduled_gh_rate_limit.py` with the
+reason a failed run costs nothing the next tick does not re-cover (frequent
+sweeps, full re-derivations, and a job whose model step can write to the
+runner's disk). That test fails for a new scheduled `gh` job that does neither.
 
 ### A red that is not your diff: external, or self-inflicted?
 
@@ -5116,7 +5125,10 @@ After the ledger, the same step appends a PUSH BUDGET section
 (`.github/review-prompts/gpt-push-budget.md`) once the PR has had three blocked
 pushes. The count is the one `pr_findings.py --rounds` and `sweep_check.py`
 print: `blocked_push_count` in the prepare-pr skill's `_review_pushes.py`, run
-as a script staged from the base commit. A push counts when the head it
+as a script staged from the base commit with `REVIEW_PUSHES_STOP_AT=3`, so it
+stops reading heads once it reaches three and the section says "at least" that
+many: the section needs only the threshold, and each replaced head costs a
+check-run read from the shared REST quota. A push counts when the head it
 replaced was blocked: the newest check run of a review lane (GPT, Opus, Design,
 UX, First Principles or Security Scope Review) ended as `failure` on it, or a
 `CHANGES_REQUESTED` review names it that the same reviewer has not since

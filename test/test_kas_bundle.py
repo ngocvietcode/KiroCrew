@@ -356,6 +356,32 @@ class TestInstall:
         assert kas_bundle.installed_bundle(root=root, version="0.66.33") is not None
         assert [p.name for p in root.iterdir() if p.name.startswith(".staging-")] == []
 
+    def test_a_forced_install_over_an_engine_in_use_is_a_named_refusal(
+        self, source_dir, tmp_path, monkeypatch
+    ):
+        """Windows refuses to move aside a directory a running node.exe holds open;
+        --force over it is an install error naming the cause, and the installed
+        engine and its record stay as they were."""
+        root = tmp_path / "root"
+        installed = _install(source_dir, root)
+        marker = installed.root / "in-use"
+        marker.write_text("held")
+        real_rename = os.rename
+
+        def rename_refusing_the_live_engine(src, dst):
+            if Path(src) == installed.root:
+                raise PermissionError(13, "Access is denied", str(src))
+            return real_rename(src, dst)
+
+        monkeypatch.setattr(kas_bundle.os, "rename", rename_refusing_the_live_engine)
+        with pytest.raises(
+            kas_bundle.KasBundleError, match="could not be replaced.*Access is denied.*retry"
+        ):
+            _install(source_dir, root, force=True)
+        assert marker.read_text() == "held"
+        assert kas_bundle.installed_bundle(root=root, version="0.66.33") is not None
+        assert [p.name for p in root.iterdir() if p.name.startswith(".staging-")] == []
+
     def test_a_zstd_engine_archive_installs_like_the_published_one(
         self, source_dir, tmp_path, monkeypatch
     ):
@@ -671,7 +697,7 @@ class TestTheLeafIsSealed:
     def test_engines_is_read_only_in_the_sandbox_and_fenced_at_the_tool_gate(self):
         """A sandboxed KAS process must read and execute the engine; nothing in a
         sandbox may rewrite the code the next session runs. Same disposition as
-        ``playwright-cli``, and the same precreate + no-follow pins so an absent
+        ``browser-harness``, and the same precreate + no-follow pins so an absent
         directory on a fresh install is not a name the agent gets to create."""
         from kiro_crew import sandbox, security
 
@@ -838,8 +864,11 @@ class TestOldGlibcRefusal:
     def test_old_glibc_refuses_before_download_naming_the_reason(self, source_dir, tmp_path):
         root = tmp_path / "root"
         with _patch_glibc((2, 26)):
-            with pytest.raises(kas_bundle.KasBundleError) as exc:
+            with pytest.raises(kas_bundle.KasHostUnsupported) as exc:
                 _install(source_dir, root)
+        # A host that cannot run the engine is its own class, so callers can
+        # leave out "retry" advice; it is still a KasBundleError for the rest.
+        assert isinstance(exc.value, kas_bundle.KasBundleError)
         msg = str(exc.value)
         assert "2.26" in msg and "2.28" in msg and "onnxruntime" in msg
         # Nothing downloaded, extracted or published.

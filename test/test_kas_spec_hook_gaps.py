@@ -98,8 +98,11 @@ def _rules(policy) -> list[tuple[str, str]]:
         (("WEB_FETCH",), {"web_fetch"}),
         (("execute_bash",), set()),
         (("fs_write", "grep"), set()),
+        # With no tool list to resolve against, an MCP-form matcher covers all of MCP.
         (("mcp__github__create_issue",), {"mcp"}),
         (("@github/create_issue",), {"mcp"}),
+        (("mcp__srv___x",), {"mcp"}),
+        (("@github/create_issue", "web_*"), {"web_fetch", "web_search", "mcp"}),
         (("WebFetch",), _ALL),
         (("web_*",), {"web_fetch", "web_search", "mcp"}),
         (("execute_*",), {"mcp"}),
@@ -247,7 +250,7 @@ def test_one_confirm_hook_reads_in_the_singular():
 
 
 def test_a_kiro_cli_turn_is_not_gated_and_reads_no_spec(monkeypatch):
-    def must_not_read(_agent, _project_dir=None):
+    def must_not_read(_agent, _project_dir=None, **_kw):
         raise AssertionError("a kiro-cli turn must not read the spec")
 
     monkeypatch.setattr(spec_hooks, "crew_fired_spec_hooks", must_not_read)
@@ -612,7 +615,7 @@ def _subagent_run(
     )
     from kiro_crew.subagent import SubagentInfo, SubagentManager
 
-    def read(agent, _project_dir=None):
+    def read(agent, _project_dir=None, **_kw):
         if unreadable:
             raise OSError("unreadable")
         if switch_to:
@@ -867,7 +870,7 @@ def _task_step(
     monkeypatch.setattr(
         spec_hooks,
         "crew_fired_spec_hooks",
-        lambda agent, _project_dir=None: (
+        lambda agent, _project_dir=None, **_kw: (
             [_agent_hook(agent) if switch_to else _spec_hook("*")],
             [],
             0,
@@ -1003,7 +1006,7 @@ def test_a_step_that_switched_and_failed_retries_under_the_switched_agents_hooks
     monkeypatch.setattr(
         spec_hooks,
         "crew_fired_spec_hooks",
-        lambda agent, _project_dir=None: ([_agent_hook(agent)], [], 0),
+        lambda agent, _project_dir=None, **_kw: ([_agent_hook(agent)], [], 0),
     )
     fired: list = []
 
@@ -1138,7 +1141,8 @@ def test_a_kiro_cli_task_step_is_not_gated_and_gets_no_spec_hooks(monkeypatch):
             ],
             {"web_fetch"},
         ),
-        ([{"capability": "mcp", "match": ["srv/*"], "effect": "allow"}], {"mcp"}),
+        ([{"capability": "mcp", "match": ["srv/*"], "effect": "allow"}], {"mcp", "mcp-server:srv"}),
+        ([{"capability": "mcp", "effect": "allow"}], {"mcp"}),
         ([{"capability": "web_search", "effect": "deny"}], set()),
     ],
 )
@@ -1193,6 +1197,39 @@ def test_a_new_hook_on_an_auto_approved_capability_makes_the_session_stale(agent
     assert asyncio.run(spec_hooks.hook_projection_stale(live, "a1")) is False
     _add_hooks_page_hook(hooks_page, "web_fetch")
     assert asyncio.run(spec_hooks.hook_projection_stale(live, "a1")) is True
+
+
+def test_a_per_tool_mcp_hook_is_stale_only_until_its_ask_is_projected(
+    agents_dir, hooks_page, monkeypatch
+):
+    # The batch the projection sends for a hook on one MCP tool reads fresh, so the
+    # session is not reset on every turn; a hook on another MCP tool reads stale.
+    tools = {"srv": ["get_creds", "delete_all", "search"]}.get
+    monkeypatch.setattr(kas_permissions, "cached_mcp_tool_names", tools)
+    _write_spec(agents_dir, "a1", allowedTools=["@srv"])
+    _add_hooks_page_hook(hooks_page, "@srv/get_creds")
+    matchers = kas_agents.pre_tool_hook_matchers("a1", {"allowedTools": ["@srv"]})
+    entry = kas_agents.to_client_custom_agent(
+        "a1", {"allowedTools": ["@srv"]}, "p", pre_tool_hook_matchers=matchers
+    )
+    projected = kas_agents.projected_auto_approved([entry], "a1")
+    assert "mcp" in projected
+    assert (
+        asyncio.run(spec_hooks.hook_projection_stale(_live(ACP_BACKEND_KAS, projected), "a1"))
+        is False
+    )
+    unhooked = kas_agents.projected_auto_approved(
+        [kas_agents.to_client_custom_agent("a1", {"allowedTools": ["@srv"]}, "p")], "a1"
+    )
+    assert (
+        asyncio.run(spec_hooks.hook_projection_stale(_live(ACP_BACKEND_KAS, unhooked), "a1"))
+        is True
+    )
+    _add_hooks_page_hook(hooks_page, "@srv/delete_all")
+    assert (
+        asyncio.run(spec_hooks.hook_projection_stale(_live(ACP_BACKEND_KAS, projected), "a1"))
+        is True
+    )
 
 
 def test_a_new_spec_hook_makes_the_session_stale(agents_dir, hooks_page):
@@ -1692,7 +1729,7 @@ def test_a_shared_subagent_session_is_checked_after_it_is_created(monkeypatch):
 
     monkeypatch.setattr(subagent_mod, "replace_stale_shared_session", replace)
     monkeypatch.setattr(
-        spec_hooks, "crew_fired_spec_hooks", lambda agent, _project_dir=None: ([], [], 0)
+        spec_hooks, "crew_fired_spec_hooks", lambda agent, _project_dir=None, **_kw: ([], [], 0)
     )
     sessions = MagicMock()
     sessions.get_pid = MagicMock(return_value=None)

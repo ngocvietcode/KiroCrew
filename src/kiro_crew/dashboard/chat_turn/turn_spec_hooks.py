@@ -11,8 +11,11 @@ from typing import TYPE_CHECKING, Any
 
 from kiro_crew.agent_files import is_kirocrew_default_agent
 from kiro_crew.agent_sdk.spec_hooks import (
+    OverlongHookCommand,
     crew_fired_spec_hooks,
     merge_user_hook_files,
+    observer_spec_hooks,
+    overlong_spec_hook_commands,
     project_hook_files_present,
     session_agent,
     spec_hook_events,
@@ -157,7 +160,9 @@ async def _prepare_spec_hooks(
 
     Only for a backend whose capabilities say Crew fires the spec's hooks: kiro-cli
     runs the field itself, and firing it here too would run every hook twice, so
-    every other session gets ``([], False, None)``.
+    every other session gets ``([], False, None)``. A backend where Crew fires
+    only the hooks that cannot refuse a call (claude) gets those, from
+    :func:`_prepare_observer_spec_hooks`.
 
     On a new session, a spec that sets a key nothing carries to this backend gets
     one notice row, and so does a spec with ``confirm: true`` hooks, which Crew
@@ -172,6 +177,8 @@ async def _prepare_spec_hooks(
     if not capabilities_of(client).crew_fires_spec_hooks:
         if is_new and spec_hooks_run_nowhere(client):
             await _notice_spec_hooks_run_nowhere(state, slot, client, agent)
+        if capabilities_of(client).crew_fires_spec_observer_hooks:
+            return await _prepare_observer_spec_hooks(state, slot, client, agent, is_new=is_new)
         return [], False, None
     cwd = getattr(client, "cwd", "")
     work_dir = cwd if isinstance(cwd, str) and cwd else None
@@ -180,14 +187,22 @@ async def _prepare_spec_hooks(
         # Whose hooks apply is unknown, so PreToolUse fails closed.
         logger.warning("no agent is known for this KAS session; tool calls are blocked")
         return [], True, work_dir
+    on_kas = capabilities_of(client).backend == ACP_BACKEND_KAS
     try:
+        # A crewmate's worker fires its session's merged spec: the
+        # session this turn holds, set at admission.
+        held = getattr(slot, "_active_turn_session_key", "")
+        by_session = {"session_key": held} if isinstance(held, str) and held else {}
         hooks, lost, unconfirmable = await asyncio.to_thread(
             functools.partial(
                 crew_fired_spec_hooks,
                 agent,
                 spec_project_dir(client),
                 # Only KAS receives `toolsSettings` as `permissions` rules.
-                translates_tools_settings=capabilities_of(client).backend == ACP_BACKEND_KAS,
+                translates_tools_settings=on_kas,
+                # Only KAS drops a remote MCP server's `oauth` block.
+                discards_mcp_oauth=on_kas,
+                **by_session,
             )
         )
     except Exception:  # noqa: BLE001 - the caller fails PreToolUse closed
@@ -230,6 +245,10 @@ async def _prepare_spec_hooks(
             "msg msg-info",
         )
     if is_new:
+        await _surface_overlong_hook_commands(
+            state, slot, agent, spec_project_dir(client), by_session.get("session_key", "")
+        )
+    if is_new:
         # A withheld project spec yields the user-level spec in its place, so
         # these hooks are exactly the user-level ones that still run.
         await _surface_withheld_project_hooks(
@@ -242,6 +261,150 @@ async def _prepare_spec_hooks(
         if is_kas:
             await _surface_withheld_project_hook_files(state, slot, client)
     return hooks, False, work_dir
+
+
+def _pre_tool_hooks_run_nowhere_notice(agent: str) -> str:
+    """The session-start notice for ``preToolUse`` spec hooks on an observer-only backend."""
+    return (
+        f"ℹ️ Agent {agent} has hooks on preToolUse. This backend does not run an "
+        "agent's preToolUse hooks, so they have no effect in this session. Its "
+        "other hooks run."
+    )
+
+
+def _spec_hooks_unread_notice(agent: str) -> str:
+    """The session-start notice for a spec whose hooks could not be read."""
+    return (
+        f"ℹ️ The hooks of agent {agent} could not be read, so none run in this "
+        "session. The gateway log names the reason."
+    )
+
+
+async def _prepare_observer_spec_hooks(
+    state: "DashboardState",
+    slot: "_ChatSlot",
+    client: Any,
+    agent: str,
+    *,
+    is_new: bool,
+) -> tuple[list, bool, str | None]:
+    """:func:`_prepare_spec_hooks` on a backend where Crew fires the spec's hooks on
+    the events that cannot refuse a tool call (claude).
+
+    The spec's ``preToolUse`` hooks are left out: the harness approves some calls
+    without a permission request, so such a hook could not gate them, and a new
+    session whose spec carries one gets a notice saying they do not run. Nothing
+    here gates, so the turn is never blocked: an agent that cannot be named, or a
+    spec that cannot be read, leaves the turn with no spec hooks, and the latter
+    gets a notice on a new session.
+    """
+    cwd = getattr(client, "cwd", "")
+    work_dir = cwd if isinstance(cwd, str) and cwd else None
+    agent = session_agent(client, agent)
+    if not agent:
+        return [], False, work_dir
+    held = getattr(slot, "_active_turn_session_key", "")
+    session_key = held if isinstance(held, str) else ""
+    project_dir = spec_project_dir(client)
+    try:
+        hooks, _lost, unconfirmable = await asyncio.to_thread(
+            functools.partial(crew_fired_spec_hooks, agent, project_dir, session_key=session_key)
+        )
+    except Exception:  # noqa: BLE001 - no spec hook gates here, so the turn runs without
+        logger.warning(
+            "agent spec hooks for %r could not be read; none run this turn",
+            agent,
+            exc_info=True,
+        )
+        if is_new:
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                _redact_display_text(_spec_hooks_unread_notice(agent)),
+                "msg msg-info",
+                meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+            )
+        return [], False, work_dir
+    observed = observer_spec_hooks(hooks)
+    if is_new:
+        if len(observed) < len(hooks):
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                _redact_display_text(_pre_tool_hooks_run_nowhere_notice(agent)),
+                "msg msg-info",
+                meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+            )
+        if unconfirmable:
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                _redact_display_text(_spec_confirm_hooks_notice(agent, unconfirmable)),
+                "msg msg-info",
+            )
+        await _surface_overlong_hook_commands(state, slot, agent, project_dir, session_key)
+        await _surface_withheld_project_hooks(
+            state, slot, client, agent, user_hooks_run=bool(observed)
+        )
+    return observed, False, work_dir
+
+
+#: How many too-long hooks the notice names before it counts the rest.
+_OVERLONG_NOTICE_ENTRIES = 3
+
+
+def _overlong_hook_commands_notice(agent: str, hooks: list[OverlongHookCommand]) -> str:
+    """The session-start notice for spec hooks whose command is over the length limit."""
+    shown = []
+    for hook in hooks[:_OVERLONG_NOTICE_ENTRIES]:
+        # Redact each whole value before the cut, as the steering notice does.
+        label = _redact_display_text(hook.event)[:64]
+        if hook.matcher:
+            label += f" (matcher {_redact_display_text(hook.matcher)[:64]})"
+        shown.append(f"{label}: {hook.length:,} characters, limit {hook.limit:,}")
+    text = "; ".join(shown)
+    more = len(hooks) - _OVERLONG_NOTICE_ENTRIES
+    if more > 0:
+        text += f"; and {more} more"
+    noun = "hook does" if len(hooks) == 1 else "hooks do"
+    return (
+        f"ℹ Agent {agent}: {len(hooks)} {noun} not run because the command is too "
+        f"long ({text}). Put the logic in a script file and call that script from "
+        "the hook."
+    )
+
+
+async def _surface_overlong_hook_commands(
+    state: "DashboardState",
+    slot: "_ChatSlot",
+    agent: str,
+    project_dir: str | None,
+    session_key: str,
+) -> None:
+    """One notice row naming the spec hooks dropped for a command over the length limit.
+
+    Best-effort: a spec that cannot be read renders no row rather than failing the turn.
+    """
+    by_session = {"session_key": session_key} if session_key else {}
+    try:
+        hooks = await asyncio.to_thread(
+            functools.partial(overlong_spec_hook_commands, agent, project_dir, **by_session)
+        )
+    except Exception:  # noqa: BLE001 - an informational row must never fail a turn
+        logger.debug("too-long spec hooks for %r could not be read", agent, exc_info=True)
+        return
+    if hooks:
+        append_and_surface(
+            state,
+            slot,
+            "notice",
+            _redact_display_text(_overlong_hook_commands_notice(agent, hooks)),
+            "msg msg-info",
+            meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+        )
 
 
 async def _surface_withheld_project_hook_files(
@@ -364,8 +527,15 @@ def _notice_steer_upgrade(state: "DashboardState", slot: "_ChatSlot", client: An
     """One notice row on a new session whose adapter is too old to take a mid-turn
     message, one whose KAS drops its agent's prompt, and one whose goose or codex is
     outside its tested range: the chat runs, and each row names the installed version, the
-    tested one and the command that installs it."""
-    for name in ("steer_upgrade_notice", "agent_prompt_upgrade_notice", "tested_version_notice"):
+    tested one and the command that installs it. One more on a session whose MCP
+    servers start without part of their env or headers, naming each server and the
+    key names it lost, never a value."""
+    for name in (
+        "steer_upgrade_notice",
+        "agent_prompt_upgrade_notice",
+        "tested_version_notice",
+        "withheld_credentials_notice",
+    ):
         notice = getattr(client, name, "")
         if isinstance(notice, str) and notice:
             append_and_surface(state, slot, "notice", _redact_display_text(notice), "msg msg-info")
@@ -651,6 +821,7 @@ async def _turn_stop_hook(turn: _ChatTurn) -> None:
     """The Stop hook, the continuations it and a tool refusal queue, the reply's Slack and cross-surface legs."""
     _answer_text = turn._answer_text
     _mirror_chan = turn._mirror_chan
+    _mirror_post_ts = turn._mirror_post_ts
     _mirror_thread = turn._mirror_thread
     _refusal_notices = turn._refusal_notices
     _refusal_notices_settled = turn._refusal_notices_settled
@@ -909,7 +1080,7 @@ async def _turn_stop_hook(turn: _ChatTurn) -> None:
                 state.slack_client, _mirror_chan, turn._mirror_thinking_ts
             )
             for _part in render_for_slack(_mirror_body):
-                await state.slack_client.post_message(_mirror_chan, _part, _mirror_thread)
+                await state.slack_client.post_message(_mirror_chan, _part, _mirror_post_ts)
             if _mirror_options:
                 # Keep the ts this posts: the control has to be spendable
                 # later, and discarding the ts is what leaves a superseded
@@ -939,7 +1110,7 @@ async def _turn_stop_hook(turn: _ChatTurn) -> None:
                     _mirror_chan,
                     _mirror_blocks,
                     "Options",
-                    _mirror_thread,
+                    _mirror_post_ts,
                 )
                 if _mirror_ts:
                     _owner = (
@@ -987,3 +1158,19 @@ async def _turn_stop_hook(turn: _ChatTurn) -> None:
             # Same quiet end as the Slack leg above: the outcome line is the reply.
             _xs_reply = turn._terminal_directive_text
         await _deliver_cross_surface_reply(state, session_key, _xs_reply, slot=slot)
+
+
+def _surface_startup_notice(state: DashboardState, slot: _ChatSlot, provider: Any) -> None:
+    """Show a start problem the provider recorded, once, as a transcript error row.
+
+    The start went on (a failed reopen started a new sandbox), but something the
+    user had was not reopened, so it is an error, not routine news. ``meta.kind``
+    names it, so the error card shows the localized sentence; the text is the
+    channel fallback.
+    """
+    notice = getattr(provider, "startup_notice", None)
+    if not isinstance(notice, tuple) or len(notice) != 2:
+        return
+    token, text = notice
+    append_and_surface(state, slot, "error", text, "msg msg-err", meta={"kind": token})
+    provider.startup_notice = None

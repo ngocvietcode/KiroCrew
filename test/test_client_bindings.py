@@ -39,6 +39,8 @@ from kiro_crew.acp.client import AcpClient
 
 pytestmark = pytest.mark.xdist_group(name="tree_scan_client_bindings")
 
+SHARED_BINDINGS_CHECKS = ("the_field_scan_counts_every_read_and_write_shape",)
+
 #: Member -> (kind, coroutine, signature digest, owning module). Frozen at the split: the
 #: kind, coroutine flag and signature are BASE's; the owner is where the member lives now.
 _MEMBERS: dict[str, tuple[str, object, str, str]] = {
@@ -47,6 +49,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "_advertised_model_ids": ("function", False, "6806e867af4e", "client_model_selection"),
     "_agent_env_for_spawn": ("function", False, "8cab7a4db01b", "client_spawn_env"),
     "_agent_turn_gate": ("data", False, "", ""),
+    "_agent_turn_held": ("data", False, "", ""),
     "_agent_turn_pending": ("function", False, "a6632a57e602", "client_transport"),
     "_agent_turn_start": ("data", False, "", ""),
     "_append_member_dispatch_server": ("function", False, "94c1c94e7642", "client_mcp_array"),
@@ -320,7 +323,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "agent_version": ("property", False, "bb418bb7ece8", "client_class"),
     "initialize_result": ("property", False, "44dc9acb7120", "client_class"),
     "answer_elicitation": ("function", True, "2fcb1ac189fa", "client_elicitation"),
-    "approve_tool": ("function", True, "d9f85d56922f", "client_permissions"),
+    "approve_tool": ("function", True, "dedeacb52f8f", "client_permissions"),
     "authored_spec_declares_zero_tools": ("function", False, "a6632a57e602", "client_mcp_array"),
     "available_models": ("function", False, "92d6193dbe19", "client_model_selection"),
     "backend": ("property", False, "bb418bb7ece8", "client_class"),
@@ -374,6 +377,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "supports_config_option": ("function", False, "b86d69c93890", "client_model_selection"),
     "supports_refusal_steer": ("property", False, "a6632a57e602", "client_class"),
     "supports_steer": ("property", False, "a6632a57e602", "client_class"),
+    "take_batch_refusal": ("function", False, "85a6851f62f8", "client_class"),
     "touch_activity": ("function", False, "b60c5fea256e", "client_lifecycle"),
     "turn_finished_cleanly": ("function", False, "a6632a57e602", "client_turn_control"),
     "wait_for_compaction": ("function", True, "1d8ef804d52e", "client_usage"),
@@ -599,16 +603,6 @@ def _fields(fns: list[ast.FunctionDef | ast.AsyncFunctionDef]) -> tuple[set[str]
             ):
                 (written if func.id == "setattr" else read).add(node.args[1].value)
     return written - set(_MEMBERS), read - written - set(_MEMBERS)
-
-
-def test_the_field_scan_counts_every_read_and_write_shape() -> None:
-    tree = ast.parse(
-        "def f(self):\n"
-        "    self.a = 1\n    del self.b\n    self.c[k] = v\n    del self.d[k]\n"
-        "    self.e.add(1)\n    self.f.setdefault(k, v)\n    setattr(self, 'g', 1)\n"
-        "    return self.h, getattr(self, 'i', None), hasattr(self, 'j'), self.e\n"
-    )
-    assert _fields([tree.body[0]]) == ({"a", "b", "c", "d", "e", "f", "g"}, {"h", "i", "j"})
 
 
 def _listed(doc: str, label: str) -> set[str]:

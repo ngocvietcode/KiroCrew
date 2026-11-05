@@ -18,6 +18,13 @@ Membership is the whole double-fire guard. A non-member's harness runs the field
 itself, so the turn loop asks :func:`spec_script_hooks` only when the session's
 capabilities say Crew owns the job.
 
+claude is a member of ``ACP_BACKENDS_CREW_FIRES_SPEC_OBSERVER_HOOKS`` alone. Its
+harness is handed no spec, so Crew fires the events that cannot refuse a call
+(:data:`OBSERVER_HOOK_EVENTS`) and drops ``preToolUse``
+(:func:`observer_spec_hooks`): claude approves some calls without asking, so a
+gating hook would be skipped on exactly those. Nothing there gates on the spec, so
+a spec that cannot be read costs its hooks, never a tool call.
+
 Both spec shapes are read:
 
 * the object form kiro-cli uses and Crew materializes, ``{event: [{command,
@@ -51,6 +58,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import functools
 import hashlib
 import json
 import logging
@@ -71,6 +79,7 @@ from kiro_crew.hooks import (
     ScriptHook,
     _normalize_hook_timeout,
 )
+from kiro_crew.security.paths import MAX_SCANNABLE_COMMAND_CHARS
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +92,18 @@ _OBJECT_EVENT_TO_HOOK_EVENT = {
     "stop": HOOK_EVENT_STOP,
 }
 
+#: The events Crew fires on a backend that fires only the spec hooks that cannot
+#: refuse a tool call (``crew_fires_spec_observer_hooks`` without
+#: ``crew_fires_spec_hooks``): every event but PreToolUse.
+OBSERVER_HOOK_EVENTS = frozenset(
+    {
+        HOOK_EVENT_AGENT_SPAWN,
+        HOOK_EVENT_USER_PROMPT_SUBMIT,
+        HOOK_EVENT_POST_TOOL_USE,
+        HOOK_EVENT_STOP,
+    }
+)
+
 #: The events whose matcher names a tool. kiro-cli reads a matcher on these only,
 #: so a matcher on any other event is dropped rather than applied to the context.
 _TOOL_EVENTS = frozenset({HOOK_EVENT_PRE_TOOL_USE, HOOK_EVENT_POST_TOOL_USE})
@@ -91,8 +112,13 @@ _TOOL_EVENTS = frozenset({HOOK_EVENT_PRE_TOOL_USE, HOOK_EVENT_POST_TOOL_USE})
 #: capped at, so a hand-written spec cannot make every turn spawn without limit.
 _MAX_SPEC_HOOKS = 20
 
-#: Bound on a retained command, matching the document validator's payload cap.
-_MAX_COMMAND_LEN = 4096
+#: Bound on a retained command: the longest command the shell gate scans, so a
+#: spec hook is held to the same ceiling as a shell tool call's command and every
+#: one it keeps is scanned whole by the deny list before it spawns. kiro-cli runs
+#: an object-form hook of any length, so a lower bound here would drop on KAS a
+#: hook the same spec runs on kiro-cli. A hook document is still held to its own
+#: validator's payload cap before it reaches this.
+_MAX_COMMAND_LEN = MAX_SCANNABLE_COMMAND_CHARS
 
 #: Bound on the conversion cache. A spec edit adds an entry, so the cache is
 #: cleared rather than grown once it reaches this.
@@ -248,10 +274,13 @@ def post_tool_hook_tool_id(provider: object, *, harness_tool_id: str, is_shell: 
     command, KAS's shell tool, which :func:`spec_hook_tool_names` reads as
     kiro-cli's ``execute_bash`` -- the one tool kiro-cli runs a command with.
 
+    claude names its shell call the same way: its frames carry no tool id, and a
+    call of kind ``execute`` is its Bash tool.
+
     "" on a backend whose harness runs the spec's hooks itself, and for a call
     nothing names, which keeps the title matching it had.
     """
-    if not capabilities_of(provider).crew_fires_spec_hooks:
+    if not capabilities_of(provider).crew_fires_spec_observer_hooks:
         return ""
     if harness_tool_id:
         return harness_tool_id
@@ -291,12 +320,13 @@ def post_tool_identity(
     is_shell: bool,
     earlier: PostToolIdentity | None = None,
 ) -> PostToolIdentity | None:
-    """*event*'s :class:`PostToolIdentity`, or ``None`` where Crew fires no spec hooks.
+    """*event*'s :class:`PostToolIdentity`, or ``None`` where Crew fires no
+    PostToolUse spec hooks.
 
     *event* is the call's ``tool_call`` frame or its permission request; a field
     the event leaves empty keeps what *earlier* recorded for the same call.
     """
-    if not capabilities_of(provider).crew_fires_spec_hooks:
+    if not capabilities_of(provider).crew_fires_spec_observer_hooks:
         return None
     base = earlier or PostToolIdentity()
     stated = getattr(event, "harness_tool_id", "") or ""
@@ -330,9 +360,122 @@ def _reject(agent_id: str, event: object, value: object, reason: str) -> None:
     _sel_hook_rejected(str(event), str(value), f"spec hook for {agent_id}: {reason}")
 
 
+class OverlongHookCommand(NamedTuple):
+    """A spec hook left out because its command is over its form's limit.
+
+    ``event`` is the event or trigger as the spec spells it, ``matcher`` its
+    matcher ("" when none), ``length`` the command's length in characters and
+    ``limit`` the bound it passed: :data:`_MAX_COMMAND_LEN` for the object form,
+    the document validator's payload cap for a hook document.
+    """
+
+    event: str
+    matcher: str
+    length: int
+    limit: int
+
+
+def _overlong_reason(matcher: object, length: int, limit: int) -> str:
+    """The log reason for a command over the limit, naming the fix."""
+    shown = _diagnostic(matcher) if isinstance(matcher, str) and matcher else "none"
+    return (
+        f"command is {length:,} characters (matcher {shown}), over the "
+        f"{limit:,}-character limit; put the logic in a script file "
+        "and call that script from the hook"
+    )
+
+
+def _overlong_commands(spec: dict[str, Any]) -> list[OverlongHookCommand]:
+    """The spec's hooks that are left out only because their command is too long.
+
+    Reads either shape (see the module docstring). An entry with an unknown event
+    or trigger is left out, since it is dropped for that reason first.
+    """
+    # circular import: agent imports hooks, which this module imports at load time.
+    from kiro_crew.agent import (
+        _KAS_TRIGGER_CANONICAL,
+        _MAX_HOOK_PAYLOAD_LEN,
+        _MAX_SPEC_HOOK_DOCUMENTS,
+        _event_for_hook_trigger,
+    )
+
+    value = spec.get("hooks")
+    found: list[OverlongHookCommand] = []
+    if isinstance(value, dict):
+        for key, entries in value.items():
+            event = _OBJECT_EVENT_TO_HOOK_EVENT.get(key) if isinstance(key, str) else None
+            if event is None or not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                command = entry.get("command")
+                if isinstance(command, str) and len(command) > _MAX_COMMAND_LEN:
+                    matcher = entry.get("matcher") if event in _TOOL_EVENTS else None
+                    found.append(
+                        OverlongHookCommand(
+                            key,
+                            matcher if isinstance(matcher, str) else "",
+                            len(command),
+                            _MAX_COMMAND_LEN,
+                        )
+                    )
+    elif isinstance(value, list):
+        # The normalizer's own document slice and trigger aliases, so a hook it
+        # would drop for another reason is not blamed on its length.
+        for doc in value[:_MAX_SPEC_HOOK_DOCUMENTS]:
+            if not isinstance(doc, dict):
+                continue
+            trigger = doc.get("trigger")
+            canonical = (
+                _KAS_TRIGGER_CANONICAL.get(trigger.lower()) if isinstance(trigger, str) else None
+            )
+            action = doc.get("action")
+            if (
+                not isinstance(action, dict)
+                or action.get("type") != "command"
+                or not _event_for_hook_trigger(canonical)
+            ):
+                continue
+            command = action.get("command")
+            # The normalizer drops a document over its payload cap before
+            # :func:`_hook` sees it, so the document's own cap is the limit here.
+            if isinstance(command, str) and len(command) > _MAX_HOOK_PAYLOAD_LEN:
+                matcher = doc.get("matcher")
+                found.append(
+                    OverlongHookCommand(
+                        str(trigger),
+                        matcher if isinstance(matcher, str) else "",
+                        len(command),
+                        _MAX_HOOK_PAYLOAD_LEN,
+                    )
+                )
+    return found
+
+
+def overlong_spec_hook_commands(
+    agent_id: str, project_dir: str | None = None, *, session_key: str = ""
+) -> list[OverlongHookCommand]:
+    """The active spec's hooks that do not run because their command is too long.
+
+    For the session-start notice. Reads the spec :func:`crew_fired_spec_hooks`
+    reads; raises when it cannot be read.
+    """
+    return _overlong_commands(_agent_spec(agent_id, project_dir, session_key))
+
+
 def _hook(agent_id: str, event: str, index: int, entry: dict, timeout: int) -> ScriptHook | None:
     command = entry.get("command")
-    if not isinstance(command, str) or not command.strip() or len(command) > _MAX_COMMAND_LEN:
+    if isinstance(command, str) and len(command) > _MAX_COMMAND_LEN:
+        _reject(
+            agent_id,
+            event,
+            command,
+            f"command is {len(command)} characters, past the {_MAX_COMMAND_LEN} limit; "
+            "move it into a script file and call that from the hook",
+        )
+        return None
+    if not isinstance(command, str) or not command.strip():
         _reject(agent_id, event, command, "no usable command")
         return None
     matcher = entry.get("matcher") if event in _TOOL_EVENTS else None
@@ -404,6 +547,15 @@ def _from_documents(
     # circular import: agent imports hooks, which this module imports at load time.
     from kiro_crew.agent import _event_for_hook_trigger, normalize_spec_hooks
 
+    # The normalizer drops a document whose command is too long before this loop
+    # sees it, so name the hook and the fix here.
+    for overlong in _overlong_commands({"hooks": hooks}):
+        logger.warning(
+            "agent %r: spec hook on %s does not run on this backend: %s",
+            agent_id,
+            _diagnostic(overlong.event),
+            _overlong_reason(overlong.matcher, overlong.length, overlong.limit),
+        )
     out: list[ScriptHook] = []
     for index, doc in enumerate(normalize_spec_hooks(hooks)):
         if len(out) > _MAX_SPEC_HOOKS:
@@ -742,7 +894,9 @@ def _convert(agent_id: str, spec: dict[str, Any]) -> tuple[tuple[ScriptHook, ...
     return result
 
 
-def _agent_spec(agent_id: str, project_dir: str | None = None) -> dict[str, Any]:
+def _agent_spec(
+    agent_id: str, project_dir: str | None = None, session_key: str = ""
+) -> dict[str, Any]:
     """*agent_id*'s spec, or ``{}`` when it has none on disk.
 
     *project_dir* is the session's checkout on a backend that resolves its spec
@@ -759,19 +913,37 @@ def _agent_spec(agent_id: str, project_dir: str | None = None) -> dict[str, Any]
     page's hooks still apply to it. Reading that as an unreadable spec would
     refuse every call the session makes and leave it unusable. A spec that exists
     but cannot be read still raises, so callers keep failing closed on it.
+
+    Given *session_key*, a crewmate's worker is read as that
+    session's merged spec (``mate_worker.mate_service_scope_spec``), the one its
+    projection was handed, so the hooks its crewmate's file carries are the ones
+    that fire.
     """
-    return _agent_spec_with_origin(agent_id, project_dir)[0]
+    return _agent_spec_with_origin(agent_id, project_dir, session_key)[0]
 
 
 def _agent_spec_with_origin(
-    agent_id: str, project_dir: str | None = None
+    agent_id: str, project_dir: str | None = None, session_key: str = ""
 ) -> tuple[dict[str, Any], str]:
     """:func:`_agent_spec` and where it came from: ``"project"`` or ``"user"``."""
     # circular import: the ACP layer imports the config loader, which sits below
     # this module; resolved at call time like the other driver seams here.
     from kiro_crew.acp.kas_agents import agent_spec_absent, load_agent_spec
     from kiro_crew.acp.session_mcp import trusted_project_agent_spec
+    from kiro_crew.agent_files import is_mate_service_agent
     from kiro_crew.config.paths import spec_dir_for
+
+    if session_key and is_mate_service_agent(agent_id):
+        from kiro_crew.mate_worker import mate_service_scope_spec
+
+        scoped = mate_service_scope_spec(agent_id, session_key)
+        if scoped is not None:
+            merged, _path = scoped
+            if merged is None:
+                raise ValueError(f"the session spec for agent {agent_id!r} could not be read")
+            # The crewmate folder is not the sealed user tree, so its hooks stay
+            # vetted as a project spec's are (see :func:`_user_dir_origin`).
+            return merged, "project"
 
     if project_dir:
         declared, spec = trusted_project_agent_spec(agent_id, project_dir)
@@ -873,7 +1045,12 @@ def spec_project_dir(provider: object) -> str | None:
 
 
 def crew_fired_spec_hooks(
-    agent_id: str, project_dir: str | None = None, *, translates_tools_settings: bool = False
+    agent_id: str,
+    project_dir: str | None = None,
+    *,
+    translates_tools_settings: bool = False,
+    session_key: str = "",
+    discards_mcp_oauth: bool = False,
 ) -> tuple[list[ScriptHook], list[str], int]:
     """The active agent spec's hooks as script hooks, the keys nothing carries, and
     how many ``confirm: true`` hooks are skipped.
@@ -885,15 +1062,21 @@ def crew_fired_spec_hooks(
     cannot be read; the caller fails PreToolUse closed on that. *project_dir* is
     :func:`spec_project_dir` of the session. *translates_tools_settings* is true
     only for a KAS session, the one backend that receives ``toolsSettings`` as
-    ``permissions`` rules.
+    ``permissions`` rules. *discards_mcp_oauth* is true only for a KAS session too,
+    the backend that drops a remote MCP server's ``oauth`` block. *session_key*
+    reads a crewmate's worker as that session's merged spec (:func:`_agent_spec`).
     """
     # circular import: the ACP layer imports the config loader, which sits below
     # this module; resolved at call time like the other driver seams here.
     from kiro_crew.acp.kas_agents import spec_keys_without_carrier
 
-    spec, origin = _agent_spec_with_origin(agent_id, project_dir)
+    spec, origin = _agent_spec_with_origin(agent_id, project_dir, session_key)
     hooks, unconfirmable = _convert(agent_id, spec)
-    lost = spec_keys_without_carrier(spec, translates_tools_settings=translates_tools_settings)
+    lost = spec_keys_without_carrier(
+        spec,
+        translates_tools_settings=translates_tools_settings,
+        discards_mcp_oauth=discards_mcp_oauth,
+    )
     # Copies, so the cached conversion keeps no origin: the same hooks can come
     # from a user-level spec in one session and a project spec in another.
     tagged = [dataclasses.replace(h, spec_origin=origin) for h in hooks]
@@ -907,11 +1090,13 @@ def spec_hooks_run_nowhere(provider: object) -> bool:
     ``withheld``, or where a ``broker-only`` backend (pi) has no mirror to send the
     field and Crew does not fire it (``backend_mcp_ability._broker_only_dispositions``).
     False where the harness runs the field itself (kiro-cli), where Crew fires it
-    (``crew_fires_spec_hooks``), and for a backend with no ruling, about which
-    nothing is established.
+    (``crew_fires_spec_hooks``) or all of it but ``preToolUse``
+    (``crew_fires_spec_observer_hooks``, claude, whose ``preToolUse`` entries get
+    their own notice), and for a backend with no ruling, about which nothing is
+    established.
     """
     caps = capabilities_of(provider)
-    if caps.crew_fires_spec_hooks:
+    if caps.crew_fires_spec_hooks or caps.crew_fires_spec_observer_hooks:
         return False
     ability = ability_for(caps.backend)
     return _HOOKS_CONCERN in ability.no_channel or _HOOKS_CONCERN in ability.withheld
@@ -970,6 +1155,21 @@ def spec_hook_events(agent_id: str, project_dir: str | None = None) -> list[str]
     return [name for name, event in _OBJECT_EVENT_TO_HOOK_EVENT.items() if event in present]
 
 
+def _fires_observer_spec_hooks_only(provider: object) -> bool:
+    """Whether Crew fires *provider*'s spec hooks on :data:`OBSERVER_HOOK_EVENTS` only.
+
+    True on claude: its harness is handed no spec, and it approves some calls
+    without a permission request, so a ``preToolUse`` hook could not gate them.
+    """
+    caps = capabilities_of(provider)
+    return caps.crew_fires_spec_observer_hooks and not caps.crew_fires_spec_hooks
+
+
+def observer_spec_hooks(hooks: list[ScriptHook]) -> list[ScriptHook]:
+    """*hooks* without the ones on an event that can refuse a tool call."""
+    return [hook for hook in hooks if hook.event in OBSERVER_HOOK_EVENTS]
+
+
 class TurnSpecHooks(NamedTuple):
     """What a subagent or task-runner turn needs to gate its permission requests."""
 
@@ -1004,6 +1204,19 @@ def session_agent(provider: object, agent_id: str) -> str:
     return projected if isinstance(projected, str) else ""
 
 
+def provider_session_key(provider: object) -> str:
+    """The session key *provider* runs, or ``""``.
+
+    A shared runtime's client carries it itself; a dedicated ``AcpProvider``
+    (``spawn_run(keep=True)``) holds it on its ``_client``.
+    """
+    for holder in (provider, getattr(provider, "_client", None)):
+        raw = getattr(holder, "_session_key", None)
+        if isinstance(raw, str) and raw:
+            return raw
+    return ""
+
+
 async def turn_spec_hooks(provider: object, agent_id: str) -> TurnSpecHooks:
     """The spec hooks a subagent or task-runner turn gates on, and how.
 
@@ -1012,7 +1225,13 @@ async def turn_spec_hooks(provider: object, agent_id: str) -> TurnSpecHooks:
     its spec is not read, as its harness already runs the field. The agent is
     resolved through :func:`session_agent`; when none can be named, every
     permission request is refused, since whose hooks apply is unknown.
+
+    On a backend that fires only :data:`OBSERVER_HOOK_EVENTS` (claude) the turn
+    is not gated: it gets those hooks, and an agent that cannot be named or a
+    spec that cannot be read leaves it with none.
     """
+    if _fires_observer_spec_hooks_only(provider):
+        return await _observer_turn_spec_hooks(provider, agent_id)
     if not capabilities_of(provider).crew_fires_spec_hooks:
         return _NOT_GATED
     cwd = getattr(provider, "cwd", "")
@@ -1021,9 +1240,16 @@ async def turn_spec_hooks(provider: object, agent_id: str) -> TurnSpecHooks:
     if not agent_id:
         logger.warning("no agent is known for this KAS turn; its tool calls are blocked")
         return TurnSpecHooks([], work_dir, True, True)
+    # A crewmate's worker fires its session's merged spec, as the chat turn does.
+    session_key = provider_session_key(provider)
     try:
         hooks, _lost, _unconfirmable = await asyncio.to_thread(
-            crew_fired_spec_hooks, agent_id, spec_project_dir(provider)
+            functools.partial(
+                crew_fired_spec_hooks,
+                agent_id,
+                spec_project_dir(provider),
+                session_key=session_key,
+            )
         )
     except Exception:  # noqa: BLE001 - the caller fails permission requests closed
         logger.warning(
@@ -1043,6 +1269,32 @@ async def turn_spec_hooks(provider: object, agent_id: str) -> TurnSpecHooks:
     return TurnSpecHooks(hooks, work_dir, False, True)
 
 
+async def _observer_turn_spec_hooks(provider: object, agent_id: str) -> TurnSpecHooks:
+    """:func:`turn_spec_hooks` on a backend that fires only the observer events."""
+    cwd = getattr(provider, "cwd", "")
+    work_dir = cwd if isinstance(cwd, str) and cwd else None
+    agent_id = session_agent(provider, agent_id)
+    if not agent_id:
+        return _NOT_GATED
+    try:
+        hooks, _lost, _unconfirmable = await asyncio.to_thread(
+            functools.partial(
+                crew_fired_spec_hooks,
+                agent_id,
+                spec_project_dir(provider),
+                session_key=provider_session_key(provider),
+            )
+        )
+    except Exception:  # noqa: BLE001 - no hook here gates, so none runs this turn
+        logger.warning(
+            "agent spec hooks for %r could not be read; none run this turn",
+            agent_id,
+            exc_info=True,
+        )
+        return _NOT_GATED
+    return TurnSpecHooks(observer_spec_hooks(hooks), work_dir, False, False)
+
+
 async def hook_projection_stale(provider: object, agent_id: str) -> bool:
     """Whether *provider*'s live session auto-approves a capability a PreToolUse hook
     now covers.
@@ -1054,7 +1306,8 @@ async def hook_projection_stale(provider: object, agent_id: str) -> bool:
     runs the spec's hooks itself, and when the session records no batch. An agent
     with no spec on disk (a KAS built-in mode) has no spec hooks, so only the Hooks
     page's hooks count; a spec that exists but cannot be read answers True:
-    re-projecting is the safe direction.
+    re-projecting is the safe direction. A crewmate's worker is read
+    as the provider's own session's merged spec (:func:`_agent_spec`).
     """
     if not capabilities_of(provider).crew_fires_spec_hooks:
         return False
@@ -1064,23 +1317,34 @@ async def hook_projection_stale(provider: object, agent_id: str) -> bool:
     agent_id = session_agent(provider, agent_id)
     if not agent_id:
         return True
+    session_key = provider_session_key(provider)
 
     def _covered() -> set[str]:
         # circular import: the ACP layer imports the config loader, which sits
         # below this module; resolved at call time like the other seams here.
         from kiro_crew.acp.kas_agents import pre_tool_hook_matchers
-        from kiro_crew.acp.kas_permissions import hook_gated_capabilities
+        from kiro_crew.acp.kas_hook_mcp import approved_mcp_servers
+        from kiro_crew.acp.kas_permissions import (
+            cached_mcp_tool_names,
+            hook_gated_auto_approved,
+            hook_gated_capabilities,
+        )
 
         # A built-in mode with no spec: only the Hooks page's hooks count.
-        spec = _agent_spec(agent_id)
-        return hook_gated_capabilities(pre_tool_hook_matchers(agent_id, spec))
+        spec = _agent_spec(agent_id, None, session_key)
+        covered = hook_gated_capabilities(
+            pre_tool_hook_matchers(agent_id, spec),
+            mcp_servers=approved_mcp_servers(approved),
+            mcp_tool_names=cached_mcp_tool_names,
+        )
+        return hook_gated_auto_approved(covered, approved)
 
     try:
-        covered = await asyncio.to_thread(_covered)
+        still_approved = await asyncio.to_thread(_covered)
     except Exception:  # noqa: BLE001 - re-projecting is the safe direction
         logger.warning("PreToolUse hook coverage for %r could not be read; re-projecting", agent_id)
         return True
-    return bool(covered & approved)
+    return bool(still_approved)
 
 
 #: :func:`invalidate_stale_kas_session`'s answers.

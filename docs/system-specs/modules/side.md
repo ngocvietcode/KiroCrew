@@ -459,7 +459,12 @@ Four prompt constants, two lifted from the upstream protocol:
 - `SIDE_BOUNDARY_PROMPT_NO_TOOLS` — the variant for a harness outside
   `ACP_BACKENDS_SIDE_READONLY`, saying tools are unavailable.
 - `SIDE_BOUNDARY_PROMPT_NO_SHELL` — the same read-only boundary for a session
-  with no shell tool (claude), naming no shell command.
+  with no shell tool (claude), naming no shell command. A shell-capable side
+  turn gets it too while `name_grant.environment_refusal()` refuses every
+  program name (a PowerShell profile, an inherited `BASH_ENV`, an ambiguous
+  `PATH`): each shell read is then declined and side chat has no card to fall
+  back to. The handler runs that check off the loop, and only for a turn that
+  sends the envelope.
 - `SIDE_BOUNDARY_PROMPT_LISTING` — the read-only boundary for a session that
   can list folders and view images but has no shell and no tool that reads a
   file's text (goose).
@@ -591,8 +596,10 @@ hardened reader refuses a hardlink); its declared `name` equals its stem and is
 the derived name of the base its owner-marked `description` names; no provider
 in the session registry was spawned under it; and the base does not resolve
 where publication looks. A user-scope base resolves while any
-`<agent>.json`/`.md` entry exists or `agent.agent_spec_path` finds a spec
-declaring it (two declaring it still resolves). A project variant is reaped
+`<agent>.json`/`.md` entry exists, `agent.agent_spec_path` finds a spec
+declaring it (two declaring it still resolves), or
+`member_essential_context.linked_global_template_spec` finds a linked entry
+declaring it, the same lookup publication reads the base through. A project variant is reaped
 only when its recorded checkout is gone, or that checkout's `.kiro/agents`
 holds no entry named or declaring the agent; an unreadable or protected
 checkout, a variant recording no checkout or a relative path, one whose

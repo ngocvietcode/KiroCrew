@@ -59,7 +59,7 @@ import { pathBasename, stripTrailingSeparators } from '../../utils/pathBasename'
 // (one strip chip), `SidePanelTabBodies.tsx` (the kept-mounted tab bodies) and
 // `useSidePanelSize.ts` (the panel's size). Callers keep importing every name
 // exported below from this module.
-export { NEW_MENU_DESC_KEY, NEW_MENU_LABEL_KEY, newMenuSections }
+export { NEW_MENU_DESC_KEY, NEW_MENU_LABEL_KEY, newMenuSections, TabChip }
 export type { SidePanelWithholdable }
 export { CHAT_PANE_MIN_W, SIDE_PANEL_MIN_W, SIDE_PANEL_RESERVED_W, sidePanelEffectiveWidth, sidePanelFillWidth } from './useSidePanelSize'
 
@@ -1097,7 +1097,7 @@ export default function SidePanel({
             return (
               <div key={`${t.id}:${slot}`} className="absolute inset-0">
                 <ErrorBoundary scope="crew-workers" fallback={<ErrorNotice className="m-3" message={i18nT('commandCenter.workers_error')} askAgent />}>
-                  <CrewWorkersTab slot={slot ?? null} active={!panelHidden} />
+                  <CrewWorkersTab slot={slot ?? null} active={!panelHidden} onAct={onComposerInsert} />
                 </ErrorBoundary>
               </div>
             )

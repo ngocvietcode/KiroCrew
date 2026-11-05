@@ -388,6 +388,11 @@ with, so this is configuration, not the victim's enforced limit). A new `oom_kil
 OOM killer, and an `oom` event raised above the slice does not reach it, so this is the
 host-wide OOM killer or a limit on an enclosing slice, and the kernel log says which. A
 victim scope already gone is pointed at the kernel log, which still names the killed process.
+The worker only adds a report to those waiting for the loop, never replaces them, so a kill
+found by a probe that outlived its timeout still reaches the bell on the next tick. At most
+`MAX_PENDING_OOM_REPORTS` reports wait; older ones are counted, and the count opens the next
+note. The loop pushes them as notes that each fit the bus body limit, and a report leaves the
+stash only once its note was pushed.
 
 A **task** breach has no comparable kernel event to observe: past `pids.max` the kernel
 fails `fork()` with `EAGAIN` in whichever scope asks next, logs nothing, and every agent
@@ -421,7 +426,8 @@ and prints "ceiling unreadable", so a teardown is never published as an absent l
 Temp-directory headroom is the third figure the pull tool reports, and like the task figure
 it is reported, never gated. `resource_status.temp_headroom_lines()` measures `/tmp`, the
 first existing `TMPDIR`/`TEMP`/`TMP` directory, and the calling process's
-`tempfile.gettempdir()`. An agent's `$TMPDIR` is its own scratch dir, so `/tmp` is listed
+`tempfile.gettempdir()`. A host without `os.statvfs` (native Windows) measures free space
+through `shutil.disk_usage` and reports no inode limit. An agent's `$TMPDIR` is its own scratch dir, so `/tmp` is listed
 explicitly, and the configured directory is read from the environment because
 `gettempdir()` skips one that is full. The tool keeps a second root only when it sits on a different device,
 and flags a root below 10% free space, below 10% free inodes, or under 1,000 free inodes.

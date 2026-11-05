@@ -40,6 +40,7 @@ from kiro_crew.acp import kas_agents as kas_agents_mod
 from kiro_crew.acp import kas_route as kas_route_mod
 from kiro_crew.acp._dispatch import advertised_mode_origin
 from kiro_crew.acp.child_env_defaults import apply_child_env_defaults
+from kiro_crew.acp.default_crew_servers import with_default_crew_servers
 from kiro_crew.acp.harness._common import (
     KIRO_FAMILY_ALIASES,
     MembershipHarness,
@@ -53,12 +54,14 @@ from kiro_crew.acp.harness.base import (
     TeardownPolicy,
 )
 from kiro_crew.acp.kas_agents import KasAgentTranslationError
+from kiro_crew.acp.kas_app_identity import resolve_app_identity_launches
 from kiro_crew.acp.kas_host_auth import answer_get_access_token, vault_holds_identity_off_loop
 from kiro_crew.acp.kas_transport import (
     METHOD_KAS_AUTH_GET_ACCESS_TOKEN,
     build_kas_argv,
     build_kas_bundle_argv,
 )
+from kiro_crew.acp.kas_withheld_notice import withheld_credentials_notice
 from kiro_crew.acp.session_mcp import project_agent_spec
 from kiro_crew.acp.types import (
     ACP_BACKEND_KAS,
@@ -166,6 +169,7 @@ def _is_operator_override(binary: str, environ: Mapping[str, str]) -> bool:
 
     The rule lives in :func:`kiro_crew.acp.kas_route.is_operator_override`, which
     the route decision reads too, so the two cannot disagree about one binary.
+    Blocking on Windows.
     """
     return kas_route_mod.is_operator_override(binary, environ)
 
@@ -229,7 +233,9 @@ def resolve_projected_spec(
         from kiro_crew.template_mcp_additions import merge_at_spawn
 
         spec = merge_at_spawn(agent, kas_agents_mod.load_agent_spec(agents_dir, agent))
-        return spec, agents_dir
+        # A user-level custom agent gets Crew's default servers, through the helper
+        # the kiro-cli skill view applies too, so the two paths cannot drift.
+        return with_default_crew_servers(agent, spec), agents_dir
     # Crewmate scope. A name the user level does NOT declare may be a crewmate's
     # own config in ``~/.kiro/mates/agents/`` (``rfc-mate-owned-agent-config``
     # §5.3): resolution reads this folder, the session agent picker does not, so
@@ -258,10 +264,8 @@ def resolve_projected_spec(
 
     if not declared:
         try:
-            return (
-                merge_at_spawn(agent, kas_agents_mod.load_agent_spec(agents_dir, agent)),
-                agents_dir,
-            )
+            spec = merge_at_spawn(agent, kas_agents_mod.load_agent_spec(agents_dir, agent))
+            return with_default_crew_servers(agent, spec), agents_dir
         except KasAgentTranslationError as exc:
             # Asked again after the read failed, so a spec that appeared meanwhile
             # and cannot be read keeps its own reason.
@@ -370,6 +374,29 @@ def mate_worker_projection(
     return worker_session_spec(literal, session_key)
 
 
+def withdrawn_worker_stubs(spec: dict[str, Any], stub_names: frozenset[str]) -> frozenset[str]:
+    """The names in *stub_names* whose server *spec* does not mount unmuted.
+
+    *spec* is the governed worker spec the KAS payload is built from. A stub
+    whose server it drops, mutes (``mcp_cleanup.mcp_entry_is_muted``) or marks
+    registry-governed (``mcp_cleanup.mcp_entry_is_registry_governed``) is
+    withdrawn, so a mute or a ``type: registry`` saved after the stubs were
+    selected still takes effect.
+    """
+    from kiro_crew.mcp_cleanup import mcp_entry_is_muted, mcp_entry_is_registry_governed
+
+    servers = spec.get("mcpServers")
+    if not isinstance(servers, dict):
+        return frozenset(stub_names)
+    return frozenset(
+        name
+        for name in stub_names
+        if not isinstance(servers.get(name), dict)
+        or mcp_entry_is_muted(servers[name])
+        or mcp_entry_is_registry_governed(servers[name])
+    )
+
+
 def _missing_agent_reason(agent: str, session_key: str) -> str:
     """The reason a session cannot start on *agent*, which has no spec, for the user.
 
@@ -473,7 +500,13 @@ class KasHarness(MembershipHarness):
         # leaves kiro-cli (``kas_route`` rule 2).
         host_auth: bool | None = None
         switch_allowed = await asyncio.to_thread(kas_route_mod.automatic_switch_allowed)
-        if switch_allowed and kas_bin and kas_route_mod.is_operator_override(kas_bin, ctx.environ):
+        # Off the loop: on Windows the comparison resolves the override's real path.
+        operator_override = False
+        if kas_bin:
+            operator_override = await asyncio.to_thread(
+                kas_route_mod.is_operator_override, kas_bin, ctx.environ
+            )
+        if switch_allowed and operator_override:
             # The operator's binary is never second-guessed (``kas_route`` rule 4).
             switch_allowed = False
         if switch_allowed:
@@ -542,7 +575,7 @@ class KasHarness(MembershipHarness):
             # An operator's KIROCREW_KIRO_BIN is exactly what they asked for --
             # a wrapper of theirs named `kiro-cli` is never swapped out from
             # under them.
-            if not _is_operator_override(kas_bin, ctx.environ):
+            if not operator_override:
                 chat_bin = await asyncio.to_thread(chat_sibling, kas_bin)
                 if chat_bin:
                     kas_bin = chat_bin
@@ -713,6 +746,7 @@ class KasHarness(MembershipHarness):
         member_dispatch: bool = False,
         crew_panel: bool = False,
         session_key: str = "",
+        worker_stub_names: frozenset[str] | None = None,
     ) -> SessionExtras:
         """Project the agent spec onto KAS, for both session start paths.
 
@@ -738,7 +772,14 @@ class KasHarness(MembershipHarness):
         if not agent:
             return SessionExtras(vault_identity=vault_identity)
 
-        def _build() -> tuple[list[dict[str, Any]], Any, dict[str, Any]]:
+        def _build() -> tuple[
+            list[dict[str, Any]],
+            Any,
+            dict[str, Any],
+            dict[str, dict[str, Any]],
+            frozenset[str],
+            str,
+        ]:
             agent_mod.require_fork_governance(agent, work_dir)
             try:
                 agent_mod.ensure_agent_materialized(agent)
@@ -830,6 +871,18 @@ class KasHarness(MembershipHarness):
                     exc_info=True,
                 )
                 stubbed = frozenset()
+            withdrawn: frozenset[str] = frozenset()
+            if worker_stub_names is not None and agent == MATE_WORKER_AGENT:
+                # A crewmate's worker: the names of the stubs its session/new
+                # carries, from the caller's one overlay lookup
+                # (``runtime_session_setup._kas_worker_stub_names``). Asking the
+                # overlay again, by name or by session, could answer differently
+                # and leave a server on neither side.
+                stubbed = worker_stub_names
+                # The worker spec above was read AFTER those stubs were picked,
+                # so a server muted or removed in between is withdrawn from the
+                # session-level array too: this payload is the later reading.
+                withdrawn = withdrawn_worker_stubs(spec, worker_stub_names)
             if member_dispatch:
                 # The member's dashboard server arrives as a session-level entry
                 # too, so it joins the subtraction set for the same reason: an
@@ -848,6 +901,7 @@ class KasHarness(MembershipHarness):
             # registered and reads nothing -- so the check that proves the consumed spec
             # did not change has to compare against this snapshot rather than against a
             # fresh read of the file.
+            withheld: kas_agents_mod.WithheldOut = {}
             custom_agents = kas_agents_mod.build_kas_custom_agents(
                 prompt_dir,
                 agent,
@@ -857,20 +911,35 @@ class KasHarness(MembershipHarness):
                 crew_panel=crew_panel,
                 session_key=session_key,
                 skill_scope_rules=_skill_scope_rules(agent, spec, prompt_dir, work_dir),
+                withheld_out=withheld,
             )
             # Resolved HERE, in this thread, for the runtime's hoist: the managed
             # launch it stamps the session token onto comes from the ``kirocrew``
             # launcher lookup, which probes the filesystem and PATH.
             managed = kas_agents_mod.resolve_managed_entries(custom_agents, agent)
-            return custom_agents, snapshot, managed
+            apps = resolve_app_identity_launches(
+                custom_agents, agent, work_dir, kas_agents_mod.MANAGED_MCP_SERVER_NAMES
+            )
+            notice = withheld_credentials_notice(withheld)
+            return custom_agents, snapshot, managed, apps, withdrawn, notice
 
         try:
-            built, built_from, managed_entries = await asyncio.to_thread(_build)
+            (
+                built,
+                built_from,
+                managed_entries,
+                app_launches,
+                withdrawn_stubs,
+                withheld_notice,
+            ) = await asyncio.to_thread(_build)
             return SessionExtras(
                 custom_agents=built,
                 derived_spec_snapshot=built_from,
                 vault_identity=vault_identity,
                 managed_entries=managed_entries,
+                app_launches=app_launches,
+                withdrawn_stub_names=withdrawn_stubs,
+                withheld_credentials_notice=withheld_notice,
             )
         except ForkGovernanceUnresolved as exc:
             raise AcpRuntimeError(str(exc)) from exc
@@ -920,9 +989,9 @@ class KasHarness(MembershipHarness):
             origin,
         )
         return (
-            f"Rename this mate's template: “{agent}” is reserved for a built-in "
-            "agent, so the mate's own prompt and tools would not run under it. "
-            "Both fixes are on the mate's Agent Template tab: for the mate's own "
+            f"Rename this Bot's template: “{agent}” is reserved for a built-in "
+            "agent, so the Bot's own prompt and tools would not run under it. "
+            "Both fixes are on the Bot's Agent Template tab: for the Bot's own "
             "copy, 'Save as new template…' under another name (it keeps its "
             "customizations) or 'Reset my changes'; for a shared template, the template "
             "picker at the top of the tab."

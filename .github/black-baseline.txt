@@ -92,7 +92,6 @@ src/kiro_crew/apps/builtins/meetings/backend/domain/dictionary.py
 src/kiro_crew/apps/builtins/meetings/backend/providers/calendar.py
 src/kiro_crew/apps/builtins/meetings/backend/providers/tasks.py
 src/kiro_crew/apps/builtins/meetings/backend/routes/calendar.py
-src/kiro_crew/apps/builtins/meetings/backend/routes/tasks.py
 src/kiro_crew/apps/builtins/mochi/backend/routes.py
 src/kiro_crew/apps/builtins/ops_mission_control/backend/ledger_sync.py
 src/kiro_crew/apps/builtins/ops_mission_control/backend/notify_out.py
@@ -202,7 +201,6 @@ src/kiro_crew/mcp_gateway/transport.py
 src/kiro_crew/mcp_tools/artifacts.py
 src/kiro_crew/metrics/http_metrics.py
 src/kiro_crew/metrics/recorder.py
-src/kiro_crew/notifications/resource_pressure.py
 src/kiro_crew/perf_sampler.py
 src/kiro_crew/pod/launchd.py
 src/kiro_crew/publish_sync.py
@@ -214,7 +212,6 @@ src/kiro_crew/skill_usage.py
 src/kiro_crew/skills_dedupe.py
 src/kiro_crew/skills_script_validator.py
 src/kiro_crew/slack/enterprise.py
-src/kiro_crew/slack/events.py
 src/kiro_crew/subagent_scale.py
 src/kiro_crew/testing/channel_fixtures.py
 src/kiro_crew/webhooks.py
@@ -234,8 +231,6 @@ test/test_acp_offload.py
 test/test_acp_prompt_blocks.py
 test/test_agent_discovery.py
 test/test_agent_source_ownership_durability.py
-test/test_ai_agent_runner_coverage.py
-test/test_ai_backend_routes_coverage.py
 test/test_api_agents_order.py
 test/test_api_file_diff.py
 test/test_api_input_validation.py
@@ -244,7 +239,6 @@ test/test_api_shutdown.py
 test/test_app_backend.py
 test/test_app_backend_stale_reap.py
 test/test_app_bridges.py
-test/test_app_cli.py
 test/test_app_config_self_heal.py
 test/test_app_context.py
 test/test_app_dev_mode.py
@@ -299,9 +293,7 @@ test/test_bench_scorers.py
 test/test_bench_windows_symlink.py
 test/test_bootstrap.py
 test/test_brand_name_gate.py
-test/test_browser_cli_snapshots.py
 test/test_browser_recording_skill.py
-test/test_bug_proposal_skip_status_default.py
 test/test_bug_validation_send_message_schema.py
 test/test_build_desktop_launcher_symlink.py
 test/test_build_desktop_rm_resilient.py
@@ -375,7 +367,6 @@ test/test_dashboard_ws_offloop_fanout.py
 test/test_dashboard_yolo_startup.py
 test/test_delete_message.py
 test/test_denied_commands_api.py
-test/test_denied_commands_authority.py
 test/test_denied_commands_hooks.py
 test/test_dependencies.py
 test/test_dependency_ledger.py
@@ -484,8 +475,6 @@ test/test_issue_radar_investigation_tool.py
 test/test_issue_radar_list_probe.py
 test/test_issue_radar_recent_repos.py
 test/test_issue_radar_ref_summary.py
-test/test_issue_radar_routes_ai_coverage.py
-test/test_issue_radar_routes_coverage.py
 test/test_issue_radar_tagging.py
 test/test_issue_summary_workflow.py
 test/test_kas_display_mapping.py
@@ -568,7 +557,6 @@ test/test_notification_legacy_actions.py
 test/test_notification_phase5.py
 test/test_notifications_push.py
 test/test_official_catalog.py
-test/test_omc_ledger_sync_coverage.py
 test/test_onboarding_import.py
 test/test_one_conversation_one_session.py
 test/test_open_dm_retry.py
@@ -655,10 +643,7 @@ test/test_skill_pending.py
 test/test_skill_pending_notify.py
 test/test_skill_providers.py
 test/test_skill_script_validator.py
-test/test_skill_update_flow.py
-test/test_skill_versioning.py
 test/test_slack_dashboard_live_sync.py
-test/test_slack_home_tab.py
 test/test_slack_linked_approval.py
 test/test_slack_mirror_unlink.py
 test/test_slack_pins_reactions.py
@@ -715,7 +700,6 @@ test/test_turn_duration_slack.py
 test/test_turn_duration_task_runner.py
 test/test_turn_duration_workflow.py
 test/test_update_venv_detection.py
-test/test_use_builtin_browser_config.py
 test/test_user_resolution_fallback.py
 test/test_validation.py
 test/test_validation_user_actions.py
@@ -732,10 +716,8 @@ test/test_webhooks_event_loop.py
 test/test_webhooks_signing.py
 test/test_webhooks_store.py
 test/test_website_build_heap.py
-test/test_wecom_config_handlers.py
 test/test_wecom_wire.py
 test/test_weixin_media.py
-test/test_weixin_wire.py
 test/test_windows_sim.py
 test/test_worker_pool.py
 test/test_workflow_permissions.py

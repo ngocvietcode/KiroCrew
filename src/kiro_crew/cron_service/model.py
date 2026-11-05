@@ -226,6 +226,14 @@ class CronJob:
     execution_context: dict[str, Any] | None = None
     approval_mode: str = ""  # "" (default/hook-based) | "auto" (auto-approve all tools)
     acked_items: list[str] = field(default_factory=list)
+    # One id per ``acked_items`` entry, aligned by position ("" for an entry
+    # added without one), so an unack can take back exactly the entry its ack
+    # added even when an equal summary was acknowledged again later.
+    acked_item_ids: list[str] = field(default_factory=list)
+    # Digest of the ``acked_items`` the ids above were written against. A
+    # writer that changed the items without the ids (an older build) leaves a
+    # digest that does not match them, so the ids then name no entry.
+    acked_item_ids_digest: str = ""
     created_by: str = ""  # Slack user ID of the creator (for DM fallback)
     # Provenance of a job seeded from a Schedule-page template. Curated
     # template prompts are COPIED into the job at save time (the user owns and
@@ -330,6 +338,15 @@ class CronJob:
     # ``cron_inject.chat_folder_for_minted_tab``). A RENAME is a no-op: ids
     # are stable, so the job follows the folder under its new name.
     chat_folder_id: str = ""
+    # Optional project directory an agent job's session runs in.
+    # ``""`` (and a record written before the field existed) keeps
+    # today's cwd: the bound agent's workspace, else the per-session scratch
+    # directory. When set, it is the session's cwd for every fire, so the
+    # repo's own ``.kiro/steering/`` and ``AGENTS.md`` load as they would for
+    # an interactive session scoped there. Stored resolved (``realpath``);
+    # validated on write and again at every fire by
+    # ``fields.resolve_project_path``. Agent (message) jobs only.
+    project_path: str = ""
     # Transient-retry telemetry for the LAST completed run. Both fields are
     # written in ONE place, `CronService._execute`, right after it stamps
     # `last_run_ts`: it reads the in-flight `_transient_attempts` counter the

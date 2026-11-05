@@ -108,6 +108,45 @@ a warning naming the app, server and env key when it sees one. How an app may
 receive a vault secret is undecided
 ([#10641](https://github.com/kirodotdev/KiroCrew/issues/10641)).
 
+### Session label for a stdio server (`x-kirocrew-session-label`)
+
+A stdio server that needs to know which chat session it serves (to tie its own
+calls to that chat, say) can opt in on its entry:
+
+```json
+"mcpServers": {
+  "notes": {
+    "command": "python3",
+    "args": ["server.py"],
+    "x-kirocrew-session-label": true
+  }
+}
+```
+
+Only the literal `true` opts in. The entry reaches the agent spec as declared,
+and when a session starts the server receives one extra variable,
+`KIROCREW_SESSION_LABEL`, holding that session's key. That is all it receives: no
+port, no session token, no `KIROCREW_SESSION_KEY`, and no internal secret. The
+label is a name, not a credential, and no Kiro Crew identity resolver reads it, so
+it cannot be presented to the gateway as the session.
+
+The label is set when the server starts and is per session: on the shared
+kiro-cli runtime it rides the session's own `mcpServers` element, and on KAS the
+session's injected agent. It is ABSENT, never stale, in these cases, and the
+server should treat a missing label as "unknown session":
+
+- a warm-pool session, which starts its servers before a chat claims it;
+- a server pooled through the MCP gateway (`mcp_gateway.stub_servers`), which is
+  shared across sessions;
+- an entry the per-session element cannot reproduce exactly, which then starts
+  natively as declared: one with `disabledTools`, `disabled`, `timeout`, `cwd`,
+  `autoApprove`, a non-stdio transport, or an `env` value holding `${NAME}` or a
+  `secret://` reference;
+- registry mode (`agent.mcp_registry_mode`), and any other ACP backend.
+
+The server's `command`, `args` and `env` are exactly what it would have started
+with without the label.
+
 ## Scheduling
 
 ### `crons` — Cron Job Definitions
@@ -871,9 +910,13 @@ no cookie is sent and no other route accepts it. Only `GET`, `POST`, `PUT`,
 
 If the app list cannot be read, a hover on a chat link shows the same notice and
 the list is asked for again. If the frame does not report `ready` within 10 seconds, or the module fails to
-import, or `activate` throws, the host logs the error, shows a short "couldn't
-load this preview" notice under the hovered element, and tries again on a hover
-at least 30 seconds later. When the app is disabled the host sends `hide('disabled')`
+import, or `activate` throws, or no frame can be minted for the app, the host
+logs the error and draws its own card where the app's card would be. The card
+says which of the three happened (it took too long, the app reported an error,
+the app is not available) and has **Retry**, which disposes that provider's
+failed frame and loads a new one for the same link, and a close button; Escape
+closes it too. Without Retry, the next hover at least 30 seconds later tries
+again. When the app is disabled the host sends `hide('disabled')`
 and `dispose`, then removes the frame.
 
 **Plain text (`textPatterns`).** Each entry names text that is not a link but should
@@ -1027,6 +1070,312 @@ second, is dropped unread. If the frame does not report `ready` within 10 second
 or the module fails to import, or `activate` throws or returns no `invoke`, the
 popover says the app didn't open. An `error` shows that the app couldn't finish.
 
+### `contributes.linkOpen` — Open a Claimed Link in the App
+
+A link-open entry lets the user open a link in a chat message inside the app,
+instead of a new browser tab. The host owns the click and the choice; the app owns
+what it shows, in the same sandboxed frame a link preview uses. No app code runs
+until the user picks the app.
+
+```json
+{
+  "contributes": {
+    "linkOpen": [
+      {
+        "id": "open",
+        "entry": "dist/link-open.mjs",
+        "hosts": ["tickets.example.com", ".example.dev"]
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Storage-safe slug, unique within the app |
+| `entry` | string | ESM module, relative to `ui/` (same base as `ui.entry`) |
+| `hosts` | string[] | 1-64 hostnames, with the same rules as `linkPreviews.hosts`. Only `https:` links on the default port and without a user name match |
+| `fullUrl` | boolean | Optional. `open` gets the URL without its query and fragment unless this is `true` and the owner approved it |
+
+At most **one** entry per app; a click goes to the first enabled app whose `hosts`
+claim the link.
+
+**Which clicks.** A plain left click on an `https:` link in a chat message whose
+host the entry claims. A click with Ctrl, Cmd, Shift or Alt, a middle click, a link
+outside a chat message and a link no app claims all behave exactly as before. So
+does a link to the dashboard itself (an artifact or a session), even when the
+dashboard is served at a host the entry claims.
+
+**The choice.** The first click asks: open the link in the app, or in the browser.
+With **Always** checked the answer is remembered for this entry and this one host
+only, not for every host the app claims. A remembered "browser" makes the link an
+ordinary link again. The app's page lists the remembered answers, each with
+**Forget**.
+
+**Approval.** The hosts and `fullUrl` are part of what the owner approves, like
+`linkPreviews`: an update that adds a host or turns `fullUrl` on waits on the app's
+page until the owner approves it. With no host approved the entry is off: no frame,
+no capability, no fetch.
+
+**Where the module runs.** In a host dialog, in a frame created when the user picks
+the app and removed when the dialog closes. It is the shared app frame: opaque
+origin, `credentialless`, the same CSP and `ctx.fetch` as a link preview. The dialog's header
+has one **More actions** menu beside close. It always holds **Open in browser**,
+which is the host's own and always works.
+
+```ts
+export function activate(ctx: {
+  appName: string
+  theme(): 'dark' | 'light'
+  /** fetch() to this app's own backend routes; `path` is relative. */
+  fetch(path: string, init?: RequestInit): Promise<Response>
+}): {
+  // One call per open. Draw the link, then return; throw to fail it.
+  open(link: {
+    url: string                 // no query or fragment unless `fullUrl` was approved
+    theme: 'dark' | 'light'
+    invocationId: string        // the host's id for this open
+    deadlineMs: number          // how long the host waits for open() to settle
+    resize(size: { width: number; height: number }): void
+    close(): void               // the app is done: the host closes the dialog
+    error(message: string): void
+    offerCopy(text: string): Promise<{ ok: boolean; code?: string }>
+    offerOpen(url: string): Promise<{ ok: boolean; code?: string }>  // https only
+  }): void | Promise<void>
+  cancel?(invocationId: string, reason: string): void
+  theme?(theme: 'dark' | 'light'): void
+  dispose?(): void
+}
+```
+
+Each open is one invocation on the shared invocation contract. When `open()`
+settles, the frame reports its size, which tells the host the link is drawn: the
+frame is shown and the deadline stops. When `open()` throws, or `link.error()` is
+called, the open fails. If neither happens within the deadline (10 seconds after the
+module is ready), the host cancels the invocation (`cancel(id, 'deadline')`) and
+shows "couldn't open this link" with **Open in browser**; a frame that does not
+report `ready` within 10 seconds, or whose module fails to import, shows the same.
+Closing the dialog first calls `cancel(id, 'closed')`. `offerCopy` and `offerOpen`
+put a **Copy** or **Open &lt;host&gt;** item in that menu: nothing is
+copied or opened until the user picks it. Links inside the frame open through the
+dashboard's link bridge.
+
+### `contributes.composerActions` — Buttons That Put Text in the Composer
+
+A composer action is a row in the chat composer's **+** menu. When the user clicks
+it, the app's frame opens in a small popover above the composer, and the app hands
+back text. The host puts that text into the empty composer, where the user can
+read it, edit it and send it. The app never sends a message.
+
+```json
+{
+  "contributes": {
+    "composerActions": [
+      {
+        "id": "insert-snippet",
+        "title": "Insert snippet",
+        "icon": "Zap",
+        "entry": "dist/composer.mjs",
+        "popover": { "width": 360, "maxHeight": 320 }
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Storage-safe slug, unique within the app |
+| `title` | string | The row's label, at most 40 characters. The row also shows the app's name |
+| `icon` | string | Optional host glyph name: one of `Shield`, `Bot`, `Search`, `Tag`, `Users`, `Zap`, `Star`, `Package`, `Cat`, `AudioLines`, `Mic`. Any other name falls back to `Package`; a URL is refused |
+| `entry` | string | ESM module, relative to `ui/` (same base as `ui.entry`) |
+| `popover` | object | Optional. `width` 200-480 and `maxHeight` 120-600, in CSS pixels |
+
+At most **two** actions per app. A field of the wrong type, or a field not in this
+table, is refused at install. The block is signed.
+
+**What the app sees.** Nothing from the composer: not the draft, not the selection,
+not the session. The click is the whole input. An app that needs the user's
+words asks for them in its own popover.
+
+**Approval.** Each action is part of what the owner approves for the app. An update
+that adds an action waits on the app's page until the owner approves it; renaming
+one or changing its icon needs nothing. A disabled app, or an action whose approval
+is withdrawn, loses its row, and an open popover is closed.
+
+**Where the module runs.** In the same sandboxed, opaque-origin frame as a link
+preview (see `contributes.linkPreviews`), loaded from
+`/app-frame/<app>/composerActions/<id>/…`. The module exports `activate(ctx)`,
+which returns an `invoke(call)` handler. The host calls it once per click.
+
+```ts
+export function activate(ctx: {
+  appName: string
+  point: 'composerActions'
+  theme(): 'dark' | 'light'
+  /** fetch() to this app's own backend routes; `path` is relative. */
+  fetch(path: string, init?: RequestInit): Promise<Response>
+}): {
+  // Nothing from the composer is passed in: only this click's own controls.
+  invoke(call: {
+    invocationId: string
+    deadlineMs: number        // how long the click has, restarted by each resize
+    signal: AbortSignal       // aborted when the user closes the popover, or at the deadline
+    // Settles with { ok: true } when the host took it, or { ok: false, code }
+    // (`stale`, `too_large`, `not_allowed`, `not_empty`, `not_literal`) when it refused.
+    insert(text: string): Promise<{ ok: boolean; code?: string }>
+    resize(size: { width: number; height: number }): void
+    close(): void
+    error(message: string): void
+  }): void | string | Promise<void | string>  // returning text is the same as call.insert(text)
+  theme?(theme: 'dark' | 'light'): void
+  dispose?(): void
+}
+```
+
+- **One result.** The host takes one `insert` per click. A later one, one after the
+  popover closed, or one over 32,000 characters is refused (`insert` settles with `ok: false`
+  and `stale` or `too_large`).
+- **Time.** The frame must load and report ready within 5 seconds. The click then
+  has 2 minutes, restarted by each `resize`; at the deadline `signal` aborts and
+  the popover says the app took too long.
+- **Only into an empty composer, only text with nothing to resolve.** The host puts
+  your text in only when the composer is empty (no text, no collapsed paste), so
+  your text is the whole draft. If the user clicks with a draft already there, the
+  popover says the draft must be cleared first and your frame is not loaded. If the
+  user types while your frame is open, your `insert` settles `not_empty`. If
+  another tab takes the composer's typing lock, your frame is closed and a late
+  `insert` settles `stale`. Text that
+  would itself be read as more than text is refused and nothing is inserted
+  (`not_literal`): a line whose first non-blank character is `/` or `!` (a
+  terminal command), an `@` that does
+  not follow a letter or digit, a `$` before a letter or digit, the composer's
+  `[ Paste #N · M lines ]`, `[attached_file N]` or `[attached_dir N]` syntax however
+  it is spaced, markdown image syntax `![…](…)`, any raw HTML tag such as `<img>` (the transcript fetches a local image,
+  audio or video destination, decoded), or a path separator followed on the same
+  line by an image suffix. The popover shows the
+  reason and stays open, so you can offer other text. Accepted text is cleaned of
+  control characters (but tab and newline), bidirectional override characters and
+  characters that draw nothing (zero-width, tag characters, variation selectors)
+  and goes in as ordinary text the user can read and edit. Nothing marks it:
+  whatever the user types after it is their own and resolves normally.
+- **Limits.** The frame cannot write the clipboard. Links open through the
+  dashboard's link bridge, and a frame that navigates itself away is closed. A
+  message over 64 KB as JSON, or past a burst of 120 messages refilled at 60 a
+  second, closes the frame.
+
+### `contributes.selectionActions` — Items on Selected Chat Text
+
+A selection action adds an item to the toolbar that appears over text the user
+selects in a chat reply. When the user picks it, the app is handed the selected
+text and nothing else, in a sandboxed frame that opens in a popover. Selection
+elsewhere in the dashboard never reaches an app.
+
+```json
+{
+  "contributes": {
+    "selectionActions": [
+      {
+        "id": "save",
+        "title": "Save to notes",
+        "icon": "Star",
+        "entry": "dist/selection.mjs",
+        "maxLength": 4000,
+        "effects": ["copy", "open"],
+        "popover": { "width": 360, "maxHeight": 480 }
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Storage-safe slug, unique within the app |
+| `title` | string | 1-40 characters. The item's label |
+| `icon` | string | Optional. A name from the host icon set (`Star`, `Tag`, `Bot`, …, as for an app's own `icon`); an unknown name draws the host's glyph |
+| `entry` | string | ESM module, relative to `ui/` (same base as `ui.entry`) |
+| `sources` | string[] | Optional, default `["chat"]`. Where a selection may come from; `chat` (a chat reply) is the only source |
+| `minLength` | integer | Optional, default 1. A shorter selection shows a notice instead of opening the frame |
+| `maxLength` | integer | Optional, 1-8,000, default 8,000. The most text the app is handed, in UTF-16 units; longer selections are cut and `truncated` is set |
+| `effects` | string[] | Optional, default `[]`. Which host buttons the app may fill: `copy`, `open` |
+| `popover` | object | Optional. `width` 200-480 (default 360), `maxHeight` 120-600 (default 480) |
+
+At most **two** items per app. A field with the wrong JSON type is refused, never
+coerced. The block is signed.
+
+**Approval.** Each item is one entry the owner approves for the app, like
+`permissions.api`: `<id>:<sources>:<minLength>-<maxLength>:<effects>`. Installing
+approves what is declared. An update that changes any of those fields (a new
+source, more text, a new effect) waits on the app's page until the owner approves
+it, and until then that item is not offered: no frame is made, and a live frame's
+capability stops renewing and its fetches are refused. A pick from a menu that was
+read before the change is refused too, before any text reaches the app. Removing an
+item needs nothing.
+
+**In the toolbar.** One **Apps** button sits in its own row under Quote, Ask and
+Copy, so the host's row never grows. It appears only while some enabled app has an
+approved item, and also when the dashboard could not load its app list, so a failure
+never hides it silently. It opens a menu of every item, read fresh from the app list
+each time it opens; if that read fails, the menu says so and offers **Retry**. The
+menu scrolls
+when it is taller than the screen. Each item
+names its app in its tooltip and in the popover's header. On a touch device the
+native selection, its handles and its Copy callout are left alone: nothing listens
+for a long-press. The items sit in the toolbar docked above the composer, and the
+popover is a sheet at the bottom of the screen.
+
+**Where the module runs.** On the shared app frame, like a link preview (see
+above), at `/app-frame/<app>/selectionActions/<id>/…`: an iframe that is `sandbox="allow-scripts"` with no `allow-same-origin`,
+`credentialless`, loading the gateway's frame document under its own CSP, made when
+the item is picked and removed when the popover closes. Its capability and its
+frame token are bound to that one item, so they reach nothing for another item or
+point. `ctx` is `{ appName, theme(), fetch }`; `ctx.fetch` reaches the app's own
+routes as for a link preview. The module exports `activate(ctx)` and returns a handler:
+
+```js
+export function activate(ctx) {
+  return {
+    async invoke(selection, call) {
+      // selection: { text, truncated, source: 'chat' }
+      const res = await ctx.fetch('notes', { method: 'POST', body: JSON.stringify({ text: selection.text }) })
+      const { url } = await res.json()
+      document.body.textContent = 'Saved'
+      call.resize({ height: 80 })
+      await call.offerOpen(url)          // the host draws "Open notes.example.com"
+      const { ok } = await call.offerCopy(url)   // the host draws "Copy"
+    },
+    cancel(invocationId, reason) {},     // reason: 'closed', 'deadline' or 'revoked'
+  }
+}
+```
+
+`call` belongs to one invocation:
+
+| Member | What it does |
+|--------|--------------|
+| `invocationId` | The host's id for this pick |
+| `offerCopy(text)` | Offers at most 32,000 UTF-16 units for the host's **Copy** button. Resolves `{ ok: true }` when the host accepted it, or `{ ok: false, code }` with `stale`, `too_large` or `not_allowed` |
+| `offerOpen(url)` | Offers an `https:` URL (at most 2,048 characters, no userinfo) for the host's **Open** button, which names the host and opens a new tab with `noopener,noreferrer`. Resolves like `offerCopy` |
+| `resize({ height })` | The frame height; clamped to 48 and `popover.maxHeight` |
+| `close()` | Ends the invocation and closes the popover |
+| `error(message)` | Ends the invocation and shows the message, as plain text, in host chrome |
+
+**The invocation.** Each pick is one invocation with a host-made `invocationId` the
+frame cannot make. It ends once: the frame closes it, reports an error, or the host
+cancels it (the popover closed, the app went away, or 2 minutes passed with no
+`resize` or offer). Every offer names its invocation and a rising `seq` and is
+answered with an acknowledgement or an error, so an offer for a closed invocation,
+a repeated one, or one of an undeclared kind does nothing. A later offer of the
+same kind replaces the earlier one. The frame never writes the clipboard or opens
+a window: an accepted offer only fills the host's button, which acts on the user's
+click. A link clicked inside the frame goes nowhere; use `offerOpen`.
+
+**Bounds.** A frame that does not activate within 10 seconds, sends a message over
+64 KB or past its burst allowance, or navigates itself away is removed, and the
+popover says the app did not respond.
+
 ### `backend` — App Backend Process
 
 ```json
@@ -1053,7 +1402,10 @@ popover says the app didn't open. An `error` shows that the app couldn't finish.
 > line, so a compiled/binary launcher (e.g. an ELF executable) cannot be
 > auto-detected — declare `"type": "exec"` explicitly for those. Exec
 > backends are POSIX-only: on native Windows the backend is refused at spawn
-> with a logged error (use a Python or Node entry point instead).
+> with a logged error (use a Python or Node entry point instead). The enable,
+> install and update responses then carry a `backend_refused` field with that
+> reason; the app itself still enables, since its other parts do not need the
+> backend.
 
 App backends are accessible through the Gateway's reverse proxy at
 `/apps/{name}/api/{path}`, which avoids CORS issues for dashboard UI pages.
@@ -1589,7 +1941,7 @@ run on at all, this says which CLIENT can render it.
 the app's backend, hooks, agents and crons all run in the gateway — so a browser
 user can still turn the app on and its autonomous side works. Only the app's own
 window is unavailable. The App Store therefore keeps the Enable action in a
-browser and shows a "Desktop app" hint beside it (`AppListRow`, `FeatureCard`,
+browser and shows a "Desktop app" hint beside it (`AppListRow`, `FeaturedSpotlight`,
 `AppDetailPage`); replacing the button with a static claim left remote users with
 no way to enable the app at all.
 
@@ -1617,7 +1969,11 @@ For apps that run outside the dashboard (e.g. Electron apps), the top-level
 
 `POST /api/apps/{name}/open` runs this command in the background. On a
 cloud/remote environment with no display, the endpoint returns the command for
-the user to run locally instead of executing it on the server.
+the user to run locally instead of executing it on the server. On native
+Windows, which has no `/bin/sh`, the command is not run: the endpoint answers
+409 with `code: "app_open_unsupported_platform"` and an error naming the
+platform. The same refusal covers a registry entry's `detectInstalled` probe,
+which reads not-installed there and logs one warning.
 
 #### `openCommand` — Environment
 

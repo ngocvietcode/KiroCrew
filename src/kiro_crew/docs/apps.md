@@ -170,6 +170,18 @@ package and now lives outside it. The page tells you whether to install the exte
 version, or clean up what the old one left behind. Your app data is not touched
 either way.
 
+Some built-in apps move to their own repository. When one of yours does, there is
+nothing to do: Kiro Crew fetches the repository version in the background and
+switches the app over the next time it starts, keeping your data, your settings,
+its permissions and whether it is enabled. Until then the built-in keeps running.
+Only a Kiro Crew release that supports the switch makes it; on an earlier one the
+built-in keeps running unchanged. If the switch cannot happen yet (for example an
+app admission policy on this machine refuses it), the app's page says why, and the
+built-in keeps running. Once the cause is fixed, the next start prepares the switch
+and the start after that makes it.
+After the switch the app updates and uninstalls like any App Store app, and once
+uninstalled it stays uninstalled.
+
 ## From the command line
 
 ```bash
@@ -178,9 +190,16 @@ kirocrew app info meetings             # one app's details
 kirocrew app enable meetings
 kirocrew app disable meetings
 kirocrew app install /path/to/my-app   # install a local app directory
+kirocrew app update my-app             # re-copy it from that directory, keeping its data
+kirocrew app update my-app --source /path/to/my-app-v2   # ...or from another directory
 kirocrew app uninstall my-app          # keeps app data
 kirocrew app uninstall my-app --purge-data   # deletes it permanently
 ```
+
+`update` is what the Update (or Sync) button on an app's page does, from a terminal: the
+running gateway stops the app, replaces its files, keeps its data and whether it
+was enabled, and starts it again. It needs the gateway running; with none to
+reach it changes nothing and says so.
 
 Four more subcommands exist for people building apps rather than using them:
 `import` converts a manifest-declared plugin package into an app directory, `init`

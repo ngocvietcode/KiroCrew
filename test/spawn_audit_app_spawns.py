@@ -587,5 +587,30 @@ BENIGN_APP_SPAWNS: frozenset[str] = frozenset(
         # which a scrubbed-env/filesystem-scoped wrapper would move or forbid.
         "apps/builtins/aws_control/crew/packaging/tests/test_producer.py"
         "::test_cli_subprocess_leaves_no_pycache_in_the_source_tree",
+        # TEST-ONLY, and the spawn is the thing under test: Design Critique's capture
+        # scripts are Node ESM modules, so the only way to call their shipped pure
+        # functions (``hostResolverRule``, ``installSsrfGuard``, ``getPlaywright``) is
+        # a ``node --input-type=module -e <program>`` child. Fixed argv, no shell=True;
+        # the program is a literal built in the test from a ``file://`` URI of the
+        # app's own script and JSON-encoded fixture inputs, the cwd and environment
+        # overrides are the test's own ``tmp_path``. Nothing here is agent-derived.
+        "apps/builtins/design_critique/tests/test_capture_site_resolver_rule.py::_rules",
+        "apps/builtins/design_critique/tests/test_ssrf_guard_fail_closed.py::_run_node",
+        # TEST-ONLY: auto-improvement's git-safety tests. Each builds a repository
+        # under ``tmp_path`` with a fixed ``git`` argv (``init``, ``config``, ``add``,
+        # ``commit``, ``--version``), plants a hook, filter or merge driver in it, then
+        # runs the app's OWN pinned argv (``gate._git_argv``, ``driver_commit._apply_argv``)
+        # against it to prove the planted program never runs. No shell=True and nothing
+        # agent-derived; the repository is the fixture, so sandboxing the spawn would
+        # sandbox the fixture rather than the pin under test.
+        "apps/builtins/auto_improvement/tests/test_ai_spine_gate_fence.py::_git",
+        "apps/builtins/auto_improvement/tests/test_auto_improvement_driver_apply_stdin.py::git",
+        "apps/builtins/auto_improvement/tests/test_auto_improvement_host_git_apply_pins.py::_g",
+        "apps/builtins/auto_improvement/tests/test_auto_improvement_host_git_apply_pins.py"
+        "::test_three_way_apply_runs_no_repo_merge_driver",
+        "apps/builtins/auto_improvement/tests/test_git_safety_config_hooks.py::_git",
+        "apps/builtins/auto_improvement/tests/test_git_safety_config_hooks.py::_git_version",
+        "apps/builtins/auto_improvement/tests/test_git_safety_config_hooks.py"
+        "::test_git_safety_commit_does_not_fire",
     }
 )

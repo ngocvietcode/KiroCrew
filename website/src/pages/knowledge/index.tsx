@@ -18,6 +18,7 @@ import { SettingsTab } from './SettingsTab'
 import { useIngestionJobs } from './useIngestionJobs'
 import type { KnowledgeItem, Entity, Source, NamespaceInfo, IngestionJob } from './types'
 import { fmtNumber } from '../../i18n/format'
+import { itemTypeLabel } from './helpers'
 
 /**
  * Visible label per knowledge status. FULL literal keys, resolved at render —
@@ -110,16 +111,42 @@ function failureText(error: unknown): string {
   return errMessage(error) || i18nT('pages.knowledge.index.error_no_reason')
 }
 
-function BulkActions({ selectedIds, items, onDone }: { selectedIds: Set<string>; items: KnowledgeItem[]; onDone: () => void }) {
+/**
+ * Send every request of a bulk action, wait for all of them, then fail with the
+ * first refusal. `Promise.all` would reject on the first refusal while the rest
+ * are still in flight, so the rollback and its refetch could run before those
+ * writes land.
+ */
+async function settleAll(requests: Promise<unknown>[]): Promise<void> {
+  const results = await Promise.allSettled(requests)
+  const refused = results.find((r): r is PromiseRejectedResult => r.status === 'rejected')
+  if (refused) throw refused.reason
+}
+
+// Each bulk action carries the ids it was started on, and on success drops
+// only those from the selection (`onActed`). The optimistic update hides those
+// rows, which empties the selection while the requests run, so any row checked
+// in that window is a new pick of the user's, not part of the action.
+function BulkActions({ selectedIds, items, onDone, onActed }: { selectedIds: Set<string>; items: KnowledgeItem[]; onDone: () => void; onActed: (ids: string[]) => void }) {
   const queryClient = useQueryClient()
+  // A bulk action that failed part-way still changed the items whose requests
+  // went through. The snapshot puts every selected row back; this refetch takes
+  // away the ones the server did archive or delete, so they are not shown as
+  // live rows that a retry would only fail on again. Awaited by `onError`, so
+  // the mutation stays pending (its buttons disabled) until the reads finish:
+  // a retry's own `cancelQueries` could otherwise cancel this refetch.
+  const refetchAfterPartialFailure = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['knowledge-items'] }),
+    queryClient.invalidateQueries({ queryKey: ['knowledge-stats'] }),
+  ])
 
   const bulkArchiveMutation = useMutation({
-    mutationFn: async (status: string) => {
-      await Promise.all(Array.from(selectedIds).map(id =>
+    mutationFn: async ({ status, ids }: { status: string; ids: string[] }) => {
+      await settleAll(ids.map(id =>
         knowledgeApi(`/items/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
       ))
     },
-    onMutate: async () => {
+    onMutate: async ({ ids }) => {
       // Each action clears the other's failure, so the notice names the latest one.
       bulkDeleteMutation.reset()
       await queryClient.cancelQueries({ queryKey: ['knowledge-items'] })
@@ -128,28 +155,29 @@ function BulkActions({ selectedIds, items, onDone }: { selectedIds: Set<string>;
       // whose payload has no `items` array. Only rewrite item-shaped entries.
       queryClient.setQueriesData<{ items: KnowledgeItem[]; total: number }>({ queryKey: ['knowledge-items'] }, old => {
         if (!old || !Array.isArray(old.items)) return old
-        const kept = old.items.filter(i => !selectedIds.has(i.id))
+        const kept = old.items.filter(i => !ids.includes(i.id))
         return { ...old, items: kept, total: old.total - (old.items.length - kept.length) }
       })
       return { prev }
     },
-    onError: (_err, _vars, ctx) => {
+    onError: async (_err, _vars, ctx) => {
       ctx?.prev.forEach(([key, data]) => queryClient.setQueryData(key, data))
+      await refetchAfterPartialFailure()
     },
-    onSuccess: () => {
+    onSuccess: (_data, { ids }) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] })
       queryClient.invalidateQueries({ queryKey: ['knowledge-stats'] })
-      onDone()
+      onActed(ids)
     },
   })
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: async () => {
-      await Promise.all(Array.from(selectedIds).map(id =>
+    mutationFn: async ({ ids }: { ids: string[] }) => {
+      await settleAll(ids.map(id =>
         knowledgeApi(`/items/${id}`, { method: 'DELETE' })
       ))
     },
-    onMutate: async () => {
+    onMutate: async ({ ids }) => {
       // Each action clears the other's failure, so the notice names the latest one.
       bulkArchiveMutation.reset()
       await queryClient.cancelQueries({ queryKey: ['knowledge-items'] })
@@ -158,18 +186,19 @@ function BulkActions({ selectedIds, items, onDone }: { selectedIds: Set<string>;
       // whose payload has no `items` array. Only rewrite item-shaped entries.
       queryClient.setQueriesData<{ items: KnowledgeItem[]; total: number }>({ queryKey: ['knowledge-items'] }, old => {
         if (!old || !Array.isArray(old.items)) return old
-        const kept = old.items.filter(i => !selectedIds.has(i.id))
+        const kept = old.items.filter(i => !ids.includes(i.id))
         return { ...old, items: kept, total: old.total - (old.items.length - kept.length) }
       })
       return { prev }
     },
-    onError: (_err, _vars, ctx) => {
+    onError: async (_err, _vars, ctx) => {
       ctx?.prev.forEach(([key, data]) => queryClient.setQueryData(key, data))
+      await refetchAfterPartialFailure()
     },
-    onSuccess: () => {
+    onSuccess: (_data, { ids }) => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] })
       queryClient.invalidateQueries({ queryKey: ['knowledge-stats'] })
-      onDone()
+      onActed(ids)
     },
   })
 
@@ -191,9 +220,9 @@ function BulkActions({ selectedIds, items, onDone }: { selectedIds: Set<string>;
         mutations that own it must stay mounted without one. */}
     {selectedIds.size > 0 && (
     <div className="flex items-center gap-2 px-3 py-2 bg-accent/5 border border-accent/20 rounded-lg mb-3">
-      <span className="text-[13px] text-text-strong font-medium">{selectedIds.size} {i18nT('pages.knowledge.index.selected')}</span>
-      <Btn disabled={pending} onClick={() => bulkArchiveMutation.mutate('archived')}>{i18nT('pages.knowledge.index.archive')}</Btn>
-      <Btn disabled={pending} onClick={() => { if (confirm(i18nT('pages.knowledge.index.delete_items_permanently', { count: selectedIds.size }))) bulkDeleteMutation.mutate() }}>{i18nT('pages.knowledge.index.delete')}</Btn>
+      <span className="text-[13px] text-text-strong font-medium">{i18nT('pages.knowledge.index.selected_count', { count: selectedIds.size })}</span>
+      <Btn disabled={pending} onClick={() => bulkArchiveMutation.mutate({ status: 'archived', ids: Array.from(selectedIds) })}>{i18nT('pages.knowledge.index.archive')}</Btn>
+      <Btn disabled={pending} onClick={() => { if (confirm(i18nT('pages.knowledge.index.delete_items_permanently', { count: selectedIds.size }))) bulkDeleteMutation.mutate({ ids: Array.from(selectedIds) }) }}>{i18nT('pages.knowledge.index.delete')}</Btn>
       <Btn onClick={copySelected}><Copy size={12} /> {copied ? i18nT('pages.knowledge.index.copied') : i18nT('pages.knowledge.index.copy_content')}</Btn>
       <button onClick={onDone} className="ml-auto text-[12px] text-muted hover:text-text bg-transparent border-none cursor-pointer">{i18nT('pages.knowledge.index.clear')}</button>
     </div>
@@ -550,7 +579,7 @@ export default function KnowledgePage({ embedded = false }: { embedded?: boolean
           takes its visible label from the matching `optionLabels` slot. */}
       <SimpleSelect
         options={['', ...ITEM_TYPES]}
-        optionLabels={[i18nT('pages.knowledge.index.all_types'), ...ITEM_TYPES.map(t => t.replace(/_/g, ' '))]}
+        optionLabels={[i18nT('pages.knowledge.index.all_types'), ...ITEM_TYPES.map(itemTypeLabel)]}
         value={typeFilter}
         onChange={v => { setTypeFilter(v); setPage(1) }}
         aria-label={i18nT('pages.knowledge.index.filter_by_type')}
@@ -659,7 +688,15 @@ export default function KnowledgePage({ embedded = false }: { embedded?: boolean
               {listFilterBar}
 
               {/* Mounted with no selection too: it owns the bulk failure notice. */}
-              <BulkActions selectedIds={selectedItems} items={visibleItems} onDone={() => setSelectedItems(new Set())} />
+              <BulkActions
+                selectedIds={selectedItems}
+                items={visibleItems}
+                onDone={() => setSelectedItems(new Set())}
+                onActed={ids => setSelectedItems(prev => {
+                  const kept = new Set([...prev].filter(id => !ids.includes(id)))
+                  return kept.size === prev.size ? prev : kept
+                })}
+              />
 
               <ErrorNotice
                 askAgent

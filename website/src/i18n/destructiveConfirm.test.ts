@@ -203,6 +203,7 @@ export const QUOTED_OPERAND_CONFIRM_KEYS = [
   'components.appstore.trustAppModal.scope', // bare {{app}} #6016
   'components.appstore.trustAppModal.title', // bare {{app}} on the code-execution grant #5725
   'pages.appDetailPage.session_approval_confirm_title', // bare {{name}} on the chat-control grant #11192
+  'pages.appsPage.uninstall_app_title', // app-name operand of the Library uninstall confirmation, quoted per locale
   'components.artifactFolderDeleteDialog.delete_folder', // already quoted; pin #5725
   'pages.artifactDeployPage.destroy_confirm',
   'pages.artifactDeployPage.recall_confirm',
@@ -216,6 +217,7 @@ export const QUOTED_OPERAND_CONFIRM_KEYS = [
   'pages.devFleetPage.make_name_live', // ASCII quotes → locale pair #5725
   'pages.devFleetPage.rebase_name', // ASCII quotes → locale pair #5725
   'pages.devFleetPage.remove_name', // ASCII quotes → locale pair #5725
+  'pages.chat.quickAsk.confirm_then', // {{button}} is page-authored DOM text, quoted in all catalogs at introduction
   'pages.overview.agentTemplatesTab.delete_confirm', // quoted in all catalogs at introduction (#12481)
   'pages.overview.promptsTab.delete_confirm', // quoted in all catalogs at introduction (#4634)
   'pages.overview.skillsTab.delete_confirm',
@@ -270,6 +272,9 @@ export const EXEMPT_CONFIRM_PLACEHOLDER_NAMES = new Set([
  * kind-word form and record that decision.
  */
 export const CONFIRM_OPERAND_KEY_EXEMPTIONS: Record<string, string> = {
+  'pages.membersPage.dashboard_download_confirm_body':
+    'kind-word form: the {{name}} operand is the bot\'s display name, joined to its kind '
+    + 'word ("{{name}}\'s Dashboard"), in a confirm for a download, which removes nothing',
   'components.redaction.link_open_confirm_title':
     'the {{host}} operand is a hostname the blocked-link record already passed through a '
     + 'strict host shape (letters, digits, dots, hyphens, underscores, or a bracketed IPv6 '
@@ -279,6 +284,9 @@ export const CONFIRM_OPERAND_KEY_EXEMPTIONS: Record<string, string> = {
     + 'link_open_confirm_title, so it cannot carry a space or a quote',
   'components.redaction.link_open_confirm_body':
     'the {{chars}} operand is a non-negative integer character count, never user text',
+  'pages.chatSidebar.resume_all_confirm_body':
+    'the {{limit}} operand is RESUME_ALL_MAX_RUNNING, a positive integer constant in code, '
+    + 'never user text',
   'components.awsConsentGate.confirmed_on':
     'not a confirmation prompt: a past-tense receipt fragment whose only operand is a '
     + 'machine-formatted date from fmtDate, never user-supplied text',

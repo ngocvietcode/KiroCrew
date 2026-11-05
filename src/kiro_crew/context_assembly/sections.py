@@ -423,6 +423,35 @@ def active_model_block(model_id: str) -> str:
     )
 
 
+def restate_active_model(message: str, stated_id: str, served_id: str) -> str:
+    """*message* with its ``[ACTIVE MODEL]`` block for *stated_id* naming *served_id*.
+
+    A retry loop that switches the model and then re-sends a prompt it already built
+    calls this, so the replayed prompt names the model that will answer it. Only the
+    exact block :func:`active_model_block` rendered for *stated_id* is rewritten, every
+    other byte is kept. An empty *served_id* drops the block, since no model can be
+    named. A message without that block comes back unchanged, as the same object.
+
+    A :class:`~kiro_crew.prompt_segments.SegmentedPrompt` keeps its provenance: only its
+    injected segments are rewritten, never the user's own text.
+    """
+    from kiro_crew.prompt_segments import SOURCE_INJECTED, PromptSegment, SegmentedPrompt
+
+    stale = active_model_block(stated_id)
+    if not stale or stale not in message:
+        return message
+    fresh = active_model_block(served_id)
+    if not isinstance(message, SegmentedPrompt):
+        return message.replace(stale, fresh)
+    segments = [
+        PromptSegment(source, text.replace(stale, fresh) if source == SOURCE_INJECTED else text)
+        for source, text in message.segments
+    ]
+    if all(new.text == old.text for new, old in zip(segments, message.segments)):
+        return message
+    return SegmentedPrompt(segments)
+
+
 def workspace_identity_block(ws_name: str, ws_path: object) -> str:
     """The ``[WORKSPACE IDENTITY]`` block (the ``kirocrew`` agent only).
 
@@ -568,19 +597,19 @@ _BROWSER_SPAN = re.compile(
     re.DOTALL,
 )
 
-# What the marked section becomes while browsing is not set up on this host: no
-# vetted ``playwright-cli`` resolves, and the ``browser`` tool refuses every op. Its
+# What the marked section becomes while browsing is not set up on this host: the
+# Browser Harness is not installed, and the ``browser`` tool refuses every op. Its
 # last sentence covers a session that stays open across the install, which the tool
 # notices on its next call while this session's prompt keeps this text.
 _BROWSER_UNAVAILABLE = (
     "## Browser\n"
     "\n"
-    "Not available in this session: browsing is not set up on this host (no\n"
-    "`playwright-cli`), so the `browser` tool refuses every op. Read pages with\n"
+    "Not available in this session: browsing is not set up on this host (the browser\n"
+    "engine is not installed), so the `browser` tool refuses every op. Read pages with\n"
     "`web_fetch` / `web_search`, and tell a user who needs a real browser that they can\n"
     "install it from Settings → Browser (one click). The `web-preview` marker still\n"
-    "shows a local dev server in the dashboard and needs no `playwright-cli`: read the\n"
-    "`web-preview` skill first. If a `browser` call works anyway,\n"
+    "shows a local dev server in the dashboard's Preview tab and needs no browser\n"
+    "engine: read the `web-preview` skill first. If a `browser` call works anyway,\n"
     "browsing was set up after this session started: read the `web-browse` skill before\n"
     "you drive a page."
 )
@@ -602,3 +631,46 @@ def browser_section(prompt: str, available: bool) -> str:
         return section if available else _BROWSER_UNAVAILABLE
 
     return _BROWSER_SPAN.sub(_resolve, prompt)
+
+
+# The marked sub-agent span: the ``spawn_*`` capability lines and the Subagent
+# Orchestration rules, whose default is "do the task yourself, spawn only when".
+# A crewmate's conductor has none of those tools (``MATE_CONDUCTOR_EXCLUDED_TOOLS``)
+# and its own instructions say the opposite: dispatch longer work to a worker
+# session. Left in, the two defaults disagree on every conductor turn.
+SUBAGENTS_BEGIN = "{{SUBAGENTS_BEGIN}}"
+SUBAGENTS_END = "{{SUBAGENTS_END}}"
+_SUBAGENTS_SPAN = re.compile(
+    r"\{\{SUBAGENTS_BEGIN\}\}\r?\n?(?P<section>.*?)\r?\n?\{\{SUBAGENTS_END\}\}"
+    r"|\{\{SUBAGENTS_(?:BEGIN|END)\}\}",
+    re.DOTALL,
+)
+
+# What the conductor gets in the span's place. It names the tools it lacks so a
+# leftover mention elsewhere does not read as an invitation, and points at the
+# crewmate blocks that carry its real delegation rule.
+_CONDUCTOR_DELEGATION = (
+    "\n### Delegation\n"
+    "\n"
+    "You have no `spawn_run`, `task_run` or `workflow_run`: they are not in your tool\n"
+    "list, and a spawn from this session is refused. Your hand-off is a worker session,\n"
+    "as [HOW YOU WORK] and [CREW MEMBER OPERATING MODE] describe: a quick read or a\n"
+    "small edit you may do here, and longer work goes to a worker.\n"
+)
+
+
+def subagent_section(prompt: str, *, conductor: bool) -> str:
+    """*prompt* with its marked sub-agent span resolved for one agent.
+
+    Every agent but a crewmate's conductor keeps the span word for word and loses
+    only the markers. The conductor gets :data:`_CONDUCTOR_DELEGATION` instead. An
+    unpaired marker is dropped and the text around it kept, as for the Browser span.
+    """
+
+    def _resolve(match: re.Match[str]) -> str:
+        section = match.group("section")
+        if section is None:
+            return ""
+        return _CONDUCTOR_DELEGATION if conductor else section
+
+    return _SUBAGENTS_SPAN.sub(_resolve, prompt)
