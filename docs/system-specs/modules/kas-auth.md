@@ -200,6 +200,16 @@ Every request on the shared auth session is bounded by an explicit `ClientTimeou
 (`total=30s`, `connect=10s`). aiohttp's own default is five minutes, which on a
 black-holed route holds a poll far past its own cadence.
 
+Every request in `auth/` (sign-in, profile resolution and refresh) also names its proxy
+with `proxy=http_proxy.resolve_proxy(url)`. aiohttp reads no proxy setting itself
+(`trust_env` is off, which also keeps its netrc credential lookup off), so without it a
+host that reaches the internet only through a proxy could never sign in, and every KAS
+turn would fail at the first refresh. `resolve_proxy` reads `HTTPS_PROXY`/`HTTP_PROXY`
+and honours `NO_PROXY`; with none set it falls back to what `urllib` finds in the OS
+(on Windows, the static proxy in Internet Settings). A PAC file and a proxy that needs
+NTLM or Kerberos are not covered. `test_kas_auth_proxy.py` pins that every
+`*session.<method>(...)` call under `auth/` passes `proxy=`.
+
 ### Social (Google / GitHub)
 
 Brokered entirely by Kiro's servers — there is **no independent OAuth client** we can
