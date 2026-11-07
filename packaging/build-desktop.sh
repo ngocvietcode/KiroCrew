@@ -39,6 +39,7 @@
 #   UNIVERSAL=0 TARGET_ARCH=x86_64 bash ...    # macOS: single-arch DMG for a named arch
 #   SKIP_FRONTEND=1 bash packaging/...         # reuse an already-staged dist
 #   SKIP_ELECTRON=1 bash packaging/...         # stop after the backend binary
+#   WIN_DIR_ONLY=1 bash packaging/...          # Windows: only dist/win-unpacked, no NSIS installer
 #   BUNDLE_KIRO_CLI=1 bash packaging/...       # also stage a pinned kiro-cli (off by default)
 #   BUNDLE_KAS=0 bash packaging/...            # ship without the bundled KAS engine
 set -euo pipefail
@@ -1841,6 +1842,11 @@ log "Packaging desktop app (electron-builder, version: $KC_VERSION)…"
     run_electron_builder_with_retry "${EB_ARGS[@]}"
   elif [ "$OS" = "windows" ]; then
     EB_ARGS+=( --win )
+    # WIN_DIR_ONLY=1 stops at dist/win-unpacked: no NSIS installer is compressed,
+    # which is most of the packaging time. For local runs; a release needs the installer.
+    if [ "${WIN_DIR_ONLY:-0}" = "1" ]; then
+      EB_ARGS+=( --dir )
+    fi
     run_electron_builder_with_retry "${EB_ARGS[@]}"
   else
     # One invocation PER FORMAT, each preceded by its own beacon stamp, so the

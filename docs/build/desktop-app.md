@@ -632,6 +632,7 @@ The script honors these environment flags:
 | `TARGET_ARCH=arm64` / `TARGET_ARCH=x86_64` | macOS, with `UNIVERSAL=0`: build the single-arch app for the NAMED arch rather than the host's (x86_64 on Apple Silicon runs under Rosetta 2). Arch-gates the backend and the shell; the artifact always carries `-arm64` / `-x64`. Refused outside macOS or with any other value |
 | `SKIP_FRONTEND=1` | Reuse an already-built `website/dist` |
 | `SKIP_ELECTRON=1` | Stop after the bundled backend (no electron-builder) |
+| `WIN_DIR_ONLY=1` | Windows only: build `dist/win-unpacked` and skip compressing the NSIS installer, for a quick local build (a release needs the installer) |
 | `BUNDLE_KIRO_CLI=1` | Stage a pinned kiro-cli into the app (default `0`: the app detects the user's own install; see [Bundled kiro-cli](#bundled-kiro-cli--an-opt-in-off-by-default)) |
 | `KIRO_CLI_VERSION=<version>` / `latest` | With `BUNDLE_KIRO_CLI=1`: override the `packaging/kiro-cli-version` pin; `latest` resolves the upstream manifest instead (still sha256-verified) |
 | `KIROCREW_MANAGED_INSTALL_MARKER=<file>` | Bake that JSON file into the app as the externally-managed marker; a missing or malformed file fails the build (see [Baking the marker into the app](#baking-the-marker-into-the-app-editions)) |
