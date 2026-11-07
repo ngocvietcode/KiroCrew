@@ -31,6 +31,7 @@ from kiro_crew.dashboard.routes import (
     connections,
     memory,
     messaging,
+    network,
     realtime,
     sessions,
     shared_crew,
@@ -56,6 +57,7 @@ _REGISTRARS: tuple[tuple[str, object], ...] = (
     ("system", system.register),
     ("browser_live", browser_live.register),
     ("shared_crew", shared_crew.register),
+    ("network", network.register),
 )
 
 REGISTRAR_NAMES: tuple[str, ...] = tuple(name for name, _ in _REGISTRARS)

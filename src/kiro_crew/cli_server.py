@@ -349,6 +349,14 @@ async def _gateway(
         print(f"👻 Created default config: {config_path()}")
 
     cfg = KiroCrewConfig.load()
+
+    # Point this process, and every child spawned from here on, at the local
+    # authenticating proxy when network.proxy_enabled is on. Before run_gateway,
+    # so no service has opened a connection yet. Off the loop: it spawns the
+    # proxy and waits for its port. A proxy that cannot start changes nothing.
+    from kiro_crew.auth_proxy import start_for_gateway
+
+    await asyncio.to_thread(start_for_gateway, cfg)
     await run_gateway(
         cfg,
         no_dashboard=no_dashboard,

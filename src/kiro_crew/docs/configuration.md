@@ -837,6 +837,45 @@ On the `kas` backend, a background helper whose agent mounts no tool
 |-----|-------------|---------|
 | `power.on_battery` | What Knowledge Library background sweeps do while this machine runs on battery; nothing else reads it yet. `normal` ignores the power source; `reduced` cuts each sweep to a quarter of `knowledge.sweep_chunk_budget`, at least 10 chunks and never more than the configured budget; `paused` skips the sweeps until the machine is back on mains. A document you add yourself always ingests; a folder you add ingests its first paced batch at once, and the rest of a large folder arrives with the sweeps, so under `paused` it waits for mains. A host that cannot report its power source counts as plugged in. Read on Linux and Windows; macOS always counts as plugged in for now | `"normal"` |
 
+### Network (company proxy)
+
+For a network that reaches the internet only through a proxy that asks you to sign in:
+with your Windows account (NTLM or Kerberos, on Windows, no password stored) or with a
+user name and password (Basic). In builds that carry it, a **Company proxy** card under **Settings > Overview**
+opens a form for all of this, with a **Test connection** button; otherwise use the
+commands below. The gateway starts a small proxy on 127.0.0.1 that signs in for
+you, and points itself and every agent, MCP server and shell it starts at it. Those
+children see only a loopback address and a one-time token, never your password. Store
+the password under **Settings > Secrets** first, then:
+
+```bash
+kirocrew config set network.proxy_url http://proxy.example.com:8080
+kirocrew config set network.proxy_username your-user
+kirocrew config set network.proxy_password secret://COMPANY_PROXY_PASSWORD
+kirocrew config set network.proxy_no_proxy .intranet.example.com
+kirocrew config set network.proxy_enabled true
+```
+
+Restart the gateway. The log then shows `auth-proxy: gateway and its children now go
+through 127.0.0.1:...`; if the proxy refuses the credentials it shows
+`auth-proxy: upstream proxy ... rejected basic credentials`.
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `network.proxy_enabled` | Start the local authenticating proxy at gateway start. Needs a restart | `false` |
+| `network.proxy_url` | The company proxy, `http://host:port`. Empty uses the `HTTPS_PROXY` or `HTTP_PROXY` the gateway was started with | `""` |
+| `network.proxy_username` | User name for Basic sign-in. Empty sends no credentials, unless the proxy URL in the environment carries them | `""` |
+| `network.proxy_password` | `secret://NAME`, the vault entry holding the password. A plain password is refused when you save it, so it never lands in `config.json` | `""` |
+| `network.proxy_auth` | `windows` signs in as the Windows account you are logged in with (NTLM or Kerberos; Windows only; no user name or password needed), `basic` uses `proxy_username` and `proxy_password`, `auto` uses Basic when a user name is set and the Windows account otherwise | `"auto"` |
+| `network.proxy_no_proxy` | Comma-separated hosts or domains reached directly. Added to the `NO_PROXY` the gateway started with; `localhost` is always direct | `""` |
+
+To sign in with your Windows account instead of a password, set
+`network.proxy_auth` to `windows` and leave the user name and password empty.
+
+Not supported yet: signing in as a different Windows account, NTLM or Kerberos on
+macOS and Linux, PAC files, and CLI commands run in a separate terminal (they use
+your own `HTTPS_PROXY`).
+
 ### Top level
 
 | Key | Description | Default |

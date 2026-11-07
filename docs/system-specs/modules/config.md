@@ -1530,6 +1530,92 @@ per-person limits at the Crew's. Every switch that changes behaviour is off by
 default. Defaults and meanings: [shared-crew.md](shared-crew.md) section 4, Defaults
 and API.
 
+## Authenticating proxy (`network`)
+
+`config/sections_network.py` owns the section; `src/kiro_crew/auth_proxy/` owns the
+behaviour. Every key is `restart=True`: the proxy is decided once, at gateway start.
+
+- **Where it starts.** `cli_server._gateway()` calls `auth_proxy.start_for_gateway(cfg)`
+  right after `KiroCrewConfig.load()` and before `run_gateway`, so no service has opened a
+  connection yet. With `proxy_enabled` off it does nothing. It never raises: a proxy that
+  cannot start leaves `os.environ` as it was and logs one `auth-proxy: not started:` line
+  naming why (no proxy URL, an `https://` or loopback upstream, a missing vault secret, a
+  process that did not report a port).
+- **What it changes.** On success it sets `HTTP_PROXY`, `HTTPS_PROXY` and their lowercase
+  spellings to `http://crew:<token>@127.0.0.1:<port>`, `NO_PROXY`/`no_proxy` to the boot
+  `NO_PROXY` plus `proxy_no_proxy` plus `localhost,127.0.0.1,::1`, and
+  `KIROCREW_AUTH_PROXY_ORIGIN` to the upstream without credentials. Every child spawned
+  afterwards inherits them: `sandbox_spawn.scrub_agent_subprocess_env` does not drop proxy
+  variables. The gateway's own clients read them per request through
+  `http_proxy.resolve_proxy`.
+- **The process.** `python -s -P -m kiro_crew.auth_proxy`, its own process group, no
+  console window. The gateway writes one JSON line on its stdin (token, upstream,
+  username, password, `no_proxy`, port) and keeps the pipe open; the process answers
+  `{"port": N}` or `{"error": ...}` on stdout and exits when stdin closes, so it ends with
+  the gateway. Its stderr is copied into the gateway log. An exited process is restarted
+  on the same port and token (the backoff is `RESTART_BACKOFF_SECS`), because running
+  children already hold that URL.
+- **Upstream and credentials.** `proxy_url`, else the `HTTPS_PROXY`/`HTTP_PROXY` the
+  gateway started with (when that is the loopback URL of an earlier gateway,
+  `KIROCREW_AUTH_PROXY_ORIGIN`). Only `http://` upstreams. With `proxy_username` set the
+  password is the vault entry `proxy_password` names (`secret://NAME`). A plain value is
+  refused at write time by `loader_document._refuse_proxy_password_plaintext` (part of
+  `_refuse_unpublishable`, so `kirocrew config set` and dashboard writes alike), unless
+  this write leaves a value already on disk unchanged; at load a plain value reads as
+  empty with a warning. Without it, credentials in the
+  environment URL are used, with a warning to move them to the vault. Basic is sent
+  preemptively on every upstream request.
+- **Sign-in mode (`proxy_auth`).** `auth.resolve_auth_mode` is the one rule, shared by the
+  supervisor and the dashboard test: `basic` and `windows` mean themselves; `auto` (the
+  default) is Basic when a user name is set, so an existing Basic setup keeps working, and
+  otherwise the Windows account where SSPI exists (`none` elsewhere). An unknown value
+  reads as `auto` with a warning. `windows` off Windows refuses the launch.
+- **Windows sign-in.** `auth_proxy/sspi.py` calls SSPI through ctypes
+  (`AcquireCredentialsHandleW` / `InitializeSecurityContextW`) as the account the proxy
+  process runs as; no password is read or stored. `WindowsAuth` waits for the proxy's
+  `407`, prefers `Negotiate` (Kerberos when `HTTP/<proxy host>` can be ticketed, else
+  NTLM) over `NTLM`, and remembers the choice so later connections send their first token
+  at once. One credential handle per package is shared; each connection gets its own
+  context, stepped in a worker thread (Kerberos may reach the domain controller).
+- **The exchange** (`auth_proxy/handshake.py`) is shared by `CONNECT`, plain HTTP and the
+  connection test. Each leg of NTLM/Negotiate stays on one upstream connection: every
+  `407` body is read to its end (`Content-Length` or chunked, at most 1 MiB), and a
+  connection the proxy closes is replaced only before the first token of an exchange;
+  closed mid-exchange, the attempt is a rejection. A plain-HTTP request through the
+  upstream is held whole (at most 1 MiB; chunked gets 411, larger 413) so each leg can
+  resend it.
+- **What the proxy serves.** It binds 127.0.0.1 only and serves a request only when its
+  `Proxy-Authorization: Basic` password equals the token (`hmac.compare_digest`);
+  otherwise 407 with a Basic challenge. `CONNECT` tunnels end to end (TLS is never
+  terminated); a plain-HTTP absolute-form request is forwarded once with
+  `Connection: close`. Loopback, link-local and unspecified destinations get 403. A
+  `no_proxy` host is reached directly. An upstream 407 is answered 407 without relaying the
+  upstream's challenge, and logged with the scheme, user and the schemes the upstream
+  offers; an unreachable upstream is 502. At most 256 tunnels at once (503 beyond). No log
+  line carries a header value, password or token (`test_no_log_call_in_the_proxy_touches_a_secret`).
+- **Dashboard API** (`dashboard/handlers/network_proxy.py`, routes in
+  `dashboard/routes/network.py`, registered last in `_REGISTRARS`). All three are owner
+  only (403 `owner_only` otherwise) and audited to SEL without values.
+  `GET /api/network/proxy` answers the saved keys, `has_password` (whether the vault
+  holds the entry `proxy_password` names; the password is never returned),
+  `restart_required` (a save happened since this gateway started), and
+  `auth_proxy.supervisor.running_status()`: `running` (port, upstream, user, `no_proxy`)
+  or `null` with `not_started` naming the boot refusal. `POST /api/network/proxy` saves
+  the keys through `run_config_write(update_config_locked)`; a typed `password` is stored
+  in the vault as `NETWORK_PROXY_PASSWORD` and the key set to its reference,
+  `clear_password` removes that entry, and an `https://` URL is refused 400.
+  `POST /api/network/proxy/test` runs `auth_proxy.probe.probe_upstream`: one
+  `CONNECT oidc.us-east-1.amazonaws.com:443` through the given upstream (the stored
+  password when none is typed; `auth` picks the sign-in like `proxy_auth`), answering
+  `outcome` `ok` (with the `scheme` that signed in), `rejected` (with the schemes the
+  proxy offers), `refused`, `unreachable`, `timeout` or `bad_response`.
+- **Dashboard UI.** Not in core: the Sao Khuê edition (`editions/saokhue/`, composed by
+  `packaging/build-saokhue.sh` through the Overview status-card seam) draws a Company
+  proxy card that opens the settings dialog. A stock build has no UI for these keys.
+- **Not covered yet.** A Windows sign-in as an account other than the logged-on one,
+  NTLM/Kerberos off Windows, PAC/WPAD discovery, a company CA for Node children, and CLI
+  commands run outside the gateway.
+
 ## Unknown keys are preserved on round-trip
 
 `save()` re-emits the whole dataclass, so anything the running build does not

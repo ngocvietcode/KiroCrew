@@ -305,6 +305,7 @@ def _refuse_unpublishable(data: dict, path: Path) -> None:
     _refuse_deepseek_env_plaintext(data, path)
     _refuse_vault_env_plaintext(data, path, "strands_env", "a Strands session")
     _refuse_agent_env_entries(data, path)
+    _refuse_proxy_password_plaintext(data, path)
 
 
 def _refuse_deepseek_env_plaintext(data: dict, path: Path) -> None:
@@ -428,6 +429,42 @@ def _refuse_agent_env_entries(data: dict, path: Path) -> None:
         f"agent.env refuses {detail}. Nothing was written, because an agent "
         "process would never receive that variable: remove or rename the entry, "
         "and keep credentials under Settings > Secrets."
+    )
+
+
+def _refuse_proxy_password_plaintext(data: dict, path: Path) -> None:
+    """Refuse a password typed straight into ``network.proxy_password``.
+
+    The load ignores such a value with a warning (``sections_network``), so a write
+    that stored it would leave the password in plaintext on disk while the proxy
+    signed in with none. Refused here instead -- ``kirocrew config set`` prints the
+    message, a dashboard write answers 400 -- and nothing is written. The message
+    never carries the value.
+
+    Scoped to what THIS write does, like :func:`_refuse_agent_env_entries`: a plain
+    value a hand edit already landed, which this write leaves exactly as it found
+    it, publishes with a warning, so writers that never touch ``network`` keep
+    working.
+    """
+    network = data.get("network") if isinstance(data, dict) else None
+    value = network.get("proxy_password") if isinstance(network, dict) else None
+    if not _sections.proxy_password_is_plaintext(value):
+        return
+    try:
+        document = json.loads(read_config_text(path))
+    except (OSError, ValueError):
+        document = None
+    on_disk = document.get("network") if isinstance(document, dict) else None
+    if isinstance(on_disk, dict) and on_disk.get("proxy_password") == value:
+        logger.warning(
+            "config.json already holds a plain network.proxy_password; it is ignored. "
+            "Store the password under Settings > Secrets and set secret://NAME."
+        )
+        return
+    raise ConfigWriteRefused(
+        "network.proxy_password takes a secret://NAME vault reference, not a password. "
+        "Nothing was written: store the password under Settings > Secrets, then set "
+        "network.proxy_password to secret://<that name>."
     )
 
 

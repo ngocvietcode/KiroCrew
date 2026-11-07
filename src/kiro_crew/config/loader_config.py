@@ -102,6 +102,7 @@ from kiro_crew.config.sections import (
     MemoryStoreConfig,
     MessagingConfig,
     MonitoringConfig,
+    NetworkConfig,
     PowerConfig,
     PublishConfig,
     ResourceLimitsConfig,
@@ -187,6 +188,13 @@ class KiroCrewConfig:
         metadata=_meta(
             "Telemetry",
             "Metrics telemetry (local-first JSONL sink). Off by default.",
+        ),
+    )
+    network: NetworkConfig = field(
+        default_factory=NetworkConfig,
+        metadata=_meta(
+            "Network",
+            "Company proxy the gateway and its agents go through. Off by default.",
         ),
     )
     stt: SttConfig = field(
@@ -748,6 +756,7 @@ class KiroCrewConfig:
             "session_summary": asdict(self.session_summary),
             "session_environments": asdict(self.session_environments),
             "telemetry": asdict(self.telemetry),
+            "network": asdict(self.network),
             "snapshot_dir": self.snapshot_dir,
             "timezone": self.timezone,
             "auto_update": self.auto_update,

@@ -376,6 +376,11 @@ from kiro_crew.config.sections_limits import (  # noqa: F401
     _limit_int,
     parse_autocompact_pct,
 )
+from kiro_crew.config.sections_network import (  # noqa: F401
+    NetworkConfig,
+    build_network_config,
+    proxy_password_is_plaintext,
+)
 from kiro_crew.config.sections_session import (  # noqa: F401
     DEFAULT_KIRO_TEMPLATE,
     STAR_ORDER_MAX,
@@ -550,6 +555,7 @@ _OWNERS = (
     "kiro_crew.config.sections_browser",
     "kiro_crew.config.sections_decisions",
     "kiro_crew.config.sections_telemetry",
+    "kiro_crew.config.sections_network",
 )
 for _owner in _OWNERS:
     _importlib.import_module(_owner)
