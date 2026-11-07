@@ -590,6 +590,7 @@ from kiro_crew.slack.gateway_runtime.subagent_wiring import (
     _WORKFLOW_STEP_PREFIXES,
     _spawn_parent_slot,
     _subagent_batch_pending,
+    _subagent_nested_live,
     _subagent_queued_count,
     _subagent_work_pending,
 )
@@ -765,6 +766,7 @@ class GatewayOrchestrator:
     channel_history: ChannelHistory | None
     dashboard_state: DashboardState | None
     _background_tasks: set[asyncio.Task]
+    _skills_sync_task: "asyncio.Task[list[tuple[str, Path]]] | None"
     _mcp_launch_approval_ready: asyncio.Event
     _memory_startup: MemoryStartup | None
     _memory_startup_task: asyncio.Task | None
@@ -790,6 +792,8 @@ class GatewayOrchestrator:
     _update_check_task: "asyncio.Task[None] | None"
     _profile_watch_task: "asyncio.Task[None] | None"
     _update_apply_deferred: bool
+    _restart_gate_hold: "asyncio.Task[None] | None"
+    _update_pause_holder: str | None
     _pending_update_respawn: Callable[[], str] | None
     _pending_update_mandatory: bool
     _pending_update_mandatory_key: str
@@ -1109,6 +1113,9 @@ class GatewayOrchestrator:
     _UPDATE_DRAIN_TIMEOUT_SECS = _upd_sched._UPDATE_DRAIN_TIMEOUT_SECS
     _prepare_auto_update_apply = _upd_sched._prepare_auto_update_apply
     _finish_auto_update_apply = _upd_sched._finish_auto_update_apply
+    _RESTART_GATE_HOLD_SECS = _upd_sched._RESTART_GATE_HOLD_SECS
+    _restart_gate_when_idle = _upd_sched._restart_gate_when_idle
+    _release_restart_gate_hold = _upd_sched._release_restart_gate_hold
     _wheel_apply_module = staticmethod(_upd_sched._wheel_apply_module)
     _dashboard_policy_applies = staticmethod(_upd_sched._dashboard_policy_applies)
     _settle_update_work = _upd_sched._settle_update_work

@@ -33,7 +33,9 @@ from typing import TYPE_CHECKING, Iterable, Iterator, Literal, NamedTuple
 
 import kiro_crew._facade_mirror as _facade_mirror
 from kiro_crew import hooks as hooks_module  # noqa: F401
-from kiro_crew import pinned_fs, skill_trust  # noqa: F401
+from kiro_crew import pinned_fs  # noqa: F401
+from kiro_crew import skill_trust  # noqa: F401
+from kiro_crew import skill_live_loaders as _live_loaders
 from kiro_crew import skills_body_reads as _body_reads
 from kiro_crew import skills_builtin_sync as _builtin_sync
 from kiro_crew import skills_candidate_tree as _candidate_tree
@@ -432,10 +434,12 @@ class SkillsLoader:
         self._catalog_drop_lock = threading.Lock()
         self._closed = False
         self._disabled_apps_cache: tuple[float, frozenset[str]] | None = None
-        #: ``id(catalog list) -> (that list, disabled apps, visible rows)``; see
-        #: ``skill_runtime.catalog._iter_visible``.
+        self._released_apps_cache: tuple[float, frozenset[str]] | None = None
+        #: ``id(catalog list) -> (that list, (disabled apps, released apps), visible
+        #: rows)``; see ``skill_runtime.catalog._iter_visible``.
         self._visible_memo: dict[
-            int, tuple[list[tuple[str, Path, str | None]], frozenset[str], list]
+            int,
+            tuple[list[tuple[str, Path, str | None]], tuple[frozenset[str], frozenset[str]], list],
         ] = {}
         # (canonical key, allowed) pairs already audited, so the enforcement
         # record is written on first use rather than once per message.
@@ -524,6 +528,9 @@ class SkillsLoader:
         self._config_sub = live.subscribe(
             "skills.extra_paths", callback=self._on_config_change, name="SkillsLoader"
         )
+        # Last, once every field an invalidation touches exists: a link the app
+        # bridge adds or removes under this root clears this loader's catalog too.
+        _live_loaders.track(self)
 
     def close(self) -> None:
         """Release persistent resources owned by this loader.

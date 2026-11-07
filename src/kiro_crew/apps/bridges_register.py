@@ -16,7 +16,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from kiro_crew.apps.bridges_agents import _deregister_agents, _register_agents
 from kiro_crew.apps.bridges_crons import _deregister_crons, _register_crons
@@ -39,7 +39,7 @@ from kiro_crew.apps.bridges_sources import (
     _registration_source,
     _safe_link_name,
 )
-from kiro_crew.apps.manager import get_app, get_app_manifest, list_apps
+from kiro_crew.apps.manager import app_enabled_state, get_app, get_app_manifest, list_apps
 from kiro_crew.apps.manifest import (
     AppManifest,
     Containment,
@@ -174,11 +174,17 @@ def _prune_stale_app_resources(app_name: str, manifest: AppManifest, app_root: P
                 logger.info("Pruned %d stale app MCP server(s) for %s", len(stale), app_name)
 
 
-def register_app(app_name: str) -> RegistrationResult:
+def register_app(
+    app_name: str, prior_agent_configs: Mapping[str, dict[str, Any]] | None = None
+) -> RegistrationResult:
     """Register all executable resources for an admitted installed app.
 
     Third-party resources come from the installed app snapshot. Shipped builtin
     resources come from the immutable manifest root that proves their provenance.
+
+    ``prior_agent_configs`` is the app's agent configs as they were before the caller
+    deregistered it (``snapshot_app_agent_configs``), so the user's edits in them are
+    carried into the fresh copies (see ``_register_agents``).
 
     Apps with ``resources="app"`` manage their own resource registration
     (agents, skills, MCP servers via SDK). Bridge registration is skipped
@@ -238,7 +244,9 @@ def register_app(app_name: str) -> RegistrationResult:
         result.errors.append(f"MCP server registration failed: {exc}")
 
     try:
-        result.agents = _register_agents(app_name, manifest, app_root)
+        result.agents = _register_agents(
+            app_name, manifest, app_root, prior_configs=prior_agent_configs
+        )
     except Exception as exc:
         result.errors.append(f"agent registration failed: {exc}")
 
@@ -305,6 +313,25 @@ def refresh_app_agents(app_name: str, io_failures: list[str] | None = None) -> l
         _deregister_agents(app_name)
         return []
     return _register_agents(app_name, manifest, app_root, io_failures=io_failures)
+
+
+def refresh_app_agents_if_enabled(app_name: str) -> None:
+    """Re-materialize *app_name*'s agent configs if it is enabled. Blocking.
+
+    For a host-wide input those configs derive from that changed at runtime: the
+    computer-use enable decides whether ``kirocrew-computer`` is copied in
+    (``_materialize_managed_refs``). The caller holds the app's
+    ``app_lifecycle_lock``, which serializes this with the gateway's own update,
+    disable and uninstall. A CLI disable runs in another process, so enablement is
+    re-read after the rewrite too, as ``backend_runtime.registration`` does: a
+    disable that landed meanwhile gets the agents removed again. An unreadable state
+    writes nothing before the rewrite and deletes nothing after it.
+    """
+    if app_enabled_state(app_name) is not True:
+        return
+    refresh_app_agents(app_name)
+    if app_enabled_state(app_name) is False:
+        _deregister_agents(app_name)
 
 
 def reconcile_enabled_app_resources() -> dict[str, int]:

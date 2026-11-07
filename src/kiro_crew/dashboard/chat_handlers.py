@@ -24,6 +24,7 @@ from aiohttp.client_exceptions import ClientConnectionResetError  # noqa: F401
 
 from kiro_crew import members as members_mod  # noqa: F401
 from kiro_crew import model_registry  # noqa: F401
+from kiro_crew import turn_timing  # noqa: F401 -- chat_api.chat_send runs on these globals
 from kiro_crew._facade_compose import compose as _facade_compose
 from kiro_crew.acp.client import AcpModelUnavailable
 from kiro_crew.agent_discovery import (  # noqa: F401
@@ -64,6 +65,7 @@ from kiro_crew.dashboard.channel_slots import channel_slot_name, note_slot_close
 from kiro_crew.dashboard.chat_api import agent_switch as _owner_agent_switch
 from kiro_crew.dashboard.chat_api import app_admission as _owner_app_admission
 from kiro_crew.dashboard.chat_api import chat_send as _owner_chat_send
+from kiro_crew.dashboard.chat_api import conductor_close as _owner_conductor_close
 from kiro_crew.dashboard.chat_api import continue_turn as _owner_continue_turn
 from kiro_crew.dashboard.chat_api import followup_card as _owner_followup_card
 from kiro_crew.dashboard.chat_api import handover_drain as _owner_handover_drain
@@ -71,6 +73,7 @@ from kiro_crew.dashboard.chat_api import pending_context as _owner_pending_conte
 from kiro_crew.dashboard.chat_api import project_lists as _owner_project_lists
 from kiro_crew.dashboard.chat_api import prompt_queue as _owner_prompt_queue
 from kiro_crew.dashboard.chat_api import resume as _owner_resume
+from kiro_crew.dashboard.chat_api import resume_window as _owner_resume_window
 from kiro_crew.dashboard.chat_api import session_relaunch as _owner_session_relaunch
 from kiro_crew.dashboard.chat_api import slot_approval as _owner_slot_approval
 from kiro_crew.dashboard.chat_api import slot_create as _owner_slot_create
@@ -137,6 +140,10 @@ from kiro_crew.dashboard.chat_api.chat_send import (  # noqa: F401
     steer_is_auto,
     write_sse_or_abort,
 )
+from kiro_crew.dashboard.chat_api.conductor_close import (  # noqa: F401
+    _close_managed,
+    _conductor_line,
+)
 from kiro_crew.dashboard.chat_api.continue_turn import (  # noqa: F401
     SlotContinueRefusal,
     _is_interrupted,
@@ -199,13 +206,15 @@ from kiro_crew.dashboard.chat_api.resume import (  # noqa: F401
     _live_slot_resume_payload,
     _materialise_slot_from_history,
     _normalise_structured_content,
-    _reconcile_slot_window,
     _redact_history_rows,
     _resume_refusal_response,
     _resume_session_identity,
     _resume_slot_from_history_noted,
     api_chat_slot_resume,
     resume_slot_from_history,
+)
+from kiro_crew.dashboard.chat_api.resume_window import (  # noqa: F401
+    _reconcile_slot_window,
 )
 from kiro_crew.dashboard.chat_api.session_relaunch import (  # noqa: F401
     api_chat_slot_project,
@@ -412,6 +421,7 @@ from kiro_crew.dashboard.chat_persistence import (  # noqa: F401
 from kiro_crew.dashboard.chat_runner import (  # noqa: F401
     _arm_pending_reset_retry,
     _context_usage_payload,
+    _forwards_harness_command,
     _run_chat,
     _start_next_queued_turn,
     _sync_served_model,
@@ -560,6 +570,7 @@ from kiro_crew.dashboard.slot_retention import (  # noqa: F401
 )
 from kiro_crew.dashboard.state import (  # noqa: F401
     _MAX_DISMISSED_SOURCE_LINKS,
+    TURN_OPENING_INJECT_KINDS,
     DashboardState,
     _ChatSlot,
     _mark_permission_resolved,
@@ -939,13 +950,16 @@ def _orphan_in_current_turn(slot: _ChatSlot, stop_id: str) -> bool:
     for msg in reversed(slot.messages):
         if msg.get("role") in _TURN_OPENER_ROLES:
             return False
-        # The grouping's SECOND turn-flushing path is not role-based: a
-        # synthesis injection (role "inject" stamped meta.injectKind ==
-        # "synthesis" by _run_pending_synthesis) closes the open batch too —
-        # mirrors isSynthesisInjection in groupDisplayItems.ts, keyed on the
-        # meta wire contract exactly as it is. Plain inject rows
-        # (cron/recovery notes) are passive on both sides and walked past.
-        if msg.get("role") == "inject" and (msg.get("meta") or {}).get("injectKind") == "synthesis":
+        # An inject row that dispatched a turn of its own (a cron delivery, an
+        # app message, an automation notice, a synthesis) opens a turn in the
+        # grouping too -- mirrors opensDisplayTurn / injectOpensTurn in
+        # groupDisplayItems.ts, keyed on the meta.injectKind wire contract. A
+        # recovery or user_replay inject continues the turn above it, and an
+        # unstamped inject (a note) dispatches nothing; both are walked past.
+        if (
+            msg.get("role") == "inject"
+            and (msg.get("meta") or {}).get("injectKind") in TURN_OPENING_INJECT_KINDS
+        ):
             return False
         cls_val = msg.get("cls", "")
         if not cls_val or not isinstance(cls_val, str) or "stop_event" not in cls_val:
@@ -1316,6 +1330,7 @@ _facade_compose(
         _owner_agent_switch,
         _owner_app_admission,
         _owner_chat_send,
+        _owner_conductor_close,
         _owner_continue_turn,
         _owner_followup_card,
         _owner_handover_drain,
@@ -1323,6 +1338,7 @@ _facade_compose(
         _owner_project_lists,
         _owner_prompt_queue,
         _owner_resume,
+        _owner_resume_window,
         _owner_session_relaunch,
         _owner_slot_approval,
         _owner_slot_create,

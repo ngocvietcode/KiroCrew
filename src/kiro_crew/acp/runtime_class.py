@@ -188,6 +188,7 @@ class AcpRuntime:
     send_request = _rt_wire.send_request
     send_notification = _rt_wire.send_notification
     _refuse_write_if_dead = _rt_wire._refuse_write_if_dead
+    _record_sent = _rt_wire._record_sent
     _stdin_write_lock = _rt_wire._stdin_write_lock
     _write_response_bounded = _rt_wire._write_response_bounded
     _write_request_bounded = _rt_wire._write_request_bounded
@@ -341,6 +342,10 @@ class AcpRuntime:
         # positive "the engine is drawing its credential from Crew" signal; later
         # ones (the engine refreshes ahead of expiry) drop to DEBUG.
         self._kas_host_auth_logged = False
+        # The last failed credential callback's reason, logged at WARNING once per
+        # runtime until a callback succeeds or the reason changes: a signed-out
+        # engine re-asks about twice a second, and one line says it all.
+        self._kas_host_auth_failure_logged: str | None = None
         # The one MCP sign-in in flight on this process, as (session_id,
         # server_name). The engine's consent-URL request names neither, so at
         # most one sign-in runs at a time and its URL goes to the session that
@@ -632,6 +637,7 @@ class AcpRuntime:
         # The mask set this spawn asked for, so a trusted corroboration run can
         # exercise the same mounts rather than a weaker profile.
         self._sandbox_hidden_dirs: tuple[str, ...] = ()
+        self._child_env_names: frozenset[str] = frozenset()  # set by the launch tail
         # Unroutable-frame drop accounting: (sessionId, method) → count since
         # the last flush, plus the monotonic timestamp of that flush (0.0 = no
         # window open yet; the first counted drop opens it). Written ONLY from

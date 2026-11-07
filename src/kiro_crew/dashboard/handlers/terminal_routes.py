@@ -72,7 +72,7 @@ async def api_terminal_create(request: web.Request) -> web.Response:
         )
         return web.json_response(
             {"error": f"Max {max_sessions} sessions", "code": "terminal_max_sessions"},
-            status=429,
+            status=409,
         )
 
     session_id = uuid.uuid4().hex[:12]
@@ -120,22 +120,15 @@ async def api_terminal_delete(request: web.Request) -> web.Response:
     owner_denied = await require_owner_dashboard_request(request, "terminal.session.delete")
     if owner_denied is not None:
         return owner_denied
-    if not _is_enabled(request):
-        _sel().log_api_access(
-            caller=caller,
-            operation="terminal.session.delete",
-            outcome="denied",
-            source="dashboard",
-            resources="feature_disabled",
-        )
-        return web.Response(status=403, text="Terminal panel disabled")
+    # No panel-enabled check: turning the panel off must not strand a shell
+    # opened before it, so its owner can still stop it.
 
     session_id = request.match_info.get("session_id", "")
     # Same bound ``api_terminal_ws`` applies when a session is created, so an id
     # outside it provably keys nothing in this registry. Rejecting it here means
     # a malformed request is told so, rather than being answered "no such
     # session" after the lookup. Plaintext 400 to match this handler's other
-    # responses (401/403/404 above and below are all plaintext).
+    # responses (401 above, 404/409 below are all plaintext).
     if not session_id or len(session_id) > _MAX_SESSION_ID_LEN:
         _sel().log_api_access(
             caller=caller,

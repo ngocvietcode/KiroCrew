@@ -37,6 +37,7 @@ from kiro_crew import (  # noqa: F401
     runtime_death,
     session_directive,
     shutdown_event,
+    turn_timing,
 )
 from kiro_crew.acp.client import (
     AcpAuthRequired,
@@ -139,6 +140,12 @@ from kiro_crew.dashboard.chat_turn.acp_recovery import (  # noqa: F401
     _on_acp_transient_retry,
     _on_process_died,
 )
+from kiro_crew.dashboard.chat_turn.agent_started import (  # noqa: F401
+    _ask_the_owed_cancel_answered,
+    _close_agent_turn_stream,
+    _send_owed_agent_cancel,
+    is_agent_started_row,
+)
 from kiro_crew.dashboard.chat_turn.app_agent_binding import (
     _on_app_agent_not_loaded,
     _recover_app_agent_binding,
@@ -226,8 +233,9 @@ from kiro_crew.dashboard.chat_turn.session_reset import (
     _turn_release_session,
     _wake_pending_reset_retry,
 )
-from kiro_crew.dashboard.chat_turn.slash_commands import (
+from kiro_crew.dashboard.chat_turn.slash_commands import (  # noqa: F401
     _answer_slash_without_channel,
+    _forwards_harness_command,
     _turn_compact_command,
     _turn_slash_gate,
 )
@@ -385,6 +393,7 @@ from kiro_crew.image_artifacts import register_images_off_loop
 from kiro_crew.llm_helpers import (  # noqa: F401
     TRANSIENT_RETRIES,
     PromptBusyExhaustedError,
+    acp_error_is_pipe_death,
     acp_error_is_session_not_found,
     acp_error_is_transient,
     advance_fallback_candidate,
@@ -611,11 +620,6 @@ def _member_capable_backend_names() -> str:
     """
     names = sorted(ACP_BACKENDS_MEMBER_CAPABILITIES - {ACP_BACKEND_KIRO})
     return ", ".join(names[:-1]) + " or " + names[-1] if len(names) > 1 else names[0]
-
-
-# One retry task per slot key, deduped — a decline observed by the retry task
-# itself re-enters _arm_pending_reset_retry and must not stack a second task.
-_pending_reset_retries: dict[str, tuple["_ChatSlot", asyncio.Task]] = {}
 
 
 # Global cap on concurrent speculative spawns. Bounds the process/RSS burst
@@ -907,6 +911,10 @@ async def _run_chat(
     # crew log's whole premise is that a reader takes it as fact. Empty means no
     # dispatch claimed it, which the crew log records as ``user``.
     _turn_actor: str = "",
+    # The agent started this turn itself between prompts (``agent_started``): the
+    # turn sends no prompt and reads the session's pending turn instead. Set only
+    # by ``agent_started._on_agent_turn``, with an empty *message*.
+    _agent_started: bool = False,
     regenerate_hint: str = "",
     _on_consumed: "Callable[[bool], None] | None" = None,
     _on_irreversibly_consumed: "Callable[[], Awaitable[None] | None] | None" = None,
@@ -947,9 +955,17 @@ async def _run_chat(
         _on_irreversibly_consumed=_on_irreversibly_consumed,
         monitor_completion=monitor_completion,
         _current_message=_current_message,
+        _agent_started=_agent_started,
     )
+    # Bench timing (KIROCREW_TURN_TIMING): top-level user prompts only, the
+    # same population as the TTFT histogram.
+    _timed = _prompt_depth == 0 and not _synthetic_payload and not _agent_started
+    if _timed:
+        turn_timing.ensure(slot.key, "runner")
     _flow = await _turn_open(turn)
     if _flow is _Flow.END:
+        if _timed:
+            turn_timing.emit("ended_at_open")
         return
 
     _tcid_collapsed = turn._tcid_collapsed
@@ -958,6 +974,8 @@ async def _run_chat(
     session_key = turn.session_key
     _flow = await _turn_slash_gate(turn)
     if _flow is _Flow.END:
+        if _timed:
+            turn_timing.emit("ended_at_slash_gate")
         return
     is_slash = turn.is_slash
     # Where the most recent compaction started inside `assistant_text`. A
@@ -969,7 +987,13 @@ async def _run_chat(
     # to clear it, and a cut with no text after it leaves nothing to judge.
     _compaction_text_offset = 0
     turn._compaction_text_offset = _compaction_text_offset
+    # A turn that is not timed (a nested ``/prompts get`` turn shares its outer
+    # turn's task and context) hides the open record from every gate and phase
+    # it reaches, and gives it back on the way out.
+    _timing_hidden = None if _timed else turn_timing.suspend()
     try:
+        if _timed:
+            turn_timing.mark("admit_start")
         _flow = await _turn_admit(turn)
         if _flow is _Flow.END:
             return
@@ -980,6 +1004,8 @@ async def _run_chat(
         await _turn_dispatch_prep(turn)
         await _turn_build_prompt(turn)
         message = turn.message
+        if _timed:
+            turn_timing.mark("prompt_built")
 
         # No await from here to the stream loop: begin_turn (in _turn_dispatch_gates) and the
         # stream's turn registration stay one yield-free span.
@@ -1011,12 +1037,21 @@ async def _run_chat(
         state.hold_turn_heartbeat(turn, slot.key)
         # The prefixes added after assembly made the prompt a plain string again;
         # re-apply build_message's provenance so only the user's text is upgraded.
-        event_stream = (
-            client.stream_command(message)
-            if is_slash
-            else client.stream(_segment_user_span(turn, full_message))
-        )
+        if _agent_started:
+            event_stream = turn._agent_turn_stream = client.stream_unsolicited()
+        elif is_slash:
+            event_stream = client.stream_command(message)
+        else:
+            event_stream = client.stream(_segment_user_span(turn, full_message))
+        if _timed:
+            turn_timing.mark("stream_open")
         async for event in event_stream:
+            if _timed:
+                turn_timing.mark("first_event")
+            if turn._agent_cancel_owed:
+                await _send_owed_agent_cancel(turn, client, event)
+            if _ask_the_owed_cancel_answered(turn, event):
+                continue
             if (_todo_sync_rendered or _todo_recovery_carried) and (
                 event.kind in _TODO_BLOCK_READ_EVENT_KINDS
             ):
@@ -1052,6 +1087,10 @@ async def _run_chat(
             # First visible model output for this user prompt — emit TTFT once.
             if _ttft_t0 is not None and event.kind in (EVENT_TEXT_CHUNK, EVENT_THINKING_CHUNK):
                 _emit_ttft_metric(_ttft_t0, session_key, is_new=is_new, resumed=resumed)
+                if _timed:
+                    turn_timing.mark("first_visible")
+                    turn_timing.note(is_new=bool(is_new), resumed=bool(resumed), kind=event.kind)
+                    turn_timing.emit("visible")
                 _ttft_t0 = None
                 turn._ttft_t0 = _ttft_t0
 
@@ -1197,6 +1236,7 @@ async def _run_chat(
         # Retry-eligible transients:
         #   - "already in progress": prompt busy (kiro-cli side)
         #   - "process exited" / "not running": ACP subprocess died, need cold-start
+        #     (acp_error_is_pipe_death: an error frame the process answered is not one)
         # For both: reset the session and re-queue the message so auto-nudges
         # (and dashboard messages) get executed on a fresh provider instead of
         # surfacing a bare ❌ error card with no work done.
@@ -1209,11 +1249,14 @@ async def _run_chat(
         _retry_eligible = (
             isinstance(exc, AcpPromptBusy)
             or "already in progress" in _msg
-            or "process exited" in _msg
-            or "not running" in _msg
+            or acp_error_is_pipe_death(exc)
         )
 
-        if _retry_eligible:
+        if _agent_started:
+            # Every arm below retries, rebuilds or replays the prompt a turn
+            # sent; a turn the agent started sent none, so its error is shown.
+            await _on_acp_error_card(turn, exc)
+        elif _retry_eligible:
             await _on_acp_retryable(turn, exc)
         elif acp_error_is_session_not_found(exc):
             await _on_acp_session_not_found(turn, exc)
@@ -1290,6 +1333,13 @@ async def _run_chat(
         await _on_error(turn, exc)
     finally:
         state.release_turn_heartbeat(turn)
+        if _timed:
+            # A turn with no visible output (error, stop, tool-only, cancel)
+            # still reports where its time went; emit is once per record.
+            turn_timing.emit("no_visible")
+        else:
+            turn_timing.resume(_timing_hidden)
+        await _close_agent_turn_stream(turn)
         # An interrupted or unexecuted proposal must not survive into a turn
         # whose backend may reuse its call id. Executed walker work is separate.
         _local_turn_marker_generation = turn._local_turn_marker_generation

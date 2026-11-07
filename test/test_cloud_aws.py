@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import functools
+import inspect
 import json
+import logging
 import os
 import select
 import sys
@@ -14,6 +16,7 @@ import pytest
 from kiro_crew import sandbox as kc_sandbox
 from kiro_crew import sandbox_launch_mark
 from kiro_crew.cloud import aws
+from kiro_crew.slack.gateway_runtime import service_boot
 
 
 class TestBuildArgv:
@@ -77,6 +80,37 @@ class TestRunAws:
         monkeypatch.setattr(aws, "popen_limited", lambda *a, **k: FakeProc())
 
         assert aws.run_aws(["sts", "get-caller-identity"]) == (0, "out", "err")
+
+    def test_the_aws_child_gets_no_python_interpreter_settings(self, monkeypatch):
+        """A Python ``aws`` (aws-cli v1) must not import the gateway's packages.
+
+        This chokepoint is also the Polly consent gate's account probe, so an
+        inherited ``PYTHONPATH`` breaks consent before any synthesis runs.
+        """
+
+        class FakeProc:
+            returncode = 0
+
+            def communicate(self, timeout):
+                return "out", "err"
+
+        seen: dict = {}
+
+        def fake_popen(*a, **k):
+            seen["env"] = k.get("env")
+            return FakeProc()
+
+        monkeypatch.setenv("PYTHONPATH", "/bundle/site-packages")
+        monkeypatch.setenv("PYTHONHOME", "/bundle")
+        monkeypatch.setenv("KC_UNRELATED_SETTING", "kept")
+        monkeypatch.setattr(aws, "wrap_argv", lambda argv, mode: (argv, ""))
+        monkeypatch.setattr(aws, "popen_limited", fake_popen)
+
+        assert aws.run_aws(["sts", "get-caller-identity"]) == (0, "out", "err")
+        env = seen["env"]
+        assert "PYTHONPATH" not in env
+        assert "PYTHONHOME" not in env
+        assert env.get("KC_UNRELATED_SETTING") == "kept"
 
     def test_spawn_gets_widened_path_for_credential_process(self, monkeypatch, tmp_path):
         """A GUI-launched gateway's minimal PATH must not hide ``credential_process``.
@@ -346,6 +380,28 @@ class TestAgentSessionSignals:
         with pytest.raises(aws.CloudActionDenied):
             aws.assert_human_action("ssm:StartSession")
 
+    def test_a_gateway_started_from_an_agent_session_warns_once(self, monkeypatch, caplog):
+        # A restart run from an agent's shell: the child inherits its session key.
+        monkeypatch.setenv("KIROCREW_SESSION_KEY", "dashboard:abc")
+        with caplog.at_level(logging.WARNING, logger=aws.logger.name):
+            assert aws.warn_if_started_from_agent_session() is True
+        warnings = [r for r in caplog.records if r.name == aws.logger.name]
+        assert len(warnings) == 1
+        assert "Restart the gateway from a normal terminal" in warnings[0].getMessage()
+
+    def test_a_gateway_started_from_a_terminal_does_not_warn(self, caplog):
+        with caplog.at_level(logging.WARNING, logger=aws.logger.name):
+            assert aws.warn_if_started_from_agent_session() is False
+        assert not [r for r in caplog.records if r.name == aws.logger.name]
+
+
+def test_the_gateway_warns_after_readiness_off_the_loop():
+    source = inspect.getsource(service_boot.run)
+    warns = "for _warn in (warn_if_running_from_git_checkout, warn_if_started_from_agent_session):"
+    assert warns in source
+    assert source.index('print(f"KIROCREW_READY:') < source.index(warns)
+    assert "asyncio.create_task(asyncio.to_thread(_warn))" in source
+
 
 class TestChokepointHumanActionGuard:
     """run_aws must refuse non-read-only calls from an agent session
@@ -420,14 +476,10 @@ class TestChokepointHumanActionGuard:
 
 
 # --------------------------------------------------------------------------- #
-# A timed-out ``aws`` call must return promptly even while a process the CLI
-# started still holds the piped stdout/stderr: ``proc.kill()`` stops only the
-# CLI, so the drain after it is bounded. The reproducer runs the real
-# ``run_aws`` and the real ``popen_limited`` on real children; only the argv
-# builder, the sandbox wrappers, the chokepoint guard and the env builder are
-# stubbed, and none of those is part of the wait. The stand-in CLI and its
-# helper block reading a pipe the test holds, so they live until the test
-# closes it: no sleep decides how long anything runs.
+# A timed-out ``aws`` call returns promptly even while a child of the CLI holds the
+# pipes: ``proc.kill()`` stops only the CLI, so the drain is bounded. Real ``run_aws``
+# and ``popen_limited``; the stand-ins block on a pipe the test holds, so no sleep
+# decides how long anything runs.
 # --------------------------------------------------------------------------- #
 _JOIN_BOUND_SECS = 8
 

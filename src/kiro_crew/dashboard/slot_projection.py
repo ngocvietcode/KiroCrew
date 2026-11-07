@@ -7,7 +7,7 @@ from collections import deque
 from collections.abc import Callable, Sequence
 from typing import Any
 
-from kiro_crew.dashboard.slot_preparing import is_preparing
+from kiro_crew.dashboard.slot_preparing import is_preparing, preparing_caption
 from kiro_crew.history_schema import transcript_sort_key
 from kiro_crew.safety_override import safety_override, yolo_policy_permits
 from kiro_crew.session_lifecycle import STOP_DECLINED_ESCALATION_SECS
@@ -61,6 +61,27 @@ def options_ending_is_stale(options_ts: str, now: float) -> bool:
     if bucket != 0:
         return False
     return now - at > OPTIONS_WAITING_MAX_AGE_SECS
+
+
+def _history_key(slot: Any) -> str:
+    """The transcript key for *slot*, unfolded, as resume accepts it.
+
+    ``slot_history_key`` is the one rule for which transcript a slot writes.
+    It is passed through as the session key, NOT folded to a filename stem:
+    ``ConversationLog._path`` only finds a pre-migration Slack thread's bare
+    ``<ts>.jsonl`` from the ``slack:<ts>`` spelling, so the folded
+    ``slack_<ts>`` would resume an empty transcript. ``""`` for a duck-typed
+    slot the rule cannot read.
+    """
+    # Local import: chat_utils_slots imports state, which imports this module.
+    # From the owner, not the chat_utils facade: a facade read here would run
+    # once per slot on every slots flush (test_facade_read_budget).
+    from kiro_crew.dashboard.chat_utils_slots import slot_history_key
+
+    try:
+        return str(slot_history_key(slot) or "")
+    except (AttributeError, TypeError):
+        return ""
 
 
 def resolved_row_identity(slot: Any) -> str:
@@ -530,6 +551,11 @@ class SlotProjection:
             # reason as `compacting`: it must not make the slot look busy to
             # sends or queueing, only show the chat's working indicator.
             "preparing": is_preparing(slot),
+            # What is being prepared, built by the gateway, and the language
+            # it is written in. A client whose UI language differs, or a ""
+            # caption, shows its own generic caption.
+            "preparing_text": preparing_caption(slot)[0],
+            "preparing_lang": preparing_caption(slot)[1],
             # A cooperative Stop was declined moments ago (the session was
             # compacting) and the next press escalates to a force stop. Read
             # with the same window the stop route uses, so the button's hint and
@@ -586,6 +612,13 @@ class SlotProjection:
             "memory_mode": slot.memory_mode,
             "forked_from": slot.forked_from,
             "linked_session_key": slot.linked_session_key,
+            # The transcript's session key, the one ``/api/chat/resume`` reads.
+            # Derived here, by the one rule (``slot_history_key``), because the
+            # client cannot rebuild it: an unbound channel-born slot has no
+            # ``linked_session_key`` and no origin link, yet its transcript is
+            # the channel's, not ``dashboard:<key>``. Reopen-closed-session
+            # resumes by this key.
+            "history_key": _history_key(slot),
             "app": slot._app,
             "origin": slot._origin,
             # Creator attribution: the slot key of the session that asked for

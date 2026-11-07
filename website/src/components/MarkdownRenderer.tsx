@@ -89,7 +89,7 @@ import {
 import { artifactSlugFromHref, classifySessionLink, soleLinkInParagraph, useSessionChip, useUnfurlHref } from './markdown/linkTargets'
 import { dashboardPreviewRef, dashboardPreviewTargetFromHref } from '../utils/dashboardPreview'
 import { ClosedSessionNotice } from './markdown/ClosedSessionNotice'
-import { activatePath, isPathCandidate, splitLineRef, usePathResolution } from './markdown/pathReferences'
+import { activatePath, isFileLinkDest, isPathCandidate, splitLineRef, usePathResolution } from './markdown/pathReferences'
 import { ELEMENT_OVERRIDES, sp, textOf } from './markdown/elements'
 import { MD_FLOW_ROOT_CLS, MD_PARAGRAPH_CLS } from './markdown/typography'
 import { InlineCode } from './markdown/InlineCode'
@@ -97,6 +97,9 @@ import { MarkdownTable } from './markdown/MarkdownTable'
 import { ImgWithFallback } from './markdown/ImgWithFallback'
 import { DeferredMedia, MdSourceEl } from './markdown/remoteMedia'
 import { MermaidBlock } from './markdown/MermaidBlock'
+import { PlantUmlBlock } from './markdown/PlantUmlBlock'
+import { APPROVAL_COMMAND_TAG } from '../lib/approvalNotificationBody'
+import { FormattedPayloadCard } from '../pages/chat/ToolDetails'
 import { isGenericLang, looksLikeMarkdown } from './markdown/markdownSniff'
 import { ALLOWED_TAGS, VERBATIM_CONTENT_TAGS, rehypeSanitize, remarkVerbatimUnknownTags } from './markdown/sanitize'
 import { holdsSessionRef, rehypeMarkFencedCode, rehypeSessionRefPunctuation, rehypeSourcepos, rehypeStableRootKeys, rehypeUnwrapBlocks, remarkSoftBreaks, SESSION_REF_TRAILING } from './markdown/treeTransforms'
@@ -286,6 +289,15 @@ function MdAnchor({ node, href, children, [SESSION_REF_TRAILING]: trailing }: Md
       && !artifactSlugFromHref(localHref)
       && !!(actions.onFileOpen || actions.onFolderOpen),
   )
+  // A path-shaped link to a FILE (not a route, see `isFileLinkDest`) whose probe
+  // says `missing` carries a local-path href, which the browser resolves against
+  // the dashboard origin into a new tab that names nothing. It drops its
+  // navigation and link dress to match the inline copy chip for the same path,
+  // while a rooted route-shaped link keeps working. The `candidate` and
+  // `missing` guards hold a confirmed file/dir and a route to their own paths.
+  const missingFileLink = pathResolution.candidate
+    && pathResolution.kind === 'missing'
+    && isFileLinkDest(pathResolution.splitPath)
   // askAgent on: a transcript link holds no draft (the host composer's draft is
   // persisted per slot), and a blocked or failed reveal is gateway-side.
   const reveal = useRevealFailure(localHref ?? undefined)
@@ -293,6 +305,14 @@ function MdAnchor({ node, href, children, [SESSION_REF_TRAILING]: trailing }: Md
     const plainPrimaryClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.altKey
     if (pathResolution.probePending && plainPrimaryClick) {
       e.preventDefault()
+      return
+    }
+    // A missing file link swallows the plain click rather than letting the
+    // browser follow its local-path href to a dead dashboard tab. A modified
+    // click (Cmd/Ctrl/middle) still reaches the browser, exactly as the muted
+    // not-open session link leaves it.
+    if (missingFileLink) {
+      if (plainPrimaryClick) e.preventDefault()
       return
     }
     if (!pathResolution.candidate
@@ -389,6 +409,11 @@ function MdAnchor({ node, href, children, [SESSION_REF_TRAILING]: trailing }: Md
   // A confirmed session link is in-app navigation, so it keeps in-place semantics.
   // So does a `#heading` link: the renderer scrolls to it (see handleClick).
   if (sessionLink || href?.startsWith('#')) ext = true
+  // A missing file link keeps no `target="_blank"`: the plain click is swallowed,
+  // and dropping the new-tab attribute keeps it from advertising a dead tab. It
+  // joins `ext` here (after `editorLink` is read, which a local-path href already
+  // excludes) so the anchor's target/rel branch stays untouched.
+  if (missingFileLink) ext = true
   return (
     <>
     <a
@@ -418,7 +443,7 @@ function MdAnchor({ node, href, children, [SESSION_REF_TRAILING]: trailing }: Md
       // for every old transcript naming a session that has since closed. Muted and
       // unadorned is the same answer the backtick chip gives an unresolved key: no
       // affordance, and the href stays intact so a modified click still works.
-      className={sessionHrefNamesSession && !sessionLink && sessionRouting
+      className={missingFileLink || (sessionHrefNamesSession && !sessionLink && sessionRouting)
         ? 'text-muted'
         : 'text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent'}
     >
@@ -582,7 +607,8 @@ const MD_COMPONENTS = {
     // nested (blockquote / list), where block-relative sourcepos does not map
     // to a document line without the block-offset dance — so nested fences
     // stay non-commentable rather than growing a gutter that can't anchor.
-    return <CodeBlock code={codeStr} lang={lang} complete={true} />
+    const block = <CodeBlock code={codeStr} lang={lang} complete={true} />
+    return lang === 'plantuml' ? <PlantUmlBlock code={codeStr}>{block}</PlantUmlBlock> : block
   },
   pre({ children }) { return <>{children}</> },
   // The message bubble sets `overflow-wrap:anywhere; word-break:break-word`
@@ -1143,9 +1169,17 @@ function BlockRenderer({ block, prevBlock, onFileOpen, sourcePos, messageTs, slo
       const node = readOnlyCode || readOnlyCodeCtx
         ? <CodeBlock code={block.content} lang={block.language} complete={block.complete} />
         : <EditableCodeBlock code={block.content} lang={block.language} complete={block.complete} sourceStartLine={sourcePos ? block.startLine : undefined} runYourselfCard={runYourselfCards} info={block.info} unclosed={block.unclosed} />
+      // A closed ```plantuml fence becomes the host's PlantUML picture when it
+      // can be drawn, and stays this code block when it cannot. A closed
+      // approval command opens on the chat approval card's Formatted view when
+      // it is JSON, with this code block as its Raw view.
+      const shown = !block.complete ? node
+        : block.language === 'plantuml' ? <PlantUmlBlock code={block.content}>{node}</PlantUmlBlock>
+        : block.language === APPROVAL_COMMAND_TAG ? <FormattedPayloadCard text={block.content}>{node}</FormattedPayloadCard>
+        : node
       // Height-grow only — streaming code renders as one plain <pre> text node
       // so per-line content animation isn't applied here.
-      return smooth ? <SmoothResize enabled={!block.complete}>{node}</SmoothResize> : node
+      return smooth ? <SmoothResize enabled={!block.complete}>{shown}</SmoothResize> : shown
     }
     case 'widget':
       if (!block.complete) return <WidgetPlaceholder title={block.language} />

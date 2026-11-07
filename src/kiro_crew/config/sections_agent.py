@@ -24,6 +24,7 @@ from kiro_crew.config.sections_agent_fields import (
     DEFAULT_CWD_ALLOWED_ROOTS,
     JAIL_MODE_AUTO,
     KAS_BUNDLE_DEFAULT_URL,
+    KAS_REFUSE_PLAIN_HTTP_MCP_HEADERS_HELP,
     YOLO_UNTIL_SHUTDOWN,
     coerce_model_context_tokens,
     coerce_refusal_fallback_model,
@@ -74,7 +75,7 @@ def coerce_fallback_model(raw: object) -> str:
 #: The Crew Mode conductor template's name. Equal to
 #: ``crew_mode.DEFAULT_CREW_MODE_AGENT`` (a test pins it); defined here so this owner
 #: binds no name the sections facade does not.
-_CREW_MODE_AGENT_DEFAULT = "saokhue-conductor"
+_CREW_MODE_AGENT_DEFAULT = "saokhue-team-lead"
 
 
 @dataclass
@@ -140,6 +141,20 @@ class AgentConfig:
             "64 entries are read, and an invalid entry is ignored with a warning. "
             "Empty by default: a model with no window of its own keeps the "
             "1,000,000-token reference. Takes effect on the next config reload.",
+        ),
+    )
+    spec_pins: dict[str, str] = field(
+        default_factory=dict,
+        metadata=_meta(
+            "Agent spec pins",
+            "Which file an agent name runs when two or more specs in the agents "
+            'directory declare it, as {"<agent name>": "<file name>"}, for example '
+            '{"helper": "PkgA-helper.json"}. A bare .json or .md file name, never a '
+            "path, so a pin survives the package's updates. Set it with "
+            "'kirocrew agent pin <name> <file>' or the chat's chooser. With no pin, "
+            "differing specs under one name are refused; a pin naming none of them is "
+            "refused too and never falls back to another file. New sessions run the "
+            "pinned file; a running session's later spec reads follow the current pin.",
         ),
     )
     fallback_model: str = field(
@@ -311,6 +326,12 @@ class AgentConfig:
             restart=True,
         ),
     )
+    kas_refuse_plain_http_mcp_headers: bool = field(
+        default=False,
+        metadata=_meta(
+            "KAS: refuse MCP headers over plain http", KAS_REFUSE_PLAIN_HTTP_MCP_HEADERS_HELP
+        ),
+    )
     kas_bundle_url: str = field(
         default=KAS_BUNDLE_DEFAULT_URL,
         metadata=_meta(
@@ -346,8 +367,8 @@ class AgentConfig:
     crew_mode_agent: str = field(
         default=_CREW_MODE_AGENT_DEFAULT,
         metadata=_meta(
-            "Crew Mode conductor",
-            "The conductor template a chat runs when Crew Mode is turned on. "
+            "Ultra Mode agent",
+            "The agent template a chat runs when Ultra Mode is turned on. "
             "Empty falls back to the default. Takes effect live for new chats; "
             "no gateway restart.",
         ),
@@ -597,6 +618,15 @@ class AgentConfig:
             "uninstalling the app sticks. Written by the gateway; do not edit.",
         ),
     )
+    apps_builtin_adoption_nav: dict[str, dict[str, str]] = field(
+        default_factory=dict,
+        metadata=_meta(
+            "Adopted Built-in App Navigation",
+            "The navigation route and icon each adopted former built-in app had "
+            "as a built-in, so its sidebar entry, order, pin and hidden setting "
+            "stay the same. Written by the gateway; do not edit.",
+        ),
+    )
     apps_ui_stream_timeout_secs: int = field(
         default=30,
         metadata=_meta(
@@ -678,7 +708,10 @@ class AgentConfig:
             "tool_search_min_tokens; disabling reverts to sending full tool "
             "specs. Crew's servers defer only when the spawn runs the pinned "
             "kiro-cli install or its kiro-cli-chat, and both are >= 2.27.0; any "
-            "other executable, an older or unknown version keeps them resident. To override the never-defer list, set "
+            "other executable, an older or unknown version keeps them resident. "
+            "On Kiro Crew's own KAS engine bundle they always defer: that engine "
+            "keeps its tools array fixed when a tool loads. To override the "
+            "never-defer list, set "
             "ASBX_KIRO_MANDATORY_MCPS (comma-separated server names) in the "
             "gateway's environment. No effect on any other ACP backend.",
         ),
@@ -711,10 +744,22 @@ class AgentConfig:
             "Session Sharing",
             "Subagents reuse a shared ACP runtime instead of spawning a fresh "
             "backend process per subagent. Reduces startup from ~3-5s to ~200ms "
-            "and memory from ~400MB to near-zero per subagent. Default ON for the "
+            "and memory from about 0.55 GB to near-zero per subagent. Default ON for the "
             "eligible backends (kiro-cli and codex); every other ACP backend "
             "ignores it and runs a dedicated process per subagent. Set false to "
             "opt an eligible backend back onto per-subagent processes.",
+        ),
+    )
+    agent_started_turns: bool = field(
+        default=True,
+        metadata=_meta(
+            "Agent-started Turns",
+            "Show a reply the agent starts on its own between your messages, such "
+            "as Claude Code answering when a background command finishes, as its "
+            "own message in the dashboard chat, with its tool calls and "
+            "permission prompts. Only the claude backend starts such turns. Set "
+            "false to turn it off: that reply then shows under your next message. "
+            "Applies from the next turn.",
         ),
     )
     max_subagents: int = field(
@@ -788,13 +833,13 @@ class AgentConfig:
         default=True,
         metadata=_meta(
             "Posture Admission Gate",
-            "While available memory is at or below resource_critical_gb, defer "
-            "scheduled cron firings to the next tick, and TaskRunner steps and "
-            "workflow ctx.agent() calls by admit_wait_secs, until memory frees. "
-            "Subagent spawns are not gated on this posture; they wait on "
-            "spawn_min_memory_gb instead. Manually triggered cron runs and "
-            "direct chat turns are never gated; an unreadable probe admits "
-            "(fail-open). Set false to make the critical posture advisory-only.",
+            "While available memory is at or below resource_critical_gb, defer scheduled cron "
+            "firings to the next tick, and TaskRunner steps and workflow ctx.agent() calls by "
+            "admit_wait_secs, until memory frees. Background helper turns (titles, labels, "
+            "summaries, history consolidation) are skipped while it lasts. Subagent "
+            "spawns are not gated on this posture; they wait on spawn_min_memory_gb instead. "
+            "Manually triggered cron runs and direct chat turns are never gated; an unreadable "
+            "probe admits (fail-open). Set false to make the critical posture advisory-only.",
         ),
     )
     task_queue_enabled: bool = field(
@@ -1166,6 +1211,15 @@ class AgentConfig:
             "completed before the cutoff is preserved on the run record.",
         ),
     )
+    kas_workflows: bool = field(
+        default=False,
+        metadata=_meta(
+            "Kiro Workflows on Kiro Agent",
+            "Developer opt-in to Kiro Agent's (KAS) own workflow engine, off by "
+            "default. This build has no surface that reads it yet, so setting it "
+            "changes nothing. No effect unless the backend is Kiro Agent.",
+        ),
+    )
     subagent_mem_buffer_pct: int = field(
         default=20,
         metadata=_meta(
@@ -1249,6 +1303,23 @@ class AgentConfig:
             "ones it manages directly. With it on, a lead that handed a worker to a "
             "conductor can still send to, read, stop and close that worker, and "
             "closing the conductor hands its workers to the lead. Off by default.",
+        ),
+    )
+    peer_steer_loss_recovery: bool = field(
+        default=False,
+        metadata=_meta(
+            "Peer Steer Loss Recovery",
+            "Let a steer that is not typed into the session's own composer (another "
+            "session's session_send or session_broadcast steer, or an automation's) "
+            "cut into a running Claude Code, Codex, Goose, Pi or OpenCode turn. "
+            "Those harnesses can drop a steer they accepted, so it counts as "
+            "delivered only when the turn ends cleanly; a turn that is cancelled, "
+            "fails or loses it to a denied approval puts it back as a queue card "
+            "that runs as the next turn, so it can run twice. While it is on, a "
+            "hard stop that drops another session's pending steer, on any harness, "
+            "tells that session the steer may not have run. Off by default: such "
+            "a steer queues for the next turn, and only the composer steers these "
+            "harnesses.",
         ),
     )
     member_dispatch: bool = field(
@@ -1451,6 +1522,11 @@ class AgentConfig:
         self.role_models = coerce_role_models(self.role_models)
         self.role_efforts = coerce_role_efforts(self.role_efforts)
         self.model_context_tokens = coerce_model_context_tokens(self.model_context_tokens)
+        # Call-time: bound here, the coercer would be a name this section module
+        # serves, and the sections facade re-exports only names its owners define.
+        from kiro_crew.agent_spec_pins import coerce_spec_pins
+
+        self.spec_pins = coerce_spec_pins(self.spec_pins)
         # Same defensive TYPE coercion for the DeepSeek provider-key map. What its
         # names and values may BE is refused at spawn, by name -- see
         # coerce_deepseek_env.

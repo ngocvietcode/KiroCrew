@@ -68,6 +68,7 @@ from kiro_crew.acp.types import (  # noqa: F401
     ACP_BACKENDS_KIRO_SLASH_COMMANDS,
     ACP_BACKENDS_KNOWN,
     ACP_BACKENDS_MATE_WORKER_KIT,
+    ACP_BACKENDS_MATE_WORKER_MCP_TOOL_LIMITS,
     ACP_BACKENDS_MATE_WORKER_PROMPT_IN_CONTEXT,
     ACP_BACKENDS_MATE_WORKER_TOOL_LIMITS,
     ACP_BACKENDS_MEMBER_CAPABILITIES,
@@ -84,7 +85,7 @@ from kiro_crew.acp.types import (  # noqa: F401
     effort_config_option_id,
     effort_config_option_value,
 )
-from kiro_crew.acp_backends import POLICY_ID_BY_BACKEND  # noqa: F401
+from kiro_crew.acp_backends import POLICY_ID_BY_BACKEND
 from kiro_crew.agent_sdk import host_auth
 from kiro_crew.agent_sdk.backend_identity import is_claude_backend_name
 from kiro_crew.agent_sdk.backends import model_registry_namespace  # noqa: F401
@@ -160,6 +161,7 @@ class AcpProvider(LLMProvider):
         acp_backend: str = "",
         effort_per_model: dict[str, str] | None = None,
         unbound_effort: str = "",
+        inherited_effort: str = "",
         effort_defaults: object = None,
         tool_search: bool | None = None,
         tool_search_min_pct: object = None,
@@ -284,6 +286,10 @@ class AcpProvider(LLMProvider):
         # and bound to that model on every (re)start (``_bind_unbound_effort``).
         self._unbound_effort: str = unbound_effort or ""
         self._unbound_effort_drop_logged: bool = False
+        # The crew/role/chat level a session with no slot pick resolves to,
+        # carried only for a harness that clears effort live (the factory's
+        # ``inherited_effort``): such a clear must land where a cold start does.
+        self._inherited_effort: str = inherited_effort or ""
         self._effort_defaults = effort_defaults
         # The spelling the factory keyed ``effort_per_model`` under.
         self._configured_model: str = model or ""
@@ -317,11 +323,6 @@ class AcpProvider(LLMProvider):
                     self._effort_per_model.setdefault(m, lvl)
             except Exception:
                 logger.debug("ACP effort overlay recovery failed", exc_info=True)
-        if self._client.backend in ACP_BACKENDS_KIRO_FAMILY:
-            # Write the overlay BEFORE the first spawn so kiro-cli reads it on
-            # session/new. Each writer is scoped to the harnesses that read its keys.
-            self._apply_effort_overlay()
-            self._apply_tool_search_overlay()
 
     @property
     def client(self) -> AcpClient:
@@ -383,10 +384,15 @@ class AcpProvider(LLMProvider):
                 pass
 
     async def answer_elicitation(
-        self, request_id: str | int, action: str, content: dict[str, Any] | None = None
+        self,
+        request_id: str | int,
+        action: str,
+        content: dict[str, Any] | None = None,
+        *,
+        person: bool = True,
     ) -> bool:
         """Answer a pending MCP elicitation on the inner client."""
-        return await self._client.answer_elicitation(request_id, action, content)
+        return await self._client.answer_elicitation(request_id, action, content, person=person)
 
     @property
     def model_pin_refused(self) -> str:
@@ -820,6 +826,11 @@ class AcpProvider(LLMProvider):
         return self._client.backend in ACP_BACKENDS_MATE_WORKER_TOOL_LIMITS
 
     @property
+    def mate_worker_mcp_tool_limits_supported(self) -> bool:
+        """The MCP half of a crewmate worker's single-tool limits, by opt-in (H6)."""
+        return self._client.backend in ACP_BACKENDS_MATE_WORKER_MCP_TOOL_LIMITS
+
+    @property
     def loaded_capability_template(self) -> str:
         return self._client.loaded_capability_template
 
@@ -1070,16 +1081,26 @@ class AcpProvider(LLMProvider):
     async def new_conversation(self) -> None:
         """Clean-slate reset on the SAME warm process (no cold start).
 
-        Delegates to the backing client — ``AcpSessionProvider.new_conversation``
-        on the kiro path (``self._client`` is swapped to the session provider by
-        ``start()``), which issues a fresh ``session/new`` on the already-running
+        Delegates to the backing client. Only ``AcpSessionProvider`` has one: a
+        member of ``ACP_BACKENDS_ACP_RUNTIME`` gets it as ``self._client`` from
+        ``start()``, and it issues a fresh ``session/new`` on the already-running
         process, skipping subprocess spawn + the ``initialize`` handshake. This is
         the primitive a warm session pool uses to reuse one worker across
-        independent tasks without leaking context between them. The claude backend
-        would delegate to its own client-side reset the same way (its ``AcpClient``
-        does not ship one — hence the type ignore).
+        independent tasks without leaking context between them.
+
+        A backend on its own ``AcpClient`` (claude and every other per-session
+        adapter) has no such reset, so this raises ``NotImplementedError`` naming
+        the backend, and the caller falls back to killing and respawning the
+        process (``WorkerPool.reset``, ``_start_fresh_conversation``).
         """
-        await self._client.new_conversation()  # type: ignore[attr-defined]
+        new_conversation = getattr(self._client, "new_conversation", None)
+        if new_conversation is None:
+            backend = POLICY_ID_BY_BACKEND.get(self._client.backend, self._client.backend)
+            raise NotImplementedError(
+                f"the {backend!r} backend has no fresh-conversation reset on its live "
+                "process; it is reset by kill and respawn"
+            )
+        await new_conversation()
 
     def set_delete_delay(self, seconds: float) -> None:
         """Keep the session's record for ``seconds`` after it ends, then delete it.
@@ -1251,6 +1272,9 @@ class AcpProvider(LLMProvider):
     _ready_confirmed_session = _acp_turns._ready_confirmed_session
     stream = _acp_turns.stream
     stream_command = _acp_turns.stream_command
+    watch_agent_turns = _acp_turns.watch_agent_turns
+    agent_turn_pending = _acp_turns.agent_turn_pending
+    stream_unsolicited = _acp_turns.stream_unsolicited
     compact = _acp_turns.compact
     cancel = _acp_turns.cancel
     steer = _acp_turns.steer

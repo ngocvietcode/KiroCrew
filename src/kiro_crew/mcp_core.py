@@ -42,9 +42,11 @@ from kiro_crew.config.loader import (  # noqa: F401
     read_local_secret,
     resolve_agent_bindings,
 )
+from kiro_crew.config.sections_defaults import (  # noqa: F401
+    DEFAULT_SEARCH_SCAN_WINDOW as SEARCH_SCAN_WINDOW,
+)
 from kiro_crew.context_management import summarize_result
 from kiro_crew.dashboard.origin import dashboard_socket_path  # noqa: F401
-from kiro_crew.history import _SEARCH_SCAN_WINDOW as SEARCH_SCAN_WINDOW  # noqa: F401
 from kiro_crew.history import (  # noqa: F401
     ConversationLog,
     is_incognito_transcript,
@@ -988,6 +990,12 @@ def run_mcp_core_server() -> None:
     from kiro_crew.mcp_tools.sessions import gateway_cjk_words
 
     register_cjk_segmenter(gateway_cjk_words)
+    # Before the first request: an enforced harness's element carries a one-time
+    # pickup in place of the secret it withholds (agent_ipc_client).
+    from kiro_crew.agent_ipc_client import redeem_at_startup
+    from kiro_crew.mcp_core_parts import gateway as _gateway_part
+
+    redeem_at_startup(_gateway_part._api_port)
     run_mcp_stdio_loop(
         "kirocrew-core",
         "1.0.0",
@@ -1061,7 +1069,6 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
     )
     from kiro_crew.mcp_core_parts.history import (  # noqa: F401
         _HISTORY_SNIPPET_ROLES,
-        _SEARCH_HISTORY_SCAN,
         _SNIPPET_MAX_LEN,
         _SNIPPET_RADIUS,
         _caller_workspace,
@@ -1070,6 +1077,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _history_is_incognito,
         _parse_iso_date_epoch,
         _redact_history_output,
+        _search_history_scan,
         _snippet_contents,
         _ws_bucket,
     )

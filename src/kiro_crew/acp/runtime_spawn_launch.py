@@ -57,7 +57,7 @@ from kiro_crew.acp.launch import LaunchRequest, LaunchTools, launch
 from kiro_crew.acp.runtime_process_tree import ChildRecord, _kill_escaped_children
 from kiro_crew.acp.runtime_tree_kill import _prune_dead_descendants
 from kiro_crew.acp.session_handle import AcpRequestTimeout, AcpRuntimeError, AcpRuntimeOverloaded
-from kiro_crew.acp.types import ACP_BACKEND_KIRO
+from kiro_crew.acp.types import ACP_BACKEND_KAS, ACP_BACKEND_KIRO
 from kiro_crew.agent import ensure_agent_materialized
 from kiro_crew.agent_sdk.backends import spawn_delegates_to_internal_sandbox
 from kiro_crew.agent_sdk.drivers import acp as acp_driver
@@ -132,18 +132,33 @@ _INITIALIZE_TIMEOUT = INITIALIZE_TIMEOUT_SECS
 _ACP_RUNTIME_RESPAWN_BACKOFF_S = 2.0
 
 
+def _allocate_private_state() -> Path | None:
+    """A scratch allocation for the host's private state, or ``None`` if none could be made.
+
+    Not the process's own scratch directory: when this process starts a session
+    tree, that directory is the tree's work directory, and every process spawned
+    for its sessions mounts it writable (``AcpRuntime.work_scratch_dir``). This
+    one is handed to this process alone and reclaimed once it is dead.
+    """
+    try:
+        return agent_scratch.allocate_scratch("private-state")
+    except (OSError, agent_scratch.ScratchBoundaryError):
+        logger.debug("agent-scratch: could not allocate a private-state dir", exc_info=True)
+        return None
+
+
 def _point_private_state_at_scratch(
     env: dict[str, str], env_var: str | None, scratch: Path | None
 ) -> None:
-    """Point the host's private-state variable at this process's scratch dir.
+    """Point the host's private-state variable at this process's private-state dir.
 
     *env_var* is :attr:`SpawnPlan.private_state_env`: ``None`` for a host whose
     state tolerates concurrent processes, so nothing is set. A non-empty value
     already in *env* is the caller's (the operator's environment, or a cron or
     workflow ``extra_env``): they chose that location, and it reaches the child
-    as set. Otherwise the variable names the per-process scratch directory: no
-    other process uses it, and it is reclaimed once this one is dead
-    (``agent_scratch.sweep_dead_scratch``). Without scratch the child gets the
+    as set. Otherwise the variable names the directory :func:`_allocate_private_state`
+    made: no other process is handed it, and it is reclaimed once this one is dead
+    (``agent_scratch.sweep_dead_scratch``). Without one the child gets the
     host's shared default and a warning says so: a shared database home is
     better than a refused spawn.
     """
@@ -151,8 +166,8 @@ def _point_private_state_at_scratch(
         return
     if scratch is None:
         logger.warning(
-            "AcpRuntime: no per-process scratch to point %s at; the child shares the "
-            "host's default, so concurrent processes may lock each other out",
+            "AcpRuntime: no private-state directory to point %s at; the child shares "
+            "the host's default, so concurrent processes may lock each other out",
             env_var,
         )
         return
@@ -424,6 +439,7 @@ async def _refuse_over_ceiling_launch(self: AcpRuntime, launch_name: str | None)
             self._agent,
             ACP_BACKEND_KIRO,
             launch_name=launch_name,
+            work_dir=getattr(self, "_work_dir", None),
         )
     except agent_mod.SharedTemplateOverCeiling as exc:
         raise AcpRuntimeError(str(exc)) from exc
@@ -488,8 +504,12 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
 
             async with self._skill_projection_lock():
                 generation = self._issue_skill_projection_generation()
+                # Only the launch agent's view is leased: every other session
+                # start re-prepares and leases its own agent's view first.
                 projection = await asyncio.to_thread(
-                    prepare_native_skill_projection, self._work_dir
+                    prepare_native_skill_projection,
+                    self._work_dir,
+                    lease_agents=(self._agent,),
                 )
                 # Issued and adopted under the lock, so nothing newer exists.
                 self._native_skill_projection = projection
@@ -498,7 +518,7 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
             # startup are ones it is guaranteed to have loaded, so later
             # projections keep translating them in inbound frames
             # (_activate_mode_bracketed), and holding the object keeps its
-            # lease -- and them -- out of the prune.
+            # lease -- the launch agent's view -- out of the prune.
             self._spawn_skill_projection = projection
             if projection is not None:
                 # Deliberately do NOT set spawn_agent_name here. The shared
@@ -626,6 +646,11 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
     if self._harness.client_meta_settings:
         client_capabilities = await self._handshake_client_capabilities()
 
+    # Before the launch builds the sandbox, which mounts it for this process alone.
+    private_state_dir = None
+    if plan.private_state_env is not None:
+        private_state_dir = await asyncio.to_thread(_allocate_private_state)
+
     # The launch tail both drivers share (``acp.launch.launch``): the pod bundle
     # swap and the delegation verdict, this runtime's scratch window, the sandbox
     # wrap with the host's credential mask, the cgroup scope, the environment and
@@ -696,9 +721,9 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
             self._harness.apply_spawn_env(
                 env, spawned_binary=spawned_binary, cli_owned_auth=not plan.host_auth
             )
-            # A host that keeps private state may prepare it in scratch before
-            # the child exists; one more blocking file copy, so it rides here.
-            _seed_private_state(env, plan, self._scratch_dir)
+            # A host that keeps private state may prepare it before the child
+            # exists; one more blocking file copy, so it rides here.
+            _seed_private_state(env, plan, private_state_dir)
 
         await self._to_thread_guarding_sandbox(_resolve_env_off_loop)
         return env
@@ -728,8 +753,8 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
 
     def _env_after_scratch(env: dict[str, str]) -> None:
         # A host whose state cannot be shared between processes (codex's SQLite
-        # databases) keeps its own copy under this process's scratch directory.
-        _point_private_state_at_scratch(env, plan.private_state_env, self._scratch_dir)
+        # databases) keeps its own copy in this process's private-state directory.
+        _point_private_state_at_scratch(env, plan.private_state_env, private_state_dir)
 
     launched = await launch(
         self,
@@ -750,6 +775,7 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
             # credential homes.
             extra_hidden_dirs=plan.extra_hidden_dirs,
             extra_expose_files=plan.extra_expose_files,
+            extra_private_dirs=(str(private_state_dir),) if private_state_dir is not None else (),
             internal_sandbox=internal_sandbox,
             pod_home_remap=self._harness.pod_home_remap,
             guard_scratch_hops=True,
@@ -806,13 +832,15 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
         )
         self._spawn_monotonic = time.monotonic()
         self._last_activity = time.monotonic()
-        if self._scratch_dir is not None:
+        for owned in (self._scratch_dir, private_state_dir):
+            if owned is None:
+                continue
             # Liveness anchor for the scratch sweeps: a dir whose recorded
             # owner is dead is reclaimable. Off-loop (file write), fail-open
             # (an unowned dir falls under the grace-window rule instead).
             owner_outcome = await asyncio.get_running_loop().run_in_executor(
                 subprocess_executor(),
-                functools.partial(agent_scratch.record_owner, self._scratch_dir, self._pid),
+                functools.partial(agent_scratch.record_owner, owned, self._pid),
             )
             if owner_outcome == "refused":
                 # A LINK where this child's own marker belongs: the child
@@ -1028,6 +1056,7 @@ async def _spawn_admitted(self: AcpRuntime) -> None:
         from kiro_crew.agent import require_unchanged_derived_spec
 
         await asyncio.to_thread(require_unchanged_derived_spec, self._derived_spec_snapshot)
+        await _switch_off_mcp_for_toolless_spawn(self)
         self._initialized = True
         # The scope unit name is logged beside the PID because it is the only
         # durable half of the join. An OOM report or ``systemctl`` listing
@@ -1239,6 +1268,52 @@ def _known_server_tool_names(server: str) -> list[str] | None:
     from kiro_crew.acp.kas_permissions import cached_mcp_tool_names
 
     return cached_mcp_tool_names(server)
+
+
+#: KAS's extension notification that switches its whole MCP subsystem on or off
+#: for the process. Sent before the first ``session/new``, nothing is started.
+KAS_MCP_TOGGLE_METHOD = "_kiro/mcp/toggle"
+
+
+async def _switch_off_mcp_for_toolless_spawn(runtime: AcpRuntime) -> None:
+    """Tell a KAS process spawned for a tool-less agent to start no MCP server.
+
+    KAS starts every server in the user's and the workspace's ``mcp.json`` for
+    each process, whatever the agent says: ``includeMcpJson: false`` only hides
+    their tools. So each background one-liner and memory-consolidation run on
+    ``kirocrew-lite`` started a fresh copy of every such server, and a server that
+    keeps an OAuth sign-in in memory opened a browser sign-in each time.
+
+    Only when the spec this process will put on the wire mounts nothing
+    (:func:`~kiro_crew.acp.client_mcp_array.spec_is_toolless`); such an agent can
+    call no MCP tool, so nothing it could use is switched off. Any other agent, any
+    other backend, or a spec that cannot be read keeps today's behaviour. A failed
+    send is logged and left alone, as without this step.
+    """
+    if runtime._acp_backend == ACP_BACKEND_KAS:
+        await _send_mcp_off_if_toolless(runtime)
+
+
+async def _send_mcp_off_if_toolless(runtime: AcpRuntime) -> None:
+    """The KAS half of :func:`_switch_off_mcp_for_toolless_spawn`."""
+    from kiro_crew.acp.client_mcp_array import spec_is_toolless
+
+    try:
+        spec = await asyncio.to_thread(runtime._projected_spawn_spec)
+    except Exception:
+        logger.debug("AcpRuntime: spawn spec unreadable; MCP left on", exc_info=True)
+        return
+    if not spec_is_toolless(spec):
+        return
+    try:
+        await runtime.send_notification(KAS_MCP_TOGGLE_METHOD, {"enabled": False})
+    except Exception:
+        logger.warning("AcpRuntime: could not switch MCP off for a tool-less agent", exc_info=True)
+        return
+    logger.info(
+        "AcpRuntime: agent=%s mounts no tool; MCP servers are off for this process",
+        runtime._agent or "<none>",
+    )
 
 
 async def _with_mcp_sign_in_storage(runtime: AcpRuntime, base: dict[str, Any]) -> dict[str, Any]:

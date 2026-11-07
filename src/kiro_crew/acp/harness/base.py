@@ -150,6 +150,10 @@ class ProcessSession(Protocol):
     _launch_mcp_servers: list[Any] | None
     _mcp_relaunch_pending: bool
 
+    @property
+    def work_scratch_dir(self) -> Path | None:
+        """The child scratch window allocated by the shared launch tail."""
+
     def _agent_env_for_spawn(self) -> dict[str, str]:
         """``agent.env`` for the spawn in progress, read at most once per spawn: a
         tool-gate read-back and the launch tail see the same values."""
@@ -253,8 +257,9 @@ class SpawnPlan:
     """Environment variable this host needs pointed at a per-process directory.
 
     ``None`` for a host whose state tolerates concurrent processes. Otherwise the
-    runtime sets the named variable to its own per-process scratch directory,
-    which no other process uses and which is reclaimed once this one is dead.
+    runtime sets the named variable to a scratch allocation of its own, apart from
+    the process's ``TMPDIR`` directory (which can be the session tree's shared work
+    directory), handed to no other process and reclaimed once this one is dead.
     A value already in the child's environment is left as set.
     """
 
@@ -341,7 +346,8 @@ class SessionExtras:
     For a host whose payload carries the agent's servers over the ACP wire, where
     Crew withholds credential-bearing fields
     (``kas_agents.withheld_credentials_notice``). ``""`` on every other host and
-    when nothing was withheld.
+    when nothing was withheld. On KAS it also carries the line for a ``file://``
+    prompt the session runs without (``kas_prompt.prompt_unread_notice``).
     """
 
 

@@ -466,6 +466,16 @@ x64 gate doubles as proof the bundle runs under Rosetta. In
 intentional there), and `extraResources` ships the `backend-dist/` directory
 wholesale so single- and dual-backend layouts both package.
 
+The `--universal` merge never sees `backend-dist/`. `@electron/universal` walks
+every file of both packed apps (a `file` process and a SHA each), and the two
+backend trees are about 100,000 files in each one, against about 270 for
+everything else: that walk took 20 to 43 minutes of a 34 to 60 minute macOS
+build. The `build.afterPack`
+hook `website/electron/scripts/universal-backend-dist.js` renames the x64 pack's
+`backend-dist/` aside, deletes the arm64 pack's identical copy, and renames the
+x64 copy back into the merged app. The result is the same `backend-dist/` the
+merge started from before.
+
 **The universal update zip must stay under 1 GiB.** The Squirrel.Mac inside every
 installed app (Electron 43 and 44.0–44.6) downloads the update zip into one
 buffer that doubles as it grows; past 1 GiB it asks for 2 GiB, Electron's
@@ -543,7 +553,7 @@ only the current set remains:
 ```bash
 cd website/electron/dist
 rm -f KiroCrew-<old-version>*.dmg            # stale DMGs from a prior version
-rm -rf mac mac-arm64 mac-universal*           # app-staging dirs (regenerated each build)
+rm -rf mac mac-arm64 mac-universal* .backend-dist-x64  # app-staging dirs (regenerated each build)
 rm -f builder-debug.yml
 ```
 
@@ -674,6 +684,12 @@ same way). Key details:
   one, which fails the whole macOS release (see
   [stt-streaming](../system-specs/modules/stt-streaming.md) for how the runtime
   then authenticates a decoder whose bytes signing rewrote).
+- **Feishu SDK bundled** — every backend installs the `[feishu]` extra
+  (`lark-oapi` and its dependencies). Settings shows no `pip` command for a
+  bundled interpreter and each update replaces the whole bundle, so a channel
+  SDK the build leaves out cannot be added later. Windows ships bytecode only
+  for traced import closures, so its build traces `lark_oapi` too: the channel
+  imports it on the gateway loop.
 - **Dashboard bundled** — the SPA is staged into
   `lib/python3.12/site-packages/kiro_crew/static/dist/` inside the bundle.
 - **Pruned** — `__pycache__`, test dirs, and unused stdlib (tkinter, idlelib,
@@ -743,6 +759,22 @@ With no gateway to reuse, the shell locates the backend binary via
 [`find-bin.js`](../../website/electron/find-bin.js), spawns it as `kirocrew
 gateway --no-open`, polls `/api/status`, and loads the dashboard once it is
 healthy.
+
+The gateway's stdout and stderr go to `gateway-launch.log`. Off Windows the shell
+passes the open log as the child's stdio. On Windows it cannot: Node adds
+`CREATE_NO_WINDOW` to a `windowsHide` spawn only when no stdio entry inherits a
+descriptor, and without that flag the gateway gets a console of its own, which can
+show and take the focus. So on Windows the child gets the log's path in
+`KIROCREW_DESKTOP_STDIO_LOG`, and both entry points (`kiro_crew/__main__.py` and
+the `kirocrew` console script) re-point descriptors 1 and 2 at that file early
+(`kiro_crew/desktop_stdio.py`). Until then its stdout is the null device and its
+stderr is a pipe the shell copies into the log, so a traceback from an interpreter
+that dies first (a half-written bundle) still reaches the log the
+incomplete-bundle check reads. A pipe is not an inherited descriptor, so
+`CREATE_NO_WINDOW` still applies, and the re-point closes it, so it never carries
+a running gateway. The variable is removed once read, so the gateway's own
+children do not inherit it. Those children inherit the gateway's windowless
+console, so they open no window either.
 
 For a bundled backend, the shell removes inherited `PYTHONPATH` and `PYTHONHOME`
 before spawning Python. Windows cleanup also removes mixed-case spellings of
@@ -827,10 +859,13 @@ handshake, so it re-enters `startGateway()` exactly once by the ordinary path
 and introduces no second respawn owner beside `recoverWedgedGateway` or the
 liveness monitor. A click always wins over the probe, and the probe stands down
 when an update install is dispatched (the updater stops the gateway on purpose)
-or the app is quitting. Only the pre-spawn refusal arms it; the reclassified
-crash below keeps the manual **Retry**, because there the probe cannot see what
-is missing and a permanently truncated bundle would otherwise respawn and crash
-on every tick.
+or the app is quitting. If the probe result has not changed for five minutes,
+the moment the dialog's own text tells the user to quit and reopen, the dialog
+switches to the "app files missing" copy with the accent on **Quit**, keeps it
+until the tree is complete, and keeps probing. Only the pre-spawn refusal arms
+it; the reclassified crash below keeps the manual **Retry**, because there the
+probe cannot see what is missing and a permanently truncated bundle would
+otherwise respawn and crash on every tick.
 
 That pre-spawn check cannot be complete, and does not pretend to be: extraction
 order *within* a package is not the app's to control, so `import zoneinfo` can
@@ -993,8 +1028,9 @@ Crashpad dump directory (`app.getPath("crashDumps")`) and, on macOS, the user's
   Crashpad handler) is acknowledged and deleted, since nothing else prunes it.
   Unreadable dumps, Electron-shaped strangers and this app's own dumps are
   never deleted.
-- Minidumps that reached `crashes-seen.json` without that check (the first
-  scan's baseline writes them off unread) are swept: each is opened once more,
+- Minidumps that reached `crashes-seen.json` without that check (every scan
+  writes off unread a dump older than the launch that first armed the
+  collector) are swept: each is opened once more,
   oldest first, within what the fresh artifacts leave of the same 25-file
   budget, and deleted on the same proof. The state file lists them as swept,
   so none is opened again.

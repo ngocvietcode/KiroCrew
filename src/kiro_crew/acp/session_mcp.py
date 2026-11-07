@@ -86,9 +86,11 @@ from kiro_crew import agent as _agent_mod
 from kiro_crew import hooks as _hooks
 from kiro_crew import kiro_cli as _kiro_cli
 from kiro_crew import mcp_provenance
+from kiro_crew.acp.claude_mcp_names import claude_mcp_tool_name
 from kiro_crew.acp.mcp_session_report import sanitize_sink_text
 from kiro_crew.acp.session_label import SESSION_LABEL_MARKER
 from kiro_crew.acp.session_mcp_crewmate import _crewmate_worker_spec
+from kiro_crew.acp.session_mcp_env_refs import expand_entry_env
 from kiro_crew.acp.session_mcp_settings_read import (  # noqa: F401 -- re-exported
     _NATIVE_NAMED_PATH_CHARS,
     _UNREADABLE_CHURN,
@@ -106,10 +108,10 @@ from kiro_crew.acp.session_mcp_settings_read import (  # noqa: F401 -- re-export
 )
 from kiro_crew.agent import (
     _mcp_registry_mode,
-    agent_spec_path,
     ensure_agent_materialized,
     managed_mcp_spec_entry,
     require_fresh_derived_spec,
+    session_agent_spec_path,
 )
 from kiro_crew.agent_discovery import _read_agent_spec, project_agent_files, project_agent_name
 from kiro_crew.agent_sdk.mcp_refs import parse_tools_refs
@@ -119,7 +121,7 @@ from kiro_crew.mcp_cleanup import (
     KIROCREW_BIN_MCP_SERVERS,
     mcp_entry_is_muted,
 )
-from kiro_crew.template_mcp_additions import merge_at_spawn
+from kiro_crew.template_mcp_additions import MERGED_MARK, merge_at_spawn
 from kiro_crew.user_json import loads_user_jsonc
 
 logger = logging.getLogger(__name__)
@@ -689,10 +691,12 @@ def _with_restrictions(
 def _user_agent_spec(agent: str) -> dict[str, Any] | None:
     """The user-level spec for *agent*, or ``None`` when absent, ambiguous or unreadable."""
     try:
-        path = agent_spec_path(agent)
+        # The pinned claimant when ``agent.spec_pins`` chooses among several.
+        path = session_agent_spec_path(agent)
     except ValueError:
-        # Two specs declare this name, so which one is live is undefined. No
-        # answer is the honest one; the control plane still loads below.
+        # Two specs declare this name and no pin chooses one, so which one is
+        # live is undefined. No answer is the honest one; the control plane
+        # still loads below.
         logger.warning("session MCP: ambiguous agent spec for %r", agent, exc_info=True)
         return None
     if path is None:
@@ -859,16 +863,17 @@ def session_mcp_deny_rules(agent: str | None, *, work_dir: str | Path | None = N
     from :func:`session_mcp_disabled_tools`, so a restriction the dashboard wrote
     to the global settings file is carried too, not only one written in the spec.
 
+    Each rule is spelled as Claude Code names the tool (``claude_mcp_names``):
+    a rule naming a raw ``dot.probe`` matches no tool and denies nothing.
+
     Note the asymmetry this does NOT close: a ``tools`` reference of the
     ``@server/tool`` form grants ONE tool on kiro-cli, while the array mounts the
     whole server here, and the set of tools to deny is not knowable without
     connecting to the server. Those extra tools still reach the host permission
     gate; they are a wider surface, not an ungated one.
     """
-    return sorted(
-        f"mcp__{server}__{tool}"
-        for server, tool in session_mcp_disabled_tools(agent, work_dir=work_dir)
-    )
+    pairs = session_mcp_disabled_tools(agent, work_dir=work_dir)
+    return sorted({claude_mcp_tool_name(server, tool) for server, tool in pairs})
 
 
 def session_mcp_disabled_tools(
@@ -1118,6 +1123,7 @@ def session_mcp_projection(
     session_key: str = "",
     worker_tool_limits_honoured: bool = False,
     spec_policy_honoured: bool = False,
+    worker_mcp_tool_limits_honoured: bool = False,
 ) -> SessionMcpProjection:
     """The array, the withhold set AND the per-tool restrictions, from ONE parse.
 
@@ -1147,6 +1153,7 @@ def session_mcp_projection(
         session_key,
         tool_limits_honoured=worker_tool_limits_honoured,
         spec_policy_honoured=spec_policy_honoured,
+        mcp_tool_limits_honoured=worker_mcp_tool_limits_honoured,
     )
     settings = _global_settings()
     disabled_tools = session_mcp_disabled_tools(
@@ -1312,7 +1319,8 @@ def session_mcp_servers(
 
     out: list[dict[str, Any]] = []
     for name in sorted(servers):
-        element = acp_server_element(name, servers[name])
+        # The harness starts the element as written; kiro-cli parity (session_mcp_env_refs).
+        element = acp_server_element(name, expand_entry_env(name, servers[name]))
         if element is not None:
             out.append(element)
     return out
@@ -1444,9 +1452,16 @@ _NATIVE_ELEMENT_KEYS: frozenset[str] = _agent_mod._MANAGED_MCP_ENTRY_KEYS - {"ti
 # omits them expresses everything the declaration says. Judging them as "a key
 # the element cannot carry" would refuse the default agent for Crew's own stamp,
 # with a message telling the user to remove it. The session-label opt-in
-# (acp.session_label) is the same kind of key: Crew reads it, kiro-cli never does.
+# (acp.session_label) is the same kind of key: Crew reads it, kiro-cli never does,
+# and so is the mount-only record's stamp (template_mcp_additions.MERGED_MARK),
+# which the managed refresh keeps on an opt-in entry the record mounted.
 _NATIVE_INERT_KEYS = frozenset(
-    {mcp_provenance.MARKER_KEY, mcp_provenance.DERIVED_KEY, SESSION_LABEL_MARKER}
+    {
+        mcp_provenance.MARKER_KEY,
+        mcp_provenance.DERIVED_KEY,
+        SESSION_LABEL_MARKER,
+        MERGED_MARK,
+    }
 )
 
 # How the three places a managed server is declared are named to a user. These

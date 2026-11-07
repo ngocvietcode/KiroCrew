@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import time
 from typing import TYPE_CHECKING, Any
 
 from kiro_crew.agent_files import is_kirocrew_default_agent
+from kiro_crew.agent_sdk.backends import ACP_BACKENDS_CREW_ENFORCES_SPEC_TOOLS_SETTINGS
 from kiro_crew.agent_sdk.spec_hooks import (
     OverlongHookCommand,
     crew_fired_spec_hooks,
@@ -23,6 +25,8 @@ from kiro_crew.agent_sdk.spec_hooks import (
     spec_project_dir,
     spec_steering_read_nowhere,
     spec_steering_resources,
+    spec_tools_settings_applied_nowhere,
+    spec_tools_settings_unapplied,
     withheld_project_spec_hooks,
 )
 from kiro_crew.dashboard.chat_utils import (
@@ -32,6 +36,7 @@ from kiro_crew.dashboard.chat_utils import (
     mint_options_token,
     remember_slack_options,
 )
+from kiro_crew.dashboard.engine_fallback import hook_session_model
 from kiro_crew.dashboard.state import (
     DENY_CAUSE_POLICY,
     HOOK_CONTINUATION_RECOVERY_PREFIX,
@@ -42,7 +47,13 @@ from kiro_crew.dashboard.state import (
     should_queue_hook_continuation,
     should_queue_refusal_recovery,
 )
-from kiro_crew.hooks import HOOK_EVENT_PRE_TOOL_USE, HOOK_EVENT_STOP, pre_tool_match_names
+from kiro_crew.hooks import (
+    HOOK_EVENT_AGENT_SPAWN,
+    HOOK_EVENT_PRE_TOOL_USE,
+    HOOK_EVENT_STOP,
+    HOOK_EVENT_USER_PROMPT_SUBMIT,
+    pre_tool_match_names,
+)
 from kiro_crew.slack.outbound import PostedOptions
 
 if TYPE_CHECKING:
@@ -168,15 +179,19 @@ async def _prepare_spec_hooks(
     one notice row, and so does a spec with ``confirm: true`` hooks, which Crew
     skips because it cannot ask for the confirmation. A new session on a backend
     where nothing runs the spec's hooks (``spec_hooks_run_nowhere``) gets one
-    notice row naming their events, and one where nothing loads the spec's
+    notice row naming their events, one where nothing loads the spec's
     ``file://`` steering (``spec_steering_read_nowhere``) gets one naming those
-    entries. None of them runs silently.
+    entries, and one where nothing applies the spec's ``toolsSettings``
+    (``spec_tools_settings_applied_nowhere``) gets one naming what of it goes
+    unapplied. None of them runs silently.
     """
     if is_new and spec_steering_read_nowhere(client):
         await _notice_unread_steering(state, slot, client, agent)
     if not capabilities_of(client).crew_fires_spec_hooks:
         if is_new and spec_hooks_run_nowhere(client):
             await _notice_spec_hooks_run_nowhere(state, slot, client, agent)
+        if is_new and spec_tools_settings_applied_nowhere(client):
+            await _notice_tools_settings_applied_nowhere(state, slot, client, agent)
         if capabilities_of(client).crew_fires_spec_observer_hooks:
             return await _prepare_observer_spec_hooks(state, slot, client, agent, is_new=is_new)
         return [], False, None
@@ -471,6 +486,44 @@ async def _notice_spec_hooks_run_nowhere(
         )
 
 
+async def _notice_tools_settings_applied_nowhere(
+    state: "DashboardState", slot: "_ChatSlot", client: Any, agent: str
+) -> None:
+    """One notice row naming the spec's ``toolsSettings`` *client*'s session does not apply.
+
+    Named in the wording a backend Crew fires spec hooks on already gets
+    (``acp.kas_agents.spec_keys_without_carrier``), so a
+    ``subagent.availableAgents`` the spawn gate applies is never among them, nor,
+    on a backend Crew's gate enforces the shell and write allowlists on, a switch
+    that gate applies. Best-effort: nothing is gated on it, so a spec that cannot be read renders no
+    row rather than failing the turn.
+    """
+    agent = session_agent(client, agent)
+    if not agent:
+        return
+    try:
+        unapplied = await asyncio.to_thread(
+            functools.partial(
+                spec_tools_settings_unapplied,
+                agent,
+                spec_project_dir(client),
+                gate_allowlists=capabilities_of(client).backend
+                in ACP_BACKENDS_CREW_ENFORCES_SPEC_TOOLS_SETTINGS,
+            )
+        )
+    except Exception:  # noqa: BLE001 - an informational row must never fail a turn
+        logger.debug("agent spec toolsSettings for %r could not be read", agent, exc_info=True)
+        return
+    if unapplied:
+        append_and_surface(
+            state,
+            slot,
+            "notice",
+            _redact_display_text(_spec_keys_notice(agent, unapplied)),
+            "msg msg-info",
+        )
+
+
 #: How many ``file://`` entries the unread-steering notice names before it counts the rest.
 _STEERING_NOTICE_ENTRIES = 3
 
@@ -521,6 +574,60 @@ async def _notice_unread_steering(
             _redact_display_text(_unread_steering_notice(agent, entries)),
             "msg msg-info",
         )
+
+
+async def _notice_inherited_conductor_skills(
+    state: "DashboardState", slot: "_ChatSlot", client: Any, agent: str
+) -> None:
+    """Tell a Bot chat's person, once per new session, that its conductor loads user skills.
+
+    Only while ``skill_scope.MATE_CONDUCTOR_INHERITS_USER_SKILLS`` is on and the
+    session's conductor scope really holds a skill from the user's ``~/.kiro/skills``
+    or the workspace ``.kiro/skills``. The crewmate chat draws messages only (the
+    "crewmate chat draws messages only" decision entry), so the guidance is queued
+    as this turn's pending context and the crewmate says it in its reply; the
+    ``notice`` row is for the Sessions page. Best-effort: an unreadable scope or a
+    full queue never fails the turn.
+    """
+    from kiro_crew.agent_discovery import mate_conductor_inherited_skills
+    from kiro_crew.mate_worker import MATE_CONDUCTOR_AGENT
+
+    if session_agent(client, agent) != MATE_CONDUCTOR_AGENT:
+        return
+    cwd = getattr(client, "cwd", "")
+    try:
+        names = await asyncio.to_thread(
+            mate_conductor_inherited_skills, cwd if isinstance(cwd, str) and cwd else None
+        )
+    except Exception:  # noqa: BLE001 - an informational row must never fail a turn
+        logger.debug("crewmate conductor inherited skills could not be read", exc_info=True)
+        return
+    if not names:
+        return
+    shown = ", ".join(names[:5]) + (f" and {len(names) - 5} more" if len(names) > 5 else "")
+    text = (
+        f"This Bot's chat still loads your own skills ({shown}). After the next "
+        "release it loads only its built-in skills. To keep a skill, add it to this "
+        "Bot in its Abilities settings, or ask it here to add the skill."
+    )
+    append_and_surface(
+        state,
+        slot,
+        "notice",
+        _redact_display_text(f"ℹ {text}"),
+        "msg msg-info",
+    )
+    entry = {
+        "content": (
+            "Before your answer, tell the person this, in their language and "
+            f"in a short sentence or two: {text}"
+        ),
+        "source": "kirocrew",
+        "ephemeral": True,
+        "injectedAt": time.time(),
+    }
+    if not slot.append_pending_context(entry):
+        logger.debug("crewmate skill deprecation note was not queued: context is full")
 
 
 def _notice_steer_upgrade(state: "DashboardState", slot: "_ChatSlot", client: Any) -> None:
@@ -670,6 +777,11 @@ async def _fire(
         # at fire time: a reset gives the session a new one. Empty before
         # session/new, and then the spec hooks get none.
         _acp_sid = getattr(turn.client, "session_id", "") if turn._spec_hooks else ""
+        # Read at fire time too: a model pick or a fallback swap changes it.
+        _model = hook_session_model(
+            turn.client,
+            in_prompt=event not in (HOOK_EVENT_AGENT_SPAWN, HOOK_EVENT_USER_PROMPT_SUBMIT),
+        )
         results = await state._hook_store.fire(
             event,
             context,
@@ -687,6 +799,7 @@ async def _fire(
             extra_hooks_tool_names=_spec_tool_names,
             tool_match_names=_match_names,
             acp_session_id=_acp_sid if isinstance(_acp_sid, str) and _acp_sid else None,
+            session_model=_model,
         )
         for r in results:
             # Anchoring rule for the bounded hook excerpts below: text the
@@ -708,14 +821,13 @@ async def _fire(
                     },
                 )
             elif event == HOOK_EVENT_PRE_TOOL_USE and r.exit_code != 0 and not r.pre_tool_blocks:
-                # A spec hook that a policy refused, or that crashed, was killed
-                # or timed out. kiro-cli, which runs these hooks on its own
-                # backend, warns and lets the tool run; so does Crew, so one
-                # broken hook in an agent package cannot stop every tool call.
+                # A spec hook that crashed, was killed or timed out. kiro-cli,
+                # which runs these hooks on its own backend, warns and lets the
+                # tool run; so does Crew, so one broken hook in an agent package
+                # cannot stop every tool call.
                 logger.warning(
-                    "Spec hook %s %s (%s); tool allowed",
+                    "Spec hook %s failed (%s); tool allowed",
                     r.hook_name,
-                    "was refused by policy" if r.refused else "failed",
                     r.failure_detail,
                 )
                 state.broadcast_ws(
@@ -727,10 +839,10 @@ async def _fire(
                     },
                 )
             elif r.exit_code == 2 and r.refused:
-                # A policy refused the hook, so it never ran. On PreToolUse this
-                # is a Hooks-page hook (a refused spec hook took the branch
-                # above): a gate with no verdict, which blocks. Log the refusal
-                # itself, so it does not read like a hook that asked to block.
+                # A policy refused the hook, so it never ran: a gate with no
+                # verdict, which blocks, a spec hook's as much as a Hooks-page
+                # hook's. Log the refusal itself, so it does not read like a hook
+                # that asked to block.
                 injected.append(f"BLOCKED:{r.hook_name}:{r.failure_detail}")
                 logger.warning(
                     "Hook %s refused by policy: %s",
@@ -828,7 +940,7 @@ async def _turn_stop_hook(turn: _ChatTurn) -> None:
     _refusal_reasons = turn._refusal_reasons
     _stop_reason = turn._stop_reason
     _turn_flushed_visible_text = turn._turn_flushed_visible_text
-    is_slash = turn.is_slash
+    _slash_withholds_mirror = turn._slash_withholds_mirror
     needs_session_reset = turn.needs_session_reset
     session_key = turn.session_key
     slot = turn.slot
@@ -1152,12 +1264,30 @@ async def _turn_stop_hook(turn: _ChatTurn) -> None:
     # mirror-link writer free to retarget between them. The text is the turn's
     # whole answer, as on the Slack leg: `turn.assistant_text` is only the
     # segment after the last tool call.
-    if not is_slash:
+    if not _slash_withholds_mirror:
         _xs_reply = _cross_surface_reply_text(_turn_reply_segments(turn), turn.assistant_text)
         if not _xs_reply.strip() and turn._terminal_directive_applied:
             # Same quiet end as the Slack leg above: the outcome line is the reply.
             _xs_reply = turn._terminal_directive_text
         await _deliver_cross_surface_reply(state, session_key, _xs_reply, slot=slot)
+
+
+async def _fallback_turn_project(turn_project: str, session_cwd: Any) -> str:
+    """The folder a turn runs in when its start fell back from a hidden scratch folder.
+
+    The chat keeps storing the earlier run's scratch folder, so the turn's own project
+    still names it while the session runs in the default folder. Returns that folder,
+    or ``""`` when the turn's project is the one the session runs in.
+    """
+    if not turn_project or not isinstance(session_cwd, str) or not session_cwd:
+        return ""
+    if session_cwd == turn_project:
+        return ""
+    from kiro_crew.session_allocation_parts.get_or_create import _stored_cwd_is_hidden_scratch
+
+    if await asyncio.to_thread(_stored_cwd_is_hidden_scratch, turn_project, None):
+        return session_cwd
+    return ""
 
 
 def _surface_startup_notice(state: DashboardState, slot: _ChatSlot, provider: Any) -> None:
@@ -1172,5 +1302,13 @@ def _surface_startup_notice(state: DashboardState, slot: _ChatSlot, provider: An
     if not isinstance(notice, tuple) or len(notice) != 2:
         return
     token, text = notice
-    append_and_surface(state, slot, "error", text, "msg msg-err", meta={"kind": token})
     provider.startup_notice = None
+    from kiro_crew.session_allocation_parts.get_or_create import HIDDEN_SCRATCH_CWD_NOTICE
+
+    if token == HIDDEN_SCRATCH_CWD_NOTICE:
+        # The chat's stored folder is left as it is, so every fresh start of this
+        # chat falls back again: say so once per chat per gateway run, in memory.
+        if slot._hidden_scratch_notice_shown:
+            return
+        slot._hidden_scratch_notice_shown = True
+    append_and_surface(state, slot, "error", text, "msg msg-err", meta={"kind": token})

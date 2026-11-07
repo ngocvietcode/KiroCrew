@@ -231,7 +231,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "_working_tool_bound_reached": ("function", False, "c7051eec1093", "session_handle_watchdog"),
     "agent_version": ("property", False, "bb418bb7ece8", "session_handle_class"),
     "initialize_result": ("property", False, "44dc9acb7120", "session_handle_class"),
-    "answer_elicitation": ("function", True, "2fcb1ac189fa", "session_handle_elicitation"),
+    "answer_elicitation": ("function", True, "8ba26aba28fc", "session_handle_elicitation"),
     "apply_session_permission_routing": (
         "function",
         True,
@@ -246,6 +246,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "cancel_pending_elicitations": ("function", True, "fa6cfecd5574", "session_handle_elicitation"),
     "cleanup_transcript_files": ("staticmethod", False, "a9cece317161", "session_handle_lifecycle"),
     "clear_pending_steers": ("function", True, "16180c63d5e6", "session_handle_steering"),
+    "command_is_native": ("function", False, "6338054a5d60", "session_handle_turn"),
     "command_result": ("function", True, "1f650230e18e", "session_handle_lifecycle"),
     "compact": ("function", True, "416a3df991e6", "session_handle_compaction"),
     "config_options": ("property", False, "7eb96c2fda05", "session_handle_class"),

@@ -26,7 +26,8 @@ Instance fields written: ``_background_launches``, ``_between_turn_credits``, ``
 ``_session_agent_spec``, ``_session_harness_deny_rules``, ``_session_id``,
 ``_session_key``, ``_session_mcp_cache``, ``_session_mcp_snapshot``,
 ``_session_mcp_unhonoured``, ``_spawn_start_token``, ``_spawn_work_dir``,
-``_spec_denied_tools``, ``_spec_zero_tools``, ``_stderr_lines``, ``_stderr_task``,
+``_spec_denied_tools``, ``_spec_shell_allowlist``, ``_spec_write_allowlist``,
+``_spec_write_cwd``, ``_spec_zero_tools``, ``_stderr_lines``, ``_stderr_task``,
 ``_stdin_stalled``, ``_windows_tree_cleanup_failed``.
 
 Instance fields read: ``_entitlement_probe_inflight``, ``_mcp_gateway_socket``,
@@ -55,6 +56,7 @@ from kiro_crew.acp.client_timeouts import (
 from kiro_crew.acp.liveness import LivenessOracle, _consume_future_exception
 from kiro_crew.acp.mcp_session_report import McpSessionReport
 from kiro_crew.acp.runtime_process_tree import ChildRecord
+from kiro_crew.acp.stale_compaction import clear_stale_compaction_state
 from kiro_crew.acp.transport_errors import (
     AcpDelegateLaunchFailed,
     AcpError,
@@ -662,6 +664,9 @@ def _reset_state(self: AcpClient) -> None:
     # what the next session's guard judges, not this one's.
     self._mcp_ref_spec = None
     self._spec_denied_tools = frozenset()
+    self._spec_shell_allowlist = None
+    self._spec_write_allowlist = None
+    self._spec_write_cwd = ""
     self._spec_zero_tools = False
     self._session_mcp_unhonoured = frozenset()
     self._session_harness_deny_rules = ()
@@ -700,6 +705,8 @@ def _reset_state(self: AcpClient) -> None:
     # harness transcript (restore_cost_session keeps the baseline). Zeroing
     # here re-billed the whole lifetime on the first turn after every resume.
     self._buffer.clear()
+    # The replacement process cannot send an abandoned compaction's terminal.
+    clear_stale_compaction_state(self)
     self._stderr_lines.clear()
     # A fresh process opens a fresh registration window: cleared WITH the
     # ring, so the latch and the evidence it gates always describe the same

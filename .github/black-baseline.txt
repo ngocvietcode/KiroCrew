@@ -7,7 +7,6 @@
 #
 # Refresh (after formatting something listed here):
 #   python3 scripts/check_black_formatting.py --update-baseline
-src/kiro_crew/acp/kas_wire.py
 src/kiro_crew/acp/worker_pool.py
 src/kiro_crew/apps/app_storage.py
 src/kiro_crew/apps/backend.py
@@ -39,6 +38,7 @@ src/kiro_crew/apps/builtins/code_review_sage/tests/fixtures.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_activity_progress.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_adapters.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_backend_routes.py
+src/kiro_crew/apps/builtins/code_review_sage/tests/test_backend_routes_coverage.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_blast_radius.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_consolidate.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_discovery.py
@@ -56,6 +56,7 @@ src/kiro_crew/apps/builtins/code_review_sage/tests/test_record_adoption.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_repo_review.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_report.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_review_driver.py
+src/kiro_crew/apps/builtins/code_review_sage/tests/test_review_driver_loopback.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_review_guidance.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_review_pool.py
 src/kiro_crew/apps/builtins/code_review_sage/tests/test_run_endpoints.py
@@ -200,7 +201,6 @@ src/kiro_crew/mcp_gateway/stub.py
 src/kiro_crew/mcp_gateway/transport.py
 src/kiro_crew/mcp_tools/artifacts.py
 src/kiro_crew/metrics/http_metrics.py
-src/kiro_crew/metrics/recorder.py
 src/kiro_crew/perf_sampler.py
 src/kiro_crew/pod/launchd.py
 src/kiro_crew/publish_sync.py
@@ -604,11 +604,9 @@ test/test_resource_health_endpoint.py
 test/test_resource_pressure_notify.py
 test/test_reveal_in_file_manager.py
 test/test_reveal_path.py
-test/test_review_driver_loopback.py
 test/test_route_registry.py
 test/test_run_config_write.py
 test/test_safety_override.py
-test/test_sage_backend_routes_coverage.py
 test/test_sandbox_backend_cache.py
 test/test_sandbox_default_fix.py
 test/test_sandbox_first_party_exec.py
@@ -656,7 +654,6 @@ test/test_slack_upload_binary.py
 test/test_slash_task_tracking.py
 test/test_slot_needs_input_status.py
 test/test_slot_sync_on_create.py
-test/test_slots_broadcast_coalesce.py
 test/test_socketsec.py
 test/test_source_providers.py
 test/test_source_providers_comment_guard.py

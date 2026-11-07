@@ -85,9 +85,10 @@ PLUMBING: frozenset[tuple[str, str]] = frozenset(
         ("kiro_crew/context.py", "recent"),
         ("kiro_crew/context_assembly/turn_message.py", "recent"),
         ("kiro_crew/dashboard/channel_slots.py", "read_messages"),
-        # The chat handlers' resume and slot-detail owners, composed into
-        # chat_handlers: the same resume and render reads it made.
+        # The chat handlers' resume, resume-window and slot-detail owners, composed
+        # into chat_handlers: the same resume, reconcile and render reads it made.
         ("kiro_crew/dashboard/chat_api/resume.py", "read_messages_chained"),
+        ("kiro_crew/dashboard/chat_api/resume_window.py", "read_messages_chained"),
         ("kiro_crew/dashboard/chat_api/slot_detail.py", "read_messages_chained"),
         ("kiro_crew/dashboard/chat_api/slot_detail.py", "read_messages_chained_full"),
         ("kiro_crew/dashboard/chat_backfill.py", "read_messages_chained"),
@@ -105,6 +106,10 @@ PLUMBING: frozenset[tuple[str, str]] = frozenset(
         ("kiro_crew/dashboard/cron_inject.py", "read_messages"),
         # Rendering the transcript's own artifacts / rows to its user.
         ("kiro_crew/dashboard/handlers/artifacts_parts/session_documents.py", "read_messages"),
+        # The Files tab listing the paths this session edited, to its user.
+        ("kiro_crew/dashboard/session_files.py", "read_file_change_messages"),
+        # The same tab showing one of those edits, as the transcript's own card does.
+        ("kiro_crew/dashboard/session_files.py", "read_messages"),
         # SEL audit log `recent`, not a transcript.
         ("kiro_crew/dashboard/handlers/core_security.py", "recent"),
         ("kiro_crew/dashboard/handlers/cron_runs.py", "read_messages"),

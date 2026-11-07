@@ -42,6 +42,7 @@ from kiro_crew.acp.session_handle_runtime_contract import (
     AcpRuntimeDead,
     AcpRuntimeError,
 )
+from kiro_crew.acp.stale_compaction import consume_stale_compaction_status
 from kiro_crew.acp.types import (
     EVENT_MCP_SERVER_INIT_FAILURE,
     EVENT_MCP_SERVER_INITIALIZED,
@@ -372,6 +373,7 @@ async def wait_mcp_ready(
         if msg is None:
             self._queue.put_nowait(None)
             raise AcpRuntimeDead("Runtime exited while waiting for managed MCP readiness")
+        dropped_compaction = consume_stale_compaction_status(self, msg)
         try:
             # Config/OAuth side effects also belong to external servers and
             # pre-mode frames. They must not become readiness requirements.
@@ -380,6 +382,8 @@ async def wait_mcp_ready(
             logger.debug("error processing init notification", exc_info=True)
         if stale:
             stale -= 1
+            continue
+        if dropped_compaction:
             continue
         self._mcp_report.record_frame(msg, owned=self._owns_mcp_frame(msg))
         readiness.record(msg)
@@ -484,6 +488,8 @@ async def wait_for_declared_mcp(self: AcpSessionHandle, timeout: float) -> tuple
             # Runtime died: re-poison so the turn that follows sees it.
             await self._queue.put(None)
             break
+        if consume_stale_compaction_status(self, msg):
+            continue
         try:
             report.record_frame(msg, owned=self._owns_mcp_frame(msg))
             self._apply_init_notification(msg, classify_notification(msg))
@@ -646,11 +652,15 @@ def text_names_mcp_server(text: str, name: str) -> bool:
 
     Each alias from :func:`mcp_server_aliases` matches with any run of
     separators between its words, and only between word boundaries, so
-    ``notion`` matches "sign in to Notion" and not "notional". Pure.
+    ``notion`` matches "sign in to Notion" and not "notional". A registry
+    provider whose slug is *name* adds its ``sign_in_words`` (``atlassian``:
+    "jira", "confluence"), matched the same way. Pure.
     """
+    from kiro_crew.connections.registry import sign_in_words
+
     if not text or not name:
         return False
-    for alias in mcp_server_aliases(name):
+    for alias in (*mcp_server_aliases(name), *sign_in_words(name)):
         pattern = r"[\s_.:/@-]+".join(re.escape(word) for word in alias.split(" "))
         if re.search(rf"(?<![A-Za-z0-9]){pattern}(?![A-Za-z0-9])", text, re.IGNORECASE):
             return True
@@ -931,6 +941,8 @@ async def drain_init(
         stale_backlog = stale_frames > 0
         if stale_backlog:
             stale_frames -= 1
+        if consume_stale_compaction_status(self, msg):
+            continue
         try:
             action = classify_notification(msg)
             if not stale_backlog:

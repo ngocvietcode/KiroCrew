@@ -252,7 +252,7 @@ set against the backend converter), `import '../utils/hljs'`
 ### The file panel, the chat pane and the browser panel
 
 `components/MarkdownPanel.tsx` (a side-panel file tab), `components/ChatPane.tsx`
-(one chat session in split view or a mate's chat) and
+(one chat session in split view or a Bot's chat) and
 `components/WebPreviewPanel.tsx` (the Browser tab) are facades over sibling owners
 in `components/`. Each facade keeps its module id, its default export and every
 named export: hosts import it, and the specs that mount a host mock it by that id,
@@ -593,6 +593,12 @@ with `window.open` on a plain click, because the frame's CSP `frame-src`
 refuses an in-place navigation to a custom scheme. Other pages keep in-place
 navigation. In the desktop app that call reaches the window-open handler in
 `website/electron/external-scheme.js`, which asks the user before opening it.
+`DiffBlock` sends that handler a `vscode://file` link to the file it probed when
+a Cmd+click (Ctrl+click off macOS) lands on its Open control or on a new-side
+line number, in a desktop-app window whose gateway the shell confirms is on this
+machine (`canPickFolderNatively`); a plain click is unchanged. A line number takes
+it only where every hunk header carries numbers, and never on a tool call's edit
+card, which counts the replaced text from 1.
 
 How a refused destination RENDERS is part of the contract (issue #9925): the
 transform's rejection sentinel is `''`, and `MdAnchor`'s `!href` guard renders
@@ -649,7 +655,7 @@ exposes it as `BASE_PATH` (`''` in the stock root build, so every helper is the
 identity).
 
 The transport shims (`installBasePathShims`) and DOM shims
-(`installBasePathDomShims`) rebase `fetch`, `WebSocket`, `EventSource` and
+(`installBasePathDomShims`) rebase `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` and
 URL-valued attributes automatically, so most call sites need no change. But a
 dynamic `import()`, a `window.location` navigation, an `AudioWorklet.addModule`
 load and a direct `window.location.pathname` read reach neither hook: wrap a
@@ -1089,6 +1095,13 @@ against `location.pathname` only, so a multi-segment, query, or hash route would
 register and then never resolve. The same constraint and the reasoning behind it
 are in [extension-seams](extension-seams.md), which covers registering routes and
 icons from a downstream edition instead of editing the seed maps.
+
+A builtin page still renders while its app is off, and the app's proxied API
+(`/apps/<name>/api/*`) then refuses every call with `code: "app_not_enabled"`.
+Throw `toApiError` from the page's fetch helpers so the code survives, test it
+with `isAppNotEnabledError` (`src/api/apiError.ts`), and show the disabled-app
+copy (`components.appHost.this_app_is_disabled`) with a way to Apps instead of
+the call's error. File Explorer and Workflows do this.
 
 ## Crew capability drafts
 

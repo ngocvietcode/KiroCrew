@@ -26,8 +26,8 @@ import { useComposerDraftState, ComposerDraftSync, useComposerIntakeRefs, useMai
 import { useModelPickerModels, useNewSessionPicks, useSessionChoices, useSlotSelectionCapabilitiesQuery } from './chat/page/sessionPicks'
 import { useCrewModeSwitch } from './chat/page/crewModeSwitch'
 import UltraModeEffect from '../components/crew/UltraModeEffect'
-import { crewModeRoot, crewRootOf, runsCrewMode } from '../lib/crewMode'
-import { useCrewMode } from '../hooks/usePreviewFlag'
+import { crewModeRoot, crewRootOf, mateRootOf, runsCrewMode } from '../lib/crewMode'
+import { useCrewMode, useMateSessionsHidden } from '../hooks/usePreviewFlag'
 import { useCrewRoot } from '../components/crew/useCrewRoot'
 import { useSteerDelivery, useRefusedPress, useRegenerate } from './chat/page/turnActions'
 import { useTranscriptScrollRefs, useTranscriptPaging } from './chat/page/transcriptPaging'
@@ -58,6 +58,7 @@ import ChatTitleOverlay from './chat/page/ChatTitleOverlay'
 import ChatTranscriptView from './chat/page/ChatTranscriptView'
 import ComposerDockView from './chat/page/ComposerDockView'
 import { useComposerTypingLock } from './chat/shared-crew/useComposerTypingLock'
+import { SessionPresence, usePresentOthers } from './chat/shared-crew/PresenceChips'
 import { useComposerEditWithTyping } from './chat/shared-crew/typingSignal'
 import ChatSidePanels from './chat/page/ChatSidePanels'
 import { slotBusySteer } from '../components/chat-input/busySend'
@@ -323,7 +324,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
     dispatch, activeSlot, splitMode, drafts, saveDraftsDebounced, composerSlotRef, setInput, inputRef, mainComposerAppend, raisePrefillHint,
   })
   useSignedLinkAnchor({
-    embedded, mode, dispatch, setSearchParams, composerSlotRef, setInput, autoSendRef, newSessionRef, raisePrefillHint, setAutoSendTick, tokenConsumingRef,
+    embedded, mode, dispatch, composerSlotRef, setInput, autoSendRef, newSessionRef, raisePrefillHint, setAutoSendTick, tokenConsumingRef,
     getNoCarryCreateIdsRef: () => noCarryCreateIdsRef,
   })
 
@@ -710,6 +711,10 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
   // A crew member's message box sends nothing while its conductor is closed
   // (ComposerDockView's gate); the voice auto-submit below honours it too.
   const currentCrewRoot = crewRootOf(currentSlot)
+  // ChatTitleOverlay shows the worker breadcrumb for a Crew worker and for a
+  // crewmate's session the mate sessions preview hides.
+  const mateSessionsHidden = useMateSessionsHidden()
+  const workerBreadcrumb = !!currentCrewRoot || (mateSessionsHidden && !!mateRootOf(currentSlot))
   const { rootClosed: crewRootClosedRaw } = useCrewRoot(currentCrewRoot)
   const crewRootClosed = !!currentCrewRoot && crewRootClosedRaw
   // From the chip press to the first message the transcript shows the Crew Mode
@@ -904,7 +909,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
   // A busy turn: steer into it, answer its question card, stop it, and the queued-message cards.
   const {
     queuedMessages, systemDeliveryCount, steer, stopTurn, keepQuestionAnswer, answerQuestionCard,
-    handleCancelQueued, handleInterruptQueued, handleEditQueued, handleReorderQueued, queuePendingIds,
+    handleCancelQueued, handleInterruptQueued, handleEditQueued, handleEditOpenQueued, handleReorderQueued, queuePendingIds,
     handleSteerAction, steerActionPending, steerActionRefusals, steerActionRequestFailures,
   } = useBusyTurnControls({
     activeSlot,
@@ -929,9 +934,9 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
     onSlashRefused: reportSlashRefusal,
   })
   // The endpointer's auto-submit is an Enter press: the composer's default busy
-  // decision for the active slot (never the flipped chord), so it steers where
-  // Send would steer. Assigned in render so the voice callback (composerHost.ts) always
-  // reaches the latest send() and steer().
+  // decision for the active slot (never the flipped chord), including a worker
+  // composer's steer-only mode, so it steers where Send would steer. Assigned in
+  // render so the voice callback (composerHost.ts) always reaches the latest send() and steer().
   voiceSubmitRef.current = () => {
     // The composer is held (the Crew Mode switch in flight, or a crew member's
     // closed conductor): an endpoint sends nothing. Dictation stops, its text
@@ -940,7 +945,9 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
     const slot = activeSlotRef.current
     // send() owns the disconnected guard and upload hold, so route either state there before steer() can consume the composer.
     if (!connected || isComposerSendHeld(slot) || isComposerSendHeld(composerSlotRef.current)) { void send(); return }
-    const flag = slot ? slotBusySteer(store.getState(), slot, jevAutoConsented) : undefined
+    const flag = slot
+      ? slotBusySteer(store.getState(), slot, jevAutoConsented, currentCrewRoot && currentSlot ? 'steer-only' : undefined)
+      : undefined
     if (flag) steer(flag === 'auto' ? { auto: true } : undefined)
     else void send()
   }
@@ -979,6 +986,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
     openDefaultModelSetting, openKiroSignIn, openMemberCapabilities, openModelPickerFromError, openTurnLimitSetting, quoteWholeMessage, handleAsk, handleQuote, handleEditResend, editLast, farmPassRef,
     handleEditConsumed, renderUserContentCb, transcriptHot, toggleAct, handleSpeak, handleApplyPlan, renderedDisplayItems, stableMsgKey, handleLoadEarlier, isPinned, handleJumpToQuote,
     handleTogglePinForMessage, handleSteerAction, steerActionPending, steerActionRefusals, steerActionRequestFailures,
+    editSkillAgent: activeAgentName, editSkillProject: currentSlot?.project || '',
   })
   const {
     mobileSessions, drawerMounted, drawerX, drawerPanelRef, drawerScrimRef, sideOverlayX, sideOverlayPanelRef, sideOverlayPhase, drawerScrim, openSidebar, closedSessionActions, sidebarFolderActions,
@@ -1030,6 +1038,9 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
   const sendNowAfterRace = useCallback((slot: string) => { void send(undefined, slot, false, false, true) }, [send])
   // Someone else typing in this shared session locks the composer read-only.
   const typingLock = useComposerTypingLock(activeSlot)
+  // Memoized so the composer's memo holds; `langGen` re-keys the chips' i18nT labels.
+  const othersHere = usePresentOthers(activeSlot).entries.length > 0
+  const composerPresence = useMemo(() => { void langGen; return othersHere ? <SessionPresence sessionKey={activeSlot} /> : undefined }, [othersHere, activeSlot, langGen])
   const composerAbove = useComposerAboveBand({
     langGen,
     controls: sessionControlState,
@@ -1148,7 +1159,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
             />
             <ChatDropOverlay active={dragOver} />
             <ChatTranscriptView
-              embedded={embedded} popout={popout} activeSlot={activeSlot} appToolCallIds={appToolCallIds} titleInTopbar={titleInTopbar} activityOpen={activityOpen}
+              embedded={embedded} popout={popout} activeSlot={activeSlot} appToolCallIds={appToolCallIds} titleInTopbar={titleInTopbar} workerBreadcrumb={workerBreadcrumb} activityOpen={activityOpen}
               completedTurnCount={completedTurnCount} cursorIsForActiveSlot={cursorIsForActiveSlot} kiroCrewVersion={kiroCrewVersion} loadingOlder={loadingOlder} olderFailed={olderFailed}
               setTurnDisclosureFor={setTurnDisclosureFor} slotHasMore={slotHasMore} slotLoading={slotLoading} slotRunning={slotRunning} slotState={slotState} environmentStart={environmentStart} slotStopping={slotStopping}
               slotSwitchTarget={slotSwitchTarget} turnDisclosure={turnDisclosure} turnRowMayBeLive={turnRowMayBeLive} setInput={setInput} isWelcomeState={transcriptWelcome} crewModeOn={crewModeOn || crewWelcomeHeld} openTaskBoard={openTaskBoard} chatConfig={chatConfig}
@@ -1192,14 +1203,14 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
               pinModelToAgentMut={pinModelToAgentMut} projectBranch={projectBranch} projectGit={projectGit} projectGitError={projectGitError} shownModel={shownModel}
               cardOwnsRecovery={cardOwnsRecovery} continuable={continuable} continuing={continuing} handleContinue={handleContinue} interrupted={interrupted} dockGutter={dockGutter} dockRef={dockRef}
               endQuoteFlight={endQuoteFlight} flyingQuote={flyingQuote} inputAreaRef={inputAreaRef} isAtBottom={isAtBottom} answerQuestionCard={answerQuestionCard}
-              handleCancelQueued={handleCancelQueued} handleEditQueued={handleEditQueued} handleInterruptQueued={handleInterruptQueued} handleReorderQueued={handleReorderQueued}
+              handleCancelQueued={handleCancelQueued} handleEditQueued={handleEditQueued} handleEditOpenQueued={handleEditOpenQueued} handleInterruptQueued={handleInterruptQueued} handleReorderQueued={handleReorderQueued}
               keepQuestionAnswer={keepQuestionAnswer} queuedMessages={queuedMessages} queuePendingIds={queuePendingIds} steer={steer} stopTurn={stopTurn} systemDeliveryCount={systemDeliveryCount}
               handleEditLastRequest={handleEditLastRequest} composerOptimizing={composerOptimizing} handleOptimizingChange={handleOptimizingChange} memorySwitching={memorySwitching}
               // Crew Mode is chosen on the welcome state: while it is on neither the
               // memory-mode chip nor the Crew Mode chip is offered. Until the first
               // message the composer mark turns it off and both come back; after
               // that the chat stays on the conductor.
-              showComposerMemoryChip={showComposerMemoryChip && !crewModeChosen} switchMemoryMode={switchMemoryMode} composerAbove={composerBand} typingLock={typingLock} composerSessionControls={composerSessionControls}
+              showComposerMemoryChip={showComposerMemoryChip && !crewModeChosen} switchMemoryMode={switchMemoryMode} composerAbove={composerBand} typingLock={typingLock} composerPresence={composerPresence} composerSessionControls={composerSessionControls}
               // Beside the memory chip on the welcome state only, and not while the chat
               // is still loading: drawn alone first, the Crew Mode chip would slide
               // across the memory chip arriving beside it.

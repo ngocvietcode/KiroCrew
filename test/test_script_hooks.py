@@ -729,6 +729,26 @@ class TestScriptHookStoreFire:
         assert results[0].succeeded
         assert "caveman" in results[0].stdout
 
+    @pytest.mark.parametrize(("model", "expected"), [("model-x", "model-x"), (None, "<unset>")])
+    @pytest.mark.asyncio
+    async def test_every_hook_sees_the_session_model_only_when_known(
+        self, hook_store: ScriptHookStore, tmp_path: Path, monkeypatch, model, expected
+    ):
+        """A stored hook and a spec hook both read it; unknown, it is unset, never the ambient one."""
+        monkeypatch.setenv("KIROCREW_SESSION_MODEL", "ambient")
+        command = _script_command(
+            tmp_path / "model_hook.py",
+            "import os; print(os.environ.get('KIROCREW_SESSION_MODEL', '<unset>'))\n",
+        )
+        hook_store.create(
+            {"name": "stored", "event": HOOK_EVENT_USER_PROMPT_SUBMIT, "command": command}
+        )
+        spec = ScriptHook(id="spec:a1:x", event=HOOK_EVENT_USER_PROMPT_SUBMIT, command=command)
+        results = await hook_store.fire(
+            HOOK_EVENT_USER_PROMPT_SUBMIT, "hi", extra_hooks=[spec], session_model=model
+        )
+        assert [r.stdout.strip() for r in results] == [expected, expected], results
+
 
 class TestRunScriptHookSpawnForm:
     """The spawn form per platform, and the guard that keeps isolation ahead of it.
@@ -1126,3 +1146,32 @@ class TestRunScriptHookShellDenyList:
         # gate did not block it" (exit 2 is the block convention) holds on both.
         assert result.exit_code != 2
         assert hook.last_status != "blocked"
+
+
+def test_the_saved_hooks_snapshot_keeps_a_hook_saved_while_one_ran(tmp_path: Path, monkeypatch):
+    """A process with no hook store fires a snapshot of the saved hooks; a hook the
+    Hooks page saves meanwhile stays saved."""
+    import kiro_crew.hooks as hooks_mod
+    from kiro_crew.config import loader
+    from kiro_crew.hooks import ScriptHookResult
+
+    monkeypatch.setattr(loader, "config_dir", lambda: tmp_path)
+    monkeypatch.setattr(hooks_mod, "_global_script_hook_store", None)
+    monkeypatch.setattr(hooks_mod, "get_global_hook_store", lambda: None)
+
+    def save(hook_id: str) -> None:
+        page = ScriptHookStore(config_dir=tmp_path)
+        page._hooks[hook_id] = ScriptHook(
+            id=hook_id, event=HOOK_EVENT_PRE_TOOL_USE, matcher="*", command=hook_id
+        )
+        page._save()
+
+    save("saved")
+
+    async def fake_run(hook, context="", hook_event=None, cwd=None):
+        save("new")
+        return ScriptHookResult(hook_id=hook.id, hook_name=hook.name, event=hook.event, exit_code=0)
+
+    monkeypatch.setattr(hooks_mod, "run_script_hook", fake_run)
+    assert asyncio.run(hooks_mod.permission_pre_tool_block(None, [], None, "x")) is None
+    assert {h.id for h in ScriptHookStore(config_dir=tmp_path).list_all()} == {"saved", "new"}

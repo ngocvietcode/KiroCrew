@@ -238,6 +238,7 @@ class AcpSessionHandle:
     wait_turn_done = _sh_turn.wait_turn_done
     prompt = _sh_turn.prompt
     stream_command = _sh_turn.stream_command
+    command_is_native = _sh_turn.command_is_native
     _run_turn = _sh_turn._run_turn
     _close_abandoned_turn = _sh_turn._close_abandoned_turn
     # The per-turn event loop: ``kiro_crew.acp.session_handle_dispatch``.
@@ -700,6 +701,9 @@ class AcpSessionHandle:
         # The upgrade notice when that batch's prompt is dropped by the KAS this
         # process runs (``harness.kas.kas_agent_prompt_issue``); "" otherwise.
         self.kas_agent_prompt_notice: str = ""
+        # Whether that KAS is known to apply the batch's prompts
+        # (``KasHarness.agent_prompt_applied``); False without that evidence.
+        self.kas_agent_prompt_applied: bool = False
         # The notice naming the MCP servers this session's projection sent without
         # part of their env or headers, by key name only
         # (``kas_agents.withheld_credentials_notice``); "" otherwise.

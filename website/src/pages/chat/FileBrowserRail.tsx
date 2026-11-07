@@ -28,10 +28,12 @@ import { cn } from '../../lib/utils'
 import { useColumnResize } from '../../hooks/useColumnResize'
 import { PierreWorkspaceTree, type TreeReveal } from '../../pierre/tree'
 import { mergeTreeMatches } from '../../lib/treeSearchMatches'
+import { treeIsPartial } from '../../pierre/treeFolderListings'
 import { findReport, reportForError } from '../../utils/errorReport'
 import { errMessage } from '../../utils/thunkError'
 import { pathBasename, relativeToRoot, stripTrailingSeparators } from '../../utils/pathBasename'
 import { useDirectoryUpload } from './useDirectoryUpload'
+import NewFileDialog from './NewFileDialog'
 
 /** Rail width bounds; the grip clamps between them. */
 const RAIL_MIN_W = 300
@@ -552,9 +554,11 @@ export default function FileBrowserRail({ projectDir, onFileOpen, onAddToContext
   const rootName = pathBasename(stripTrailingSeparators(projectDir)) || projectDir
 
   const {
-    uploadFiles, pickAndUpload, progress: uploadProgress, error: uploadError, dismissError,
+    uploadFiles, pickAndUpload, createFile, folderLabel, progress: uploadProgress, error: uploadError, dismissError,
     success: uploadSuccess, dismissSuccess, fileInput,
   } = useDirectoryUpload(projectDir, root)
+  // The directory a row's "New file…" asked for, while its dialog is open.
+  const [newFileDir, setNewFileDir] = useState<string | null>(null)
   const { active: dragOver, dropTargetProps } = useChatFileDrop((dataTransfer) => {
     const files = Array.from(dataTransfer.files)
     if (!files.length) return
@@ -624,7 +628,7 @@ export default function FileBrowserRail({ projectDir, onFileOpen, onAddToContext
   const contentMode = searchMode === 'content'
   // The tree filter finds only what the tree holds. Past its cap the name query
   // goes to the filename search instead.
-  const treeTruncated = treeData?.truncated === true
+  const treeTruncated = treeIsPartial(treeData)
   const nameSearch = !contentMode && !changedMode && treeTruncated
     && query.trim().length >= NAME_SEARCH_MIN_CHARS
   const projectRoot = (treeData?.root ?? projectDir).replace(/[/\\]+$/, '')
@@ -931,6 +935,7 @@ export default function FileBrowserRail({ projectDir, onFileOpen, onAddToContext
                   onFileOpen={(abs) => onFileOpen(abs, changedMode)}
                   onAddToContext={onAddToContext}
                   onUploadRequest={pickAndUpload}
+                  onNewFileRequest={setNewFileDir}
                   searchQuery={nameSearch ? null : query || null}
                   selectedPath={selectedPath ?? null}
                   onOpenFolder={onOpenFolder ? folder => onOpenFolder(`${projectRoot}/${folder}`) : undefined}
@@ -944,6 +949,19 @@ export default function FileBrowserRail({ projectDir, onFileOpen, onAddToContext
         </div>
       </div>
       {fileInput}
+      {newFileDir !== null && (
+        <NewFileDialog
+          folder={folderLabel(newFileDir)}
+          onCreate={name => createFile(newFileDir, name)}
+          onCreated={path => {
+            setNewFileDir(null)
+            // A requested line opens the source editor, so a new markdown file
+            // is ready to type into rather than an empty preview.
+            onFileOpen(path, false, { line: 1 })
+          }}
+          onClose={() => setNewFileDir(null)}
+        />
+      )}
     </>
   )
 }

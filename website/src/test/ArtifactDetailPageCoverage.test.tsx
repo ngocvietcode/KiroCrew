@@ -467,6 +467,14 @@ describe('ArtifactDetailPage — mutation paths', () => {
     )
   })
 
+  it('hands focus to the add-tag button when a tag is removed', async () => {
+    await mount(mkArtifact({ tags: ['ops', 'cr'] }))
+    const remove = screen.getByLabelText('Remove tag ops')
+    remove.focus()
+    fireEvent.click(remove)
+    expect(screen.getByLabelText('Add a tag')).toHaveFocus()
+  })
+
   it('surfaces a tag-write failure', async () => {
     await mount(mkArtifact({ tags: ['ops'] }))
     vi.mocked(api).updateArtifact = vi.fn().mockRejectedValue(new Error('tags rejected'))
@@ -499,6 +507,42 @@ describe('ArtifactDetailPage — mutation paths', () => {
     fireEvent.keyDown(input, { key: 'Escape' })
     await waitFor(() => expect(screen.getByLabelText('Add a tag').tagName).toBe('BUTTON'))
     expect(vi.mocked(api).updateArtifact).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['Escape', 'draft'],
+    ['Enter', 'release'],
+    [',', 'oncall'],
+  ])('returns focus to the add-tag button when %s closes the input', async (key, tag) => {
+    await mount(mkArtifact({ tags: [] }))
+    fireEvent.click(screen.getByLabelText('Add a tag'))
+    const input = await screen.findByLabelText('Add a tag')
+    input.focus()
+    fireEvent.change(input, { target: { value: tag } })
+    fireEvent.keyDown(input, { key })
+    await waitFor(() => expect(screen.getByLabelText('Add a tag').tagName).toBe('BUTTON'))
+    expect(screen.getByLabelText('Add a tag')).toHaveFocus()
+  })
+
+  it.each([['Enter'], [' ']])(
+    'cancels the default of a %j that closes the tag input, so it cannot click the refocused button',
+    async (key) => {
+      await mount(mkArtifact({ tags: [] }))
+      fireEvent.click(screen.getByLabelText('Add a tag'))
+      const input = await screen.findByLabelText('Add a tag')
+      fireEvent.change(input, { target: { value: 'release' } })
+      // fireEvent returns false when a handler called preventDefault.
+      expect(fireEvent.keyDown(input, { key })).toBe(false)
+    },
+  )
+
+  it('leaves focus alone when the tag input closes on blur', async () => {
+    await mount(mkArtifact({ tags: [] }))
+    fireEvent.click(screen.getByLabelText('Add a tag'))
+    const input = await screen.findByLabelText('Add a tag')
+    fireEvent.blur(input)
+    await waitFor(() => expect(screen.getByLabelText('Add a tag').tagName).toBe('BUTTON'))
+    expect(screen.getByLabelText('Add a tag')).not.toHaveFocus()
   })
 
   it('blurring the tag input commits a typed tag and discards an empty one', async () => {

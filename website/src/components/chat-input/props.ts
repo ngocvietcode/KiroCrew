@@ -17,7 +17,6 @@ import type { MemorySource } from '../../lib/agentMemorySource'
 /** Who holds the typing lease that locks this composer (`ChatInputProps.typingLock`). */
 export interface ComposerTypingLockView {
   holderName: string
-  holderInitials: string
   /** The holder took the lease over from this user: the banner says so. */
   tookOver?: boolean
   /** Shows Take over on the banner (Shared Crew preview only). */
@@ -101,6 +100,9 @@ export interface ChatInputProps {
    *  row gives way to a banner naming who is typing, and only Stop and Steer
    *  stay for a running turn. Cleared the moment the lease ends. */
   typingLock?: ComposerTypingLockView | null
+  /** Who else is in this shared session, drawn at the end of the context row
+   *  beside the model chip. Omitted when the session is not shared. */
+  presence?: React.ReactNode
   placeholder?: string
   /** Shown instead of the default "Stopping…" while `disabled` is set, naming
    *  why the composer is locked. */
@@ -123,6 +125,8 @@ export interface ChatInputProps {
   /** How many uploads `onCancelUpload` aborts. Above one, the cancel control's
    *  label names the count, since pressing it stops every one of them. */
   uploadCount?: number
+  /** The slot those uploads run in; their progress shows beside the cancel control. */
+  uploadSlot?: string | null
   /** Pending file paths (images + non-images) for preview strip */
   pendingFiles?: string[]
   /** Pending folder references for the preview strip: RELATIVE paths with trailing slash, derived from `@rel/` composer tokens (a path reference handed to the agent, not an upload) */

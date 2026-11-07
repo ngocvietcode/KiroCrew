@@ -26,7 +26,7 @@ from kiro_crew import sandbox_launch_mark
 from kiro_crew.constants import KIROCREW_RUNTIME_AGENT_ENV
 from kiro_crew.deploy.engine import aws_spawn_env, resolve_aws_bin
 from kiro_crew.platform_compat import IS_POSIX
-from kiro_crew.sandbox import cgroup_scope_argv, popen_limited, wrap_argv
+from kiro_crew.sandbox import cgroup_scope_argv, popen_limited, without_python_env, wrap_argv
 from kiro_crew.subprocess_utf8 import UTF8_TEXT
 
 logger = logging.getLogger(__name__)
@@ -106,6 +106,24 @@ def _agent_confinement() -> bool:
     if sandbox_launch_mark.launched_in_sandbox():
         return True
     return _sandbox.agent_confinement_evidence() is not None
+
+
+def warn_if_started_from_agent_session() -> bool:
+    """Log one WARNING when the gateway carries an agent session's markers.
+
+    A gateway restarted from an agent's shell keeps that session's environment and
+    sandbox, and nothing else says why AWS features then fail. Warns only: starting
+    a gateway is an ordinary command. Returns whether it warned.
+    """
+    if not _in_agent_session():
+        return False
+    logger.warning(
+        "This gateway was started from inside an agent session and inherits that "
+        "session's environment and any sandbox around it, so AWS credentials may not "
+        "resolve (dictation fails with 'Unable to locate credentials') and dashboard "
+        "cloud actions are refused. Restart the gateway from a normal terminal."
+    )
+    return True
 
 
 def assert_human_action(action: str) -> None:
@@ -336,7 +354,9 @@ def run_aws(
                 # which a GUI-launched gateway leaves minimal. The sandbox's
                 # AWS_SECRET*/AWS_SESSION* scrub still applies: the wrapped argv
                 # runs it inside the child, on whatever env it is handed.
-                env=aws_spawn_env(argv[0]),
+                # aws-cli v1 is Python: the gateway's PYTHONPATH/PYTHONHOME
+                # would make it import the gateway's packages instead.
+                env=without_python_env(aws_spawn_env(argv[0])),
             )
             if proc_sink is not None:
                 try:

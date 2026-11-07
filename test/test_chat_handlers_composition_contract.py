@@ -55,7 +55,7 @@ _BASE_NAMES = frozenset("""
         STEER_REQUEUED STEER_STEERED SUGGEST_FOLLOWUP_SCHEMA SYNTHETIC_RECOVERY_KIND
         SelectionChange SessionFolderError SlotAgentSwitchCaller SlotCloseError
         SlotContinueRefusal SplitlinesBoundaryRecord TURN_ACTOR_META_KEY TURN_END_WIRE_CLS
-        TYPE_CHECKING TranscriptRevisionChanged UnknownMemoryStore ValidationError
+        TURN_OPENING_INJECT_KINDS TYPE_CHECKING TranscriptRevisionChanged UnknownMemoryStore ValidationError
         _CREATABLE_MODES _ChatSlot _CommitToken _DEFERRED_PLAIN_CREATE_KNOWN_KEYS
         _DurablePrefixMismatch _FLUSH_SNAPSHOT_RETRIES _FOLLOWUP_TEXT_FIELDS
         _GUARDED_WRITE_WAIT_SECS _HandoverDrainResult _MANUAL_CONTINUE_MSG
@@ -529,6 +529,7 @@ _OWNER_MODULES = frozenset(
         "agent_switch",
         "app_admission",
         "chat_send",
+        "conductor_close",
         "continue_turn",
         "followup_card",
         "handover_drain",
@@ -536,6 +537,7 @@ _OWNER_MODULES = frozenset(
         "project_lists",
         "prompt_queue",
         "resume",
+        "resume_window",
         "session_relaunch",
         "slot_approval",
         "slot_create",
@@ -635,11 +637,6 @@ _BASE_SURFACE: dict[str, tuple[tuple[str, str, str], ...]] = {
     ),
     "resume": (
         (
-            "_reconcile_slot_window",
-            "async function",
-            "(state: 'DashboardState', slot: \"'_ChatSlot'\") -> 'None'",
-        ),
-        (
             "_resume_session_identity",
             "function",
             "(state: 'DashboardState', history_key: 'str') -> 'str'",
@@ -672,6 +669,13 @@ _BASE_SURFACE: dict[str, tuple[tuple[str, str, str], ...]] = {
             "resume_slot_from_history",
             "async function",
             "(state: \"'DashboardState'\", *, name: 'str', history_key: 'str | None' = None, request_app: 'str' = '', caller_label: 'str' = '', request_title: 'str' = '', containment: \"'Callable[[_ChatSlot], Awaitable[ResumeRefusal | None]] | None'\" = None, final_check: \"'Callable[[_ChatSlot], ResumeRefusal | None] | None'\" = None, rebind_manager: 'bool' = True) -> 'ResumeOutcome'",
+        ),
+    ),
+    "resume_window": (
+        (
+            "_reconcile_slot_window",
+            "async function",
+            "(state: 'DashboardState', slot: \"'_ChatSlot'\") -> 'None'",
         ),
     ),
     "slot_repair": (
@@ -810,7 +814,7 @@ slot_settings | api_chat_slot_color | async function | (request: 'web.Request') 
 chat_send | _sweep_stale_permissions | function | (slot: "'_ChatSlot'") -> 'None'
 chat_send | _send_binds_agent | function | (agent: 'str', slot: 'Any') -> 'bool'
 chat_send | _send_writes_persona | function | (body: 'dict') -> 'bool'
-chat_send | _send_harness_command | async function | (message: 'str') -> 'str'
+chat_send | _send_harness_command | async function | (message: 'str', state: 'DashboardState', slot: '_ChatSlot') -> 'str'
 chat_send | steer_is_auto | function | (value: 'object') -> 'bool'
 chat_send | decided_message_handling | async function | (slot: 'Any', message: 'str') -> 'tuple[bool, dict | None]'
 chat_send | api_chat | async function | (request: 'web.Request') -> 'web.StreamResponse'

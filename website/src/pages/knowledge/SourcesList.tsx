@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Upload, FolderSync, FolderOpen, X, RefreshCw, AlertCircle, CheckCircle, ChevronDown, ChevronRight, Pause, Play, Pencil, Check, Coins, Globe, Database } from 'lucide-react'
 import { api, type AwsConsentStatus } from '../../api/client'
 import AwsConsentGate from '../../components/AwsConsentGate'
+import BedrockKbLiveChip from './BedrockKbLiveChip'
 import { Badge, Btn, EmptyState, ContentSkeleton, Input } from '../../components/ui'
 import Clickable from '../../components/Clickable'
 import { knowledgeApi } from './api'
 import { formatRelativeDate, FALLBACK_SUPPORTED_FORMATS } from './helpers'
-import { parseSourceProps, shouldShowWordCount, syncStatusLabel, ingestionStatusLabel } from './knowledgeUtils'
+import { parseSourceProps, shouldShowWordCount, syncStatusLabel, ingestionStatusLabel, displaySyncStatus } from './knowledgeUtils'
 import { fmtCompact, fmtList, fmtNumber } from '../../i18n/format'
 import type { Source, SourceSpend, NamespaceInfo, IngestionJob, SourceFilesResponse } from './types'
 
@@ -377,12 +378,15 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
   // grants, so a later blocked click can raise it again.
   const [consentNudge, setConsentNudge] = useState(false)
   const consentCardRef = useRef<HTMLDivElement>(null)
+  // Bumped by each "Not enabled · Review AWS account" click, so a repeat click (the nudge
+  // already raised) still scrolls to and focuses the card.
+  const [consentFocusTick, setConsentFocusTick] = useState(0)
   useEffect(() => {
     if (!consentNudge) return
     const el = consentCardRef.current
     el?.scrollIntoView?.({ block: 'nearest' })
     el?.focus({ preventScroll: true })
-  }, [consentNudge])
+  }, [consentNudge, consentFocusTick])
   // Submit gates on the SAME consent query the card polls (identical key =
   // react-query dedupes to one fetch): saving refuses server-side without a
   // grant for exactly this (profile, region), so an enabled submit before
@@ -398,6 +402,18 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
   })
   const addKbConsentGranted = addKbConsentQ.data?.granted === true
   useEffect(() => { if (addKbConsentGranted) setConsentNudge(false) }, [addKbConsentGranted])
+  // A row whose grant is gone ("Not enabled · Review AWS account") leads back to the one
+  // consent card there is: the Bedrock KB add form, targeted at that row's
+  // (profile, region), with the card focused.
+  const openKbConsent = (target: { profile: string; region: string }) => {
+    setAddType('bedrock_kb')
+    setAddKbRegion(target.region)
+    setAddKbProfile(target.profile)
+    setAddKbProfileCommitted(target.profile)
+    setShowAdd(true)
+    setConsentNudge(true)
+    setConsentFocusTick(n => n + 1)
+  }
   const [pendingConfirm, setPendingConfirm] = useState<{ id: string; uri: string; fileCount: number } | null>(null)
   const [expandedSource, setExpandedSource] = useState<string | null>(null)
   // The global staleTime is Infinity, so a reopened expanded view would serve the
@@ -433,7 +449,7 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
     // Auto-refresh when any source has a pending sync status
     refetchInterval: (query) => {
       const data = query.state.data
-      if (data?.some(s => s.sync_status === 'syncing')) return 5000
+      if (data?.some(s => displaySyncStatus(s) === 'syncing')) return 5000
       return false
     },
   })
@@ -441,7 +457,7 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
   // Invalidate items/graph when sync completes
   const wasSyncingRef = useRef(false)
   useEffect(() => {
-    const isSyncing = sources.some(s => s.sync_status === 'syncing')
+    const isSyncing = sources.some(s => displaySyncStatus(s) === 'syncing')
     if (wasSyncingRef.current && !isSyncing) {
       queryClient.invalidateQueries({ queryKey: ['knowledge-items'] })
       queryClient.invalidateQueries({ queryKey: ['knowledge-graph'] })
@@ -824,7 +840,10 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
                       That row uses no target data and offers no Confirm, so it
                       cannot name or approve the old profile. Blur re-targets
                       the query to the profile the field shows. */}
+                  {/* A grant or revoke changes which rows search queries
+                      (each row's `searchable`), so the list reads it again. */}
                   <AwsConsentGate service="bedrock-kb" compact
+                    onConsentChange={() => queryClient.invalidateQueries({ queryKey: ['knowledge-sources'] })}
                     targetPending={addKbProfile.trim() !== addKbProfileCommitted}
                     target={{ profile: addKbProfileCommitted, region: addKbRegion.trim() }} />
                 </div>
@@ -961,6 +980,7 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
           const failedCount = s.spend?.files_failed ?? 0
           const isPaused = s.sync_status === 'paused'
           const isPending = s.sync_status === 'pending_confirmation'
+          const shownStatus = displaySyncStatus(s)
           return (
           <div key={s.id} className={`border border-border rounded-lg p-3 hover:border-border-strong transition-all ${isDeleting ? 'opacity-50' : ''}`}>
             {/* Stacks on narrow viewports: identity block on top, meta + actions below. */}
@@ -968,6 +988,7 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
               <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
               {isFolderType ? (
                 <button onClick={() => toggleExpandedSource(s.id, isExpanded)} className="text-muted shrink-0 mt-0.5 sm:mt-0"
+                  aria-expanded={isExpanded}
                   aria-label={isExpanded ? i18nT('pages.knowledge.sourcesList.collapse_folder_details') : i18nT('pages.knowledge.sourcesList.expand_folder_details')}>
                   {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </button>
@@ -1005,7 +1026,7 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
                     : isFolderType
                     ? <span className={`inline-flex items-center gap-0.5 shrink-0 ${isPaused ? 'text-warn' : isPending ? 'text-muted' : 'text-ok'}`} title={isPaused ? i18nT('pages.knowledge.sourcesList.paused') : isPending ? i18nT('pages.knowledge.sourcesList.awaiting_confirmation') : i18nT('pages.knowledge.sourcesList.watching_folder')}>● {isPaused ? i18nT('pages.knowledge.sourcesList.paused_2') : isPending ? i18nT('pages.knowledge.sourcesList.pending') : i18nT('pages.knowledge.sourcesList.folder')}</span>
                     : isLiveSource
-                    ? <span className="text-muted shrink-0">{/* No dot: a grey dot read as a status ("off"), and "Live" is a kind, not a state. */}{i18nT('pages.knowledge.sourcesList.live_query')}</span>
+                    ? <BedrockKbLiveChip source={s} onReviewConsent={openKbConsent} />
                     : s.source_type === 'agent'
                     // Like "auto" and "folder", the label names how the row updates,
                     // so it comes from the row's type; "manual" would point at a Sync
@@ -1025,6 +1046,7 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
                   {failedCount > 0 && (
                     isFolderType ? (
                       <button type="button" onClick={() => toggleExpandedSource(s.id, isExpanded)}
+                        aria-expanded={isExpanded}
                         title={i18nT('pages.knowledge.sourcesList.show_failed_files')}
                         className="text-[11px] text-danger whitespace-nowrap shrink-0 underline decoration-dotted underline-offset-2 hover:decoration-solid">
                         {i18nT('pages.knowledge.sourcesList.files_failed_count', { count: failedCount })}
@@ -1054,13 +1076,18 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
                   nothing at mid widths. */}
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end shrink-0 pl-6 sm:pl-0 sm:max-w-[70%]">
               {isDeleting ? <Badge variant="warn">{i18nT('pages.knowledge.sourcesList.deleting')}</Badge> : isLiveSource ? (
-                /* No status badge: the meta chip already labels the MODE
-                   ("● Live", explained by the visible line under the name),
-                   and a green badge here asserted a health this row never
-                   checks (a revoked grant fails open with only a log line). */
-                null
+                /* The meta chip labels the MODE ("Live"); this badge states
+                   the one health the gateway records for the row: how its
+                   last search went. Absent until a search reaches the row.
+                   A refused or failed search did not run, so it renders as
+                   the ErrorNotice under the row instead. */
+                s.last_search?.outcome === 'ok' ? (
+                  <Badge variant="ok" data-testid="bedrock-kb-last-search">
+                    {i18nT('pages.knowledge.sourcesList.last_search_ok')}
+                  </Badge>
+                ) : null
               ) : (
-                <Badge variant={s.sync_status === 'synced' || s.sync_status === 'active' ? 'ok' : s.sync_status === 'error' ? 'err' : s.sync_status === 'paused' ? 'warn' : 'aim'}>{isPending ? i18nT('pages.knowledge.sourcesList.awaiting_confirmation') : syncStatusLabel(s.sync_status, i18nT)}</Badge>
+                <Badge variant={shownStatus === 'synced' || shownStatus === 'active' ? 'ok' : shownStatus === 'error' ? 'err' : shownStatus === 'paused' ? 'warn' : 'aim'}>{isPending ? i18nT('pages.knowledge.sourcesList.awaiting_confirmation') : syncStatusLabel(shownStatus, i18nT)}</Badge>
               )}
               {!isLiveSource && <span className="text-[11px] text-muted whitespace-nowrap">{i18nT('pages.knowledge.sourcesList.items_count', { count: s.item_count ?? 0, n: fmtNumber(s.item_count ?? 0) })}</span>}
               {/* The failed count renders on the identity meta line (the parent owns
@@ -1070,6 +1097,7 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
               <SourceSpendDisplay spend={s.spend} />
               {(() => { const { wordCount: wc } = parseSourceProps(s); if (!shouldShowWordCount(wc)) return null; return <span className="text-[11px] text-muted whitespace-nowrap">{sourceWordCountLabel(wc!)}</span> })()}
               {!isLiveSource && <StalenessIndicator lastSynced={s.last_synced} />}
+              {isLiveSource && s.last_search && <span className="text-[11px] text-muted whitespace-nowrap">{formatRelativeDate(s.last_search.at)}</span>}
               {/* Pause/Resume/Confirm for folder sources */}
               {isFolderType && isPending && (
                 <button aria-label={i18nT('pages.knowledge.sourcesList.confirm_scan')} onClick={() => confirmMutation.mutate(s.id)}
@@ -1120,6 +1148,18 @@ export default function SourcesList({ onIngest, uploadNamespace, setUploadNamesp
                 askAgent={!showAdd}
                 className="mt-2"
                 testId="source-delete-error"
+              />
+            )}
+            {/* No hand-off while the add form is open, for the same unsaved
+                drafts as the delete notice above. */}
+            {isLiveSource && s.last_search && s.last_search.outcome !== 'ok' && (
+              <ErrorNotice
+                message={i18nT(s.last_search.outcome === 'refused'
+                  ? 'pages.knowledge.sourcesList.last_search_refused'
+                  : 'pages.knowledge.sourcesList.last_search_failed')}
+                askAgent={!showAdd}
+                className="mt-2"
+                testId="bedrock-kb-last-search-error"
               />
             )}
             {/* Inline expandable progress for folder sources */}

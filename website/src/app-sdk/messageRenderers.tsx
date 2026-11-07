@@ -23,6 +23,7 @@ import { copyToClipboard } from '../utils/clipboard'
 import { extractToolFilePath } from '../utils/toolFilePath'
 import { deriveToolCallTitle } from '../utils/toolCallTitle'
 import { isSafePath } from '../utils/safePath'
+import { pathBasename } from '../utils/pathBasename'
 import { isHiddenInvisibleAssistantRow } from '../utils/invisibleText'
 import AssistantMessage, { type TurnStats } from '../pages/chat/AssistantMessage'
 import { type FileChangeEntry } from '../components/FileChangeChips'
@@ -389,7 +390,7 @@ export const ToolCallPill = memo(function ToolCallPill({ message, running, onFil
           aria-label={i18nT('appSdk.chatMessageList.open_path', { path: filePath })}
           className="inline-flex items-center gap-1 text-[12px] leading-5 font-mono px-1.5 py-0.5 rounded-md border border-border text-muted cursor-pointer hover:text-text hover:border-border-strong transition-all"
         >
-          {filePath.split('/').pop()}
+          {pathBasename(filePath)}
           <PanelRight size={11} />
         </button>
       )}
@@ -509,6 +510,11 @@ export interface AssistantBubbleOptions {
    *  system policy notice rather than the user's (`turnHadPolicyBlock`). The
    *  raw marker is stripped from the prose either way. */
   suppressSteerAck?: boolean
+  /** Never draw the "N files changed" chips, whatever `meta.file_changes`
+   *  holds. A host whose replies are not file work the reader reviews (a
+   *  crewmate's chat: its notes, scripts and page writes) sets it. Off
+   *  (default) the chips draw as on every other surface. */
+  hideFileChanges?: boolean
   /** Session routing for the reply's markdown: open a session chip, plus the
    *  roster and the active key the chip resolver needs. All three or none — the
    *  renderer gates on (`onSessionOpen` AND `sessions`), so a half-wired host
@@ -532,6 +538,12 @@ export interface AssistantBubbleOptions {
    *  from `meta.redactions` and their card offers the owner's reveal of the
    *  removed value. A host drawing another gateway's rows leaves it unset. */
   redactionSlot?: string
+  /** The reply menu's Read aloud, for a host that can read this reply aloud
+   *  (a crewmate's chat). Absent: no Read aloud item. */
+  onSpeak?: (content: string) => void
+  /** Show the reply's action row without hover, for a host whose playback the
+   *  browser blocked (the recovery notice points at More → Read aloud). */
+  revealActions?: boolean
 }
 
 /**
@@ -599,9 +611,11 @@ export function renderAssistantBubble(
       variantIdx={m.variant_idx}
       turnStats={(m.meta as Record<string, unknown> | undefined)?.turn_stats as TurnStats | undefined}
       decisionsStrip={decisionStripFieldOf(m)}
-      fileChanges={(m.meta as Record<string, unknown> | undefined)?.file_changes as FileChangeEntry[] | undefined}
-      fileChangesOmittedFiles={(m.meta as Record<string, unknown> | undefined)?.file_changes_omitted_files}
+      fileChanges={opts.hideFileChanges ? undefined : (m.meta as Record<string, unknown> | undefined)?.file_changes as FileChangeEntry[] | undefined}
+      fileChangesOmittedFiles={opts.hideFileChanges ? undefined : (m.meta as Record<string, unknown> | undefined)?.file_changes_omitted_files}
       onRegenerate={opts.onRegenerate}
+      onSpeak={opts.onSpeak}
+      revealActions={opts.revealActions}
       redactions={opts.redactionSlot ? (m.meta as Record<string, unknown> | undefined)?.redactions : undefined}
       redactionSlot={opts.redactionSlot}
       suppressSteerAck={opts.suppressSteerAck || turnHadPolicyBlock(ctx.messages, ctx.index)}

@@ -810,6 +810,7 @@ class LaunchHost(Protocol):
     _sandbox_cleanup: str | None
     _sandbox_wrapped_by_crew: bool
     _sandbox_hidden_dirs: tuple[str, ...]
+    _child_env_names: frozenset[str]
     _spawn_work_dir: str
     _bound_workspace_fd: int | None
 
@@ -904,6 +905,9 @@ class LaunchRequest:
     env_before_scrub: Callable[[dict[str, str], str | None], Awaitable[dict[str, str]]]
     extra_hidden_dirs: tuple[str, ...] = ()
     extra_expose_files: tuple[str, ...] = ()
+    #: More windows into the masked scratch root for this process alone: the
+    #: runtime's private-state directory.
+    extra_private_dirs: tuple[str, ...] = ()
     internal_sandbox: bool = False
     pod_home_remap: bool = False
     #: The runtime allocates scratch through its guarded hop; the client never has.
@@ -1119,6 +1123,7 @@ async def launch(host: LaunchHost, request: LaunchRequest, tools: LaunchTools) -
         )
     if host._shared_scratch is not None:
         scratch_window = (*scratch_window, str(host._shared_scratch))
+    scratch_window = (*scratch_window, *request.extra_private_dirs)
     # Resolve the SSH_AUTH_SOCK forward OFF the event loop (the governance
     # floor and the consent leaf are filesystem reads) ONCE, then pass the
     # resolved boolean into both the sandbox wrap below and the parent-side
@@ -1246,6 +1251,9 @@ async def launch(host: LaunchHost, request: LaunchRequest, tools: LaunchTools) -
     # resource_status.inject_xdist_auto_cap. Off-loop: resolving the cap reads the
     # raw config. Guarded: the sandbox temp file is live.
     await host._to_thread_guarding_sandbox(tools.inject_xdist_auto_cap, env)
+    # Names only, never values: what a ``${NAME}`` the child expands itself can
+    # resolve to (``mcp_ref_guard.warn_unset_env_placeholders``).
+    host._child_env_names = frozenset(env)
 
     await host._discard_bound_workspace()
     if request.internal_sandbox:

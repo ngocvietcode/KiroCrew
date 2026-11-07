@@ -8,6 +8,7 @@ import asyncio
 import functools
 from typing import TYPE_CHECKING, Any
 
+from kiro_crew import turn_timing
 from kiro_crew.config.loader import normalize_agent_model
 from kiro_crew.context import discard_memory_prefetch
 from kiro_crew.dashboard.chat_utils import (
@@ -22,7 +23,7 @@ from kiro_crew.dashboard.state import durable_row_count
 from kiro_crew.llm_helpers import _billing_stats
 from kiro_crew.members import DM_SLOT_MODE, is_dispatchable_member_name, member_lifecycle
 from kiro_crew.platform import redact_log_via_context
-from kiro_crew.quick_prompts import QUICK_PROMPTS
+from kiro_crew.quick_prompts import QUICK_PROMPTS, user_quick_prompt
 
 if TYPE_CHECKING:
     from kiro_crew.dashboard.chat_runner import (
@@ -56,6 +57,7 @@ if TYPE_CHECKING:
         warm_project_agent_names,
     )
     from kiro_crew.dashboard.chat_turn.account_identity import _retire_sessions_on_identity_change
+    from kiro_crew.dashboard.chat_turn.agent_started import _watch_agent_turns
     from kiro_crew.dashboard.chat_turn.app_agent_binding import (
         _app_agent_host_allowed,
         _app_agent_turn_backend,
@@ -90,6 +92,7 @@ if TYPE_CHECKING:
         _expand_prompt_mention_off_loop,
         _prewarm_startup_query,
     )
+    from kiro_crew.dashboard.chat_turn.recipient import _deliver_linked_slack_message
     from kiro_crew.dashboard.chat_turn.regenerate_swap import rows_before_regenerate_target
     from kiro_crew.dashboard.chat_turn.session_reset import _consume_pending_reset
     from kiro_crew.dashboard.chat_turn.slash_commands import _refuse_blocked_slash
@@ -107,12 +110,21 @@ if TYPE_CHECKING:
     )
     from kiro_crew.dashboard.chat_turn.turn_reply_seams import _steer_segment_cut
     from kiro_crew.dashboard.chat_turn.turn_spec_hooks import (
+        _fallback_turn_project,
+        _notice_inherited_conductor_skills,
         _notice_seed_declined,
         _notice_steer_upgrade,
         _prepare_spec_hooks,
         _surface_agent_welcome,
         _surface_startup_notice,
     )
+
+#: A code channel turn refused because its worktree should exist and does not
+#: yet: shown on the dashboard row and posted to the channel.
+_WORKTREE_NOT_READY_TEXT = (
+    "This code channel's worktree is not ready, so the message was not run. "
+    "Send it again in a moment."
+)
 
 
 def _current_binding(turn) -> tuple:
@@ -319,8 +331,30 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
     from kiro_crew.memory_startup import wait_for_memory_preparation
 
     await wait_for_memory_preparation(getattr(state, "memory_startup_task", None))
+    turn_timing.mark("memory_ready")
     _memory_preparation_admitted = True
     turn._memory_preparation_admitted = _memory_preparation_admitted
+    # A Slack code channel's session is moved into its workspace before the
+    # turn's bindings are read (a move after that would read as a binding
+    # change and refuse the turn), and the reset the move arms is consumed
+    # below, before the session is acquired: THIS turn starts there.
+    from kiro_crew.slack.code_channels.binding import notify_turn_prepare
+
+    if not await notify_turn_prepare(state, slot):
+        # The channel's worktree should exist and does not (a git error): the
+        # turn would run in the shared checkout, so it does not run at all.
+        slot.append(
+            "error",
+            _WORKTREE_NOT_READY_TEXT,
+            "msg msg-err",
+            meta=gn.gateway_notice_meta(gn.GATEWAY_NOTICE_CODE_CHANNEL_WORKTREE_NOT_READY),
+        )
+        # A message typed in the channel ends here before any turn hook runs,
+        # so the channel itself is told, or its sender sees nothing at all.
+        await _deliver_linked_slack_message(
+            state, slot, getattr(state, "sessions", None), session_key, _WORKTREE_NOT_READY_TEXT
+        )
+        return _Flow.END
 
     # A new turn supersedes whatever question the previous one ended on, so
     # any OPTIONS control still live in this session's Slack thread stops
@@ -409,6 +443,7 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
     turn._dispatch_lock = _dispatch_lock
     await _dispatch_lock.acquire()
     turn._dispatch_lock_held = True
+    turn_timing.mark("dispatch_lock")
     selected_binding = _current_binding(turn)
     turn.selected_binding = selected_binding
     registered_slot = state._slots.get(slot.key)
@@ -908,6 +943,8 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
         crew_agent=crew_alias,
         model=_requested_model or None,
         cwd=slot.project or None,
+        # The chat says when its folder is an earlier run's hidden scratch folder.
+        fallback_hidden_cwd=True,
         # The persisted channel stays separate from the dashboard-owned key
         # so provider startup can distinguish a linked dispatcher from a
         # direct dashboard turn.
@@ -1026,6 +1063,8 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
             session_key, wait_if_busy=wait_if_busy, **_allocation_kwargs
         )
 
+    turn_timing.mark("claim_start")
+    turn_timing.note(priority=getattr(_turn_priority, "value", _turn_priority))
     for _claim in (0, 1):
         try:
             client, is_new, resumed = await _claim_session(_wait_if_busy)
@@ -1072,7 +1111,19 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
     except BaseException:
         state.sessions.release(session_key)
         raise
+    turn_timing.mark("claim_end")
+    turn_timing.note(is_new=bool(is_new), resumed=bool(resumed))
     _clear_eager_spawn_failures(slot)
+    # Held but not yet marked acquired: release it if this await is cancelled, like
+    # the reprojection above.
+    try:
+        _fallback = await _fallback_turn_project(_turn_project, getattr(client, "cwd", None))
+    except BaseException:
+        state.sessions.release(session_key)
+        raise
+    if _fallback:
+        _turn_project = _fallback
+        turn._turn_project = _turn_project
     if not is_new and slot._pending_reset_history_key == session_key and client.cwd:
         # The deferred project reset is still armed for the session this
         # turn holds (attached sub-agents keep the process alive), so the
@@ -1256,6 +1307,9 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
     if is_new:
         _notice_steer_upgrade(state, slot, client)
         await _notice_seed_declined(state, slot, client)
+        await _notice_inherited_conductor_skills(
+            state, slot, client, kiro_agent or slot.agent or ""
+        )
     # A member DM's first turn carries the four-layer member section as
     # session-start context. Record that it is at stake HERE — the moment
     # the session client exists — not at the context build: every early
@@ -1327,6 +1381,10 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
     # (the dashboard steer handler) can reach the running session's client
     # to inject a mid-turn steer. Cleared in _turn_release_handles (chat_turn/turn_entry.py).
     slot._acp_client = getattr(client, "client", None)
+    # A turn the agent starts on its own between this session's prompts runs on
+    # this slot (chat_turn/agent_started.py); set again by every turn, so the
+    # agent.agent_started_turns switch applies from the next one.
+    _watch_agent_turns(state, slot, client, loaded_cfg)
     # Billing stats as they stand BEFORE this turn's prompt is sent. The
     # runtime installs a fresh per-turn stats object only inside the dispatch
     # in _run_chat; a turn that dies before that (expired credential, broken pipe)
@@ -1576,7 +1634,13 @@ async def _turn_admit(turn: _ChatTurn) -> _Flow | None:
     # after post-assembly prefixes). It must NOT also shorten the span handed to
     # build_message -- that span is how the matcher FINDS the token, and zeroing
     # it stops the expansion entirely. `user_text_span` keeps the two apart.
-    _is_quick_prompt = first_word.lower() in QUICK_PROMPTS
+    # A user quick prompt is a file read, so it is looked up off the loop; a word
+    # forwarded to the harness is never one.
+    _is_quick_prompt = first_word.lower() in QUICK_PROMPTS or (
+        first_word.startswith("/")
+        and not is_slash
+        and await asyncio.to_thread(user_quick_prompt, first_word) is not None
+    )
     turn._is_quick_prompt = _is_quick_prompt
     prompt_expanded = _is_quick_prompt
     turn.prompt_expanded = prompt_expanded

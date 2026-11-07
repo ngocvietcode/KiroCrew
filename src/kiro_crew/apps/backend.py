@@ -112,6 +112,7 @@ from kiro_crew.apps.backend_runtime.tracking import (  # noqa: E402
     _advance_lifecycle_locked,
     _await_inflight_spawn,
     _health_reconcile_lock,
+    _lifecycle_generation,
     _lock,
     _processes,
     _spawn_publication_owner,
@@ -352,8 +353,14 @@ def start_app_backend(app_name: str) -> AppProcess | None:
     return _start_app_backend(app_name)
 
 
-def _start_app_backend(app_name: str) -> AppProcess | None:
-    """Single-flight spawn implementation without an external lifecycle transition."""
+def _start_app_backend(
+    app_name: str, *, _untracked_at: tuple[int, str] | None = None
+) -> AppProcess | None:
+    """Single-flight spawn implementation without an external lifecycle transition.
+
+    ``_untracked_at`` (the backstop's snapshot) spawns only while the app is still
+    untracked at that lifecycle generation, checked under the reservation's own lock.
+    """
     manifest = get_app_manifest(app_name)
     if not manifest or not manifest.backend.entryPoint:
         return None
@@ -361,6 +368,11 @@ def _start_app_backend(app_name: str) -> AppProcess | None:
     await_inflight = False
     spawn_placeholder: AppProcess | None = None
     with _lock:
+        if _untracked_at is not None and (
+            app_name in _processes
+            or _lifecycle_generation.get(app_name, (0, _LIFECYCLE_START)) != _untracked_at
+        ):
+            return None
         if app_name in _processes:
             existing = _processes[app_name]
             # Already running (spawned proc alive, OR an adopted external instance) — reuse.
@@ -955,32 +967,47 @@ def _start_app_backend_body(app_name: str, manifest: Any) -> AppProcess | None:
         # Pass PORT as env var — Node.js apps typically read process.env.PORT
         env["NODE_ENV"] = "production"
 
-        # Install npm dependencies if package.json exists and node_modules is missing
-        pkg_json = root / "package.json"
-        node_modules = root / "node_modules"
-        if pkg_json.is_file() and not node_modules.is_dir():
+        # Node looks the entry's imports up in the node_modules of every directory
+        # above it, so a backend/package.json needs installing as much as the root's.
+        # Install in each such directory, from the app root down, that has a
+        # package.json and no node_modules. The resolved paths Node itself uses keep
+        # every candidate inside the app root.
+        real_root = root.resolve()
+        pkg_dirs = [d for d in entry.resolve().parents if d == real_root or real_root in d.parents]
+        for pkg_dir in reversed(pkg_dirs):
+            if not (pkg_dir / "package.json").is_file() or (pkg_dir / "node_modules").is_dir():
+                continue
             npm_bin = _find_npm_binary()
-            if npm_bin:
-                logger.info("Installing npm deps for app %s", app_name)
-                try:
-                    sel().log_api_access(
-                        caller="gateway", operation="app_backend_npm_install",
-                        outcome="started", resources=f"{app_name}",
-                    )
-                except Exception as exc:
-                    logger.debug("SEL audit failed for npm install %s: %s", app_name, exc)
-                try:
-                    sandboxed_npm, _ = wrap_argv(
-                        [npm_bin, "install", "--production", "--no-audit", "--no-fund"],
-                        mode="standard",
-                    )
-                    sandboxed_npm = cgroup_scope_argv(sandboxed_npm)  # cgroup DoS ceiling
-                    run_limited(
-                        sandboxed_npm,
-                        cwd=str(root), env=env, capture_output=True, timeout=120,
-                    )
-                except Exception as exc:
-                    logger.warning("Failed to install npm deps for app %s: %s", app_name, exc)
+            if not npm_bin:
+                break
+            logger.info("Installing npm deps for app %s in %s", app_name, pkg_dir)
+            try:
+                sel().log_api_access(
+                    caller="gateway", operation="app_backend_npm_install",
+                    outcome="started", resources=f"{app_name}",
+                )
+            except Exception as exc:
+                logger.debug("SEL audit failed for npm install %s: %s", app_name, exc)
+            try:
+                sandboxed_npm, _ = wrap_argv(
+                    [npm_bin, "install", "--production", "--no-audit", "--no-fund"],
+                    mode="standard",
+                )
+                sandboxed_npm = cgroup_scope_argv(sandboxed_npm)  # cgroup DoS ceiling
+                npm_run = run_limited(
+                    sandboxed_npm,
+                    cwd=str(pkg_dir), env=env, capture_output=True, timeout=120,
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to install npm deps for app %s in %s: %s", app_name, pkg_dir, exc
+                )
+                continue
+            if npm_run.returncode != 0:
+                logger.warning(
+                    "Failed to install npm deps for app %s in %s: npm exited %s",
+                    app_name, pkg_dir, npm_run.returncode,
+                )
 
     # --- Module-style Python builtin (e.g. kiro_crew.apps.builtins.<name>) ---
     # Module-style entries have no file path — the module runs under the gateway's own
@@ -1703,10 +1730,13 @@ if _typing.TYPE_CHECKING:
         _app_activation_denied,
         _BackendShutdownEvent,
         _gateway_shutdown_event,
+        _keep_down,
         _read_installed,
         _restart_exited_backend,
         _settle_superseding_start,
         app_admission_denied,
+        revive_lost_app_backends,
+        shipped_builtin_app_root,
         shutdown_event,
     )
     from kiro_crew.apps.backend_runtime.stale_reap import (  # noqa: F401
@@ -1719,7 +1749,6 @@ if _typing.TYPE_CHECKING:
         _start_backends_concurrently,
         concurrent,
         list_apps,
-        shipped_builtin_app_root,
         start_enabled_app_backends,
     )
     from kiro_crew.apps.backend_runtime.supervision import (  # noqa: F401
@@ -1751,7 +1780,6 @@ if _typing.TYPE_CHECKING:
         _LIFECYCLE_STOP,
         ContextVar,
         Iterator,
-        _lifecycle_generation,
         _restart_attempts,
         contextlib,
         dataclass,

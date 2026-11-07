@@ -15,8 +15,8 @@ The advisory surfaces carry no enforcement, no lease, no cross-session
 coordination. Two sessions can both read "ample" and both launch heavy work —
 the tradeoff of a cheap, zero-tuning guard. One narrow enforcement point sits
 on top: :func:`admission_check` gates *background* work admission (scheduled
-cron firings, task-runner steps) while posture is CRITICAL, so the scheduler
-stops piling work onto a host that is about to freeze. Subagent spawns are not
+cron firings, task-runner steps, background helper turns) while posture is CRITICAL,
+so the scheduler stops piling work onto a host about to freeze. Subagent spawns are not
 gated here: they admit on their own memory floor (``agent.spawn_min_memory_gb``),
 which the pull tool reports on the gate's own figure (:func:`spawn_floor_reading`)
 because the posture can read AMPLE while that floor holds every start. Direct user chat turns
@@ -63,6 +63,8 @@ from pathlib import Path
 from kiro_crew import platform_compat
 from kiro_crew.config.loader import KiroCrewConfig
 from kiro_crew.cpu_affinity import affinity_cpu_count
+from kiro_crew.resource_status_agent_ceiling import AgentCeiling, gb_text
+from kiro_crew.resource_status_agent_ceiling import read_agent_ceiling as _read_agent_ceiling
 from kiro_crew.subagent_wait_reasons import MEMORY_PRESSURE_PHRASE
 
 logger = logging.getLogger(__name__)
@@ -94,6 +96,46 @@ def _read_available_gb() -> float:
     except Exception:  # pragma: no cover - defensive; probe must never raise
         logger.debug("available-memory probe failed", exc_info=True)
         return -1.0
+
+
+def _read_measured_available_gb() -> float:
+    """The tightest memory reading that was measured (GB), or ``-1.0``.
+
+    Like :func:`_read_available_gb`, but a cgroup level whose usage cannot be
+    read is left out instead of counted as zero headroom, so the host,
+    readable ancestor and agents-slice figures remain.
+    """
+    try:
+        from kiro_crew.subagent import _available_memory_gb
+
+        return _available_memory_gb(measured_only=True)
+    except Exception:  # pragma: no cover - defensive; probe must never raise
+        logger.debug("measured available-memory probe failed", exc_info=True)
+        return -1.0
+
+
+def _read_posture_available_gb(pressure_gb: float, critical_gb: float) -> float:
+    """:func:`_read_available_gb` for the posture, ``-1.0`` when a cgroup usage is unreadable.
+
+    The probe charges a cgroup whose limit is set but whose usage cannot be
+    read as zero headroom, so the spawn gate admits nothing it cannot measure.
+    The gate words that reading as "unknown"; a posture built from the same
+    0.0 GB would instead say memory is critically low. So the posture keeps
+    only what was measured: when those readings already classify as tight or
+    critical under *pressure_gb* and *critical_gb* that figure stands,
+    otherwise the posture is ``unknown``.
+    """
+    from kiro_crew.subagent import MEMORY_CAUSE_CGROUP_USAGE_UNREADABLE, pop_memory_check_cause
+
+    pop_memory_check_cause()  # drop a cause left by any earlier reading
+    available_gb = _read_available_gb()
+    if pop_memory_check_cause() != MEMORY_CAUSE_CGROUP_USAGE_UNREADABLE:
+        return available_gb
+    measured_gb = _read_measured_available_gb()
+    pop_memory_check_cause()  # the second read records the same cause again
+    if _classify(measured_gb, pressure_gb, critical_gb) in (POSTURE_TIGHT, POSTURE_CRITICAL):
+        return measured_gb
+    return -1.0
 
 
 #: What a kernel memory-pressure reading means for the user, said the same way
@@ -398,6 +440,29 @@ class ResourceStatus:
     # None off macOS or when unreadable. Reported beside the posture, never
     # folded into it.
     memory_pressure_level: int | None = None
+    # Set when ``available_gb`` is the agent slice's headroom rather than the
+    # host's (see AgentCeiling). Read only under pressure, so None on an ample
+    # reading whatever binds.
+    agent_ceiling: AgentCeiling | None = None
+
+    @property
+    def memory_subject(self) -> str:
+        """What the memory figure measures: "Agent memory" or "Host memory"."""
+        return "Agent memory" if self.agent_ceiling is not None else "Host memory"
+
+    def memory_reading(self) -> str:
+        """The free-memory figure as the advisories print it, naming its ceiling.
+
+        A slice-bound figure is printed with the host's own figure beside it, so
+        a reader comparing it with the dashboard's host gauge sees why they differ.
+        """
+        figure = f"~{self.available_gb:.1f} GB"
+        if self.agent_ceiling is None:
+            return f"{figure} free"
+        return (
+            f"{figure} left under the {gb_text(self.agent_ceiling.ceiling_gb)} GB agent memory "
+            f"ceiling, ~{gb_text(self.agent_ceiling.host_available_gb)} GB free on the host"
+        )
 
     @property
     def memory_pressure_held(self) -> bool:
@@ -496,19 +561,18 @@ class ResourceStatus:
             if self.memory_pressure_held:
                 return self._kernel_pressure_line()
             return self._tasks_only_line()
-        gb = f"{self.available_gb:.1f}"
-        load = self._load_suffix()
+        reading = f"{self.memory_reading()}{self._load_suffix()}"
         suffix = self._pressure_clause() + self._tasks_clause()
         if self.posture == POSTURE_CRITICAL:
             return (
-                f"[RESOURCES] Host memory is CRITICALLY low (~{gb} GB free{load}). "
+                f"[RESOURCES] {self.memory_subject} is CRITICALLY low ({reading}). "
                 "Do NOT start heavy work now (full test suites, large builds, big "
                 "parallel sub-agent waves) — it may fail or destabilize other "
                 "sessions on this host. Run only the lightest necessary steps, or "
                 "wait for memory to free. Call the resource_status tool to re-check."
             ) + suffix
         return (
-            f"[RESOURCES] Host memory is tight (~{gb} GB free{load}). Before heavy "
+            f"[RESOURCES] {self.memory_subject} is tight ({reading}). Before heavy "
             "work, prefer the lighter path: run targeted tests instead of the full "
             "suite, avoid large parallel sub-agent waves, and serialize or defer "
             "memory-heavy builds/test runs. Call the resource_status tool to "
@@ -564,7 +628,7 @@ class ResourceStatus:
             level = "CRITICALLY low" if self.posture == POSTURE_CRITICAL else "tight"
             parts.append(
                 f"The gateway machine (where this session's engine and subagents run) "
-                f"is {level} on memory (~{self.available_gb:.1f} GB free"
+                f"is {level} on memory ({self.memory_reading()}"
                 f"{self._load_suffix()}), so keep sub-agent waves small." + self._pressure_clause()
             )
         elif gateway_pressed:
@@ -637,6 +701,14 @@ class ResourceStatus:
                 f"  Available memory: {self.available_gb:.1f} GB "
                 f"(tight \u2264 {self.pressure_gb:g} GB, critical \u2264 {self.critical_gb:g} GB)"
             )
+        ceiling = self.agent_ceiling
+        if ceiling is not None:
+            lines.append(
+                f"  Measured against the agent memory ceiling ({gb_text(ceiling.ceiling_gb)} GB); "
+                f"the host has {ceiling.host_available_gb:.1f} GB available"
+            )
+            if ceiling.shmem_notable:
+                lines.append(f"  {ceiling.shmem_sentence()}")
         load = f"{self.load_per_cpu}/core" if self.load_per_cpu is not None else "unknown"
         lines.append(f"  CPU cores: {self.cpu_count}   1-min load: {load}")
         lines.append(f"  Posture: {self.posture.upper()}")
@@ -1206,11 +1278,14 @@ def probe(cfg: object | None = None) -> ResourceStatus:
     if cfg is None:
         cfg = _load_config()
     pressure_gb, critical_gb = _resolve_thresholds(cfg)
-    available_gb = _read_available_gb()
+    available_gb = _read_posture_available_gb(pressure_gb, critical_gb)
     cpu_count = os.cpu_count() or 1
     load_per_cpu = _read_load_per_cpu(cpu_count)
     posture = _classify(available_gb, pressure_gb, critical_gb)
     slice_tasks, slice_tasks_limit, slice_tasks_own = _read_agent_slice_tasks()
+    # Only a pressured reading is worded, so only a pressured probe pays for the
+    # attribution reads.
+    agent_ceiling = _read_agent_ceiling() if posture in (POSTURE_TIGHT, POSTURE_CRITICAL) else None
     return ResourceStatus(
         available_gb=available_gb,
         cpu_count=cpu_count,
@@ -1222,6 +1297,7 @@ def probe(cfg: object | None = None) -> ResourceStatus:
         slice_tasks_limit=slice_tasks_limit,
         slice_tasks_own=slice_tasks_own,
         memory_pressure_level=read_memory_pressure_level(),
+        agent_ceiling=agent_ceiling,
     )
 
 
@@ -1363,7 +1439,7 @@ def admission_check(cfg: object | None = None) -> AdmissionDecision:
     The single enforcement point layered on the advisory posture tier: a
     CRITICAL posture refuses; every other posture — ample, tight, and unknown —
     admits. Callers on the gated paths (scheduled cron firings, task-runner
-    steps) consult this once per admission decision; it reuses the
+    steps, background helper turns) consult this once per admission decision; it reuses the
     same cheap :func:`probe` the advisory surfaces use (fingerprint-cached
     config, one memory read, and a handful of single-value cgroup reads for the
     slice's task figure) and never scans processes. The task figure is reported,
@@ -1397,7 +1473,7 @@ def admission_check(cfg: object | None = None) -> AdmissionDecision:
                 posture=status.posture,
                 available_gb=status.available_gb,
                 reason=(
-                    f"host memory is critical (~{status.available_gb:.1f} GB free, "
+                    f"{status.memory_subject.lower()} is critical ({status.memory_reading()}, "
                     f"critical \u2264 {status.critical_gb:g} GB) — retry when memory frees"
                 ),
             )

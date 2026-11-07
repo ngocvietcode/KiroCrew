@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { createElement, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Trans } from 'react-i18next'
 import { shallowEqual } from 'react-redux'
 import { useAppSelector, type useAppDispatch } from '../../store'
-import { resolveByApprovalId, openActivityToTool, openActivityToTab, selectSlotPendingApproval, selectSlotPendingSpawnApprovals, selectSlotSubagents, isSpawnApprovalGone, markSubagentApproving, markSubagentApprovalGone, reconcileGoneSubagent, sseSubagentDone } from '../../store/chatSlice'
+import { pendingQuestionFor, resolveByApprovalId, openActivityToTool, openActivityToTab, selectSlotPendingApproval, selectSlotPendingSpawnApprovals, selectSlotSubagents, isSpawnApprovalGone, markSubagentApproving, markSubagentApprovalGone, reconcileGoneSubagent, sseSubagentDone } from '../../store/chatSlice'
 import { useToolPillVisible } from '../../store/toolPillRegistry'
 import { api, ApiError } from '../../api/client'
 import { isTerminalApprovalRefusal } from '../../api/apiError'
@@ -12,7 +13,7 @@ import { useLanguage } from '../../i18n/LanguageProvider'
 import { pickToolLabel } from '../../utils/toolLabel'
 import { deriveToolCallTitle } from '../../utils/toolCallTitle'
 import { toApiDecision } from '../../utils/approvalDecision'
-import { alreadyResolvedDecision, decisionVerdict, mintResponseId, resolvedByLine, settledElsewhereLine } from './sharedDecision'
+import { alreadyResolvedDecision, decisionVerdict, mintResponseId, resolvedByLine, settledElsewhereLine, settledNoticeKind } from './sharedDecision'
 import { baseCommandLabel, truncateCommandLabel } from '../../utils/trustPatterns'
 import { APPROVAL_MODE_ADJUSTED_LS_KEY } from '../ApprovalModePicker'
 import type { SubagentActivity } from '../../types'
@@ -21,6 +22,8 @@ import { fmtTime } from '../../i18n/format'
 import { crewRootOf } from '../../lib/crewMode'
 import { useSharedCrewViewer, useTeamAttribution } from '../../hooks/sharedCrew/useSharedCrew'
 import { isUnknownPrincipal } from '../../api/sharedCrewUi'
+import { useResolvedElsewhere } from './useResolvedElsewhere'
+import { useRaisedBy } from '../../pages/chat/shared-crew/useRaisedBy'
 
 /* The slot's approval chrome as state: the pending tool approval (its
    decision submit, the approval-mode discovery hint and nudge, the ghost
@@ -41,6 +44,10 @@ type AppDispatch = ReturnType<typeof useAppDispatch>
  *  `approvalIsUnattended`), so the Trust controls are withheld and only
  *  Allow once / Reject are offered. Kept in sync with the backend's
  *  `_BACKGROUND_APPROVAL_SOURCES` minus `autonudge`, which does run in-session. */
+const TRUST_DECISIONS = ['trust_command', 'trust_base', 'trust', 'trust_reads']
+// The one-shot decisions the slot route takes with a card row (`request_mid`).
+const ONE_SHOT_DECISIONS = ['approved', 'rejected', 'rejected_once']
+
 export const UNATTENDED_APPROVAL_SOURCES = new Set(['cron', 'heartbeat', 'taskrunner'])
 
 /** B2 nudge: after this many manual one-shot approvals in one slot while the
@@ -105,16 +112,43 @@ export function useToolApproval({ slotId, slotApprovalChrome, approvalMode, disp
   const hideApprovalNudge = useCallback(() => setApprovalNudgeSlot(null), [])
   // Non-null while the last approval decision failed. Rendered as a one-line
   // strip under the composer; auto-clears so it cannot become permanent chrome.
-  const [approvalNotice, setApprovalNotice] = useState<string | null>(null)
+  const [approvalNotice, setApprovalNotice] = useState<ReactNode>(null)
   // The same notice slot carries two different things: STATUS about an
   // approval that expired (nothing failed on our side) and a FAILED decision
   // submit (a rejected request). Only the latter is an error surface.
-  const [approvalNoticeKind, setApprovalNoticeKind] = useState<'status' | 'error' | 'granted'>('status')
+  const [approvalNoticeKind, setApprovalNoticeKind] = useState<'status' | 'settled' | 'error' | 'granted'>('status')
 
   const activeSlot = slotId
+  // Someone else settled the card this tab was showing: say how it ended, once.
+  // The line belongs to the card it resolved, so the next card, or another
+  // session, clears it.
   const approvalMeta = pendingApproval?.meta as Record<string, unknown> | undefined
   const approvalId = approvalMeta?.approval_id as string | undefined
+  const askId = useAppSelector(s => (slotId ? pendingQuestionFor(s.chat.pendingQuestions, slotId)?.ask_id : undefined))
+  const resolvedLine = useRef('')
+  const markSettled = useResolvedElsewhere(slotId, teamAttribution, viewerId, [approvalId, askId].filter((id): id is string => !!id), (line, decision) => {
+    resolvedLine.current = line
+    setApprovalNoticeKind(settledNoticeKind(decision))
+    setApprovalNotice(line)
+  })
+  const clearResolvedLine = useCallback(() => {
+    const line = resolvedLine.current
+    resolvedLine.current = ''
+    if (line) setApprovalNotice(current => (current === line ? null : current))
+  }, [])
+  // Only a card this tab has not shown before clears it; a card still on screen
+  // beside the settled one must not.
+  const shownCards = useRef(new Set<string>())
+  useEffect(() => {
+    const now = [approvalId, askId].filter((id): id is string => !!id)
+    if (now.some(id => !shownCards.current.has(id))) clearResolvedLine()
+    shownCards.current = new Set(now)
+  }, [approvalId, askId, clearResolvedLine])
+  useEffect(() => clearResolvedLine, [slotId, clearResolvedLine])
+  // A pending card says whose turn raised it when that is someone else.
+  const approvalRaisedBy = useRaisedBy(slotId, approvalId ? id => id.endsWith(`:${approvalId}`) : null)
   const approvalMid = typeof approvalMeta?.mid === 'string' ? approvalMeta.mid : undefined
+  const approvalRegistry = typeof approvalMeta?.registry === 'string' ? approvalMeta.registry : undefined
   const approvalToolInput = (approvalMeta?.tool_input as string) || ''
   const approvalIsReadOnly = !!(approvalMeta?.is_read_only)
   const approvalFullCommand = (approvalMeta?.full_command as string) || ''
@@ -248,10 +282,18 @@ export function useToolApproval({ slotId, slotApprovalChrome, approvalMode, disp
     const clickedMid = approvalMid
     // A security-rule override is bound to the card row it was clicked on.
     const isDenyOverride = decision === 'deny_override_once' || decision === 'deny_override_session'
+    // Request ids recur across sessions, so a one-shot decision on this
+    // session's own request names its session and card row on the slot route.
+    // A coordinator card (cron, subagent, task) is not this slot's request and
+    // keeps the id route, which refuses an id pending in two sessions.
+    const isNativeOneShot = !!activeSlot && !!clickedMid && !approvalIsUnattended
+      && approvalRegistry !== 'coordinator' && ONE_SHOT_DECISIONS.includes(decision)
+    // A decide that named its card row settled (or missed) only that row.
+    const rowScoped = !!clickedMid && (isDenyOverride || isNativeOneShot)
     const finish = () => {
       // An override settles the row it named; request ids recur.
       dispatch(resolveByApprovalId({
-        id: approvalId, slot: activeSlot || undefined, decision, ...(isDenyOverride && clickedMid ? { mid: clickedMid } : {}),
+        id: approvalId, slot: activeSlot || undefined, decision, ...(rowScoped ? { mid: clickedMid } : {}),
       }))
       setApprovalSubmitting(false)
       // A timed grant says what it covers and when it ends, since the card that
@@ -263,7 +305,11 @@ export function useToolApproval({ slotId, slotApprovalChrome, approvalMode, disp
         setApprovalNoticeKind('granted')
         setApprovalNotice(decision === 'trust_base'
           ? i18nT('components.chatInput.trusted_base_until', { base: baseCommandLabel(approvalBaseCommand), time })
-          : i18nT('components.chatInput.trusted_command_until', { cmd: truncateCommandLabel(approvalFullCommand, 80), time }))
+          // The command is the <mono/> chip's child, never a `values` entry.
+          : createElement(Trans, {
+            i18nKey: 'components.chatInput.trusted_command_until', values: { time },
+            components: { mono: createElement('span', { className: 'bg-bg-elevated px-1.5 py-0.5 rounded font-mono break-all border border-border' }, truncateCommandLabel(approvalFullCommand, 80)) },
+          }))
       }
       // B2: tally manual one-shot approvals per slot. Only 'approved' counts —
       // a trust grant already reduces future prompts, and a rejection is not
@@ -288,8 +334,10 @@ export function useToolApproval({ slotId, slotApprovalChrome, approvalMode, disp
       if (settled) {
         // It answered the request this tab clicked, not every row with that id.
         dispatch(resolveByApprovalId({ id: approvalId, slot: activeSlot || undefined, decision: decisionVerdict(settled), mid: clickedMid }))
-        setApprovalNoticeKind('status')
-        setApprovalNotice(teamAttribution ? resolvedByLine(settled, viewerId) : settledElsewhereLine(settled))
+        setApprovalNoticeKind(settledNoticeKind(settled))
+        markSettled(settled)
+        resolvedLine.current = teamAttribution ? resolvedByLine(settled, viewerId) : settledElsewhereLine(settled)
+        setApprovalNotice(resolvedLine.current)
         return
       }
       // 404 means the backend no longer holds a future for this id — the turn
@@ -300,7 +348,7 @@ export function useToolApproval({ slotId, slotApprovalChrome, approvalMode, disp
         // An override names its card row (`request_mid`), so its 404 proves only
         // that row is gone: a replacement request reusing the id may still be
         // pending, and must keep its card. A bare-id 404 proves none is pending.
-        dispatch(resolveByApprovalId(isDenyOverride && clickedMid
+        dispatch(resolveByApprovalId(rowScoped
           ? { id: approvalId, slot: activeSlot || undefined, decision: 'stale', mid: clickedMid }
           : { id: approvalId, slot: activeSlot || undefined, decision: 'stale', allPending: true }))
         // Say WHOSE turn expired. Unattended sources deny-fast on a short
@@ -332,7 +380,7 @@ export function useToolApproval({ slotId, slotApprovalChrome, approvalMode, disp
       }).then(finish).catch(fail)
       return
     }
-    if (['trust_command', 'trust_base', 'trust', 'trust_reads'].includes(decision) && activeSlot) {
+    if (TRUST_DECISIONS.includes(decision) && activeSlot) {
       // Defence in depth: the Trust controls are not rendered for unattended
       // sources, but never let a trust grant be applied on their behalf. The
       // grant would land on THIS slot (api.approveChatSlot is slot-scoped),
@@ -346,10 +394,14 @@ export function useToolApproval({ slotId, slotApprovalChrome, approvalMode, disp
       if (pattern) extra.pattern = pattern
       if (ttlSeconds !== undefined) extra.ttl_seconds = ttlSeconds
       api.approveChatSlot(activeSlot, decision, extra).then(finish).catch(fail)
+    } else if (isNativeOneShot && activeSlot && clickedMid) {
+      api.approveChatSlot(activeSlot, decision, {
+        request_id: approvalId, response_id: responseId, origin: 'native', request_mid: clickedMid,
+      }).then(finish).catch(fail)
     } else {
       api.resolveApproval(approvalId, toApiDecision(decision), undefined, responseId).then(finish).catch(fail)
     }
-  }, [approvalId, approvalMid, activeSlot, approvalIsUnattended, approvalSource, approvalMode, approvalFullCommand, approvalBaseCommand, dispatch, teamAttribution, viewerId])
+  }, [approvalId, approvalMid, approvalRegistry, activeSlot, approvalIsUnattended, approvalSource, approvalMode, approvalFullCommand, approvalBaseCommand, dispatch, teamAttribution, viewerId, markSettled])
 
   return {
     pendingApproval, hasApproval, approvalId, approvalSubmitting, approvalPickerSignal, setApprovalPickerSignal,
@@ -358,7 +410,7 @@ export function useToolApproval({ slotId, slotApprovalChrome, approvalMode, disp
     approvalToolInput, approvalIsReadOnly, approvalFullCommand, approvalBaseCommand, approvalIsShell,
     approvalTrustCommandGrantable, approvalTrustBaseGrantable, approvalTrustAllGrantable, approvalIsUnattended, approvalTrustGrantable,
     approvalDenyRule, approvalDenyDetail, approvalDenyFamily, approvalDenyCommand,
-    approvalLabelRaw, approvalToolCallId, approvalPurpose, approvalTs, approvalLabel, showGhost, showInChat, handleApprovalAction,
+    approvalLabelRaw, approvalToolCallId, approvalPurpose, approvalTs, approvalLabel, approvalRaisedBy, showGhost, showInChat, handleApprovalAction,
   }
 }
 

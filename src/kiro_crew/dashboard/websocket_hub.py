@@ -11,6 +11,7 @@ from typing import Any, Protocol
 
 from aiohttp import web
 
+from kiro_crew.dashboard import ws_chunk_scope as chunk_scope
 from kiro_crew.dashboard.kiro_relay.caller import RELAY_TEAMMATE_WS_FLAG
 from kiro_crew.dashboard.turn_heartbeat import TurnHeartbeat
 from kiro_crew.write_buffer_level import level_is_progress_signal
@@ -22,6 +23,20 @@ SLOT_PATCH_CAPABILITY = "slot_patch"
 #: Socket attribute recording that declaration. Only a dashboard-user socket
 #: carries it; every other socket keeps receiving the full ``slots`` list.
 SLOT_PATCH_WS_FLAG = "_slot_patch"
+
+#: Capability a dashboard tab declares in ``?caps=`` (beside ``slot_patch``) when
+#: its bundle applies ``slots_diff`` frames: the rows of the slot list that changed
+#: since the last list frame it was sent (``state_parts/slots_diff.py``).
+SLOT_DIFF_CAPABILITY = "slot_diff.1"
+
+#: Socket attribute recording that declaration. A flagged socket gets every
+#: coalesced slot list as a ``slots_diff`` frame, or as a sequenced full frame
+#: when it holds no base; the generic and owner ``slots`` fan-outs skip it.
+SLOT_DIFF_WS_FLAG = "_slot_diff"
+
+#: Socket attribute holding the ``(view, seq)`` of the slot list a diff socket was
+#: last sent. Popping it makes the next coalesced list reach the socket in full.
+SLOT_DIFF_SEQ_KEY = "_slot_diff_seq"
 
 #: Capability a dashboard tab declares in ``?caps=`` when its bundle sends
 #: ``fold_watch`` and can live with slot-fold frames for only the boards it watches.
@@ -370,8 +385,15 @@ class WebSocketHub:
         ws: web.WebSocketResponse,
         msg_type: str,
         data: object,
+        audit_type: str | None = None,
     ) -> bool:
-        """Apply the deny-by-default event-scope gate for one client."""
+        """Apply the deny-by-default event-scope gate for one client.
+
+        *audit_type* names the frame the socket actually receives when it differs
+        from *msg_type* (a stream frame the socket gets as a coarse frame, see
+        ``ws_chunk_scope``); the grant is recorded under it. The decision itself
+        is always made on *msg_type*.
+        """
         # Checked BEFORE the dashboard-user short-circuit, and gated on a plain
         # dict lookup because this predicate runs for every frame on every socket:
         # the mark is absent for all but a socket still awaiting its
@@ -447,7 +469,7 @@ class WebSocketHub:
                     _audit_allow,
                 )
 
-                _audit_allow(DASHBOARD_USER_AUDITEE, msg_type)
+                _audit_allow(DASHBOARD_USER_AUDITEE, audit_type or msg_type)
             except Exception:
                 self._log.debug(
                     "state: SEL audit for dashboard-user grant %s failed",
@@ -577,6 +599,15 @@ class WebSocketHub:
         serialize = self._owner_method("_serialize_for_client", self._serialize_for_client)
         spawn = self._owner_method("_spawn_ws_send", self._spawn_ws_send)
         remove = self._owner_method("_remove_ws", self._remove_ws)
+        # A streamed frame of one slot: scoped sockets that do not watch it get
+        # at most a coarse frame instead (see ws_chunk_scope).
+        stream_slot = chunk_scope.frame_slot(msg_type, data)
+        unwatched: chunk_scope.UnwatchedFrames | None = None
+        # Any other frame of a slot goes out after that slot's held reasoning.
+        flush_slot = (
+            data.get("slot") if isinstance(data, dict) and msg_type != "chat_thinking" else None
+        )
+        held_text: dict[str, str] = {}
         for ws in list(self._owner._ws_clients):
             if ws.closed:
                 dead.append(ws)
@@ -585,7 +616,32 @@ class WebSocketHub:
                 continue
             if skip_patch_clients and ws.get(SLOT_PATCH_WS_FLAG, False):
                 continue
-            if not client_allowed(ws, msg_type, data):
+            # A ``slots_diff`` socket receives the slot list from the diff sender.
+            if skip_owners and ws.get(SLOT_DIFF_WS_FLAG, False) is True:
+                continue
+            held_back = stream_slot is not None and chunk_scope.routes(ws, stream_slot)
+            if held_back:
+                if not client_allowed(ws, msg_type, data, chunk_scope.delivered_type(msg_type)):
+                    continue
+            elif not client_allowed(ws, msg_type, data):
+                continue
+            chunk_scope.note_coarse(ws, msg_type, data)
+            held = chunk_scope.pop_thinking(ws, flush_slot, held_text) if flush_slot else None
+            if held is not None:
+                try:
+                    spawn(ws, held)
+                except Exception:
+                    dead.append(ws)
+                    continue
+            if held_back and stream_slot is not None:
+                if unwatched is None:
+                    assert isinstance(data, dict)
+                    unwatched = chunk_scope.UnwatchedFrames(msg_type, stream_slot, data)
+                try:
+                    for coarse in unwatched.for_socket(ws):
+                        spawn(ws, coarse)
+                except Exception:
+                    dead.append(ws)
                 continue
             try:
                 payload = serialize(ws, msg_type, data, msg)
@@ -606,7 +662,13 @@ class WebSocketHub:
         for ws in dead:
             remove(ws)
 
-    def _send_ws_owners(self, msg: str, *, skip_slot_patch_clients: bool = False) -> None:
+    def _send_ws_owners(
+        self,
+        msg: str,
+        *,
+        skip_slot_patch_clients: bool = False,
+        skip_slot_diff_clients: bool = False,
+    ) -> None:
         """Send a pre-serialized message only to owner-authenticated clients."""
         dead: list[web.WebSocketResponse] = []
         spawn = self._owner_method("_spawn_ws_send", self._spawn_ws_send)
@@ -616,6 +678,8 @@ class WebSocketHub:
                 dead.append(ws)
                 continue
             if skip_slot_patch_clients and ws.get(SLOT_PATCH_WS_FLAG, False):
+                continue
+            if skip_slot_diff_clients and ws.get(SLOT_DIFF_WS_FLAG, False) is True:
                 continue
             try:
                 spawn(ws, msg)
@@ -966,6 +1030,55 @@ class WebSocketHub:
             self._fold_watch_changed()
         return watched
 
+    def set_chunk_scope_capable(self, ws: web.WebSocketResponse, capable: bool) -> bool:
+        """Record whether *ws* declared ``chunk_scope.1``; returns the flag.
+
+        Dashboard-user sockets only. A capable socket watches every slot until
+        its tab sends its first ``chunk_watch``, so nothing is held back before
+        the tab has said what it shows.
+        """
+        flag = bool(capable) and bool(ws.get("_is_dashboard_user", False))
+        ws[chunk_scope.CHUNK_SCOPE_WS_FLAG] = flag
+        ws[chunk_scope.CHUNK_WATCH_WS_KEY] = None
+        ws[chunk_scope.CHUNK_PHASE_WS_KEY] = {}
+        ws[chunk_scope.CHUNK_DONE_WS_KEY] = {}
+        ws[chunk_scope.CHUNK_THINK_WS_KEY] = {}
+        return flag
+
+    def set_chunk_watch(
+        self,
+        ws: web.WebSocketResponse,
+        slots: object,
+        running: Callable[[str], bool] | None = None,
+    ) -> dict[str, list[str]] | None:
+        """REPLACE *ws*'s chunk watch set and return the ``chunk_watch_ack`` data.
+
+        Returns None for a socket without the capability. The ack names, under
+        ``catchup``, each newly watched slot whose turn *running* reports live:
+        its earlier chunks went to this socket as coarse frames only, so the tab
+        re-reads that slot's transcript. The set changes before the ack is
+        queued, so every chunk after the re-read's snapshot reaches the socket.
+        """
+        if not ws.get(chunk_scope.CHUNK_SCOPE_WS_FLAG, False):
+            return None
+        watched = chunk_scope.clean_watch(slots)
+        before = ws.get(chunk_scope.CHUNK_WATCH_WS_KEY) or frozenset()
+        ws[chunk_scope.CHUNK_WATCH_WS_KEY] = watched
+        phases = ws.get(chunk_scope.CHUNK_PHASE_WS_KEY)
+        if isinstance(phases, dict):
+            for slot in before ^ watched:
+                phases.pop(slot, None)
+        added = sorted(watched - before)
+        # Reasoning held back while the slot was unwatched exists nowhere else,
+        # so it goes out now, before the ack and the chunks the new set admits.
+        spawn = self._owner_method("_spawn_ws_send", self._spawn_ws_send)
+        for slot in added:
+            held = chunk_scope.pop_thinking(ws, slot)
+            if held is not None:
+                spawn(ws, held)
+        catchup = [slot for slot in added if running is not None and running(slot)]
+        return {"slots": sorted(watched), "catchup": catchup}
+
     def fold_watchers(self, slot: str) -> list[web.WebSocketResponse]:
         """The capable owner sockets that watch *slot* or one of its ancestors."""
         chain = self.board_chain(slot)
@@ -1157,6 +1270,13 @@ class WebSocketHub:
         self._owner._owner_ws_clients.discard(ws)
         self._owner._ws_log_subscribers.discard(ws)
         self._owner._ws_subagent_subscribers.discard(ws)
+        # A closed socket watches nothing: drop its chunk watch and phase map.
+        drop = getattr(ws, "pop", None)
+        if callable(drop):
+            drop(chunk_scope.CHUNK_WATCH_WS_KEY, None)
+            drop(chunk_scope.CHUNK_PHASE_WS_KEY, None)
+            drop(chunk_scope.CHUNK_DONE_WS_KEY, None)
+            drop(chunk_scope.CHUNK_THINK_WS_KEY, None)
         if was_owner and self._fold_watch_listeners:
             self._fold_watch_changed()
 

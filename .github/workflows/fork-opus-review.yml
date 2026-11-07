@@ -1901,7 +1901,7 @@ jobs:
               *) stage="unknown" ;;
             esac
             conclusion="failure"; title="turn budget spent, needs human review"
-            summary="The $stage stage stopped at --max-turns (error_max_turns) for $HEAD, so no verdict was reached. A re-run walks into the same cap; a human reviews this diff, or the PR is split."
+            summary="The $stage stage stopped at --max-turns (error_max_turns) for $HEAD, so no verdict was reached. A re-run walks into the same cap: split the PR, or a repository writer who has reviewed this diff records it with \`/ai-review override fable $HEAD <class>: <reason, 20 to 500 characters>\`."
           fi
           # The output file proves a verdict was COMPUTED, never that it reached
           # the PR. A slot still holding another head's verdict, or an earlier
@@ -2007,6 +2007,8 @@ jobs:
             # overwrite the newer run's row with a stale verdict. A row whose
             # run-id dimension is NEWER than this run's is left alone.
             enc="$(jq -rn '"Opus 5.5 Review" | @uri')"
+            # No `filter=all` needed: the default can drop only completed rows,
+            # never a non-completed one (measured in #10116).
             stranded="$(gh api --method GET \
               "repos/$REPO/commits/$HEAD/check-runs?check_name=$enc&per_page=100" \
               --jq ".check_runs[]

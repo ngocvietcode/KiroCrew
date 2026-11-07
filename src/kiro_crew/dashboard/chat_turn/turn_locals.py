@@ -42,6 +42,7 @@ if TYPE_CHECKING:
         _ChatSlot,
         _TurnExit,
     )
+    from kiro_crew.dashboard.chat_turn.turn_reply_seams import _TurnDiedNote
     from kiro_crew.dashboard.chat_turn.turn_stats import _FirstVisibleClock
     from kiro_crew.dashboard.deny_override import DenyOverrideOffer
     from kiro_crew.dashboard.poisoned_escalation import PoisonedConversationEscalation
@@ -99,6 +100,17 @@ class _ChatTurn:
     _on_irreversibly_consumed: "Callable[[], Awaitable[None] | None] | None"
     monitor_completion: "MonitorCompletionHook | None"
     _current_message: "dict | None"
+    # The agent started this turn on its own between prompts: it reads the
+    # session's pending turn with ``stream_unsolicited`` and sends no prompt.
+    _agent_started: "bool"
+    # That turn's event stream, closed in ``_run_chat``'s ``finally``: while it is
+    # open the client holds back the next prompt (``agent_started``).
+    _agent_turn_stream: "Any"
+    # A Stop pressed while this turn was being prepared, owed to the agent's
+    # cycle once its stream is open (``agent_started._send_owed_agent_cancel``).
+    _agent_cancel_owed: "bool"
+    # The event that cancel was sent at; it answered the asks the client held open.
+    _agent_cancel_event: "Any"
 
     # State those functions write, or read after the turn rebinds it.
     _acquired: "bool"
@@ -133,7 +145,7 @@ class _ChatTurn:
     _current_replay_message: "dict[Any, Any] | None"
     _declined_grant_notices: "dict[str, str]"
     _deferred_cut_text: "str"
-    died_notice: "str | None"
+    died_notice: "_TurnDiedNote | None"
     _deferred_options_expiry: "bool"
     _deny_override: "DenyOverrideOffer | None"
     _dir_consumed_out: "dict[str, str]"
@@ -238,6 +250,7 @@ class _ChatTurn:
     _terminal_directive_tcids: "set[str]"
     _terminal_synthetic: "bool"
     _thinkred: "StreamRedactor"
+    _slash_withholds_mirror: "bool"
     _this_turn_is_clear: "bool"
     _todo_recovery_carried: "bool"
     _todo_sync_rendered: "tuple[tuple[str, str, bool], ...]"
@@ -350,6 +363,7 @@ class _ChatTurn:
         _on_irreversibly_consumed: "Callable[[], Awaitable[None] | None] | None",
         monitor_completion: "MonitorCompletionHook | None",
         _current_message: "dict | None",
+        _agent_started: "bool" = False,
     ) -> None:
         self.state = state
         self.slot = slot
@@ -383,6 +397,10 @@ class _ChatTurn:
         self._on_irreversibly_consumed = _on_irreversibly_consumed
         self.monitor_completion = monitor_completion
         self._current_message = _current_message
+        self._agent_started = _agent_started
+        self._agent_turn_stream = None
+        self._agent_cancel_owed = False
+        self._agent_cancel_event = None
         # No admission reservation until the context-builder branch opens one.
         self._admission_slot = None
 

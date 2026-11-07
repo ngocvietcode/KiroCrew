@@ -1,4 +1,4 @@
-import { safeSetItem } from '../utils/safeStorage'
+import { savePrefExplicitly } from '../lib/uiPrefs'
 import { newerTs } from '../lib/slotReadRelay'
 import { jsonEqual } from '../utils/structuralEqual'
 import { slotSurfaceKey } from './slotIdentity'
@@ -12,40 +12,18 @@ import { bumpLastTsOverlay, dropCaughtUpLastTs, pruneLastTsOverlay, slotLastTsOf
 import type { SessionColorMode, PaletteName, DefaultColorSetting, IntensityName } from '../utils/sessionColors'
 import { isChatPageSurface } from '../utils/channelOrigin'
 import { slotListHoldTest } from '../utils/slotListHold'
-import { crewModeEnabled } from '../lib/crewMode'
+import { crewModeEnabled, mateSessionsHidden } from '../lib/crewMode'
+import { closeWatchReducer, isCloseWatchAction, type CloseWatchState } from './dashboard/closeWatch'
 import { MANUAL_UNREAD, _relayUnreadToParent, clearSharedUnreadIfCovered, crewMemberKeys, drainUnreadKeys, dropQueuedSharedUnreadCoveredBy, hasUnreadRelayHold, heldOrphanTest, persistManualSentinels, persistSharedUnread, queueSharedUnread, readCovers, relayUnreadCount, relayUnreadIfHolding, relayedUnreadKeys, restoreUnreadBadges, restoreUnreadSince, retireSharedUnreadIfUnchanged, sharedUnreadWatermark } from './dashboard/unread'
-export { selectPersonSlots } from './personSlots'
-
-/** A close tombstone entry (see `applySlots`). */
-interface CloseHold {
-  /** The `deleteSlot` attempt that owns this hold. A stale attempt's lifecycle
-   *  actions (a `rejected` trailing a slow peer navigation) must not touch a
-   *  newer attempt's hold on the same key. */
-  requestId: string
-  /** Deadline while the DELETE is in flight; `null` once the server has answered. */
-  inFlightUntil: number | null
-  /** This attempt received 404 because another close popped the key; wait for
-   *  that close's durable removal or rollback signal. */
-  awaitingOutcome?: true
-  /** Straggler lists an awaiting or confirmed hold still survives. The same
-   *  counter carries across a durable `removed` outcome. */
-  graceFrames: number
-  /** `fetchSlots` requests that were already in flight when the server
-   *  confirmed the close. Their replies may predate the pop, so the hold
-   *  outlives them however many frames arrive first. */
-  awaitingFetches: string[]
-  /** Wall-clock deadline for the confirmed phase. `chatSlots()` carries no
-   *  deadline either, so an `awaitingFetches` entry that never settles would
-   *  otherwise pin the tombstone until a reload. Set at confirmation. */
-  confirmedUntil: number | null
-}
+import type { CloseHold } from './dashboard/closeHold'
+export { selectLiveMateThreads, selectPersonSlots } from './personSlots'
 
 /** The two user-owned mute flags on a slot. */
 export type MuteFlag = 'mutes_opened' | 'muted'
 /** The `slotMuteFlagError` key for one flag on one slot. */
 export const muteFlagErrorKey = (flag: MuteFlag, slotKey: string) => `${flag}:${slotKey}`
 
-export interface DashboardState {
+export interface DashboardState extends CloseWatchState {
   status: StatusData | null
   /** The ad-hoc auto-approve duration this tab last saved in Settings, or
    *  undefined when it has saved none. Applied over every status write: the
@@ -92,6 +70,9 @@ export interface DashboardState {
    *  History rewrites may trust this immediately; slot-list visibility still
    *  follows `closingSlots` and its straggler budget. */
   durablyRemoved: Record<string, true>
+  /** Per key, how many close holds reached the confirmed phase. Outlives the
+   *  hold, so a close's late callback can tell a newer close was confirmed. */
+  closeConfirmations: Record<string, number>
   /** `fetchSlots` requests currently in flight, by thunk requestId — read by
    *  a confirmed close to know which replies could still predate its pop. */
   slotFetchesInFlight: string[]
@@ -222,10 +203,6 @@ export interface DashboardState {
 
 const safeGet = (key: string, fallback: string) => { try { return localStorage.getItem(key) ?? fallback } catch { return fallback } }
 export { MANUAL_UNREAD, restoreUnreadBadges, restoreUnreadSince } from './dashboard/unread'
-const safeSet = (key: string, value: string) => {
-  try { safeSetItem(key, value) } catch { /* QuotaExceededError / SecurityError */ }
-  if (key === 'mc-unread-slots') _relayUnreadToParent(value)
-}
 
 const initialState: DashboardState = {
   status: null,
@@ -242,6 +219,7 @@ const initialState: DashboardState = {
   slotMuteFlagError: {},
   closingSlots: {},
   durablyRemoved: {},
+  closeConfirmations: {},
   slotFetchesInFlight: [],
   staleSlotFetches: {},
   slotWriteSeq: 0,
@@ -532,6 +510,11 @@ const confirmHold = (state: DashboardState, key: string, requestId: string): voi
   hold.inFlightUntil = null
   hold.awaitingFetches = [...(state.slotFetchesInFlight ?? [])]
   hold.confirmedUntil = Date.now() + CLOSE_CONFIRMED_MAX_MS
+  countCloseConfirmation(state, key)
+}
+const countCloseConfirmation = (state: DashboardState, key: string): void => {
+  if (!state.closeConfirmations) state.closeConfirmations = {}
+  state.closeConfirmations[key] = (state.closeConfirmations[key] ?? 0) + 1
 }
 /** Arm a tombstone directly in its confirmed phase for a removal the server
  *  already acknowledged. Pre-removal fetches remain paired with the hold so
@@ -546,6 +529,7 @@ const armConfirmedHold = (state: DashboardState, key: string): void => {
     awaitingFetches: [...(state.slotFetchesInFlight ?? [])],
     confirmedUntil: Date.now() + CLOSE_CONFIRMED_MAX_MS,
   }
+  countCloseConfirmation(state, key)
 }
 /** A `fetchSlots` request settled: no confirmed hold need wait for it any more.
  *  Runs AFTER that reply's own `applySlots`, so the reply itself is still held. */
@@ -1249,6 +1233,7 @@ const dashboardSlice = createSlice({
         hold.inFlightUntil = null
         hold.awaitingFetches = [...(state.slotFetchesInFlight ?? [])]
         hold.confirmedUntil = Date.now() + CLOSE_CONFIRMED_MAX_MS
+        countCloseConfirmation(state, key)
         delete hold.awaitingOutcome
       }
     },
@@ -1632,19 +1617,19 @@ const dashboardSlice = createSlice({
     },
     setSessionDefaultColor(state, action: PayloadAction<DefaultColorSetting>) {
       state.sessionDefaultColor = action.payload
-      safeSet('mc-session-default-color', JSON.stringify(action.payload))
+      savePrefExplicitly('mc-session-default-color', JSON.stringify(action.payload))
     },
     setSessionColorsMode(state, action: PayloadAction<SessionColorMode>) {
       state.sessionColorsMode = action.payload
-      safeSet('mc-session-colors-mode', action.payload)
+      savePrefExplicitly('mc-session-colors-mode', action.payload)
     },
     setSessionColorsPalette(state, action: PayloadAction<PaletteName>) {
       state.sessionColorsPalette = action.payload
-      safeSet('mc-session-colors-palette', action.payload)
+      savePrefExplicitly('mc-session-colors-palette', action.payload)
     },
     setSessionColorsIntensity(state, action: PayloadAction<IntensityName>) {
       state.sessionColorsIntensity = action.payload
-      safeSet('mc-session-colors-intensity', action.payload)
+      savePrefExplicitly('mc-session-colors-intensity', action.payload)
     },
     setEnabledAppIds(state, action: PayloadAction<string[]>) {
       state.enabledAppIds = action.payload
@@ -1888,6 +1873,7 @@ const dashboardSlice = createSlice({
           releaseHold(state, action.meta.arg, action.meta.requestId)
         },
       )
+      .addMatcher(isCloseWatchAction, closeWatchReducer)
   },
 })
 
@@ -1952,7 +1938,8 @@ const _unreadByModeCache = new Map<string, UnreadByModeSelector>()
 export function selectUnreadByMode(mode: string): UnreadByModeSelector {
   let sel = _unreadByModeCache.get(mode)
   if (!sel) {
-    // The Crew Mode preview decides whether crew members count (`crewMemberKeys`).
+    // The Crew Mode and mate sessions previews decide whether crew members and a
+    // mate's sessions count (`crewMemberKeys`).
     // It is passed as an argument, not read inside an input selector: the
     // selector memoizes on its arguments, so a flip with the same state would
     // otherwise answer from the cache.
@@ -1963,10 +1950,11 @@ export function selectUnreadByMode(mode: string): UnreadByModeSelector {
       (state: { dashboard: DashboardState }) => state.dashboard.slotsHoldChannels,
       (state: { dashboard: DashboardState }) => state.dashboard.slotsListPartial,
       (_state: { dashboard: DashboardState }, crewMode: boolean) => crewMode,
+      (_state: { dashboard: DashboardState }, _crewMode: boolean, mateSessions: boolean) => mateSessions,
       (slots, unread, heldKeys, holdChannels, listPartial) =>
         countUnreadByMode(slots, unread, mode, heldKeys ?? [], holdChannels === true, listPartial === true),
     )
-    sel = state => count(state, crewModeEnabled())
+    sel = state => count(state, crewModeEnabled(), mateSessionsHidden())
     _unreadByModeCache.set(mode, sel)
   }
   return sel

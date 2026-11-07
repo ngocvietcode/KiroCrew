@@ -58,10 +58,12 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKENDS_CREW_FIRES_SPEC_HOOKS,
     ACP_BACKENDS_CREW_FIRES_SPEC_OBSERVER_HOOKS,
     ACP_BACKENDS_EFFORT_VIA_CONFIG_OPTION,
+    ACP_BACKENDS_HARNESS_OWNED_SLASH_COMMANDS,
     ACP_BACKENDS_HONOR_ZERO_TOOL_BAN,
     ACP_BACKENDS_INLINE_COMPACTION,
     ACP_BACKENDS_KIRO_SLASH_COMMANDS,
     ACP_BACKENDS_NATIVE_TODOS,
+    ACP_BACKENDS_NATIVE_WORKFLOWS,
     ACP_BACKENDS_REMOTE_MCP_OAUTH,
     model_registry_namespace,
 )
@@ -174,6 +176,14 @@ class SessionCapabilities:
     #: Unknown and newly registered backends remain False until they opt in.
     supports_native_todos: bool
 
+    #: Whether this harness runs ANY leading-slash prompt as one of its own commands.
+    #:
+    #: True where the adapter resolves the name itself (Claude Code's ``/review``,
+    #: ``/init``, skills, ``.claude/commands``), so the dashboard forwards every
+    #: leading-slash word raw instead of only kiro-cli's command names. Unknown and
+    #: newly registered backends remain False until they opt in.
+    runs_own_slash_commands: bool
+
     #: Whether an agent spec's ``"tools": []`` is honoured as a total ban -- no
     #: MCP server AND no harness-native tool -- on this backend.
     #:
@@ -211,6 +221,13 @@ class SessionCapabilities:
     #: Connect that cannot finish.
     honors_remote_mcp_oauth: bool
 
+    #: Whether the harness brings its own workflow engine
+    #: (:data:`ACP_BACKENDS_NATIVE_WORKFLOWS`), so that workflow definitions, runs
+    #: and controls go to it over ``_kiro/workflow/*`` instead of to Crew's
+    #: ``ctx``-script engine. False routes to Crew's engine, which serves every
+    #: harness, so an unknown backend loses nothing.
+    native_workflows: bool
+
 
 def capabilities_for(backend: str) -> SessionCapabilities:
     """The capabilities of *backend*, fail-closed for an id this build cannot name.
@@ -235,9 +252,11 @@ def capabilities_for(backend: str) -> SessionCapabilities:
         crew_fires_spec_hooks=backend in ACP_BACKENDS_CREW_FIRES_SPEC_HOOKS,
         crew_fires_spec_observer_hooks=backend in ACP_BACKENDS_CREW_FIRES_SPEC_OBSERVER_HOOKS,
         supports_native_todos=backend in ACP_BACKENDS_NATIVE_TODOS,
+        runs_own_slash_commands=backend in ACP_BACKENDS_HARNESS_OWNED_SLASH_COMMANDS,
         honors_zero_tool_ban=backend in ACP_BACKENDS_HONOR_ZERO_TOOL_BAN,
         acp_client_spawnable=backend in ACP_BACKENDS_ACP_CLIENT_SPAWNABLE,
         honors_remote_mcp_oauth=backend in ACP_BACKENDS_REMOTE_MCP_OAUTH,
+        native_workflows=backend in ACP_BACKENDS_NATIVE_WORKFLOWS,
     )
 
 
@@ -265,9 +284,11 @@ UNKNOWN_BACKEND_CAPABILITIES = SessionCapabilities(
     crew_fires_spec_hooks=False,
     crew_fires_spec_observer_hooks=False,
     supports_native_todos=False,
+    runs_own_slash_commands=False,
     honors_zero_tool_ban=False,
     acp_client_spawnable=False,
     honors_remote_mcp_oauth=False,
+    native_workflows=False,
 )
 
 

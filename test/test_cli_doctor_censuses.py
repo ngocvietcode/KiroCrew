@@ -88,14 +88,9 @@ class TestCronHealth:
     ) -> None:
         """An explicitly paused ``at`` job must stay silent even carrying an error.
 
-        The user pause is the later, more specific instruction, so it wins -- the
-        contract this function's own docstring states. A stale ``last_status``
-        from a run before the pause is not a reason to hand back a hint for a job
-        the user switched off.
-
-        Paired with the sibling below, which keeps a NON-paused errored at-job
-        reported: neither test alone pins the distinction, because one mutation
-        can only move one of the two outcomes.
+        The user pause is the later, more specific instruction, so it beats a stale
+        ``last_status``. Paired with the next test (non-paused stays reported): each
+        alone pins only one side of the distinction.
         """
         self._write(
             tmp_path,
@@ -420,14 +415,9 @@ class TestCronHealth:
 class TestDoctorSkillViewCensus:
     """The Agents Directory section counts the ``kirocrew-skill-view-*`` aliases.
 
-    The projection publishes one alias per distinct agent view into the shared
-    kiro agents directory -- spawns of the same agent share one file -- and
-    kiro-cli reads every file there on startup. Before
-    the lease-based reclaim the directory grew without bound (28k files / 580 MB
-    on one host; ``EMFILE`` on another), and the only way to see it was ``ls``.
-    Doctor reports the census read-only: how many aliases exist, how many a
-    lease record names, which share this gateway's reclaim covers, and a
-    warning once the count is past the point where startup cost is measurable.
+    kiro-cli reads every file in the shared agents directory on startup, and unreclaimed
+    aliases can reach tens of thousands (``EMFILE``). Doctor reports read-only: totals,
+    leased count, this gateway's reclaim share, and a warning past a startup-cost threshold.
     """
 
     PREFIX = "kirocrew-skill-view-"
@@ -502,6 +492,16 @@ class TestDoctorSkillViewCensus:
         out = self._run(tmp_path, monkeypatch, capsys)
         assert "skill views: ⚠️" in out
         assert f"{limit + 1} kirocrew-skill-view-*.json alias(es)" in out
+
+    def test_the_threshold_grows_with_the_authored_agents(self, tmp_path, monkeypatch, capsys):
+        # 100 authored specs size the threshold at 200, as the projection's ceiling.
+        for i in range(100):
+            (tmp_path / f"authored-{i}.json").write_text('{"name":"x"}', encoding="utf-8")
+        for i in range(200):
+            self._alias(tmp_path, i, home=None)
+        assert "skill views: ✅" in self._run(tmp_path, monkeypatch, capsys)
+        self._alias(tmp_path, 200, home=None)
+        assert "skill views: ⚠" in self._run(tmp_path, monkeypatch, capsys)
 
     def test_a_backlog_this_home_owns_names_its_share_and_the_remedy_is_a_move(
         self, tmp_path, monkeypatch, capsys
@@ -759,12 +759,8 @@ class TestDoctorSkillViewCensus:
 class TestRunDirCensus:
     """The run-directory census is read-only, down to the workspace root itself.
 
-    ``workspace_root()`` creates the tree it resolves, which is right for a
-    gateway about to spawn into it and wrong for a doctor on a host where no
-    gateway ever ran: the report would leave a workspace behind as its only
-    trace. The doctor resolves without creating and says there is nothing yet.
-    Its two figures come from the sweep's own rule over this home's pid ledger;
-    no pid's liveness is probed.
+    ``workspace_root()`` creates what it resolves, so the doctor resolves without creating.
+    Its figures use the sweep's rule over the pid ledger; no pid's liveness is probed.
     """
 
     @staticmethod

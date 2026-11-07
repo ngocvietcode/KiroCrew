@@ -168,8 +168,8 @@ def _doctor_member_memory_bindings(cfg: KiroCrewConfig, issues: list[str]) -> No
 
 # kiro-cli is the DEFAULT agent backend; the claude-agent-acp binary below belongs
 # to Claude Code, which is also selectable. Doctor reports it as an optional
-# backend, and the verdict comes from ``agent_sdk.probe_backend`` so doctor and the
-# dashboard cannot give different answers.
+# backend unless a selected role runs it, and the verdict comes from
+# ``agent_sdk.probe_backend`` so doctor and the dashboard cannot give different answers.
 _CLAUDE_ACP_BIN = "claude-agent-acp"
 
 
@@ -295,8 +295,8 @@ def _doctor_deprecated_agent_specs(cfg: KiroCrewConfig, issues: list[str]) -> No
     issues.append("a config names a deprecated agent spec")
 
 
-def _doctor_claude_backend() -> None:
-    """Report Claude Code as an optional agent backend, installed or not.
+def _doctor_claude_backend(issues: list[str], *, required: bool) -> None:
+    """Report the Claude Code agent backend, installed or not.
 
     Its own function, not an inline block, so a test can exercise the reporting
     without running the whole doctor -- the full ``_doctor()`` shells out to
@@ -304,8 +304,12 @@ def _doctor_claude_backend() -> None:
     operator's real installation to check three print statements.
 
     Claude Code needs TWO binaries and the probe names whichever is absent, so a
-    half-install does not read as a total one. Never a hard failure: it is an
-    optional backend and kiro-cli is the floor. The verdict comes from
+    half-install does not read as a total one. *required* is True when a selected
+    role (``agent.acp_backend`` or ``agent.member_acp_backend``) runs this harness:
+    a missing component is then an issue, because every session on that role fails
+    to spawn. Otherwise it is an optional backend and kiro-cli is the floor, so
+    absence is informational. ``UNKNOWN`` or a raising probe is never an issue
+    either way: a check that could not answer is no evidence of absence. The verdict comes from
     ``agent_sdk.probe_backend`` -- the same owner ``GET /api/acp-backends`` uses --
     so doctor and the dashboard cannot give different answers.
     """
@@ -329,14 +333,21 @@ def _doctor_claude_backend() -> None:
         # whether the deployment may select the backend is a separate answer that
         # ``apply_selectable_denials`` can say no to. Calling an install "selectable"
         # would print the opposite of the truth on a policy-denied deployment.
+        version = _claude_adapter_version()
+        shown = f" {version}" if version else ""
         where = shutil.which(_CLAUDE_ACP_BIN)
         if where:
-            print(f"  claude-acp:  ✅ {where} (Claude Code installed)")
+            print(f"  claude-acp:  ✅ {where}{shown} (Claude Code installed)")
         else:
-            print("  claude-acp:  ✅ resolved off PATH (Claude Code installed)")
+            print(f"  claude-acp:  ✅ resolved off PATH{shown} (Claude Code installed)")
+        _warn_old_claude_adapter(version)
     elif claude_state.installed == MISSING:
         missing = ", ".join(claude_state.missing_components) or "components"
-        print(f"  claude-acp:  ⏭  {missing} not found (optional agent backend)")
+        if required:
+            print(f"  claude-acp:  ❌ {missing} not found (a selected backend runs it)")
+            issues.append(f"claude-acp: {missing} not found")
+        else:
+            print(f"  claude-acp:  ⏭  {missing} not found (optional agent backend)")
         if claude_state.install_command:
             print(f"               {claude_state.install_command}")
     else:
@@ -345,6 +356,43 @@ def _doctor_claude_backend() -> None:
         # probe's three-valued verdict exists to prevent, and which the dashboard
         # also refuses to make.
         print("  claude-acp:  ⚠️  could not check")
+
+
+def _claude_adapter_version() -> str:
+    """The installed adapter's npm package version, or ``""`` when unreadable.
+
+    Never ``claude-agent-acp --version``: old releases ignore the flag and wait on
+    stdin, which would hang doctor.
+    """
+    try:
+        from kiro_crew.agent_sdk.drivers.acp import claude_adapter_disk_version
+
+        return claude_adapter_disk_version()
+    except Exception:
+        return ""
+
+
+def _warn_old_claude_adapter(version: str) -> None:
+    """A warning row when *version* is below the floor; never an issue.
+
+    Below the floor sessions still start (Crew withholds what that adapter cannot
+    honour), so this informs rather than fails doctor.
+    """
+    try:
+        from kiro_crew.agent_sdk.drivers.acp import (
+            claude_adapter_install_command,
+            claude_adapter_min_version,
+            claude_adapter_version_is_below_floor,
+        )
+
+        if not claude_adapter_version_is_below_floor(version):
+            return
+        floor = claude_adapter_min_version()
+        command = claude_adapter_install_command()
+    except Exception:
+        return
+    print(f"               ⚠️  claude-agent-acp {version} is older than {floor}; update it:")
+    print(f"               {command}")
 
 
 def _backend_policy_label(backend: str) -> str:

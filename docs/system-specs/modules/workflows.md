@@ -132,7 +132,7 @@ run_id`.
 ```python
 async def agent(
     self, prompt: str, *, label=None, phase=None, schema=None, model=None,
-    agent=None, effort=None, cwd=None, session=None, nudge=None,
+    agent=None, effort=None, cwd=None, session=None, nudge=None, backend=None,
 ) -> AgentResult
 ```
 
@@ -163,9 +163,11 @@ Semantics, from `runner._RunContext.agent`:
   `MAX_AGENT_ERROR_CHARS` = 500, no traceback).
 
 `label`, `phase`, `schema`, `model`, `agent`, `effort`, `cwd`, `session` and
-`nudge` are all passed to the injected `agent_fn` in one `opts` dict. The shipped
-adapters read `session`, `agent`, `model`, `cwd` and `effort`; `label` and `phase`
-are consumed by the runner for the event stream; `schema` is consumed by the runner.
+`nudge` are all passed to the injected `agent_fn` in one `opts` dict, and `backend`
+joins them only when the call names one, so a call without it keeps the fingerprint
+it had. The shipped adapters read `session`, `agent`, `model`, `cwd`, `effort` and
+`backend`; `label` and `phase` are consumed by the runner for the event stream;
+`schema` is consumed by the runner.
 
 `effort` is the step's reasoning effort. Both shipped adapters
 (`agent_exec.build_agent_fn`, `agent_pool.build_pooled_agent_fn`) hand it to
@@ -183,6 +185,18 @@ not the effort, and a harness that takes effort as a per-session config option
 through `provider.change_effort` after each cheap reset; a push that raises takes
 the hard-reset fallback, which cold-starts with the override. There is no
 run-level effort default.
+
+`backend` is the harness the step runs on, named as `spawn_run(backend=)` and a
+governance rule name it (`"kiro"` is Kiro CLI). Both shipped adapters hand it to
+`get_or_create` as `backend_override`, the provider factory's per-session backend,
+which also takes the session past the gateway's warm pool. A name this build cannot
+select (unknown, or denied by policy) fails the step (`WorkflowSpawnRefused`) before
+a session is allocated, rather than letting the factory move it to the floor
+backend. Unset (`None` or `""`) passes nothing. A named `session=` is scoped to its
+backend (`<name>@<backend>`), because a live session cannot change harness. With no
+`model=`, the session's model comes from the default-model ladder scoped to that
+backend, which is auto when nothing is pinned for it. The spawn and cwd gates and
+the run's memory scope apply as to any other step.
 
 > Open question: the per-call `nudge` dict is part of the frozen signature and
 > reaches `opts`, but neither shipped `agent_fn` reads it, so today it has no
@@ -402,7 +416,7 @@ untouched. On top of those verbs the port adds only:
   `mode_raise_refused` for a mode above the target session's current mode or
   above the launching session's own posture (`_trust` → `trust`, `_trust_reads`
   → `trust_reads`, else `normal`; a launching slot that closed or was replaced
-  reads as `normal`, and a Crew Mode card trust (`_trust_card_scoped`), which
+  reads as `normal`, and an Ultra Mode card trust (`_trust_card_scoped`), which
   `approval_posture.trust_carries` keeps from passing to the sessions it
   starts though it reaches its subagents, counts as no `_trust`). So a session the person lowered stays lowered, and the
   mode write's `trust` arm, which also approves the session's pending tool calls,
@@ -1119,7 +1133,7 @@ writes nothing. Neither card offers Undo: the library has no delete, and an upda
 keeps every earlier revision in `revisions`. Only the main assistant's own
 dashboard chat may propose one: the shared card caller check already refuses
 sub-agents, scheduled and app sessions, channel turns and turns the user did not
-send, and the propose route also refuses a crewmate's thread and its workers
+send, and the propose route also refuses a Bot's thread and its workers
 (`owner_assistant_only`). SEL records the proposal on the shared `cards.propose` row
 (its resource names the card id and kind), the owner's decline as `cards.decline`,
 and the save itself on the definition route's own `workflow_definition_create` /
@@ -1407,9 +1421,13 @@ never spawns `kiro-cli` in tests. Two production adapters:
   worker after `provider.new_conversation()` (a fresh `session/new` on the live
   process, skipping spawn and initialize), falling back to a hard
   `SessionManager.reset` if that is unavailable or fails, so a reused worker can
-  never carry prior-task context forward. Dead workers are retired and replaced.
+  never carry prior-task context forward. Only a backend on the shared runtime
+  (kiro, KAS, Codex) has the cheap reset; one on its own `AcpClient` (claude and
+  the other per-session adapters) raises `NotImplementedError` naming the backend,
+  and its reuse is the hard reset, logged at INFO as a cold start. Dead workers are retired and replaced.
   A `session=<key>` call bypasses the pool entirely, since it needs a stable named
-  session rather than a reset-between-uses worker.
+  session rather than a reset-between-uses worker. So does a `backend=` call: every
+  warm worker runs the default harness, so it runs on a one-shot unpooled session.
 
   Per-call `agent` / `model` / `cwd` / `effort` overrides each get their **own** warm
   sub-pool, so a multi-specialist fan-out still gets warm reuse per specialist and
@@ -1586,7 +1604,7 @@ At the ceiling both delivery paths (`inject_workflow_result` and
 create nothing, log one warning naming the run id, and return `False`; the result
 stays on the run record (`workflow_status`, the Runs view). The test keeps a
 workflow whose origin is gone on every run from filling the slot table, which
-would answer the person's own new chat with 429 `slot_cap_reached`. A re-fire into an
+would answer the person's own new chat with 409 `slot_cap_reached`. A re-fire into an
 existing `workflow-<run_id>` slot and delivery into a live originating chat
 allocate nothing and are not tested.
 
@@ -2080,10 +2098,10 @@ refusal or a `WorkflowMemoryError`, both raised with fixed text (a test parses
 every raise site to keep it so). Any other cause, such as an `OSError` or a
 memory-store refusal that formats one and its path into its own text, stays in
 the log only. When either reason is one of
-the two a mate's own binding produces (`MEMBER_ON_GLOBAL_REASON`,
+the two a Bot's own binding produces (`MEMBER_ON_GLOBAL_REASON`,
 `MEMBER_WITHOUT_IDENTITY_REASON`), the text adds the two ways to run a workflow:
-a chat with no mate picked (the default template on Global), or a mate
-with its own memory. A mate on Global V1 is still refused: member memory
+a chat with no Bot picked (the default template on Global), or a Bot
+with its own memory. A Bot on Global V1 is still refused: member memory
 never substitutes Global. A refusal that names no reason keeps the generic text
 "Workflow memory is unavailable; no Global fallback was used."
 

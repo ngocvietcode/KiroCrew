@@ -86,6 +86,12 @@ waiting in the user's sidebar; watch it with session_read_message.
 
 Pass that key as `target` to every other session tool.
 
+A session you created stays yours across a gateway restart while the crew log
+records that you created it. With the crew log off (`KIROCREW_CREW_LOG=0`), or
+once it no longer holds that record, the session comes back with no creator
+until a later restart can confirm it: your tools get `not_creator` for it, and
+only the person can reach it.
+
 `session_create` never copies a transcript. When the new session should already know
 what you know — you are splitting a long investigation into several sessions —
 use `session_fork` instead.
@@ -300,6 +306,10 @@ Takes no arguments. The roster of sessions you stood up, and what each is doing.
 | `lost` | The crew log has it, the dashboard does not, and it did not close cleanly — a turn was open, a process recycle or destroy tore it down, or its lifecycle could not be read | Re-dispatch it |
 | `unknown` | History has its birth metadata, but no live slot or crew-log edge exists | Inspect or re-dispatch without assuming it finished or was lost |
 
+An `idle` or `queued` session with no process running (the idle sweep released
+it, or it never started) also says `released`. The next message starts a process
+for it and keeps its conversation.
+
 `closed`, `lost` and `unknown` are why this tool exists rather than reading
 sessions one at
 a time. Live slots forget a session the moment it is closed or lost with the
@@ -312,7 +322,10 @@ metadata proves the creator but cannot prove why the live slot is absent.
 
 The ownership fence applies to all three sources. A history row is shown only
 when its persisted `created_by` exactly names you and its workspace matches
-yours, so another caller's archived session and title do not appear.
+yours, so another caller's archived session and title do not appear. A fenced
+session (see `not_creator` below) also needs the crew log to record that it
+created that session. With the crew log off, or once it no longer holds that
+record, the row is left out and `history` reads `incomplete`.
 
 A LIVE row passes the same target containment `session_broadcast` resolves names
 against — one shared predicate, not a second copy of its clauses. So a session you
@@ -514,7 +527,7 @@ name it.
 A handed-over session counts against its manager's per-caller session cap and
 still counts against its creator's, so a handoff, or closing the manager, never
 frees room under the creator's cap. A handoff is refused with
-`creator_slot_cap_reached` (HTTP 429) when `to` already holds the cap.
+`creator_slot_cap_reached` (HTTP 409) when `to` already holds the cap.
 After an archive, the manager can `session_revive` the session and still manages it.
 
 ### `session_stop` vs `session_close`
@@ -622,8 +635,10 @@ memory store the session reads.
 
 Only an idle session takes a pick. If the target has a turn or sub-agents in
 flight, the call is refused with `target_busy` ("session busy, model not
-changed") and the target keeps its model. The tool never stops anything itself.
-To force the change, call `session_stop`, then retry once the target is idle.
+changed") and the target keeps its model. A sub-agent refusal names each
+running or queued sub-agent by id and state, and says when some could not be
+checked. The tool never stops anything itself. To force the change, call
+`session_stop`, then retry once the target is idle.
 
 Also refused: `auto` and `Auto (Jev)` (`model_owner_only`), because with the Jev
 preview on a slot on `auto` hands each turn's model to Jev routing, which only the
@@ -647,10 +662,11 @@ The agent, model and workspace do not change.
 Only sessions you created can be reloaded, whatever kind of session you are.
 Only an idle one: a turn running or starting, queued messages, or attached
 sub-agents refuse the call with `target_busy` ("session busy, not reloaded")
-and nothing is torn down. The tool never stops anything itself. You cannot
-reload yourself (`self_target`): the calling session is mid-turn, and a reload
-under a running turn would orphan it. A read-only relay archive is refused
-with `relay_archive_read_only`.
+and nothing is torn down. A sub-agent refusal names each running or queued
+sub-agent by id and state, and says when some could not be checked. The tool
+never stops anything itself. You cannot reload yourself (`self_target`): the
+calling session is mid-turn, and a reload under a running turn would orphan it.
+A read-only relay archive is refused with `relay_archive_read_only`.
 
 If the target gains a channel link or otherwise leaves your reach while its
 process is being reset, the call answers `target_changed_during_reload`: the
@@ -710,9 +726,12 @@ There is no prompt argument. To ask for something new, use `session_send`.
 
 The refusals are Continue's own: `slot_running`, `slot_stopping`,
 `slot_queue_pending`, `slot_approval_pending`, `slot_subagents_running` and
-`slot_empty`. After two failed session starts in a row the call is refused too,
-and the refusal says to restart the gateway. An old relay chat is refused with
-`relay_archive_read_only`. Target reach is the same as `session_retry`'s.
+`slot_empty`. A `slot_subagents_running` refusal, here and from
+`session_retry`, names each running or queued sub-agent by id and state, as
+`session_reload`'s does. After two failed session starts in a row the call is
+refused too, and the refusal says to restart the gateway. An old relay chat is
+refused with `relay_archive_read_only`. Target reach is the same as
+`session_retry`'s.
 
 The session-control audit line records your session key as the caller and the
 `body` that was sent; the target's own `dashboard_continue` line records
@@ -775,7 +794,7 @@ Refusals only a revive gives:
 |---|---|
 | `member_thread_target` | The match is a Bot's thread, which is not addressable |
 | `folder_not_found` | The `folder` you named does not exist; nothing was revived |
-| `creator_slot_cap_reached` | HTTP 429: you already hold the per-caller live-session cap |
+| `creator_slot_cap_reached` | HTTP 409: you already hold the per-caller live-session cap |
 | `resume_in_progress` | HTTP 409: the session is being resumed elsewhere. Try again |
 | `resume_conflict` | HTTP 409: the session is being deleted. Try again |
 | `resume_session_deleted` | HTTP 409: the session was deleted while it was being resumed |
@@ -915,7 +934,12 @@ channel: a resumed `/sessions` pick, a channel mirror, a linked Slack thread, or
 channel-born tab. A resumed conversation keeps the dashboard session's key, so
 the folder endpoint checks those links rather than the key, using the same
 predicate that gates creating peer sessions, and while one
-exists the person renames folders from the sidebar instead.
+exists the person renames folders from the sidebar instead. The same check
+refuses every other tool that changes the person's sidebar from such a session,
+with `channel_reachable_caller`: `chat_folder_create` (and any folder a path
+argument would create), `chat_folder_move`, `chat_folder_move_session`,
+`chat_tag_create`, `chat_tag_update`, `chat_tag_assign`, `chat_session_pin`,
+`chat_tag_column_create`, `chat_tag_column_move` and `session_move_to_column`.
 
 Dispatchers (conductors and Bots) get no folder tool without an approval,
 and their guidance does not use them: the person's folders are the person's to
@@ -953,8 +977,8 @@ browser and every agent sees the same one.
 
 Pass exactly one of `before` / `after`, naming a pinned session in the same group.
 `chat_folder_tree` lists each group's pinned sessions first, in the order the
-sidebar draws them, so read it to pick the anchor. Pinned sessions the person
-never reordered follow in most-recent-activity order, and the first call
+sidebar draws them, so read it to pick the anchor. Pinned sessions with no
+stored position follow in most-recent-activity order, and the first call
 stores that order for every one of them: the person's own sidebar sort lives in
 their browser, where the gateway cannot read it. The call only reorders: it
 does not pin, unpin, or move a session between folders. The order is the

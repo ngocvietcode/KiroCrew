@@ -346,7 +346,7 @@ internal-secret caller there would expose the app's whole backend surface.
 
 | Method | Route | Input | Description |
 |--------|-------|-------|-------------|
-| POST | `/api/apps/dev-fleet/pod/up` | `{worktree, memory?, cpu?}` | Boot a pod, passing `memory` / `cpu` to the CLI as `--memory` / `--cpu`; answers the CLI's `--json` handle (`base_url`, `token`, `port`, `ttl`). The token is minted **in the gateway process** when pod config is available (see *Token mint runs in the gateway*); otherwise the CLI mints it. Provisioning is NOT reachable here: a cold venv + SPA build is minutes of work, and one blocking request for that dies to any timeout with no way to learn the outcome. An unbuilt worktree is refused with the CLI's own remedy; the dashboard's Provision button streams the same work under a run id |
+| POST | `/api/apps/dev-fleet/pod/up` | `{worktree, memory?, cpu?}` | Boot a pod, passing `memory` / `cpu` to the CLI as `--memory` / `--cpu`; answers the CLI's `--json` handle (`base_url`, `token`, `port`, `ttl`, and `checkout`, the pod's own clone path, which the pod-e2e harness compares with its own checkout). The token is minted **in the gateway process** when pod config is available (see *Token mint runs in the gateway*); otherwise the CLI mints it. Provisioning is NOT reachable here: a cold venv + SPA build is minutes of work, and one blocking request for that dies to any timeout with no way to learn the outcome. An unbuilt worktree is refused with the CLI's own remedy; the dashboard's Provision button streams the same work under a run id |
 | POST | `/api/apps/dev-fleet/pod/restart` | `{worktree, memory?, cpu?}` | Restart the pod in place through `kirocrew pod restart`, keeping its isolated HOME, and answer the same handle as `pod/up`. `memory` / `cpu` record new ceilings first |
 | POST | `/api/apps/dev-fleet/pod/down` | `{worktree}` | Stop the pod and reclaim its isolated HOME |
 | GET | `/api/apps/dev-fleet/pod/status?worktree=` | — | `{name, status, port, health, memory, cpu}`, as `pod status --json` reports it |
@@ -541,8 +541,13 @@ name never has two workers racing to remove the same worktree. The frontend rend
 failure reason); the preview dialog maps the kept-list verdict codes to human-readable
 reasons so users can see why a worktree is a candidate or is kept.
 
-**Scan feedback:** the preview that opens that dialog (`prune-candidates`) runs `git` --
-and for merged- or closed-verdict candidates a `gh` lookup -- per worktree. Those
+**Scan feedback:** the preview that opens that dialog (`prune-candidates`) runs `git` per
+worktree, but asks GitHub once per `_PR_BATCH_HEADS` heads: `_fetch_pr_rows` fetches every
+upstream PR of every head up front, in one `gh api graphql` call of aliased
+`pullRequests(headRefName:)` connections, the same newest-first rows
+`gh pr list --head <branch> --state all` returns. Each verdict rules on its head's rows
+exactly as on its own query; a head whose batch failed, and a PR found only in a legacy
+repo, are still looked up alone, and the removal re-check never reads the batch. The
 per-worktree verdicts run concurrently, bounded by `_PRUNE_CONCURRENCY` (the same bound
 the parallel prune workers use), because a serial scan of a large fleet exceeds the
 gateway app proxy's 30s `_PROXY_TIMEOUT` and returns a 504. The scan is read-only git
@@ -848,13 +853,16 @@ The unit template is written once by `pod install`, so a machine keeps whatever 
 installed. On `pod up`, the pod CLI re-renders it when the installed unit is one this
 build will not boot:
 
-1. Detects a stale unit via `unit.unit_is_current(cfg)`, which fails on either of two
+1. Detects a stale unit via `unit.unit_is_current(cfg)`, which fails on any of three
    triggers:
    - the baked `ExecStart` binary no longer exists — `unit.unit_exec_ok(cfg)` reads the
      unit file and checks `os.access(exe, os.X_OK)` on the baked path (typically the
      worktree it resolved into was pruned)
    - the unit carries a directive this build has removed (`unit._REMOVED_DIRECTIVES`,
      currently `ExecStopPost=` — see the pod module's teardown section)
+   - the unit lacks a directive this build requires (`unit._REQUIRED_DIRECTIVES`,
+     currently `RestartPreventExitStatus=`, which makes a boot refusal terminal, and
+     `LimitCORE=`, which keeps a crashed pod from waiting minutes on its core file)
 2. Re-renders the unit with a currently-valid binary (`unit.install_unit(cfg)`)
 3. Runs `daemon-reload`
 4. Audits the self-heal event
@@ -1736,7 +1744,8 @@ choose the gateway's next image. Instead:
   stub is a point fix for the one hidden leaf whose absence is a code-execution
   input; the other file leaves in `sandbox._CREW_HIDDEN_LEAVES` share the
   absent-mask gap (secret disclosure, not execution) and are tracked as a separate,
-  class-level follow-up rather than closed here.
+  class-level follow-up rather than closed here (`.env` is closed: see
+  [security](security.md), *Channel credentials*).
   `read_target_reason` reads the stub as `(None, None)` exactly like an absent
   file. A present `checkout` of another type, or a missing key, is still reported
   as a defect. **Downgrade note:** the stub is an ordinary file and survives a roll
@@ -1838,6 +1847,11 @@ Fleet can also bounce the gateway:
   on Linux, bounded graceful `launchctl stop` on macOS), sets the
   `_MAKE_LIVE_COMMITTED` latch, and returns `start_id` for the restart handshake.
   The next gateway process reads the pointer and execs into the target checkout.
+  On Linux this restart, like Restart Gateway's, first runs
+  `systemctl --user reset-failed <unit>` (best-effort): the unit's
+  `StartLimitBurst` counts operator-requested starts too, so a few cutovers in a
+  row would otherwise leave it stopped with `start-limit-hit`. A crash loop after
+  the restart is still capped.
 - **Foreground last resort**: when the manager probe reports one of
   `no_systemd` / `no_user_unit` / `no_launchd` / `no_agent` — nothing to drive at
   all, e.g. a terminal-launched gateway on a host whose per-user systemd cannot

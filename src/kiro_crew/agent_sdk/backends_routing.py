@@ -164,9 +164,9 @@ ACP_BACKENDS_SIDE_READONLY = frozenset(
 )
 
 # Harnesses opted into the fail-closed approval posture: a ``tool_call`` frame carrying
-# NEITHER an ACP ``kind`` nor the harness's own ``_meta`` identity channel classifies as
-# nothing, and on an auto-approve path with a deny set configured its approval is refused
-# rather than answered blind.
+# neither an ACP ``kind`` nor a classification under the harness's own ``_meta`` channel
+# (an MCP server, or the harness's own shell -- a bare tool name does not count)
+# classifies as nothing, and its approval is refused rather than answered blind.
 #
 # Membership is the SCOPE of that refusal, and the scope is the point. What proves a
 # harness classifies EVERY tool class is a recording of every tool class -- and a corpus
@@ -177,17 +177,17 @@ ACP_BACKENDS_SIDE_READONLY = frozenset(
 #
 # goose is in because its corpus is the case that NEEDS the refusal -- its builtin shell
 # frames carry no ``kind`` at all, captured live -- and every recorded frame carries its
-# channel. kiro-cli is deliberately absent, for the same reason ``kas`` is: both publish
-# ``_meta.kiro``, but the recorded kiro corpus holds two tool_call frames of two classes,
-# which is not a measurement of every class, and no kiro defect (an approval answered
-# blind) has been observed that the refusal would close. Neither loses anything by being
-# out: a harness outside the set keeps its behaviour exactly. Adding one is one entry here
-# plus one on its channel row, and the pin then checks it against its own recordings --
-# which for kiro means first recording a frame per builtin tool class.
+# channel. kiro-cli is deliberately absent, and measured: of the built-ins its corpus
+# records, ``todo_list``, ``knowledge``, ``subagent`` and ``goal`` carry no ``kind`` and
+# no MCP server -- only ``_meta.kiro.toolName`` -- so the refusal would deny a
+# ``knowledge`` or ``subagent`` approval (both ask) on any session whose spec enables
+# them. ``kas`` publishes ``_meta.kiro`` too and is out until its corpus records every
+# class. Neither loses anything by being out: a harness outside the set keeps its
+# behaviour exactly. Adding one is one entry here, and the pin then checks it against its
+# own recordings.
 #
 # The channel TABLE lives in ``kiro_crew.acp._dispatch`` (it holds wire field names, which
-# are driver detail); this set is the vocabulary half, and a test asserts the two agree so
-# a row and its membership cannot drift apart.
+# are driver detail); its rows carry no membership, so this set alone is the scope.
 ACP_BACKENDS_META_IDENTITY: FrozenSet[str] = frozenset({ACP_BACKEND_GOOSE})
 
 # Backends whose ``session/request_permission`` names no ``kind`` and whose
@@ -308,6 +308,29 @@ ACP_BACKENDS_OPEN_EXTERNAL_URL = frozenset({ACP_BACKEND_KAS})
 #: ``_kiro/hooks/*`` request.
 ACP_BACKENDS_HOOKS_LIST = frozenset({ACP_BACKEND_KAS})
 
+#: Backends that bring their OWN workflow engine, reached over the
+#: ``_kiro/workflow/*`` extension methods (:mod:`kiro_crew.kas_workflows`). For a
+#: member, the harness owns workflow definitions ("recipes"), orchestration and
+#: run history, and Crew drives and mirrors it instead of running its own
+#: ``ctx``-script engine. Every other backend keeps Crew's engine unchanged.
+#:
+#: KAS serves the methods on every connection, whatever the session's workflows
+#: setting says. That setting only gates the model-facing tools. Membership
+#: authorizes the route, and the operator's ``agent.kas_workflows`` opt-in
+#: (:func:`kiro_crew.kas_workflows.engine.kas_workflows_enabled`) decides whether
+#: Crew uses it, because the KAS surface is still pre-release.
+#:
+#: kiro-cli is not a member: it serves no ``_kiro/workflow/*`` method, so a
+#: kiro-cli chat keeps Crew's own engine.
+#:
+#: KAS's membership is captured live in
+#: ``test/fixtures/acp_frames/kas/workflow-run-live.jsonl``: the advertised ``extensionMethods``, the
+#: ``workflowsEnabled`` echo, a workspace recipe listed, created and invoked, the
+#: ``run_start`` .. ``run_complete`` lifecycle, step notes on ``_kiro/session/notify``,
+#: a step parked for input and answered on its own session, and load / inspect /
+#: list. ``test/test_kas_workflows_live_capture.py`` folds it through the mirror.
+ACP_BACKENDS_NATIVE_WORKFLOWS = frozenset({ACP_BACKEND_KAS})
+
 #: Backends whose session never runs the agent spec's own ``hooks``, so Crew's turn
 #: loop fires them instead
 #: (:mod:`kiro_crew.agent_sdk.spec_hooks`). KAS takes its agent over
@@ -355,6 +378,26 @@ ACP_BACKENDS_CREW_FIRES_SPEC_OBSERVER_HOOKS = ACP_BACKENDS_CREW_FIRES_SPEC_HOOKS
     {ACP_BACKEND_CLAUDE}
 )
 
+#: Backends on the direct ``AcpClient`` whose session never reads the agent spec's
+#: ``toolsSettings`` shell and write allowlists, so Crew's gate enforces them: the
+#: client reads ``shell.denyByDefault``/``allowedCommands`` and
+#: ``fs_write.fallbackAction: "deny"``/``allowedPaths`` from the spec it projects
+#: (``acp.spec_tools_allowlists``), stamps them on the session's own permission
+#: requests, and the gate's ``spec-shell-allowlist`` and ``spec-write-allowlist``
+#: rows refuse what they do not cover, ``AUTO_APPROVE`` included. KAS gets the same
+#: stamps from the shared runtime's session handle, so it is not a member here.
+#:
+#: claude is the member. Its settings seed adds ``permissions.ask`` rules for the
+#: shell and the file-write tools while either allowlist is set, so a call the
+#: harness would approve on its own (a read-only command, an edit under
+#: ``acceptEdits``) still raises the request the gate answers.
+#:
+#: kiro-cli is NOT a member and must never become one: it reads ``toolsSettings``
+#: off disk and enforces it itself, and Crew's narrower pattern subset would refuse
+#: commands kiro-cli allows. The other backends stay out until their seed is shown
+#: to make every shell and write call ask.
+ACP_BACKENDS_CREW_ENFORCES_SPEC_TOOLS_SETTINGS: FrozenSet[str] = frozenset({ACP_BACKEND_CLAUDE})
+
 
 # ── How a harness is made to ask ──
 # Kiro Crew's PreToolUse gate -- the bundled denied-command rules, the
@@ -382,11 +425,11 @@ class Routing(str, Enum):
     does not exist. ``AcpClient._write_claude_local_settings`` does seed
     ``permissions.defaultMode``, but it is a CONDITIONAL write: it touches only the
     file Crew owns (created this session, bytes still Crew's) and otherwise leaves
-    the path alone, and nothing confirms the adapter honoured the mode afterwards.
-    So a ``bypassPermissions`` already present in a user's own
-    ``settings.local.json`` or ``~/.claude`` is neither detected nor stripped, and
-    the guarantee cannot be asserted. Recorded as a known gap rather than papered
-    over with a ``ROUTED`` this core cannot earn -- see
+    the path alone. Only the STARTING mode is read back, per session, and not
+    on every session (``AcpClient._pin_claude_starting_mode`` names which).
+    Nothing is stripped, and an inherited ``permissions.allow`` is not read back
+    at all, so the guarantee cannot be asserted. Recorded as a known gap rather
+    than papered over with a ``ROUTED`` this core cannot earn -- see
     ``docs/system-specs/modules/harness-onboarding.md``.
 
     ``VERIFIED_SEEDED_SETTINGS`` -- the harness is made to ask by a setting Kiro
@@ -446,9 +489,10 @@ ACP_BACKEND_ROUTING: dict = {
     ACP_BACKEND_KIRO: Routing.AGENT_SPEC,
     ACP_BACKEND_KAS: Routing.AGENT_SPEC,
     ACP_BACKEND_SAOKHUE: Routing.AGENT_SPEC,
-    # Declared, not enforced: nothing reads back whether the seeded settings took
-    # effect, and ``SEEDED_SETTINGS`` is outside ``tool_gate.ENFORCED_ROUTINGS``, so
-    # a claude session is not refused for it.
+    # Declared, not enforced: only the starting mode is read back
+    # (``_pin_claude_starting_mode``), never the rest of the seeded settings, and
+    # ``SEEDED_SETTINGS`` is outside ``tool_gate.ENFORCED_ROUTINGS``, so a claude
+    # session is not refused for it.
     ACP_BACKEND_CLAUDE: Routing.SEEDED_SETTINGS,
     ACP_BACKEND_CODEX: Routing.SESSION_CONFIG,
     ACP_BACKEND_OPENCODE: Routing.VERIFIED_SEEDED_SETTINGS,

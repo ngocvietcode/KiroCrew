@@ -25,8 +25,6 @@ import json
 import logging
 import re
 import time
-import unicodedata
-from collections.abc import Iterable, Mapping
 from contextlib import ExitStack
 from dataclasses import dataclass, replace
 from types import SimpleNamespace
@@ -35,16 +33,27 @@ from typing import TYPE_CHECKING, Any, cast
 from kiro_crew import crew_mode
 from kiro_crew import members as members_mod
 from kiro_crew.config.loader import KiroCrewConfig
+from kiro_crew.dashboard import warm_task_brief_facts as facts
 from kiro_crew.dashboard import warm_task_brief_inputs as inputs
+from kiro_crew.dashboard import warm_task_brief_wake as wake
 from kiro_crew.dashboard.chat_utils import effective_session_key, slot_history_key
 from kiro_crew.dashboard.slot_preparing import preparing_message
 from kiro_crew.dashboard.slot_retention import _MAX_FOREGROUND_KEY
+from kiro_crew.dashboard.warm_task_brief_check import (
+    _mark,
+    _mark_body,
+    _names_an_unknown_pr,
+    _scan_views,
+    _tagged_re,
+    _unbacked_facts,
+)
+from kiro_crew.dashboard.warm_task_brief_checking import checking_text
 from kiro_crew.dashboard.warm_task_brief_inputs import language_of as _language_of
 from kiro_crew.dashboard.warm_task_brief_inputs import parse_epoch as _parse_epoch
+from kiro_crew.dashboard.warm_task_brief_inputs import redact as _redact
 from kiro_crew.dashboard.warm_task_brief_inputs import row_epoch as _row_epoch
 from kiro_crew.history import TranscriptBusy, TranscriptWithheld, is_incognito_transcript
 from kiro_crew.llm_helpers import _extract_json_of_type, run_bg_oneliner
-from kiro_crew.security import redact_credentials, redact_exfiltration_urls
 from kiro_crew.session_ledger import TERMINAL_PHASES, read_state
 from kiro_crew.session_summary import (
     MAX_USER_CHARS,
@@ -131,6 +140,17 @@ _FAILURE_TEXT = {
     "hi": "माफ़ कीजिए, अभी यह तैयार नहीं हो पाया। मुझसे पूछिए कि काम कहाँ तक पहुँचा है।",
     "bn": "দুঃখিত, এখন এটা গুছিয়ে উঠতে পারিনি। কাজ কোথায় আছে আমাকে জিজ্ঞেস করুন।",
 }
+# The tag set right after a commit SHA or time the input never gave (section
+# 3.9.6). ASCII brackets, so NFKC in the scan views leaves the tag as written.
+_UNVERIFIED_TEXT = {
+    "en": "(unverified)",
+    "zh": "(未核实)",
+    "ja": "(未確認)",
+    "ko": "(미확인)",
+    "ru": "(не проверено)",
+    "hi": "(असत्यापित)",
+    "bn": "(যাচাই হয়নি)",
+}
 
 # Labels for the stored plain-text rendering of a brief (history export and any
 # surface that shows ``content`` instead of the card). Same script rule as above.
@@ -146,22 +166,23 @@ _TEXT_LABEL_KEYS = (
     "next",
     "why",
     "recommended",
+    "checked",
 )
 # One "|"-separated row per language, in _TEXT_LABEL_KEYS order: the four
 # status words, then the section labels.
 _TEXT_LABEL_ROWS = {
     "en": "On track|Waiting on you|Blocked|Done|Needs you|Left|You asked|Done so far|Next"
-    "|Why|Recommended",
-    "zh": "进展顺利|等你处理|卡住了|已完成|需要你|还剩|你让我做|已做完|下一步|原因|建议",
-    "ja": "順調|あなた待ち|止まっています|完了|あなたの番|残り|ご依頼|済んだこと|次に|理由|おすすめ",
-    "ko": "순조로움|답변 대기|막힘|완료|확인 필요|남은 일|요청하신 일|한 일|다음|이유|추천",
+    "|Why|Recommended|Checked just now",
+    "zh": "进展顺利|等你处理|卡住了|已完成|需要你|还剩|你让我做|已做完|下一步|原因|建议|已核实",
+    "ja": "順調|あなた待ち|止まっています|完了|あなたの番|残り|ご依頼|済んだこと|次に|理由|おすすめ|確認済み",
+    "ko": "순조로움|답변 대기|막힘|완료|확인 필요|남은 일|요청하신 일|한 일|다음|이유|추천|확인함",
     "ru": "По плану|Ждёт вас|Застряло|Готово|Нужно от вас|Осталось|Вы просили|Сделано|Дальше"
-    "|Почему|Совет",
+    "|Почему|Совет|Проверено",
     "hi": "ठीक चल रहा है|आपका इंतज़ार|अटका है|पूरा हुआ|आपसे चाहिए|बाकी|आपने कहा था|हो चुका|आगे"
-    "|क्यों|सुझाव",
+    "|क्यों|सुझाव|जाँचा गया",
     "bn": (
         "ঠিকঠাক চলছে|আপনার অপেক্ষায়|আটকে আছে|শেষ|"
-        "আপনার কাছে দরকার|বাকি|আপনি বলেছিলেন|যা হয়েছে|এরপর|কেন|পরামর্শ"
+        "আপনার কাছে দরকার|বাকি|আপনি বলেছিলেন|যা হয়েছে|এরপর|কেন|পরামর্শ|যাচাই করা হয়েছে"
     ),
 }
 _TEXT_LABELS = {
@@ -202,9 +223,9 @@ The snapshot, most important first:
   with its "options".
 - "changes_since_away": what changed while the owner was away, each with its
   source and time.
-- "live_prs": pull requests the gateway read from GitHub just now ("read_at").
-  An entry with "checked": false was not read; "checks": "not fully read" means
-  its check results are unknown.
+- "checked_facts": what the gateway read just now, each with an "id" (f1, ...):
+  pull requests from GitHub ("read_at"; one it could not read says only "not
+  checked since HH:MM") and work items from the task list.
 - "transcript_since_owner": the owner's last message and every turn since.
 - "open_items": open work items, questions and blocked ones first.
 - "goal", and "goal_progress" when the goal has a count.
@@ -218,15 +239,17 @@ Write these parts in order, leaving out any that would be empty:
    which one you recommend and why. An ask that answers a waiting_on_you entry
    names it by "source" (its index) and copies that entry's options exactly, in
    order; never add, drop or rename one. Any other ask has no options. An ask
-   that live_prs or a newer change shows already done goes under part 2
+   that checked_facts or a newer change shows already done goes under part 2
    instead. An ask about someone else's pull request says whose it is.
 4. Problems that do not need the owner, each with its cause.
 5. What you will do next without the owner.
 
-Facts: say a pull request is merged, green, approved or in conflict only from
-live_prs or from a change newer than the away time. Otherwise write "not
-checked since HH:MM" with the time the snapshot gives. Name only pull
-requests that appear in the snapshot. Never state a percentage, elapsed time,
+Facts: write parts 2, 4 and 5 as "lines", one fact each, with "kind" (what it
+names: pr, task, file, deploy, ticket or none) and "facts" (the checked_facts
+ids it states). A pr or task line lists a fact of that kind, or it is deleted;
+file, deploy and ticket lines are deleted (nothing checks them yet). A pull
+request "not checked since HH:MM" gets no state. Name only pull requests that
+appear in the snapshot. Never state a percentage, elapsed time,
 deadline or ETA, and never count work items unless goal_progress gives the
 count. If a fact is missing, say you are not sure.
 
@@ -238,13 +261,14 @@ Return exactly one JSON object:
    "source": <waiting_on_you index, or null>,
    "options": [{{"label": "<copied label>", "consequence": "<what happens>"}}],
    "recommended": "<one option label, or empty>", "recommended_why": "..."}}],
- "body": "<parts 2, 4 and 5>"}}
+ "lines": [{{"text": "<one plain sentence>", "kind": "<kind>", "facts": ["<fN>"]}}],
+ "body": "<pictures only, or empty>"}}
 
 "asks" holds at most {max_items} asks, each text at most {item_cap} characters
 and each consequence at most {consequence_cap};
-it is [] when nothing waits on the owner. "body" is markdown of at most
-{body_cap} characters and {body_lines} lines, mostly short "- " lines; a
-picture that would pass either cap is dropped whole. When a picture helps the
+it is [] when nothing waits on the owner; "lines" holds at most {max_lines}. "body"
+holds pictures only, at most {body_cap} characters and {body_lines} lines (a
+picture past a cap is dropped whole); every fact goes in "lines". When a picture helps the
 owner act faster, you may add one, in the form that fits best: a ```mermaid
 diagram, a markdown table, or an <mcwidget> (a live widget: HTML, CSS and
 script in one block, coloured only with the theme's CSS variables, never a
@@ -285,6 +309,7 @@ class TaskSnapshot:
     # claim stored ("" when there was no earlier brief).
     ledger_digest: str = ""
     previous_digest: str = ""
+    previous_facts: str = ""  # the newest delivered brief's facts.facts_digest
     # Worker sessions this thread created or revived that are running now;
     # not part of ``fingerprint``.
     running_workers: int = 0
@@ -316,7 +341,8 @@ class TaskSnapshot:
 
 
 def cancel_warm_task_brief(state: "DashboardState", slot_key: str) -> None:
-    """Cancel one in-flight brief before model acquisition starts."""
+    """Cancel one in-flight brief before model acquisition starts; a wake stops too."""
+    wake.stop(slot_key)
     tasks = getattr(state, "_warm_task_brief_tasks", None)
     task = tasks.get(slot_key) if isinstance(tasks, dict) else None
     current = asyncio.current_task() if task is not None else None
@@ -507,8 +533,9 @@ def _record_claim(rows: list[dict[str, Any]]) -> str:
     return ""
 
 
-# Set on a result row that fell back to the gateway's own cards after a
-# section 3.9.6 grounding miss; the value names the miss.
+# Set on a result row after a section 3.9.6 grounding miss, whether it fell
+# back to the gateway's own cards or posted with unverified tags; the value
+# names the miss.
 _GROUNDING_MISS_KEY = "grounding_miss"
 
 
@@ -799,6 +826,7 @@ def _snapshot_sync(
         pending_options=member_waiting.pending_options(rows) or "",
         ledger_digest=inputs.ledger_digest(conductor_record, items_raw, session_state),
         previous_digest=_claim_digest(rows),
+        previous_facts=facts.previous_facts_digest(rows, _RESULT_KIND, _GROUNDING_MISS_KEY),
         last_claim_at=_claim_epoch(rows),
         user_fingerprint=user_fingerprint,
         last_user_at=max(
@@ -981,33 +1009,9 @@ def _ask_items(snapshot: TaskSnapshot) -> list[dict[str, Any]]:
     return [item for item in snapshot.work_items if inputs.is_open_ask(item, work_item_is_terminal)]
 
 
-def _ask_texts(snapshot: TaskSnapshot) -> list[str]:
-    """The text of every open ask, where the live read looks for full PR URLs."""
-    texts = [
-        part
-        for item in snapshot.waiting
-        for part in (str(item.get("text") or ""), *(str(o) for o in item.get("options") or []))
-        if part
-    ]
-    for item in _ask_items(snapshot):
-        texts.extend(
-            str(v)
-            for v in (
-                item.get("title"),
-                item.get("summary"),
-                item.get("decision"),
-                *(item.get("artifacts") or {}).values(),
-            )
-            if v
-        )
-    return texts
-
-
 def _live_refs(snapshot: TaskSnapshot) -> list[inputs.PrRef]:
-    """The PRs the open asks name: each ask item's own PR from ledger data,
-    then full PR URLs in the asks' text. A bare ``#N`` is never guessed."""
-    ledger = (inputs.ledger_ref(item) for item in _ask_items(snapshot))
-    return inputs.pr_refs(_ask_texts(snapshot), [ref for ref in ledger if ref is not None])
+    """The PRs read before the brief may name them (``facts.live_refs``)."""
+    return facts.live_refs(snapshot.work_items, snapshot.waiting, work_item_is_terminal)
 
 
 def _is_quiet(snapshot: TaskSnapshot, previous_digest: str, anchor: float | None) -> bool:
@@ -1034,15 +1038,16 @@ def _payload(
     """The prompt's snapshot: each section budgeted on its own, whole entries
     only, what waits on the owner and the changes first."""
     progress = snapshot.progress
+    open_items = inputs.open_item_entries(snapshot.work_items, anchor, work_item_is_terminal)
     payload: dict[str, Any] = {
         "away_since": inputs.clock(anchor),
         "waiting_on_you": inputs.waiting_entries(snapshot.waiting),
         "changes_since_away": inputs.change_entries(
             snapshot.work_items, anchor, snapshot.session_state
         ),
-        "live_prs": inputs.public_live(live),
+        "checked_facts": facts.checked_facts(live, open_items),
         "transcript_since_owner": inputs.turns_since_owner(snapshot.turns),
-        "open_items": inputs.open_item_entries(snapshot.work_items, anchor, work_item_is_terminal),
+        "open_items": open_items,
         "running_worker_sessions": snapshot.running_workers,
         "goal": _goal(snapshot),
         "owner_request": snapshot.original_request,
@@ -1080,6 +1085,7 @@ def _build_prompt(
         consequence_cap=_MAX_CONSEQUENCE_CHARS,
         item_cap=_MAX_ITEM_CHARS,
         max_items=_MAX_ITEMS,
+        max_lines=facts.MAX_LINES,
         body_cap=_MAX_BODY_CHARS,
         body_lines=_MAX_BODY_LINES,
     )
@@ -1113,9 +1119,10 @@ class Ask:
 
 @dataclass(frozen=True)
 class Brief:
-    """One validated, redacted, capped brief. Every field but ``body`` is plain
-    text; ``body`` is markdown. ``waiting`` is the gateway's own read of the
-    ledger, never the model's."""
+    """One validated, capped brief. Every free-text field but ``body`` is redacted
+    plain text; ``body`` is markdown kept as source, unredacted, and the secret
+    scan of the posted text drops the model's fields when it holds one.
+    ``waiting`` is the gateway's own read of the ledger, never the model's."""
 
     status: str
     headline: str
@@ -1135,6 +1142,8 @@ class Brief:
     links: tuple[inputs.PrRef, ...] = ()
     # The model's structured asks, labels checked against their source.
     asks: tuple[Ask, ...] = ()
+    checked: tuple[dict[str, Any], ...] = ()
+    lines: tuple[dict[str, Any], ...] = ()
 
     def as_meta(self) -> dict[str, Any]:
         meta: dict[str, Any] = {
@@ -1156,6 +1165,10 @@ class Brief:
             meta["links"] = [ref.url for ref in self.links]
         if self.asks:
             meta["asks"] = [ask.as_meta() for ask in self.asks]
+        if self.checked:
+            meta["checked"] = [dict(fact) for fact in self.checked]
+        if self.lines:
+            meta["lines"] = [dict(line) for line in self.lines]
         return meta
 
     def model_text(self) -> str:
@@ -1165,6 +1178,7 @@ class Brief:
         model text a new brief carries, so it is left out."""
         parts = [self.headline, self.asked, self.remaining, self.body]
         parts.extend(self.done + self.needs_you + self.next)
+        parts.extend(line["text"] for line in self.lines)
         for ask in self.asks:
             parts.extend(ask.texts())
         for title, items in self.extra:
@@ -1237,103 +1251,6 @@ def _clean_extra(value: object) -> tuple[tuple[str, tuple[str, ...]], ...]:
         if title and items:
             sections.append((title, items))
     return tuple(sections[:_MAX_EXTRA_SECTIONS])
-
-
-def _redact_whole(text: str) -> str:
-    """Redact a multi-line value as one text, before and after ``**`` is
-    dropped: a marker inside a key's header would otherwise hide the header
-    from the whole-text pass and leave the key's body lines behind."""
-    return _redact(_redact(text).replace("**", ""))
-
-
-def _unescaped(text: str) -> str:
-    """*text* with HTML entities decoded until it stops changing, so a
-    double-encoded value reads as the page shows it."""
-    for _ in range(8):
-        decoded = html.unescape(text)
-        if decoded == text:
-            break
-        text = decoded
-    return text
-
-
-# Emphasis, code and strike marks: drawn as nothing between two halves of a
-# fact, so a reference or a time split by bold still reads as one.
-_EMPHASIS_RE = re.compile(r"[*_`~]")
-
-# Where a CSS-style declaration can sit: a mermaid fence, a ``<style>`` block,
-# or a ``style=`` attribute value.
-_STYLE_SPAN_RE = re.compile(
-    r"^ {0,3}(`{3,}|~{3,})[ \t]*mermaid\b[^\n]*\n[\s\S]*?(?:^ {0,3}\1[ \t]*$|\Z)"
-    r"|<style\b[^>]*>[\s\S]*?(?:</style\s*>|\Z)"
-    r"|\bstyle\s*=\s*(?:\"[^\"]*\"|'[^']*')",
-    re.IGNORECASE | re.MULTILINE,
-)
-# Inside a mermaid fence, declarations sit only on these statement lines; a
-# node label such as ``A[PR: 42]`` is text, not a declaration.
-_MERMAID_STYLE_LINE_RE = re.compile(
-    r"^[ \t]*(?:style|classDef|linkStyle)\b[^\n]*", re.IGNORECASE | re.MULTILINE
-)
-# A CSS-style declaration: ``<name>:`` at a declaration boundary (start, space,
-# ``;``, ``,``, ``{`` or a quote), then its value up to the next separator.
-_DECLARATION_RE = re.compile(r"(?:^|(?<=[\s;,{\"']))([A-Za-z-]+\s*:\s*)([^;,{}\"'\n]*)")
-# A colour value inside a declaration: ``#`` and 3, 4, 6 or 8 hex characters.
-_COLOUR_VALUE_RE = re.compile(
-    r"#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3})\b", re.IGNORECASE
-)
-
-
-def _without_declared_colours(span: str) -> str:
-    return _DECLARATION_RE.sub(lambda d: d.group(1) + _COLOUR_VALUE_RE.sub("", d.group(2)), span)
-
-
-def _without_colour_values(text: str) -> str:
-    """The scan copy of *text* with every colour declaration's value removed.
-    A ``#`` + hex value is a colour only inside the value of a CSS-style
-    declaration in a mermaid ``style``/``classDef``/``linkStyle`` line, a
-    ``<style>`` block or a ``style=`` attribute; everywhere else a ``#N``
-    stays a pull-request reference."""
-
-    def strip(match: re.Match[str]) -> str:
-        span = match.group(0)
-        if match.group(1):
-            return _MERMAID_STYLE_LINE_RE.sub(
-                lambda line: _without_declared_colours(line.group(0)), span
-            )
-        return _without_declared_colours(span)
-
-    return _STYLE_SPAN_RE.sub(strip, text)
-
-
-def _canonical(text: str) -> str:
-    """One canonical form of model output for the secret scan: entities
-    decoded until stable, then NFKC. Nothing is stripped, so attribute values,
-    text and comments all stay in it."""
-    # The cap's cut marker stays one character: NFKC would make it three dots,
-    # and a number the cap cut (``#261…``) would then read as a whole reference.
-    return "…".join(unicodedata.normalize("NFKC", part) for part in _unescaped(text).split("…"))
-
-
-# Markup that can sit between two halves of a key without showing: an HTML
-# tag or comment, a markdown link's brackets and target (its label stays),
-# and emphasis and code marks. Not ``_``, which credential prefixes (``ghp_``)
-# contain.
-_JOINER_RE = re.compile(r"<!--[\s\S]*?-->|<[^<>]*>|!?\[|\]\([^)\n]*\)|[*`~]")
-
-
-def _scan_views(text: str) -> tuple[str, ...]:
-    """The one set of views every section 3.9.6 scanner reads, all of the
-    final posted *text*: its canonical form (entities decoded until stable,
-    then NFKC) as written, with markup removed so the halves around it join,
-    and that joined form with emphasis marks also removed. Colour
-    declaration values are removed in every view. The stored markdown is not
-    changed."""
-    written = _without_colour_values(_canonical(text))
-    # Until stable, so markup nested in markup (``<im<img>g>``) joins too.
-    joined = written
-    while (once := _JOINER_RE.sub("", joined)) != joined:
-        joined = once
-    return written, joined, _EMPHASIS_RE.sub("", joined)
 
 
 def _holds_a_secret(text: str) -> bool:
@@ -1552,81 +1469,114 @@ def _parse_result(
         waiting=owner_items,
         waiting_total=waiting_total,
         asks=asks,
+        lines=facts.raw_lines(raw.get("lines"), lambda v: _clean(v, _MAX_ITEM_CHARS)),
     )
-
-
-# The section 3.9.6 output check: what the model may only repeat, never make up.
-# A commit SHA: 7 to 40 hex digits, not a `#` colour, with a digit and a letter.
-_SHA_RE = re.compile(r"(?<![#\w])([0-9a-f]{7,40})(?!\w)", re.IGNORECASE)
-_TIME_RE = re.compile(r"(?<!\d)([01]?\d|2[0-3]):([0-5]\d)(?!\d)")
-
-
-def _times_in(text: str) -> set[str]:
-    return {f"{int(h):02d}:{m}" for h, m in _TIME_RE.findall(text)}
 
 
 def _posted_text(brief: "Brief", content: str) -> str:
     """Every string the result row posts: its ``content`` and each field of
     ``meta.brief`` as stored. The secret scan reads this, after every
     transform has run, so no later step can rejoin what it would catch."""
-    return "\n".join([content, brief.model_text(), *(ref.url for ref in brief.links)])
+    checked = [text for fact in brief.checked for text in inputs.text_values(fact)]
+    return "\n".join([content, brief.model_text(), *(ref.url for ref in brief.links), *checked])
 
 
 def _posted_model_text(brief: "Brief") -> str:
     """The model-written strings exactly as the row posts them: each
-    ``meta.brief`` field, and the body as ``content`` carries it. The PR, SHA
-    and time scans read this; the gateway's own waiting cards are not model
-    text."""
-    return brief.model_text() + "\n" + _inert_body(brief.body)
-
-
-def _names_an_unknown_pr(posted: str, known: set[int]) -> bool:
-    """Whether *posted*, read as the page shows it (entities decoded), names a
-    pull request outside *known*: one read live, or named by the input or the
-    owner's request."""
-    named: set[int] = set()
-    for view in _scan_views(posted):
-        named |= inputs.pr_numbers(view)
-    return bool(named - known)
+    ``meta.brief`` field, the body as ``content`` carries it, and wake checks.
+    The PR, SHA and time scans read this; gateway cards are not model text."""
+    return "\n".join([brief.model_text(), _inert_body(brief.body), *wake.words(brief.checked)])
 
 
 def _grounding_miss(
-    brief: "Brief", content: str, known_prs: set[int], grounding: str, clocks: set[str]
+    brief: "Brief",
+    content: str,
+    known_prs: set[int],
+    grounding: str,
+    clocks: set[str],
+    tag: str = "",
 ) -> str:
     """The section 3.9.6 miss in what the row would post, or "" when it is
     grounded: a secret anywhere in it, or, in the model-written strings, a
     pull request outside *known_prs* or a commit SHA or time the input never
-    gave. Runs after every transform, on the final strings."""
+    gave. Runs after every transform, on the final strings. With *tag*, a SHA
+    or time followed by it is marked and not a miss; one left unmarked is."""
     if _holds_a_secret(_posted_text(brief, content)):
         return "secret"
     written = _posted_model_text(brief)
     if _names_an_unknown_pr(written, known_prs):
         return "unknown_pr"
+    if tag:
+        written = _tagged_re(tag).sub("", written)
     if _unbacked_facts(written, grounding, clocks):
         return "unbacked_fact"
     return ""
 
 
-def _unbacked_facts(posted: str, grounding: str, clocks: set[str]) -> list[str]:
-    """The commit SHAs and HH:MM times in *posted* that the input never gave
-    (section 3.9.6); unknown `#N` references are checked by
-    :func:`_names_an_unknown_pr`. *grounding* is the snapshot the prompt
-    carried; *clocks* the "as of" times the prompt stated."""
-    views = _scan_views(posted)
-    lowered = grounding.lower()
-    times = _times_in(grounding) | clocks
-    # Each SHA is named once, however many views or fields carry it.
-    shas = dict.fromkeys(sha for view in views for sha in _SHA_RE.findall(view))
-    bad = [
-        sha
-        for sha in shas
-        if any(c.isdigit() for c in sha)
-        and any(c.isalpha() for c in sha)
-        and sha.lower() not in lowered
-    ]
-    found = set().union(*(_times_in(view) for view in views))
-    bad += [t for t in sorted(found) if t not in times]
-    return bad
+# What the card keeps of each text field and of the body
+# (``MAX_FIELD`` and ``MAX_BODY`` in ``WarmBriefCard.tsx``): a tag past it would
+# be cut off the page, leaving the value shown as if checked.
+_CARD_FIELD_CHARS = 240
+_CARD_BODY_CHARS = 6000
+
+
+def _marked(brief: "Brief", bad: list[str], language: str) -> "Brief | None":
+    """The brief with every unbacked SHA and time in a model field tagged
+    unverified (section 3.9.6), or ``None`` when a tagged field runs past
+    what the card shows. Wake checks' words are model text and are
+    tagged too. Option labels and ``recommended`` are the source entry's own
+    and stay as they are; the gateway's cards and facts are not model text."""
+    tag = _UNVERIFIED_TEXT[language]
+    keys = {value.lower() for value in bad}
+    overflow = False
+
+    def m(text: str) -> str:
+        nonlocal overflow
+        tagged = _mark(text, keys, tag)
+        # The card cuts a field in UTF-16 units (``slice``), the body in code points.
+        units = len(tagged.strip().encode("utf-16-le")) // 2
+        overflow = overflow or (tagged != text and units > _CARD_FIELD_CHARS)
+        return tagged
+
+    def ms(items: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(m(item) for item in items)
+
+    def checked(fact: dict[str, Any]) -> dict[str, Any]:
+        if fact.get("source") != "wake":
+            return fact
+        values = dict(fact.get("values") or {})
+        if isinstance(values.get("result"), str):
+            values["result"] = m(values["result"])
+        label = fact.get("label")
+        return {**fact, "label": m(label) if isinstance(label, str) else label, "values": values}
+
+    body = _mark_body(brief.body, keys, tag)
+    marked = replace(
+        brief,
+        headline=m(brief.headline),
+        asked=m(brief.asked),
+        remaining=m(brief.remaining),
+        done=ms(brief.done),
+        needs_you=ms(brief.needs_you),
+        next=ms(brief.next),
+        extra=tuple((m(title), ms(items)) for title, items in brief.extra),
+        body=body,
+        asks=tuple(
+            replace(
+                ask,
+                what=m(ask.what),
+                why=m(ask.why),
+                recommended_why=m(ask.recommended_why),
+                options=tuple((label, m(c)) for label, c in ask.options),
+            )
+            for ask in brief.asks
+        ),
+        lines=tuple({**line, "text": m(line["text"])} for line in brief.lines),
+        checked=tuple(checked(fact) for fact in brief.checked),
+    )
+    if overflow or (body != brief.body and len(body.strip()) > _CARD_BODY_CHARS):
+        return None
+    return marked
 
 
 def _gateway_only(brief: "Brief", language: str) -> "Brief":
@@ -1653,13 +1603,9 @@ def _gateway_only(brief: "Brief", language: str) -> "Brief":
         body="",
         links=(),
         asks=(),
+        checked=(),
+        lines=(),
     )
-
-
-def _redact(text: str) -> str:
-    text, _ = redact_exfiltration_urls(text)
-    text, _ = redact_credentials(text)
-    return text
 
 
 # What `content` must never carry live: a widget block (an unclosed one runs
@@ -1683,19 +1629,6 @@ def _inert_body(body: str) -> str:
     # Removing a link can rejoin a control marker or a comment opener: the
     # markers are defanged again on the final text.
     return _defang_markers(text)
-
-
-def _live_links(live: Iterable[Mapping[str, Any]]) -> tuple[inputs.PrRef, ...]:
-    """The link row (section 3.9.3): each pull request read live, once, its
-    URL built from the read's own repo. Model text never adds to it."""
-    refs: list[inputs.PrRef] = []
-    for entry in live:
-        repo, number = entry.get("repo"), str(entry.get("pr", "")).lstrip("#")
-        if entry.get("checked") is True and isinstance(repo, str) and number.isdigit():
-            ref = inputs.PrRef(repo, int(number))
-            if ref not in refs:
-                refs.append(ref)
-    return tuple(refs)
 
 
 def _brief_text(brief: Brief, language: str) -> str:
@@ -1727,6 +1660,9 @@ def _brief_text(brief: Brief, language: str) -> str:
         # inert like the body: no live widget, link or address.
         # Ask fields are plain text, so their HTML is escaped as well.
         lines.append(html.escape(_inert_body("\n".join(asks)), quote=False))
+    if brief.lines or brief.checked:
+        typed = facts.lines_text(brief.lines, brief.checked, labels["checked"])
+        lines.append(html.escape(_inert_body(typed), quote=False))
     if brief.body:
         lines.append(_inert_body(brief.body))
     if brief.remaining:
@@ -1765,6 +1701,7 @@ def _post_message(
     brief: Brief | None = None,
     grounding_miss: str = "",
     options: str = "",
+    facts_digest: str = "",
 ) -> dict[str, Any]:
     """Post one crewmate message; *options* is its one live, gateway-copied marker."""
     if options:
@@ -1772,6 +1709,8 @@ def _post_message(
     from kiro_crew.dashboard.state import append_and_surface
 
     meta: dict[str, Any] = {"kind": kind, "fingerprint": fingerprint}
+    if facts_digest:
+        meta[facts.FACTS_DIGEST_KEY] = facts_digest
     if brief is not None:
         meta["brief"] = brief.as_meta()
     if grounding_miss:
@@ -1786,8 +1725,9 @@ async def _generate(
     anchor: float | None,
     live: tuple[dict[str, Any], ...] = (),
     now: float | None = None,
+    calls: wake.Calls | None = None,
 ) -> tuple[str, str]:
-    """One tool-free background model call over *fresh*: ``(text, source)``,
+    """The wake turn, else one tool-free model call, over *fresh*: ``(text, source)``,
     with "" text on any failure. *source* is every text value of the prompt's
     input, decoded, one per line: what the PR-number post-check reads. The JSON
     form would hide a reference after an escape (``\\n#222`` reads ``n#222``)."""
@@ -1813,7 +1753,9 @@ async def _generate(
         )
         state._warm_task_brief_model_active.add(slot.key)
         try:
-            text = await run_bg_oneliner(
+            if (woken := await wake.run(state, slot, cfg, prompt, calls)) is None:
+                return "", source  # stopped: the owner typed or left; nothing would post
+            text = woken or await run_bg_oneliner(
                 state.sessions,
                 prompt,
                 model=cfg.agent.resolve_model("background"),
@@ -1921,28 +1863,44 @@ async def _run_warm_task_brief(
             options=_live_options(slot, fresh),
         )
         return
-    # From here the thread shows the "preparing your catch-up" indicator
-    # without marking a turn: the deferral below still reads ``slot.running``.
-    # The finished message replaces it in place; there is no separate opener.
-    indicator.enter_context(preparing_message(state, slot))
-    # From now on the owner leaving the thread keeps the brief: only a typed
-    # row, a reset or a close cancels it.
+    read_left = inputs.LIVE_READ_TOTAL_SECS
+    read_started = time.monotonic()
+    live = tuple(await inputs.read_live_prs(_live_refs(fresh), budget=read_left))
+    read_left -= time.monotonic() - read_started
+    # One limit covers every read. A turn or leave during it: wait, re-read.
+    if slot.running or not _is_foreground(state, slot.key) or not _same_slot(state, slot):
+        if (fresh := await _settled(state, slot, snapshot, deadline)) is None:
+            return
+        read_started = time.monotonic()
+        live = tuple(await inputs.read_live_prs(_live_refs(fresh), budget=read_left))
+        read_left -= time.monotonic() - read_started
+    digest = facts.facts_digest(fresh.ledger_digest, fresh.waiting, live)
+    if digest == fresh.previous_facts and not inputs.assistant_spoke_since(fresh.turns, anchor):
+        return _skip(slot.key, "unchanged")
+    # The indicator marks no turn (the deferral reads ``slot.running``).
+    # Its caption names what the brief checks; the goal is redacted whole, before the cut.
+    open_items = inputs.open_item_entries(fresh.work_items, anchor, work_item_is_terminal)
+    goal = _redact(_goal(fresh))
+    prs = sum(1 for pr in live if pr.get("checked") is not False)  # a failed read is not one
+    caption = checking_text(language, goal, prs, len(open_items), fresh.running_workers)
+    indicator.enter_context(preparing_message(state, slot, caption, language))
+    # Leaving now keeps the brief: only a typed row, a reset or a close cancels it.
     opened = getattr(state, "_warm_task_brief_opened", None)
     if isinstance(opened, set):
         opened.add(slot.key)
     # What the owner sees must still be true when it posts: an ask answered or
     # a ledger write during the model call makes the result stale. Regenerate
     # once from the new state; a second change posts nothing this visit.
-    # One time limit covers the live reads of every attempt; only the time
-    # spent reading counts, never the model call or the wait between.
-    read_left = inputs.LIVE_READ_TOTAL_SECS
     options = ""
-    for _attempt in range(WARM_TASK_BRIEF_ATTEMPTS):
-        read_started = time.monotonic()
-        live = tuple(await inputs.read_live_prs(_live_refs(fresh), budget=read_left))
-        read_left -= time.monotonic() - read_started
+    for attempt in range(WARM_TASK_BRIEF_ATTEMPTS):
+        if attempt:
+            read_started = time.monotonic()
+            live = tuple(await inputs.read_live_prs(_live_refs(fresh), budget=read_left))
+            read_left -= time.monotonic() - read_started
+            digest = facts.facts_digest(fresh.ledger_digest, fresh.waiting, live)
         asked_at = time.time()
-        text, source = await _generate(state, slot, fresh, anchor, live, now=asked_at)
+        calls = None if attempt else wake.Calls()  # one wake per return, never on a retry
+        text, source = await _generate(state, slot, fresh, anchor, live, asked_at, calls)
         # Once the indicator shows, the result lands as ordinary history even
         # while the owner is away from the thread. A turn that started
         # meanwhile defers publication until it ends.
@@ -1969,22 +1927,36 @@ async def _run_warm_task_brief(
             options=options,
         )
         return
-    # Section 3.9.6, after the PR filter above: a commit SHA or time the input
-    # never gave drops every model field, the picture included; the gateway's
-    # waiting cards still post. *source* already carries the original request
+    # Section 3.9.6, after the PR filter above: a commit SHA or time is backed
+    # only by what the input gave. *source* already carries the original request
     # (a missing ``asked`` falls back to it) and the live PR reads.
     grounding = source + "\n" + json.dumps(_payload(fresh, anchor, live), ensure_ascii=False)
     # Only the exact "as of" time the prompt stated, beside the snapshot's own.
     clocks = {inputs.clock(asked_at)[-5:]}
-    # Section 3.9.6: every grounding miss takes this one exit. All model fields
-    # go; the gateway's waiting cards and the failure line post, and the row
-    # is marked so the next return is not read as already caught up.
+    # Section 3.9.6: an unbacked SHA or time is tagged unverified and the
+    # brief posts; every other miss, or a value the tag cannot sit beside,
+    # takes the one drop exit: all model fields go, the gateway's waiting
+    # cards and the failure line post. Either way the row records the miss so
+    # the next return is not read as already caught up.
     # The scans run last, on the exact strings the row would post.
-    # The gateway's own link row; the checks below read the text with it.
-    brief = replace(brief, links=_live_links(live))
+    items = inputs.open_item_entries(fresh.work_items, anchor, work_item_is_terminal)
+    brief, checked = wake.with_checks(brief, text, calls, facts.checked_facts(live, items))
+    brief = cast(Brief, facts.checked_brief(brief, checked, facts.live_links(live)))
     content = _brief_text(brief, language)
-    miss = _grounding_miss(brief, content, inputs.pr_numbers(source), grounding, clocks)
-    if miss:
+    known_prs = inputs.pr_numbers(source)
+    miss = _grounding_miss(brief, content, known_prs, grounding, clocks)
+    kept = False
+    if miss == "unbacked_fact":
+        bad = _unbacked_facts(_posted_model_text(brief), grounding, clocks)
+        tag = _UNVERIFIED_TEXT[language]
+        marked = _marked(brief, bad, language)
+        marked_content = _brief_text(marked, language) if marked else ""
+        if marked and not _grounding_miss(
+            marked, marked_content, known_prs, grounding, clocks, tag
+        ):
+            logger.info("warm task brief for %s marked unbacked_fact: %s", slot.key, bad)
+            brief, content, kept = marked, marked_content, True
+    if miss and not kept:
         logger.info("warm task brief for %s dropped: %s", slot.key, miss)
         brief = _gateway_only(brief, language)
         content = _brief_text(brief, language)
@@ -1997,4 +1969,5 @@ async def _run_warm_task_brief(
         brief=brief,
         grounding_miss=miss,
         options=options,
+        facts_digest=digest,
     )

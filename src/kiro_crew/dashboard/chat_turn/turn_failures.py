@@ -142,7 +142,7 @@ async def _on_auth_required(turn: _ChatTurn, exc) -> None:
     # store the row stays a plain error. The prose is unchanged.
     slot.append("error", _auth_msg, "msg msg-err", meta=_terminal_error_meta(exc))
     _mark_kiro_signed_out(state)
-    turn.died_notice = "The chat stopped because the agent is signed out. Open the chat to sign in."
+    turn.died_notice = "chat_stopped_signed_out"
     await _deliver_linked_slack_message(state, slot, sessions, session_key, _auth_msg)
 
 
@@ -252,6 +252,8 @@ async def _on_acp_error_card(turn: _ChatTurn, exc) -> None:
     if (
         _escalation.should_probe()
         and _prompt_depth == 0
+        # A turn the agent started has no prompt to retry after the probe.
+        and not turn._agent_started
         and not _should_suppress_requeue(slot)
         # Resolved Stop: the canary snapshot below is taken after the
         # Stop moved the counter (see _on_process_died in acp_recovery.py).
@@ -416,7 +418,7 @@ async def _on_acp_error_card(turn: _ChatTurn, exc) -> None:
         # must act on (a 5xx/throttle timeout, an unentitled model, a
         # malformed-request rejection). Ring the bell so an operator in
         # another session is not left to find the inline card.
-        turn.died_notice = "The chat stopped with an error. Open the chat to see what happened."
+        turn.died_notice = "chat_stopped_error"
         # Record a STRUCTURAL terminal outcome for this slot's last turn,
         # but ONLY for a self-driven nudge fire (``_directive_self_wake``).
         # A malformed-request rejection is deterministic in the payload's
@@ -628,7 +630,7 @@ async def _on_error(turn: _ChatTurn, exc) -> None:
     # guided-fix card and a retry repeats them unchanged, so they are not the
     # "work silently stopped" case the bell exists for.
     if not (isinstance(_err_meta, dict) and _err_meta.get("code")):
-        turn.died_notice = "The chat stopped with an error. Open the chat to see what happened."
+        turn.died_notice = "chat_stopped_error"
     # The SIBLING of the tagged-start report in the AcpError branch (_on_acp_error_card).
     # A session start on the SHARED runtime raises AcpRequestTimeout /
     # AcpSessionStartTimeout, which descend from AcpRuntimeError and not from

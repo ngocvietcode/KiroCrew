@@ -116,7 +116,7 @@ backends and Kiro internal delegation refuse private member turns with a reason.
 The owner can still manage memory in the dashboard. A member's memory store is
 chosen when the member is created and cannot be rebound afterwards. Existing
 members, including the default assistant selection, keep their declared V1
-memory after upgrading. To give a crewmate private V2 memory, create a new crew
+memory after upgrading. To give a Bot private V2 memory, create a new crew
 member: new members receive V2 automatically, starting empty, and V1 stores
 remain available for an explicit copy of selected starting knowledge. Check the
 execution requirements above first. A V2 member never falls back to V1 on
@@ -449,6 +449,12 @@ pip install --pre kirocrew --extra-index-url https://updates.crew.kiro.dev/feed/
 #    consults no index for Kiro Crew itself — so there is no name to squat.
 pip install "https://download.crew.kiro.dev/cli/stable/<version>/kirocrew-<version>-py3-none-any.whl#sha256=<sha256>"
 ```
+
+Create the venv and run either form under `umask 022`. Under umask `002`,
+`python -m venv` and pip leave the venv group-writable, and `kirocrew service
+install` then refuses to attach the
+[AppArmor profile](#linux-the-agent-sandbox-and-unprivileged-user-namespaces);
+`chmod -R g-w <venv>` repairs an existing install.
 
 Swap `stable` for `insider` or `nightly` in either URL. The two names split by
 class as a convention — `updates.crew.kiro.dev` for mutable pointers and indexes,

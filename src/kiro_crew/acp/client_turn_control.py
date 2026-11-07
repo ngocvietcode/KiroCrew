@@ -46,6 +46,7 @@ from kiro_crew.acp.client_timeouts import (
     _STEERING_WAIT_SLICE_SECS,
     _effective_prompt_timeout_async,
 )
+from kiro_crew.acp.stale_compaction import consume_stale_compaction_status
 from kiro_crew.acp.transport_errors import AcpError, AcpProcessDied, AcpTimeoutError
 from kiro_crew.acp.transport_framing import write_notification_best_effort
 from kiro_crew.acp.types import (
@@ -434,6 +435,7 @@ async def cancel_session(self: AcpClient, grace_secs: float = 0.0) -> None:
             self._stdin_write_lock(),
             data,
             bound_secs=transport_framing._RESPONSE_WRITE_BOUND_SECS,
+            on_written=self._record_sent,
         )
         # Only a drained frame is evidence the backend moved: an unlocked
         # append or a stall must not refresh the activity clock the
@@ -1121,6 +1123,8 @@ async def _read_steer_answers(
             if not self._is_process_alive():
                 break
             continue
+        if consume_stale_compaction_status(self, msg):
+            continue
         if msg.method is None and msg.id in ids:
             into[msg.id] = (msg, other_output)
         elif msg.is_method(METHOD_REQUEST_PERMISSION) and msg.id is not None:
@@ -1147,6 +1151,7 @@ async def _write_steer_cancel(self: AcpClient) -> None:
             self._stdin_write_lock(),
             data,
             bound_secs=transport_framing._RESPONSE_WRITE_BOUND_SECS,
+            on_written=self._record_sent,
         )
     except Exception as exc:
         logger.warning("steer cancel on %s failed: %s", self._session_id, type(exc).__name__)

@@ -91,6 +91,7 @@ function fakeStore(initial = {}) {
 function makeHotkeyStub() {
   const state = {
     current: "",
+    requested: "",
     logger: null,
     summonDeps: null,
     summonCalls: 0,
@@ -109,6 +110,7 @@ function makeHotkeyStub() {
       bindGlobalHotkey(saved, handler) {
         state.binds.push({ saved, handler });
         state.current = typeof saved === "string" ? saved : DEFAULT_GLOBAL_HOTKEY;
+        state.requested = state.current;
         return { accelerator: state.current, bound: !!state.current };
       },
       unregisterGlobalHotkey() {
@@ -117,6 +119,9 @@ function makeHotkeyStub() {
       },
       currentGlobalHotkey() {
         return state.current;
+      },
+      requestedGlobalHotkey() {
+        return state.requested;
       },
       setGlobalHotkeyLogger(logger) {
         state.logger = logger;
@@ -631,6 +636,7 @@ test("shell handlers preserve sender, argument, and return shapes", async () => 
   assert.equal(h.store.data.runLocalGateway, false);
   assert.deepEqual(h.handlers.get("global-hotkey:get")(event), {
     accelerator: "",
+    requested: "",
     default: "Test+Shift+K",
   });
 });
@@ -1534,6 +1540,7 @@ test("bind and unregister remain owned by the dedicated hotkey helper", () => {
   h.registrar.registerShell();
   assert.deepEqual(h.handlers.get("global-hotkey:get")({}), {
     accelerator: "Ctrl+Alt+Test",
+    requested: "Ctrl+Alt+Test",
     default: "Test+Shift+K",
   });
   h.registrar.unregisterGlobalHotkey();
@@ -1644,7 +1651,7 @@ test("registerUpdater owns six handlers and preserves lazy gateway hooks", async
   // for the same install. Every other platform exits with its last window, so
   // clearing there cannot strand the flag.
   //
-  // The handler reads process.platform and electron.BrowserWindow itself, and
+  // The handler reads process.platform and electron.BaseWindow itself, and
   // this harness opens no window, so darwin always takes the hold branch here.
   const holdsGovernanceWithNoWindowOpen = process.platform === "darwin";
   const ev2 = makeEvent();
@@ -1667,6 +1674,16 @@ test("registerUpdater owns six handlers and preserves lazy gateway hooks", async
   evA._destroy(); // close the first window too
   assert.equal(deps.isPolicyGoverned(), holdsGovernanceWithNoWindowOpen,
     "governance clears when all windows close, except on macOS where the app outlives them");
+
+  // A dashboard window is a BaseWindow, not a BrowserWindow: while one is still
+  // open, destroying the last governing sender clears governance on macOS too.
+  h.electron.BaseWindow = { getAllWindows: () => [{ isDestroyed: () => false }] };
+  const evLast = makeEvent();
+  await h.listeners.get("update:notify-policy-governed")(evLast, true);
+  evLast._destroy();
+  assert.equal(deps.isPolicyGoverned(), false,
+    "a destroyed governing window clears governance while a dashboard window remains open");
+  delete h.electron.BaseWindow;
 
   // Remote-gateway gate: a harness that simulates a non-kirocrew port owner
   // (SSH tunnel holding the primary port) must reject governance via gate 3.

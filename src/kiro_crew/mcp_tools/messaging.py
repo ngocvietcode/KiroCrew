@@ -49,11 +49,11 @@ from kiro_crew.validation import _SLACK_TS_RE, CHANNEL_ID_RE, CHANNEL_MAX_LEN
 #: given channel can actually take a proactive DM is answered per send by
 #: ``_owner_dm_target``, which returns a target only when the transport
 #: advertises exactly ONE available direct target: a channel that needs prior
-#: inbound state (Teams, WeCom) or cannot DM proactively at all (Feishu) marks
-#: its targets unavailable and still degrades to the dashboard notification, and
-#: an ambiguous allow-list is refused rather than guessed at. That gate is at the
-#: side-effect boundary and reads live config, which is where it has to be — a
-#: static tuple here cannot answer a runtime question.
+#: inbound state (Teams, WeCom) marks its targets unavailable and still degrades
+#: to the dashboard notification, and an ambiguous allow-list is refused rather
+#: than guessed at. That gate is at the side-effect boundary and reads live
+#: config, which is where it has to be — a static tuple here cannot answer a
+#: runtime question.
 #:
 #: The two exclusions live with the roster in ``constants.CHANNEL_SEND_NAMESPACES``,
 #: which the gateway's accepted ``channel_type`` set and the validator's pattern
@@ -197,6 +197,17 @@ def schemas() -> list[dict[str, Any]]:
                             "the conversation this session already belongs to. The "
                             "channel's own allow-list is re-checked at send time, so "
                             "an id that is no longer configured is refused."
+                        ),
+                    },
+                    "format": {
+                        "type": "string",
+                        "enum": ["plain", "markdown"],
+                        "description": (
+                            '"markdown" renders **bold**, _italic_, `code` and links '
+                            "on a channel that would otherwise show the markup "
+                            "literally (Telegram), for channel_type, target_id and "
+                            'channel-session sends. Default "plain" sends the text as '
+                            "written; Slack and the dashboard notification ignore it."
                         ),
                     },
                     "unfurl_links": {
@@ -420,6 +431,40 @@ def schemas() -> list[dict[str, Any]]:
             },
         },
         {
+            "name": "read_slack_history",
+            "description": (
+                "Read recent messages in a tracked Slack channel, or one thread "
+                "with thread_ts, newest first. Use it to see whether the owner "
+                "replied (an approval, a follow-up). Returns [{user, ts, admitted, "
+                "text}]: text is returned only when admitted is true (the sender "
+                "is the owner); other senders' messages come back with no text. "
+                "Bot messages are left out. Pass oldest (a Slack ts) to read "
+                "only messages after it."
+            ),
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "channel": {
+                        "type": "string",
+                        "description": "Tracked channel ID (e.g. C0123ABC456).",
+                    },
+                    "thread_ts": {
+                        "type": "string",
+                        "description": "Read this thread's replies, not the channel timeline.",
+                    },
+                    "oldest": {
+                        "type": "string",
+                        "description": "Only messages after this Slack ts.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max messages to return (1-100, default 20).",
+                    },
+                },
+                "required": ["channel"],
+            },
+        },
+        {
             "name": "file_send",
             "description": (
                 "Send a file to the user. Copies the file to the outbox and "
@@ -510,6 +555,8 @@ def send_message(name: str, args: dict[str, Any]) -> str:
     # destination on it. The gateway rejects it without one.
     if args.get("target_id"):
         payload["target_id"] = args["target_id"]
+    if args.get("format"):
+        payload["format"] = args["format"]
     if args.get("channel"):
         payload["channel"] = args["channel"]
     if args.get("user"):
@@ -887,6 +934,46 @@ def read_slack_profile(name: str, args: dict[str, Any]) -> str:
     return json.dumps(profile, indent=2)
 
 
+def read_slack_history(name: str, args: dict[str, Any]) -> str:
+    # Strict identity and channel-agent containment, as update_message holds
+    # them: kirocrew-core is auto-approved, so channel.py's permission guard never
+    # sees this call, and a channel agent could relay one channel's messages into
+    # its own thread.
+    caller, strict_err = mcp_core.require_strict_session_key(
+        "Error: cannot verify caller identity for a read_slack_history call "
+        "(no gateway-injected session key or HMAC-verified pid). "
+        "Refusing to read channel messages for a caller that cannot be identified."
+    )
+    if not caller:
+        return strict_err
+    chan_deny = mcp_core._deny_channel_agent_messaging(caller, "read_slack_history")
+    if chan_deny:
+        return chan_deny
+
+    def _audit(outcome: str) -> None:
+        mcp_core.sel().log_tool_invocation(
+            session_key=caller, source="mcp", tool_name="read_slack_history", outcome=outcome
+        )
+
+    # The caller's own ``channels`` scope: the gateway route checks the host's,
+    # so a session or app narrowed off Slack would otherwise still read it.
+    gov_chan = mcp_core._vet_channel_governance(caller, "slack", tool_name="read_slack_history")
+    if gov_chan:
+        _audit("denied")
+        return f"Error: {gov_chan}"
+    resp = mcp_core._post("/api/slack-history", args, session_key=caller)
+    if resp.get("error"):
+        _audit("error")
+        return f"Error: {resp['error']}"
+    _audit("success")
+    messages = resp.get("messages", [])
+    # Defence-in-depth, as read_slack_profile: redact again before the LLM.
+    for m in messages:
+        text, _ = redact_exfiltration_urls(str(m.get("text") or ""))
+        m["text"], _ = redact_credentials(text)
+    return json.dumps(messages, indent=2)
+
+
 def _describe_channel_skip(reason: str) -> str:
     """Render a channel-leg skip *reason* as an actionable warning clause.
 
@@ -904,8 +991,8 @@ def _describe_channel_skip(reason: str) -> str:
 
     ``channel_upload_unsupported`` gets no remedy either, for the neighbouring
     reason: it fires for any channel with no document verb wired, and that set
-    spans both capabilities. Discord would honour an inline reference
-    (``files_outbound=True``) but WeCom, Weixin, iMessage and Feishu declare
+    spans both capabilities. Discord and Feishu (in a DM) would honour an inline
+    reference (``files_outbound=True``) but Weixin and iMessage declare
     ``files_outbound=False``, so their renderers leave the reference in the text
     as literal markup. The reason string cannot tell those cases apart, and
     naming a route that silently does nothing on half of them is worse than
@@ -1142,5 +1229,6 @@ HANDLERS: dict[str, Callable[[str, dict[str, Any]], str]] = {
     "delete_message": delete_message,
     "update_message": update_message,
     "read_slack_profile": read_slack_profile,
+    "read_slack_history": read_slack_history,
     "file_send": file_send,
 }

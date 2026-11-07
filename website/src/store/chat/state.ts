@@ -11,6 +11,7 @@ import type { ErrorReport } from '../../utils/errorReport'
 import type { AgentSwitchNotice } from '../../utils/agentSwitchFeedback'
 import type { HistoryDeleteRefusal } from '../../utils/historyDeleteRefusal'
 import type { ParkedThinking } from './thinking'
+import type { PasteBlock } from '../../utils/pasteTokens'
 
 /** Per-slot activity-panel open/closed state, persisted to localStorage so the
  *  panel's open/closed choice survives a full page reload — keeping it
@@ -62,8 +63,9 @@ const seedSlotActivity = (): ChatState['slotActivity'] =>
 
 export type SlotState = 'idle' | 'streaming' | 'tool_running' | 'stopping' | 'compacting'
 export type EndedTurn = { gen: string; turn: number }
-/** One prompt this tab submitted: the bubble text and the send's own id. */
-export type SendAttempt = { text: string; sendId: string }
+/** One prompt this tab submitted: the bubble text, the send's own id and the
+ *  paste blocks its tokens name. */
+export type SendAttempt = { text: string; sendId: string; pastes?: PasteBlock[] }
 /** Retention bound for `ChatState.sendAttempts`, per slot. */
 export const SEND_ATTEMPTS_PER_SLOT_MAX = 50
 
@@ -233,8 +235,9 @@ export interface ChatState {
   activatedRequestSeq?: number
   /** The resume that opened its session last, and the session that was
    *  active when it did, so the swap in `handleResumeSession` retires only
-   *  the tab that resume replaced. */
-  lastResumeActivation?: { requestId: string; replaced: string | null } | null
+   *  the tab that resume replaced. `leaveSplit` marks a resume whose caller
+   *  asked the chat page to leave Split View once it takes the view. */
+  lastResumeActivation?: { requestId: string; replaced: string | null; leaveSplit?: boolean } | null
   /** The last session the user OPENED by a gesture, set when that open's
    *  transcript load lands (`switchSlot.fulfilled` for a switch marked
    *  `gesture`, which only user-initiated opens set; see `SwitchSlotArg`). `seq` counts the opens,
@@ -317,9 +320,10 @@ export interface ChatState {
    *  NAME, not the sentence, so the copy re-resolves on locale switch; ''
    *  when the slot list no longer knew the title. The optional report keeps
    *  the API endpoint, status, and backend code available to Ask the agent
-   *  while the displayed sentence stays localized. Cleared by the next
+   *  while the displayed sentence stays localized. `closed` is a Back/Forward
+   *  onto a session this tab saw closed (#14762). Cleared by the next
    *  `switchSlot.pending` or the notice's dismiss. */
-  switchSlotGone: { name: string; kind: 'gone' | 'failed'; report?: ErrorReport } | null
+  switchSlotGone: { name: string; kind: 'gone' | 'failed' | 'closed'; report?: ErrorReport } | null
   loadingOlder: boolean
   /** Last older-history fetch was rejected; surfaced on the top-of-transcript bar. */
   slotOlderError: boolean

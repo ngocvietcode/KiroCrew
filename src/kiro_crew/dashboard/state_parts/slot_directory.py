@@ -56,7 +56,7 @@ MAX_LIVE_SLOTS = 500
 #: :data:`MAX_LIVE_SLOTS`. The global ceiling alone bounds the total but not the
 #: distribution, so a single automated creator working through a nudge loop can
 #: reach 500 on its own and every later create -- including the person opening a
-#: new chat tab -- gets the 429. That is the availability half of the cap: a
+#: new chat tab -- gets the 409. That is the availability half of the cap: a
 #: bounded resource that one caller may exhaust entirely is not bounded from
 #: anybody else's point of view.
 #:
@@ -407,11 +407,19 @@ def resolve_slot(self: DashboardState, name: str) -> _ChatSlot | None:
 
 
 def link_slack(self: DashboardState, slot_name: str, thread_ts: str, channel_id: str) -> None:
-    """Update a slot's Slack link state and persist to SessionStore."""
+    """Update a slot's Slack link state and persist to SessionStore.
+
+    Raises ``AnchorHandoffRefused``, changing nothing, when *thread_ts* is a
+    Slack code channel's anchor owned by another slot: see
+    ``slack.code_channels.binding.check_anchor_handoff``.
+    """
     slot = self._slots.get(slot_name)
     if not slot:
         logger.warning("slack link skipped: no live slot %r (chat closed?)", slot_name)
         return
+    from kiro_crew.slack.code_channels.binding import check_anchor_handoff
+
+    check_anchor_handoff(thread_ts, slot_name)
     # A thread handoff is ONE action with TWO persisted writes: the previous
     # owner's link is cleared and this slot's is claimed. Each write rewrites
     # the whole session map, so as two separate writes they are separately

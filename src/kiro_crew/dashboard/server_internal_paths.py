@@ -63,6 +63,9 @@ _STRICT_INTERNAL_API_PATHS = frozenset(
         # and performs a credential-bearing egress.
         "/api/mediated-secret-capability",
         "/api/mediated-secret-request",
+        # Crew-owned Connection proxy: its only caller is the in-session stdio
+        # bridge over the Unix socket, which adds no token; the gateway injects it.
+        "/api/connection-proxy",
         # Computer use: the live-view (PiP) frame ingress. STRICT for the same
         # reason as ``invoke`` — its body is a frame of the operator's own desktop
         # and its only caller is this gateway's own capture thread, so no browser
@@ -100,6 +103,10 @@ _STRICT_INTERNAL_API_PATHS = frozenset(
         # boundary, and the handler re-asserts host-locality itself because a
         # local_only=False deployment reclassifies strict paths as mixed.
         "/api/update/approve",
+        # The idle check before a restart. STRICT: its only caller is
+        # `kirocrew restart --when-idle` on the gateway host with the local
+        # secret; no browser posts to it. The handler re-asserts host locality.
+        "/api/restart/when-idle",
         "/api/session-tool-policy",
         # NOTE: "/api/hooks/agent" is deliberately NOT here. It is an inbound
         # webhook for EXTERNAL callers (CI runners, review bots) that hold no
@@ -118,6 +125,7 @@ _STRICT_INTERNAL_API_PATHS = frozenset(
         "/api/slack/pins",
         "/api/slack/reactions",
         "/api/slack-profile",  # MCP-only (slack_profile tool); no browser caller
+        "/api/slack-history",  # MCP-only (read_slack_history tool); no browser caller
         "/api/sessions/summarize",  # MCP-only (list_sessions summarize leg); internal-secret, no browser caller
         # MCP-only crew-scoped session reads (crew= scope on search_chat_history
         # / list_sessions / get_chat_session). Prefix matching covers

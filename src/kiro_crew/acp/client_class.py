@@ -178,10 +178,12 @@ class AcpClient:
         self.memory_mode = "persistent"
         self._acp_backend = acp_backend
         # Claude backend permission mode (Auto-mode / permission-UI parity).
-        # Inert on the kiro-cli path. None = the backend's own default
-        # ("default", i.e. every tool decision is forwarded to the host), which is
-        # what _write_claude_local_settings leaves in place when nothing asked
-        # for a mode.
+        # Inert on the kiro-cli path. None = nothing asked for a mode:
+        # _write_claude_local_settings seeds no defaultMode, so the session starts
+        # in the mode the user's own settings name. With
+        # KIROCREW_CC_PIN_INHERITED_MODE on, _pin_claude_starting_mode then moves a
+        # session carrying Crew's tools that starts in "auto" or
+        # "bypassPermissions" to "default".
         self._permission_mode = permission_mode
         # A Side Chat session that may run read-only tools. On claude it starts
         # with only the read built-ins and no MCP server, and its mode is pinned
@@ -303,6 +305,12 @@ class AcpClient:
         # file Crew writes (claude's ``permissions.deny``) leaves it empty, and an
         # empty set makes the refusal a no-op. Cleared on reset with the array.
         self._spec_denied_tools: frozenset[tuple[str, str]] = frozenset()
+        # The spec's `toolsSettings` shell and write allowlists, stamped on this
+        # session's own permission requests on a backend Crew enforces them for
+        # (`spec_tools_allowlists`); None when the spec sets none.
+        self._spec_shell_allowlist: tuple[str, ...] | None = None
+        self._spec_write_allowlist: tuple[str, ...] | None = None
+        self._spec_write_cwd = ""
         # The mirror's other CLIENT OBLIGATION from the same parse
         # (``SessionProjection.zero_tools``): the spec declares ``"tools": []``, a
         # total ban the array and ``denied_tools`` above have no way to express --
@@ -656,6 +664,7 @@ class AcpClient:
         # The mask set this spawn asked for, so a trusted corroboration run can
         # exercise the same mounts rather than a weaker profile.
         self._sandbox_hidden_dirs: tuple[str, ...] = ()
+        self._child_env_names: frozenset[str] = frozenset()  # set by the launch tail
         self._jsonl_pos: int = 0  # track read position in session JSONL for tool results
         self._stderr_task: asyncio.Task | None = None  # type: ignore[type-arg]
         self._last_activity: float = time.monotonic()
@@ -1396,6 +1405,7 @@ class AcpClient:
     _next_req_id = _client_transport._next_req_id
     _send_request = _client_transport._send_request
     _write_request_bounded = _client_transport._write_request_bounded
+    _record_sent = _client_transport._record_sent
     _stdin_write_lock = _client_transport._stdin_write_lock
     _write_response_bounded = _client_transport._write_response_bounded
     _send_response = _client_transport._send_response
@@ -1448,6 +1458,8 @@ class AcpClient:
     _note_session_message = _client_native_children._note_session_message
     _native_child_of = _client_native_children._native_child_of
     _native_child_events = _client_native_children._native_child_events
+    native_child_resume_refusal = _client_native_children.native_child_resume_refusal
+    report_native_children = _client_native_children.report_native_children
     # Their redaction before the turn yields them, and the flush of the text it
     # holds for a turn cut short: ``kiro_crew.acp.client_turn``.
     _redact_native_child_events = _client_turn._redact_native_child_events

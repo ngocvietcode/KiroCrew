@@ -10,13 +10,20 @@ An owner of the :mod:`kiro_crew.config.sections` facade; it never imports the fa
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Mapping
 from typing import Any, TypeVar
 
 from kiro_crew.config.fields import _declared_fields, field_default
 
+logger = logging.getLogger("kiro_crew.config.loader")
+
 _T = TypeVar("_T")
 _ABSENT = object()
+#: (DTO, key, stored value) of each bounded read logged as clamped since the last disk
+#: read of the config files, which clears it. ``load()`` runs the builders on every call,
+#: so a value warns once per read of the file, as its validation warnings do.
+_REPORTED_CLAMPS: set[tuple[type, str, str]] = set()
 
 
 class SectionReader:
@@ -60,9 +67,23 @@ class SectionReader:
         """``coerce(stored-or-default, default, *bounds, **options)`` for *key*.
 
         For the ``_safe_*`` coercer family, whose second argument is the fallback for
-        a value they cannot read: the fallback is the field's default too.
+        a value they cannot read: the fallback is the field's default too. The extra
+        arguments are the coercer's bounds, and a stored value they change is logged.
         """
-        return coerce(self.get(key), self.default(key), *bounds, **options)
+        value, default = self.get(key), self.default(key)
+        result = coerce(value, default, *bounds, **options)
+        if (bounds or options) and key in self._data and result != coerce(value, default):
+            seen = (self._dto, key, repr(value))
+            if seen not in _REPORTED_CLAMPS:
+                _REPORTED_CLAMPS.add(seen)
+                logger.warning(
+                    "Config: %s.%s = %r is outside its allowed range; using %r",
+                    self._dto.__name__,
+                    key,
+                    value,
+                    result,
+                )
+        return result
 
 
 DEFAULT_MODEL = "auto"
@@ -135,3 +156,8 @@ DEFAULT_WATCHDOG_RSS_MAX_MB = 4096
 # process holds. Measured on such a host: 250-504 unowned pids per pass against 4
 # genuine strays in 6.5 hours. Setting 0 takes the reading without the signal.
 DEFAULT_RECONCILE_MAX_KILLS = 5
+# session.search_scan_window -- how many of the most recently changed transcripts
+# a session search reads. The fold and snippet memos are
+# capped in bytes, so the count bounds per-search I/O, not memory; this default
+# keeps the default window of ordinary sessions inside the fold budget.
+DEFAULT_SEARCH_SCAN_WINDOW = 2000

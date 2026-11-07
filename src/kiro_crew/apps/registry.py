@@ -331,6 +331,13 @@ async def _run_app_build(
                 "name": app_name,
                 "error": f"build timed out after {_BUILD_TIMEOUT}s ({' '.join(cmd)})",
             }
+        except asyncio.CancelledError:
+            # The build runs in its own session, so once this coroutine stops
+            # awaiting it nothing else will stop it: no timeout is left.
+            # kill_and_reap shields the kill, so a repeated cancel cannot skip it.
+            if proc.returncode is None:
+                await platform_compat.kill_and_reap(proc)
+            raise
 
         if proc.returncode != 0:
             return {
@@ -574,6 +581,8 @@ if _typing.TYPE_CHECKING:
         _BLOB_CACHE_GC_MAX_ENTRIES,
         _CACHE_EXPIRY_BACKDATE_SLACK,
         _EXTERNAL_REGISTRY_CACHE_TTL,
+        _EXTERNAL_REGISTRY_FAILURE_CLOCK_SLACK,
+        _EXTERNAL_REGISTRY_FAILURE_TTL,
         _FACADE,
         _MANIFEST_CACHE_GC_GRACE,
         _MANIFEST_CACHE_TTL,
@@ -581,12 +590,14 @@ if _typing.TYPE_CHECKING:
         _MANIFEST_SOURCE_SUBDIR,
         PinnedPathRefusal,
         _blob_cache_dir,
+        _clear_external_registry_failure,
         _credential_free_external_registry_entries,
         _credential_free_external_registry_value,
         _expire_cache_file,
         _external_registry_cache_identity,
         _external_registry_cache_path,
         _external_registry_cache_path_for_identity,
+        _external_registry_failure_path,
         _facade,
         _gc_blob_cache_dir,
         _gc_blob_cache_sweep_fd,
@@ -600,6 +611,7 @@ if _typing.TYPE_CHECKING:
         _manifest_negative_cache_path,
         _manifest_source_coordinates,
         _read_external_registry_cache,
+        _read_external_registry_failure,
         _read_installed_manifest_cache,
         _read_manifest_cache,
         _read_manifest_negative_cache,
@@ -607,6 +619,7 @@ if _typing.TYPE_CHECKING:
         _remove_legacy_name_keyed_registry_cache,
         _safe_cache_stem,
         _write_external_registry_cache,
+        _write_external_registry_failure,
         _write_installed_manifest_cache,
         _write_manifest_cache,
         _write_manifest_negative_cache,
@@ -678,6 +691,7 @@ if _typing.TYPE_CHECKING:
         _clone_origin_matches,
         _clone_origin_url,
         _communicate_with_timeout,
+        _ensure_directory,
         _git_clone_or_pull,
         _git_fetch_branch,
         _git_fetch_commit,
@@ -698,6 +712,8 @@ if _typing.TYPE_CHECKING:
         _GIT_NO_FSMONITOR_PAIR,
         _GIT_NO_HOOKS_PAIR,
         _PUBLIC_GIT_HOSTS,
+        _SSH_METHOD_CHARS,
+        _SSH_REFUSAL_PREFIX,
         IPv6Address,
         _clone_sandbox_mode,
         _entry_git_url,
@@ -709,6 +725,7 @@ if _typing.TYPE_CHECKING:
         _git_target_is_unsupported,
         _git_transport_env,
         _git_url_host,
+        _is_ssh_auth_refusal,
         _is_ssh_git_url,
         _loggable_git_transport_output,
         _looks_like_git_url,
@@ -718,6 +735,7 @@ if _typing.TYPE_CHECKING:
         _redact_url_userinfo,
         _redacted_git_failure_class,
         _same_git_target,
+        _ssh_method_list_closes,
         _strip_git_target_userinfo,
         _valid_git_port,
         re,
@@ -733,6 +751,7 @@ if _typing.TYPE_CHECKING:
         _registry_sign_in_refused,
     )
     from kiro_crew.apps.registry_pipeline.install import (  # noqa: F401
+        _SCRIPT_LOG_TAIL_CHARS,
         _SCRIPT_TIMEOUT,
         NATIVE_WINDOWS_HOOK_REFUSAL,
         RESERVED_APP_NAME_CODE,
@@ -740,10 +759,12 @@ if _typing.TYPE_CHECKING:
         _adoption_pending,
         _install_script_platform_refusal,
         _official_entry,
+        _redact_log_via_context,
         _remote_controlled_url,
         _retained_startup_refusal,
         _trust_grant_would_stay_local,
         app_name_error,
+        git_unavailable_refusal,
         install_app,
         install_from_registry,
         install_receipt,
@@ -760,6 +781,7 @@ if _typing.TYPE_CHECKING:
         Literal,
         _clone_build_app,
         _clone_build_app_locked,
+        _downgrade_refusal,
         _refuse_identity_mismatch,
         _report_retained_stale_checkouts,
         app_admission_denied,
@@ -796,6 +818,7 @@ if _typing.TYPE_CHECKING:
         _merge_manifest,
         _resolve_manifest,
         official_catalog,
+        sanitize_links,
     )
     from kiro_crew.apps.registry_pipeline.recovery import (  # noqa: F401
         _STALE_CHECKOUT_PATTERN,

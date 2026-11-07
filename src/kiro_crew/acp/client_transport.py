@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any, AsyncGenerator, Awaitable, Callable, Type
 from kiro_crew import kiro_sandbox_conflict
 from kiro_crew.acp import transport_framing
 from kiro_crew.acp._dispatch import _loggable_request_id
-from kiro_crew.acp._frame_record import record_frame
+from kiro_crew.acp._frame_record import record_frame, record_sent_frame
 from kiro_crew.acp.client_spawn_env import _exit_origin
 from kiro_crew.acp.client_timeouts import (
     _DRAIN_DURATION,
@@ -46,6 +46,7 @@ from kiro_crew.acp.runtime_models import (
     _is_model_substitution_advisory,
     _substitute_model_from_advisory,
 )
+from kiro_crew.acp.stale_compaction import consume_stale_compaction_status
 from kiro_crew.acp.transport_errors import AcpError, AcpProcessDied, AcpTimeoutError
 from kiro_crew.acp.transport_framing import (
     RequestWriteResult,
@@ -292,6 +293,7 @@ async def _write_request_bounded(
         self._stdin_write_lock(),
         data,
         bound_secs=transport_framing._RESPONSE_WRITE_BOUND_SECS,
+        on_written=self._record_sent,
     )
     if result is RequestWriteResult.OK:
         return
@@ -317,6 +319,12 @@ async def _write_request_bounded(
         f"sending request req={safe_id}",
         ambiguous_delivery=result is RequestWriteResult.DRAIN_STALL,
     )
+
+
+def _record_sent(self: AcpClient, data: bytes) -> None:
+    """Feed a written request or notification to the frame recorder, gated like the read side."""
+    if self.memory_mode == "persistent":
+        record_sent_frame(self.backend, data)
 
 
 def _stdin_write_lock(self: AcpClient) -> asyncio.Lock:
@@ -1059,6 +1067,8 @@ async def _drain_notifications(
     # Process notifications buffered during _wait_for_response
     for idx, msg in enumerate(self._mcp_notifications):
         drained += 1
+        if consume_stale_compaction_status(self, msg):
+            continue
         _capture_oauth(msg)
         _capture_config_update(msg)
         _capture_agent_switched(msg)
@@ -1114,6 +1124,8 @@ async def _drain_notifications(
             if not read_msg.method:
                 continue
             drained += 1
+            if consume_stale_compaction_status(self, read_msg):
+                continue
             _capture_oauth(read_msg)
             _capture_config_update(read_msg)
             _capture_agent_switched(read_msg)

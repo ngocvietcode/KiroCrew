@@ -373,8 +373,9 @@ def is_harness_slash_command(first_word: str, *, cc_provider: bool) -> bool:
     """Whether *first_word* should be forwarded to the harness as a command.
 
     Two rules, and the second exists because of a trap. A member of
-    :data:`_SLASH_COMMANDS` is a command on every provider. Under ``claude_code``
-    the harness owns its own command set, so ANY leading slash is forwarded —
+    :data:`_SLASH_COMMANDS` is a command on every provider. When *cc_provider* says
+    the harness owns its own command set (the ``claude_code`` label, or a backend in
+    ``ACP_BACKENDS_HARNESS_OWNED_SLASH_COMMANDS``), ANY leading slash is forwarded —
     except a quick-prompt token, which is not a command at all but a macro
     :meth:`ContextBuilder.build_message` expands into an instruction. Forwarding one
     would hand the harness a command it has no definition for, and the token would
@@ -630,9 +631,11 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         background_wake_pending,
         chat_done_payload,
         chunk_generation,
+        idle_compaction_blocker,
         subagents_attached,
         subagents_attached_async,
         synthesis_fire_verdict,
+        wire_session_idle_compaction_probe,
         wire_session_subagent_probe,
     )
     from kiro_crew.dashboard.chat_utils_display import (  # noqa: F401
@@ -788,6 +791,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         reject_if_slot_under_construction,
         replacement_shares_transcript,
         restore_replacement_if_handover_did_not_land,
+        revoke_slot_trust,
         session_key_for,
         slot_history_key,
         slot_transcript_key,

@@ -164,6 +164,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
     from kiro_crew.dashboard.handlers.knowledge_sources import (  # noqa: F401
         _bedrock_registration_identity,
         _folder_picker_available,
+        _mark_bedrock_searchable,
         _reclaim_rowless_attestations,
         _url_allowed_hosts_or_none,
     )
@@ -204,6 +205,7 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
     from kiro_crew.dashboard import part_stream  # noqa: F401
     from kiro_crew.dashboard.body_numbers import body_int  # noqa: F401
     from kiro_crew.dashboard.chat_utils import drained_to_thread  # noqa: F401
+    from kiro_crew.dashboard.handlers._shared import open_multipart  # noqa: F401
     from kiro_crew.dashboard.handlers._shared import read_bounded_json  # noqa: F401
     from kiro_crew.dashboard.handlers._shared import require_owner_dashboard_request  # noqa: F401
     from kiro_crew.dashboard.handlers._shared import string_field_error  # noqa: F401

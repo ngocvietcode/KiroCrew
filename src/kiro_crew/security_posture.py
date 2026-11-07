@@ -78,6 +78,10 @@ NON_EGRESS_REDACTION_MODULES: frozenset[str] = frozenset(
         # `dashboard/handlers/crew_workers.py`, the registered sink that passes the
         # display battery in.
         "crew_timeline.py",
+        # Pure helper: `redact` returns the redacted string and emits nothing. Its
+        # only caller is `dashboard/warm_task_brief.py`, the registered sink that
+        # posts the result.
+        "dashboard/warm_task_brief_inputs.py",
         # The redaction cards' owner-only route (allowed hosts). It applies no
         # redactor; the call-site scan matches its
         # handler names (`api_redaction_allow_host`, ...).
@@ -133,6 +137,11 @@ NON_EGRESS_REDACTION_MODULES: frozenset[str] = frozenset(
         # from an engine fallback notice and DROPS the id when either would change
         # it. Only the unchanged id is ever returned, never redacted text.
         "acp/engine_fallback.py",
+        # Inbound, like the `@prompt` mention read in the runner's prompt
+        # assembly: a saved prompt that opted in as a slash command is redacted
+        # as it is read, before its body joins the turn or its description joins
+        # the command list. The turn and the dashboard route carry it out.
+        "quick_prompts.py",
         # Gate-side the same way: a change card's reason and parameters are refused
         # when the redactor WOULD change them, and nothing it returns is redacted.
         "dashboard/change_cards_records.py",
@@ -651,6 +660,7 @@ NON_EGRESS_REDACTION_MODULES: frozenset[str] = frozenset(
         "dashboard/chat_api/followup_card.py",
         "dashboard/chat_api/pending_context.py",
         "dashboard/chat_api/resume.py",
+        "dashboard/chat_api/resume_window.py",
         "dashboard/chat_api/slot_create.py",
         "dashboard/chat_api/slot_detail.py",
         "dashboard/chat_api/slot_note.py",

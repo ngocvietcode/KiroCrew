@@ -135,9 +135,11 @@ CHANNEL_AGENT_BLOCKED_DISPATCH_TOOLS: tuple[str, ...] = (
 # is what refuses the call -- approving the prompt only means the refusal arrives
 # one step later, and the interactive guard's job is to beat an AUTO-approval,
 # which the dispatch guard beats as well.
-CHANNEL_AGENT_BLOCKED_DISPATCH_OPERATIONS: dict[str, tuple[tuple[str, str], ...]] = {
-    "ops_mission_control_api": (("POST", "/rotation/arm"),),
-}
+CHANNEL_AGENT_BLOCKED_DISPATCH_OPERATION: tuple[str, str, str] = (
+    "ops_mission_control_api",
+    "POST",
+    "/rotation/arm",
+)
 
 # Direct-to-user messaging tools a channel agent may never invoke — channel
 # agents communicate exclusively through channel posts.  send_notification
@@ -193,6 +195,9 @@ CHANNEL_AGENT_BLOCKED_TOOLS: tuple[str, ...] = (
     # A digest of the same transcript `session_read_message` returns, so it is
     # blocked for the same exfiltration reason.
     "session_summary",
+    # Reads another tracked channel's messages, which a channel agent would relay
+    # into a thread other people read; same exfiltration reason.
+    "read_slack_history",
     # The fan-out verb, blocked for the reason `session_send` is and then some: one
     # call with `all: true` reaches every session the caller created, so a channel agent acting on
     # words from a thread other people are in would relay them into the user's

@@ -24,6 +24,8 @@ from aiohttp import web
 from kiro_crew import platform_compat, port_resolution, shutdown_event  # noqa: F401
 from kiro_crew._facade_compose import compose as _facade_compose
 from kiro_crew.apps.backend import (  # noqa: F401
+    _RESTART_STEADY_INTERVAL,
+    revive_lost_app_backends,
     start_enabled_app_backends,
 )
 from kiro_crew.apps.hook_reconcile import init_hook_reconciler, stop_hook_reconciler  # noqa: F401
@@ -61,6 +63,11 @@ from kiro_crew.dashboard import (  # noqa: F401
     slot_retention,
     tailnet,
     tailnet_serve,
+)
+from kiro_crew.dashboard.agent_ipc import (  # noqa: F401
+    AGENT_SOCKET_HOLDER_KEY,
+    register_agent_site_cleanup,
+    start_agent_site,
 )
 from kiro_crew.dashboard.approval_posture import trust_reaches_subagents  # noqa: F401
 from kiro_crew.dashboard.chat_utils import (  # noqa: F401
@@ -225,8 +232,10 @@ from kiro_crew.dashboard.server_runtime.api_entrypoint import (  # noqa: F401
 )
 from kiro_crew.dashboard.server_runtime.app_platform import (  # noqa: F401
     _apply_builtin_adoptions,
+    _kick_app_backend_backstop,
     _kick_builtin_adoption_staging,
     _kick_default_app_installs,
+    _kick_interrupted_update_sweep,
     _reconcile_app_resources,
     _start_app_backends,
     _warm_builtin_app_names,
@@ -281,6 +290,7 @@ from kiro_crew.dashboard.server_runtime.listener import (  # noqa: F401
     _reserve_dashboard_port,
     _resolved_bound_host,
     _resolved_bound_port,
+    _start_dashboard_unix_site,
     _start_secondary_loopback_site,
     _start_site,
     _start_unix_site,
@@ -480,6 +490,7 @@ if TYPE_CHECKING:
         SubagentManager,
         TaskRunner,
     )
+    from kiro_crew.dashboard.ssm_gate import GateRef as SsmGateRef
     from kiro_crew.dashboard.tailnet_direct import DirectGate, GateRef  # noqa: F401
     from kiro_crew.kiro_prerequisite import KiroPrerequisiteService
 
@@ -1074,8 +1085,15 @@ async def start_dashboard(
         # empty holder for the direct tailnet listener's gate (off by default);
         # the daemon read that fills it runs after the bind.
         _direct: GateRef | None = None
+        _ssm_ref: SsmGateRef | None = None
         if _shared_crew_preview:
             from kiro_crew.dashboard import tailnet_direct_listener
+
+            if _cfg.dashboard.shared_crew.ssm:
+                # Only an SSM-enabled launch loads the SSM modules before the bind.
+                from kiro_crew.dashboard import ssm_gate
+
+                _ssm_ref = ssm_gate.GateRef()
 
             _direct = tailnet_direct_listener.prepare_at_start(
                 _cfg, host=_tailnet_host, trust=_tailnet_trust, local_only=local_only
@@ -1094,11 +1112,14 @@ async def start_dashboard(
         # with, for handlers the middleware bypasses (POST /api/auth/refresh must
         # re-bind a rotated access token to the same verified peer identity).
         app["tailnet_trust"] = _tailnet_trust
-        # The relay client's door into this app (dashboard/kiro_relay). Built off:
-        # the relay client, and the setting that turns this on, arrive together in a
-        # later change. Off, the ingress middleware hands every request on to the
-        # client-sent relay-header strip.
-        app[RELAY_INGRESS_APP_KEY] = RelayIngress(enabled=False)
+        # The relay client's door into this app (dashboard/kiro_relay). Built off
+        # unless tunnel.relay_enabled is set, and always off in an enterprise build,
+        # which ignores that local switch with the rest of the tunnel control. Either
+        # way the ingress middleware hands every request that is not a verified
+        # handover on to the client-sent relay-header strip.
+        from kiro_crew.edition_locks import relay_selected
+
+        app[RELAY_INGRESS_APP_KEY] = RelayIngress(enabled=relay_selected(_cfg))
         app["allowed_origins"] = build_allowed_origins(
             port, local_only, configured_host, tailnet_host=_tailnet_host
         )
@@ -1157,6 +1178,7 @@ async def start_dashboard(
             configured_host=configured_host,
             dashboard_url=dashboard_url,
             tailnet_direct=_direct,
+            ssm_gate=_ssm_ref,
         )
 
         # Register only after the final allowed-origin set is selected.  The startup
@@ -1271,18 +1293,21 @@ async def start_dashboard(
     # via _start_site with no reservation step, still exports post-listen.)
     _kick_default_app_installs(state)
     _kick_builtin_adoption_staging(state)
+    _kick_interrupted_update_sweep(state)
+    _kick_app_backend_backstop(state)
+    # Resolved ONCE, and used for the unix socket's name, the second bind and the
+    # publication below. Under `--port auto` the requested port is 0 and stays 0:
+    # a socket named for it is one no client dials (they name the real port), and
+    # binding the second family on it lands on an unrelated ephemeral port while
+    # the sidecar is filed under the real one -- which would publish coverage for
+    # an address nothing listens on and leave the real one free for anyone to take.
+    _bound_port = _resolved_bound_port(runner, port)
     # Additional kernel-verifiable transport for the internal API (POSIX only;
     # degrades to TCP-only on any failure — see _start_unix_site).
-    _unix_socket_holder["path"] = await _start_unix_site(runner, port)
+    _unix_socket_holder["path"] = await _start_unix_site(runner, _bound_port)
     # Hold the OTHER loopback family too, so a client dialling a NAME cannot be
     # answered by anyone else -- see _start_secondary_loopback_site. None when
     # there is no second listener, and the client then signs in explicitly.
-    # Resolved ONCE, and used for both the second bind and the publication below.
-    # Under `--port auto` the requested port is 0 and stays 0, so binding the
-    # second family on it lands on an unrelated ephemeral port while the sidecar
-    # is filed under the real one -- which would publish coverage for an address
-    # nothing listens on and leave the real one free for anyone to take.
-    _bound_port = _resolved_bound_port(runner, port)
     _second_loopback = await _start_secondary_loopback_site(runner, _bound_port, _bind_ip)
     # The direct tailnet sites, on the same port; nothing when the gate is off.
     if _direct is not None:
@@ -1290,6 +1315,13 @@ async def start_dashboard(
 
         await tailnet_direct_listener.start_after_bind(
             app, runner, _bound_port, _cfg, _direct, local_only=local_only
+        )
+    # The SSM site, on its own loopback port; nothing when it is off.
+    if _ssm_ref is not None:
+        from kiro_crew.dashboard import ssm_gate
+
+        await ssm_gate.start_after_bind(
+            app, runner, _cfg.dashboard.shared_crew, _bound_port, _ssm_ref
         )
 
     # Port bind succeeded — now safe to write the secret file. Offloaded:
@@ -1386,8 +1418,9 @@ async def start_dashboard(
     # Keep the host awake while a turn is in flight (opt-in via
     # dashboard.prevent_sleep), or while the dashboard is published on the
     # tailnet (opt-out via dashboard.tailscale.keep_awake). Shared with the
-    # headless --slack-only entrypoint.
-    _arm_prevent_sleep_poll(state, port)
+    # headless --slack-only entrypoint. The bound port: the poll asks whether
+    # `tailscale serve` fronts THIS listener, which `--port auto`'s 0 never names.
+    _arm_prevent_sleep_poll(state, _bound_port)
 
     # Arm the stall watchdog only when faulthandler is enabled — i.e. under the
     # real gateway entrypoint (see cli `gateway` dispatch). Tests that spin up

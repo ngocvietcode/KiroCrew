@@ -1,6 +1,7 @@
 """Run an ``AcpProvider`` session's turns on its inner client.
 
-Prompt and slash-command turns and their event translation, manual compaction and the
+Prompt and slash-command turns and their event translation, a turn the agent started
+on its own (``watch_agent_turns``, ``stream_unsolicited``), manual compaction and the
 wait for its result, cancel and steer.
 
 Each function here whose first parameter is ``self`` is an ``AcpProvider`` method: the
@@ -17,11 +18,11 @@ from __future__ import annotations
 import asyncio
 import functools
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator, Callable
 from contextlib import aclosing
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
-from kiro_crew.acp import relaunch_reload
+from kiro_crew.acp import relaunch_reload, stale_compaction
 from kiro_crew.acp.client import AcpClient, AcpError
 from kiro_crew.acp.launch_tuning import switch_barrier
 from kiro_crew.acp.types import (
@@ -30,6 +31,7 @@ from kiro_crew.acp.types import (
     STOP_REASON_CANCELLED,
     STOP_REASON_END_TURN,
 )
+from kiro_crew.agent_sdk.backends import ACP_BACKENDS_AGENT_STARTED_TURNS
 from kiro_crew.constants import COMPACT_WAIT_TIMEOUT_SECS
 from kiro_crew.process_identity import record_live_children_after_turn
 from kiro_crew.providers.base import CancelOutcome, LLMEvent
@@ -251,6 +253,7 @@ async def stream(
     # The direct client can respawn in ensure_ready; resolve that BEFORE
     # comparing receipts so a recycled conversation receives the full text.
     await self._ready_confirmed_session()
+    stale_compaction.sync_provider_compaction_delivery(self, self.essential_delivery)
     send = self._client.stream_events
     if ask:
         from kiro_crew.acp.session_provider import AcpSessionProvider
@@ -276,6 +279,10 @@ async def stream(
 
 async def stream_command(self: AcpProvider, command: str) -> AsyncIterator[LLMEvent]:
     _, self._sign_in_ask = getattr(self, "_sign_in_ask", ""), ""
+    if stale_compaction.is_compact_command(
+        command
+    ) and stale_compaction.provider_refuses_compaction(self):
+        raise AcpError(stale_compaction.UNRESOLVED_COMPACTION_ERROR)
     # _kiro.dev/commands/execute is a kiro extension, so only
     # ACP_BACKENDS_KIRO_SLASH_COMMANDS members can be sent it. Everyone else
     # routes through session/prompt, which an adapter interprets natively for
@@ -292,15 +299,22 @@ async def stream_command(self: AcpProvider, command: str) -> AsyncIterator[LLMEv
     # so the next warm turn resends the complete snapshot even when the
     # status receipt is missing or arrives late.
     await self._ready_confirmed_session()
+    stale_compaction.sync_provider_compaction_delivery(self, self.essential_delivery)
     self.essential_delivery.prepare_command(command)
-    send = (
-        self._client.stream_events
-        if self._client.backend not in ACP_BACKENDS_KIRO_SLASH_COMMANDS
-        else self._client.stream_command
-    )
+    native = self._client.backend in ACP_BACKENDS_KIRO_SLASH_COMMANDS
+    send = self._client.stream_command if native else self._client.stream_events
+    # Whether THIS command makes a model request is the transport's per-command
+    # answer: a session handle keeps /compact and /help on session/prompt even
+    # on kiro, and only a real commands/execute call leaves the floor alone.
+    per_command = getattr(self._client, "command_is_native", None)
+    makes_no_request = per_command(command) if native and callable(per_command) else native
     try:
         async with aclosing(
-            self.essential_delivery.stream(command, send, lambda: self.context_incarnation)
+            # Native commands/execute makes no model request, so it never moves
+            # the idle-compaction request floor.
+            self.essential_delivery.stream(
+                command, send, lambda: self.context_incarnation, requests_model=not makes_no_request
+            )
         ) as events:
             async for e in events:
                 yield self._to_llm_event(e)
@@ -308,8 +322,60 @@ async def stream_command(self: AcpProvider, command: str) -> AsyncIterator[LLMEv
         await record_live_children_after_turn(self._client)
 
 
+def watch_agent_turns(self: AcpProvider, callback: Callable[[], None] | None) -> bool:
+    """Call *callback* when the agent starts a turn on its own; ``None`` stops it.
+
+    Only a direct ``AcpClient`` on a backend in ``ACP_BACKENDS_AGENT_STARTED_TURNS``
+    has a reader that sees such a turn, so any other session registers nothing and
+    returns False. The callback runs synchronously on the event loop, from the
+    client's idle reader, and the turn is read with :func:`stream_unsolicited`.
+    """
+    client = self._client
+    if not isinstance(client, AcpClient) or client.backend not in ACP_BACKENDS_AGENT_STARTED_TURNS:
+        return False
+    if callback is None:
+        client.on_agent_turn = None
+    else:
+        client.on_agent_turn = lambda _client: callback()
+    return True
+
+
+def agent_turn_pending(self: AcpProvider) -> bool:
+    """Whether a turn the agent started is waiting to be read by :func:`stream_unsolicited`."""
+    client = self._client
+    return isinstance(client, AcpClient) and client._agent_turn_pending()
+
+
+async def stream_unsolicited(
+    self: AcpProvider, timeout: float | None = None
+) -> AsyncIterator[LLMEvent]:
+    """Yield the events of the turn the agent started on its own, sending nothing.
+
+    Yields nothing when no such turn is pending or a prompt took its frames. No
+    prompt is sent, so the essential-context receipts are left as they are.
+    """
+    client = self._client
+    if not isinstance(client, AcpClient):
+        return
+    try:
+        # The client's method is an async generator typed as its iterator.
+        unsolicited = cast("AsyncGenerator[Any, None]", client.stream_unsolicited(timeout))
+        async with aclosing(unsolicited) as events:
+            async for e in events:
+                yield self._to_llm_event(e)
+    finally:
+        await record_live_children_after_turn(client)
+
+
 async def compact(self: AcpProvider, context: str = "") -> None:
-    """Trigger native /compact with optional context-preserving prompt."""
+    """Trigger native /compact with optional context-preserving prompt.
+
+    While an earlier compaction status is unresolved, this sends nothing and
+    the next :func:`wait_for_compaction` returns one ``failed`` result.
+    """
+    if stale_compaction.refuse_provider_compaction(self):
+        self._compact_result = None
+        return
     await self._ready_confirmed_session()
     self.essential_delivery.invalidate()
     if context:
@@ -430,7 +496,11 @@ async def wait_for_compaction(
     On a cached ``completed``, still grace-drains the inner client for
     kiro's post-compaction metadata so the mid-turn path reports real
     numbers too — mirrors ``AcpSessionHandle.wait_for_compaction``.
+    A refused :func:`compact` is answered first, with its ``failed`` result.
     """
+    refusal = stale_compaction.take_provider_compaction_refusal(self)
+    if refusal is not None:
+        return refusal
     cached = getattr(self, "_compact_result", None)
     if cached is not None:
         self._compact_result = None

@@ -19,7 +19,8 @@ Instance fields written: ``_activated_model``, ``_agent_accepts_image``,
 Instance fields read: ``_agent``, ``_available_mode_ids``, ``_channel_id``,
 ``_extra_env``, ``_modes_advertised``, ``_sandbox_mode``, ``_scratch_dir``,
 ``_session_key``, ``_session_mcp_snapshot``, ``_shared_scratch``, ``_side_read_only``,
-``_stdin_stalled``, ``_windows_tree_cleanup_failed``, ``_work_dir``, ``last_prompt_stats``.
+``_spec_zero_tools``, ``_stdin_stalled``, ``_windows_tree_cleanup_failed``, ``_work_dir``,
+``last_prompt_stats``.
 """
 
 from __future__ import annotations
@@ -33,13 +34,16 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
-from kiro_crew import __version__, acp_tool_gate, agent_scratch, platform_compat
+from kiro_crew import __version__, acp_tool_gate, agent_scratch
+from kiro_crew import kiro_cli as kiro_cli_mod
+from kiro_crew import platform_compat
 from kiro_crew.acp import managed_agent_shadow as managed_shadow_mod
 from kiro_crew.acp import runtime_process_tree
 from kiro_crew.acp._dispatch import agent_version_from_init
 from kiro_crew.acp.client_claude_session import (
     CLAUDE_ACP_FORK_POINT_MIN_VERSION,
     _adapter_version_at_least,
+    refuse_claude_zero_tool_mounts,
 )
 from kiro_crew.acp.client_native_children import client_capabilities_for
 from kiro_crew.acp.client_spawn_env import (
@@ -55,6 +59,7 @@ from kiro_crew.acp.client_timeouts import _ACP_RESPAWN_BACKOFF_S, _INIT_TIMEOUT
 from kiro_crew.acp.harness import process_adapter_for
 from kiro_crew.acp.harness.base import SpawnContext, SpawnPlan
 from kiro_crew.acp.launch import LaunchRequest, launch
+from kiro_crew.acp.pi_mcp_registration import verify_registration
 from kiro_crew.acp.transport_errors import (
     AcpAuthRequired,
     AcpError,
@@ -336,7 +341,11 @@ async def _spawn(self: AcpClient) -> None:
         # element-withholding question does not arise, and a ``disabledTools``
         # naming other tools must not refuse this agent's view.
         self._native_skill_projection = await asyncio.to_thread(
-            prepare_native_skill_projection, self._work_dir, per_session_element=False
+            prepare_native_skill_projection,
+            self._work_dir,
+            per_session_element=False,
+            # One session, one agent: only its view needs holding on disk.
+            lease_agents=(self._agent,),
         )
         if self._native_skill_projection is not None:
             # The agent this process is launched as: its own FIRST ``set_mode``
@@ -364,10 +373,14 @@ async def _spawn(self: AcpClient) -> None:
                 self._agent,
                 self.backend,
                 launch_name=launch_name,
+                work_dir=self._work_dir,
             )
         except SharedTemplateOverCeiling as exc:
             raise AcpError(str(exc)) from exc
-        argv = [kiro_bin, KIRO_CLI_SUBCMD, "--agent", launch_name]
+        # The engine is pinned, never left to kiro-cli's default (KiroHarness
+        # carries the reason). Off the loop: one cached `acp --help` spawn.
+        engine_args = await asyncio.to_thread(kiro_cli_mod.kiro_acp_engine_args, kiro_bin)
+        argv = [kiro_bin, KIRO_CLI_SUBCMD, *engine_args, "--agent", launch_name]
         spawn_label = f"{KIRO_CLI_BIN} {KIRO_CLI_SUBCMD}"
         stderr_label = KIRO_CLI_BIN
         plan = SpawnPlan(argv=argv, spawn_label=spawn_label, stderr_label=stderr_label)
@@ -649,6 +662,9 @@ async def _new_session_following_substitution(self: AcpClient) -> dict:
     if self.backend in ACP_BACKENDS_PRUNE_UNSTARTABLE_MCP:
         new_params["mcpServers"] = await self._prune_unstartable_mcp(new_params["mcpServers"])
     if self._is_claude:
+        refuse_claude_zero_tool_mounts(
+            getattr(self, "_spec_zero_tools", False), new_params["mcpServers"]
+        )
         new_params["_meta"] = self._claude_session_meta()
 
     # The roster this session put ON THE WIRE. Distinct from the agent spec
@@ -731,6 +747,9 @@ async def _new_session_following_substitution(self: AcpClient) -> dict:
         # Rebuilt AFTER the array, from the same re-seed: the envelope carries
         # the setting sources the array was authorized under and the inline
         # settings naming the substitute model.
+        refuse_claude_zero_tool_mounts(
+            getattr(self, "_spec_zero_tools", False), new_params["mcpServers"]
+        )
         new_params["_meta"] = self._claude_session_meta()
         self._begin_session_report(_roster_of(self, new_params.get("mcpServers")))
         self._guard_unresolved_mcp_refs(_roster_of(self, new_params.get("mcpServers")))
@@ -963,6 +982,9 @@ async def _initialize_session(self: AcpClient) -> None:
                         load_params["mcpServers"]
                     )
                 if self._is_claude:
+                    refuse_claude_zero_tool_mounts(
+                        getattr(self, "_spec_zero_tools", False), load_params["mcpServers"]
+                    )
                     load_params["_meta"] = self._claude_session_meta()
                 elif self.backend not in ACP_BACKENDS_HARNESS_OWNED_SESSIONS:
                     # The kiro family reads its transcript path from _meta. A
@@ -1088,8 +1110,13 @@ async def _initialize_session(self: AcpClient) -> None:
     self._last_activity = time.monotonic()
     # The session exists, so the pi process that read the MCP handoff file has
     # started; the file has no further reader and goes now.
+    # Its own process then says which of those servers it registered, before the
+    # first prompt: a confirmed refusal is a failed row, no answer an unconfirmed one.
     if self._is_pi:
-        await self._discard_pi_mcp_handoff()
+        try:
+            await verify_registration(self)
+        finally:
+            await self._discard_pi_mcp_handoff()
     # Copilot CLI read its launch MCP config when its process started; the file
     # carries a session credential and nothing reads it again. Same for the Strands CLI.
     if self._is_copilot or self._is_strands:

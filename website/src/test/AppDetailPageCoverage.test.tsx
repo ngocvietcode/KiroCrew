@@ -934,6 +934,25 @@ describe('AppDetailPage — uncovered surfaces', () => {
     return screen.findByRole('dialog', { name: /confirm uninstall/i })
   }
 
+  it('titles the uninstall dialog as one sentence with the quoted app name', async () => {
+    const box = await openUninstall()
+    expect(within(box).getByText('Uninstall “Ledger Lens”?')).toBeInTheDocument()
+  })
+
+  it('words the uninstall dialog title in German with the name first', async () => {
+    await act(async () => { await i18next.changeLanguage('de') })
+    try {
+      getApp.mockResolvedValue(installedApp())
+      renderDetail()
+      await loaded()
+      fireEvent.click(screen.getByRole('button', { name: 'Deinstallieren' }))
+      const box = await screen.findByRole('dialog')
+      expect(within(box).getByText('„Ledger Lens“ deinstallieren?')).toBeInTheDocument()
+    } finally {
+      await act(async () => { await i18next.changeLanguage('en') })
+    }
+  })
+
   it('keeps app data by default and cancels without calling the API', async () => {
     const box = await openUninstall()
 
@@ -1074,7 +1093,7 @@ describe('AppDetailPage — uncovered surfaces', () => {
     expect(screen.getByText('Chat approval modes it can set')).toBeInTheDocument()
     // Each mode carries the picker's gloss, so "Trust" here cannot be read as
     // the consent verb.
-    expect(screen.getByText(/checks with you before doing anything/)).toBeInTheDocument()
+    expect(screen.getByText(/checks with you before anything else/)).toBeInTheDocument()
     expect(screen.getByText('sessionApproval')).toBeInTheDocument()
     expect(screen.getByText('Normal')).toBeInTheDocument()
     expect(screen.getByText('Reads')).toBeInTheDocument()
@@ -1155,11 +1174,88 @@ describe('AppDetailPage — Details rows in other languages', () => {
     expect(screen.queryByText(/builtin|locked/)).toBeNull()
   })
 
+  it('lists installed resources with the Japanese list mark, not an English comma', async () => {
+    await act(async () => { await i18next.changeLanguage('ja') })
+    getApp.mockResolvedValue(installedApp({
+      manifest: {
+        displayName: 'Ledger Lens',
+        description: 'Reads your books and explains them.',
+        agents: ['agents/auditor.json', 'agents/scribe.json'],
+        skills: ['skills/ledger-read/SKILL.md', 'skills/ledger-write/NOTES.md'],
+        crons: [{ name: 'nightly-close' }, { name: 'weekly-sum' }],
+      },
+    }))
+    renderDetail()
+    await loaded()
+
+    expect(screen.getByText('auditor、scribe')).toBeInTheDocument()
+    expect(screen.getByText('SKILL.md、NOTES.md')).toBeInTheDocument()
+    expect(screen.getByText('nightly-close、weekly-sum')).toBeInTheDocument()
+    expect(screen.queryByText('auditor, scribe')).toBeNull()
+  })
+
+  it('lists a registry app platforms with the Japanese list mark', async () => {
+    await act(async () => { await i18next.changeLanguage('ja') })
+    getApp.mockResolvedValue(null)
+    listRegistry.mockResolvedValue({
+      apps: [registryRow({ platform: { os: ['darwin', 'linux'] } })],
+      serverPlatform: { os: 'darwin', arch: 'arm64' },
+    })
+    renderDetail()
+    await loaded()
+
+    expect(screen.getByText(/darwin、linux/)).toBeInTheDocument()
+    expect(screen.queryByText(/darwin, linux/)).toBeNull()
+  })
+
   it('shows a value it has no word for as it is', async () => {
     getApp.mockResolvedValue(installedApp({ origin: 'mirror', resources: 'app', lifecycle: 'app' }))
     renderDetail()
     await loaded()
 
     expect(screen.getByText('Origin: mirror | Resources: App | Lifecycle: App')).toBeInTheDocument()
+  })
+})
+
+// The memory permission row is one catalog sentence per manifest value, not a
+// translated label glued to the raw `permissions.memory` value.
+describe('AppDetailPage — memory permission row', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    system.mockResolvedValue({ hostname: '' })
+    listRegistry.mockResolvedValue({ apps: [], serverPlatform: { os: 'darwin', arch: 'arm64' } })
+  })
+  afterEach(async () => { await act(async () => { await i18next.changeLanguage('en') }) })
+
+  const withMemory = (memory: boolean | string) => installedApp({
+    manifest: {
+      displayName: 'Ledger Lens',
+      description: 'Reads your books and explains them.',
+      permissions: { storage: true, memory },
+    },
+  })
+
+  it.each([
+    ['app-scoped', 'Memory: app-scoped'],
+    ['shared', 'Memory: shared'],
+    [true, 'Memory: yes'],
+    ['True', 'Memory: yes'],
+    ['read', 'Memory: read'],
+  ] as const)('words memory %s as one sentence', async (memory, text) => {
+    getApp.mockResolvedValue(withMemory(memory))
+    renderDetail()
+    await loaded()
+
+    expect(screen.getByText(text)).toBeInTheDocument()
+  })
+
+  it('words the memory row in German with no English value', async () => {
+    await act(async () => { await i18next.changeLanguage('de') })
+    getApp.mockResolvedValue(withMemory('app-scoped'))
+    renderDetail()
+    await loaded()
+
+    expect(screen.getByText('Gedächtnis: nur für diese App')).toBeInTheDocument()
+    expect(screen.queryByText(/app-scoped/)).toBeNull()
   })
 })

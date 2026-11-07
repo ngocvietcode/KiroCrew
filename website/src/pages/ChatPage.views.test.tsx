@@ -46,7 +46,7 @@ vi.mock('./chat', async (orig) => ({
   PinnedPrompt: (p: { onToggleExpanded: () => void; onJump: () => void }) => { seen.pinnedPrompt = p; return null },
   ChatFooter: () => null,
 }))
-vi.mock('./chat/TranscriptScrollShell', () => ({ default: ({ children }: { children: ReactNode }) => <div data-testid="shell">{children}</div> }))
+vi.mock('./chat/TranscriptScrollShell', () => ({ default: ({ children, belowRows }: { children: ReactNode; belowRows?: ReactNode }) => <div data-testid="shell">{children}{belowRows}</div> }))
 vi.mock('./chat/CollapsibleToolGroup', () => ({
   default: (p: { onApprove: (a: string) => Promise<void>; pendingPermCount: number; count: number; children: ReactNode }) => {
     seen.toolGroups.push(p); return <div data-testid="tool-group">{p.children}</div>
@@ -69,6 +69,12 @@ import ChatTranscriptView from './chat/page/ChatTranscriptView'
 import { api } from '../api/client'
 import { requestSlotReveal } from '../store/chatSlice'
 import { transcriptShownFor } from '../hooks/useAckCronNotesInView'
+
+// Placeholder Slack thread timestamps (the link builder needs ``\d{10}.\d{6}``);
+// expected permalinks are built from them, never written out.
+const TS1 = '1700000000.000001'
+const threadUrl = (channel: string, ts: string) =>
+  `https://slack.com/archives/${channel}/p${ts.replace('.', '')}`
 
 /** A view's props: the fields a case sets, the rest left undefined (each view reads only what its branch needs). */
 const props = <T,>(over: Partial<T>) => over as T
@@ -179,6 +185,35 @@ describe('ChatTitleOverlay', () => {
     expect(phone.setSidebarPinned).not.toHaveBeenCalled()
   })
 
+  it('marks a Slack code channel session in the header, and nothing else', () => {
+    const codeChannel = {
+      channel_name: 'fix-login', status: 'active' as const,
+      web_url: 'https://slack.com/app_redirect?channel=C0CODE1&team=T0TEAM1',
+    }
+    const { unmount } = render(<ChatTitleOverlay {...base({ currentSlot: { key: 'slot-a', messages: 0, running: false } as never })} />)
+    expect(screen.queryByTestId('code-channel-badge-header')).toBeNull()
+    unmount()
+    render(<ChatTitleOverlay {...base({ currentSlot: {
+      key: 'slot-a', messages: 0, running: false, code_channel: codeChannel,
+      // A bound session is also Slack-linked (its anchor thread): the code
+      // channel's own link must win over the thread link.
+      slack_linked: true, slack_channel: 'C0CODE1', slack_thread_ts: '1700000000.000001',
+    } as never })} />)
+    expect(screen.getByTestId('code-channel-badge-header')).toHaveAttribute('href', codeChannel.web_url)
+    expect(screen.queryByTestId('slack-thread-link-header')).toBeNull()
+  })
+
+  it('links a session mirrored to a Slack thread to that thread in the header', () => {
+    const { unmount } = render(<ChatTitleOverlay {...base({ currentSlot: { key: 'slot-a', messages: 0, running: false, slack_linked: false } as never })} />)
+    expect(screen.queryByTestId('slack-thread-link-header')).toBeNull()
+    unmount()
+    render(<ChatTitleOverlay {...base({ currentSlot: {
+      key: 'slot-a', messages: 0, running: false, slack_linked: true, slack_channel: 'C0THREAD1', slack_thread_ts: '1700000000.000001',
+    } as never })} />)
+    expect(screen.getByTestId('slack-thread-link-header')).toHaveAttribute('href', threadUrl('C0THREAD1', TS1))
+    expect(screen.queryByTestId('code-channel-badge-header')).toBeNull()
+  })
+
   it('offers no reveal on an embedded chat, and renames the active session', () => {
     const setEditingTitleSlot = vi.fn()
     render(<ChatTitleOverlay {...base({ embedMode: 'chat', setEditingTitleSlot })} />)
@@ -256,6 +291,15 @@ describe('ChatTranscriptView', () => {
   it('draws nothing for a permissions-only tool group', () => {
     render(<ChatTranscriptView {...base([{ kind: 'group', startIdx: 0, msgs: [msg('permission', 'p1')] }])} />)
     expect(seen.toolGroups).toHaveLength(0)
+  })
+
+  it("names what the warm catch-up checks while the gateway prepares it, and nothing once it is done", () => {
+    const caption = 'Checking 2 PRs on GitHub for “Ship the fix”.'
+    const slot = (preparing: boolean) => ({ key: 'crew-a', messages: 1, running: false, preparing, preparing_text: preparing ? caption : '', preparing_lang: preparing ? 'en' : '' }) as never
+    const { rerender } = render(<ChatTranscriptView {...base([], { currentSlot: slot(true) })} />)
+    expect(screen.getByTestId('chat-preparing-catch-up')).toHaveTextContent(caption)
+    rerender(<ChatTranscriptView {...base([], { currentSlot: slot(false) })} />)
+    expect(screen.queryByTestId('chat-preparing-catch-up')).toBeNull()
   })
 
   it('routes a group approval to the newest unresolved permission, else to the page approve', async () => {

@@ -179,6 +179,8 @@ export interface SidebarScope {
   setFolderOfflineNotice: SetState<string>
   newChatError: string
   setNewChatError: SetState<string>
+  prStatusRefreshError: string
+  setPrStatusRefreshError: SetState<string>
   remoteCrewErrorId: string
   remoteCrewError: string
   setRemoteCrewError: SetState<string>
@@ -209,6 +211,8 @@ export interface SidebarScope {
   setCleanupOpen: SetState<boolean>
   folderCleanupOpen: boolean
   setFolderCleanupOpen: SetState<boolean>
+  /** Opens the folder cleanup on one folder's tree (folder ⋮ → "Close sessions and delete…"). */
+  setFolderCleanupRoot: SetState<ChatFolder | null>
   setManageTagsOpen: SetState<boolean>
   broadcastOpen: boolean
   setBroadcastOpen: SetState<boolean>
@@ -267,6 +271,7 @@ export interface SidebarScope {
   // From `useSessionSources`
   historySearchResults: ReturnType<typeof useSessionSources>['historySearchResults']
   historySearchFailed: ReturnType<typeof useSessionSources>['historySearchFailed']
+  historySearchScan: ReturnType<typeof useSessionSources>['historySearchScan']
   instanceSessions: ReturnType<typeof useSessionSources>['instanceSessions']
   remoteSessionsError: ReturnType<typeof useSessionSources>['remoteSessionsError']
   selectInstance: ReturnType<typeof useSessionSources>['selectInstance']

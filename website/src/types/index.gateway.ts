@@ -79,6 +79,12 @@ export interface StatusData {
    */
   update_channel_move_pending?: boolean
   update_managed_by?: string
+  /**
+   * The home security policy file's path when its update commands manage
+   * this install, so the policy notice can say where it is. Empty under any
+   * other policy tier, absent on older gateways and on app sockets.
+   */
+  update_policy_file?: string
   update_can_arm?: boolean
   /**
    * What an available update leads to on this install: `install` (with the
@@ -335,8 +341,8 @@ export interface SessionStorageCleanup {
  * a single slot, so a second empty is refused with 409 and this same shape rather
  * than queued.
  *
- * `total_bytes` comes from the staged manifests — the same figure the trash row
- * showed — so it is the denominator for `freed_bytes` and never a remeasurement.
+ * `total_bytes` counts what the delete counts in `freed_bytes` (the trash row's
+ * figure plus each batch's manifest), so it is the denominator, never a remeasurement.
  */
 export interface SessionStorageEmptyJob {
   job_id: string
@@ -486,13 +492,24 @@ export interface RemoteUpdateJob {
    *  installed nothing). `unverified`: it did not answer with a version in time. */
   state: 'running' | 'succeeded' | 'unchanged' | 'unverified' | 'failed'
   /** Where the job is, or where it failed: the remote `kirocrew update`, then
-   *  `kirocrew restart`, then reading the crew's version back. */
-  phase: 'updating' | 'restarting' | 'verifying' | 'done'
+   *  waiting for the crew's in-flight work to finish, then `kirocrew restart`,
+   *  then reading the crew's version back. */
+  phase: 'updating' | 'waiting_for_idle' | 'restarting' | 'verifying' | 'done'
   started_at: number
   finished_at: number | null
   elapsed_secs: number
   /** The remote's redacted error tail on a failure, else "". */
   error: string
+  /** Why a failed job stopped short of its restart: `still_busy` (the crew
+   *  was still running work when the wait ran out), `peer_cannot_wait` (its
+   *  build has no idle check) or `idle_check_failed` (it could not establish
+   *  that it is idle). All are retried with `force`. Else "". Absent
+   *  from a gateway that predates it. */
+  code?: '' | 'still_busy' | 'peer_cannot_wait' | 'idle_check_failed'
+  /** The crew's last in-flight counts while `waiting_for_idle`. */
+  waiting?: { turns: number; background: number }
+  /** Whether the job restarts without waiting for in-flight work. */
+  force?: boolean
   /** The crew's version before the update and after its restart; "" when it
    *  did not answer. */
   version_before: string

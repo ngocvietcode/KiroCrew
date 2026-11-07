@@ -16,6 +16,7 @@ import { isSystemNoticeKind } from '../../lib/systemNotice'
 import type { ChatMessage } from '../../types'
 import { withOriginLink } from '../../components/withOriginLink'
 import { SessionTurnLimitButton } from '../../components/SessionTurnLimitMenu'
+import { AgentSpecChoiceCard, agentSpecAmbiguity } from './AgentSpecChoiceCard'
 import { injectOpensTurn } from './RecoveryCard'
 import { resumeProseFor } from './gatewayNotice'
 
@@ -164,6 +165,9 @@ export const isKiroCliMissing = (m: Pick<ChatMessage, 'kind' | 'meta'>): boolean
 const CLOUD_SESSION_NOTICE_KEYS: Record<string, string> = {
   cloud_session_replayed: 'sessionEnvironments.kiroCloud.replayed',
   cloud_session_replaced: 'sessionEnvironments.kiroCloud.replaced',
+  // The same kind of start notice, for a chat whose folder was an earlier run's
+  // scratch folder (`session_allocation_parts/get_or_create.py`).
+  hidden_scratch_cwd_skipped: 'pages.chat.errorCard.hidden_scratch_folder',
 }
 
 /** The catalog key of a Kiro Cloud sandbox notice row, or `''`. */
@@ -639,6 +643,12 @@ export const ErrorCard = memo(function ErrorCard({
         </div>
       </div>
     )
+  }
+  const contested = agentSpecAmbiguity({ meta })
+  if (contested) {
+    // Several spec files declare the agent's name and nothing chooses one: the
+    // card lists them, and pinning one restarts the session through Resume.
+    return <AgentSpecChoiceCard ambiguity={contested} onRetry={onContinue} />
   }
   const refusal = capabilityRefusal({ meta })
   if (refusal) {

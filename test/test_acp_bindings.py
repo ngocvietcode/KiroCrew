@@ -45,7 +45,7 @@ SHARED_BINDINGS_CHECKS = ("the_field_scan_counts_every_read_and_write_shape",)
 #: Member -> (kind, coroutine, signature digest, owning module). Frozen at the split: the
 #: kind, coroutine flag and signature are BASE's; the owner is where the member lives now.
 _MEMBERS: dict[str, tuple[str, object, str, str]] = {
-    "__init__": ("function", False, "22e43ccb505a", "acp"),
+    "__init__": ("function", False, "2c65337d97d7", "acp"),
     "_abc_impl": ("data", False, "", ""),
     "_advertised_effort_levels": ("function", False, "93b23ca4342b", "acp_model_effort"),
     "_apply_effort_overlay": ("function", False, "66550c0d40fa", "acp_cli_overlay"),
@@ -71,8 +71,9 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "accepts_effort_level": ("function", False, "581451d2b011", "acp_model_effort"),
     "accepts_elicitation": ("property", False, "a6632a57e602", "acp"),
     "agent_prompt_upgrade_notice": ("property", False, "bb418bb7ece8", "acp"),
+    "agent_turn_pending": ("function", False, "a6632a57e602", "acp_turns"),
     "agent_version": ("property", False, "bb418bb7ece8", "acp"),
-    "answer_elicitation": ("function", True, "2fcb1ac189fa", "acp"),
+    "answer_elicitation": ("function", True, "8ba26aba28fc", "acp"),
     "approval_withdrawable": ("data", False, "", ""),
     "approve_tool": ("function", True, "86811c6ce780", "acp"),
     "available_models": ("function", False, "92d6193dbe19", "acp"),
@@ -84,7 +85,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "change_effort": ("function", True, "581451d2b011", "acp_model_effort"),
     "child_fidelity_aware": ("property", False, "a6632a57e602", "acp"),
     "cleanup_session": ("function", True, "c284282f8a1d", "acp_lifecycle"),
-    "clear_effort": ("function", True, "16180c63d5e6", "acp_model_effort"),
+    "clear_effort": ("function", True, "7830fb6429af", "acp_model_effort"),
     "client": ("property", False, "4d5584e1d14b", "acp"),
     "compact": ("function", True, "416a3df991e6", "acp_turns"),
     "compaction_self_managed": ("property", False, "a6632a57e602", "acp"),
@@ -129,6 +130,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "loaded_capability_template": ("property", False, "bb418bb7ece8", "acp"),
     "manual_compact_unsupported_backend": ("property", False, "f21e39ec5ffb", "acp"),
     "mate_worker_kit_supported": ("property", False, "a6632a57e602", "acp"),
+    "mate_worker_mcp_tool_limits_supported": ("property", False, "a6632a57e602", "acp"),
     "mate_worker_prompt_in_context": ("property", False, "a6632a57e602", "acp"),
     "mate_worker_tool_limits_supported": ("property", False, "a6632a57e602", "acp"),
     "maybe_refresh_available_models": ("function", True, "9de63ef05543", "acp_model_effort"),
@@ -154,6 +156,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "reports_effort_support": ("data", False, "", ""),
     "reports_turn_usage": ("property", False, "a6632a57e602", "acp"),
     "served_model": ("property", False, "bb418bb7ece8", "acp"),
+    "stream_unsolicited": ("function", "agen", "0bdd19141cbc", "acp_turns"),
     "switches_by_relaunch": ("property", False, "a6632a57e602", "acp"),
     "session_activity_at": ("property", False, "c2eec8a41739", "acp"),
     "session_id": ("property", False, "bb418bb7ece8", "acp"),
@@ -180,6 +183,7 @@ _MEMBERS: dict[str, tuple[str, object, str, str]] = {
     "wait_for_compaction": ("function", True, "1d8ef804d52e", "acp_turns"),
     "wait_for_declared_mcp": ("function", True, "921c3727b83c", "acp"),
     "wait_turn_done": ("function", True, "48da118c69ff", "acp"),
+    "watch_agent_turns": ("function", False, "42d751137554", "acp_turns"),
     "withheld_credentials_notice": ("property", False, "bb418bb7ece8", "acp"),
     "work_scratch_dir": ("property", False, "d921fd8d443d", "acp"),
 }

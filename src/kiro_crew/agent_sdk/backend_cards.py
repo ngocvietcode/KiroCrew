@@ -445,6 +445,22 @@ OFF_CARD_SETS: Mapping[str, str] = {
         "reader loses by choosing another harness. A wrong membership forwards a "
         "command the acquired provider cannot serve, which is a defect"
     ),
+    "ACP_BACKENDS_HARNESS_OWNED_SLASH_COMMANDS": (
+        "whether the dashboard forwards every leading-slash word to the harness raw, "
+        "rather than only kiro-cli's command names. It selects a command-dispatch path "
+        "for a harness that resolves its own commands, not a feature a reader gains by "
+        "choosing it. A wrong membership either sends prompt text to the harness as a "
+        "command with no context, or hands one of its own commands to the model as "
+        "text, which is a defect"
+    ),
+    "ACP_BACKENDS_NATIVE_WORKFLOWS": (
+        "whether workflows run on the harness's own engine instead of Crew's. "
+        "Workflows run on every harness either way, and while the native route is "
+        "behind a developer opt-in, someone choosing a harness cannot yet act on "
+        "the difference. A wrong membership sends workflow calls to an engine "
+        "that does not serve them, which is a defect. It earns a card line when "
+        "the opt-in becomes a default"
+    ),
     "ACP_BACKENDS_LOCAL_CLEAR": (
         "whether the dashboard answers /clear itself or hands it to the harness. "
         "/clear drops the conversation on every harness either way, so a reader "
@@ -473,6 +489,13 @@ OFF_CARD_SETS: Mapping[str, str] = {
         "running the OAuth flow itself. Both paths end at the same Authorize banner, "
         "so a reader choosing a harness loses nothing; a wrong membership would answer "
         "a request the backend never sends, or leave a KAS server unable to sign in, "
+        "which is a defect"
+    ),
+    "ACP_BACKENDS_CREW_ENFORCES_SPEC_TOOLS_SETTINGS": (
+        "who enforces the agent spec's toolsSettings shell and write allowlists: the "
+        "harness, or Crew's gate for a harness that never reads them. The allowlist "
+        "holds either way, so a reader choosing a harness loses nothing; a wrong "
+        "membership refuses commands the harness allows or drops the allowlist, "
         "which is a defect"
     ),
     "ACP_BACKENDS_CREW_FIRES_SPEC_HOOKS": (
@@ -525,6 +548,12 @@ OFF_CARD_SETS: Mapping[str, str] = {
         "the fix, so it never runs wider than its Bot saved; a worker without "
         "them runs, and the card's saved-agent line already says whether it loads"
     ),
+    "ACP_BACKENDS_MATE_WORKER_MCP_TOOL_LIMITS": (
+        "whether the MCP half of a Bot worker's single-tool switch-offs is honoured. "
+        "A worker with such limits on a non-member is refused before spawn with an "
+        "error naming the fix, so it never runs wider than its Bot saved; the "
+        "single-tool line above already covers a native-tool switch-off"
+    ),
     "ACP_BACKENDS_SPEC_SERVERS_OFF_WIRE": (
         "which channel carries the agent spec's own servers to the session, read by the "
         "unresolved-ref detector. The servers arrive either way; a wrong membership is a "
@@ -564,6 +593,13 @@ OFF_CARD_SETS: Mapping[str, str] = {
         "asking the registry about a harness whose model ids it does not carry hides a "
         "control that works, and asking the option on a harness whose level rides the "
         "model offers one the model will refuse"
+    ),
+    "ACP_BACKENDS_DEFAULT_PSEUDO_MODEL": (
+        "which fact answers whether an unpinned session takes an effort level -- the "
+        "option the adapter built for the model it serves, or Crew's model registry. "
+        "The card already reports whether effort can be changed on this harness at all, "
+        "and a wrong membership is a defect, not an absent feature a card could mark: "
+        "outside it the control is hidden on every session that serves no concrete id"
     ),
     "ACP_BACKENDS_AGENT_STARTED_TURNS": (
         "whether a turn the agent starts on its own between prompts is read when it "

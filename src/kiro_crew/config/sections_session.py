@@ -15,6 +15,7 @@ from kiro_crew.config.sections_defaults import (
     DEFAULT_HARNESS_BACKGROUND_HOLD_SECS,
     DEFAULT_POOL_SIZE,
     DEFAULT_RECONCILE_MAX_KILLS,
+    DEFAULT_SEARCH_SCAN_WINDOW,
     DEFAULT_SESSION_TIMEOUT,
     DEFAULT_WATCHDOG_RSS_MAX_MB,
     SectionReader,
@@ -113,6 +114,31 @@ class SessionConfig:
             "so a change needs no restart.",
         ),
     )
+    idle_compaction: bool = field(
+        default=False,
+        metadata=_meta(
+            "Compact Idle Chats Before Cache Expiry",
+            "When a dashboard chat has been idle for slightly less than its "
+            "backend's prompt-cache lifetime, compact it once so your next turn "
+            "re-sends a summary instead of the full history. It saves credits only "
+            "on large chats you come back to: each idle compaction is an extra "
+            "model call that costs credits even if you never return, if you return "
+            "just after it starts you wait for it to finish, up to the compaction "
+            "wait limit plus about 20 seconds (5 minutes by default), "
+            "and the summary loses detail from earlier in the conversation. Only "
+            "chats whose context is at least Idle Compaction Minimum Context full "
+            "are compacted. Backends with an unknown cache lifetime are skipped.",
+        ),
+    )
+    idle_compaction_min_context_pct: float = field(
+        default=50.0,
+        metadata=_meta(
+            "Idle Compaction Minimum Context",
+            "Context usage percentage below which an idle chat is left alone. "
+            "Below about 40% a compaction costs more than re-sending the history "
+            "it replaces, so values below 40 are raised to 40 (40-90).",
+        ),
+    )
     compact_wait_secs: float = field(
         default=0.0,
         metadata=_meta(
@@ -196,6 +222,18 @@ class SessionConfig:
             "they end whatever this says. A record that comes due while another "
             "backend is selected waits until kas is selected again. Other backends "
             "ignore it.",
+        ),
+    )
+    search_scan_window: int = field(
+        default=DEFAULT_SEARCH_SCAN_WINDOW,
+        metadata=_meta(
+            "Session Search Scan Window",
+            "How many of the most recently changed session transcripts a session "
+            "search reads: the dashboard search, search_chat_history and a chat "
+            "channel's session picker. An older session is not searched, and the "
+            "results say how many were searched out of how many there are. A larger "
+            "window makes each search read more transcripts. Clamped to "
+            "100..100000. Read at each search, so a change needs no restart.",
         ),
     )
     watchdog_rss_max_mb: int = field(
@@ -405,9 +443,8 @@ class KiroCrewAgentConfig:
             "Tool stall hard cap override (s)",
             "Per-agent override for watchdog.tool_stall_hard_cap_secs on sessions "
             "running this agent. 0 inherits watchdog.tool_stall_hard_cap_secs. Applies "
-            "to UNKNOWN verdicts and to an opaque MCP tool whose only WORKING "
-            "evidence is movement in the runtime's process tree; every other "
-            "WORKING session is never acted on.",
+            "to UNKNOWN verdicts and to the WORKING readings that key bounds; every "
+            "other WORKING session is never acted on.",
         ),
     )
     # Per-agent compaction threshold. Same empty-inherits convention as the

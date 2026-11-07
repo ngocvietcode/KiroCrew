@@ -180,6 +180,7 @@ def __init__(
     self.channel_history = None
     self.dashboard_state = None
     self._background_tasks = set()  # prevent GC of fire-and-forget tasks
+    self._skills_sync_task = None
     # Approval-state persistence is scheduled while the MCP broker starts,
     # but its task waits for the dashboard/API readiness boundary.
     self._mcp_launch_approval_ready = asyncio.Event()
@@ -228,6 +229,10 @@ def __init__(
     # distribution refresher, so no rebuild starts into a closing gateway.
     self._profile_watch_task = None
     self._update_apply_deferred = False
+    # The timer that reopens admission an idle restart-gate answer paused.
+    self._restart_gate_hold = None
+    # Whose update pause admission is under: "restart_gate", "auto_update" or None.
+    self._update_pause_holder = None
     self._pending_update_respawn = None
     # Whether the pending restart serves a policy floor, and its target key:
     # kept beside the respawn so every retry runs under the same mandatory

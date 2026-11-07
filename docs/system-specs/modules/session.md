@@ -154,7 +154,7 @@ The owner-only `slot_focused` WebSocket frame also drives the warm task brief.
 The gateway keeps, in memory and bounded, when each thread was last on screen
 in any owner view: an owner frame naming it, an owner frame leaving it, and the
 close of an owner socket showing it all stamp that time. An owner frame naming
-a mate thread is a possible return only when no owner view already shows it, so
+a Bot thread is a possible return only when no owner view already shows it, so
 watching a thread, a re-sent frame, and a second window never qualify. Time
 away runs from the latest of the last-on-screen time, the owner's last genuine
 (non-injected) user message, and the last brief claim row; the two durable
@@ -171,11 +171,11 @@ repeated focus frames stay cheap. A return while the thread runs a turn
 waits for the turn to end, up to 30 minutes, while the owner keeps the thread
 on screen. Each skip logs one debug line with the thread key and a fixed reason.
 
-A Crew Mode root (a root chat running a conductor) is eligible on the same
-rules as a mate thread, trigger included: a switch to another chat, from the
+An Ultra Mode root (a root chat running a conductor) is eligible on the same
+rules as a Bot thread, trigger included: a switch to another chat, from the
 sidebar or to another split-view pane, leaves it as a page hide does, because
 the owner's attention left it. Off the chat routes (Settings and every other
-page) the dashboard reports a Crew Mode root as no chat, though `activeSlot`
+page) the dashboard reports an Ultra Mode root as no chat, though `activeSlot`
 keeps it, and re-announces it when a route change enters or leaves the chat
 routes, so a reveal on Settings is not a return. Its workers and other chats
 are not eligible; a plain chat never gets a brief. Any thread that owns a work ledger (a conductor
@@ -203,10 +203,19 @@ brief is one fixed line ("Nothing new since HH:MM.", with the date when it is
 not today), posted as a plain message without a card or status chip, and no
 model call is made. The line claims nothing about what waits:
 a question asked in prose before the owner left is the message right above it.
-Otherwise the slot's `preparing` flag shows "Preparing your catch-up…" in the
-chat's working indicator while the gateway reads its inputs and makes one
-tool-free background model call; the finished message posts while the flag is
-still up, so it replaces the indicator in place. The claim and every staleness
+Otherwise the slot's `preparing` flag shows in the chat's working indicator
+while the gateway reads its inputs and writes the brief (the wake turn below,
+else one tool-free background model call); the finished message posts while the
+flag is still up, so it replaces the indicator in place. The flag carries a
+caption the gateway builds (`warm_task_brief_checking.py`) from the inputs the
+brief already holds: the non-zero counts of pull requests it read on GitHub (a
+failed read is not counted), the brief's work items (open ones, plus any that closed
+while the owner was away) and running worker chats, then the goal, redacted and
+cut to 60 characters ("Checking 2 PRs on GitHub, 3 tasks for “…”."), or the goal
+alone when every count is zero. The slots frame sends it as `preparing_text`
+with the language it is written in, `preparing_lang`; a client shows it only
+when that is its UI language, and its own translated "Preparing your catch-up…"
+otherwise. The claim and every staleness
 check use the first read's fingerprint; what the brief says comes from the
 re-read made once the claim is on disk, so a worker report that lands in
 between is not missed. Just before posting, the gateway re-reads the "Waiting on
@@ -227,8 +236,11 @@ ask is never brought back);
 anchor, and session-ledger events after it, each with its source (worker
 report, conductor decision, work ledger or session ledger) and `HH:MM`
 time; a PR's live state is not listed here, since the read cannot tell when
-it merged, and stays in `live_prs`);
-`live_prs`; `transcript_since_owner` (the
+it merged, and is a checked fact);
+`checked_facts` (what the gateway itself read, numbered `f1`, `f2`, ...:
+each pull request the live read covered, one whose read failed stating
+only "not checked since HH:MM", then every work item in `open_items`, from
+the task list; `warm_task_brief_facts.py`); `transcript_since_owner` (the
 owner's last genuine message and every turn since, whole; over budget the
 oldest drop first); `open_items` (open items, and terminal ones that changed
 while the owner was away, questions and blocked first); `goal` (conductor
@@ -236,12 +248,13 @@ goal, else session-ledger goal, else the owner's newest message);
 `goal_progress`; and `owner_recent_messages` (the owner's last three genuine
 messages, which pick the reply language and the script of the fixed lines).
 
-The live read covers only pull requests the open asks name, at most five,
-through the structured monitor's GitHub probe (`GitHubPullRequestProvider`).
+The live read covers the pull requests the open work items hold, at most
+five, through the structured monitor's GitHub probe (`GitHubPullRequestProvider`).
 A PR's repository comes only from ledger data or a full PR URL: each open
 question or blocked item's own PR (its `pr`, or its acceptance's `pr`, in its
 acceptance's `repo`), then every `https://github.com/<owner>/<repo>/pull/<n>`
-URL in the pending ask's text and choices and in those items' text. A bare
+URL in the pending ask's text and choices and in those items' text, then each
+other open item's own PR. A bare
 `#N` or a written `owner/repo#N` is never resolved to a repository, so it is
 not read. PR links in the card and buttons for the pending choices come in
 follow-up changes. Each answer
@@ -250,9 +263,52 @@ total on live reads, both attempts included (`LIVE_READ_TOTAL_SECS`); at the
 limit the welcome goes out with the cached reads, and every PR still being read
 is `checked: false`. Every entry carries `read_at`, or
 `checked: false` with `not_checked_since` (the last good read, or `never`).
-The prompt allows merged, green, approved or conflict states only from
-`live_prs` or a change newer than the away time; anything else is written as
-"not checked since HH:MM".
+The model returns its catch-up lines as `lines` (at most 12), each
+`{text, kind, facts}` with `kind` one of `pr`, `task`, `file`, `deploy`,
+`ticket`, `none`. Before the grounding scans the gateway keeps a line only
+when every id in `facts` is a key of the fact table, a `pr` or `task` line
+lists a fact of its own kind (a `none` line needs none); only a wake check
+is a `file`, `deploy` or `ticket` fact; no text is scanned for this. `body`
+is asked for pictures only; the gateway enforces no picture count.
+Known limit: a `none` line naming a task or file is not caught; a pull
+request in one still fails the `#N` grounding check. Words in `body` are not citation-checked
+either; the grounding checks still read them. Kept lines are stored
+in `meta.brief.lines`. The card lists the facts under "Checked just now"
+(`meta.brief.checked`: `id`, `kind`, `label`, `values` (machine values),
+`source` (`github` or `tasks`), `read_at`), translated by the card, each led by a superscript mark; each line draws the
+marks of its own `facts`. The secret scan reads these strings, and a
+grounding miss drops them. The result row stores `facts_digest` (the ledger digest, what
+waited and each live read, without read times); when the newest delivered
+brief's digest equals the new one and the thread said nothing since the away
+anchor, the return sends nothing and calls no model. A PR whose read failed
+is written as "not checked since HH:MM", citing its fact.
+
+**Wake turn** (`warm_task_brief_wake.py`, RFC section 3.8 as amended
+2026-11-05). On the first write of a return, before the one-call brief, the
+gateway runs one turn of the thread's crewmate in a fresh session
+(`thread:<slot>:warm-wake`, a dashboard surface for governance and the
+audit log, destroyed after) through
+`DashboardState.run_background_turn`, under `ToolApprovalPolicy.READ_ONLY`
+(the Reads mode's classifier with reject as the fallback, so no approval card
+and no write: it closes no task and writes no ledger) and the read-only spec
+of a thread reply (`publish_readonly_spec`, or `side_read_only`). The prompt
+is the one-call prompt with its tool ban replaced: the turn may read files,
+deployments and tickets, its calls are numbered `t1`, `t2`, ... in call
+order, and it returns the same JSON plus `checks`, each
+`{id: c1..c8, kind: file|deploy|ticket, label, result, tool_calls}`. A check
+stays only when every call it cites completed in this turn; it takes the next
+`fN`, `source: wake`, and `evidence` (the cited calls' tool-call ids, the
+only proof stored), and lines citing its `cN` are renamed to it. Limits:
+`WARM_TASK_BRIEF_WAKE_TIMEOUT_SECS = 180`, `WARM_TASK_BRIEF_WAKE_MAX_TOOL_CALLS = 15` (`max_turns`),
+`WARM_TASK_BRIEF_WAKE_MAX_PER_THREAD_PER_DAY = 6` per chat per local day (in memory: a gateway restart
+resets the count). It runs only when the crewmate's own chat runs on the
+default harness the wake session starts on (no pin or member route
+elsewhere). The one-call brief runs instead, once, on a timeout, a failed
+or brief-less turn, the cap, or a harness that does not qualify. A typed
+owner row, a reset or a close during the wake stops it
+(`cancel_warm_task_brief`) and abandons the brief: no one-call brief is made,
+since none could post. Nothing is retried, and a retry after a changed snapshot
+never wakes.
 
 The prompt asks for parts in order: the goal, what changed since the owner
 left (each fact with source and time), numbered asks (what, why only the
@@ -282,7 +338,7 @@ post: the secret scan on its whole `content` and each `meta.brief` field,
 the PR, SHA and time scans on the model-written strings only (each
 `meta.brief` field and the body as `content` carries it; the gateway's own
 waiting cards are not model text). Any grounding miss drops every model
-field, never masks or edits one. Every scanner reads the same three views
+field, never masks or edits one; the checked-fact line rule runs before the scans. Every scanner reads the same three views
 of its text, built by one function: the canonical form (HTML entities
 decoded until stable, then NFKC) as written, with tags, comments and link
 syntax removed until none is left so the halves around them join, and that joined form with
@@ -293,9 +349,18 @@ the verified set (a live read, the snapshot or the owner's request, read by
 Before posting, the gateway runs the RFC's section 3.9.6 output check over
 every model field, the whole body included: every commit SHA must appear in
 the snapshot, and every HH:MM must appear in the snapshot or be the prompt's
-"as of" time. On a
+"as of" time. An unbacked SHA or time alone keeps the brief: each one gets
+the `_UNVERIFIED_TEXT` tag for the owner's language right after it in every
+model field, and the secret, PR and SHA/time scans run again on the tagged
+strings; a wake check's `label` and `result` are tagged like model fields.
+A value the tag cannot sit beside is still a miss: one without whitespace
+before it and whitespace or sentence punctuation after it (split by markup,
+in inline code or a link, or inside `17:05:30`), any value in a body that
+holds a fenced block or a widget, or one whose tagged field would pass what
+the card keeps (240 UTF-16 units a field, 6,000 characters the body). On any other
 miss every model field is dropped and the card posts with the gateway's
-waiting cards and the fixed failure line as its headline. The body may carry one
+waiting cards and the fixed failure line as its headline. Both paths store
+`grounding_miss` on the row. The body may carry one
 picture the model chooses when it helps the owner act: a mermaid block, a
 markdown table or an `<mcwidget>`, with no fixed template; the prompt forbids a
 bare "N of M done" line, links and images. A separate `widget` field the model
@@ -323,7 +388,7 @@ in the colour `#007bff`, or cut by a field cap's closing `…` names no PR) in a
 model-written field that neither the prompt's input nor the original
 request named fails the result, and the
 fixed failure line posts instead.
-The result is one mate message: `meta.brief` holds the fields and `content`
+The result is one Bot message: `meta.brief` holds the fields and `content`
 holds the same brief as labelled plain text; there the body's widget becomes a `[widget]` mention, links keep only their text and bare addresses become code, because a reply thread's parent and history draw `content` under the chat profile. The transcript draws `meta.brief`
 as a card (`WarmBriefCard`) in the order status and headline, the waiting
 cards (`WarmBriefWaiting`), body, What you asked, Done, Next, then the `extra`
@@ -521,8 +586,8 @@ Resolved dispatch bindings use the canonical `default` name for Global memory,
 including when restored from a captured execution record. Equivalent aliases
 therefore compare equally without changing the selected conversation identity.
 A `template` record's provider template is dispatched exactly. A `member`
-record runs the crewmate conductor whenever the member's current `kiro_agent`
-binding owns a crewmate file, even when the record kept an older template; any
+record runs the Bot conductor whenever the member's current `kiro_agent`
+binding owns a Bot file, even when the record kept an older template; any
 other member runs its recorded template
 ([crew-mode](crew-mode.md), `mate_worker.member_record_template`).
 
@@ -560,6 +625,10 @@ TRANSCRIPT is persisted like any other session's -- the user reopens an
 incognito or temporary chat from History, before or after a restart -- and what
 the mode withholds is everything derived FROM it: consolidation, lessons,
 memory injection, the session summary, workflow and task snapshots. The
+harness's OWN record of the session is deleted when the provider shuts down
+(`AcpProvider.cleanup_session`): kiro-cli's `sessions/cli/<sid>.json` + `.jsonl`,
+or on the claude backend Claude Code's `projects/<project>/<sid>.jsonl`,
+`<sid>/` and `file-history/<sid>/` (`agent_sdk/claude_transcripts.py`). The
 metadata line is the file's privacy contract, and both slot save and
 turn-start binding treat it as a ratchet. When a writer tightens a line held by a
 live slot, the slot follows that mode on the event loop and its restricted-key
@@ -608,17 +677,17 @@ cleanup does not read durable session metadata. Tab close retires its nudge loop
 before other asynchronous work. After the last consumer and provider stop, cleanup
 releases only the captured identity, preserving any replacement session carrier.
 
-**Crew Mode** has no field of its own. It is a chat on a conductor template
-(`kiro_crew/crew_mode.py`): a chat is in Crew Mode exactly when it is a root
+**Ultra Mode** has no field of its own. It is a chat on a conductor template
+(`kiro_crew/crew_mode.py`): a chat is in Ultra Mode exactly when it is a root
 session on a conductor template, in the `template` namespace. Every conductor is Crew
 Mode: `crew_mode.conductor_agents` is the one set, every
-shipped conductor (the Crew Mode conductor, team lead, pipeline, security and ledger
+shipped conductor (the Ultra Mode conductor, team lead, pipeline, security and ledger
 conductors) plus the configured `agent.crew_mode_agent` and `CONDUCTOR_ALIASES`. A
-chat on the agent its own stamp names is Crew Mode too (`crew_mode.runs_crew_mode`):
+chat on the agent its own stamp names is Ultra Mode too (`crew_mode.runs_crew_mode`):
 the stamp (`crew_mode_agent`, on the metadata line and the slot row) only marks the
-chat as Crew Mode until the migration moves it. `agent.crew_mode_agent` is the one
+chat as Ultra Mode until the migration moves it. `agent.crew_mode_agent` is the one
 place that names the conductor; when it changes, or an update ships a new default,
-`dashboard/crew_mode_migration.py` moves every Crew Mode root onto it through
+`dashboard/crew_mode_migration.py` moves every Ultra Mode root onto it through
 `switch_slot_agent` (busy roots at their next idle point), keeps the work ledger keyed
 on the session, and writes one `crew_mode.migrate` audit line per move. The config
 watcher starts the migration as a background task (`schedule_on_config_change`), off
@@ -642,21 +711,21 @@ for the task that owns the new name, so no false notice is posted. A name found
 unusable is re-checked on every idle-loop tick, so a
 template installed later is picked up without a config edit. The recorded name
 advances only when every live root is on the target. A configured name that is not an agent template that resolves in the
-`template` namespace (a typo, or a name that is only a crewmate's; a crewmate sharing an
+`template` namespace (a typo, or a name that is only a Bot's; a Bot sharing an
 installed template's name does not make the template unusable) moves nothing: it is logged as an error, named in one notice, and
 `crew_mode.crew_mode_agent()` keeps answering the conductor last applied, so new
-Crew Mode chats still turn on. A migration move counts no `turned_on`. The start pass
+Ultra Mode chats still turn on. A migration move counts no `turned_on`. The start pass
 learns closed roots from saved metadata (`crew_mode_migration.learn_closed_roots`,
 `crew_mode.note_roots`), off the boot path, and pushes a slot frame when a newly
 learned root holds a live slot, so a worker whose root's tab was closed before this
 process ran stays out of the session list by the persisted lineage. The start pass
-writes no stamp: a conductor root from before Crew Mode had a switch is Crew Mode by
-its template alone, and the stamp means the chat TURNED Crew Mode on, which is what
+writes no stamp: a conductor root from before Ultra Mode had a switch is Ultra Mode by
+its template alone, and the stamp means the chat TURNED Ultra Mode on, which is what
 gates the folder rule, so backfilling it would take an old chat's folders away on a
 restart; the migration's own move keeps an empty stamp empty for the same reason, so a
 root it moved onto a conductor the config later stops naming is an ordinary chat again
 (nothing hidden, nothing lost: the person can switch it). History and the session
-search still list a Crew Mode root's dispatched sessions. A remote peer's `crew_root` and `crew_mode_root` stamps survive the peer
+search still list an Ultra Mode root's dispatched sessions. A remote peer's `crew_root` and `crew_mode_root` stamps survive the peer
 row allowlist (`crew_mode_root` only as a real `true`). Once the root has a user message (in its window, or rows trimmed to disk), switching it to any other agent is refused `409
 crew_mode_locked` (`agent_switch._crew_mode_lock_refusal`, read before agent resolution
 and again in the no-await window that commits the switch, so a first message that lands
@@ -665,10 +734,10 @@ mid-turn is vetoed in `chat_runner`; a switch onto the configured conductor in t
 `template` namespace is the one exception, whoever asks (the migration, or a person
 moving a root the migration never visited). Before the
 first user message a switch onto a template that is not a conductor passes: that is
-Crew Mode turned off. The agent
+Ultra Mode turned off. The agent
 catalog (`GET /api/agents/catalog`) carries `crew_mode_agent` and `conductor_agents`, so a
 client reads them instead of naming a conductor itself.
-Turning Crew Mode on is an ordinary
+Turning Ultra Mode on is an ordinary
 `POST /api/chat/slots/{slot}/agent` naming the configured conductor in the `template`
 namespace; the agent picker is the way in.
 Which agent conducts is read where it is used: `crew_mode.crew_mode_agent()` asks
@@ -682,7 +751,7 @@ conductor's: a `work_report` `question`/`blocked` lands on its ledger item and w
 the conductor, which answers or asks the person in its own chat and relays the
 answer. The two rules below are defined and tested but off
 (`crew_mode.APPROVAL_ROUTING_LIVE` is `False`) until the Crew panel that shows the
-person a crew member's question lands and turns them on, as the Crew Mode decision
+person a crew member's question lands and turns them on, as the Ultra Mode decision
 records (each part inert until the UI that uses it arrives); until then every
 conductor and crew member asks as today. A crew member's `ask_question` is refused on both ask routes
 (`409 crew_worker_asks_conductor`, `ask_question._crew_worker_refusal`) with the
@@ -702,7 +771,7 @@ editable transcript metadata). `session_send` and `session_stop` keep asking, as
 the goal-conductor skill states: a send runs as the target's user turn under the
 target's grants. Any other call, a subagent's or one on the claude backend (whose
 requests do not say which session sent them) included, keeps asking. A `blocked`
-or `question` report on a Crew Mode board counts
+or `question` report on an Ultra Mode board counts
 once in `kirocrew.crew_mode.worker_waits`, and a close counts the run in
 `kirocrew.crew_mode.runs_finished` and `steers_per_run`
 (`metrics.crew_mode.board_is_crew_mode`).
@@ -721,8 +790,8 @@ conversation's own text approvals, which the card trust already covers.
 `trust_carries` is `_trust` that is NOT card-scoped: `session_create`, forks and the
 workflow ceiling read it, so the sessions a card-trusted worker opens are born
 asking, on the same card. A revoke clears `_trust` and writes `""`, so a subagent
-spawned after it asks again; one already running keeps the policy it was given at
-spawn (`subagent_manager.turn_session`).
+spawned after it asks again, and one already running loses its `parent_policy=auto`
+grant on its next tool request ([subagent](subagent.md) § Revoked parent trust).
 Trust is in memory only and never persisted. A pending
 approval's slot row carries `trust_grantable` (the slot approve route's own proof
 that Trust may be offered) and, for a coordinator request such as a spawn,
@@ -785,7 +854,25 @@ Enrolled members prepare capabilities only when allocating a new runtime.
 verifies the saved materialization off-loop before provider construction. It
 passes the immutable template explicitly while preserving the canonical member,
 member memory binding, history key, caller model and approval policy. An explicit
-or resumed cwd wins; otherwise the member's configured workspace is used. The
+or resumed cwd wins; otherwise the member's configured workspace is used. A
+resumed cwd is the one the session map recorded, kept only while it is still a
+directory. A resumed cwd, or an explicit one from a caller that passes
+`fallback_hidden_cwd=True` (the dashboard chat's turn and eager start, which show the
+notice), is dropped when it is inside an earlier process's scratch tree; any other
+caller keeps its explicit cwd, so a sub-agent's start there fails loudly instead of
+running in another repository: the sandbox hides every scratch tree but the spawn's own
+(and a `shared_scratch` tree it is handed), so a child started there could not read
+its working directory and every MCP server it launched failed to spawn. The session
+then starts in its default directory, and the provider carries a
+`hidden_scratch_cwd_skipped` `startup_notice`. The chat's stored folder is never
+changed, so each fresh start of that chat falls back again; the dashboard shows the
+notice, translated, at most once per chat per gateway run (an in-memory flag on the
+slot, `_hidden_scratch_notice_shown`), and the turn describes the folder the session
+runs in (`chat_turn.turn_spec_hooks._fallback_turn_project`).
+With `agent.sandbox` off after the governance floor nothing is hidden and the cwd is
+kept, and so it is on native Windows, where a Kiro spawn is delegated to Kiro's own
+sandbox and no scratch-root mask is applied
+(`session_allocation_parts/get_or_create._stored_cwd_is_hidden_scratch`). The
 cwd may name a different project than the one the capabilities were saved in
 (a folder's project directory, for example). Startup is refused with
 `project_identity_changed` only when that project resolves a different Parent:
@@ -1155,10 +1242,10 @@ to the conversation the next workflow reuse ends.
   later tick. Only a process running the session cleanup loop sweeps, so a standalone
   `kirocrew run` that ends before its entries are due leaves them for the next process that
   runs the loop, such as the gateway.
-- **Starting the loop.** The cleanup loop otherwise starts only with the first ordinary
-  allocation (`get_or_create`). `open_task_session` starts it when it sets a delay, and
-  `SessionManager.start_pool` starts it when entries wait from an earlier process. A workflow
-  worker's session comes from `get_or_create`, which starts it already.
+- **Starting the loop.** `SessionManager.start_pool` always starts the cleanup loop, so a
+  gateway that never allocates still runs the boot sandbox reclaim, the periodic sweeps and
+  this hook. `get_or_create`, and `open_task_session` when it sets a delay, start it again; the start is
+  idempotent. A workflow worker's session comes from `get_or_create`, which starts it.
 - **Protection.** An entry has the host delete the record it names, so
   `released-sessions` is a data-home leaf written by Crew's own processes outside the
   sandbox (the gateway, or a standalone `kirocrew run`), registered where
@@ -1572,24 +1659,24 @@ against sweep completeness, and are torn down at `close_all`.
   tool row: a tool row later than it means the model kept working past the
   directive, and a gateway that died in that work must not hide behind it.
   `test_nothing_to_do_directive.py` pins the two constants against the
-  selectors mirror. The Mate chat draws nothing for it: tool rows are
+  selectors mirror. The Bot chat draws nothing for it: tool rows are
   machinery there
   (`crewmateBubbles.MACHINERY_ROLES`), so the quiet turn leaves that surface
-  exactly as it was. The Mate chat drops a `notice` row by an ALLOWLIST of
+  exactly as it was. The Bot chat drops a `notice` row by an ALLOWLIST of
   machinery `meta.kind`s (`crewmateBubbles.CREWMATE_HIDDEN_NOTICE_KINDS`), never
   by role: the ladder's own cards — the continue and give-up rungs and the
   post-compaction resume — carry `meta.kind = "empty_turn"`
   (`chat_utils.EMPTY_TURN_NOTICE_KIND`), and the automation arm/revision/stop
   refusal carries `meta.kind = "arm_refusal"`
   (`session_directive_apply.ARM_REFUSAL_NOTICE_KIND`); both are the runtime
-  talking about its own machinery, so a person reading a mate has nothing to
+  talking about its own machinery, so a person reading a Bot has nothing to
   do with them. Every notice OUTSIDE that allowlist still draws, because it
   names something the person may have to act on (a dropped queued message, a
-  model-fallback hint). The refusal still reaches the crewmate: it is also
-  queued into the mate's NEXT turn with `chat_utils.AUTOMATION_NOTICE_KIND`,
+  model-fallback hint). The refusal still reaches the Bot: it is also
+  queued into the Bot's NEXT turn with `chat_utils.AUTOMATION_NOTICE_KIND`,
   so it drains as an `inject` row (never a `user` row shown as the person's own
-  bubble) the turn carries, and the mate can stop and re-arm the loop
-  itself. That inject row is model-only machinery: the mate chat hides it
+  bubble) the turn carries, and the Bot can stop and re-arm the loop
+  itself. That inject row is model-only machinery: the Bot chat hides it
   via `MACHINERY_ROLES` and every other surface suppresses it too
   (`transcriptRenderers` `automation_notice_inject` draws nothing), so the raw
   `[Automation notice] …` text never appears as a row beside the refusal's own
@@ -1778,6 +1865,34 @@ against sweep completeness, and are torn down at `close_all`.
   and one-shot gates remain unchanged; trusted or global auto-approve sessions
   retain the existing notice-only downgrade.
 - **Compaction threshold precedence** (`SessionManager.effective_autocompact_pct`): the session's own override (the context popover slider, `set_autocompact_pct`), else the default the session's crew member declares (`agents.<name>.autocompact_pct`; 0 or a negative value inherits, a positive value is held to the global's 5–90 range at load), else the global `session.autocompact_pct`. The crew is the identity the allocation resolved (`_Session.capability_member`), read against the manager's live `_cfg`, so a config edit reaches running sessions on their next reading and a session with no crew follows the global. The value cannot live in the kiro agent JSON, which kiro-cli rejects on any unknown field. `GET/POST /api/chat/slots/{slot}/autocompact` report it as `agent_pct` with the crew's redacted name as `agent` (both null when none is declared; a slot with no live session answers for the crew its next session starts under) so the popover shows which default a cleared slider returns to. GET also reports `harness_managed`: the backend id when the session compacts on its own (a member of `ACP_BACKENDS_HARNESS_MANAGED_COMPACTION`, KAS), else null, read off the live provider's `harness_managed_compaction_backend` or, with no live session, from `select_provider_backend` for the session's next start. Only while the session follows the global (no override and no agent default, `harnessManagedNoteBackend`), the popover shows a note that the backend compacts on its own and that setting a threshold there compacts sooner, because the turn-end gate declines Crew's `/compact` for such a backend at the global threshold and honours an explicit one. The `kirocrew chat` REPL compacts at the same number for the crew its run resolves to.
+- **Idle compaction before cache expiry** (`session.idle_compaction`, off by default; `session_idle_compaction.py::IdleCompaction`, held by the coordinator as `CompactionCoordinator.idle`, which owns the timer, the generation check, the live-signal probes and `compact_if_idle`): a dashboard chat that goes quiet is compacted once, a little before its backend's prompt cache expires, so the next turn does not re-send the whole history at the uncached rate. Each idle compaction is an extra model call and loses detail, which the setting's help says.
+  - **Lifetime per backend** (`agent_sdk.backends_turns.PROMPT_CACHE_LIFETIMES`): kiro 300 s, codex 1800 s, claude 300 s or 3600 s only when `CLAUDE_CODE_PROMPT_CACHE_TTL` is `5m` or `1h` in the backend's launch environment (the gateway environment, then the client's `agent.env` snapshot, then the session's own variables), every other backend skipped. The timer fires at the lifetime minus 45 s for a lifetime of 600 s or less (255 s on kiro), else at 90% of it (27 minutes on codex, 54 on a one-hour claude cache), counted from the start of the turn's last model request, not from the turn end.
+  - **Anchor** (`session_idle_compaction.provider_request_floor`, reading `EssentialDelivery.request_floor`): the provider's prompt delivery records the start of each stream before its send and keeps it only once the stream yields model output (a stream with none, such as `/context`, leaves the previous value, and a stream the caller marks `requests_model=False`, kiro's native `_kiro.dev/commands/execute` path, never moves it), and moves it to the moment a tool call ended once model output follows that end, so it is never later than the last request's start. `arm_after_turn` arms for `floor + fire time - now`; when that is not positive, or the provider has no floor, it arms nothing and logs it.
+  - **Arm**: `check_context_usage` calls `IdleCompaction.arm_after_turn`, which arms one per-session timer at turn end, after ending the previous one, when the setting is on, the key is `dashboard:`, the threshold check declined with `below_threshold` or `cooldown` (so a threshold compaction started on this reading is never followed by an idle one), the reading is confirmed and at least `session.idle_compaction_min_context_pct` (default 50, clamped at load to 40 through 90), and the backend's lifetime is known. The timer uses an injectable monotonic clock and scheduler (`CompactionDeps.idle_clock` / `idle_schedule`; default the loop's `call_later`).
+  - **Cancel**: every `get_or_create` and `try_acquire` on the key (a claim), every `_advance_session_generation` (reset, recycle, removal), and a config change that leaves the setting off (`config_apply._on_config_change` calls `IdleCompaction.cancel_all`). Each arm takes the next number from one counter shared by every key and records it as the key's generation; a cancel drops the key's entry, so the table holds only keys in an idle stretch. A fire names the generation it was armed with, so a stale fire returns `stale`. A fired timer is consumed before its check runs, and the idle compaction's own `/compact` never reaches `check_context_usage`, so an idle stretch is compacted at most once.
+  - **Fire** (`compact_if_idle`): the asynchronous sub-agent probe runs first (an error reads as attached). Then, with no await before the commit: the setting and generation; the coordinator's own gate ladder called as `_gate_rung(..., skip_threshold=True)`, which drops only `below_threshold` and still answers `cc_managed`, `compact_unsupported`, `unconfirmed`, `in_progress` and `cooldown`; then `pending_verdict` and `unmanaged`, so the idle trigger never reaches the recycle arm; the minimum context; and the live signals: a held turn permit, a live `turn_owner`, `lifecycle_turn_active`, a non-empty session queue, a recycling marker, `provider.has_active_turn()`, the completion-injection probe, and the dashboard's idle probe (`set_idle_compaction_probe`, installed with the sub-agent probe by `wire_session_subagent_probe`; `dashboard.chat_utils_completion.idle_compaction_blocker` refuses a session with no open tab, a running or reserved slot turn, a starting wake, a slot queue, an open question card, a slot compaction, synthesis or sub-agent delivery in flight, a pending approval naming the slot, an unfinished workflow run for the session (`workflow_service.registry.has_pending_work_for`), or an active auto-nudge or monitor loop). A missing or raising probe answers busy. Last, the cache anchor is rechecked (`_cache_expired_ago`): when `provider_request_floor + prompt_cache_lifetime_secs` is no longer in the future on the timers' clock, a callback the event loop delivered late declines as `expired` (the age adds the time the host spent suspended since the arm, `IdleCompactionTimers.suspended_since_arm`, read from `platform_compat.boottime_now` beside the monotonic clock), logged once at INFO, because a compaction after the cache expired saves nothing and its notice would be false; an unreadable floor or lifetime is not read as expiry. Any decline ends the stretch; the next turn re-arms. On success it commits `_set_compacting` with `compaction_triggers[key] = "idle"` and awaits the owner's `_compact_session(key, pct)`, whose arms read the trigger from `compaction_triggers`.
+  - **Idle arm of `_compact_session`**: never waits for a held permit (`busy`), never recycles an unmanaged backend, and never takes `_await_cotenants` or the history-dropping `_restart_held` on a failed in-place `/compact`. It also skips `_reset_still_critical` on a still-critical reading. A reported `failed` status arms the ordinary cooldown and fires the callback with `success=False` and the `compacted_idle` outcome through `_settle_idle_failure`. The dashboard notice says that the idle compaction changed nothing. A user Stop settles through `_settle_cancelled`.
+
+    A `/compact` that reports no terminal status enters `_settle_idle_unconfirmed` with the permit held. `IdleCompaction.quiesce` cancels it through `provider.cancel` and drains a late status through `provider.wait_for_compaction`. `IDLE_COMPACT_CANCEL_ACK_SECS` bounds the cancel acknowledgement at 5 seconds. The drain uses the lower value of `IDLE_COMPACT_DRAIN_SECS` and `compact_wait_timeout_secs()`. This is 10 seconds unless the configured compaction budget is lower. A late `completed` status is success. A late `failed` status is failure. If no terminal arrives, Crew keeps the session, arms the cooldown, reports `unconfirmed`, fires the `compacted_idle` failure callback, and releases the permit. Crew does not tear down or restart the session because those actions can lose conversation history.
+
+    Only a provider whose `compacts_inline` capability is False records an unresolved terminal (`_reports_async_compaction_status`, read through `capabilities_of`; a provider with no capability record records nothing). Of the backends with a prompt-cache lifetime, that is kiro, which reports through `_kiro.dev/compaction/status`. The abandoned compaction can still complete, and the reader that drops its status cannot reach the session, so `CompactionCoordinator.consume_needs_reinjection` also asks the reader (`stale_compaction.take_provider_context_reinjection`): every prompt built while the status is owed carries the session's startup context, because the late `completed` can land in the pre-turn drain after the prompt is built, and one more prompt does after a reader dropped a `completed`. Claude and codex report terminal results inline, so their idle paths record nothing. The quiesce drain runs before the record is set. An abandoned compaction increments the per-reader count at most once. A user Stop records one unresolved terminal when it ends an idle compaction without a terminal. A threshold Stop records nothing.
+
+    The count has no time limit. Every queue reader that consumes or discards `_kiro.dev/compaction/status` applies the count first. This includes prompt dispatch, `wait_for_compaction`, the pre-turn drain, MCP readiness waits, MCP initialization drains, and the dedicated client's steer and initialization drains. While the count is more than zero, the reader discards each compaction status. Each discarded terminal decrements the count. A discarded `failed` status cannot arm `_COMPACTION_FAILED_TURN_BUDGET`. Thus it cannot produce `STOP_REASON_COMPACTION_FAILED` or a later session reset.
+
+    A shared runtime sends a compaction status with no session identifier to each session queue as an ownerless frame. If a handle has an unresolved count, an ownerless terminal decrements it and is discarded. The terminal can belong to a co-tenant, so it can end the debt early. With a zero count, the ownerless frame is yielded and its existing per-turn ownership guards apply.
+
+    A discarded `completed` status clears `_compaction_failed_at` and resets `last_prompt_stats` only when its frame is owned, and every discarded `completed` status advances the reader's delivery generation. `stale_compaction.sync_provider_compaction_delivery` runs at the start of each provider stream. It invalidates essential delivery when a generation changed, and on every stream while a reader behind the provider has an unresolved count, because the stream can consume the late `completed` after the receipt check. The session handle's pre-turn drain is one such reader. A discarded `failed` status changes no turn state.
+
+    `CompactionCoordinator._compact_in_place` reads `provider_has_unresolved_compaction_status` before it takes the turn permit. Its first threshold refusal for each debt logs at WARNING. Later refusals for the same debt log at INFO. It returns `busy` without a send, callback, cooldown, or restart while ownership is unresolved. A later threshold reading retries.
+
+    `stream_command("/compact")` and `compact()` on `AcpProvider` and `AcpSessionProvider` call `stale_compaction.provider_refuses_compaction` first. It consumes, without blocking, the owed statuses that wait on an idle reader: the handle's `_queue`, and the dedicated client's `_buffer` and `_mcp_notifications`. Other frames keep their order, and the notification floors still mark the same frames. A reader inside a turn keeps its frames. A refused `compact()` sends nothing and raises nothing, and the next `wait_for_compaction` returns `{"type": "failed", "summary": UNRESOLVED_COMPACTION_ERROR}` once. The next dispatch drops a refusal that no wait collected. Every channel `/compact` command and hard-threshold compaction follows `compact()` with that wait, so it reports a plain failure, and its exception arm, which calls `discard_conversation`, does not run. A refused `stream_command("/compact")` raises `AcpError`. The dashboard catches this error and appends a terminal error notice. It does not reset the session.
+
+    `AcpClient._reset_state` calls `stale_compaction.clear_stale_compaction_state`, which clears the count, the warning bit and the delivery generation, because a replacement process cannot send the old terminal. A session handle never binds a new native session, and a replacement handle starts at zero.
+
+    If the harness never sends the terminal, Crew compaction stays refused until the session is replaced or the dedicated client's process restarts, and each turn sends the complete essential context. A completion consumed in the pre-turn drain causes one more complete send on the next turn. Statuses still in the process pipe, or held by a pending request, are not read before the refusal. kiro-cli can still start a compaction by itself, although no capture shows it doing so (`agent_sdk/backends_turns.py`). If it starts one while the count is more than zero, the next status reader discards its statuses, and that terminal pays the debt, so Crew compaction resumes. With no such terminal, the context of that session can grow to the provider window. A discarded completion still resets the meter and invalidates essential delivery, but Crew does not surface its status. A drain interrupted by a force Stop settles as `cancelled`. A drain whose key changes hands settles as `absent`. A turn that claims the session while idle compaction holds the permit waits behind it.
+  - **Metric**: `kirocrew.context.compactions` carries `trigger` (`threshold` or `idle`), read from `compaction_triggers` by `_fire_compact_callback`.
+  - **Notice**: a successful in-place idle compaction reaches the compact callback with outcome `compacted_idle` (`COMPACT_OUTCOME_COMPACTED_IDLE`), which `_fire_compact_callback` picks when the recorded trigger is `idle`. The dashboard row then reads "Compacted at N% while this chat was idle, before its prompt cache expired." A threshold compaction keeps `compacted` and "Auto-compacted at N%."
+  - **Restart**: nothing is persisted. A restored session has no timer until its first turn ends, so its idle clock runs from after the restore.
 - **Crossing the threshold mid-turn** (`SessionManager.compaction_due_after_turn`, `chat_turn.recovery._notice_compaction_after_turn`): compaction still runs only after a turn ends. A dashboard turn whose reading crosses the effective threshold while it is still working gets, ONCE per turn, at the first tool-result boundary where every tool row above is done and no text segment is pending, one `kind="compaction"` row marked `meta.notice="compact_after_turn"` ("Context at N% (limit M%) — will compact after this turn", rendered by `CompactionCard` from the catalog as a calm info row with a clock glyph). It is a display row only: the model is not told anything and the turn runs on unchanged. `compaction_due_after_turn` reads the gate's own side-effect-free rungs (`CompactionCoordinator._gate_rung`, which `_compaction_gate_decision` delegates to after settling a pending verdict) and changes nothing; it is False while a pending verdict waits (its settlement can arm a cooldown) and on the recycle arm (a restart, not a compaction), so Claude-Code backends, harness-managed backends at the global threshold, uncompactable backends, an unconfirmed reading, a compaction in flight and an active cooldown get no row. Slash-command turns are skipped. The threshold and the end-of-turn trigger are unchanged.
 - **Context compaction**: at ≥ configured threshold (`session.autocompact_pct`, default 70%, valid 5–90), compacts **in place** on a member of
   `ACP_BACKENDS_COMPACT` — kiro-cli, claude, codex, opencode, goose, pi and copilot, plus KAS,
@@ -1986,7 +2101,7 @@ against sweep completeness, and are torn down at `close_all`.
   arrive without an attached child or a tracked harness-background launch;
   those frames receive only the bounded idle grace. Never expires the
   persistent keys (`_bg`, `_hb`). Dashboard per-tab sessions
-  (`dashboard:{slot_key}`) idle-expire like any other session. A crewmate's worker
+  (`dashboard:{slot_key}`) idle-expire like any other session. A Bot's worker
   session is one of them: its process is released, its conversation resumes on
   the next send, and `session_status` reports it as `process: released`.
   A key listed in `session.idle_exempt_keys` never expires on the idle clock,
@@ -2754,6 +2869,14 @@ answer); `queued`, the accepted spawns with no run yet (`queued_runs_async`) as
 unavailable; and `deliveries_inflight`, the results still being delivered to the
 slot. Ids and states only: no task text, agent name or result. The fields are read
 after the verdict, and a read that fails costs its own field, never the refusal.
+Two readers show them. The dashboard (`api/apiError.slotAttachedDetail`) puts one
+line naming each run and queued spawn as `id (state)` under the refusal's message,
+through `friendlyErrText` for every surface that shows it and beside the Reload
+alert's own copy, plus a could-not-check line when `runs` is `null` or
+`queued_partial` is true.
+Session-control's `target_busy` refusals (`session_reload`, `session_set_model`) and
+its `session_retry` / `session_continue` refusal append the same list to their
+message (`turn_control._name_attached`), so a driving agent sees what to stop.
 
 Eight properties are load-bearing on this boundary, and each fails toward the
 permissive answer if dropped. `edit-resend` carries all eight; the bullets name
@@ -3019,8 +3142,8 @@ The `side:` prefix is included so
 `/side` conversations never resume across KiroCrew restarts — each cold-start
 triggers `is_first_turn=True` in `build_side_message` which re-seeds the
 parent snapshot + accumulated side history.
-The `thread:` prefix (a reply thread on a mate chat message,
-[history](history.md#reply-threads-on-mate-chat-messages-dashboardchat_threadspy))
+The `thread:` prefix (a reply thread on a Bot chat message,
+[history](history.md#reply-threads-on-bot-chat-messages-dashboardchat_threadspy))
 is included for the same reason: `build_thread_message` re-seeds the whole
 envelope on a cold session.
 
@@ -3041,8 +3164,16 @@ envelope on a cold session.
 byte-order mark reads normally. A file that is not a JSON object starts the map
 empty, and the first write moves it to `session_map.json.corrupt-<utc>` before
 landing; a failed move fails that write and the state stays owed. A file whose
-read raises `OSError` is left alone, and every write raises until a restart reads
-it (`session_map_store._load`, `_write_payload`).
+read raises `OSError` is left alone, and every write raises until an async
+flush re-reads it or a restart does (`session_map_store._load`, `_write_payload`).
+The deferred flush and `aflush` all wait for one re-read, run in a worker thread
+and never under `_MAP_LOCK`; inline writes keep raising until it has run. It
+adopts the file beside the keys written since only when the file holds none of
+them and no entry in memory binds a Slack thread or a mirror, whose one-owner
+checks could not see the file (`_reread_after_failed_load`). A key removed in
+memory since then comes back from the file, as it would after a restart.
+Otherwise, or when the re-read fails or does not parse, writes raise until a
+restart reads the file.
 
 **Module layout:** `kiro_crew.session_map` is the import path and defines `SessionMap`
 itself: the constructor, the resume rule and both stale paths (`get`, `prune`, the per-read
@@ -3221,7 +3352,11 @@ state a close compensates is not all scoped the same way.
   metadata, its flush stamps no id and its save retires nothing, so a
   downgrade-deliver-reupgrade cycle replays already-delivered notes as
   duplicates — bounded harm, and the chosen at-least-once direction, but the
-  invariant silently does not hold across versions.) A close flushes the hold before
+  invariant silently does not hold across versions. A hold restored into an idle
+  slot, because a restart cut the turn that held it, is flushed by the next
+  directly started turn (`_api_chat_send` and the OpenAI-compatible route call
+  `slot_buffers.flush_restored_hold`) above that turn's user row: neither the
+  queue drain nor the cycle end runs before such a turn.) A close flushes the hold before
   its archive save, so each held note's visible row reaches the transcript a History
   resume reads; that path does not read `deferred_notes`, so before the flush a note
   the DELETE had answered 200 for left no row there. A note with no context half is
@@ -4009,7 +4144,7 @@ WeCom always steers regardless of `queue_mode`: its replies are bound to the
 inbound request, so a queued-then-drained reply can't be delivered later (see
 [messaging](messaging.md)).
 
-### Responsive human sends in a mate DM
+### Responsive human sends in a Bot DM
 
 `POST /api/chat?ws=1` accepts optional JSON `responsive: true`. Only the
 middleware-authenticated dashboard owner on an existing local member DM earns
@@ -4142,7 +4277,7 @@ provider sees the expanded request and gateway guidance; the transcript keeps
 the person's original command.
 
 **Question answers.** A native question on a live turn keeps its existing steer
-answer route, behind the plain mate UI, with the same gateway reply-first
+answer route, behind the plain Bot UI, with the same gateway reply-first
 guidance. An idle native/stateless card blocks no future, so its answer may start
 a responsive turn and the user-row append retires that exact stateless record.
 Blocking MCP asks keep their separate answer endpoint and live future; native
@@ -4773,10 +4908,10 @@ only when a `mirror` `ChannelLink` exists on the dashboard-side key:
 **Delivery** (`chat_turn.recipient._deliver_cross_surface_reply` /
 `_deliver_cross_surface_user_message`, via the shared `_resolve_mirror_target`
 preamble) is best-effort and gated on: Slack skipped (its own inline mirror); a
-registered transport with `supports_proactive_send` (Feishu is the shipped
-transport without it, so `/link` is rejected there; WeCom declares it, with
-per-target availability); and the `channels` governance ceiling via
-`governance_permits("channels", channel_type)`, so an operator policy
+registered transport with `supports_proactive_send` (every shipped transport
+declares it; Teams and WeCom with per-target availability); and the `channels`
+governance ceiling via `governance_permits("channels", channel_type)`, so an
+operator policy
 restricting outbound messaging is honored on this egress too (fail-closed on any
 governance error — matching the Slack path). Egress text is redacted through the
 canonical `redact_via_context` shim so a loaded companion's extra

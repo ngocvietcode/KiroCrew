@@ -60,6 +60,7 @@ if TYPE_CHECKING:
         is_unverifiable_path_refusal,
         logger,
         mcp_identity_ref,
+        mcp_title_to_ref,
         policy_alias_split,
         policy_aliases,
         security,
@@ -827,8 +828,7 @@ def _tier_deny_rules(facts: GateFacts, tier: GateTier) -> ToolHookResult | None:
 
 def _tier_mcp_auto_deny(facts: GateFacts, tier: GateTier) -> ToolHookResult | None:
     """The operator's own ``auto_deny_tools`` GLOBS, and only those, against the
-    ``_meta.kiro`` server/tool identity (verified or not) in the ``@server/tool``
-    spelling the grant tier uses.
+    call's MCP identity in the ``@server/tool`` spelling the grant tier uses.
 
     Plus ``Running: @server/tool`` and the bare ``@server``, so a server-level rule
     binds to every tool. A user who writes both lists in one spelling --
@@ -839,13 +839,30 @@ def _tier_mcp_auto_deny(facts: GateFacts, tier: GateTier) -> ToolHookResult | No
     shell text, and running them over a synthesized reference is the accidental
     widening :attr:`GateFacts.governance_mcp_ref` forbids. Not gated on
     provenance: a deny can only ever deny.
+
+    The identity is the ``_meta.kiro`` server/tool pair when the call carries one
+    (verified or not). A call with no server whose title is ``mcp__<server>__<tool>``
+    -- the only place a harness that sends no ``_meta.kiro`` (claude) names its MCP
+    tool -- is read through ``mcp_title_to_ref``, the last-``__`` split the
+    governance ceilings use. That reading feeds this deny and nothing else: the
+    title is agent-influenced, so no grant tier ever sees it.
     """
     call = facts.call
-    if call.mcp_server and facts.config.auto_deny_tools:
+    if not facts.config.auto_deny_tools:
+        return None
+    if call.mcp_server:
         tool_ref = mcp_identity_ref(call.mcp_server, call.mcp_tool)
-        for ref in (tool_ref, f"Running: {tool_ref}", mcp_identity_ref(call.mcp_server, "")):
-            if ref and any(_tool_matches(pattern, ref) for pattern in facts.config.auto_deny_tools):
-                return ToolHookResult.deny(f"Blocked by security policy: {ref}")
+        server_ref = mcp_identity_ref(call.mcp_server, "")
+    elif facts.normalized.startswith("mcp__"):
+        tool_ref = mcp_title_to_ref(facts.normalized)
+        server_ref = tool_ref.partition("/")[0]
+        if server_ref == "@":
+            return None
+    else:
+        return None
+    for ref in (tool_ref, f"Running: {tool_ref}", server_ref):
+        if ref and any(_tool_matches(pattern, ref) for pattern in facts.config.auto_deny_tools):
+            return ToolHookResult.deny(f"Blocked by security policy: {ref}")
     return None
 
 
@@ -1244,13 +1261,16 @@ def _command_matches_any(command: str | None, patterns: Sequence[str]) -> bool:
 
 
 def _tier_spec_shell_allowlist(facts: GateFacts, tier: GateTier) -> ToolHookResult | None:
-    """A KAS spec's ``toolsSettings.shell.denyByDefault``: refuse an unlisted command.
+    """A spec's ``toolsSettings.shell.denyByDefault`` on a harness that does not
+    read it (KAS, claude): refuse an unlisted command.
 
     On kiro-cli such a spec refuses every shell command its ``allowedCommands``
-    do not match. KAS has no rule for it, so the session handle stamps the spec's
-    usable patterns on its own agent's permission requests
+    do not match. KAS and claude have no rule for it, so the KAS session handle and
+    the claude direct client stamp the spec's usable patterns on their own agent's
+    permission requests
     (``AcpEvent.spec_shell_allowlist``; ``None`` when the spec does not set it, a
-    sub-session's or native sub-agent's request carries ``None`` too), and this row
+    sub-session's or native KAS sub-agent's request carries ``None`` too, a native
+    claude sub-agent's the parent's), and this row
     refuses a shell call (kiro-cli's ``execute_bash`` among its names, no MCP
     server behind it) unless its recovered command passes the same match the
     ``spec-builtin-grant`` row grants by (:func:`_spec_command_granted`: plain,
@@ -1356,15 +1376,16 @@ def _write_target_uncovered(target: str, patterns: Sequence[str], cwd: str) -> s
 
 
 def _tier_spec_write_allowlist(facts: GateFacts, tier: GateTier) -> ToolHookResult | None:
-    """A KAS spec's ``toolsSettings.fs_write.fallbackAction: "deny"``: refuse an
-    uncovered write, a relative target judged under ``spec_write_cwd``.
+    """A spec's ``toolsSettings.fs_write.fallbackAction: "deny"`` on a harness that
+    does not read it (KAS, claude): refuse an uncovered write, a relative target
+    judged under ``spec_write_cwd``.
 
     On kiro-cli such a spec refuses every file write its ``allowedPaths`` do not
-    cover, instead of asking. KAS has no rule for it, so the session handle stamps
-    the spec's usable entries, anchored at the session's directory, on its own
-    agent's permission requests (``AcpEvent.spec_write_allowlist``; ``None`` when
-    the spec does not set it, and on a sub-session's or native sub-agent's
-    request), and this row refuses a file write (:func:`_is_spec_write_call`, no
+    cover, instead of asking. KAS and claude have no rule for it, so the KAS session
+    handle and the claude direct client stamp the spec's usable entries, anchored
+    at the session's directory, on their own agent's permission requests (``AcpEvent.spec_write_allowlist``; ``None`` when
+    the spec does not set it, and on a sub-session's or native KAS sub-agent's
+    request; a native claude sub-agent's carries the parent's), and this row refuses a file write (:func:`_is_spec_write_call`, no
     MCP server behind it) unless every target it names is covered
     (:func:`_write_target_uncovered`, matched by
     :mod:`kiro_crew.platform.allowed_paths`). A write whose targets cannot all be
@@ -1467,6 +1488,44 @@ def grant_spec_builtin(
     if _operator_confirms(facts, names):
         return None
     if allow is not None and not allow(facts, names):
+        return None
+    return ToolHookResult.auto_approve()
+
+
+def _tier_batch_guard_grant(facts: GateFacts, tier: GateTier) -> ToolHookResult | None:
+    """A write-class MCP tool the agent spec auto-approves, which the batch write
+    guard kept at ``ask`` on KAS (``batch_guard.withhold_write_auto_approval``).
+
+    The guard runs inside ``approve_tool``, so a call the engine approves itself is
+    never judged. With the guard on, the projection gives each such write an
+    ``ask`` and records its ``@server/tool`` ref in ``spec_granted_builtins``; this
+    row answers the request it now raises, so the write still runs with no prompt,
+    and the transport's guard then refuses it only when it was batched with a read.
+
+    A ``grant`` row, after every deny tier and governance, and only when all hold:
+    not ``classifier_only``; the call's MCP identity is host-trusted; its
+    ``@server/tool`` ref is one the session's own projection recorded (a
+    sub-session's request carries none); the governance ceiling in this
+    judgement's context and every configured profile still let the ref skip the
+    gate (``governance.may_skip_gate``, ``any_configured_profile_governs``); and
+    no operator ``confirm_tools`` pattern names the call.
+    """
+    if facts.classifier_only:
+        return None
+    call = facts.call
+    if not call.identity_trusted or not call.mcp_server or not call.mcp_tool:
+        return None
+    ref = mcp_identity_ref(call.mcp_server, call.mcp_tool)
+    if not ref or ref not in call.spec_granted_builtins:
+        return None
+    from kiro_crew.platform.governance import may_skip_gate
+    from kiro_crew.platform.governance_profiles import any_configured_profile_governs
+
+    if not may_skip_gate(ref, getattr(facts.ctx, "governance", None)):
+        return None
+    if any_configured_profile_governs(ref):
+        return None
+    if _operator_confirms(facts, (ref,)):
         return None
     return ToolHookResult.auto_approve()
 

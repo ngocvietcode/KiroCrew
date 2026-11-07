@@ -2,7 +2,8 @@
  * Files and projects on the gateway host: worktree creation, recent
  * projects, directory, drive and file browsing, project git status/log/tree,
  * named workspaces, reveal/open, the file picker, diff, fuzzy search, path
- * completion, composer and Files-panel uploads and screenshots.
+ * completion, composer and Files-panel uploads, screenshots, and PlantUML
+ * diagrams drawn by the host's own `plantuml`.
  */
 
 import { COMPOSER_UPLOAD_PATH, uploadComposerFiles } from '../../utils/composerUpload'
@@ -40,6 +41,48 @@ function showHiddenFiles(): boolean {
   } catch {
     return false
   }
+}
+
+/** GET /api/project/tree: one folder level of a project directory. */
+export interface ProjectTreePayload {
+  root: string
+  dir?: string
+  paths: string[]
+  directories?: string[]
+  repo: boolean
+  truncated?: boolean
+  truncatedDirectories?: string[]
+  hiddenOnlyDirectories?: string[]
+  unreadableDirectories?: string[]
+  linkedDirectories?: string[]
+  nestedRepoDirectories?: string[]
+}
+
+/** One file a chat session edited: absolute path, latest change time (ISO),
+ *  and whether it is still on disk. */
+export interface SessionFile {
+  path: string
+  ts: string
+  exists: boolean
+}
+
+/** GET /api/project/session-files. `truncated`: more files than the list
+ *  holds, the oldest left out. `withheld`: edits it cannot name here (a
+ *  sensitive or unresolvable path, files a turn's own record left out). */
+export interface SessionFilesPayload {
+  files: SessionFile[]
+  truncated: boolean
+  withheld?: boolean
+}
+
+/** GET /api/project/session-file-diff: the texts of the newest change this chat
+ *  recorded to one file. `available` false: no whole pair is recorded, so the
+ *  caller shows the working-tree diff instead. */
+export interface SessionFileDiffPayload {
+  path: string
+  available: boolean
+  before: string
+  after: string
 }
 
 /** Deadline for the whole-tree walks, `api.fileSearch` and `api.projectTree`. Its own literal,
@@ -94,6 +137,36 @@ export const FILE_SEARCH_TIMEOUT_MS = 15_000
  *  them. */
 export const BROWSE_FILES_TIMEOUT_MS = 10_000
 
+/** Bytes of a request body sent so far, and the body's size. */
+type UploadProgress = (loaded: number, total: number) => void
+
+/** `fetch`, over XMLHttpRequest: the one browser API that reports upload
+ *  progress, from its start at zero bytes on. It settles as `fetch` does, so
+ *  the caller and the journal read it the same way: a Response for any HTTP
+ *  answer, a TypeError when the network fails, an AbortError once
+ *  `init.signal` aborts (at once, whatever the request does next). */
+function sendWithProgress(url: string, init: RequestInit | undefined, onProgress?: UploadProgress): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open(init?.method ?? 'GET', url)
+    if (onProgress) xhr.upload.onloadstart = xhr.upload.onprogress = e => onProgress(e.loaded, e.total)
+    xhr.onload = () => {
+      const headers = new Headers()
+      for (const line of xhr.getAllResponseHeaders().split('\r\n')) {
+        const colon = line.indexOf(':')
+        if (colon > 0) headers.append(line.slice(0, colon), line.slice(colon + 1).trim())
+      }
+      resolve(new Response(xhr.responseText || null, { status: xhr.status, statusText: xhr.statusText, headers }))
+    }
+    xhr.onerror = () => reject(new TypeError('Failed to fetch'))
+    init?.signal?.addEventListener('abort', () => {
+      xhr.abort()
+      reject(new DOMException('The upload was cancelled.', 'AbortError'))
+    }, { once: true })
+    xhr.send(init?.body as XMLHttpRequestBodyInit | null | undefined)
+  })
+}
+
 export function createFilesEndpoints({ post, put, del, j, jfetch: fetch, checkSessionExpired, withJournaledDeadline }: ClientTransport) {
   const projects = {
     // Follow-up card: create a sibling git worktree of `repo` on a new `branch`.
@@ -139,6 +212,10 @@ export function createFilesEndpoints({ post, put, del, j, jfetch: fetch, checkSe
     projectGit: (path: string) => fetch('/api/project/git?path=' + encodeURIComponent(path)).then(j) as Promise<{ path: string; repo: boolean; repoRoot?: string; isRepoRoot?: boolean; branch?: string; detached?: boolean; head?: string }>,
     projectGitStatus: (path: string) => fetch('/api/project/git/status?path=' + encodeURIComponent(path)).then(j) as Promise<{ repo: boolean; repoRoot?: string; branch?: string; ahead?: number; behind?: number; truncated?: boolean; files: { path: string; status: string; staged: boolean; additions?: number; deletions?: number }[] }>,
     projectGitLog: (path: string, limit = 20) => fetch('/api/project/git/log?path=' + encodeURIComponent(path) + '&limit=' + limit).then(j) as Promise<{ repo: boolean; commits: { sha: string; message: string; author: string; date: string; isHead: boolean }[] }>,
+    /** Every change the branch committed since it left its base (`origin/HEAD`,
+     *  else `main`, else the older default name), as one masked patch. `base` is null when the
+     *  repository has none; `omitted` counts changed files the patch leaves out. */
+    projectGitBranchDiff: (path: string) => fetch('/api/project/git/branch-diff?path=' + encodeURIComponent(path)).then(j) as Promise<{ repo: boolean; base?: string | null; diff?: string; omitted?: number }>,
     /** The repositories the Git tab lists for one chat: its project (when that
      *  is in a repository) first, then every repository its tool calls worked
      *  in, most recent first. Each `path` is accepted by the status/log routes.
@@ -147,8 +224,24 @@ export function createFilesEndpoints({ post, put, del, j, jfetch: fetch, checkSe
     projectGitRepos: (slot: string) => fetch('/api/project/git/repos?slot=' + encodeURIComponent(slot)).then(j) as Promise<{ repos: { path: string; source: 'project' | 'agent' }[]; omitted: number; listed: number; incomplete: boolean }>,
     /** `dir` lists one project-relative folder (one the whole listing named in
      *  `truncatedDirectories`) instead of the whole tree; its paths stay project-relative. */
+    // One level per request (`shallow=1`): the folders inside come back in
+    // `lazyDirectories`, unread. They are folded into `nestedRepoDirectories`,
+    // the set the tree already lists on open with no state row, so opening a
+    // folder fetches just that folder and a large workspace never walks whole.
     projectTree: (path: string, dir?: string) => withJournaledDeadline(FILE_SEARCH_TIMEOUT_MS, undefined, '/api/project/tree', s =>
-      fetch('/api/project/tree?path=' + encodeURIComponent(path) + (dir ? '&dir=' + encodeURIComponent(dir) : '') + (showHiddenFiles() ? '&hidden=1' : ''), { signal: s }).then(j)) as Promise<{ root: string; dir?: string; paths: string[]; directories?: string[]; repo: boolean; truncated?: boolean; truncatedDirectories?: string[]; hiddenOnlyDirectories?: string[]; unreadableDirectories?: string[]; linkedDirectories?: string[]; nestedRepoDirectories?: string[] }>,
+      fetch('/api/project/tree?shallow=1&path=' + encodeURIComponent(path) + (dir ? '&dir=' + encodeURIComponent(dir) : '') + (showHiddenFiles() ? '&hidden=1' : ''), { signal: s })
+        .then(j)
+        .then((body: ProjectTreePayload & { lazyDirectories?: string[] }) => {
+          const lazy = body?.lazyDirectories
+          if (!Array.isArray(lazy) || lazy.length === 0) return body
+          return { ...body, nestedRepoDirectories: [...new Set([...(body.nestedRepoDirectories ?? []), ...lazy])].sort() }
+        })) as Promise<ProjectTreePayload>,
+    /** The files this chat session edited, newest first (`GET /api/project/session-files`). */
+    sessionFiles: (slot: string) => withJournaledDeadline(FILE_SEARCH_TIMEOUT_MS, undefined, '/api/project/session-files', s =>
+      fetch('/api/project/session-files?slot=' + encodeURIComponent(slot), { signal: s }).then(j)) as Promise<SessionFilesPayload>,
+    /** The texts of this chat's newest recorded change to one file (`GET /api/project/session-file-diff`). */
+    sessionFileDiff: (slot: string, path: string) => withJournaledDeadline(FILE_SEARCH_TIMEOUT_MS, undefined, '/api/project/session-file-diff', s =>
+      fetch('/api/project/session-file-diff?slot=' + encodeURIComponent(slot) + '&path=' + encodeURIComponent(path), { signal: s }).then(j)) as Promise<SessionFileDiffPayload>,
     workspaces: () => fetch('/api/workspaces').then(j),
     createWorkspace: (body: object) => post('/api/workspaces', body).then(j),
     updateWorkspace: (name: string, body: object) =>
@@ -205,10 +298,12 @@ export function createFilesEndpoints({ post, put, del, j, jfetch: fetch, checkSe
     /** Upload files via browser File API (cross-platform).
      *  `signal` lets the composer abort an upload still in flight: the
      *  request dies client-side and the server unlinks its partials through
-     *  the disconnect path the upload handler already has. */
-    uploadFiles: async (files: File[], signal?: AbortSignal) =>
+     *  the disconnect path the upload handler already has. `onProgress`
+     *  hears each step of the bytes going out. */
+    uploadFiles: async (files: File[], signal?: AbortSignal, onProgress?: UploadProgress) =>
       uploadComposerFiles(files, async body => {
-        const res = await fetch(COMPOSER_UPLOAD_PATH, { method: 'POST', body, ...(signal ? { signal } : {}) })
+        const res = await fetch(COMPOSER_UPLOAD_PATH, { method: 'POST', body, ...(signal ? { signal } : {}) },
+          (url, init) => sendWithProgress(url, init, onProgress))
         checkSessionExpired(res)
         return res
       }, signal),
@@ -242,6 +337,18 @@ export function createFilesEndpoints({ post, put, del, j, jfetch: fetch, checkSe
       return { ok: true, path: body.path ?? '', name: body.name ?? file.name }
     },
     screenshot: () => post('/api/screenshot').then(j) as Promise<{ path: string }>,
+    /** A ```plantuml fence as SVG from the host's PlantUML. The route's designed
+     *  answers keep the code view unjournaled: no renderer (404), not the owner
+     *  (403), a diagram PlantUML cannot draw (422, `failed`). A lapsed session's
+     *  403 goes through `j`, which starts the refresh. */
+    plantUmlSvg: async (source: string): Promise<{ svg: string | null; failed: boolean }> => {
+      const res = await post('/api/plantuml/svg', { source })
+      const lapsed = res.headers.get('X-Auth-Required') === 'true'
+      if (res.status === 404 || res.status === 422 || (res.status === 403 && !lapsed)) {
+        return { svg: null, failed: res.status === 422 }
+      }
+      return { svg: ((await j(res)) as { svg: string }).svg, failed: false }
+    },
   }
 
   return { projects, reveal, fileOps }

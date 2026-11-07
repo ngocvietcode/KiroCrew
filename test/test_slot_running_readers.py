@@ -5,15 +5,10 @@ from pathlib import Path
 
 # Busy-check helpers, and the slot state each one reads on its caller's behalf.
 #
-# A handler that delegates its refusal to one of these is still a CONSUMER of
-# that state even though it does not name the attribute itself, so the
-# enumeration below credits the caller with what the helper reads. Without that,
-# extracting a guard into a helper silently drops every caller out of the table,
-# and a NEW handler wired to the same helper adds no entry at all -- the drift
-# this test exists to catch stops tripping it.
-#
-# Add a helper here when it becomes the only thing standing between a handler
-# and a live turn.
+# A handler that delegates its refusal to a helper still consumes that state, so the
+# enumeration credits the caller with what the helper reads; otherwise moving a guard
+# into a helper would drop callers out of the table. Add a helper here when it becomes
+# the only thing standing between a handler and a live turn.
 _BUSY_HELPERS: dict[str, frozenset[str]] = {
     # Regenerate, variant switch and edit-resend: refuses on either state.
     "_destructive_history_busy": frozenset({"running", "turn_running"}),
@@ -192,10 +187,21 @@ def test_running_and_turn_running_slot_readers_are_enumerated() -> None:
                 ("chat_api/slot_lifecycle.py", "api_chat_slots_cleanup"),
                 ("chat_api/slot_model.py", "api_chat_slots_model"),
                 ("chat_api/continue_turn.py", "continue_slot_turn"),
+                # A paused member's own Continue drains what queued for it only
+                # on an unreserved slot, as continue_slot_turn below refuses one.
+                ("chat_api/continue_turn.py", "api_chat_slot_continue"),
+                # Resume all hands back only a slot no turn has reserved.
+                ("handlers/crew_pause.py", "_hand_back"),
+                # The held-queue drain Resume and a member's Continue share starts
+                # a turn only on an unreserved slot, under its lock.
+                ("handlers/crew_pause.py", "drain_held_queue"),
                 ("chat_api/turn_stop.py", "stop_slot_turn"),
                 # Stop settlement wakes retained priority only on an unreserved slot.
                 ("chat_api/turn_stop.py", "_make_stop_resolver"),
                 ("chat_rewind.py", "api_chat_slot_rewind"),
+                # A turn the agent started claims the slot only when no send
+                # has reserved it: a reserved slot's turn reads those frames.
+                ("chat_turn/agent_started.py", "_on_agent_turn"),
                 # The memory-ready queue drain starts a turn only on a slot no
                 # dispatch has reserved, the same guard the dispatch routes take.
                 ("chat_turn/queue_drain.py", "_drain_parked_queues"),
@@ -207,6 +213,9 @@ def test_running_and_turn_running_slot_readers_are_enumerated() -> None:
                 ("chat_turn/queue_cycle.py", "_hand_off_unstarted_turn"),
                 ("chat_turn/eager_spawn.py", "_eager_spawn"),
                 ("chat_turn/eager_spawn.py", "_prefetch_ttl"),
+                # An idle compaction never starts on a slot a send has reserved,
+                # even before its model turn begins.
+                ("chat_utils_completion.py", "idle_compaction_blocker"),
                 ("handlers/autonudge.py", "api_autonudge_fire"),
                 # A native-card answer steers into the turn only when one runs;
                 # on a reserved-but-not-executing slot slot.running is still
@@ -277,6 +286,9 @@ def test_running_and_turn_running_slot_readers_are_enumerated() -> None:
                 # A responsive steer needs a turn executing now; a reserved
                 # slot keeps the queue path.
                 ("responsive_chat.py", "_steer_ready"),
+                # A restored note hold is flushed only while no turn executes:
+                # the caller's own reservation must not hold the note back.
+                ("slot_buffers.py", "flush_restored_hold"),
                 ("slot_projection.py", "SlotProjection.to_dict"),
                 ("slot_registry.py", "SlotRegistry.running_session_keys"),
                 ("state_parts/chat_slot.py", "_ChatSlot.running"),
@@ -309,6 +321,8 @@ def test_running_and_turn_running_slot_readers_are_enumerated() -> None:
         ("chat_regenerate.py", "api_chat_slot_edit_resend"),
         ("chat_regenerate.py", "api_chat_slot_regenerate"),
         ("chat_rewind.py", "api_chat_slot_rewind"),
+        # A turn the agent started between prompts, claimed like a drained one.
+        ("chat_turn/agent_started.py", "_on_agent_turn"),
         ("chat_turn/queue_cycle.py", "_launch_synthesis"),
         # The cycle end of a dispatch that never ran a turn's tail holds the
         # floor the way the synthesis launch does.

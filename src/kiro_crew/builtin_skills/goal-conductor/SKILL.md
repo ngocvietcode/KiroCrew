@@ -217,7 +217,7 @@ read `<crew-home>/skills/kirocrew-dev/kirocrew-prepare-pr/SKILL.md` (`<crew-home
 `KIROCREW_HOME` when set, else `~/.kiro/crew`) and follow its loop to drive
 the PR to review-ready. Optional — the worker's own method is fine too.
 
-**A coding seed relies on the worker's coding rules.** `kirocrew-worker` and a crewmate's worker already carry them (smallest complete change, no unasked-for code, one test for new logic, end the report with what was skipped). A seed for any other agent states them.
+**A coding seed relies on the worker's coding rules.** `kirocrew-worker` and a Bot's worker already carry them (smallest complete change, no unasked-for code, one test for new logic, end the report with what was skipped). A seed for any other agent states them.
 
 **A large item's seed may name `workflow_run`.** You see the item's size
 before the worker does. When it has several dependent phases or many
@@ -455,8 +455,9 @@ Each cycle:
    patrol ever ran.
 
    Evaluate **every `done` item in ONE call** — each invocation costs one
-   approval prompt — then record each answer with `work_ledger_record`
-   `action=verdict` (with `fails` when you are counting retries).
+   approval prompt — then, in a later step once it has printed, record each
+   answer with `work_ledger_record` `action=verdict` (with `fails` when you are
+   counting retries).
 
    Verdicts: `pass` / `fail` are final for this cycle. `pending` means keep
    waiting, within the budget below. `refused` means the spec asked for
@@ -617,6 +618,13 @@ carry on in the same chat and try again at the next round close.
 The user can message you any time. Apply a changed goal **at the round
 boundary** — that is the re-plan point, and cancelling mid-round throws away
 finished work.
+
+**Record the goal first, every time it changes.** When the user gives a new goal
+or changes the scope, call `work_ledger_record` `action=goal` FIRST, before you
+dispatch or reply: `new_goal=true` for a new goal, a plain rewrite for a scope
+change. Write one plain sentence for the outcome, then one "Done when ..."
+sentence. The Board's Overview shows that goal; one you never rewrite goes
+stale there. The re-plan itself still waits for the round boundary.
 
 One exception: if their message directly invalidates an item that is still
 running, deal with that item now — `session_stop` it and `close` its ledger item,

@@ -38,7 +38,14 @@ vi.mock('framer-motion', async () => {
         }
         return React.createElement(tag, { ...clean, ref }, props.children)
       })
-  const motion = new Proxy({}, { get: (_t, tag: string) => make(tag) })
+  // One component per tag: a fresh type on every read would remount the subtree.
+  const byTag = new Map<string, ReturnType<typeof make>>()
+  const motion = new Proxy({}, {
+    get: (_t, tag: string) => {
+      if (!byTag.has(tag)) byTag.set(tag, make(tag))
+      return byTag.get(tag)
+    },
+  })
   return {
     motion,
     AnimatePresence: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
@@ -198,6 +205,21 @@ describe('board column tag filter', () => {
     expect(slotKeysIn(container, COL_FILTERED)).toEqual([TAGGED_KEY])
     // The unfiltered (match-all) lane still shows every session.
     expect(new Set(slotKeysIn(container, COL_ALL))).toEqual(new Set([TAGGED_KEY, UNTAGGED_KEY]))
+  })
+
+  it('names the column name box in the column popover', async () => {
+    // Its placeholder ("Column name (optional)") is not a name: it vanishes
+    // once the box holds the column's current name.
+    const { container } = renderSidebar()
+    fireEvent.click(container.querySelector(`[data-testid="column-edit-${COL_FILTERED}"]`)!)
+    const popover = await waitFor(() => {
+      const el = document.querySelector(`[data-column-popover="${COL_FILTERED}"]`)
+      expect(el).toBeTruthy()
+      return el as HTMLElement
+    })
+    const box = popover.querySelector<HTMLInputElement>('input[aria-label="Column name"]')
+    expect(box).toBeTruthy()
+    expect(box!.value).toBe('Jira lane')
   })
 
   it('re-syncs tag + column caches when the column PATCH is rejected', async () => {

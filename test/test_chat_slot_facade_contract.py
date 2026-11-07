@@ -54,6 +54,8 @@ _TO_DICT_KEYS = (
     "turn_gen",
     "compacting",
     "preparing",
+    "preparing_text",
+    "preparing_lang",
     "stop_declined",
     "queue_depth",
     "stopping",
@@ -99,6 +101,9 @@ _TO_DICT_KEYS = (
     "memory_mode",
     "forked_from",
     "linked_session_key",
+    # The transcript's session key, derived by ``slot_history_key``; the
+    # reopen-closed-session shortcut resumes by it.
+    "history_key",
     "app",
     "origin",
     "created_by",

@@ -56,7 +56,9 @@ plain public build:
   forwards it to `@anthropic-ai/claude-agent-sdk` as
   `pathToClaudeCodeExecutable`; without it the SDK fails `session/new` with
   "Claude native binary not found", because it does not search `PATH` for
-  `claude` on its own.
+  `claude` on its own. `prepare_spawn_env` runs the lookup through the driver's
+  guarded thread hop, because it shells out to `mise which claude` and must not
+  block the event loop.
 - The adapter is a **public** npm package, `CLAUDE_ACP_NPM_PKG =
   "@agentclientprotocol/claude-agent-acp"`. Nothing on this path is
   edition-private.
@@ -71,9 +73,13 @@ half-install does not read as a total one. A probe that itself fails reads
 
 Both operator-facing surfaces read that one verdict:
 
-- `kirocrew doctor` prints Claude Code as an optional backend — present, absent
-  with the missing components named, or uncheckable. It is never a hard failure;
-  kiro-cli is the floor.
+- `kirocrew doctor` prints Claude Code's row — present, absent with the missing
+  components named, or uncheckable. When `agent.acp_backend` or
+  `agent.member_acp_backend` selects `claude`, a missing component is a ❌ row and
+  an issue (doctor exits 1), because every session on that role fails to spawn.
+  Otherwise it is an optional backend and never a hard failure; kiro-cli is the
+  floor. An uncheckable probe is never an issue. Covered by
+  `test/test_doctor_claude_backend.py`.
 - The dashboard's agent-backend control **hides** a harness the deployment may
   not select instead of dimming it, because under a managed policy there is
   nothing the reader can do about it and advertising a forbidden option is the
@@ -83,6 +89,15 @@ Both operator-facing surfaces read that one verdict:
   `hides a backend the deployment may not select, rather than dimming it`,
   `keeps the current backend listed even if it reads as unselectable` and
   `saves the Claude Code selection the shipped build offers`.
+
+### The default agent's prompt
+
+A default-agent session on this harness gets the same `prompt.md` contract as a
+Kiro one (`ContextBuilder._resolve_agent_prompt`), with one respelling: `kiro-cli`
+reads `claude code`. Nothing else is renamed. "Kiro Crew" is the product on every
+harness, and the `~/.kiro/crew/...` paths the prompt names are the real data home
+(`KIROCREW_HOME`), which no `~/.claude/...` path stands in for. Pinned by
+`test/test_cc_prompt_branding.py`.
 
 ### Stale cloud credentials
 
@@ -94,6 +109,14 @@ the provider's own remedy. See the Lost backend session entry in
 [error handling](../common/error-handling.md). The trigger is the provider's
 `errorKind`, not a harness check, so any backend that emits that kind is
 recycled the same way.
+
+### Overloaded answers
+
+Anthropic's 529 overload reaches Crew as `Internal error: API Error: 529 {...}` or,
+once Claude Code's own retries are spent, `API Error: Repeated 529 Overloaded
+errors`. Both are a retryable `http_5xx` by wording, not by a harness check, so the
+same retry ladder a kiro-cli 5xx gets runs here; the patterns are in the 5xx
+paragraph of [error handling](../common/error-handling.md).
 
 ### What Crew gates on this harness, and what a pre-approval skips
 
@@ -136,10 +159,17 @@ session reaches a terminal status without a `session/request_permission`,
 (`outcome` `auto_approved` when it completed, else its status; `metadata.decided_by`
 `claude_classifier`). That row is an after-the-fact record, not a gate. Only the literal value
 `auto` resolves, a backend that seeds no settings file resolves to nothing, and with
-no opt-in no `defaultMode` is written at all. Crew never seeds `bypassPermissions`:
+no opt-in no `defaultMode` is written at all. Such a session starts in the mode the
+user's own settings name (a resumed one in the mode its transcript was left in), and
+by default keeps it unless it takes the exclusion path or is a Side Chat.
+`KIROCREW_CC_PIN_INHERITED_MODE` (`resolve_cc_pin_inherited_mode`, off by default)
+turns on the broader pin: `_pin_claude_starting_mode` then moves a session that
+carries Crew's tools out of an `auto` or `bypassPermissions` start to `default` before
+the first prompt, on an adapter at or above `CLAUDE_ACP_SETTING_SOURCES_MIN_VERSION`
+("A project-owned settings file" below). Crew never seeds `bypassPermissions`:
 `resolve_cc_permission_mode` resolves only `auto` and warns on anything else. That mode
-can only arrive from a foreign project settings file, which is the disclosed
-inherited-settings gap below. The gate half of the `auto` trade (a host check before the call runs) is tracked in #12743.
+can only arrive from settings Crew did not write or from a resumed transcript; the
+settings case is the disclosed inherited-settings gap below. The gate half of the `auto` trade (a host check before the call runs) is tracked in #12743.
 
 This is documented, intended Claude Code behaviour, not a defect introduced by making
 the harness selectable — the harness was already implemented and reachable by any
@@ -273,17 +303,54 @@ and effort selection, the full `session/request_permission` flow) works. So
   `permissions.allow` entry, and a pre-approved tool is one Claude never asks
   about — so the call would never reach the host gate that carries the deny floor,
   the sensitive-path check and the governance ceiling. Every MCP call on this
-  backend stays gated. `timeout` is kiro-only and dropped.
+  backend stays gated. `timeout` is kiro-only and dropped. An operator's
+  `hooks.auto_deny_tools` entry in the `@server/tool` or `@server` spelling binds
+  to such a call through its `mcp__<server>__<tool>` title, since the adapter sends
+  no `_meta.kiro` server name; the grant tiers never read that title as an
+  identity (`docs/system-specs/modules/security.md`, the `auto_deny_tools`
+  identity-plane paragraph).
 - **`disabledTools` becomes a `permissions.deny` rule.** It cannot ride along in
   an array element either, but it is a RESTRICTION: dropping it while forwarding
   the server it narrows would silently widen the session's tool surface, which is
   what the dashboard writes that key to prevent. `session_mcp_deny_rules` turns
   each entry into `mcp__<server>__<tool>` and the settings writer merges those
   into `permissions.deny`, which CC evaluates ahead of every allow rule and of the
-  host callback. One asymmetry remains open: a `@server/tool` reference grants ONE
+  host callback. A crewmate's worker takes its rules from the spec built for its
+  session, not the base on disk by name
+  (`session_mcp_crewmate.crewmate_worker_deny_rules`): each `disabledTools` entry,
+  each `@server/tool` in its `excludedTools` and each whole `@server`
+  (`mcp__<server>`); a worker whose crewmate file excludes a native tool (`@builtin` included), or sets a
+  `disabledTools` that is not a list of tool names, is refused before spawn, since
+  no deny here carries it. The seed and the array read that spec in turn, so the
+  array is held to the settings the session ships (the inline settings, or the
+  `settings.local.json` on disk, read only as Crew's own seed, never through a link): when the spec the array reads asks for a rule
+  they lack (the crewmate file was narrowed in between, or a re-seed was
+  declined), the whole array is withheld
+  (`session_mcp_crewmate.worker_array_outruns_seed`). One asymmetry
+  remains open: a
+  `@server/tool` reference grants ONE
   tool on kiro-cli while the array mounts the whole server here, and the set to
   deny is not knowable without connecting to the server — those extra tools still
   reach the host permission gate, so the surface is wider, not ungated.
+- **`toolsSettings` shell and write allowlists are enforced at Crew's gate.**
+  claude reads neither `shell.denyByDefault`/`allowedCommands` nor
+  `fs_write.fallbackAction: "deny"`/`allowedPaths`, so for a backend in
+  `ACP_BACKENDS_CREW_ENFORCES_SPEC_TOOLS_SETTINGS` (claude only) the client reads
+  them from the spec `_resolve_session_mcp_servers` projected (or reads the spec
+  again when the array is withheld), through `acp/spec_tools_allowlists.py` and the
+  KAS readers it wraps, and `_build_permission_event` stamps them on every request
+  the session's process raises, a native sub-agent's (`parentToolUseId` or a
+  foreign `sessionId`) included: that child runs in the same process under the same
+  spec and has none of its own. The gate's `spec-shell-allowlist` and `spec-write-allowlist` rows
+  then refuse what they do not cover, under `AUTO_APPROVE` too
+  (`docs/system-specs/modules/security.md` § claude spec allowlists). While either
+  is set the seed adds `permissions.ask` rules (`Bash`; `Edit`, `MultiEdit`,
+  `NotebookEdit`, `Write`), and the `session/new` envelope's inline `settings` carry
+  them too, so a project `settings.local.json` Crew declines (and its allow rules)
+  cannot drop them. CC evaluates them ahead of every allow rule, the
+  read-only auto-allow and `acceptEdits`, so those calls raise
+  `session/request_permission` at all. `deniedPaths`, `web_fetch.blocked` and the
+  other `toolsSettings` entries are not carried on this backend.
 
 Both call sites are fed from the one function —
 `_new_session_following_substitution` (`session/new`) and the `session/load`
@@ -330,8 +397,9 @@ own servers. Pinned by `test/test_claude_mcp_identity.py`.
 
 `_write_claude_local_settings` writes `<work_dir>/.claude/settings.local.json` before
 the primary spawn (not only on the model-substitution retry) with
-`permissions.defaultMode` when requested and `permissions.deny` rules derived from
-the spec's `disabledTools`. Once the provider-advertised model cache is warm it
+`permissions.defaultMode` when requested, `permissions.deny` rules derived from
+the spec's `disabledTools`, and the `permissions.ask` rules a `toolsSettings` shell
+or write allowlist needs (above). Once the provider-advertised model cache is warm it
 writes a pinned `model`, and it writes `availableModels` only when another settings
 source (user `settings.json`, project `.claude/settings.json`, or the managed
 `managed-settings.json` and its `managed-settings.d/*.json` drop-ins) already defines
@@ -614,12 +682,29 @@ pre-approved) is kept as the session started it, so an operator's stricter postu
 never widened. A pin that fails stops the harness,
 so a session never runs with Crew's tools under a mode that approves on its own.
 
-The pin runs only on this path and on a Side Chat session (below). Any other session
-whose file Crew authored is not pinned: a
-user `~/.claude` mode reaching it is the inherited-config gap below ("Known gap: the
-user's global `~/.claude` is inherited"), which this path does not widen. The exclusion is never taken below
+By default the pin runs only on this path and on a Side Chat session (below). Any
+other session whose file Crew authored is not pinned: a user `~/.claude` mode reaching
+it is the inherited-config gap below ("Known gap: the user's global `~/.claude` is
+inherited"), which this path does not widen. The exclusion is never taken below
 `CLAUDE_ACP_SETTING_SOURCES_MIN_VERSION`, or when Crew requested a mode itself, so
 neither case reaches the pin.
+
+With `KIROCREW_CC_PIN_INHERITED_MODE` on (`resolve_cc_pin_inherited_mode`; off by
+default, because it moves sessions out of a mode the user chose), the pin also runs on
+every other claude session that carries Crew's MCP array, after `session/new` and after
+`session/load`; a session without that array is left as it started. Which session
+carries it is read from the array its start sent (`_mcp_mount_servers`), not projected
+again, so the pin reads no spec or settings file on the event loop. A session that
+requested no mode has a seed that names no `defaultMode`, so a new one starts in the
+mode the user's own settings name (a `~/.claude` `defaultMode: auto`, for example). A
+loaded one starts in the mode its transcript was left in, whatever was requested. The
+same read-back moves `auto`, `bypassPermissions` or an unreported mode to `default` and
+keeps every other mode, except that a reported mode that is the one Crew requested (the
+`auto` opt-in) is kept as well. A pin that fails stops the session there too. The deny
+re-read runs only on this path. A session the setting brings in keeps the mode it
+started in on an adapter below `CLAUDE_ACP_SETTING_SOURCES_MIN_VERSION`, or on one that
+reports no version, rather than being stopped, because the pin has not been checked on
+an adapter older than 0.84.0.
 
 The adapter behaviour the pin rests on is captured, not assumed:
 `test/fixtures/claude_mode_pin/` holds live claude-agent-acp 0.84.0 frames driven with
@@ -629,8 +714,9 @@ adapter and the session started in `default`, so a project file cannot start thi
 in `auto` or `bypassPermissions`. `session/set_mode` `default` from `auto` answered `{}`.
 The pin tests replay those answers.
 
-The array stays withheld when the session asked for a permission mode of its own,
-since the pin sets only `default`, when a project file's deny rules cannot be read
+The array stays withheld when the session asked for a permission mode other than
+`default`, since the pin sets only `default` (a request for `default` itself is what
+the pin sets, so it keeps the array, #13143), when a project file's deny rules cannot be read
 (above), when the adapter is below the `settingSources` floor or reports no version,
 and when the path is a link (below). The floor is decided before the array exists: the
 claude adapter's launch reads the installed version (`_claude_adapter_installed_version`)
@@ -728,16 +814,67 @@ from any call an activity event names, with or without a card (`_native_child_tc
 the dashboard, as the messaging driver's own set), so no child can act on the
 parent's chat. The ids outlive
 the turn, because a background child keeps running after the turn that started it;
-a later turn that reads one of its frames lists it again. Not wired: the per-child
-`capabilities.cancel` the adapter offers (a card's Stop still only closes the card),
-a resume naming a child id (it misses as an unknown conversation), and reporting the
-children as uncharged residency. A child's permission request is answered like any
+a later turn that reads one of its frames lists it again. The parent is the boundary,
+as for a kiro-cli child: a `spawn_continue` or `POST /api/spawn` resume naming a child
+id is refused with `native_child_not_resumable` naming the parent, and session health
+reports the children seen this turn as uncharged residency (`native_children`), never
+charged. Not
+wired: the per-child `capabilities.cancel` the adapter offers (a card's Stop still
+only closes the card). A child's permission request is answered like any
 other request on the session. The cards do not change the approval gate: the
 native-crew auto-approve rung (`hooks.auto_approve_subagent_tools` while a crew card
 is open, `tool_approval.py`) skips the claude backend, because a claude request does
 not name the session that sent it, and the rung cannot tell the parent's request
 from a child's. Every request takes the gate it takes with no child running.
 Contract tests: `test_claude_native_subagent_cards.py`.
+
+### A turn Claude Code starts on its own
+
+Claude Code can start a turn after the dashboard's turn has ended: a
+`run_in_background` command exits and the model answers its task notification, a
+background subagent hands back, or a background or Workflow agent asks for a
+permission. claude-agent-acp writes that turn to stdout with no request open.
+`ACP_BACKENDS_AGENT_STARTED_TURNS` names this backend alone; the client's idle
+reader is described in `acp-client.md` ("Idle reader and agent-started turns").
+
+On a dashboard chat, every turn registers a watch on its session once it holds it
+(`agent_sdk.watch_agent_turns`, from `chat_turn/agent_started._watch_agent_turns`),
+so a reply or a permission request the agent sends between prompts starts a turn
+of its own on that chat (`_run_chat(_agent_started=True)`). The turn sends nothing
+and reads the pending turn with `AcpProvider.stream_unsolicited`, through the same
+event loop a user turn uses: its tool rows, permission cards, PreToolUse /
+PostToolUse hooks, SEL records, redaction and persistence are a user turn's own. It
+writes no user row, its assistant rows carry `meta.origin = {"kind": "agent"}`, it
+records crew-log actor `agent`, and it ends through the normal end-of-turn path,
+so the unread badge and turn sound fire. A message sent while it runs queues
+behind it: the turn is responsive-protected, so a send never cancels it. It is
+spawned under `independent_turn`, so Shared Crew admits it on its own rather than
+as the finished turn's work. A Stop pressed while it is still being prepared finds
+no open turn to cancel, but the agent's cycle runs natively anyway, so the turn
+does not end at the Stop-before-dispatch gate: it opens its stream and sends the
+cancel at the first event (`agent_started._send_owed_agent_cancel`). That cancel
+answers every ask the client holds open, which is that event's ask when it is one,
+so that ask opens no card (`_ask_the_owed_cancel_answered`); an ask read later is
+still open and takes the normal card path. It never queues a recovery (`_queue_recovery`): every one replays or
+continues a prompt, and this turn answered none. The arms that end a normal turn
+(the L1 capacity retry, the promise-only guard and its spent-budget notice, the
+compaction continuation, the empty-response ladder) do not fire for it, so it lands
+as it stands. The failure arms take the branch a nested turn takes: an ACP error
+goes straight to its error card, and a process death, a stalled turn, a stalled
+tool or a failed compaction posts its give-up notice, without a "retrying…" row and
+without spending that arm's retry budget. A caller that still asks
+`_queue_recovery` (a Stop hook's block) is declined and posts nothing. Its
+reply and tool stream reach a linked Slack thread like any reply; no prompt echo is
+posted, because none was typed. It does not count as an
+AutoNudge or monitor cycle. Regenerate refuses (`agent_started_reply`) while a
+reply it wrote sits after the newest user row: re-running that prompt would retire
+the agent's reply, and any reply beside it, for a variant of only the newest one. A
+session no dashboard chat turn runs (a channel
+conversation on the messaging driver, a cron job's own session, a sub-agent)
+registers no watch, so its between-turn frames reach its next prompt as before.
+`agent.agent_started_turns` (default `true`) turns it off from the next turn: no
+watch is registered and the idle reader never starts. Tests:
+`test_dashboard_agent_started_turn.py`.
 
 ### A Side Chat session
 
@@ -756,21 +893,123 @@ opens a sensitive path, since a deny rule outranks both from any source. A launc
 does not start the session.
 Detail: [side.md](side.md), "On claude the confinement is the session's own options".
 
+### Claude Code's own slash commands
+
+On a claude session a leading-slash word reaches the adapter raw, as
+`session/prompt` text with no Crew context in front of it, whether or not kiro-cli
+knows the name: claude is in `ACP_BACKENDS_HARNESS_OWNED_SLASH_COMMANDS`, so
+`/review`, `/init`, `/security-review`, a `.claude/commands` file or a skill run as
+Claude Code commands (`claude/compact-live.jsonl` shows the SDK running a
+`/compact` prompt as its own command). The dashboard's own commands (`/agent`,
+`/goal`, `/workflow`, `/prompts`, `/side`) and a quick-prompt macro such as
+`/plain`, or a user's own opted-in saved prompt (`quick_prompts.user_quick_prompt`),
+still win first. The cost is that a message which merely opens with a
+slash (a pasted `/etc/hosts` line) is forwarded without context too. The slash
+gate and the app-grant send refusal read the same predicate
+(`_forwards_harness_command`). Such a command answers like a prompt, so its echo
+and reply still reach a linked Slack thread and proactive channel, and the Slack
+auto-link opens a thread for it; only a kiro-cli command name (or a word the
+`claude_code` label forwards) keeps off them (`_slash_withholds_mirror`). Pinned by
+`test/test_claude_slash_forwarding.py`.
+
+The `/` menu (`GET /api/slash-commands`) follows the same capability, read for
+the configured `agent.acp_backend` because that endpoint has no session key: where
+`runs_own_slash_commands` holds it lists Claude Code's commands (`/compact`,
+`/clear`, `/context`, `/help`, `/init`, `/review`, `/security-review`, `/todos`,
+`/usage`) and the dashboard's own ones above, minus the blocked set, never kiro-cli's
+`/hooks`, `/code`, `/experiment`, `/logdump`, `/changelog` or `/tools`. The user's
+opted-in saved prompts join either list. Project
+commands and skills are not listed: nothing records the adapter's
+`available_commands_update` yet. Pinned by `test/test_api_slash_commands.py`.
+
 ### A tool-less session
 
 A session whose agent spec declares `"tools": []` (the mirror's `zero_tools`, which
-covers the `kirocrew-lite` background helpers `_bg` and `_consolidate`) is started
-with `strictMcpConfig`. The adapter otherwise mounts the user's, the project's and
-installed plugins' MCP servers beside the wire array, and each helper call starts a
-fresh session, so those servers would start on every call in a session that runs no
-tool. Only the wire array mounts; nothing else in the envelope changes.
+covers the `kirocrew-lite` background helpers `_bg` and `_consolidate` and the
+knowledge pool's workers) mounts no tool at all, so the inherited-config gap below
+cannot reach it: an allow rule pre-approves only a tool that exists. It is started
+with `tools` empty, so none of Claude Code's built-ins (Bash, Write, WebFetch, ...)
+is mounted, `strictMcpConfig`, so the user's, the project's and installed plugins'
+MCP servers stay out, and bypass off. Its wire array must be empty as well
+(`refuse_claude_zero_tool_mounts`; a non-empty one is not sent). The adapter that
+answered the handshake must be at or above the session-options floor
+(`CLAUDE_ACP_SETTING_SOURCES_MIN_VERSION`, an unreadable version counting as below
+it), or the session is stopped before its first prompt; it is not mode-pinned,
+because it has nothing a mode could approve. This is why claude is in
+`ACP_BACKENDS_HONOR_ZERO_TOOL_BAN` although its routing is not enforced, and why the
+knowledge pool runs on claude instead of falling back to kiro-cli. Measured on
+claude-agent-acp 0.94.0: `test/fixtures/acp_frames/claude/zero-tools-refused-live.jsonl`
+(0.93.0, the installers' pin, behaved the same; a project allow rule for Bash, Write
+and WebFetch in force; no `tool_call`, no permission request, nothing on disk).
+
+### A fresh conversation is a cold start
+
+The adapter runs on a dedicated `AcpClient`, and `AcpClient` has no reset that
+starts a new conversation on its live process; only `AcpSessionProvider` (the
+shared-runtime path of kiro, KAS and Codex) has one. `AcpProvider.new_conversation`
+on a Claude session therefore raises `NotImplementedError` naming the backend, and
+both of its callers take their kill-and-respawn fallback: a reused workflow-pool
+worker (`WorkerPool.reset`, which logs the cold start at INFO) and a history
+consolidation pass (`_start_fresh_conversation`, which logs the path it took at
+INFO). No context crosses either reset; the cost is a spawn and `initialize` per
+reuse.
+
+### A Bot's worker session
+
+A Bot's worker (`members.is_crewmate_worker_session`) is started with
+`strictMcpConfig` as well. Its per-session spec names the servers the Bot grants,
+and the wire array carries them. Without the option every worker also started each
+server in the user's own Claude config, the project's `.mcp.json` and installed
+plugins, once per worker, so a host with many such servers and several workers ran
+out of memory. Ordinary and member chats keep the adapter's default.
+
+### An incognito or temporary chat
+
+Claude Code's auto-memory reads `<config dir>/projects/<project key>/memory/MEMORY.md`
+into every session and writes memory files there, with no `session/request_permission`,
+so Crew's gate never sees those writes. A session whose `memory_mode` is `incognito` or
+`temporary` gets `env: {"CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"}` in
+`_meta.claudeCode.options`, beside whatever else its envelope carries. The adapter
+spreads that `env` over its own process env (verified on claude-agent-acp 0.100.0), and
+the CLI then neither loads nor writes auto-memory; the variable wins over the
+`autoMemoryEnabled` setting (verified on Claude Code 2.1.318). Claude Code also copies
+each settings tier's own `env` over the process env, user, project and local first and
+the flag tier last, so a settings file that sets the variable to a false value would
+turn auto-memory back on. The same key therefore also goes into the flag tier's
+`settings.env` (a copy of any inline settings, which stay unchanged). A persistent
+session's envelope is unchanged. `AcpProvider.start` sets the client's `memory_mode`
+before the client starts, and a restricted session never takes a warm-pool child or a
+native resume, so every `session/new` it sends carries the variable. Not covered: a
+sub-agent spawned with `include_memory=false` (that choice shapes the prompt only and
+does not reach the client), and a live chat tightened to incognito or temporary while
+its claude session runs, which keeps the envelope it started with until its next
+`session/new`. Contract tests: `test_claude_auto_memory_envelope.py`.
+
+### `/clear` is answered by the dashboard
+
+A dashboard `/clear` on a claude session never reaches the adapter: claude is in
+`ACP_BACKENDS_LOCAL_CLEAR`, so the slash gate runs the dashboard's own reset (the
+discard `reset_conversation` queues, the todo pill dropped, the "Conversation
+cleared" row) before any session work. Sent on as `session/prompt` text, a clear the
+Agent SDK ran would leave Crew's history, todo state and next-turn replay
+untouched, because the adapter sends no clear status frame and has no
+`_kiro.dev/commands/execute`. claude runs one adapter per session, so the discard
+drops that adapter's conversation either way. Every other claude command keeps
+the prompt path. Pinned by `test/test_slash_command_no_channel.py`.
 
 ### Known gap: the user's global `~/.claude` is inherited
 
 With no `CLAUDE_CONFIG_DIR` set by the core, the adapter and the SDK read the
 user's real `~/.claude`. Project-scope `settings.local.json` outranks it for
-`defaultMode`, but `permissions.allow` entries **merge** rather than being
-overridden — so a user whose global settings pre-approve a tool family gets those
+`defaultMode`, but Crew's seed names one only when the session requested a mode, so
+with no request a `defaultMode` there that approves on its own (`auto`,
+`bypassPermissions`) is the mode the session starts in and, by default, keeps.
+`KIROCREW_CC_PIN_INHERITED_MODE` closes that mode half of the gap: with it on, a
+session that carries Crew's tools and requested no mode is moved to `default` before
+its first prompt, on an adapter at or above `CLAUDE_ACP_SETTING_SOURCES_MIN_VERSION`
+(the pin above); below it, with no version reported, or on a session without Crew's
+MCP array, the session keeps that mode. `permissions.allow` entries **merge** rather
+than being overridden, and the setting leaves them alone — so a user whose global settings pre-approve a tool family gets those
 calls auto-approved by Claude's own engine, which never calls `canUseTool` and so
 never reaches Crew's gate. A project's own `settings.local.json` is not part of
 this gap: a session that carries Crew's tools either governs a Crew seed (authored or
@@ -781,12 +1020,54 @@ isolated config root, which is a separate change: it has to carry credentials
 across (or CC cannot authenticate at all) while dropping exactly the `permissions`
 keys that bypass the gate.
 
+### A disposable session's transcript
+
+The `claude` CLI keeps its own record of every session under that same config
+root: `projects/<project>/<sid>.jsonl`, the sibling `projects/<project>/<sid>/`,
+and `file-history/<sid>/`, where `<project>` is the session's resolved working
+directory with every character that is not an ASCII letter or digit replaced by
+`-`. Crew deletes those three paths wherever it deletes the kiro-cli replay log
+(`agent_sdk/claude_transcripts.py`, `delete_claude_session_files`):
+
+- an incognito or temporary chat's shutdown (`providers/acp_lifecycle.cleanup_session`,
+  on `is_claude_backend`, off the loop, using the client's work directory), and
+  every other caller of that method: a permanent session destroy and the
+  lessons-draft export's throwaway session;
+- the subagent tombstone prune (`subagent_persistence._cleanup_session_files_sync`
+  for `PROVIDER_LABEL_CLAUDE`, using the gateway-recorded cleanup cwd);
+- `spawn_release` (`ContinuationCoordinator._release_disk_sync`, reading the cwd
+  from the trusted cleanup identity record).
+
+The root is `CLAUDE_CONFIG_DIR`, else `~/.claude` (`claude_settings_sources.claude_config_dir`),
+read in the gateway because the child inherits its environment. A session id that
+is not a UUID, an empty cwd, a project name longer than the 200 characters the CLI
+keeps verbatim, or a symlinked `projects`, `file-history`, project directory or
+leaf deletes nothing and answers not done, so the prune keeps its retry record and
+`spawn_release` answers `not_disposed`. A persistent session's store is never
+touched, and nothing is sent over the wire to delete the adapter's session.
+
 ### Standing rule
 
 Unchanged by Claude Code becoming selectable: `agent.provider` stays
 single-valued and **no provider selector is re-added**. The harness switch is
 `agent.acp_backend`, and it is gated in exactly one place
 (`resolve_selected_backend`).
+
+### Clearing effort live
+
+The adapter's `effort` select offers `default` beside the levels. A write of it
+clears the adapter's flag layer, which hands effort back to the CLI's own per-model
+resolution. That is what a cold start with no slot level runs, so `clear_effort`
+writes `default` (`EFFORT_CONFIG_OPTION_CLEAR_VALUES`) instead of asking the
+dashboard to reset the session. `test/fixtures/acp_frames/claude/effort-clear-live.jsonl`
+is the evidence: `high` and then `default` written on one 0.94.0 session, each read
+back. A session that did not advertise `default`, or refused the write, keeps the
+reset, with the slot's level put back first. So does a session with an inherited
+level (`agent.reasoning_effort`, a crew pin or a role effort, handed over by the
+factory as `inherited_effort`): a cold start applies that level, not the adapter's
+default. A slot clear (`every_model=True`) also drops the levels stored for models
+the session ran before, so a fallback restore does not re-apply one; a refused
+write puts them back. `test_claude_effort_live_clear.py` pins each outcome.
 
 ## Model registry
 
@@ -808,3 +1089,18 @@ uses the resulting allowlist when an automatic selection omits an explicit
 model. `TestModelRegistry.test_the_claude_code_default_is_canonical` and
 `TestModelRegistry.test_available_models_is_default_first` pin the default and
 ordering behavior.
+
+### Effort on the `default` pseudo-model
+
+An unpinned claude session serves the head of the advertised list (the adapter's
+`default` pseudo-model) or reports no model id at all. The registry and its name
+heuristic recognise neither, so `ACP_BACKENDS_DEFAULT_PSEUDO_MODEL` (claude only)
+makes `AcpProvider.supports_effort` answer there from the `effort` select the
+adapter built for the model it serves: a level applies when that select offers any
+value other than the adapter's own `default`. The same answer gates the start-time
+push of a configured level (`_resolve_effort`, keyed on the served id, or on the
+client's `auto` sentinel when no id is reported, the key `change_effort` writes) and
+`change_effort`; the push still steps a level the model lacks down. Every concrete
+id keeps the registry answer. Before the session reports, the composer's cold read
+answers `effort_supported: null` for an `auto` or empty model on this harness.
+`test_unpinned_effort_binding.py::TestClaudeDefaultPseudoModel` pins it.

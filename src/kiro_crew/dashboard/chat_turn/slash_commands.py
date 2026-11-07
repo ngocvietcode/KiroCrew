@@ -33,6 +33,7 @@ from kiro_crew.dashboard.state import (
     SUBAGENT_SYNTHESIS_PREFIX,
 )
 from kiro_crew.messaging.commands import compact_unsupported_backend, compact_unsupported_reply
+from kiro_crew.quick_prompts import user_quick_prompt
 from kiro_crew.security import redact
 
 if TYPE_CHECKING:
@@ -107,6 +108,29 @@ async def _slash_command_backend(state: DashboardState, session_key: str) -> str
         # the unstartable pin inside the turn's error handling, with its reason.
         return ACP_BACKEND_KIRO
     return backend if isinstance(backend, str) else ACP_BACKEND_KIRO
+
+
+async def _forwards_harness_command(
+    state: DashboardState, session_key: str, first_word: str, *, cc_provider: bool
+) -> bool:
+    """Whether *first_word* reaches the harness on *session_key* as a command.
+
+    :func:`is_harness_slash_command`, with its harness-owned rule granted by the
+    backend the command would reach (``runs_own_slash_commands``) as well as by the
+    dormant ``claude_code`` label. Only a word that rule alone would forward pays for
+    the backend lookup; a kiro-cli command name or plain text never does. A word
+    naming the user's own quick prompt is a macro, like ``/plain``, so it is kept
+    for ``build_message`` to expand rather than forwarded.
+    """
+    if is_harness_slash_command(first_word, cc_provider=False):
+        return True
+    if not is_harness_slash_command(first_word, cc_provider=True):
+        return False
+    if not cc_provider:
+        backend = await _slash_command_backend(state, session_key)
+        if not capabilities_for(backend).runs_own_slash_commands:
+            return False
+    return await asyncio.to_thread(user_quick_prompt, first_word) is None
 
 
 async def _answer_slash_without_channel(
@@ -501,8 +525,16 @@ async def _turn_slash_gate(turn: _ChatTurn) -> _Flow | None:
     # Named rather than inlined so the quick-prompt exception is one testable rule
     # instead of a condition only reachable by driving the whole of _run_chat: a macro
     # must NOT be forwarded to the harness as a command.
-    is_slash = is_harness_slash_command(first_word, cc_provider=_is_cc_provider)
+    is_slash = await _forwards_harness_command(
+        state, session_key, first_word, cc_provider=_is_cc_provider
+    )
     turn.is_slash = is_slash
+    # Linked surfaces still hear a command only the backend's own rule forwards
+    # (``runs_own_slash_commands``: Claude Code's ``/review``, a skill): it answers
+    # like a prompt. A kiro-cli command name, or a word the ``claude_code`` label
+    # forwards, keeps its echo and reply off the linked Slack thread and channels.
+    _slash_withholds_mirror = is_harness_slash_command(first_word, cc_provider=_is_cc_provider)
+    turn._slash_withholds_mirror = _slash_withholds_mirror
     _this_turn_is_clear = is_slash and first_word.lower() == "/clear"
     turn._this_turn_is_clear = _this_turn_is_clear
 
@@ -789,8 +821,9 @@ async def _turn_slash_gate(turn: _ChatTurn) -> _Flow | None:
     # sends it as the engine's own compaction verb, not as prompt text. A /todos
     # that got past its own gate is on a harness that runs it natively.
     # The other harnesses in ACP_BACKENDS_LOCAL_CLEAR have no /clear of their own
-    # either, so /clear alone is answered here for them too; their other commands
-    # keep the prompt path, where those harnesses serve the ones they know.
+    # either, or (claude) run one Crew cannot observe, so /clear alone is answered
+    # here for them too; their other commands keep the prompt path, where those
+    # harnesses serve the ones they know.
     if (
         is_slash
         and not _is_cc_provider

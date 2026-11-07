@@ -145,7 +145,8 @@ rows in the `chat --list-models` shape — `model_id` / `model_name` / `display_
 select alone, no structured context-window field on any option). The recording is
 process-wide and in memory, like the catalog's prices; a response with no select
 clears nothing. A select is what ONE account is served, so the next account must
-see `auto` alone until its own first session: every `session/new` and
+see `auto` alone until its own first session (a cold read starts one in the
+background; see the cold-read bullet below): every `session/new` and
 `session/load` notes the vault identity fingerprint it WENT OUT under
 (`kas_model_catalog.vault_identity`, `auth/bridge.vault_identity_fingerprint`, read
 off the loop by the KAS harness as it builds the session payload --
@@ -496,6 +497,20 @@ its own once the cache refreshes with a list that carries it.
   backends preserve exact wire ids (including Pi provider/model ids) without
   substituting the Kiro CLI catalog. A cold cache offers `auto` and a scoped
   configured default until that backend advertises its choices.
+- A cold read does not wait for a chat. When `/api/models` answers cold for the
+  configured harness (an advertised-selection backend with nothing cached, or the
+  KAS bundle route with no recording for the signed-in account),
+  `dashboard/handlers/models_cold_probe.start_cold_model_probe` opens one
+  throwaway background session on the shared runtime (`get_bg_session`, then
+  `destroy`) in a background task, and the request answers at once. Its
+  `session/new` fills the list through the same capture a chat session uses, and
+  a `models_changed` frame (tier 0, empty payload) makes every dashboard re-read
+  `['available-models']`. Nothing persistent is registered, so a later harness
+  switch finds no leftover background entry. One probe runs at a time, at most
+  one per backend per `COLD_PROBE_COOLDOWN_SECS` (300 s), and no frame is sent
+  when the session did not open, so a harness that advertises nothing cannot
+  loop. Only the configured harness on a shared-runtime backend is probed; a Bot
+  picker asking about another harness (`?backend=`) is not.
 - Whether a canonical registry key is a display-only spelling is the backend's
   `model_id_namespace` question, the same field `_wire_model_id` translates
   through: a provider namespace whose registry row carries an id for the key
@@ -516,11 +531,23 @@ its own once the cache refreshes with a list that carries it.
   editor shows a stored pin the harness serves as one of its own rows AS that row,
   rather than listing one model twice, and labels a pin no row carries as running
   as that id, or as not offered by the harness.
+- Clearing a slot's effort to Default goes live where it can: `clear_effort`
+  pushes a kiro-family workspace default, or writes the harness's own clear value
+  (`effort_config_option_clear_value`; claude's `default`) when the session
+  advertised it and no crew/role/chat level is inherited (the factory's
+  `inherited_effort`). Otherwise, or when that write is refused, it returns False and
+  the dashboard resets the session so a cold start runs the inherited level or none.
+  The dashboard's clear passes `every_model=True`, so a live clear also drops the
+  levels stored for models the session ran before, as the reset would.
 - The chat composer reads `GET /api/chat/slots/{slot}/selection-capabilities` for
   the active ACP session's backend, effort support, and ordered effort levels. A
   missing session answers `known: false`. Where the level rides the model
   (kiro-cli, claude), it resolves the slot's or crew's effective model so an
   inheriting crew thread still has its effort control before its first turn.
+  An `auto` or empty model on a harness whose unpinned session serves a
+  pseudo-model (`ACP_BACKENDS_DEFAULT_PSEUDO_MODEL`, claude) answers `null`
+  instead: the live session's own effort option decides once it reports
+  (see claude-code-provider.md, "Effort on the `default` pseudo-model").
   The cold answer refreshes every two seconds for its first five reads, then every
   30 seconds, and a model or agent switch invalidates it immediately. Where the
   harness carries a session option (goose, pi) or a model pair (codex), a live
@@ -565,20 +592,20 @@ its own once the cache refreshes with a list that carries it.
   across turns and across a restart: a metadata line whose `model` is `""` restores
   `""`. Only a line with no `model` key, saved before every save wrote one, takes the
   agent's configured model (`metadata_codec._read_model`). When neither the slot nor
-  its mate pins a model, the turn asks
+  its Bot pins a model, the turn asks
   `get_or_create` for no model and the allocation resolves the ladder itself; the turn
   reads the same resolver over the session manager's config
   (`_inherited_default_model`) only to know which default the slot inherits. Neither
   `slot.model` backfill site writes the provider's served model into such a slot,
   whatever that default is, Auto included (every tier deferring to the backend); the
   composer chip reads it from `served_model`. The backfill writes only a slot whose
-  mate pins a model. A settings change to the default
+  Bot pins a model. A settings change to the default
   rebuilds the provider factory but leaves live sessions alone, so the next turn of an
   inheriting slot compares its live session's allocation stamp
   (`allocation_requested_model`) with the default it inherits now. When they differ
   it queues the same reset a model pick queues, consumed with `skip_if_busy`, so a
   turn already streaming on that session is never cut. An empty stamp is unknown and
-  triggers nothing. A slot or mate pin never triggers it. A `slot.model` an
+  triggers nothing. A slot or Bot pin never triggers it. A `slot.model` an
   earlier backfill stored is indistinguishable from a person's pick, so nothing
   clears it on its own: it stays until the user picks Auto in that chat, or presses
   **Make my chats follow the default** under Settings > Chat > Model. That action
@@ -600,9 +627,9 @@ its own once the cache refreshes with a list that carries it.
   being opened. A chat a
   throttle or refusal fallback is serving is not counted, so the press never strands
   it on the fallback: the fallback's restore still moves it back. A chat
-  `session_create` made (its line names a `created_by`), a mate's own chat, and
+  `session_create` made (its line names a `created_by`), a Bot's own chat, and
   app, cron, channel and remote sessions are never counted. Neither is a chat on a
-  mate whose config pins a model: that pin outranks the default, and the chat's
+  Bot whose config pins a model: that pin outranks the default, and the chat's
   next turn would write it back. A slot kind a person does not start must set a
   non-person origin or a `created_by`: the origin check is the guard that keeps it
   out. Config pins are read, never written. An open chat's clear is saved at once
@@ -645,13 +672,13 @@ its own once the cache refreshes with a list that carries it.
   `AgentConfig.resolve_model(role)` in `config/sections_agent.py`. Roles default to
   `"auto"` and deliberately do NOT inherit `agent.model`, so a user's chat model
   does not silently become the price of every background task. The sessions a
-  mate dispatches with `session_create` are the one decided exception
+  Bot dispatches with `session_create` are the one decided exception
   ([rfc-worker-model-inheritance](../../request-for-change/rfc-worker-model-inheritance.md)):
-  they take a copy, made at creation, of the CREWMATE profile's explicit model
-  and effort pins (the values the person chose on that mate's profile, never
+  they take a copy, made at creation, of the BOT profile's explicit model
+  and effort pins (the values the person chose on that Bot's profile, never
   the user's chat model), so a later profile edit does not reach a worker
   already open.
-  An empty mate pin leaves that half unpinned, so the worker's selected agent
+  An empty Bot pin leaves that half unpinned, so the worker's selected agent
   or the global default decides. The per-crewmate cost cap is that
   profile's `worker_model` / `worker_reasoning_effort`, where
   `"auto"` is a real pin on the backend default. `worker_session_defaults` in

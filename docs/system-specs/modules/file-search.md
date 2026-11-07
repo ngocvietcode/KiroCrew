@@ -194,8 +194,9 @@ each flag closes a divergence: `--fixed-strings` (both python passes match
 unconditionally), `--no-ignore` (`os.walk` cannot honour ignore files),
 `--max-filesize` and `--max-count 1` to match the fallback's own ceilings, and
 `--no-config`, because `RIPGREP_CONFIG_PATH` can carry `--pre=<binary>` and the
-child inherits this process's environment. Document containers are excluded with
-`--iglob`, not `--glob`: the document pass claims a file by
+child inherits this process's environment. Both text engines number lines as
+ripgrep does, by `\n` alone, and a preview drops its trailing `\r`. Document containers
+are excluded with `--iglob`, not `--glob`: the document pass claims a file by
 `splitext(name)[1].lower()`, so a case-sensitive exclusion leaves `REPORT.DOCX` in
 ripgrep's pass and the file is reported twice. Directory skips stay
 case-sensitive, matching the walk's own exact-name screen — extensions are folded
@@ -286,7 +287,7 @@ Two paths produce results:
 
 The walk starts at each selected root and the endpoint accepts no descendant path parameter to resolve against it. This is not a general root-containment guard: `api_file_search` resolves each candidate only for the sensitive-path check, so a non-sensitive symlink target outside the selected root can remain a result. A sensitive symlink target is rejected on its canonical path; `test_index_file_symlink_resolved_before_sensitive_check` and `test_walk_fallback_file_symlink_resolved_before_sensitive_check` pin that refusal.
 
-Both result paths exclude dot-prefixed **files**, directories named by shared `file_index._SKIP_DIRS`, and candidates whose resolved path is sensitive. Dot-prefixed directories that are not in `_SKIP_DIRS` remain candidates but are not descended into, preserving useful configuration-folder matches without recursively exposing their contents; `test_index_offers_dot_dirs_but_not_skip_dirs`, `test_index_does_not_descend_into_dot_dirs`, and `test_walk_fallback_offers_dot_dirs_but_not_skip_dirs` pin the behavior. On macOS, a walk rooted at home prunes the TCC-gated directories, so it never stats one and pops a consent prompt. The unscoped walk fallback and `FileIndex._walk` both apply that prune. The scoped walk fallback (an explicit `?project=`/`?workspace=`) does not, since that access is deliberate and macOS's own one-time prompt is the expected contract. The registry never indexes a home root: the build checks the root on the pool thread, marks a home root walk-only without walking it, and every search of it takes the scoped walk. So an explicit `?project=$HOME` keeps returning the gated folders, and no background rebuild touches them. `test_home_root_skips_tcc_dirs`, `test_home_root_offers_dot_dir_but_not_tcc_dir`, `test_scoped_tcc_dir_is_still_indexed`, `test_nested_dir_sharing_a_tcc_name_is_not_pruned`, and `test_explicit_home_search_keeps_gated_folders_after_index_warms` pin this.
+Both result paths exclude dot-prefixed **files**, directories named by shared `file_index._SKIP_DIRS`, and candidates whose resolved path is sensitive. Dot-prefixed directories that are not in `_SKIP_DIRS` remain candidates but are not descended into, preserving useful configuration-folder matches without recursively exposing their contents; `test_index_offers_dot_dirs_but_not_skip_dirs`, `test_index_does_not_descend_into_dot_dirs`, and `test_walk_fallback_offers_dot_dirs_but_not_skip_dirs` pin the behavior. The one exception is `file_index._OPEN_DOT_DIRS`: below the root, a `.kiro` directory is entered, but only its `specs` and `steering` children are offered and walked, and the files directly in `.kiro` are not offered, so a user can `@` a spec's `tasks.md` or a steering file while `.kiro/settings`, `.github`, `.vscode`, `.ssh` and `.aws` stay closed. Both paths take that decision from one helper, `file_index._dot_dir_walk_plan`, which matches whole path segments (the walked directory's name and the child's name). A symlinked `.kiro/specs` is offered but never followed, because neither `os.walk` follows links. `TestOpenedDotDirs` in `test_file_search_dirs.py` pins this on both paths. On macOS, a walk rooted at home prunes the TCC-gated directories, so it never stats one and pops a consent prompt. The unscoped walk fallback and `FileIndex._walk` both apply that prune. The scoped walk fallback (an explicit `?project=`/`?workspace=`) does not, since that access is deliberate and macOS's own one-time prompt is the expected contract. The registry never indexes a home root: the build checks the root on the pool thread, marks a home root walk-only without walking it, and every search of it takes the scoped walk. So an explicit `?project=$HOME` keeps returning the gated folders, and no background rebuild touches them. `test_home_root_skips_tcc_dirs`, `test_home_root_offers_dot_dir_but_not_tcc_dir`, `test_scoped_tcc_dir_is_still_indexed`, `test_nested_dir_sharing_a_tcc_name_is_not_pruned`, and `test_explicit_home_search_keeps_gated_folders_after_index_warms` pin this.
 
 ## Security
 
@@ -338,6 +339,12 @@ The recorded tokens are persisted per slot beside the staged files
 (`chatFileTokenDrafts`, sessionStorage), so a chip restored after a reload
 keeps them and behaves like one picked in the current page.
 Uploaded/dropped files have no token and keep a state-only remove.
+A split pane's composer gets the same pick and chip remove from the
+`Composer` root's Mention atom (`chat-core/composer/mention.ts`): the pane
+hands the root its staged-file list, the atom keeps each pick's token per slot
+in memory, and the pane's send resolves `@rel/` tokens against the pane's
+project. The pane keeps no alias drafts across a reload and runs no hand-edit
+reconciliation; those stay with the main chat's composer.
 
 A file chip is kept in step with its mention text in both directions
 (`website/src/pages/chat/page/composerFileMentions.ts`). The file tree's "Add to
@@ -407,7 +414,7 @@ shows literally — the same trade-off inline file mentions make.
 | `website/src/pages/chat/FileBrowserRail.tsx` | Files tab: Name/Content toggle, result rows, status row |
 | `website/src/api/fileGrep.ts` | `/api/file-grep` client and result types |
 | `src/kiro_crew/dashboard/file_index.py` | `FileIndex`, `FileIndexRegistry` |
-| `website/src/components/FilePickerMenu.tsx` | Picker UI, `kind` propagation, trailing-slash insertion, `pathMode`, `pathTail` (rows show their root-relative folder cut from the start, so same-named results stay distinguishable in a narrow menu; `ChatEmbed` opts in, the dashboard keeps the full path cut at the end) |
+| `website/src/components/FilePickerMenu.tsx` | Picker UI, `kind` propagation, trailing-slash insertion, `pathMode`, `pathTail` (rows show their root-relative folder cut from the start, so same-named results stay distinguishable in a narrow menu; `ChatEmbed` and a split pane's composer opt in, the main chat keeps the full path cut at the end) |
 | `website/src/components/composerTokens.ts` | Caret-relative `@` / `$` / `./` token matchers and the shared token replace |
 | `website/src/components/ChatInput.tsx` | Composer wiring: mounts the trigger pickers and the preview strip |
 | `website/src/chat-core/composer/pickers.ts` | Which trigger picker the text at the caret opens (`@` / `$` / `./` / `/`), one rule for the textarea and the Lexical editor; store-free, shared by `ChatInput` and `ChatEmbed` |
@@ -419,6 +426,7 @@ shows literally — the same trade-off inline file mentions make.
 | `website/src/utils/fileTokens.ts` | Attachment-marker owner: file AND dir token parse/serialize/resolve |
 | `website/src/utils/chatFileTokenDrafts.ts` | Per-slot persistence of file-chip aliases beside the staged-file drafts |
 | `website/src/chat-core/composer/outgoingTurn.ts` | Send and steer serialization: `[attached_dir N]` + `meta.dirs` on a send, `@rel/` kept on the text-only steer |
+| `website/src/chat-core/composer/mention.ts` | The Mention atom: a split pane's `@` file pick and file-chip remove through the `Composer` root, and `stripPickedToken`, shared with `ChatEmbed` |
 | `website/src/pages/ChatPage.tsx` | The host that composes the owners below |
 | `website/src/pages/chat/page/composerSend.ts` | Sends the outgoing turn (`buildOutgoingTurn`, `sendTurn`) |
 | `website/src/pages/chat/page/composerStaging.ts` | Staged-resource state; folder chips derived from `@rel/` tokens (`useStagedFolderRefs`) |
@@ -447,6 +455,7 @@ shows literally — the same trade-off inline file mentions make.
 | `website/src/test/fileTokens.dirs.test.ts` | Token parse/serialize/resolve units, label widening, lossless spaced paths |
 | `website/src/chat-core/composer/outgoingTurn.test.ts` | Send and steer serialization at the turn: `[attached_dir N]` + `meta.dirs[N-1]` resolved against the project on a send, `@rel/` kept on a steer |
 | `website/src/test/ChatPage.dirStaging.test.tsx` | Token-derived staging, per-slot draft survival, remove parity, send serialization + `meta.dirs` |
+| `website/src/test/ChatPane.composerParity.test.tsx` | A split pane's `@` menu: a picked file's chip remove strips its token, rows cut from the start, a picked folder sent against the pane's project |
 | `website/src/test/ChatPage.chipUndo.test.tsx` | File-chip remove then undo/redo: attachment restored and sent, removed again, duplicate-token, prefix-sibling, old-project-alias, after-reload and post-send cases |
 | `website/src/test/chatFileTokenDrafts.test.ts` | Alias-draft roundtrip and corruption guard |
 | `website/src/test/renderUserContent.dirs.test.tsx` | Bubble chips: fresh, replay, mixed file+dir, paste-adjacent |

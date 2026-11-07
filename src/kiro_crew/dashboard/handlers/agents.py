@@ -217,6 +217,7 @@ from kiro_crew.dashboard.agent_admin.capabilities import (  # noqa: F401
 )
 from kiro_crew.dashboard.agent_admin.crew_records import (  # noqa: F401
     _api_kirocrew_agents_create,
+    _created_response,
     _crew_effort_rejected,
     _crew_memory_store_rejected,
     _eager_copy_mate_config,
@@ -299,6 +300,7 @@ from kiro_crew.dashboard.chat_utils import (  # noqa: F401
     run_config_write,
 )
 from kiro_crew.dashboard.conditional_get import conditional_response, strong_content_etag
+from kiro_crew.dashboard.handlers import models_cold_probe
 from kiro_crew.dashboard.handlers._shared import (  # noqa: F401
     MAX_AGENT_SKILLS,
     SkillCatalogSnapshot,
@@ -356,6 +358,7 @@ from kiro_crew.memory_stores import (  # noqa: F401
 )
 from kiro_crew.platform.governance import sanitize_agent_config_governance  # noqa: F401
 from kiro_crew.platform_compat import is_link_or_junction, kill_and_reap  # noqa: F401
+from kiro_crew.quick_prompts import user_quick_prompt_menu
 from kiro_crew.sandbox import (
     SandboxUnavailableError,
     cgroup_scope_argv,
@@ -876,6 +879,7 @@ def _advertised_backend_models(
     """
     namespace = model_registry_namespace(backend)
     advertised = _advertised_cc_models(request, namespace)
+    models_cold_probe.probe_if_cold(request, backend, advertised)  # answers now regardless
 
     rows: list[dict] = [
         {"model_name": "auto", "display_name": "Auto", "description": "Backend default"}
@@ -1569,36 +1573,33 @@ async def api_slash_commands(request: web.Request) -> web.Response:
     blocked_commands = _BLOCKED_SLASH_COMMANDS
     if capabilities_for(cfg.agent.acp_backend).supports_native_todos:
         blocked_commands = blocked_commands - {"/todos"}
-    if is_claude_code(cfg.agent.provider):
-        state: DashboardState = request.app["state"]
-        cc_commands: list[str] = []
-        for provider in state.sessions.active_providers():
-            cmds = getattr(provider, "_slash_commands", [])
-            if cmds:
-                cc_commands = cmds
-                break
-        if not cc_commands:
-            cc_commands = [
-                "compact",
-                "clear",
-                "context",
-                "help",
-                "init",
-                "review",
-                "security-review",
-                "usage",
-            ]
+    # A harness that runs its own commands gets its own list, not kiro-cli's.
+    if capabilities_for(cfg.agent.acp_backend).runs_own_slash_commands or is_claude_code(
+        cfg.agent.provider
+    ):
+        cc_commands = [
+            "compact",
+            "clear",
+            "context",
+            "help",
+            "init",
+            "review",
+            "security-review",
+            "todos",
+            "usage",
+        ]
         result = [
             {"name": f"/{c}", "description": SLASH_COMMAND_DESCRIPTIONS.get(f"/{c}", "")}
             for c in cc_commands
             if f"/{c}" not in blocked_commands
         ]
-        for command in ("/side", "/workflow"):
+        # The commands the dashboard answers before any harness sees the turn.
+        for command in ("/agent", "/goal", "/prompts", "/side", "/workflow"):
             if not any(item["name"] == command for item in result):
                 result.append(
                     {"name": command, "description": SLASH_COMMAND_DESCRIPTIONS.get(command, "")}
                 )
-        return web.json_response(result)
+        return web.json_response(result + await asyncio.to_thread(user_quick_prompt_menu))
 
     # Blocked commands stay in _SLASH_COMMANDS (typing one still gets the
     # explicit "not available in the dashboard" rejection in chat_runner), but
@@ -1612,6 +1613,7 @@ async def api_slash_commands(request: web.Request) -> web.Response:
         offered = offered & local_harness_menu(cfg.agent.acp_backend)
     return web.json_response(
         [{"name": c, "description": SLASH_COMMAND_DESCRIPTIONS.get(c, "")} for c in sorted(offered)]
+        + await asyncio.to_thread(user_quick_prompt_menu)  # expanded on every harness
     )
 
 

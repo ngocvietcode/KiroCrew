@@ -11,6 +11,7 @@
  * `client.ts` re-exports `ApiError` and `friendlyErrText`, so every existing
  * import path — and every test that mocks `../api/client` — keeps working.
  */
+import { fmtList } from '../i18n/format'
 import { i18nT } from '../i18n/t'
 import { looksLikeHtmlDocument, edgeChallengeMessage, noteEdgeAuthChallenge } from './edgeAuthChallenge'
 
@@ -71,6 +72,13 @@ export const apiErrorCode = (e: unknown): string =>
   e instanceof ApiError ? errorBodyCode(e.body) : ''
 
 /**
+ * True for the gateway's refusal of a call to an app that is switched off: the
+ * `app_not_enabled` code the app reverse proxy answers with. Keyed on the code,
+ * not the 403, because the same routes answer 403 to other refusals too.
+ */
+export const isAppNotEnabledError = (e: unknown): boolean => apiErrorCode(e) === 'app_not_enabled'
+
+/**
  * The `code` a raw refusal body names, or `''`. The body-level half of
  * {@link apiErrorCode}, for readers that run before an ApiError exists --
  * `friendlyErrText` builds the ApiError's message from the raw body.
@@ -84,6 +92,26 @@ const errorBodyCode = (body: string): string => {
   } catch {
     return ''
   }
+}
+
+type AttachedRow = { id: string; state: string }
+
+/**
+ * What a `slot_subagents_running` refusal body says keeps the slot attached, as
+ * lines to show under the refusal: each unfinished run and queued spawn as
+ * `id (state)`, then a could-not-check line when the run probe could not answer
+ * (`runs: null`) or the queued listing is incomplete (`queued_partial`). `''` for
+ * any other body.
+ */
+export const slotAttachedDetail = (body: string): string => {
+  if (errorBodyCode(body) !== 'slot_subagents_running') return ''
+  const { runs, queued, queued_partial } = JSON.parse(body) as {
+    runs?: AttachedRow[] | null, queued?: AttachedRow[], queued_partial?: boolean
+  }
+  const rows = [...(runs ?? []), ...(queued ?? [])].map(row => `${row.id} (${row.state})`)
+  const lines = rows.length ? [i18nT('api.client.subagents_still_running_or_queued', { list: fmtList(rows) })] : []
+  if (runs === null || queued_partial) lines.push(i18nT('api.client.subagents_could_not_be_checked'))
+  return lines.join('\n')
 }
 
 /** True when an approval refusal is terminal — the approval itself is gone (404,
@@ -113,14 +141,16 @@ export const isEdgeChallengeError = (e: unknown): boolean =>
   e instanceof ApiError && e.edgeChallenge
 
 /**
- * Is this a live-slot cap refusal? The gateway answers 429 with
+ * Is this a live-slot cap refusal? The gateway answers 409 with
  * `{"code":"slot_cap_reached"}` (global) or `creator_slot_cap_reached`
  * (per-caller) when a new session cannot open because too many are live.
+ * An older gateway, or a remote crew on one, answers the same codes with 429,
+ * so both statuses are accepted.
  * Matches the parsed `code` EXACTLY, not a substring of the body, so an
- * unrelated 429 whose message happens to mention it is not misread.
+ * unrelated 409 or 429 whose message happens to mention it is not misread.
  */
 export const isSlotCapError = (status: number, body: string): boolean => {
-  if (status !== 429) return false
+  if (status !== 409 && status !== 429) return false
   const code = errorBodyCode(body)
   return code === 'slot_cap_reached' || code === 'creator_slot_cap_reached'
 }
@@ -152,28 +182,30 @@ const jsonMessage = (trimmed: string, keys: readonly string[]): string => {
  */
 export const friendlyErrText = (status: number, body: string): string => {
   const trimmed = body.trim()
+  // The live-slot caps -- `slot_cap_reached` (global) and
+  // `creator_slot_cap_reached` (per-caller) -- are hit by Duplicate/Fork (each
+  // mints a new slot) once too many session tabs are open; a generic "wait a few
+  // seconds and reload" is a dead end there, because a reload re-restores the
+  // same open tabs straight back over the cap, so the guidance names the one
+  // thing that clears it. The gateway answers them 409; an older one answered
+  // 429, so the check runs before either status branch. Match the parsed `code`
+  // EXACTLY, not a substring of the body, so an unrelated refusal whose message
+  // happens to contain the text does not get the wrong copy.
+  if (isSlotCapError(status, body)) {
+    return i18nT('api.client.too_many_open_sessions_http_429_close_old')
+  }
   if (status === 429) {
-    // Two different 429s reach here. The live-slot caps -- `slot_cap_reached`
-    // (global) and `creator_slot_cap_reached` (per-caller) -- are hit by
-    // Duplicate/Fork (each mints a new slot) once too many session tabs are
-    // open; a generic "wait a few seconds and reload" is a dead end there,
-    // because a reload re-restores the same open tabs straight back over the
-    // cap, so the guidance names the one thing that clears it. Match the parsed
-    // `code` EXACTLY, not a substring of the body, so an unrelated 429 whose
-    // message happens to contain the text does not get the wrong copy. Any
-    // other 429 the gateway sent names its reason in `error`; one with no reason,
-    // like the tunnel edge's burst throttle, is a wait-and-retry.
-    if (isSlotCapError(status, body)) {
-      return i18nT('api.client.too_many_open_sessions_http_429_close_old')
-    }
+    // Any other 429 the gateway sent names its reason in `error`; one with no
+    // reason, like the tunnel edge's burst throttle, is a wait-and-retry.
     return jsonMessage(trimmed, ['error', 'detail'])
       || i18nT('api.client.rate_limited_by_the_tunnel_edge_http_429_too_man')
   }
   // Backends return errors as {"error": "…"} (or detail/message). Unwrap the
   // field so the UI shows the human message with its real newlines, not the
-  // raw JSON envelope with escaped \n and \".
+  // raw JSON envelope with escaped \n and \". A sub-agent refusal also names what
+  // keeps the slot attached, so every surface showing it says what to stop.
   const msg = jsonMessage(trimmed, ['error', 'detail', 'message'])
-  if (msg) return msg
+  if (msg) return [msg, slotAttachedDetail(trimmed)].filter(Boolean).join('\n')
   // An error PAGE has no message field to unwrap, so returning it verbatim put
   // `<!DOCTYPE html><html><head><meta charset="utf…` in the dashboard's topbar.
   if (looksLikeHtmlDocument(trimmed)) return ''
