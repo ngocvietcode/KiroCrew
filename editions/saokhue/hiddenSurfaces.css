@@ -1,0 +1,12 @@
+/*
+ * Core surfaces this edition does not offer, hidden without editing core files.
+ *
+ * Keyed on the stable `data-ui-location` marker the core puts on each surface's
+ * root element. `html` raises the specificity so load order between this sheet
+ * and the core's cannot matter (website/docs/extension-seams.md, "Theme CSS").
+ */
+
+/* Nav rail: "Connect your phone". The row is the only way into that dialog. */
+html [data-ui-location='shell.connect-phone'] {
+  display: none !important;
+}
