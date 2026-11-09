@@ -25,7 +25,7 @@
         "refusal_fallback_model": "",
         "reasoning_effort": "",
         "provider": "acp",
-        "mcp_registry_mode": false,
+        "mcp_registry_mode": true,
         "mcp_quarantine_after_failures": 3,
         "acp_backend": "kas",
         "member_acp_backend": "kas",
@@ -362,10 +362,10 @@
       "sensitive": false,
       "tags": [],
       "label": "Enterprise MCP Registry Mode",
-      "help": "Set true when this Kiro account is governed by an enterprise MCP registry (Kiro console -> Shared settings -> MCP Registry URL, which applies to IAM Identity Center and API-key sign-ins). In registry mode the client connects ONLY to mcpServers entries carrying 'type': \"registry\" that resolve to a catalog entry of the same name, so Kiro Crew stamps that marker on the servers it manages. Leave false on a personal account: with no registry configured the filter inverts and registry-marked entries are the ones dropped. The administrator must also allow-list, by those exact names, every managed kirocrew-* server Kiro Crew mounts: kirocrew-core, kirocrew-cron and kirocrew-computer by default, plus any opt-in server (e.g. kirocrew-dashboard, kirocrew-work) an agent is granted.",
+      "help": "Set true when this Kiro account is governed by an enterprise MCP registry (Kiro console -> Shared settings -> MCP Registry URL, which applies to IAM Identity Center and API-key sign-ins). In registry mode the client connects ONLY to mcpServers entries carrying 'type': \"registry\" that resolve to a catalog entry of the same name, so Kiro Crew stamps that marker on the servers it manages. This build defaults to true; set false on a personal account: with no registry configured the filter inverts and registry-marked entries are the ones dropped. The administrator must also allow-list, by those exact names, every managed kirocrew-* server Kiro Crew mounts: kirocrew-core, kirocrew-cron and kirocrew-computer by default, plus any opt-in server (e.g. kirocrew-dashboard, kirocrew-work) an agent is granted.",
       "hasChildren": false,
       "enumValues": null,
-      "defaultValue": false
+      "defaultValue": true
     },
     {
       "path": "agent.mcp_quarantine_after_failures",

@@ -201,7 +201,7 @@ class AgentConfig:
         metadata=_meta("Provider", "LLM provider backend (KiroACP / kiro-cli).", enum=["acp"]),
     )
     mcp_registry_mode: bool = field(
-        default=False,
+        default=True,
         metadata=_meta(
             "Enterprise MCP Registry Mode",
             "Set true when this Kiro account is governed by an enterprise MCP "
@@ -210,8 +210,8 @@ class AgentConfig:
             "mode the client connects ONLY to mcpServers entries carrying "
             "'type': \"registry\" that resolve to a catalog entry of the same "
             "name, so Kiro Crew stamps that marker on the servers it manages. "
-            "Leave false on a personal account: with no registry configured the "
-            "filter inverts and registry-marked entries are the ones dropped. "
+            "This build defaults to true; set false on a personal account: with "
+            "no registry configured the filter inverts and registry-marked entries are the ones dropped. "
             "The administrator must also allow-list, by those exact names, every "
             "managed kirocrew-* server Kiro Crew mounts: kirocrew-core, "
             "kirocrew-cron and kirocrew-computer by default, plus any opt-in "
