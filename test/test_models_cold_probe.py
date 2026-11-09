@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -131,3 +131,50 @@ def test_warm_advertised_list_starts_no_probe(monkeypatch) -> None:
     rows = agents._advertised_backend_models(SimpleNamespace(app={"state": object()}), "codex")
     assert [r["model_name"] for r in rows] == ["auto", "gpt-x"]
     assert calls == []
+
+
+@pytest.fixture
+def _no_catalog_listeners(_floor_monkeypatch):
+    from kiro_crew.agent_sdk import kas_model_catalog
+
+    _floor_monkeypatch.setattr(kas_model_catalog, "_listeners", [])
+    _floor_monkeypatch.setattr(kas_model_catalog, "_recorded", None)
+    _floor_monkeypatch.setattr(kas_model_catalog, "_recorded_identity", "")
+    return kas_model_catalog
+
+
+def _kas_select(*values: str) -> dict:
+    options = [{"value": v, "name": v, "description": ""} for v in values]
+    return {
+        "configOptions": [
+            {"id": "model", "type": "select", "currentValue": "auto", "options": options}
+        ]
+    }
+
+
+@pytest.mark.asyncio
+async def test_a_kas_catalog_recording_announces_after_a_cold_probe_recorded_nothing(
+    _no_catalog_listeners,
+) -> None:
+    # The probe's session answered before the engine had its select, so the frame it
+    # sent re-read a cold list. The session that records later must announce again.
+    catalog = _no_catalog_listeners
+    state = _state(backend="kas")
+    models_cold_probe.watch_kas_catalog(state)
+    models_cold_probe.watch_kas_catalog(state)  # once per dashboard state
+    announced = asyncio.Event()
+    state.broadcast_ws.side_effect = lambda *_: announced.set()
+
+    catalog.record_catalog(_kas_select("auto", "m1"), "kas", identity="acct")
+    await asyncio.wait_for(announced.wait(), timeout=5)
+    state.broadcast_ws.assert_called_once_with(models_cold_probe.MODELS_CHANGED_EVENT, {})
+
+    # The same catalog again is no news: no listener runs, so nothing is scheduled.
+    with patch.object(asyncio.get_running_loop(), "call_soon_threadsafe") as scheduled:
+        catalog.record_catalog(_kas_select("auto", "m1"), "kas", identity="acct")
+    scheduled.assert_not_called()
+
+
+def test_watching_without_a_state_is_not_an_error(_no_catalog_listeners) -> None:
+    models_cold_probe.watch_kas_catalog(None)
+    assert _no_catalog_listeners._listeners == []

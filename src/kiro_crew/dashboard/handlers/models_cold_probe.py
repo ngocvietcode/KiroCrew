@@ -14,6 +14,12 @@ records the harness's models through the same capture a chat session uses
 cache feed). Then a ``models_changed`` frame tells every dashboard to read the
 list again. Nothing persistent is registered, so a later harness switch finds no
 leftover background entry of this one.
+
+The probe's own session can answer before a freshly started KAS engine has its
+model select, so it may record nothing, and its frame then re-reads a list that is
+still cold. :func:`watch_kas_catalog` covers that and every later case: it sends the
+same frame whenever any KAS session records a catalog that changes what the bundle
+route serves, so the picker fills on the first session that does advertise one.
 """
 
 from __future__ import annotations
@@ -41,6 +47,36 @@ COLD_PROBE_COOLDOWN_SECS = 300.0
 
 #: The clock the cooldown reads, bound here so a test can set it.
 _now = time.monotonic
+
+#: Where the KAS catalog listener registered for this dashboard is kept.
+_CATALOG_LISTENER_ATTR = "_kas_catalog_listener"
+
+
+def watch_kas_catalog(state: Any) -> None:
+    """Send ``models_changed`` on *state* whenever the KAS catalog recording changes.
+
+    Idempotent per dashboard state; must be called on the dashboard's loop. The
+    recorder may run on any thread, so the frame is scheduled onto this loop, and a
+    listener whose loop has closed (a gateway restarted in the same process)
+    removes itself. Never raises.
+    """
+    try:
+        if state is None or getattr(state, _CATALOG_LISTENER_ATTR, None) is not None:
+            return
+        from kiro_crew.agent_sdk import kas_model_catalog
+
+        loop = asyncio.get_running_loop()
+
+        def _on_change() -> None:
+            if loop.is_closed():
+                kas_model_catalog.remove_change_listener(_on_change)
+                return
+            loop.call_soon_threadsafe(state.broadcast_ws, MODELS_CHANGED_EVENT, {})
+
+        setattr(state, _CATALOG_LISTENER_ATTR, _on_change)
+        kas_model_catalog.add_change_listener(_on_change)
+    except Exception:  # noqa: BLE001 - without it the picker fills on the next spawn
+        logger.debug("KAS catalog listener not registered", exc_info=True)
 
 
 def start_cold_model_probe(state: Any, backend: str) -> bool:

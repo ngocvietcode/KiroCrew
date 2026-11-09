@@ -511,6 +511,14 @@ its own once the cache refreshes with a list that carries it.
   when the session did not open, so a harness that advertises nothing cannot
   loop. Only the configured harness on a shared-runtime backend is probed; a Bot
   picker asking about another harness (`?backend=`) is not.
+- On the KAS bundle route the probe is not the only cue. A freshly started engine
+  can answer the probe's `session/new` before it has its `model` select, so the
+  probe records nothing and its frame re-reads a list that is still cold. Every
+  `/api/models` read on that route therefore registers, once per dashboard,
+  `models_cold_probe.watch_kas_catalog`: a `kas_model_catalog` change listener
+  that sends the same `models_changed` frame whenever any KAS session records a
+  catalog that changes what the route serves (the first recording, other rows, or
+  another account). Re-recording the same rows for the same account sends nothing.
 - Whether a canonical registry key is a display-only spelling is the backend's
   `model_id_namespace` question, the same field `_wire_model_id` translates
   through: a provider namespace whose registry row carries an id for the key

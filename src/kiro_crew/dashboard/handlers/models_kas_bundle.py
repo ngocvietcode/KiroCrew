@@ -25,9 +25,10 @@ spawns here:
   registry), and is OMITTED otherwise, because the select carries none and an
   invented number would scale the context meter on a guess.
 * **A cold process serves ``auto`` alone with 200**, not a degraded 503: nothing
-  has failed, no session has advertised yet. The dashboard refetches the list
-  when a session spawns (``useWebSocket``'s ``spawned`` invalidation), so the
-  first chat fills the picker without a poll. Cold again whenever the vault
+  has failed, no session has advertised yet. The first recording for the
+  signed-in account sends ``models_changed`` (``models_cold_probe.watch_kas_catalog``,
+  registered by this handler), so the picker fills without a poll and without
+  depending on the read racing the session that records. Cold again whenever the vault
   names a different account than the one the rows were recorded for: every
   request reads the vault's identity fingerprint and
   ``recorded_catalog_snapshot`` yields the rows only to that account, so a
@@ -116,6 +117,11 @@ def _picker_row(row: dict[str, Any]) -> dict[str, Any]:
 
 async def api_models_kas_bundle(request: web.Request) -> web.Response:
     """The bundle route's ``GET /api/models``. See the module docstring."""
+    from kiro_crew.dashboard.handlers.models_cold_probe import watch_kas_catalog
+
+    # Before any answer: a cold answer here is a 200 the dashboard keeps, so the
+    # recording that later fills the catalog must tell it to read again.
+    watch_kas_catalog(request.app.get("state"))
     # An engine that is not there yet is not an error: the first spawn installs
     # the pinned engine (``acp/kas_engine_install.py``), and the harness panel
     # reads that host as installed too (``backend_install._probe_kas``). Only a

@@ -150,6 +150,23 @@ class TestTheList:
         await bundle.api_models_kas_bundle(_request())
         assert calls == [ACP_BACKEND_KAS]
 
+    async def test_every_read_registers_the_catalog_watch_for_its_dashboard(
+        self, ready, monkeypatch
+    ):
+        # A cold answer is a 200 the dashboard keeps: the recording that fills the
+        # catalog later is what tells it to read again, so the watch is in place
+        # before the first answer, cold or warm.
+        from kiro_crew.dashboard.handlers import models_cold_probe
+
+        watched: list[object] = []
+        monkeypatch.setattr(models_cold_probe, "watch_kas_catalog", watched.append)
+        monkeypatch.setattr(models_cold_probe, "start_cold_model_probe", lambda _s, _b: True)
+        request = _request()
+        state = object()
+        request.app = {"state": state}
+        await bundle.api_models_kas_bundle(request)
+        assert watched == [state]
+
     async def test_recorded_rows_carry_the_multiplier_and_only_known_windows(self, ready):
         _record({"id": "auto", "name": "Auto", "rate": 1}, {"id": "model-x", "rate": 2})
         known_windows = {"model-x": None}

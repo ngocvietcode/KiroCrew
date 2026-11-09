@@ -36,12 +36,19 @@ Recorded by the shared-runtime driver (``AcpSessionHandle.store_session_config``
 KAS runs on ``AcpRuntime`` only, ``ACP_BACKENDS_ACP_RUNTIME``) on a positive KAS
 identity, so a KAS session on either route records; only the bundle-route picker
 READS it.
+
+A recording that changes what the picker would serve (the first one, other rows,
+or another account) calls the change listeners (:func:`add_change_listener`). The
+dashboard registers one that tells every open picker to read the list again: a
+picker that read ``auto`` alone while the catalog was cold has no other cue, since
+that read was a successful one and nothing polls after it.
 """
 
 from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Callable
 from typing import Any
 
 from kiro_crew import model_registry
@@ -63,6 +70,8 @@ _recorded: list[dict[str, Any]] | None = None
 #: ``_LOCK`` with the rows, as one state.
 _recorded_identity = ""
 _LOCK = threading.Lock()
+#: Called, outside ``_LOCK``, after a recording that changed the served catalog.
+_listeners: list[Callable[[], None]] = []
 
 
 def _clamp(value: object) -> str:
@@ -185,13 +194,38 @@ def record_catalog(resp: dict[str, Any], backend: str, *, identity: object) -> b
                 )
                 return False
             with _LOCK:
+                changed = rows != _recorded or identity != _recorded_identity
                 _recorded = rows
                 _recorded_identity = identity
+                listeners = list(_listeners) if changed else []
             logger.debug(
                 "KAS model catalog recorded from the session's model select (%d rows)", len(rows)
             )
+            for listener in listeners:
+                try:
+                    listener()
+                except Exception:  # noqa: BLE001 - a listener never fails the session
+                    logger.debug("KAS model catalog change listener failed", exc_info=True)
             return True
     return False
+
+
+def add_change_listener(listener: Callable[[], None]) -> None:
+    """Call *listener* after each recording that changes the served catalog.
+
+    It runs on the recorder's thread and must not block; an exception it raises is
+    logged and dropped. Adding the same callable twice registers it once.
+    """
+    with _LOCK:
+        if listener not in _listeners:
+            _listeners.append(listener)
+
+
+def remove_change_listener(listener: Callable[[], None]) -> None:
+    """Stop calling *listener*; a callable that was never added is ignored."""
+    with _LOCK:
+        if listener in _listeners:
+            _listeners.remove(listener)
 
 
 def recorded_catalog_snapshot(identity: str) -> list[dict[str, Any]] | None:

@@ -31,6 +31,7 @@ def _cold_catalog(_floor_monkeypatch):
     # lift it, so the recording is cold at the start of every test here.
     _floor_monkeypatch.setattr(catalog, "_recorded", None)
     _floor_monkeypatch.setattr(catalog, "_recorded_identity", "")
+    _floor_monkeypatch.setattr(catalog, "_listeners", [])
     yield
     _floor_monkeypatch.setattr(catalog, "_recorded", None)
 
@@ -319,3 +320,68 @@ class TestTheVaultIdentity:
         kas = await KasHarness().session_extras("", work_dir=None)
         assert kas.vault_identity == _ID
         assert reads == ["vault"]
+
+
+class TestChangeListeners:
+    """A recording that changes what the picker serves tells the listeners; one that does not stays quiet."""
+
+    def test_first_recording_calls_the_listener(self) -> None:
+        calls: list[int] = []
+        catalog.add_change_listener(lambda: calls.append(1))
+        catalog.record_catalog(
+            _select([_option("auto"), _option("m1")]), ACP_BACKEND_KAS, identity=_ID
+        )
+        assert calls == [1]
+
+    def test_the_same_rows_for_the_same_account_call_nothing(self) -> None:
+        calls: list[int] = []
+        resp = _select([_option("auto"), _option("m1")])
+        catalog.record_catalog(resp, ACP_BACKEND_KAS, identity=_ID)
+        catalog.add_change_listener(lambda: calls.append(1))
+        catalog.record_catalog(resp, ACP_BACKEND_KAS, identity=_ID)
+        assert calls == []
+
+    def test_other_rows_or_another_account_call_the_listener(self) -> None:
+        calls: list[int] = []
+        catalog.record_catalog(_select([_option("auto")]), ACP_BACKEND_KAS, identity=_ID)
+        catalog.add_change_listener(lambda: calls.append(1))
+        catalog.record_catalog(
+            _select([_option("auto"), _option("m2")]), ACP_BACKEND_KAS, identity=_ID
+        )
+        catalog.record_catalog(
+            _select([_option("auto"), _option("m2")]), ACP_BACKEND_KAS, identity="account-b"
+        )
+        assert calls == [1, 1]
+
+    def test_a_refused_recording_calls_nothing(self) -> None:
+        calls: list[int] = []
+        catalog.add_change_listener(lambda: calls.append(1))
+        catalog.record_catalog(_select([_option("auto")]), ACP_BACKEND_CODEX, identity=_ID)
+        catalog.record_catalog(_select([_option("auto")]), ACP_BACKEND_KAS, identity="")
+        catalog.record_catalog({"sessionId": "s"}, ACP_BACKEND_KAS, identity=_ID)
+        assert calls == []
+
+    def test_a_failing_listener_does_not_fail_the_recording(self) -> None:
+        calls: list[int] = []
+
+        def _boom() -> None:
+            raise RuntimeError("listener failed")
+
+        catalog.add_change_listener(_boom)
+        catalog.add_change_listener(lambda: calls.append(1))
+        assert catalog.record_catalog(_select([_option("auto")]), ACP_BACKEND_KAS, identity=_ID)
+        assert calls == [1]
+        assert _recorded() is not None
+
+    def test_a_removed_listener_is_not_called(self) -> None:
+        calls: list[int] = []
+
+        def _listener() -> None:
+            calls.append(1)
+
+        catalog.add_change_listener(_listener)
+        catalog.add_change_listener(_listener)
+        catalog.remove_change_listener(_listener)
+        catalog.remove_change_listener(_listener)
+        catalog.record_catalog(_select([_option("auto")]), ACP_BACKEND_KAS, identity=_ID)
+        assert calls == []
