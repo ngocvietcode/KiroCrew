@@ -114,7 +114,7 @@ describe('icon working motion', () => {
     }
   })
 
-  it('moves the same face: body and eye layers split the still pose, minus its tile', () => {
+  it('moves the same flower: body and (empty) eye layers split the still pose, minus its tile', () => {
     const paths = (svg: string) => svg.match(/<path\b[^>]*\/>/g) ?? []
     for (const pose of POSE_IDS) {
       const still = svgOf(poseDataUri(pose, '#25679d'))
@@ -122,10 +122,10 @@ describe('icon working motion', () => {
       const eyes = svgOf(poseEyesDataUri(pose))
       expect(body).not.toMatch(/<rect\b/)
       expect(eyes).not.toMatch(/<rect\b/)
-      // The body is the white silhouette alone; the eyes are the two unfilled paths.
+      // The body is the white flower alone; the flower has no eyes, so that layer is empty.
       expect(paths(body)).toHaveLength(1)
       expect(paths(body)[0]).toContain('fill="#fff"')
-      expect(paths(eyes)).toHaveLength(2)
+      expect(paths(eyes)).toHaveLength(0)
       for (const eye of paths(eyes)) expect(eye).not.toContain('fill=')
       // Byte for byte the still frame's paths, on the same canvas: nothing redrawn.
       expect([...paths(body), ...paths(eyes)]).toEqual(paths(still))

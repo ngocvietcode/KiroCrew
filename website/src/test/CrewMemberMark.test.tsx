@@ -80,41 +80,22 @@ describe('crew-member-mark.svg line weight', () => {
     expect(svg).toMatch(/viewBox="0 0 24 24"/)
   })
 
-  it('strokes at width 2, so size=16 matches its Lucide neighbours', () => {
-    // Asserted on the ROOT specifically. `stroke-width` inherits, so this is the
-    // weight of both ghosts — the part that has to sit at the same weight as the
-    // Lucide glyphs above and below it on the rail.
-    expect(/<svg[^>]*stroke-width="2"/.test(svg)).toBe(true)
+  it('strokes the flower at width 1.5 on the root, so its thin petals stay open', () => {
+    // Lucide's width 2 would fill the ~3.6-unit petals solid. The weight lives on
+    // the ROOT and is inherited by every flower path: one weight, no per-path override.
+    expect(/<svg[^>]*stroke-width="1\.5"/.test(svg)).toBe(true)
+    const flower = [...svg.matchAll(/<path d="([^"]+)"/g)].map((m) => m[1].trim())
+    expect(flower).toHaveLength(4)
+    for (const d of flower) expect(d).toMatch(/Z$/)
+    expect(svg).not.toMatch(/<path d="[^"]*"[^>]*stroke-width=/)
   })
 
-  it('draws both ghosts at the inherited weight, with no per-path override', () => {
-    // The pair is ONE weight on purpose. An earlier draft of this mark (a ghost
-    // inside a speech bubble) gave the interior a lighter 1.5 stroke; at the
-    // rail's 16px on a 1x display that lighter detail was the first thing to
-    // vanish, which is why that draft was dropped. A second weight creeping back
-    // in is the regression this pins.
-    expect(svg).not.toMatch(/<path[^>]*stroke-width=/)
-    expect((svg.match(/<path /g) ?? []).length).toBe(2)
-  })
-
-  it('draws the back ghost as an OPEN partial outline, occluded by the front one', () => {
-    // Lucide's `Users` idiom: the figure behind is drawn only where it is not
-    // covered, and each cut stops a gap short of the front stroke — that gap is
-    // the cue that reads as "behind" rather than "two overlapping outlines".
-    // The front ghost is a closed silhouette (ends in Z); the back one must NOT
-    // close, or the occlusion is gone and the mark reads as a knot.
-    const paths = [...svg.matchAll(/<path d="([^"]+)"/g)].map((m) => m[1].trim())
-    expect(paths).toHaveLength(2)
-    const [front, back] = paths
-    expect(front).toMatch(/Z$/)
-    expect(back).not.toMatch(/Z/)
-  })
-
-  it('is an outline, not a filled shape', () => {
-    // A fill would read as a solid blob under the mask, at a visual weight no
-    // stroke width could reconcile with the outlined glyphs beside it.
-    expect(svg).toMatch(/fill="none"/)
-    expect(svg).not.toMatch(/fill="(?!none)/)
+  it('draws the star solid and the flower hollow', () => {
+    // The star is the only filled path. Under the mask both paint as currentColor,
+    // so the mark still follows the rail's active/idle colour and every theme.
+    expect(svg).toMatch(/<svg[^>]*fill="none"/)
+    expect(svg.match(/fill="#000"/g) ?? []).toHaveLength(1)
+    expect(svg).toMatch(/<path fill="#000" stroke="none"/)
   })
 
   it('rounds its joins and caps, like every Lucide glyph', () => {

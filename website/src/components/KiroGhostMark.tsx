@@ -1,4 +1,4 @@
-// The Kiro ghost mark, sized and tinted for use as a nav/UI glyph.
+// The VPBank Prosperity Flower (the fork's replacement for the Kiro ghost), sized and tinted for use as a nav/UI glyph.
 //
 // The source art (`kiro-ghost-mark.svg`) is the ghost from the Kiro brand mark —
 // the same silhouette shipped as the product icon in the public `kirodotdev/Kiro`
@@ -16,7 +16,7 @@
 // muted when idle) exactly like the Lucide glyphs it sits beside — and the
 // hollow body keeps its visual weight in line with those stroke-drawn glyphs.
 import { BrandGlyph } from './BrandIcon'
-import ghostMarkUrl from '../assets/kiro-ghost-mark.svg'
+import ghostMarkUrl from '../assets/vpbank-flower-mark.svg'
 
 /**
  * Kiro ghost brand glyph.

@@ -39,6 +39,7 @@
  */
 import type { Style, StyleCreateProps } from '@dicebear/core'
 import markSvg from '../assets/kiro-ghost-mark.svg?raw'
+import flowerSvg from '../assets/vpbank-flower-mark.svg?raw'
 
 const WHITE = '#ffffff'
 /** Ink pieces sit ON the white body; anything floating on the tile is white instead. */
@@ -63,8 +64,27 @@ export function markPaths(svg: string): [string, string, string] {
   return [found[0], found[1], found[2]]
 }
 
-/** Silhouette and eyes, bbox 272.9,202.7 654x795 inside the 1200 tile. */
-export const [BODY, EYE_A, EYE_B] = markPaths(markSvg)
+/** Eyes of the original ghost mark; the face variants below are still authored against them. */
+export const [GHOST_BODY, EYE_A, EYE_B] = markPaths(markSvg)
+
+/** The VPBank Prosperity Flower (272x228 asset) as one path, scaled to FLOWER_W wide
+ *  and centred in the 1200 tile. Every number in the asset's path data is an
+ *  absolute x/y pair, so the scale is a pairwise rewrite. */
+const FLOWER_W = 700
+export function flowerBody(svg: string): string {
+  const s = FLOWER_W / 272
+  const ox = (1200 - FLOWER_W) / 2
+  const oy = 600 - (228 * s) / 2
+  const num = (v: number): string => String(+v.toFixed(1))
+  return [...svg.matchAll(/\sd="([^"]+)"/g)]
+    .map((m) =>
+      m[1].replace(/(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g, (_, x, y) => `${num(+x * s + ox)} ${num(+y * s + oy)}`),
+    )
+    .join('')
+}
+
+/** The avatar body: the flower, which has no face — see `compose`. */
+export const BODY = flowerBody(flowerSvg)
 
 /** Brand purple, used for every tile when `hueTile` is off. */
 export const BRAND_PURPLE = '#9046ff'
@@ -771,19 +791,10 @@ export function compose(
 ): string {
   const react = motionFrom(motion)
   const animate = react ? null : (working ?? null)
-  const eyesKey = react && react.eyes ? react.eyes : t.eyes
-  const eyesArt = animate
-    ? (WORKING_EYES[eyesKey] ?? EYES[eyesKey] ?? '')
-    : (EYES[eyesKey] ?? '')
   const inner = [
     `<path d="${BODY}" fill="${WHITE}"/>`,
-    t.blush
-      ? `<ellipse cx="${EL - 20}" cy="600" rx="46" ry="26" fill="${BLUSH}" opacity="0.55"/>` +
-        `<ellipse cx="${ER + 34}" cy="600" rx="46" ry="26" fill="${BLUSH}" opacity="0.55"/>`
-      : '',
-    eyesArt,
-    BROWS[t.brows] ?? '',
-    MOUTHS[t.mouth] ?? '',
+    // The flower has no face: blush, eyes, brows and mouth are still rolled (so a
+    // seed keeps its tile, headwear and prop) but not drawn.
     ACCESSORIES[t.accessory] ?? '',
     PROPS[t.prop] ?? '',
   ].join('')

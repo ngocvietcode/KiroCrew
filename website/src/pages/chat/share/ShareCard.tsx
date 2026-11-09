@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { i18nT } from '../../../i18n/t'
 import { SHARE_REPO_URL } from './shareSupport'
-import pose2 from '../../../assets/ghost-poses/pose-2.svg'
-import pose5 from '../../../assets/ghost-poses/pose-5.svg'
+import pose2 from '../../../assets/vpbank-flower-pose.svg'
+import logoUrl from '../../../assets/saokhue-logo.svg'
+const pose5 = pose2
 
 /**
  * The share card itself — the DOM node html-to-image snapshots into the PNG.
@@ -25,7 +26,7 @@ export const CARD_W = 520
 function AppIconMark() {
   return (
     <img
-      src="/logo.png"
+      src={logoUrl}
       alt=""
       aria-hidden="true"
       draggable={false}

@@ -23,9 +23,9 @@ import { useTranslation } from 'react-i18next'
 // Brand mascot art for the Sessions tab's empty state: a plain <img> URL import,
 // never inline path data, which is what `use-lucide-icons` requires of a
 // mascot (GhostPoses.tsx explains the exemption).
-import workersLeadPose from '../../assets/ghost-poses/pose-7.svg'
-import workerPoseA from '../../assets/ghost-poses/pose-4.svg'
-import workerPoseB from '../../assets/ghost-poses/pose-6.svg'
+import workersLeadPose from '../../assets/vpbank-flower-pose.svg'
+const workerPoseA = workersLeadPose
+const workerPoseB = workersLeadPose
 import { api, type MemberRosterRow } from '../../api/client'
 import { isNotFoundError } from '../../api/apiError'
 import { CREW_BOARD_POLL_MS, crewBoardQueryKey } from '../../api/crewBoard'

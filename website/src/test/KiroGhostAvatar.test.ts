@@ -25,6 +25,7 @@ import {
   motionDrop,
   motionStyle,
   BODY,
+  GHOST_BODY,
   EYE_A,
   EYE_B,
   TILES,
@@ -118,14 +119,14 @@ function deltaE00(c1: string, c2: string): number {
 }
 
 describe('kiroGhost style', () => {
-  it('takes its silhouette and eyes from the mark asset, not from copied code', () => {
+  it('takes its eye shapes from the ghost mark asset and its body from the flower asset', () => {
     // Parsed independently here, so a regression in `markPaths` is caught rather
     // than compared against itself.
     const asset = readFileSync(MARK, 'utf8')
     const ds = [...asset.matchAll(/\sd="([^"]+)"/g)].map((m) => m[1])
     expect(ds).toHaveLength(3)
-    expect([BODY, EYE_A, EYE_B]).toEqual(ds)
-    for (const d of [BODY, EYE_A, EYE_B]) expect(d.startsWith('M')).toBe(true)
+    expect([GHOST_BODY, EYE_A, EYE_B]).toEqual(ds)
+    for (const d of [GHOST_BODY, EYE_A, EYE_B]) expect(d.startsWith('M')).toBe(true)
     expect(EYE_A).not.toBe(EYE_B)
   })
 
@@ -139,13 +140,12 @@ describe('kiroGhost style', () => {
     ).toThrow(/found 4/)
   })
 
-  it('reproduces the mark when every trait is off', () => {
+  it('draws the bare flower when every trait is off', () => {
     const bare = compose(BARE)
     expect(bare).toContain(`<path d="${BODY}" fill="#ffffff"/>`)
-    expect(bare).toContain(EYE_A)
-    expect(bare).toContain(EYE_B)
-    // Nothing else is drawn: body + two eyes + the tile rect.
-    expect(bare.match(/<path|<ellipse|<circle|<rect|<g /g)).toHaveLength(4)
+    expect(bare).not.toContain(EYE_A)
+    // Nothing else is drawn: the flower and the tile rect. The face is never drawn.
+    expect(bare.match(/<path|<ellipse|<circle|<rect|<g /g)).toHaveLength(2)
   })
 
   it('keeps tile colors perceptually apart', () => {
