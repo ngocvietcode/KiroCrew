@@ -350,6 +350,12 @@ async def _gateway(
 
     cfg = KiroCrewConfig.load()
 
+    # Name the machine's CA certificates for every child spawned from here on,
+    # proxy or not. Off the loop: it reads the certificate store and writes a file.
+    from kiro_crew.ca_bundle_env import export_for_children
+
+    await asyncio.to_thread(export_for_children)
+
     # Point this process, and every child spawned from here on, at the local
     # authenticating proxy when network.proxy_enabled is on. Before run_gateway,
     # so no service has opened a connection yet. Off the loop: it spawns the

@@ -1614,9 +1614,20 @@ behaviour. Every key is `restart=True`: the proxy is decided once, at gateway st
 - **Dashboard UI.** Not in core: the Sao Khuê edition (`editions/saokhue/`, composed by
   `packaging/build-saokhue.sh` through the Overview status-card seam) draws a Company
   proxy card that opens the settings dialog. A stock build has no UI for these keys.
+- **Company CA for children** (`ca_bundle_env.export_for_children`, called by
+  `cli_server._gateway()` just before the proxy starts, at every gateway start whether
+  or not `proxy_enabled` is on). It writes the system certificates to
+  `~/.saokhue-cli/system-ca-bundle.pem` and names that file in each CA variable that is
+  still unset, so every child inherits it: `NODE_EXTRA_CA_CERTS` on every platform (Node
+  adds it to its own CAs), and on Windows also `SSL_CERT_FILE`, `REQUESTS_CA_BUNDLE` and
+  `AWS_CA_BUNDLE`. Those three replace a client's default CAs, so they are set only
+  where the bundle holds the whole system store; off Windows the bundle carries no
+  macOS Keychain certificate and `_ssl_compat` chooses them. A value already set is
+  never changed. A bundle that cannot be written leaves the environment as it was, with
+  one warning.
 - **Not covered yet.** A Windows sign-in as an account other than the logged-on one,
-  NTLM/Kerberos off Windows, PAC/WPAD discovery, a company CA for Node children, and CLI
-  commands run outside the gateway.
+  NTLM/Kerberos off Windows, PAC/WPAD discovery, a macOS Keychain CA for children, and
+  CLI commands run outside the gateway.
 
 ## Unknown keys are preserved on round-trip
 
