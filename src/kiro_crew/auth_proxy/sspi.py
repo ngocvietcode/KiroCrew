@@ -233,11 +233,14 @@ class SspiContext:
         )
         del in_buf, in_raw
         self._started = True
-        token = _take_output(lib, out_buf)
-        if status in (SEC_I_COMPLETE_NEEDED, SEC_I_COMPLETE_AND_CONTINUE):
-            complete = lib.CompleteAuthToken(ctypes.byref(self._handle), ctypes.byref(out_desc))
-            if complete != SEC_E_OK:
-                raise SspiError("CompleteAuthToken", complete)
+        try:
+            if status in (SEC_I_COMPLETE_NEEDED, SEC_I_COMPLETE_AND_CONTINUE):
+                # Reads and may rewrite the token, so it runs before the buffer is freed.
+                complete = lib.CompleteAuthToken(ctypes.byref(self._handle), ctypes.byref(out_desc))
+                if complete != SEC_E_OK:
+                    raise SspiError("CompleteAuthToken", complete)
+        finally:
+            token = _take_output(lib, out_buf)
         if status in (SEC_E_OK, SEC_I_COMPLETE_NEEDED):
             self.done = True
         elif status not in (SEC_I_CONTINUE_NEEDED, SEC_I_COMPLETE_AND_CONTINUE):

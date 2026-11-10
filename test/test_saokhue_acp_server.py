@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-import importlib.util
 import json
 from pathlib import Path
 from typing import Any
 
+from kiro_crew.acp import saokhue_server
 from kiro_crew.agent_sdk import backend_install, host_auth, native_allow_stores
 from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_ROUTING,
@@ -27,23 +27,6 @@ from kiro_crew.agent_sdk.backends import (
     Routing,
     model_registry_namespace,
 )
-
-
-def _load_saokhue_server_module() -> Any:
-    import sys
-
-    script_path = (
-        Path(__file__).resolve().parents[1] / "src" / "kiro_crew" / "acp" / "saokhue_server.py"
-    )
-    spec = importlib.util.spec_from_file_location("kiro_crew_saokhue_server", script_path)
-    assert spec is not None and spec.loader is not None
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-saokhue_server = _load_saokhue_server_module()
 
 
 def test_saokhue_backend_vocabulary_and_declarations() -> None:
@@ -126,7 +109,7 @@ def test_saokhue_cli_per_user_login_password_token_and_logout(tmp_path: Path) ->
         def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
             return None
 
-    def _fake_urlopen(req: Any, timeout: float = 0.0) -> _FakeResp:
+    def _fake_urlopen(req: Any, timeout: float = 0.0, context: Any = None) -> _FakeResp:
         url = req.full_url
         if url.endswith("/login"):
             body = json.loads(req.data.decode("utf-8"))
@@ -233,7 +216,7 @@ def test_saokhue_cli_vpbank_oidc_device_flow_and_userinfo(tmp_path: Path) -> Non
         def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
             return None
 
-    def _fake_urlopen(req: Any, timeout: float = 0.0) -> _FakeResp:
+    def _fake_urlopen(req: Any, timeout: float = 0.0, context: Any = None) -> _FakeResp:
         url = req.full_url
         if url == "https://portal.aws.rpa.vpbank.dev/api/idpOAuth/device/auth":
             form = req.data.decode("utf-8")
@@ -342,7 +325,7 @@ def test_saokhue_acp_server_session_and_tool_permission_roundtrip(tmp_path: Path
     async def _run() -> None:
         call_count = 0
 
-        def _fake_urlopen(req: Any, timeout: float = 0.0) -> _FakeHttpResponse:
+        def _fake_urlopen(req: Any, timeout: float = 0.0, context: Any = None) -> _FakeHttpResponse:
             nonlocal call_count
             url = req.full_url
             if url.endswith("/v1/models"):
@@ -381,9 +364,7 @@ def test_saokhue_acp_server_session_and_tool_permission_roundtrip(tmp_path: Path
                                                 "type": "function",
                                                 "function": {
                                                     "name": "fs_read",
-                                                    "arguments": json.dumps(
-                                                        {"path": "hello.txt"}
-                                                    ),
+                                                    "arguments": json.dumps({"path": "hello.txt"}),
                                                 },
                                             }
                                         ]
@@ -547,7 +528,7 @@ def test_saokhue_dashboard_login_handlers(tmp_path: Path, monkeypatch: Any) -> N
         def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
             return None
 
-    def _fake_urlopen(req: Any, timeout: float = 0.0) -> _FakeResp:
+    def _fake_urlopen(req: Any, timeout: float = 0.0, context: Any = None) -> _FakeResp:
         url = req.full_url
         if url.endswith("/v1/models"):
             return _FakeResp(200, {"data": [{"id": "sk-model-1"}, {"id": "sk-model-2"}]})
@@ -654,3 +635,141 @@ def test_saokhue_dashboard_login_handlers(tmp_path: Path, monkeypatch: Any) -> N
         assert not (Path(cli_home) / "auth.json").exists()
 
     asyncio.run(_run_dashboard())
+
+
+def _raise_untrusted(*_args: Any, **_kwargs: Any) -> Any:
+    import ssl
+
+    raise ssl.SSLCertVerificationError("certificate verify failed: self-signed certificate")
+
+
+def test_urlopen_never_retries_a_certificate_failure_unverified(monkeypatch: Any) -> None:
+    trusted = object()
+    contexts: list[Any] = []
+
+    def _urlopen(req: Any, timeout: float = 0.0, context: Any = None) -> Any:
+        contexts.append(context)
+        return _raise_untrusted()
+
+    monkeypatch.delenv("SAOKHUE_SSL_VERIFY", raising=False)
+    monkeypatch.setattr(saokhue_server, "_build_system_ssl_context", lambda: trusted)
+    monkeypatch.setattr(saokhue_server.urllib.request, "urlopen", _urlopen)
+
+    try:
+        saokhue_server._urlopen_resilient("https://portal.example.test/v1/models")
+    except Exception as exc:
+        assert saokhue_server._is_ssl_cert_error(exc)
+    else:
+        raise AssertionError("an untrusted certificate must fail the request")
+    assert contexts == [trusted]
+
+
+def test_urlopen_skips_verification_only_when_the_operator_turns_it_off(monkeypatch: Any) -> None:
+    import ssl
+
+    contexts: list[Any] = []
+
+    def _urlopen(req: Any, timeout: float = 0.0, context: Any = None) -> str:
+        contexts.append(context)
+        return "opened"
+
+    monkeypatch.setenv("SAOKHUE_SSL_VERIFY", "0")
+    monkeypatch.setattr(saokhue_server.urllib.request, "urlopen", _urlopen)
+
+    assert saokhue_server._urlopen_resilient("https://portal.example.test/") == "opened"
+    assert contexts[0].verify_mode == ssl.CERT_NONE
+
+
+class _RecordingAiohttp:
+    """Stands in for the ``aiohttp`` module: records each request's keyword arguments."""
+
+    def __init__(self, respond: Any) -> None:
+        self.calls: list[dict[str, Any]] = []
+        self._respond = respond
+
+    def ClientTimeout(self, **_kwargs: Any) -> None:  # noqa: N802 - aiohttp's name
+        return None
+
+    def ClientSession(self, **_kwargs: Any) -> "_RecordingAiohttp":  # noqa: N802
+        return self
+
+    async def __aenter__(self) -> "_RecordingAiohttp":
+        return self
+
+    async def __aexit__(self, *_exc: Any) -> None:
+        return None
+
+    def _request(self, url: str, **kwargs: Any) -> Any:
+        self.calls.append({"url": url, **kwargs})
+        return self._respond()
+
+    get = post = _request
+
+
+def test_model_listing_goes_through_the_proxy_with_certificate_checks(monkeypatch: Any) -> None:
+    trusted = object()
+    fake = _RecordingAiohttp(_raise_untrusted)
+    monkeypatch.delenv("SAOKHUE_SSL_VERIFY", raising=False)
+    monkeypatch.setattr(saokhue_server, "aiohttp", fake)
+    monkeypatch.setattr(saokhue_server, "_build_system_ssl_context", lambda: trusted)
+    monkeypatch.setattr(saokhue_server, "resolve_proxy", lambda url: "http://proxy.test:8080")
+    monkeypatch.setattr(saokhue_server, "load_saokhue_user_auth", lambda **_kwargs: {})
+
+    models = asyncio.run(
+        saokhue_server.SaokhueAcpServer._fetch_saokhue_models(
+            None, "https://portal.example.test", "token"
+        )
+    )
+
+    assert models == []
+    assert [(c["ssl"], c["proxy"]) for c in fake.calls] == [(trusted, "http://proxy.test:8080")]
+
+
+def test_a_patch_through_the_facade_reaches_the_owner_that_reads_the_name(
+    monkeypatch: Any,
+) -> None:
+    from kiro_crew.saokhue_cli import auth, tls, turns
+
+    fake = object()
+    originals = (tls._build_system_ssl_context, auth._urlopen_resilient, turns.resolve_proxy)
+    monkeypatch.setattr(saokhue_server, "_build_system_ssl_context", fake)
+    monkeypatch.setattr(saokhue_server, "_urlopen_resilient", fake)
+    monkeypatch.setattr(saokhue_server, "resolve_proxy", fake)
+
+    assert tls._build_system_ssl_context is fake
+    assert auth._urlopen_resilient is fake and tls._urlopen_resilient is fake
+    assert turns.resolve_proxy is fake and saokhue_server.resolve_proxy is fake
+
+    monkeypatch.undo()
+    assert (
+        tls._build_system_ssl_context,
+        auth._urlopen_resilient,
+        turns.resolve_proxy,
+    ) == originals
+
+
+def test_the_server_script_starts_without_the_acp_client_and_runtime() -> None:
+    """Why the owners live in ``kiro_crew.saokhue_cli``: a script launch stays light."""
+    import subprocess
+    import sys
+
+    from kiro_crew.acp.harness.saokhue import SAOKHUE_SERVER_SCRIPT
+    from kiro_crew.subprocess_utf8 import UTF8_TEXT
+
+    probe = (
+        "import runpy, sys\n"
+        "sys.argv = [sys.argv[1], '--help']\n"
+        "try:\n"
+        "    runpy.run_path(sys.argv[0], run_name='__main__')\n"
+        "except SystemExit:\n"
+        "    pass\n"
+        "print('LOADED', sorted(m for m in sys.modules if m.startswith('kiro_crew.acp')))\n"
+    )
+    done = subprocess.run(
+        [sys.executable, "-c", probe, SAOKHUE_SERVER_SCRIPT],
+        capture_output=True,
+        timeout=60,
+        **UTF8_TEXT,
+    )
+    assert done.returncode == 0, done.stderr
+    assert done.stdout.rstrip().endswith("LOADED []"), done.stdout[-300:]

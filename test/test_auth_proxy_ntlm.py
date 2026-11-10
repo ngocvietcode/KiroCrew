@@ -455,3 +455,38 @@ async def test_real_sspi_connection_test():
     finally:
         await company.close()
     assert result.ok and result.scheme == "NTLM"
+
+
+def test_the_token_is_completed_before_its_buffer_is_freed(monkeypatch):
+    """CompleteAuthToken reads the output buffer, so it must run before FreeContextBuffer."""
+    import ctypes
+
+    calls: list[str] = []
+    payload = ctypes.create_string_buffer(b"token", 5)
+
+    class FakeSecur32:
+        def InitializeSecurityContextW(self, *args):  # noqa: N802 - the SSPI name
+            out_buf = ctypes.cast(args[9], ctypes.POINTER(sspi.SecBufferDesc)).contents.pBuffers[0]
+            out_buf.pvBuffer = ctypes.cast(payload, ctypes.c_void_p).value
+            out_buf.cbBuffer = 5
+            calls.append("initialize")
+            return sspi.SEC_I_COMPLETE_NEEDED
+
+        def CompleteAuthToken(self, *args):  # noqa: N802
+            calls.append("complete")
+            return sspi.SEC_E_OK
+
+        def FreeContextBuffer(self, *args):  # noqa: N802
+            calls.append("free")
+            return sspi.SEC_E_OK
+
+    monkeypatch.setattr(sspi, "_secur32", lambda: FakeSecur32())
+
+    class Credentials:
+        handle = sspi.SecHandle()
+
+    context = sspi.SspiContext(Credentials(), "HTTP/proxy.test")
+    assert context.step(None) == b"token"
+    assert context.done
+    assert calls == ["initialize", "complete", "free"]
+    context._started = False  # the fake holds no context to delete

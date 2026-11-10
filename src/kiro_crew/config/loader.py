@@ -861,6 +861,7 @@ if TYPE_CHECKING:  # every owner-defined name this module forwards, for type che
         _refuse_agent_env_entries,
         _refuse_aws_project_profiles,
         _refuse_deepseek_env_plaintext,
+        _refuse_proxy_password_plaintext,
         _refuse_unpublishable,
         _refuse_vault_env_plaintext,
         _shadowed_base_sections,

@@ -1577,6 +1577,8 @@ behaviour. Every key is `restart=True`: the proxy is decided once, at gateway st
   NTLM) over `NTLM`, and remembers the choice so later connections send their first token
   at once. One credential handle per package is shared; each connection gets its own
   context, stepped in a worker thread (Kerberos may reach the domain controller).
+  A token the package asks to complete (`SEC_I_COMPLETE_NEEDED`) goes through
+  `CompleteAuthToken` before its buffer is freed.
 - **The exchange** (`auth_proxy/handshake.py`) is shared by `CONNECT`, plain HTTP and the
   connection test. Each leg of NTLM/Negotiate stays on one upstream connection: every
   `407` body is read to its end (`Content-Length` or chunked, at most 1 MiB), and a
