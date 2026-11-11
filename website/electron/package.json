@@ -208,6 +208,7 @@
       "fullscreen-transition-watch.js",
       "fullscreen-top-reserve.js",
       "gateway-stop.js",
+      "quit-hold.js",
       "gateway-wait.js",
       "sandbox-profile.js",
       "windows-port.js",
