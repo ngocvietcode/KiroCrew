@@ -773,3 +773,328 @@ def test_the_server_script_starts_without_the_acp_client_and_runtime() -> None:
     )
     assert done.returncode == 0, done.stderr
     assert done.stdout.rstrip().endswith("LOADED []"), done.stdout[-300:]
+
+
+def _bare_session(tmp_path: Path, **fields: Any) -> Any:
+    from kiro_crew.saokhue_cli.turns import SaokhueSession
+
+    values: dict[str, Any] = {
+        "session_id": "sid-1",
+        "cwd": str(tmp_path),
+        "agent_name": "kirocrew",
+        "system_prompt": "sys",
+        "model": "model-a",
+        "available_models": ["model-a", "vendor/model-b"],
+        "models_listed": True,
+    }
+    values.update(fields)
+    return SaokhueSession(**values)
+
+
+def _server_capturing_frames(tmp_path: Path, monkeypatch: Any) -> tuple[Any, list[dict[str, Any]]]:
+    monkeypatch.setenv("KIROCREW_HOME", str(tmp_path / "crew_home"))
+    monkeypatch.setattr(saokhue_server, "_persist_preferred_model", lambda *_a, **_k: None)
+    server = saokhue_server.SaokhueAcpServer()
+    frames: list[dict[str, Any]] = []
+
+    async def _capture(payload: dict[str, Any]) -> None:
+        frames.append(payload)
+
+    server.send_message = _capture  # type: ignore[method-assign]
+    return server, frames
+
+
+def test_a_stop_during_a_shell_tool_kills_the_command_it_started(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    import sys
+
+    from kiro_crew import platform_compat
+
+    reaped: list[Any] = []
+    real_reap = platform_compat.kill_and_reap
+
+    async def _recording_reap(proc: Any, **kwargs: Any) -> None:
+        reaped.append(proc)
+        await real_reap(proc, **kwargs)
+
+    monkeypatch.setattr(platform_compat, "kill_and_reap", _recording_reap)
+    real_spawn = asyncio.create_subprocess_shell
+
+    async def _run() -> None:
+        spawned: asyncio.Future[Any] = asyncio.get_running_loop().create_future()
+
+        async def _spawn(*args: Any, **kwargs: Any) -> Any:
+            proc = await real_spawn(*args, **kwargs)
+            spawned.set_result(proc)
+            return proc
+
+        monkeypatch.setattr(asyncio, "create_subprocess_shell", _spawn)
+        server = saokhue_server.SaokhueAcpServer()
+        session = _bare_session(tmp_path)
+        command = f'"{sys.executable}" -c "import time; time.sleep(60)"'
+        task = asyncio.ensure_future(
+            server._execute_builtin_tool(session, "execute_bash", {"command": command})
+        )
+        proc = await asyncio.wait_for(spawned, timeout=30)
+        task.cancel()
+        try:
+            await asyncio.wait_for(task, timeout=30)
+        except asyncio.CancelledError:
+            pass
+        else:
+            raise AssertionError("the cancelled tool call returned instead of re-raising")
+        assert reaped == [proc]
+        assert proc.returncode is not None
+
+    asyncio.run(_run())
+
+
+def test_unanswered_tool_calls_are_closed_after_the_results_that_arrived() -> None:
+    from kiro_crew.saokhue_cli.turns import CANCELLED_TOOL_RESULT, close_unanswered_tool_calls
+
+    messages: list[dict[str, Any]] = [
+        {"role": "user", "content": "go"},
+        {"role": "assistant", "content": "", "tool_calls": [{"id": "c1"}, {"id": "c2"}]},
+        {"role": "tool", "tool_call_id": "c1", "content": "done"},
+        {"role": "user", "content": "next"},
+    ]
+
+    assert close_unanswered_tool_calls(messages) is True
+    assert [(m["role"], m.get("tool_call_id")) for m in messages] == [
+        ("user", None),
+        ("assistant", None),
+        ("tool", "c1"),
+        ("tool", "c2"),
+        ("user", None),
+    ]
+    assert messages[3]["content"] == CANCELLED_TOOL_RESULT
+    assert close_unanswered_tool_calls(messages) is False
+
+
+def test_the_next_turn_after_a_stop_mid_tool_sends_a_complete_transcript(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    server, _frames = _server_capturing_frames(tmp_path, monkeypatch)
+    session = _bare_session(
+        tmp_path,
+        messages=[
+            {"role": "user", "content": "run it"},
+            {"role": "assistant", "content": "", "tool_calls": [{"id": "call_1"}]},
+        ],
+    )
+    server._sessions[session.session_id] = session
+    sent: list[list[dict[str, Any]]] = []
+
+    async def _turn(_session: Any, messages: list[dict[str, Any]], _tools: Any) -> Any:
+        sent.append(messages)
+        return "ok", [], 1, 1, 0, 0, 0.0
+
+    monkeypatch.setattr(server, "_stream_saokhue_turn", _turn)
+
+    result = asyncio.run(server.handle_prompt({"sessionId": session.session_id, "prompt": "next"}))
+
+    assert result["stopReason"] == saokhue_server.STOP_REASON_END_TURN
+    assert [m["role"] for m in sent[0]] == ["system", "user", "assistant", "tool", "user"]
+    assert sent[0][3]["tool_call_id"] == "call_1"
+
+
+def _http_error(status: int, body: str) -> Exception:
+    import io
+    import urllib.error
+
+    return urllib.error.HTTPError(
+        "http://saokhue.test/v1/chat/completions", status, "err", {}, io.BytesIO(body.encode())
+    )
+
+
+def _stream_with(tmp_path: Path, monkeypatch: Any, answer: Any) -> tuple[Any, list[str], Any]:
+    from kiro_crew.saokhue_cli import turns
+
+    tried: list[str] = []
+    sse = [b'data: {"choices": [{"delta": {"content": "hi"}}]}\n', b"data: [DONE]\n"]
+
+    class _Done:
+        status = 200
+        headers = {"Content-Type": "text/event-stream"}
+
+        def __iter__(self) -> Any:
+            return iter(sse)
+
+        def __enter__(self) -> "_Done":
+            return self
+
+        def __exit__(self, *_exc: Any) -> None:
+            return None
+
+    def _urlopen(req: Any, timeout: float = 0.0) -> Any:
+        model = json.loads(req.data)["model"]
+        tried.append(model)
+        error = answer(model)
+        if error is not None:
+            raise error
+        return _Done()
+
+    monkeypatch.setattr(turns, "aiohttp", None)
+    monkeypatch.setattr(turns, "_urlopen_resilient", _urlopen)
+    monkeypatch.setattr(
+        turns, "resolve_saokhue_settings", lambda: ("http://saokhue.test", "k", "", 30.0)
+    )
+    monkeypatch.setattr(turns, "load_saokhue_user_auth", lambda **_k: {})
+    monkeypatch.setattr(turns, "_persist_preferred_model", lambda *_a, **_k: None)
+    server, _frames = _server_capturing_frames(tmp_path, monkeypatch)
+    session = _bare_session(tmp_path)
+    run = turns._stream_saokhue_turn(server, session, [{"role": "user", "content": "x"}], [])
+    return run, tried, session
+
+
+def test_an_error_that_is_not_about_the_model_keeps_the_session_on_it(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    from kiro_crew.saokhue_cli.turns import SaokhueHttpError
+
+    run, tried, session = _stream_with(
+        tmp_path,
+        monkeypatch,
+        lambda _model: _http_error(400, '{"error": "tool_calls must be followed by tool"}'),
+    )
+
+    try:
+        asyncio.run(run)
+    except SaokhueHttpError as exc:
+        assert exc.status == 400
+    else:
+        raise AssertionError("a refused transcript was reported as a reply")
+    assert tried == ["model-a"]
+    assert session.model == "model-a"
+
+
+def test_a_model_the_endpoint_cannot_serve_falls_back_to_the_next_one(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    run, tried, session = _stream_with(
+        tmp_path,
+        monkeypatch,
+        lambda model: (
+            _http_error(404, '{"error": {"code": "model_not_found"}}')
+            if model == "model-a"
+            else None
+        ),
+    )
+
+    reply = asyncio.run(run)
+
+    assert reply[0] == "hi"
+    assert tried == ["model-a", "vendor/model-b"]
+    assert session.model == "vendor/model-b"
+
+
+def test_a_pick_the_endpoint_does_not_list_is_refused_as_a_config_value(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    from kiro_crew.acp.client_model_selection import _is_config_value_rejection
+    from kiro_crew.acp.transport_errors import AcpError
+
+    server, frames = _server_capturing_frames(tmp_path, monkeypatch)
+    session = _bare_session(tmp_path)
+    server._sessions[session.session_id] = session
+
+    def _pick(value: str) -> dict[str, Any]:
+        asyncio.run(
+            server._dispatch_request(
+                len(frames) + 1,
+                saokhue_server.METHOD_SET_CONFIG_OPTION,
+                {"sessionId": session.session_id, "configId": "model", "value": value},
+            )
+        )
+        return frames[-1]
+
+    refused = _pick("not-served")
+    assert refused["error"]["code"] == -32602
+    assert session.model == "model-a"
+    rejection = AcpError(refused["error"]["message"], code=refused["error"]["code"])
+    assert _is_config_value_rejection(rejection, "model", ACP_BACKEND_SAOKHUE)
+
+    accepted = _pick("MODEL-B")
+    assert accepted["result"]["configOptions"][0]["currentValue"] == "vendor/model-b"
+    assert session.model == "vendor/model-b"
+
+
+def test_a_pick_is_taken_as_given_when_the_endpoint_listed_no_models(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    server, _frames = _server_capturing_frames(tmp_path, monkeypatch)
+    session = _bare_session(tmp_path, available_models=["model-a"], models_listed=False)
+    server._sessions[session.session_id] = session
+
+    asyncio.run(
+        server.handle_set_config_option(
+            {"sessionId": session.session_id, "configId": "model", "value": "private-model"}
+        )
+    )
+
+    assert session.model == "private-model"
+
+
+def test_a_session_the_endpoint_listed_nothing_for_advertises_no_placeholder(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    server, _frames = _server_capturing_frames(tmp_path, monkeypatch)
+    monkeypatch.delenv("SAOKHUE_MODEL", raising=False)
+
+    async def _nothing_listed(*_args: Any) -> list[str]:
+        return []
+
+    monkeypatch.setattr(server, "_fetch_saokhue_models", _nothing_listed)
+    monkeypatch.setattr(server, "_load_agent_spec", lambda *_a: {})
+
+    payload = asyncio.run(server._create_or_load_session({"cwd": str(tmp_path)}))
+
+    assert payload["models"]["availableModels"] == []
+    assert payload["configOptions"][0]["options"] == []
+    assert server._sessions[payload["sessionId"]].models_listed is False
+
+
+class _RecordingState:
+    def __init__(self) -> None:
+        self.frames: list[tuple[str, dict[str, Any]]] = []
+
+    def broadcast_ws(self, event: str, payload: dict[str, Any]) -> None:
+        self.frames.append((event, payload))
+
+
+class _FakeRequest:
+    def __init__(self, state: _RecordingState) -> None:
+        self.app = {"state": state}
+
+
+def _login_status(monkeypatch: Any, payload: dict[str, Any]) -> tuple[_RecordingState, Any]:
+    from kiro_crew import model_registry
+    from kiro_crew.dashboard.handlers import saokhue_login
+
+    monkeypatch.setattr(model_registry, "_ADVERTISED_MODELS", {})
+    monkeypatch.setattr(model_registry, "_ADVERTISED_META", {})
+    monkeypatch.setattr(model_registry, "persist_advertised_models", lambda: None)
+    monkeypatch.setattr(saokhue_login, "_build_status_sync", lambda **_k: dict(payload))
+    state = _RecordingState()
+    asyncio.run(saokhue_login._status(_FakeRequest(state)))  # type: ignore[arg-type]
+    return state, model_registry
+
+
+def test_signing_in_hands_the_account_models_to_the_chat_picker(monkeypatch: Any) -> None:
+    from kiro_crew.dashboard.handlers.models_cold_probe import MODELS_CHANGED_EVENT
+
+    state, registry = _login_status(
+        monkeypatch,
+        {"authenticated": True, "models": ["model-a", "saokhue-default", "vendor/model-b"]},
+    )
+
+    assert registry.advertised_models("saokhue") == ["model-a", "vendor/model-b"]
+    assert state.frames == [(MODELS_CHANGED_EVENT, {})]
+
+
+def test_a_signed_out_status_leaves_the_picker_list_alone(monkeypatch: Any) -> None:
+    state, registry = _login_status(monkeypatch, {"authenticated": False, "models": ["model-a"]})
+
+    assert registry.advertised_models("saokhue") == []
+    assert state.frames == []

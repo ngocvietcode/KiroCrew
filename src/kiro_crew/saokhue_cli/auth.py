@@ -58,6 +58,35 @@ def _is_likely_chat_model(model_id: str) -> bool:
     return not any(tok in lower for tok in _NON_CHAT_MODEL_SUBSTRINGS)
 
 
+def _match_listed_model(requested: str, available_models: list[str]) -> str:
+    """The listed model *requested* names, or ``""`` when none does.
+
+    A name matches exactly, in any case, or by its last ``/`` segment on either
+    side (``claude-x`` names ``bedrock/claude-x``). ``auto`` and the fallback
+    placeholder are never a listed model.
+    """
+    req = (requested or "").strip()
+    if not req:
+        return ""
+    real_models = [
+        m
+        for m in available_models
+        if isinstance(m, str) and m.strip() and m.strip() not in ("auto", DEFAULT_FALLBACK_MODEL)
+    ]
+    if req in real_models:
+        return req
+    req_lower = req.lower()
+    for m in real_models:
+        m_lower = m.lower()
+        if (
+            m_lower == req_lower
+            or m_lower.endswith(f"/{req_lower}")
+            or req_lower.endswith(f"/{m_lower}")
+        ):
+            return m
+    return ""
+
+
 def _select_valid_saokhue_model(
     requested: str, available_models: list[str], env_model: str = ""
 ) -> str:
@@ -71,18 +100,9 @@ def _select_valid_saokhue_model(
         if isinstance(m, str) and m.strip() and m.strip() not in ("auto", DEFAULT_FALLBACK_MODEL)
     ]
     if real_models:
-        if req and req in real_models:
-            return req
-        if req:
-            req_lower = req.lower()
-            for m in real_models:
-                m_lower = m.lower()
-                if (
-                    m_lower == req_lower
-                    or m_lower.endswith(f"/{req_lower}")
-                    or req_lower.endswith(f"/{m_lower}")
-                ):
-                    return m
+        matched = _match_listed_model(req, real_models)
+        if matched:
+            return matched
         env_clean = (env_model or "").strip()
         if env_clean and env_clean in real_models:
             return env_clean

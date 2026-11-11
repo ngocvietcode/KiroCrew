@@ -61,6 +61,91 @@ class SaokhueSession:
     active_turn_task: asyncio.Task[None] | None = None
     cancelled: bool = False
     cumulative_cost_usd: float = 0.0
+    #: Whether ``available_models`` came from the endpoint (or the login's cached
+    #: list) rather than being only the model the session started on. Only then can
+    #: a pick be checked against it.
+    models_listed: bool = False
+
+
+#: The result recorded for a tool call that a Stop ended before it answered.
+CANCELLED_TOOL_RESULT = "Tool call was cancelled by the user before it finished."
+
+
+def close_unanswered_tool_calls(messages: list[dict[str, Any]]) -> bool:
+    """Give every assistant ``tool_calls`` entry a ``tool`` result; True if any was added.
+
+    Chat Completions refuses a transcript in which an assistant message's tool
+    calls are not each followed by their ``tool`` message. A Stop that lands
+    between the assistant message and its results would otherwise leave every
+    later turn of the session refused. The missing results are recorded as
+    cancelled, after the results that did arrive.
+    """
+    repaired: list[dict[str, Any]] = []
+    changed = False
+    i = 0
+    while i < len(messages):
+        msg = messages[i]
+        repaired.append(msg)
+        i += 1
+        calls = msg.get("tool_calls") if msg.get("role") == "assistant" else None
+        if not isinstance(calls, list) or not calls:
+            continue
+        answered: set[Any] = set()
+        while i < len(messages) and messages[i].get("role") == "tool":
+            answered.add(messages[i].get("tool_call_id"))
+            repaired.append(messages[i])
+            i += 1
+        for call in calls:
+            call_id = call.get("id") if isinstance(call, dict) else None
+            if call_id and call_id not in answered:
+                repaired.append(
+                    {"role": "tool", "tool_call_id": call_id, "content": CANCELLED_TOOL_RESULT}
+                )
+                changed = True
+    if changed:
+        messages[:] = repaired
+    return changed
+
+
+class SaokhueHttpError(RuntimeError):
+    """An error status the Sao Khuê endpoint answered a chat request with."""
+
+    def __init__(self, message: str, *, status: int, body: str) -> None:
+        super().__init__(message)
+        self.status = status
+        self.body = body
+
+
+#: Text an OpenAI-compatible endpoint puts in a 400/422 that refuses the MODEL.
+_MODEL_REFUSAL_MARKERS = (
+    "model_not_found",
+    "does not exist",
+    "not found",
+    "invalid model",
+    "unknown model",
+    "no such model",
+    "not allowed to access",
+    "not available",
+)
+
+
+def _model_unavailable(exc: BaseException) -> bool:
+    """Whether *exc* says the requested model cannot be served, so another may be tried.
+
+    Anything else -- a refused transcript, a network failure, a timeout -- would
+    fail the same way on every model, and trying the next one would only move the
+    session off the model the user chose.
+    """
+    if not isinstance(exc, SaokhueHttpError):
+        return False
+    if exc.status == 404:
+        return True
+    body = exc.body.lower()
+    return (
+        exc.status in (400, 422)
+        and "model" in body
+        and any(marker in body for marker in _MODEL_REFUSAL_MARKERS)
+    )
 
 
 def _estimate_messages_tokens(messages: list[dict[str, Any]]) -> int:
@@ -177,6 +262,7 @@ async def _stream_saokhue_turn(
         fetched = await self._fetch_saokhue_models(base_url, api_key)
         if fetched:
             session.available_models = fetched
+            session.models_listed = True
     session.model = _select_valid_saokhue_model(session.model, session.available_models, env_model)
 
     candidate_models: list[str] = []
@@ -231,7 +317,6 @@ async def _stream_saokhue_turn(
         last_urllib_err: Exception | None = None
         for cand_idx, cand_model in enumerate(candidate_models):
             payload["model"] = cand_model
-            session.model = cand_model
             for include_stream_opts in (True, False):
                 if include_stream_opts:
                     payload["stream_options"] = {"include_usage": True}
@@ -247,6 +332,7 @@ async def _stream_saokhue_turn(
                         message_id=message_id,
                         openai_messages=openai_messages,
                     )
+                    session.model = cand_model
                     if cand_idx > 0:
                         _persist_preferred_model(cand_model)
                     return res
@@ -257,6 +343,8 @@ async def _stream_saokhue_turn(
                     if include_stream_opts and "stream_options" in str(exc).lower():
                         continue
                     break
+            if last_urllib_err is not None and not _model_unavailable(last_urllib_err):
+                raise last_urllib_err
             logger.warning(
                 "Sao Khuê model %r failed (%s); trying next candidate if available",
                 cand_model,
@@ -270,7 +358,6 @@ async def _stream_saokhue_turn(
     last_model_err: Exception | None = None
     for cand_idx, cand_model in enumerate(candidate_models):
         payload["model"] = cand_model
-        session.model = cand_model
         payload["stream_options"] = {"include_usage": True}
         succeeded = False
         # One pass: the loop is the scope its ``break`` statements leave.
@@ -310,9 +397,11 @@ async def _stream_saokhue_turn(
                                 async with http.post(url, **post_kwargs) as resp2:
                                     if resp2.status >= 400:
                                         err_body2 = await resp2.text()
-                                        raise RuntimeError(
+                                        raise SaokhueHttpError(
                                             f"Sao Khuê status={resp2.status} from {url} (model={cand_model!r}): "
-                                            f"{err_body2[:500]}"
+                                            f"{err_body2[:500]}",
+                                            status=resp2.status,
+                                            body=err_body2,
                                         )
                                     resp_cost_hdr = resp2.headers.get("x-saokhue-response-cost")
                                     if resp_cost_hdr:
@@ -410,9 +499,11 @@ async def _stream_saokhue_turn(
                                                     )
                                 succeeded = True
                                 break
-                            raise RuntimeError(
+                            raise SaokhueHttpError(
                                 f"Sao Khuê status={resp.status} from {url} (model={cand_model!r}): "
-                                f"{err_body[:500]}"
+                                f"{err_body[:500]}",
+                                status=resp.status,
+                                body=err_body,
                             )
                         resp_cost_hdr = resp.headers.get("x-saokhue-response-cost")
                         if resp_cost_hdr:
@@ -568,9 +659,12 @@ async def _stream_saokhue_turn(
                     raise
                 if "Not signed in to Sao Khuê" in str(exc):
                     raise
+                if not _model_unavailable(exc):
+                    raise
                 last_model_err = exc
                 break
         if succeeded:
+            session.model = cand_model
             if cand_idx > 0:
                 _persist_preferred_model(cand_model)
             break
@@ -654,9 +748,11 @@ async def _stream_saokhue_turn_urllib(
                     f"or run `saokhue-cli login` in your terminal, then start a new chat. Details: {err_body[:300]}"
                 )
             else:
-                err_obj = RuntimeError(
-                    f"Sao Khuê status={exc.code} from {url} (model={session.model!r}): "
-                    f"{err_body[:500]}"
+                err_obj = SaokhueHttpError(
+                    f"Sao Khuê status={exc.code} from {url} (model={payload.get('model')!r}): "
+                    f"{err_body[:500]}",
+                    status=exc.code,
+                    body=err_body,
                 )
             loop.call_soon_threadsafe(
                 line_queue.put_nowait,

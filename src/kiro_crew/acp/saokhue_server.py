@@ -36,11 +36,13 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from kiro_crew import platform_compat
 from kiro_crew.config.paths import config_dir, kiro_agents_dir
 from kiro_crew.http_proxy import resolve_proxy
 from kiro_crew.remote_session import workspace_tools
 from kiro_crew.saokhue_cli import turns as _sk_turns
 from kiro_crew.saokhue_cli.auth import (
+    _match_listed_model,
     _persist_preferred_model,
     _select_valid_saokhue_model,
     load_saokhue_user_auth,
@@ -99,9 +101,16 @@ from kiro_crew.saokhue_cli.tls import (
     _warn_untrusted_certificate,
     ensure_system_ca_bundle,
 )
-from kiro_crew.saokhue_cli.turns import SaokhueSession
+from kiro_crew.saokhue_cli.turns import SaokhueSession, close_unanswered_tool_calls
 
 logger = logging.getLogger("kiro_crew.acp.saokhue_server")
+
+#: JSON-RPC ``Invalid params``: what a refused config-option value is answered with.
+_JSONRPC_INVALID_PARAMS = -32602
+
+
+class _InvalidParams(ValueError):
+    """A request whose parameters the server refuses, answered ``-32602``."""
 
 
 class SaokhueAcpServer:
@@ -368,9 +377,13 @@ class SaokhueAcpServer:
             await asyncio.gather(*(_start_one(e) for e in entries), return_exceptions=True)
 
     def _session_response_payload(self, session: SaokhueSession) -> dict[str, Any]:
-        models_list = session.available_models or [session.model]
+        models_list = list(session.available_models) or [session.model]
         if session.model and session.model not in models_list:
             models_list = [session.model, *models_list]
+        # Advertised ids become the dashboard picker's list and its cache, so the
+        # placeholder a session falls back to when the endpoint listed nothing
+        # (signed out, unreachable) is never offered as a model to pick.
+        models_list = [m for m in models_list if m and m not in ("auto", DEFAULT_FALLBACK_MODEL)]
         return {
             "sessionId": session.session_id,
             "modes": {
@@ -451,9 +464,10 @@ class SaokhueAcpServer:
         sid = session_id or uuid.uuid4().hex
         base_url, api_key, env_model, _ = resolve_saokhue_settings()
         models = await self._fetch_saokhue_models(base_url, api_key)
+        models_listed = bool(models)
 
         chosen_model = _select_valid_saokhue_model(self._initial_model, models, env_model)
-        if chosen_model not in models:
+        if models_listed and chosen_model not in models:
             models = [chosen_model, *models]
 
         spec = self._load_agent_spec(self._default_agent, cwd)
@@ -474,6 +488,7 @@ class SaokhueAcpServer:
             messages=restored_messages,
             disabled_tools=disabled_tools,
             zero_tools=zero_tools,
+            models_listed=models_listed,
         )
         self._sessions[sid] = session
         await self._mount_mcp_servers(session, mcp_entries)
@@ -495,20 +510,37 @@ class SaokhueAcpServer:
         )
         return {}
 
+    def _apply_model_pick(self, session: SaokhueSession, requested: str) -> None:
+        """Put *session* on the model *requested* names, or refuse it.
+
+        A pick the endpoint does not list is refused rather than replaced with a
+        model it does list: the caller would report the model it asked for while
+        the session ran another. The refusal names the config option, the shape the
+        ACP client reads as a refused value, so the user's pick is rolled back and
+        the reason shown. Without a list from the endpoint nothing can be checked,
+        and the pick is taken as given.
+        """
+        if session.models_listed:
+            resolved = _match_listed_model(requested, session.available_models)
+            if not resolved:
+                raise _InvalidParams(
+                    f"Invalid value for config option {MODEL_CONFIG_ID}: {requested!r} "
+                    "is not a model this Sao Khuê endpoint serves"
+                )
+        else:
+            resolved = requested
+        session.model = resolved
+        if resolved not in session.available_models:
+            session.available_models.insert(0, resolved)
+        _persist_preferred_model(resolved)
+        self._save_transcript(session)
+
     async def handle_set_model(self, params: dict[str, Any]) -> dict[str, Any]:
         sid = str(params.get("sessionId") or "")
         model_id = str(params.get("modelId") or "").strip()
         session = self._sessions.get(sid)
         if session is not None and model_id and model_id != "auto":
-            _, _, env_model, _ = resolve_saokhue_settings()
-            resolved_model = _select_valid_saokhue_model(
-                model_id, session.available_models, env_model
-            )
-            session.model = resolved_model
-            if resolved_model not in session.available_models:
-                session.available_models.insert(0, resolved_model)
-            _persist_preferred_model(resolved_model)
-            self._save_transcript(session)
+            self._apply_model_pick(session, model_id)
         return {}
 
     async def handle_set_config_option(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -517,13 +549,7 @@ class SaokhueAcpServer:
         value = str(params.get("value") or "").strip()
         session = self._sessions.get(sid)
         if session is not None and config_id == MODEL_CONFIG_ID and value and value != "auto":
-            _, _, env_model, _ = resolve_saokhue_settings()
-            resolved_model = _select_valid_saokhue_model(value, session.available_models, env_model)
-            session.model = resolved_model
-            if resolved_model not in session.available_models:
-                session.available_models.insert(0, resolved_model)
-            _persist_preferred_model(resolved_model)
-            self._save_transcript(session)
+            self._apply_model_pick(session, value)
         if session is not None:
             return {"configOptions": self._session_response_payload(session)["configOptions"]}
         return {"configOptions": []}
@@ -738,14 +764,19 @@ class SaokhueAcpServer:
                     stdin=asyncio.subprocess.DEVNULL,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.STDOUT,
+                    # Its own group, so the kill below reaches what the shell started.
+                    start_new_session=platform_compat.IS_POSIX,
                 )
                 try:
                     stdout_bytes, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout_s)
                 except asyncio.TimeoutError:
-                    with contextlib.suppress(ProcessLookupError):
-                        proc.kill()
-                    await proc.wait()
+                    await platform_compat.kill_and_reap(proc)
                     return f"Command timed out after {timeout_s}s", True
+                except asyncio.CancelledError:
+                    # A Stop cancels the turn here. The shell is only the leader:
+                    # the command it started keeps running unless the tree goes too.
+                    await platform_compat.kill_and_reap(proc)
+                    raise
                 out_str = (stdout_bytes or b"").decode("utf-8", errors="replace")
                 rc = proc.returncode or 0
                 return f"exit_code={rc}\n{out_str}", rc != 0
@@ -765,6 +796,11 @@ class SaokhueAcpServer:
             raise RuntimeError(f"Unknown sessionId: {sid!r}")
 
         session.cancelled = False
+        # A turn that ended between a tool call and its result -- a Stop, or a
+        # failure on an earlier build that saved the transcript that way -- would
+        # have the endpoint refuse this turn and every one after it.
+        if close_unanswered_tool_calls(session.messages):
+            self._save_transcript(session)
         user_content = self._extract_user_content(params.get("prompt"))
         session.messages.append({"role": "user", "content": user_content})
         tools = self._build_openai_tools(session)
@@ -775,10 +811,16 @@ class SaokhueAcpServer:
         total_cache_write = 0
         total_cost_usd = 0.0
         last_call_context = 0
+
+        def _cancelled() -> dict[str, Any]:
+            if close_unanswered_tool_calls(session.messages):
+                self._save_transcript(session)
+            return {"stopReason": STOP_REASON_CANCELLED}
+
         try:
             for _step in range(MAX_AGENT_TURNS):
                 if session.cancelled:
-                    return {"stopReason": STOP_REASON_CANCELLED}
+                    return _cancelled()
 
                 openai_messages: list[dict[str, Any]] = [
                     {"role": "system", "content": session.system_prompt},
@@ -801,7 +843,7 @@ class SaokhueAcpServer:
                 last_call_context = in_tok + out_tok
 
                 if session.cancelled:
-                    return {"stopReason": STOP_REASON_CANCELLED}
+                    return _cancelled()
 
                 assistant_msg: dict[str, Any] = {
                     "role": "assistant",
@@ -817,7 +859,7 @@ class SaokhueAcpServer:
 
                 for tc in tool_calls:
                     if session.cancelled:
-                        return {"stopReason": STOP_REASON_CANCELLED}
+                        return _cancelled()
                     tc_id = str(tc.get("id") or f"call_{uuid.uuid4().hex[:12]}")
                     fn = tc.get("function") or {}
                     fn_name = str(fn.get("name") or "")
@@ -910,7 +952,7 @@ class SaokhueAcpServer:
                     )
                     self._save_transcript(session)
         except asyncio.CancelledError:
-            return {"stopReason": STOP_REASON_CANCELLED}
+            return _cancelled()
 
         used_tokens = last_call_context or (total_in + total_out)
         pct = min(100.0, round((used_tokens / DEFAULT_CONTEXT_WINDOW_TOKENS) * 100.0, 2))
@@ -995,6 +1037,14 @@ class SaokhueAcpServer:
                 )
                 return
             await self.send_message({"jsonrpc": "2.0", "id": req_id, "result": result})
+        except _InvalidParams as exc:
+            await self.send_message(
+                {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {"code": _JSONRPC_INVALID_PARAMS, "message": str(exc)},
+                }
+            )
         except Exception as exc:
             logger.warning("Request %s failed: %s", method, exc, exc_info=True)
             await self.send_message(

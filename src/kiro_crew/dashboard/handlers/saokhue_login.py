@@ -13,7 +13,9 @@ from typing import Any
 
 from aiohttp import web
 
+from kiro_crew import model_registry
 from kiro_crew.acp.saokhue_server import (
+    DEFAULT_FALLBACK_MODEL,
     DEFAULT_OIDC_CLIENT_ID,
     DEFAULT_OIDC_REVOKE_URL,
     DEFAULT_SAOKHUE_BASE_URL,
@@ -30,6 +32,8 @@ from kiro_crew.acp.saokhue_server import (
     save_saokhue_user_auth,
     start_device_code_flow,
 )
+from kiro_crew.agent_sdk.backends import ACP_BACKEND_SAOKHUE, model_registry_namespace
+from kiro_crew.dashboard.handlers.models_cold_probe import MODELS_CHANGED_EVENT
 from kiro_crew.dashboard.handlers.source_providers import is_owner_dashboard_request
 from kiro_crew.sel import sel
 
@@ -76,7 +80,10 @@ async def _require_owner(request: web.Request, operation: str) -> web.Response |
         return None
     await _audit(request, operation, "denied", error="non-owner caller")
     return web.json_response(
-        {"error": "Only the dashboard owner can manage Sao Khuê CLI sign-in.", "code": "owner_only"},
+        {
+            "error": "Only the dashboard owner can manage Sao Khuê CLI sign-in.",
+            "code": "owner_only",
+        },
         status=403,
     )
 
@@ -88,9 +95,7 @@ def _build_status_sync(*, probe: bool = False) -> dict[str, Any]:
     auth_path = str(saokhue_auth_path())
 
     models: list[str] = [
-        str(m).strip()
-        for m in (user_auth.get("models") or [])
-        if isinstance(m, str) and m.strip()
+        str(m).strip() for m in (user_auth.get("models") or []) if isinstance(m, str) and m.strip()
     ]
     user_id = str(user_auth.get("user_id") or "").strip()
     email = str(user_auth.get("email") or "").strip()
@@ -146,6 +151,33 @@ def _build_status_sync(*, probe: bool = False) -> dict[str, Any]:
     }
 
 
+async def _status(request: web.Request, *, probe: bool = False) -> dict[str, Any]:
+    """The sign-in status, with its model list handed to the chat model picker.
+
+    The picker lists what a Sao Khuê session advertised, and no session starts
+    before the first chat, so without this a sign-in filled this card's model
+    list while the picker kept showing Auto alone (or what a session that ran
+    signed out had advertised) until a new chat started. The list is the same
+    ``/v1/models`` answer a session reads, for the same account.
+    """
+    payload = await asyncio.to_thread(_build_status_sync, probe=probe)
+    if payload.get("authenticated"):
+        await _publish_picker_models(request, payload.get("models") or [])
+    return payload
+
+
+async def _publish_picker_models(request: web.Request, models: list[str]) -> None:
+    """Record *models* as the Sao Khuê picker list and tell dashboards to re-read it."""
+    ids = [m for m in models if m not in ("auto", DEFAULT_FALLBACK_MODEL)]
+    namespace = model_registry_namespace(ACP_BACKEND_SAOKHUE)
+    if not ids or not model_registry.refresh_advertised_models(namespace, ids):
+        return
+    await asyncio.to_thread(model_registry.persist_advertised_models)
+    state = request.app.get("state")
+    if state is not None:
+        state.broadcast_ws(MODELS_CHANGED_EVENT, {})
+
+
 def _pending_device_store(request: web.Request) -> dict[str, dict[str, Any]]:
     store = request.app.get("saokhue_device_logins")
     if not isinstance(store, dict):
@@ -155,7 +187,8 @@ def _pending_device_store(request: web.Request) -> dict[str, dict[str, Any]]:
     expired_keys = [
         k
         for k, v in store.items()
-        if not isinstance(v, dict) or (now - float(v.get("created_at") or 0.0)) > _PENDING_DEVICE_TTL_SECS
+        if not isinstance(v, dict)
+        or (now - float(v.get("created_at") or 0.0)) > _PENDING_DEVICE_TTL_SECS
     ]
     for k in expired_keys:
         store.pop(k, None)
@@ -166,12 +199,15 @@ async def api_saokhue_login_status(request: web.Request) -> web.Response:
     """GET /api/saokhue-login — current Sao Khuê CLI authentication status."""
     probe = request.query.get("probe", "").strip().lower() in ("1", "true", "yes")
     try:
-        payload = await asyncio.to_thread(_build_status_sync, probe=probe)
+        payload = await _status(request, probe=probe)
         return web.json_response(payload)
     except Exception as exc:
         logger.warning("Failed to read Sao Khuê CLI login status", exc_info=True)
         return web.json_response(
-            {"error": f"Could not read Sao Khuê CLI sign-in status: {exc}", "code": "status_failed"},
+            {
+                "error": f"Could not read Sao Khuê CLI sign-in status: {exc}",
+                "code": "status_failed",
+            },
             status=500,
         )
 
@@ -221,7 +257,7 @@ async def api_saokhue_login_sso(request: web.Request) -> web.Response:
         )
 
     await _audit(request, "saokhue_login_sso", "success")
-    status_payload = await asyncio.to_thread(_build_status_sync)
+    status_payload = await _status(request)
     return web.json_response({"ok": True, **status_payload})
 
 
@@ -322,7 +358,7 @@ async def api_saokhue_login_device_poll(request: web.Request) -> web.Response:
 
     store.pop(login_id, None)
     await _audit(request, "saokhue_login_device_poll", "success")
-    status_payload = await asyncio.to_thread(_build_status_sync)
+    status_payload = await _status(request)
     return web.json_response(
         {
             "ok": True,
@@ -374,7 +410,7 @@ async def api_saokhue_login_password(request: web.Request) -> web.Response:
         )
 
     await _audit(request, "saokhue_login_password", "success")
-    status_payload = await asyncio.to_thread(_build_status_sync)
+    status_payload = await _status(request)
     return web.json_response({"ok": True, **status_payload})
 
 
@@ -426,7 +462,7 @@ async def api_saokhue_login_token(request: web.Request) -> web.Response:
         )
 
     await _audit(request, "saokhue_login_token", "success")
-    status_payload = await asyncio.to_thread(_build_status_sync)
+    status_payload = await _status(request)
     return web.json_response({"ok": True, **status_payload})
 
 
@@ -466,7 +502,7 @@ async def api_saokhue_login_model(request: web.Request) -> web.Response:
         )
 
     await _audit(request, "saokhue_login_model", "success")
-    status_payload = await asyncio.to_thread(_build_status_sync)
+    status_payload = await _status(request)
     return web.json_response({"ok": True, **status_payload})
 
 
@@ -480,9 +516,9 @@ def _logout_sync() -> bool:
             with contextlib.suppress(Exception):
                 req = urllib.request.Request(
                     revoke_url,
-                    data=urllib.parse.urlencode(
-                        {"token": tok, "client_id": client_id}
-                    ).encode("utf-8"),
+                    data=urllib.parse.urlencode({"token": tok, "client_id": client_id}).encode(
+                        "utf-8"
+                    ),
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                     method="POST",
                 )
@@ -511,6 +547,5 @@ async def api_saokhue_login_logout(request: web.Request) -> web.Response:
         )
 
     await _audit(request, "saokhue_login_logout", "success")
-    status_payload = await asyncio.to_thread(_build_status_sync)
+    status_payload = await _status(request)
     return web.json_response({"ok": True, "removed": removed, **status_payload})
-
