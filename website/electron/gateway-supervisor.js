@@ -1002,10 +1002,17 @@ function createGatewaySupervisor({
     resolve(true);
   }
 
+  /**
+   * Begin stopping what this app started. Returns the stop of a live gateway
+   * child so the caller can keep the process alive until it settles, or null
+   * when there is no such child and nothing to wait for.
+   */
   function stopGatewayOnQuit() {
     tunnelKeeper.stop();
-    stopGatewayGracefully()
+    const live = Boolean(gatewayProcess && gatewayProcess.exitCode === null);
+    const stop = stopGatewayGracefully()
       .catch((error) => console.error("Gateway stop failed:", error?.message));
+    return live ? stop : null;
   }
 
   // How long the BOOT poll waits for one answer. The poll runs every

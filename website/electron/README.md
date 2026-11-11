@@ -365,7 +365,10 @@ Open via **Connection → Open Config File** or the tray menu.
   The choice is the `closeAction` key (`"background"` or `"quit"`) in this
   app's config file, read on every close (`close-action.js`). Quitting this way
   takes the same path as the Quit menu item: a gateway the app started stops,
-  and a gateway it connected to keeps running.
+  and a gateway it connected to keeps running. The app process stays alive
+  after its last window closes until that stop has finished, for at most 30
+  seconds (`quit-hold.js`), so a quit never leaves the gateway or its children
+  holding the port.
 - **GPU rendering.** Hardware acceleration is on by default.
   `KIROCREW_DISABLE_GPU=1` or `--disable-gpu` turns it off for a launch
   (`disable-gpu.js`). On Windows, if the GPU process dies before the dashboard

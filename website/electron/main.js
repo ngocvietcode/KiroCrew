@@ -24,6 +24,7 @@ const launchLog = createLaunchLog({
 
 const { findConfiguredDashboardPort } = require("./data-home");
 const { onQuitForUpdate } = require("./close-action");
+const { createQuitHold } = require("./quit-hold");
 const { defaultedPort } = require("./gateway-auth-hint");
 const {
   classifyBundleLocation,
@@ -363,6 +364,8 @@ function scanCrashArtifacts() {
   }
   return crashScan;
 }
+
+const quitHold = createQuitHold({ app, log: (line) => glog(line) });
 
 const requestQuit = () => {
   // Window close handlers consult this synchronously. Set it before app.quit()
@@ -849,13 +852,16 @@ app.on("before-quit", () => {
   } catch {
     // Best effort during quit.
   }
-  gateway.stopOnQuit();
+  quitHold.track(gateway.stopOnQuit());
 });
 
 // Release only the shell summon accelerator. Mochi owns and removes its own
 // shortcuts on the before-quit path above.
-app.on("will-quit", () => {
+app.on("will-quit", (event) => {
   ipcRegistrar.unregisterGlobalHotkey();
+  // The stop begun on before-quit is still in flight: exiting now would leave
+  // the gateway and its children running on the port (see quit-hold.js).
+  quitHold.onWillQuit(event);
 });
 
 app.on("window-all-closed", () => {
