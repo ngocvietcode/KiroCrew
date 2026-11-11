@@ -23,6 +23,7 @@ New here? Start with [guides/install.md](guides/install.md), then
 | [decisions/](decisions/README.md) | The append-only record of product and design decisions a person on the team made. One immutable file per decision; grep it before changing a user-facing label, placement or behaviour. |
 | [blog/](blog/README.md) | Essays on direction and design philosophy. Arguments, not contracts. |
 | [reference/](reference/README.md) | A mirror of upstream kiro-cli documentation, with named local exceptions. |
+| [sao-khue/](sao-khue/README.md) | Bộ tài liệu nội bộ VPBank về Sao Khuê: tổng quan, định hướng, lợi ích theo đơn vị. |
 | [task-specs/](task-specs/README.md) | Archived per-task specs. Not current context. |
 | `../.kiro/specs/` (repo root) | Archived feature specs from the repo's own Spec Builder runs. Each file's `Status` marker says what it is; not current context. Spec Builder writes live specs to `<project>/.kiro/specs/` in the user's project, not here. |
 
