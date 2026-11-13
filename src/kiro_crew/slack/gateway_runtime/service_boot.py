@@ -4,8 +4,8 @@ The memory, skills, hooks, context, history and session stack; the task runner; 
 dashboard or API-only server; ``run`` itself, which brings everything up in order
 and blocks until shutdown; and the post-bind session-start sizing log.
 
-Orchestrator fields read: ``_background_tasks``, ``_bot_token``, ``_cfg``,
-``_cron_injecting``, ``_json_ready``, ``_no_crons``, ``_no_dashboard``, ``_no_open``,
+Orchestrator fields read: ``_approval_mode``, ``_background_tasks``, ``_bot_token``,
+``_cfg``, ``_cron_injecting``, ``_json_ready``, ``_no_crons``, ``_no_dashboard``, ``_no_open``,
 ``_owner_id``, ``_port_override``, ``_runner_admission_adopted``, ``_slack_enabled``,
 ``_test_mode``,
 ``_tracking_channels``, ``autonudge_svc``, ``cron_svc``, ``subagent_mgr``.
@@ -89,7 +89,6 @@ if TYPE_CHECKING:
         shutdown_event,
         start_dashboard,
         subprocess_executor,
-        supervisor_reentry,
         timezone,
         warm_backend,
         warn_unreadable_tracked_channels,
@@ -99,7 +98,9 @@ if TYPE_CHECKING:
     _KAS_CLI_FLOOR_TASK: asyncio.Task[None] | None
 
 
-async def _auto_open_dashboard(self: GatewayOrchestrator, dashboard_url: str) -> None:
+async def _auto_open_dashboard(
+    self: GatewayOrchestrator, dashboard_url: str, *, print_link: bool
+) -> None:
     """Open the dashboard in the operator's browser, best effort.
 
     Offloaded to the subprocess executor — ``webbrowser.open()`` can block
@@ -111,6 +112,10 @@ async def _auto_open_dashboard(self: GatewayOrchestrator, dashboard_url: str) ->
     browser launch overlaps the MCP probe instead of adding to it. The URL
     has already been printed by the time this is called, so a failure here
     costs the operator a click, not the address.
+
+    The browser always gets the login link. *print_link* is the boot's one
+    decision on whether stdout is a terminal: when it is false, the slow-browser
+    fallback prints the URL without its ``?token=``, as the announcement does.
     """
     try:
         await asyncio.wait_for(
@@ -123,10 +128,11 @@ async def _auto_open_dashboard(self: GatewayOrchestrator, dashboard_url: str) ->
         )
     except (TimeoutError, asyncio.TimeoutError):
         logger.debug("webbrowser.open timed out — skipping")
+        shown_url = dashboard_url if print_link else dashboard_url.partition("?")[0]
         print(
             "👻 Browser was slow to open — skipping auto-open.\n"
             "   Dashboard is running. Open this URL manually:\n"
-            f"   {dashboard_url}\n"
+            f"   {shown_url}\n"
             "   Or run: kirocrew token"
         )
 
@@ -260,8 +266,11 @@ async def _init_services(self: GatewayOrchestrator) -> None:
     try:
         from kiro_crew.dashboard.chat_persistence import watch_config as _watch_entry_cache_config
         from kiro_crew.metrics.provider import watch_config as _watch_telemetry_config
+        from kiro_crew.tracing.provider import watch_config as _watch_tracing_config
 
         _watch_telemetry_config()
+        # Same section, separate switch: telemetry.traces_enabled re-read on a write.
+        _watch_tracing_config()
         # Entry-cache bounds are memoised on the chat save path; the watcher
         # drops the memo so a new bound applies to the next flush.
         _watch_entry_cache_config()
@@ -481,9 +490,19 @@ def _schedule_session_start_sizing(self: GatewayOrchestrator) -> None:
     """Run :meth:`_log_session_start_sizing` as a tracked background task.
 
     Called after the dashboard/API socket binds, so the host probe never
-    delays READY (AUTOSDE ``no-new-work-on-gateway-boot-path``).
+    delays READY (AUTOSDE ``no-new-work-on-gateway-boot-path``). The same task
+    then re-reads the host on a slow interval and widens the ``auto`` gates, so
+    a gateway that boots while memory is short does not keep that moment's
+    widths for its whole life (``start_gate_widening``).
     """
-    task = asyncio.create_task(self._log_session_start_sizing())
+
+    async def _size_then_widen() -> None:
+        from kiro_crew.start_gate_widening import widen_start_gates_as_memory_frees
+
+        await self._log_session_start_sizing()
+        await widen_start_gates_as_memory_frees(self._cfg.agent, getattr(self, "sessions", None))
+
+    task = asyncio.create_task(_size_then_widen())
     self._background_tasks.add(task)
     task.add_done_callback(self._background_tasks.discard)
 
@@ -555,6 +574,19 @@ def _init_task_runner(self: GatewayOrchestrator) -> None:
             meta = {"task_id": task_id} if task_id else None
             self.dashboard_state.notify("taskrunner", title, body, meta=meta)
             self.dashboard_state.push_refresh("taskrunner")
+            # A step's runtime death or a restart's recovery also reaches the
+            # conversation the run was started from, if it still resolves.
+            from kiro_crew.dashboard import task_run_notices as origin
+
+            if session_key and origin.reaches_origin(title):
+                notice = origin.notice_text(title, body)
+                try:
+                    await origin.post_to_origin_tab(
+                        self.dashboard_state, session_key, notice, task_id
+                    )
+                    await self._deliver_channel_reply(session_key, notice, caller="taskrunner")
+                except Exception as exc:
+                    logger.warning("Failed to post a task run notice to its conversation: %s", exc)
         # Send approval-related notifications to Slack DM so user knows even when away.
         # Match on specific title patterns from task_executor, not broad keywords
         # (avoids false positives like "Investigating gateway error").
@@ -618,12 +650,20 @@ def _init_task_runner(self: GatewayOrchestrator) -> None:
             return False
         clean_title, _ = redact_exfiltration_urls(task.title or "")
         clean_title, _ = redact_credentials(clean_title)
+        # The record names the run this gate holds as well as its task:
+        # up to three runs execute at once and their task indexes
+        # overlap, so the index alone cannot say whose gate it is. A
+        # project page reads both fields from the listing and decides
+        # each gate by the record's instance; the id is opaque. The
+        # executor sets the task's run before it awaits this callback.
         approval_id = f"task-gate-{task.index}-{uuid.uuid4().hex[:8]}"
         result = await self.dashboard_state.request_approval(
             approval_id=approval_id,
             source="taskrunner",
             tool=f"Task {task.index}: {clean_title}",
             tool_purpose="Task requires manual approval before execution",
+            run_task_id=task.run_task_id,
+            task_index=task.index,
         )
         sel().log_api_access(
             caller="taskrunner",
@@ -637,6 +677,15 @@ def _init_task_runner(self: GatewayOrchestrator) -> None:
     # mypy checks this owner before the facade's bindings, so this function runs in a
     # deferred pass, where the nested def above drops the narrowing from the assignment.
     self.task_runner._on_approval = _task_approval  # type: ignore[union-attr]
+
+    # An app turn (``AgentTurnSDK.run``: a meeting's agents) passes this prompt as
+    # its approver, as a cron job does. Without it a call the hook gate neither
+    # denies nor grants is approved with nobody asked.
+    from kiro_crew.apps import agent_turn_sdk
+
+    agent_turn_sdk.set_turn_approver(
+        lambda app: self._interactive_approval("app", requester=f"app {app}")
+    )
 
 
 async def _init_dashboard(self: GatewayOrchestrator) -> None:
@@ -673,6 +722,7 @@ async def _init_dashboard(self: GatewayOrchestrator) -> None:
         kiro_prerequisite_service=self._boot_kiro_service,
         defer_channel_agent_resume=True,
         schedule_memory_preparation=self._schedule_memory_preparation,
+        approval_mode=self._approval_mode,
     )
     # When --port auto was requested, read the OS-assigned ephemeral port
     # back from the runner so subsequent URL building and the READY line
@@ -685,13 +735,21 @@ async def _init_dashboard(self: GatewayOrchestrator) -> None:
         self.dashboard_state.slack_client = self.slack
     if self.dashboard_state:
         self.dashboard_state.no_crons = self._no_crons  # dashboard mode
-        # ``kirocrew restart --when-idle`` asks this before it restarts.
-        self.dashboard_state._restart_idle_gate = self._restart_gate_when_idle
+        # The dashboard restart takes the scheduler's pause, drain and fence, and
+        # ``kirocrew restart --when-idle`` and the restart confirm read the one
+        # quiescence census.
+        from kiro_crew import restart_admission
+
+        restart_admission.wire(self.dashboard_state, self)
     if self.dashboard_state and not self._test_mode:
         # Told once, after the KAS floor answers: a Kiro CLI pick now runs on KAS.
         from kiro_crew import kiro_on_kas_notice
 
         kiro_on_kas_notice.schedule(self.dashboard_state, _KAS_CLI_FLOOR_TASK)
+        # Told when Crew bots cannot follow the Settings harness and run on KAS.
+        from kiro_crew import crewmate_harness_notice
+
+        crewmate_harness_notice.schedule(self.dashboard_state)
     sync_task = getattr(self, "_skills_sync_task", None)
     if self.dashboard_state and sync_task is not None:
         state = self.dashboard_state
@@ -772,6 +830,24 @@ async def run(self: GatewayOrchestrator) -> None:
     # No-op on Windows (no per-process descriptor rlimit).
     platform_compat.raise_nofile_soft_limit(10240)
 
+    # ── Keystone content-provenance host probe ──
+    # Probe once, in a tracked background worker thread, whether this host can build the
+    # namespace sandbox, so later config reads (on the loop included) get the cached
+    # answer. Readiness never waits on it: until it returns the content check is ON, and
+    # a host without userns turns it OFF when it does. This is the shared gateway entry
+    # both the CLI (run_gateway) and the in-process test gateway reach.
+    from kiro_crew.config import loosening_provenance
+
+    async def _prime_keystone_probe() -> None:
+        try:
+            await asyncio.to_thread(loosening_provenance.prime_host_verdict)
+        except Exception:
+            logger.debug("keystone provenance host probe failed", exc_info=True)
+
+    _keystone_probe_task = asyncio.create_task(_prime_keystone_probe())
+    self._background_tasks.add(_keystone_probe_task)
+    _keystone_probe_task.add_done_callback(self._background_tasks.discard)
+
     # Refuse to boot on a truncated signing key (see signing_key_preflight).
     # Off-loop, since its file I/O would wedge the loop on a stalled data home,
     # and bounded: a key leaf on a disconnected mount must refuse the boot, not
@@ -803,6 +879,15 @@ async def run(self: GatewayOrchestrator) -> None:
         )
         print(f"❌ Cannot run the signing key preflight: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
+
+    # An update a person armed applies HERE, at the start, before the listeners bind
+    # and before any session is restored: nothing is serving, so nothing is cut. A
+    # successful apply re-execs and does not return; a failure leaves the old
+    # version running and the error for the dashboard (``pending_apply_error``).
+    # Never at shutdown (decision entry "updates never restart a running gateway").
+    from kiro_crew.update_boot_apply import apply_armed_update_at_boot
+
+    await apply_armed_update_at_boot()
 
     # Clean up orphaned kiro-cli processes from previous runs
     from kiro_crew.session import cleanup_orphaned_sessions
@@ -882,23 +967,23 @@ async def run(self: GatewayOrchestrator) -> None:
     except RuntimeError:
         logger.warning("sandbox warm_backend skipped (thread exhaustion); cache stays cold")
 
-    # Enterprise build only: no kiro sign-in, no Crew. Checked before any service
+    # LTS build only: no kiro sign-in, no Crew. Checked before any service
     # starts and long before the HTTP server binds; a failure exits non-zero. The
-    # check reads the one enterprise sign-in (Crew's vault sign-in) and
+    # check reads the one LTS sign-in (Crew's vault sign-in) and
     # always hands back None, so start_dashboard builds its own setup service.
-    from kiro_crew.enterprise_boot import require_kiro_login
+    from kiro_crew.lts_boot import require_kiro_login
 
     self._boot_kiro_service = await require_kiro_login(assume_ready=self._test_mode)
 
-    # Enterprise build only (RFC D6): KAS is the harness, and a KAS that cannot start
+    # LTS build only (RFC D6): KAS is the harness, and a KAS that cannot start
     # refuses the start instead of falling back to the Kiro CLI harness. Before any
     # service starts, like the sign-in check above. Only the gateway records the
     # verdict that refuses later KAS sessions; another process that spawns KAS gets
     # that spawn's own error. An oss build skips this block entirely.
     from kiro_crew import edition
 
-    if edition.is_enterprise():
-        from kiro_crew.enterprise_boot import require_kas_harness
+    if edition.is_lts():
+        from kiro_crew.lts_boot import require_kas_harness
 
         await asyncio.to_thread(require_kas_harness, self._cfg, test_mode=self._test_mode)
 
@@ -914,6 +999,8 @@ async def run(self: GatewayOrchestrator) -> None:
     await cautious_boot.initialize()
 
     seen = SeenCache()
+    # Kept for a Slack reconnect, so a rebuilt socket still drops redeliveries.
+    self._slack_seen = seen
     await self._init_services()
 
     # Wire in-process embeddings (always-on) and kick background model download
@@ -979,6 +1066,18 @@ async def run(self: GatewayOrchestrator) -> None:
 
     gc.freeze()
     gc.enable()
+    # Opt-in (KIROCREW_GC_WARM_FREEZE, off by default): a higher gen-2 threshold
+    # now, and one more freeze once the restored tabs are in (kiro_crew.gc_tuning).
+    from kiro_crew import gc_tuning
+
+    if gc_tuning.apply_threshold() and state is not None:
+        _freeze_task = asyncio.create_task(gc_tuning.freeze_when_warm(state.startup_tabs_rebuilt))
+        self._background_tasks.add(_freeze_task)
+        _freeze_task.add_done_callback(self._background_tasks.discard)
+    # A slot fold with nothing to resume folds cold in a child process from now on.
+    from kiro_crew.crew_log import slot_backfill_child
+
+    slot_backfill_child.enable()
     # The dashboard/API socket is bound now. A missing wrapper can take the
     # full pip timeout to repair, so track that work without delaying READY.
     # The task itself catches and logs failures; startup remains available.
@@ -1027,8 +1126,12 @@ async def run(self: GatewayOrchestrator) -> None:
     # its ready=True boundary. No suspension has followed its return, so the
     # restore/open worker still cannot run before this process-ready marker.
     if self._json_ready:
+        from kiro_crew.dashboard.token_auth_tokens import owner_mint_extra
+
         ready_token = generate_token(
-            self._owner_id or "local-startup", ttl_seconds=MAX_SESSION_TTL_SECS
+            self._owner_id or "local-startup",
+            ttl_seconds=MAX_SESSION_TTL_SECS,
+            extra=owner_mint_extra(),
         )
         ready_payload = {
             "port": self._dashboard_port,
@@ -1072,6 +1175,15 @@ async def run(self: GatewayOrchestrator) -> None:
             self._background_tasks.add(_warn_task)
             _warn_task.add_done_callback(self._background_tasks.discard)
 
+        # Same contract: name files another account owns, with the repair line.
+        from kiro_crew.data_home_owner import warn_if_data_home_not_owned
+
+        _owner_task = asyncio.create_task(
+            asyncio.to_thread(warn_if_data_home_not_owned, data_home())
+        )
+        self._background_tasks.add(_owner_task)
+        _owner_task.add_done_callback(self._background_tasks.discard)
+
     # Disable and mark pending any app whose sessionApproval grant was never
     # consented to. Past KIROCREW_READY (no-new-work-on-gateway-boot-path):
     # the grant is refused on read already, so readiness need not wait.
@@ -1082,6 +1194,17 @@ async def run(self: GatewayOrchestrator) -> None:
         _consent_task = asyncio.create_task(reconcile_after_ready())
         self._background_tasks.add(_consent_task)
         _consent_task.add_done_callback(self._background_tasks.discard)
+
+        # The first session's skill read, made once for the gateway so that
+        # session's prompt build does not wait for it. Past KIROCREW_READY
+        # (no-new-work-on-gateway-boot-path), on a worker thread, never raises.
+        from kiro_crew.skill_first_read import first_read_after_ready
+
+        _skill_read_task = asyncio.create_task(
+            first_read_after_ready(self.ctx_builder, self._skills_sync_task)
+        )
+        self._background_tasks.add(_skill_read_task)
+        _skill_read_task.add_done_callback(self._background_tasks.discard)
 
     # The run directories a PREDECESSOR gateway of this data home left behind
     # (session_work_dir). Ordered after ``cleanup_orphaned_sessions`` above,
@@ -1243,6 +1366,19 @@ async def run(self: GatewayOrchestrator) -> None:
             if self._dashboard_runner is not None:
                 _app, _loop = self._dashboard_runner.app, asyncio.get_running_loop()
                 register_post_install_hook(lambda: withdraw_refused_origins(_app, _loop))
+                # A policy that refuses the terminal ends the shells already open.
+                from kiro_crew.dashboard.handlers.terminal_lifecycle import (
+                    end_shells_if_policy_refuses,
+                )
+
+                register_post_install_hook(lambda: end_shells_if_policy_refuses(_app, _loop))
+                # A policy that withdraws the redaction opt-in must purge open dashboards.
+                from kiro_crew.dashboard.handlers import credential_redaction as _redaction
+
+                await asyncio.to_thread(_redaction.seed_pushed_switch)
+                register_post_install_hook(
+                    lambda: _redaction.push_switch_moved_by_policy(_app, _loop)
+                )
             # Seeded BEFORE the poller starts: the first poll can itself install a new
             # ceiling, and a baseline taken on the hook's first call would record that
             # generation and skip the rebuild it needed.
@@ -1372,12 +1508,24 @@ async def run(self: GatewayOrchestrator) -> None:
                 base_url = _cfg_url.rstrip("/")
             else:
                 base_url = f"http://{host}:{self._dashboard_port}"
+            from kiro_crew.dashboard.token_auth_tokens import owner_mint_extra
+
             startup_token = generate_token(
-                self._owner_id or "local-startup", ttl_seconds=MAX_SESSION_TTL_SECS
+                self._owner_id or "local-startup",
+                ttl_seconds=MAX_SESSION_TTL_SECS,
+                extra=owner_mint_extra(),
             )
             dashboard_url = build_dashboard_url(
                 base_url, startup_token, local_only=self._local_only
             )
+            # The login link is printed to a terminal only. Any other stdout is
+            # a log something keeps (the systemd journal, the launchd file),
+            # where a reader could redeem the link for a session, so that boot
+            # prints the bare URL and names `kirocrew token`, here and in the
+            # auto-open fallback. Auto-open itself still gets the link.
+            from kiro_crew.dashboard.urls import login_link_may_print
+
+            print_link = login_link_may_print()
             # Off the loop: the Remote hint resolves the host's own name, and
             # a name the resolver cannot answer (every hosted macOS runner)
             # would otherwise sit on the loop for the lookup's bound.
@@ -1387,6 +1535,7 @@ async def run(self: GatewayOrchestrator) -> None:
                 port=self._dashboard_port,
                 local_only=self._local_only,
                 has_custom_host=bool(self._configured_host),
+                with_token=print_link,
             )
             for line in url_lines:
                 print(line)
@@ -1403,7 +1552,9 @@ async def run(self: GatewayOrchestrator) -> None:
                 # Runs as a task so a slow browser launch overlaps the MCP
                 # probe instead of delaying it. Tracked so it is not GC'd
                 # mid-flight and is reaped on shutdown with the rest.
-                _open_task = asyncio.create_task(self._auto_open_dashboard(dashboard_url))
+                _open_task = asyncio.create_task(
+                    self._auto_open_dashboard(dashboard_url, print_link=print_link)
+                )
                 self._background_tasks.add(_open_task)
                 _open_task.add_done_callback(self._background_tasks.discard)
         except Exception:
@@ -1443,16 +1594,16 @@ async def run(self: GatewayOrchestrator) -> None:
     _bg_session_task.add_done_callback(self._background_tasks.discard)
 
     # Stale-asset watchdog: detects when an update prunes the running
-    # install's static assets and triggers graceful shutdown so the
-    # supervisor can restart a fresh process. It first drains in-flight
-    # backend turns (count_in_flight) so active work isn't killed
-    # mid-prompt by the restart, and stays up when its supervisor could
-    # not relaunch it (supervisor_reentry).
+    # install's static assets. It never exits the gateway: it keeps serving and
+    # records "update ready, restart to use it" for the dashboard to show.
     _watchdog = asyncio.create_task(
         run_stale_asset_watchdog(
             shutdown_event,
-            count_in_flight=self._count_in_flight_work,
-            reentry_check=supervisor_reentry,
+            on_change=lambda: (
+                self.dashboard_state.push_refresh("update_available")
+                if self.dashboard_state
+                else None
+            ),
         )
     )
     self._background_tasks.add(_watchdog)
@@ -1501,6 +1652,26 @@ async def run(self: GatewayOrchestrator) -> None:
     if self.dashboard_state:
         self.dashboard_state.slack_socket_connected = connected
         self.dashboard_state.slack_connect_error = getattr(self, "_slack_connect_error", "")
+    # Pin the workspace of the Web API client boot published (none published,
+    # nothing pinned), so a later reconnect refuses to switch workspaces in
+    # place; the probe names the workspace, or releases the pin when Slack
+    # proves the token belongs to none. Fire-and-forget like the probe below:
+    # boot latency is unaffected.
+    from kiro_crew.slack.reconnect import pin_boot_workspace
+
+    _workspace_task = pin_boot_workspace(self)
+    if _workspace_task is not None:
+        self._background_tasks.add(_workspace_task)
+        _workspace_task.add_done_callback(self._background_tasks.discard)
+    if self.dashboard_state and not self._no_dashboard:
+        # POST /api/slack/reconnect calls this. Published only once boot's own
+        # Slack bring-up has returned, so a reconnect never builds a socket
+        # that boot's init_socket_mode then replaces without closing; until
+        # then the route answers 503 slack_reconnect_unavailable. The
+        # API-only server leaves it None.
+        from kiro_crew.slack.reconnect import reconnect_slack
+
+        self.dashboard_state.slack_reconnect = lambda: reconnect_slack(self)
 
     # Deferred tracked-channel capability probe (fire-and-forget, never
     # awaited — boot latency is unaffected). A Slack install created before

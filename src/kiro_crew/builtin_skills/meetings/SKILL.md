@@ -30,7 +30,7 @@ reopened to `active`, and a same-status POST is an idempotent no-op. Stop
 (`POST …/meetings/<id>/stop`) is the separate exit that ends a meeting outright.
 
 A live translation panel translates each transcript line as it lands, using one
-tool-less `saokhue-lite` call per line in an ephemeral session — deliberately
+tool-less `kirocrew-lite` call per line in an ephemeral session — deliberately
 NOT the agent batch path, because latency is the point. It is sequential per
 meeting and drops the oldest pending line when it falls behind, so gaps in
 `translations.json` are expected, not a bug.
@@ -107,7 +107,7 @@ keeps the sync but stops pre-creation.
 
 Transcription uses KiroCrew's own streaming endpoint (`/api/ws/stt`), driven from
 the browser. Cloud transcription is optional
-(`pip install 'boto3>=1.34,<2' 'amazon-transcribe>=0.6.3,<1'`); when it is not
+(`pip install "boto3>=1.34,<2" "amazon-transcribe>=0.6.3,<1"`); when it is not
 installed the app says so and the user can still type into the broadcast bar to
 feed the agents.
 

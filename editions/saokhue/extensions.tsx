@@ -10,8 +10,12 @@
  */
 import { suppressOverviewBuiltin } from '@/pages/overviewBuiltins'
 import { registerOverviewStatCards } from '@/pages/overviewStatCards'
+import { installBranding } from './branding'
 import { CompanyProxyCard } from './companyProxy/CompanyProxyCard'
 import './hiddenSurfaces.css'
+
+// The product name and this edition's catalog wording (branding.ts).
+installBranding()
 
 registerOverviewStatCards([{ id: 'saokhue-company-proxy', order: 100, component: CompanyProxyCard }])
 

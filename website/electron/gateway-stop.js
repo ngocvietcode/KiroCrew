@@ -31,7 +31,7 @@ const KIROCREW_MODULE_RE = /^(?:kiro_crew|kirocrew_[a-z0-9][a-z0-9_]*)$/;
 // gates `kirocrew stop` on. Without this the module name alone would authorize a
 // SIGKILL of any process that merely imports a `kirocrew_*` module on our port.
 // Both constants are pinned to their Python twins by
-// `test/test_cli.py::TestDesktopGatewayIdentityParity`; change them together.
+// `test/test_cli_stop.py::TestDesktopGatewayIdentityParity`; change them together.
 const KIROCREW_SERVER_SUBCOMMANDS = new Set(["gateway", "dashboard", "start"]);
 
 // The code the updater's pre-swap stop rejects with when a gateway running from
@@ -108,10 +108,10 @@ function executableSelector(tokens) {
 }
 
 /**
- * Match only a Sao Khuê executable, or a Python process whose first execution
- * selector invokes a Sao Khuê gateway module (`kiro_crew`, or a composed
+ * Match only a Kiro Crew executable, or a Python process whose first execution
+ * selector invokes a Kiro Crew gateway module (`kiro_crew`, or a composed
  * edition's `kirocrew_<edition>` companion — `KIROCREW_MODULE_RE`) followed by
- * a server subcommand (`KIROCREW_SERVER_SUBCOMMANDS`), or a Sao Khuê script.
+ * a server subcommand (`KIROCREW_SERVER_SUBCOMMANDS`), or a Kiro Crew script.
  * Later process arguments never establish ownership, so SSH aliases and
  * unrelated script arguments cannot authorize a kill.
  *
@@ -131,7 +131,7 @@ function isKirocrewCommand(commandLine, options) {
 }
 
 /**
- * `isKirocrewCommand`, narrowed to a Sao Khuê SERVER: argparse's first
+ * `isKirocrewCommand`, narrowed to a Kiro Crew SERVER: argparse's first
  * positional after the executable (or after the console script) must be one of
  * `KIROCREW_SERVER_SUBCOMMANDS`, exactly as the Python twin
  * `port_resolution._args_look_like_kirocrew` gates its console-script form.
@@ -204,7 +204,7 @@ function strictWindowsArguments(commandLine, count) {
  * a launcher spelled as argv0 would leave Python running whatever the next
  * argument names. An interpreter option, another script, another venv's
  * launcher, a non-server subcommand or an ambiguous argument boundary stays
- * foreign: the shared interpreter alone never names a Sao Khuê gateway.
+ * foreign: the shared interpreter alone never names a Kiro Crew gateway.
  *
  * This is command-line attribution, like every other Windows rule here: a
  * process of this account that starts the interpreter with this exact command
@@ -243,7 +243,7 @@ function venvBaseInterpreterShape(commandLine, observed, launches, canonical) {
 }
 
 /**
- * Classify a command line: `null` when it is not a Sao Khuê command, else
+ * Classify a command line: `null` when it is not a Kiro Crew command, else
  * `{ serverSubcommand }` -- whether argparse's first positional selects a
  * server subcommand. The `-m <module>` shape only ever matches WITH that
  * subcommand, so it is always `true` there.
@@ -321,15 +321,17 @@ function kirocrewCommandShape(
   return { serverSubcommand: KIROCREW_SERVER_SUBCOMMANDS.has(tokens[index + 1]) };
 }
 
-// A gateway whose parent is init (PID 1) is owned by the OS service manager —
-// a launchd LaunchAgent on macOS, a systemd unit on Linux — not by this app.
-// It must never be evicted: launchd's KeepAlive (and systemd's Restart=)
-// respawns it within milliseconds, so a "successful" force-stop frees the port
-// only long enough for our retry's bind to race the respawn and fail with a
-// confusing "address already in use". Reuse is always the correct move there.
+// A gateway whose parent is init (PID 1) may be owned by the OS service manager:
+// a launchd LaunchAgent on macOS, a systemd unit on Linux. Such a gateway must
+// never be evicted: launchd's KeepAlive (and systemd's Restart=) respawns it
+// within milliseconds, so a "successful" force-stop frees the port only long
+// enough for our retry's bind to race the respawn and fail with a confusing
+// "address already in use". Reuse is always the correct move there.
 //
-// A process whose parent shell has exited is also reparented to PID 1. Treating
-// that as non-evictable is equally right: it is not our child either.
+// A gateway whose app or shell has exited is reparented to PID 1 too, and
+// nothing restarts it. On macOS the caller passes `isLaunchdJob`, launchd's own
+// job list, which tells that orphan apart from a service; without a readable
+// answer a PID-1 holder is still read as a service.
 const INIT_PPID = 1;
 
 /**
@@ -428,7 +430,7 @@ function readCommandBounded(getCommandFn, pid, timeoutMs = SURVIVOR_COMMAND_READ
  * sent. Identity is re-read right before each signal, so a pid that exited and
  * was reused by an unrelated process is never signalled. The identity test is
  * the SERVER one (`isKirocrewGatewayCommand`): a `kirocrew mcp-core` /
- * `mcp-cron` descendant is a Sao Khuê executable too, but it belongs to the
+ * `mcp-cron` descendant is a Kiro Crew executable too, but it belongs to the
  * backend's own orphan sweep, not to this one.
  */
 async function stopForkedGatewaySurvivors(pids, { deadline, graceMs, getCommandFn, signalPidFn, pollMs }) {
@@ -745,6 +747,7 @@ async function confirmedFree(port, { confirmFree, waitMs, sleep, onWait, isAbort
  *   - kill(pid, signal)                          (process.kill; may throw)
  *   - sleep(ms)           -> Promise<void>
  *   - confirmFree(port)   -> Promise<boolean>   (optional; true = a bind succeeds)
+ *   - getPpid, isLaunchdJob                     (optional; see isServiceManaged)
  *
  * @returns {Promise<{killed:number, freed:boolean, survivors:number[], foreignHolder:boolean, probeFailed?:boolean, ownerUnknown?:boolean}>}
  */
@@ -756,6 +759,7 @@ async function forceStopPort(
     kill,
     sleep,
     getPpid = null,
+    isLaunchdJob = null,
     isKirocrew = isKirocrewCommand,
     verifyTimeoutMs = 4000,
     pollIntervalMs = 250,
@@ -804,7 +808,7 @@ async function forceStopPort(
       // A service-managed gateway is respawned by launchd/systemd the moment we
       // kill it, so evicting it cannot free the port — it only makes the retry
       // race the respawn. Leave it alone and tell the caller why.
-      if (await isServiceManaged(pid, getPpid)) {
+      if (await isServiceManaged(pid, getPpid, isLaunchdJob)) {
         serviceHolder = true;
         log(`force-stop: SKIP pid=${pid} — service-managed KiroCrew gateway (${cmd.slice(0, 80)})`);
         continue;
@@ -945,6 +949,7 @@ async function probePortBinding(port, { getListenPids, log = () => {} }) {
  *   "kirocrew" — a local LISTEN owner matching isKirocrewCommand. Only this
  *                value may authorise a takeover.
  *   "foreign"  — a local LISTEN owner exists but is not ours (e.g. `ssh`).
+ *                A holder whose command could not be read is not ours either.
  *   "none"     — nothing is listening locally, yet something answered. A race,
  *                or a socket we cannot see; treat as not ours.
  *   "unknown"  — the probe itself could not run (no lsof / EACCES). Never
@@ -957,11 +962,19 @@ async function probePortBinding(port, { getListenPids, log = () => {} }) {
  * @param {object} deps
  * @param {(port:number)=>Promise<number[]>} deps.getListenPids  lsof -t
  * @param {(pid:number)=>Promise<string>}    deps.getCommand     ps -o command=
- * @returns {Promise<"kirocrew"|"foreign"|"none"|"unknown">}
+ * @param {(pid:number)=>Promise<string>}    [deps.getPpid]      ps -o ppid=; see isServiceManaged
+ * @param {(pid:number)=>Promise<boolean|null>} [deps.isLaunchdJob] macOS only; see isServiceManaged
+ * @param {Array<{pid:number, command:string|null}>} [deps.holders]  on a
+ *        "foreign" verdict, receives every holder found, so a caller can name
+ *        them to the user; `command` is null when it could not be read.
+ * @returns {Promise<"kirocrew"|"service"|"foreign"|"none"|"unknown">}
  */
 async function classifyPortOwner(
   port,
-  { getListenPids, getCommand, getPpid = null, isKirocrew = isKirocrewCommand, log = () => {} }
+  {
+    getListenPids, getCommand, getPpid = null, isLaunchdJob = null,
+    isKirocrew = isKirocrewCommand, log = () => {}, holders = null,
+  }
 ) {
   let pids;
   try {
@@ -974,11 +987,21 @@ async function classifyPortOwner(
     log(`port-owner: no local LISTEN owner on :${port}`);
     return "none";
   }
+  const found = [];
   for (const pid of pids) {
     const cmd = (await getCommand(pid)).trim();
+    if (!cmd) {
+      // The command readers answer "" when the read failed or ran out of
+      // time, and when the holder exited between the two probes. None of
+      // those says what the holder is, so it is reported as unread rather
+      // than as a program positively identified as someone else's.
+      log(`port-owner: :${port} held by pid=${pid}, whose command could not be read; not identified as Kiro Crew`);
+      found.push({ pid, command: null });
+      continue;
+    }
     const ours = isKirocrew(cmd);
     if (ours) {
-      if (await isServiceManaged(pid, getPpid)) {
+      if (await isServiceManaged(pid, getPpid, isLaunchdJob)) {
         log(`port-owner: :${port} held by SERVICE-MANAGED KiroCrew pid=${pid} (${cmd.slice(0, 80)}) — reuse, never evict`);
         return "service";
       }
@@ -986,24 +1009,37 @@ async function classifyPortOwner(
       return "kirocrew";
     }
     log(`port-owner: :${port} held by NON-KiroCrew pid=${pid} (${cmd.slice(0, 80)})`);
+    found.push({ pid, command: cmd });
   }
+  if (holders) holders.push(...found);
   return "foreign";
 }
 
 /**
  * Is `pid` owned by the OS service manager rather than by us? See INIT_PPID.
  *
+ * A PID-1 holder is a service unless `isLaunchdJob(pid)` answers exactly
+ * false: launchd's job list does not hold it, so it is an orphan nothing
+ * restarts. With no `isLaunchdJob` (off macOS), a null answer (the job list
+ * could not be read) or a throw, the holder stays a service.
+ *
  * Fails CLOSED (returns true, i.e. "do not touch") when the parent cannot be
  * determined: mistaking a service for a wedge kills a gateway the OS instantly
  * respawns, while mistaking a wedge for a service only costs an eviction we can
  * still explain to the user.
  */
-async function isServiceManaged(pid, getPpid) {
+async function isServiceManaged(pid, getPpid, isLaunchdJob = null) {
   if (!getPpid) return false; // caller opted out of the probe (e.g. Windows)
   try {
     const ppid = parseInt(String(await getPpid(pid)).trim(), 10);
     if (!Number.isInteger(ppid)) return true;
-    return ppid === INIT_PPID;
+    if (ppid !== INIT_PPID) return false;
+  } catch {
+    return true;
+  }
+  if (!isLaunchdJob) return true;
+  try {
+    return (await isLaunchdJob(pid)) !== false;
   } catch {
     return true;
   }

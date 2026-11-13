@@ -13,7 +13,7 @@ import { i18nT } from '../../i18n/t'
 export const DEFAULT_TEMPLATE = 'kirocrew'
 
 /** Source-defined agents a crewmate runs on that are not templates anyone picks. */
-const SOURCE_DEFINED = new Set(['saokhue-mate-conductor', 'saokhue-mate-worker'])
+const SOURCE_DEFINED = new Set(['kirocrew-mate-conductor', 'kirocrew-mate-worker'])
 
 /** A template's name as the user sees it: the default one is labelled as such. */
 export function templateDisplayName(name: string): string {

@@ -52,7 +52,7 @@ MAX_PAGE_BYTES = 5 * 1024 * 1024
 MAX_URL_LENGTH = 2048
 
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
-_USER_AGENT = "saokhue-knowledge/1"
+_USER_AGENT = "kirocrew-knowledge/1"
 #: Content types stored, mapped to the suffix the file reader dispatches on.
 _CONTENT_SUFFIXES = {
     "text/html": ".html",

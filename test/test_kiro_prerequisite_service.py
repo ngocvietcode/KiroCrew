@@ -156,6 +156,7 @@ _BASE_MEMBERS: dict[str, tuple[str, bool, str]] = {
     "_stamp_probe": ("function", False, "(self, identity: 'str') -> 'None'"),
     "authenticated": ("property", False, "(self) -> 'bool'"),
     "boot_login_status": ("function", True, "(self) -> 'PrerequisiteStatus'"),
+    "cli_too_old": ("property", False, "(self) -> 'bool'"),
     "close": ("function", True, "(self) -> 'None'"),
     "current_identity_fingerprint": (
         "function",
@@ -169,9 +170,20 @@ _BASE_MEMBERS: dict[str, tuple[str, bool, str]] = {
     "identity_changed_since_sessions": ("function", True, "(self) -> 'tuple[bool, str]'"),
     "identity_component_dropped": ("function", False, "(self, live: 'str') -> 'bool'"),
     "identity_observation_generation": ("property", False, "(self) -> 'int'"),
+    "identity_read_generation": ("property", False, "(self) -> 'int'"),
+    "identity_read_other_than": (
+        "function",
+        False,
+        "(self, fingerprint: 'str', *, since: 'int') -> 'bool'",
+    ),
     "initial_setup_complete": ("property", False, "(self) -> 'bool'"),
     "login_verified": ("function", True, "(self, *, max_age_secs: 'float') -> 'bool'"),
     "mark_signed_out": ("function", False, "(self) -> 'None'"),
+    "mark_cli_too_old": (
+        "function",
+        False,
+        "(self, stamp: 'tuple[object, ...] | None' = None) -> 'bool'",
+    ),
     "note_absence_swept": ("function", False, "(self, run: 'int') -> 'None'"),
     "note_sessions_reconciled": (
         "function",
@@ -215,6 +227,7 @@ _BOUND: dict[str, str] = {
     "identity_changed_since_probe": "kiro_crew.kiro_prerequisite_identity_tracking",
     "identity_changed_since_sessions": "kiro_crew.kiro_prerequisite_identity_tracking",
     "note_absence_swept": "kiro_crew.kiro_prerequisite_identity_tracking",
+    "identity_read_other_than": "kiro_crew.kiro_prerequisite_identity_tracking",
     "note_sessions_reconciled": "kiro_crew.kiro_prerequisite_identity_tracking",
     "read_spawn_identity": "kiro_crew.kiro_prerequisite_identity_tracking",
     "repair_agent_specs": "kiro_crew.kiro_prerequisite_agent_specs",

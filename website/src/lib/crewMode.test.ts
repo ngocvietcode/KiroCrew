@@ -14,43 +14,43 @@ import { crewModePreviewOn } from '../test/crewModePreview'
 afterEach(() => resetCrewModeCatalog())
 
 /** The conductors a Crew Mode gateway lists in its catalog today. */
-const GATEWAY_CONDUCTORS = ['saokhue-conductor', 'saokhue-ledger-conductor', 'saokhue-pipeline-conductor', 'saokhue-security-conductor', 'saokhue-team-lead']
+const GATEWAY_CONDUCTORS = ['kirocrew-conductor', 'kirocrew-ledger-conductor', 'kirocrew-pipeline-conductor', 'kirocrew-security-conductor', 'kirocrew-team-lead']
 
 describe('crewMode', () => {
   it('runs on the shipped conductor until the catalog says otherwise', () => {
-    expect(DEFAULT_CREW_MODE_AGENT).toBe('saokhue-team-lead')
-    expect(crewModeAgent()).toBe('saokhue-team-lead')
+    expect(DEFAULT_CREW_MODE_AGENT).toBe('kirocrew-team-lead')
+    expect(crewModeAgent()).toBe('kirocrew-team-lead')
   })
 
   it('swaps the conductor to the one the catalog names', () => {
-    setCrewModeCatalog('better-conductor', ['saokhue-conductor', 'saokhue-team-lead'])
+    setCrewModeCatalog('better-conductor', ['kirocrew-conductor', 'kirocrew-team-lead'])
     expect(crewModeAgent()).toBe('better-conductor')
     // The configured agent is a conductor even when the family list omits it.
     expect(isConductorAgent('better-conductor')).toBe(true)
-    expect(isConductorAgent('saokhue-team-lead')).toBe(true)
+    expect(isConductorAgent('kirocrew-team-lead')).toBe(true)
     expect(isConductorAgent('kirocrew')).toBe(false)
   })
 
   it('never treats a crewmate as a conductor, whatever its name', () => {
-    setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor'])
-    expect(runsConductor('saokhue-conductor', 'template')).toBe(true)
-    expect(runsConductor('saokhue-conductor', undefined)).toBe(true)
-    expect(runsConductor('saokhue-conductor', 'member')).toBe(false)
+    setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor'])
+    expect(runsConductor('kirocrew-conductor', 'template')).toBe(true)
+    expect(runsConductor('kirocrew-conductor', undefined)).toBe(true)
+    expect(runsConductor('kirocrew-conductor', 'member')).toBe(false)
   })
 
   it('drops conductor templates from a normal chat picker and keeps crewmates, whatever their name', () => {
     // The composer's Crew Mode switch is the way onto a conductor, so the picker
     // lists none of the catalog's conductor set; a crewmate row stays.
-    setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor', 'saokhue-pipeline-conductor'])
+    setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor', 'kirocrew-pipeline-conductor'])
     const rows = [
       { name: 'kirocrew', selection_kind: 'template' },
-      { name: 'saokhue-conductor', selection_kind: 'template' },
-      { name: 'saokhue-pipeline-conductor', selection_kind: 'template' },
-      { name: 'saokhue-conductor', selection_kind: 'member' },
+      { name: 'kirocrew-conductor', selection_kind: 'template' },
+      { name: 'kirocrew-pipeline-conductor', selection_kind: 'template' },
+      { name: 'kirocrew-conductor', selection_kind: 'member' },
     ]
     expect(withoutConductors(rows)).toEqual([
       { name: 'kirocrew', selection_kind: 'template' },
-      { name: 'saokhue-conductor', selection_kind: 'member' },
+      { name: 'kirocrew-conductor', selection_kind: 'member' },
     ])
   })
 
@@ -100,12 +100,12 @@ describe('crewMode', () => {
   })
 
   it('cycles a normal chat past every conductor, so a chord never turns Crew Mode on', () => {
-    setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor', 'saokhue-team-lead'])
+    setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor', 'kirocrew-team-lead'])
     const agents = [
       { name: 'kirocrew', selection_kind: 'template' },
-      { name: 'saokhue-conductor', selection_kind: 'template' },
+      { name: 'kirocrew-conductor', selection_kind: 'template' },
       { name: 'research', selection_kind: 'template' },
-      { name: 'saokhue-team-lead', selection_kind: 'template' },
+      { name: 'kirocrew-team-lead', selection_kind: 'template' },
     ]
     // The picker is the way onto a conductor; the chord skips them both ways.
     expect(agentCycleTarget(agents, 'kirocrew', 'template', 1)).toBe('research')
@@ -113,19 +113,19 @@ describe('crewMode', () => {
     expect(agentCycleTarget(agents, 'kirocrew', 'template', -1)).toBe('research')
     // A chat already on a conductor has no picker to mirror (the server refuses
     // to move a Crew Mode root), so the chord does nothing there.
-    expect(agentCycleTarget(agents, 'saokhue-conductor', 'template', 1)).toBeNull()
+    expect(agentCycleTarget(agents, 'kirocrew-conductor', 'template', 1)).toBeNull()
     expect(agentCycleTarget([], 'kirocrew', 'template', 1)).toBeNull()
   })
 })
 
 describe('runsCrewMode', () => {
   it('is every conductor in the catalog list', () => {
-    setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor', 'saokhue-pipeline-conductor', 'saokhue-ledger-conductor'])
-    expect(runsCrewMode('saokhue-conductor', 'template')).toBe(true)
-    expect(runsCrewMode('saokhue-ledger-conductor', 'template')).toBe(true)
-    expect(runsCrewMode('saokhue-pipeline-conductor', 'template')).toBe(true)
-    expect(isConductorAgent('saokhue-ledger-conductor')).toBe(true)
-    expect(runsCrewMode('saokhue-conductor', 'member')).toBe(false)
+    setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor', 'kirocrew-pipeline-conductor', 'kirocrew-ledger-conductor'])
+    expect(runsCrewMode('kirocrew-conductor', 'template')).toBe(true)
+    expect(runsCrewMode('kirocrew-ledger-conductor', 'template')).toBe(true)
+    expect(runsCrewMode('kirocrew-pipeline-conductor', 'template')).toBe(true)
+    expect(isConductorAgent('kirocrew-ledger-conductor')).toBe(true)
+    expect(runsCrewMode('kirocrew-conductor', 'member')).toBe(false)
     expect(runsCrewMode('kirocrew', 'template')).toBe(false)
   })
 
@@ -134,19 +134,19 @@ describe('runsCrewMode', () => {
     expect(gatewayRunsCrewMode()).toBe(false)
     for (const name of GATEWAY_CONDUCTORS) expect(runsCrewMode(name, 'template')).toBe(false)
     // The stamp a Crew Mode chat carries is recognized on its own.
-    expect(runsCrewMode('saokhue-conductor', 'template', 'saokhue-conductor')).toBe(true)
+    expect(runsCrewMode('kirocrew-conductor', 'template', 'kirocrew-conductor')).toBe(true)
   })
 
   it('keeps no client copy of the conductor set: a catalog with no list counts its agent alone', () => {
-    setCrewModeCatalog('saokhue-conductor', undefined)
+    setCrewModeCatalog('kirocrew-conductor', undefined)
     expect(gatewayRunsCrewMode()).toBe(true)
-    expect(runsCrewMode('saokhue-conductor', 'template')).toBe(true)
-    expect(runsCrewMode('saokhue-team-lead', 'template')).toBe(false)
+    expect(runsCrewMode('kirocrew-conductor', 'template')).toBe(true)
+    expect(runsCrewMode('kirocrew-team-lead', 'template')).toBe(false)
   })
 
   it('names no conductor on a gateway without Crew Mode, so nothing is hidden there', () => {
     // A catalog with neither Crew Mode field: the gateway predates Crew Mode.
-    setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor'])
+    setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor'])
     setCrewModeCatalog(undefined, undefined)
     expect(gatewayRunsCrewMode()).toBe(false)
     for (const name of GATEWAY_CONDUCTORS) {
@@ -157,7 +157,7 @@ describe('runsCrewMode', () => {
     const rows = GATEWAY_CONDUCTORS.map(name => ({ name, selection_kind: 'template' }))
     expect(withoutConductors(rows)).toEqual(rows)
     // The agent chord cycles over the whole list and lands on a conductor as today.
-    expect(agentCycleTarget(rows, 'saokhue-conductor', 'template', 1)).toBe('saokhue-ledger-conductor')
+    expect(agentCycleTarget(rows, 'kirocrew-conductor', 'template', 1)).toBe('kirocrew-ledger-conductor')
     // The switch still knows which agent it would turn on.
     expect(crewModeAgent()).toBe(DEFAULT_CREW_MODE_AGENT)
   })
@@ -208,14 +208,14 @@ describe('crewApprovalDecidableHere', () => {
 
 describe('the Crew Mode preview', () => {
   const rows = [
-    { key: 'root', crew_mode_root: true, agent: 'saokhue-conductor' },
+    { key: 'root', crew_mode_root: true, agent: 'kirocrew-conductor' },
     { key: 'member', crew_root: 'root' },
     { key: 'plain' },
   ]
   // The file turns the preview on for every test; these turn it off again.
   beforeEach(() => {
     localStorage.removeItem(PREVIEW_CREW_MODE)
-    setCrewModeCatalog('saokhue-conductor', GATEWAY_CONDUCTORS)
+    setCrewModeCatalog('kirocrew-conductor', GATEWAY_CONDUCTORS)
   })
 
   it('is off by default', () => {
@@ -224,32 +224,32 @@ describe('the Crew Mode preview', () => {
 
   it('off, answers as a gateway without Crew Mode: no conductor, no switch, every picker row', () => {
     expect(gatewayRunsCrewMode()).toBe(false)
-    expect(isConductorAgent('saokhue-conductor')).toBe(false)
-    expect(runsCrewMode('saokhue-conductor', 'template')).toBe(false)
-    const picker = [{ name: 'kirocrew' }, { name: 'saokhue-conductor' }]
+    expect(isConductorAgent('kirocrew-conductor')).toBe(false)
+    expect(runsCrewMode('kirocrew-conductor', 'template')).toBe(false)
+    const picker = [{ name: 'kirocrew' }, { name: 'kirocrew-conductor' }]
     expect(withoutConductors(picker)).toEqual(picker)
   })
 
   it('off, the chord never moves a plain chat onto a conductor the gateway would run as Crew Mode', () => {
-    const picker = [{ name: 'kirocrew' }, { name: 'saokhue-conductor' }, { name: 'research' }]
+    const picker = [{ name: 'kirocrew' }, { name: 'kirocrew-conductor' }, { name: 'research' }]
     expect(agentCycleTarget(picker, 'kirocrew', 'template', 1)).toBe('research')
     expect(agentCycleTarget(picker, 'kirocrew', 'template', -1)).toBe('research')
     expect(agentCycleTarget(picker, 'research', 'template', 1)).toBe('kirocrew')
-    expect(agentCycleTarget([{ name: 'saokhue-conductor' }], 'kirocrew', 'template', 1)).toBeNull()
+    expect(agentCycleTarget([{ name: 'kirocrew-conductor' }], 'kirocrew', 'template', 1)).toBeNull()
     // A crewmate is kept whatever its name.
-    const withMate = [{ name: 'kirocrew' }, { name: 'saokhue-conductor', selection_kind: 'member' }]
-    expect(agentCycleTarget(withMate, 'kirocrew', 'template', 1)).toBe('saokhue-conductor')
+    const withMate = [{ name: 'kirocrew' }, { name: 'kirocrew-conductor', selection_kind: 'member' }]
+    expect(agentCycleTarget(withMate, 'kirocrew', 'template', 1)).toBe('kirocrew-conductor')
   })
 
   it('off, the chord stops only on a chat the gateway locks: the raw crew_mode_root stamp', () => {
-    const picker = [{ name: 'kirocrew' }, { name: 'saokhue-conductor' }, { name: 'research' }]
+    const picker = [{ name: 'kirocrew' }, { name: 'kirocrew-conductor' }, { name: 'research' }]
     // A Crew Mode root (the server's own stamp): the gateway refuses every switch.
-    expect(agentCycleTarget(picker, 'saokhue-conductor', 'template', 1, undefined, true)).toBeNull()
-    expect(agentCycleTarget(picker, 'saokhue-conductor', 'template', -1, undefined, true)).toBeNull()
+    expect(agentCycleTarget(picker, 'kirocrew-conductor', 'template', 1, undefined, true)).toBeNull()
+    expect(agentCycleTarget(picker, 'kirocrew-conductor', 'template', -1, undefined, true)).toBeNull()
     // A conductor chat that is no root (Incognito, Temporary, dispatched): the gateway
     // lets it switch, so the chord moves it, never onto a conductor.
-    expect(agentCycleTarget(picker, 'saokhue-conductor', 'template', 1)).toBe('kirocrew')
-    expect(agentCycleTarget(picker, 'saokhue-conductor', 'template', -1)).toBe('research')
+    expect(agentCycleTarget(picker, 'kirocrew-conductor', 'template', 1)).toBe('kirocrew')
+    expect(agentCycleTarget(picker, 'kirocrew-conductor', 'template', -1)).toBe('research')
   })
 
   it('off, reads every Crew Mode stamp as absent, so a crew member is an ordinary chat', () => {
@@ -266,7 +266,7 @@ describe('the Crew Mode preview', () => {
   it('on, is Crew Mode exactly as before the flag', () => {
     setPreviewFlag(PREVIEW_CREW_MODE, true)
     expect(gatewayRunsCrewMode()).toBe(true)
-    expect(isConductorAgent('saokhue-conductor')).toBe(true)
+    expect(isConductorAgent('kirocrew-conductor')).toBe(true)
     expect(crewModeRoot(rows[0])).toBe(true)
     expect(crewRootOf(rows[1])).toBe('root')
     expect(crewModeView(rows).map(r => r.key)).toEqual(['root', 'plain'])

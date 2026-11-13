@@ -22,7 +22,7 @@ check whose every answer would be "refuse" is more honestly written as a refusal
 Rewriting the file would be Crew editing a repository's tracked content, so there
 is no repair path and no override.
 
-``saokhue-worker`` is reserved like every other managed name. The derived-spec gate
+``kirocrew-worker`` is reserved like every other managed name. The derived-spec gate
 (:func:`kiro_crew.agent.require_fresh_derived_spec`) refuses a top-level copy of it on
 the worker's own spawn, but it scans the top level only and compares the name
 exactly, so a nested or case-variant claim is left to this check.

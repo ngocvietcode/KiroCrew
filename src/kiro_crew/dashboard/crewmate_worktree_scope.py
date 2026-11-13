@@ -1,7 +1,7 @@
 """Point a crewmate's worker at the crewmate's own worktree, at the start of its turn.
 
 A worker session a crewmate opened (a ``template`` record on
-``saokhue-mate-worker`` carrying the crewmate's ``member_id``) gets its
+``kirocrew-mate-worker`` carrying the crewmate's ``member_id``) gets its
 ``slot.project`` -- its cwd and project scope -- set to the crewmate's own git
 worktree of the repository the turn is about (:mod:`kiro_crew.crewmate_worktree`).
 The repository is read from the paths this turn's message names, then from the
@@ -51,10 +51,11 @@ def resolve_worker_project(config: Any, name: str, project: str, message: str) -
         return None
     slug = member_slug(name, config)
     ws_dir = str(workspace_dir_for(getattr(record, "workspace", "") or None))
+    prefix = config.agent.member_branch_prefix
     candidates = [*cw.paths_in(message), *([project] if project else [])]
     for candidate in candidates:
         try:
-            found = cw.ensure(slug, ws_dir, candidate)
+            found = cw.ensure(slug, ws_dir, candidate, prefix)
         except cw.WorktreeRefused as exc:
             logger.warning("Bot %s: no worktree for %s: %s", name, candidate, exc)
             continue

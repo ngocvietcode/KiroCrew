@@ -2,7 +2,7 @@
 
 ``SystemOneProvider`` answers in ~100 ms over HTTP. This module answers the SAME
 protocol -- ``ask(state, questions) -> Answers``, raise on any failure -- from one
-text-only model call on the ``saokhue-lite`` agent, so a machine with no Jev key
+text-only model call on the ``kirocrew-lite`` agent, so a machine with no Jev key
 still has a judge. It takes seconds and a small model call, both far below the
 main-session turn the judge exists to avoid.
 
@@ -21,7 +21,7 @@ paths and depends on nothing above it, so the layer that owns the session manage
 REGISTERS a runner (:func:`set_runner`) when the dashboard state is built. A test
 registers a runner that returns a fixture string.
 
-The registered runner uses ``run_bg_oneliner`` on the warm shared ``saokhue-lite``
+The registered runner uses ``run_bg_oneliner`` on the warm shared ``kirocrew-lite``
 runtime where the backend has one, else a tool-less session of its own that is
 released AND destroyed; see :func:`build_session_runner`.
 """
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 #: The bundled agent template this lane runs on: text-only, no tools, no MCP, no
 #: skills. No judge template of its own: the model is passed per call and
 #: :func:`render_prompt` states the whole instruction on each call.
-JUDGE_AGENT_NAME = "saokhue-lite"
+JUDGE_AGENT_NAME = "kirocrew-lite"
 
 #: What an empty ``decisions.nudge_wake.llm_model`` resolves to: INHERIT the
 #: agent's background role model (``agent.role_models.background``). A real word
@@ -136,7 +136,7 @@ def has_runner() -> bool:
 def _background_role_model() -> str:
     """The judge agent's own model, or ``""`` when the config cannot be read.
 
-    ``saokhue-lite`` is written with ``agent.role_models.background``, but a session
+    ``kirocrew-lite`` is written with ``agent.role_models.background``, but a session
     opened on the shared runtime does not start on its template's model (KAS opens
     every session on its own ``auto``), so inheriting means asking for this id. The
     live snapshot is read rather than the file, because this runs on the event loop.
@@ -217,7 +217,7 @@ def build_session_runner(sessions: Any, *, model: str = "") -> Runner:
     """A :data:`Runner` over the shared background runtime, where there is one.
 
     On a backend with a shared runtime (kiro-cli, KAS, codex), each call is one
-    ``run_bg_oneliner`` on the warm ``saokhue-lite`` runtime: text only, tool
+    ``run_bg_oneliner`` on the warm ``kirocrew-lite`` runtime: text only, tool
     requests rejected and audited. A session of its own there would wait out the
     MCP drain's 6 s ceiling, which alone overruns the lane's 8 s floor. Other
     backends use :func:`_call_on_own_session`.
@@ -333,6 +333,10 @@ def render_prompt(state: dict | str, questions: list[Question]) -> str:
         '"probabilities": {"<option>": <number 0..1>, ...}}',
         "The probabilities must include your chosen option. If you give a number "
         "for every option, they must add up to 1.",
+        # Observed live: a confident model answers with the bare option names
+        # (``{"outcome": "nothing_new", ...}``), which the parser rightly refuses.
+        'Never answer with a bare option name: a value such as "quiet" on its own '
+        "is an invalid answer.",
         "",
         "For a question that lists exactly two options you may instead answer with "
         "a bare number from 0 to 1: the probability of the FIRST option listed.",
@@ -607,7 +611,7 @@ class LlmProvider:
 
     A ``decisions.provider.DecisionProvider``, registered as ``session-llm``: one
     ``ask``, every answer or an exception, no retries. The gate supplies the
-    timeout and the fallback.
+    timeout, its one retry and the fallback.
     """
 
     def __init__(self, runner: Runner | None = None, *, model: str = "") -> None:

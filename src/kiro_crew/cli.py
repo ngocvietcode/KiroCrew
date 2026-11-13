@@ -32,6 +32,7 @@ drop_inherited_lib_path()
 import argparse
 import asyncio
 import faulthandler
+import functools
 import importlib
 import importlib.machinery
 import logging
@@ -39,6 +40,7 @@ import os
 import shutil
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -62,6 +64,7 @@ from kiro_crew.cli_log_files import (  # noqa: F401 -- re-exported for existing 
 from kiro_crew.config import KiroCrewConfig, config_dir, ensure_data_home
 from kiro_crew.config.loader import (  # noqa: F401
     DASHBOARD_PORT,
+    PendingEditBlocksSave,
     build_provider_factory,
 )
 from kiro_crew.config.paths import _default_home, _legacy_home  # noqa: F401
@@ -112,16 +115,16 @@ _SIGN_IN_ACTIONS = frozenset({"login", "whoami", "logout", "route"})
 
 
 def _is_sign_in_command(args: argparse.Namespace) -> bool:
-    """Is *args* an enterprise build's sign-in verb, which must run before policy loads?
+    """Is *args* an LTS build's sign-in verb, which must run before policy loads?
 
-    An enterprise build's policy fetch authenticates as the vault's sign-in, so with no
+    An LTS build's policy fetch authenticates as the vault's sign-in, so with no
     sign-in the fetch fails; the verb that creates one must not need it. An oss build
     keeps the fail-closed rule for every command.
     """
     from kiro_crew import edition
 
     return (
-        edition.is_enterprise()
+        edition.is_lts()
         and args.command == "kas"
         and getattr(args, "kas_action", None) in _SIGN_IN_ACTIONS
     )
@@ -132,9 +135,9 @@ def _serve_sign_in_first(args: argparse.Namespace, exc: BaseException) -> None:
 
     Returns, having done nothing, for any other failure and in an ``oss`` build.
     Otherwise it exits: 0 once a sign-in landed (start again to load the rules),
-    as before on any failure (``kiro_crew.enterprise_signin_gateway``).
+    as before on any failure (``kiro_crew.lts_signin_gateway``).
     """
-    from kiro_crew import enterprise_signin_gateway as signin
+    from kiro_crew import lts_signin_gateway as signin
 
     # A test or scripted start (`--test-mode`, `--json-ready`) waits for a ready
     # line, not a browser sign-in, so it gets the refusal exit as before.
@@ -171,7 +174,9 @@ def _serve_sign_in_first(args: argparse.Namespace, exc: BaseException) -> None:
     # One gateway per data home, the sign-in screen included: the same lock the
     # gateway takes, held until this process exits.
     try:
-        lock = GatewayLock(config_dir(), port=port or None, bind_address=signin.BIND_HOST).acquire()
+        lock = GatewayLock(
+            config_dir(), port=port or None, bind_address=signin.BIND_HOST, signed_out=True
+        ).acquire()
     except GatewayLockError as lock_err:
         print(f"👻 {lock_err}", file=sys.stderr)
         sys.exit(LIVE_HOLDER_EXIT_CODE if lock_err.live_holder else 1)
@@ -301,13 +306,33 @@ def _builtin_mcp_server_available(name: str) -> bool:
     return finder.find_spec("mcp_server", list(pkg_spec.submodule_search_locations)) is not None
 
 
+def _exit_on_pending_save(entry: Callable[[], None]) -> Callable[[], None]:
+    """Turn a save refused for a pending outside change into one line and exit 1.
+
+    Any subcommand can save a protected file; the refusal is expected, so it gets
+    its own sentence instead of a traceback. ``functools.wraps`` keeps
+    ``inspect.getsource(main)`` reading ``main``'s own body.
+    """
+
+    @functools.wraps(entry)
+    def run() -> None:
+        try:
+            entry()
+        except PendingEditBlocksSave as exc:
+            print(f"❌ {exc}", file=sys.stderr)
+            raise SystemExit(1) from None
+
+    return run
+
+
+@_exit_on_pending_save
 def main() -> None:
     """Entry point — parse args and dispatch to the appropriate subcommand."""
     # On Windows, force stdout/stderr to UTF-8 BEFORE anything prints — KiroCrew's
     # non-ASCII output otherwise raises UnicodeEncodeError under the cp1252
-    # default when stdout is a pipe (detached gateway, KiroCrewHub client). No-op
-    # on POSIX. Must be the first statement: the KIROCREW_PORT error below prints
-    # non-ASCII glyphs.
+    # default when stdout is a pipe (detached gateway, KiroCrewHub client). On
+    # POSIX, an ASCII-only stdout replaces glyphs instead of raising. Must be the
+    # first statement: the KIROCREW_PORT error below prints non-ASCII glyphs.
     platform_compat.ensure_utf8_console()
 
     # Clear any INHERITED sandbox-active marker before any argv-wrapping path
@@ -353,11 +378,6 @@ def main() -> None:
                 file=sys.stderr,
             )
             sys.exit(1)
-
-    if not os.environ.get("KIROCREW_PROJECT_DIR"):
-        detected = _detect_project_dir()
-        if detected:
-            os.environ["KIROCREW_PROJECT_DIR"] = detected
 
     parser = argparse.ArgumentParser(
         prog="kirocrew",
@@ -419,6 +439,7 @@ def main() -> None:
     cli_parser_agent.register_chat_parser(sub, _jail_opts)
     cli_parser_gateway.register_doctor_parser(sub)
     cli_parser_gateway.register_ledger_sweep_parser(sub)
+    cli_parser_gateway.register_tmp_parser(sub)
 
     # gateway
     gw_parser = cli_help.add_command(sub, "gateway")
@@ -499,11 +520,14 @@ def main() -> None:
         choices=["reads", "yolo", "interactive"],
         help=(
             "Default approval mode for tool invocations. 'reads' auto-approves "
-            "read-only tools (read/list/get/search/* prefixes); 'yolo' "
-            "auto-approves all tools (refused unless KIROCREW_HOME is "
+            "read-only tools (read/list/get/search/* prefixes) on background "
+            "turns (cron jobs, the task runner, subagents); a channel turn "
+            "under 'reads' asks about every tool, as under 'interactive'. "
+            "'yolo' auto-approves all tools (refused unless KIROCREW_HOME is "
             "explicitly set to a non-default location); 'interactive' uses "
-            "the standard Slack/dashboard prompt flow. When omitted, current "
-            "interactive behavior is preserved."
+            "the standard Slack/dashboard prompt flow. When omitted, config "
+            "agent.approval_mode (default: auto) decides; 'auto' approves "
+            "every channel tool call the tool gate allows, without asking."
         ),
     )
     gw_parser.add_argument(
@@ -528,6 +552,9 @@ def main() -> None:
     cli_parser_admin.register_security_parser(sub)
     cli_parser_admin.register_eval_parser(sub, _jail_opts)
     cli_parser_admin.register_tailnet_parser(sub)
+    from kiro_crew.remote_control.cli import register_parser as _register_remote_control
+
+    _register_remote_control(sub)
     cli_parser_admin.register_telemetry_parser(sub)
     cli_parser_admin.register_policy_parser(sub)
 
@@ -620,6 +647,22 @@ def main() -> None:
     cli_help.hide_internal_commands(sub)
 
     args = parser.parse_args()
+
+    # Before anything can write into the data home, project detection included
+    # (its saved-path lookup creates the home): a root run aimed at a person's
+    # own home would leave files that person cannot read.
+    from kiro_crew.config import paths as _config_paths
+    from kiro_crew.data_home_owner import root_run_refusal
+
+    _refusal = root_run_refusal(_config_paths.peek_data_home(), args.command, sys.argv[1:])
+    if _refusal:
+        print(_refusal, file=sys.stderr)
+        sys.exit(1)
+
+    if not os.environ.get("KIROCREW_PROJECT_DIR"):
+        detected = _detect_project_dir()
+        if detected:
+            os.environ["KIROCREW_PROJECT_DIR"] = detected
 
     # Cap glibc malloc arenas before the gateway starts any thread pool: an
     # uncapped glibc gives a busy thread its own 64 MiB arena heaps, and on a
@@ -716,6 +759,11 @@ def main() -> None:
         parser.print_help()
         return
 
+    if args.command == "gateway":  # before companion code can repoint SSH_AUTH_SOCK
+        from kiro_crew.mcp_gateway.agent_socket import record_boot_agent_socket
+
+        record_boot_agent_socket()
+
     # ── Platform context boot (CPP seam) ──
     # Resolve + install the PlatformContext ONCE, before any subcommand spins up
     # services. Standalone (no companion, no KIROCREW_PROFILE) composes the
@@ -741,17 +789,17 @@ def main() -> None:
         if isinstance(exc, PlatformCompositionError):
             sign_in = _is_sign_in_command(args)
             if args.command == "gateway":
-                # Enterprise build, nobody signed in: the sign-in screen runs and
+                # LTS build, nobody signed in: the sign-in screen runs and
                 # this exits (0 once signed in). Returns for any other failure.
                 _serve_sign_in_first(args, exc)
             if args.command != "doctor" and not sign_in:
-                # Enterprise build: governance rules that did not load stop Crew
+                # LTS build: governance rules that did not load stop Crew
                 # here, before any server binds, with what failed and the fix.
-                from kiro_crew.enterprise_boot import refuse_policy_boot
+                from kiro_crew.lts_boot import refuse_policy_boot
 
                 refuse_policy_boot(exc)
             if args.command == "doctor" or sign_in:
-                # The sign-in verbs are what an enterprise build's policy fetch needs
+                # The sign-in verbs are what an LTS build's policy fetch needs
                 # first, so a missing sign-in must not lock them out. They touch only
                 # the Kiro sign-in in Crew's vault and run no agent.
                 logging.getLogger("kiro_crew").debug(
@@ -833,6 +881,13 @@ def main() -> None:
         # keys off to decide whether to arm itself (see start_dashboard). Cheap
         # and gateway-only — other CLI subcommands are short-lived and skip it.
         faulthandler.enable()
+        # Count crew-log records this process decodes per read (report mode by
+        # default; see crew_log/read_budget.py). Gateway-only for the same reason as
+        # faulthandler: a child or another subcommand never marks itself, so its
+        # reads are not counted. A stdlib-only module and one flag.
+        from kiro_crew.crew_log.read_budget import mark_gateway_process
+
+        mark_gateway_process()
         # An in-app restart reaches this image through os.execv, and execve
         # preserves ITIMER_REAL while resetting a caught SIGALRM to its default
         # disposition: the predecessor cancels its stall alarm before it execs,
@@ -907,6 +962,10 @@ def main() -> None:
             purge=args.purge,
             older_than_days=args.older_than_days,
             purge_unreadable=args.purge_unreadable,
+        )
+    elif args.command == "tmp":
+        importlib.import_module("kiro_crew.temp_reclaim").run_command(
+            args.paths, dry_run=args.dry_run
         )
     elif args.command == "manifest":
         _manifest(
@@ -1009,6 +1068,10 @@ def main() -> None:
         from kiro_crew.cli_commands import _tailnet
 
         _tailnet(args)
+    elif args.command == "remote-control":
+        from kiro_crew.remote_control.cli import run as _remote_control
+
+        _remote_control(args)
     elif args.command == "telemetry":
         from kiro_crew.cli_commands import _telemetry
 
@@ -1040,6 +1103,13 @@ def main() -> None:
             from kiro_crew.cli_server import _update
 
             _update(force=args.force)
+            # A manual update that finished is the fix for a failed boot apply.
+            from kiro_crew import update_next_start
+
+            try:
+                update_next_start.clear_error()
+            except OSError:
+                pass  # the notice stays; the update itself succeeded
     elif args.command == "stop":
         from kiro_crew.cli_server import _stop
 
@@ -1059,7 +1129,7 @@ def main() -> None:
     elif args.command == "gateway-pid":
         from kiro_crew.cli_server import _gateway_pid
 
-        _gateway_pid()
+        _gateway_pid(args.port)
     elif args.command == "service":
         from kiro_crew.cli_server import _service_cmd
 
@@ -1209,6 +1279,10 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
     )
     from kiro_crew.cli_knowledge import _knowledge_stats  # noqa: F401
     from kiro_crew.cli_logging import (  # noqa: F401
+        _CONSOLE_DRAIN_TIMEOUT,
+        _CONSOLE_OFF_LOOP_COMMANDS,
+        _CONSOLE_QUEUE_LISTENER,
+        _CONSOLE_QUEUE_MAX,
         _GATEWAY_LOG_DETACHED,
         _GATEWAY_LOG_HANDLER,
         _GATEWAY_LOG_MAX_BYTES,
@@ -1216,13 +1290,19 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _LOG_FATAL_ERRNOS,
         _LOG_QUEUE_LISTENER,
         _LONG_LIVED_COMMANDS,
+        _chat_console_filter,
         _CliLogQueueHandler,
+        _ConsoleQueueHandler,
+        _ConsoleQueueListener,
         _fd_is_regular_file,
         _fd_targets_file,
         _FdTrackingRotatingFileHandler,
+        _move_console_echo_off_loop,
         _prune_older_boot_logs,
         _redirect_fds_to,
         _rotate_boot_logs,
+        _stop_console_queue_listener,
+        _stop_file_log_listener,
         _stop_log_queue_listener,
         drain_log_queue_before_hard_exit,
     )

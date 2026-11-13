@@ -44,7 +44,7 @@ Paths below are relative to `src/kiro_crew/`.
 | Base agent config | `config/defaults.json` | `tools`, `allowedTools`, `resources`, `hooks`, model. Packaged as package data, so editing it needs no code change. |
 | Managed MCP server specs | `agent.py` | `_MANAGED_MCP_SERVERS`: which servers are auto-registered and refreshed while preserving user customizations. |
 | AgentCore policy-field validators | `platform/agentcore_schema.py` | `AGENTCORE_GATEWAY_URL_MAX`, `WORKLOAD_NAME_MIN` / `WORKLOAD_NAME_MAX`, `normalize_agentcore_gateway_url`, `normalize_agentcore_workload_name`. AWS-free so governance can parse a policy without the optional extra. |
-| Kiro relay protocol v1 | `relay_client/protocol.py` | Every frame size, timeout, close code and error code of the relay's host leg (`PING_INTERVAL_SECONDS`, `SILENCE_REPLACE_SECONDS`, `BACKOFF_STEPS_SECONDS`, `MAX_TEXT_FRAME_BYTES`, `CLOSE_*`, `ERR_*`). `test/test_relay_client_protocol.py` pins them to the copied contract fixtures. The relay's own names have no built-in default: they come from the lease answer, or from `tunnel.relay_host_url` and `tunnel.relay_crew_domain` (`relay_client/provider.py`). |
+| Kiro relay protocol v1 | `relay_client/protocol.py` | Every frame size, timeout, close code and error code of the relay's host leg (`PING_INTERVAL_SECONDS`, `SILENCE_REPLACE_SECONDS`, `BACKOFF_STEPS_SECONDS`, `MAX_TEXT_FRAME_BYTES`, `CLOSE_*`, `ERR_*`). `test/test_relay_client_protocol.py` pins them to the copied contract fixtures. The relay's own names have no built-in default: they come from the lease answer, or from the `RelaySettings` an edition builds with its own host token source (`relay_client/provider.py`). |
 | Built-in skills | `builtin_skills/<name>/SKILL.md` | Frontmatter (`always`, `triggers`, `dir`) is the skill's own contract. This is the only tree copied into a user's `~/.kiro/crew/skills/`, so a skill any shipped feature, tool or doc references MUST live here. The top-level `skills/` tree is repo-checkout-only and reaches no installed user. |
 
 Other style rules:
@@ -155,6 +155,40 @@ The formatter, linter and type-checker are pinned to exact versions in both
 `setup.cfg`'s `dev` extra and `pyproject.toml`'s `dependency-groups`, because
 black and mypy change their output across minor releases and a floating range
 makes a local venv disagree with CI. Bump them in lockstep.
+
+## A capped read goes through `bounded_read`
+
+A reader that must refuse a file over a cap reads one byte past the cap and checks the
+length. Never spell that `handle.read(cap + 1)` or `os.read(fd, cap + 1)`: CPython
+allocates the requested size before the first byte arrives, so a 4 KB file under a
+50 MB cap costs a 50 MB allocation. That is 14 ms per read on a Windows host and
+0.03 ms on Linux, which is why it survives review on Linux.
+
+```python
+from kiro_crew.bounded_read import bounded_read, bounded_read_fd
+
+data = bounded_read(handle, cap + 1)      # a file object, binary or text
+data = bounded_read_fd(fd, cap + 1)       # a raw descriptor
+if len(data) > cap:
+    ...  # the caller's refusal, unchanged
+```
+
+Both return what the single read returned, for a file at the cap, one byte over it,
+far over it and one that grows while it is read. The first request is sized by what
+the open file holds and later ones by `READ_CHUNK_BYTES` (64 KB), so growth is read
+to the limit without ever asking for the limit. A negative limit raises `ValueError`.
+
+`test/test_bounded_read_ratchet.py` fails on a new `read(<anything> + 1)` under
+`src/kiro_crew`. It leaves three things alone: an awaited read (an async stream
+allocates nothing up front), the built-in apps (they are leaving the package), and
+two recorded tables with exact counts. One is the files that run where the package
+cannot be imported. The other is reads of an HTTP response body, where the standard
+library clips the request to the declared length; keep `resp.read(cap + 1)` there.
+
+In a module that a facade serves ([Splitting a file](#splitting-a-file)), import the
+helper inside the function that uses it, or bind it on the facade as `hooks.py` does
+for its read owners: a new module-level name in an owner changes what the facade
+serves.
 
 ## No file over 2,000 lines
 

@@ -11,8 +11,8 @@ const {
 const SWITCHING_STATUS = "Switching to your remote crew…";
 const PROMPT_TITLE = "Connect to a crew on another machine";
 const PROMPT_SAVE_LABEL = "Connect";
-const STOP_FAILED_MESSAGE = "The gateway on this computer did not stop, so Sao Khuê kept using it. "
-  + "Try again, or quit Sao Khuê and reopen it.";
+const STOP_FAILED_MESSAGE = "The gateway on this computer did not stop, so Kiro Crew kept using it. "
+  + "Try again, or quit Kiro Crew and reopen it.";
 
 /**
  * First-run setup's way out for a user who will only use crews on other
@@ -57,6 +57,7 @@ function createRemoteSwitch({
   waitForPortFree,
   startGateway,
   showLoadingThenConnect,
+  applySavedTunnelChoice = () => {},
 }) {
   // One switch at a time: a second request while the form is open, or while
   // the gateway is stopping, answers "unavailable" instead of opening another.
@@ -138,7 +139,7 @@ function createRemoteSwitch({
     try {
       await dialog.showMessageBox(window, {
         type: "error",
-        title: "Sao Khuê — could not switch",
+        title: "Kiro Crew — could not switch",
         message,
       });
     } catch (error) {
@@ -189,6 +190,8 @@ function createRemoteSwitch({
         setLocalGatewayEnabled(store, false);
         setRunLocalGateway(false);
         setGatewayOwnership("none");
+        // The user just stated the tunnel choice; it stands for this launch.
+        applySavedTunnelChoice();
         log(`remote switch: crew ${fields.host} saved for :${port}; local gateway turned off`);
       } catch (error) {
         log(`remote switch: saving the crew failed after the stop: ${error && error.message}`);
@@ -206,7 +209,7 @@ function createRemoteSwitch({
         }
         setRunLocalGateway(true);
         await showSwitchFailure(window, "Could not save the remote crew settings. "
-          + "Sao Khuê will try to reconnect to the gateway on this computer. "
+          + "Kiro Crew will try to reconnect to the gateway on this computer. "
           + "Check that your settings folder is writable and has free space, then try again.");
       }
     }
@@ -224,7 +227,7 @@ function createRemoteSwitch({
     } catch (error) {
       log(`remote switch: reconnecting failed: ${error && error.message}`);
       if (window.isDestroyed() || quitting()) return;
-      await showSwitchFailure(window, "Sao Khuê could not reconnect. Quit Sao Khuê and reopen it.");
+      await showSwitchFailure(window, "Kiro Crew could not reconnect. Quit Kiro Crew and reopen it.");
     }
   }
 

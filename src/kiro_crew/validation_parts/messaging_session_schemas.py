@@ -186,6 +186,7 @@ SEND_NOTIFICATION_SCHEMA = ToolSchema(
         # is the cheap first gate (must start with '/', not '//').
         FieldSpec("url", str, max_len=500, pattern=re.compile(r"^/(?!/)\S*$")),
         FieldSpec("group_key", str, max_len=MAX_SHORT_STRING),
+        FieldSpec("key", str, max_len=MAX_SHORT_STRING),
         # Inline actions (Phase 4 contract). Item cap mirrors the bus's
         # _MAX_ACTIONS (4); per-item shape ({id,label,url?}, length caps,
         # internal-path url) is validated by NotificationPayload at the
@@ -193,6 +194,11 @@ SEND_NOTIFICATION_SCHEMA = ToolSchema(
         # malformed MCP call is rejected before the HTTP hop.
         FieldSpec("actions", list, item_type=dict, max_items=4),
     ],
+)
+
+DISMISS_NOTIFICATION_SCHEMA = ToolSchema(
+    tool_name="dismiss_notification",
+    fields=[FieldSpec("key", str, required=True, max_len=MAX_SHORT_STRING)],
 )
 
 READ_SLACK_PROFILE_SCHEMA = ToolSchema(
@@ -356,7 +362,7 @@ SESSION_CREATE_SCHEMA = ToolSchema(
         FieldSpec("agent", str, required=False, default="", max_len=MAX_SHORT_STRING),
         # The selection namespace for ``agent``, one value: ``template``. It
         # exists for a template that a same-named crew member shadows (the stock
-        # ``saokhue-worker`` on installs where an older sync enrolled it as a
+        # ``kirocrew-worker`` on installs where an older sync enrolled it as a
         # member): ``template`` dispatches the template on the caller's own
         # memory instead of selecting the member, which a bare name already does.
         # Omitted keeps name-first resolution; an empty string is not a namespace
@@ -387,6 +393,10 @@ SESSION_CREATE_SCHEMA = ToolSchema(
         # crewmate's", which an empty string would also read as, so the
         # schema leaves absence to the handler rather than spelling it.
         FieldSpec("reasoning_effort", str, required=False, max_len=32),
+        # The harness (ACP backend) the new session runs on, spelled the way
+        # ``spawn_run.backend`` spells it (``kiro``, ``claude``, ``codex``, ...).
+        # The route refuses one that cannot start here; this only bounds it.
+        FieldSpec("backend", str, required=False, max_len=MAX_SHORT_STRING),
         # The new session's own compaction threshold, the override the context
         # meter's "Auto-compact at" slider sets. This range check is the early
         # refusal; create_session repeats it with the NaN guard, because the HTTP
@@ -530,6 +540,14 @@ SESSION_SET_COLOR_SCHEMA = ToolSchema(
     ],
 )
 
+SESSION_SET_NOTE_SCHEMA = ToolSchema(
+    tool_name="session_set_note",
+    fields=[
+        FieldSpec("target", str, required=True, max_len=MAX_SHORT_STRING),
+        FieldSpec("note", str, required=True, max_len=MAX_LONG_STRING),
+    ],
+)
+
 SESSION_CLOSE_SCHEMA = ToolSchema(
     tool_name="session_close",
     fields=[
@@ -607,6 +625,7 @@ WORK_DISPATCH_SCHEMA = ToolSchema(
             pattern=_MODEL_NAME_RE,
         ),
         FieldSpec("reasoning_effort", str, required=False, max_len=32),
+        FieldSpec("backend", str, required=False, max_len=MAX_SHORT_STRING),
     ],
 )
 

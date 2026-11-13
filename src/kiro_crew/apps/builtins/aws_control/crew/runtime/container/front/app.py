@@ -266,7 +266,7 @@ def _forward_body(payload: dict[str, Any], crew: str) -> tuple[dict[str, Any], s
     namespace (``common.crew_agent_id``) -- not the bare crew name, because that is
     the id the supervisor installs the crew's spec under. The bare name resolves to
     whatever else declares it, which for the crew this deployment ships is Kiro Crew's
-    own ``saokhue-worker`` mirror. The customer's address is unchanged: they name the
+    own ``kirocrew-worker`` mirror. The customer's address is unchanged: they name the
     crew, the namespace never leaves this process, and the responses carry the crew's
     own name back (``backend._with_customer_model``, ``stream.project_frame``).
     """

@@ -6,6 +6,7 @@ import base64
 import contextlib
 import dataclasses
 import inspect
+import json
 import os
 from types import SimpleNamespace
 
@@ -15,6 +16,7 @@ from kiro_crew.acp.types import EVENT_COMPLETE, EVENT_TEXT_CHUNK, AcpEvent
 from kiro_crew.feishu.client import LarkInbound
 from kiro_crew.feishu.transport_dispatch import FeishuDispatcher
 from kiro_crew.messaging.attachments import Attachment
+from kiro_crew.messaging.commands import COMPACT_ACCOUNT_CHANGED_REPLY_ZH
 from kiro_crew.messaging.inbound_spool import InboundRoute
 from kiro_crew.messaging.link import (
     CHAT_TYPE_DIRECT,
@@ -132,6 +134,13 @@ class FakeSessions:
         self.acquired.append(key)
         return self._acquire
 
+    #: True models a session the Kiro account check flagged: ``try_acquire``
+    #: refuses it while it stays registered.
+    retiring = False
+
+    def is_retiring(self, key) -> bool:
+        return self.retiring
+
     def has_session(self, key) -> bool:
         return self._has_session
 
@@ -229,7 +238,7 @@ class FakeConvLog:
         self.agents: list[str | None] = []
         self.titles: dict[str, str] = {}
 
-    def append(self, key, role, text, *, agent=None, mid=None) -> None:
+    def append(self, key, role, text, *, agent=None, mid=None, ingested_images=()) -> None:
         self.appended.append((key, role, text))
         self.agents.append(agent)
 
@@ -959,6 +968,22 @@ class TestCommands:
         assert client.replies == [("msg1", "⏳ 正在处理上一条消息，请稍后再试 /compact。")]
 
     @pytest.mark.asyncio
+    async def test_compact_on_a_flagged_session_says_the_account_changed(self) -> None:
+        # The Kiro account check flagged the session without retiring it: try_acquire
+        # refuses it while has_session still answers True, and no reply is running.
+        provider = FakeProvider([])
+        sessions = FakeSessions(provider, acquire=False, has_session=True)
+        sessions.retiring = True
+        client = FakeClient()
+        d = _dispatcher(sessions, FakeCtx(), client)
+
+        await d.handle_message(_inbound("/compact"))
+
+        assert provider.compacted is False
+        assert sessions.released == []
+        assert client.replies == [("msg1", COMPACT_ACCOUNT_CHANGED_REPLY_ZH)]
+
+    @pytest.mark.asyncio
     async def test_compact_without_active_session(self) -> None:
         sessions = FakeSessions(None, acquire=False, has_session=False)
         client = FakeClient()
@@ -1341,6 +1366,35 @@ class TestInboundFiles:
         assert "is saved in the folder" in user_text
         assert not os.path.exists(saved)  # removed when the turn ended
         assert any(content == "a cat" for _, content in client.replies)
+
+    @pytest.mark.asyncio
+    async def test_a_picture_still_shows_after_the_turn(self, tmp_path) -> None:
+        """The row names a copy kept with the session, not the temp file the turn deletes.
+
+        A path the user typed is theirs: it stays as written and is not copied.
+        """
+        from kiro_crew.chat_attachments import attachments_dir
+        from kiro_crew.history import ConversationLog
+
+        typed = tmp_path / "mine.png"
+        typed.write_bytes(b"\x89PNG\r\n\x1a\n")
+        provider = FakeProvider(
+            [AcpEvent(kind=EVENT_TEXT_CHUNK, text="a cat"), AcpEvent(kind=EVENT_COMPLETE)]
+        )
+        log = ConversationLog(base_dir=tmp_path / "sessions")
+        d = _dispatcher(FakeSessions(provider), FakeCtx(), FakeClient(), conv_log=log)
+        inbound = dataclasses.replace(_image_inbound(), text=f"![mine]({typed})")
+
+        await d.handle_message(inbound)
+
+        path = log._path(d._session_key(d._route(inbound)))
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        user_text = next(row["content"] for row in rows if row.get("role") == "user")
+        store = attachments_dir(path.parent, path.stem)
+        assert store.is_dir(), user_text
+        (stored,) = store.iterdir()
+        stored_dest = str(stored).replace(os.sep, "/")
+        assert user_text.splitlines() == [f"![mine]({typed})", f"![image]({stored_dest})"]
 
     @pytest.mark.asyncio
     async def test_a_governance_deny_fetches_nothing(self, monkeypatch) -> None:

@@ -193,7 +193,7 @@ async def _compute_label_recommendations(
     """One-shot, tool-less, ephemeral-session model call proposing NEW labels.
 
     Runs through the same :func:`_run_oneshot_model` as :func:`_compute_issue_ai`
-    (``saokhue-lite``, ``REJECT_ALL``, release + destroy), so the start priority
+    (``kirocrew-lite``, ``REJECT_ALL``, release + destroy), so the start priority
     read from who asked lives in one place. Output is validated: names that
     already exist are dropped (so every proposal is genuinely new), ``category``
     is constrained to the known set,

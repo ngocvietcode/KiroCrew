@@ -98,7 +98,7 @@ function createWindowPrompts({
     </style></head><body>
       <label>Gateway port</label>
       <input id="p" type="number" value="7778" min="1" max="65535" autofocus>
-      <div class="hint">Connect to a Sao Khuê gateway running on another port</div>
+      <div class="hint">Connect to a Kiro Crew gateway running on another port</div>
       <div class="row"><button class="ok" onclick="go()">Connect</button>
       <button class="cancel" onclick="window.close()">Cancel</button></div>
       <script>
@@ -107,7 +107,8 @@ function createWindowPrompts({
           window.close();
         }
         document.addEventListener('keydown', event => {
-          if (event.key === 'Enter') go();
+          // Enter on a focused button is that button's own press: Cancel must not connect.
+          if (event.key === 'Enter' && !(event.target instanceof HTMLButtonElement)) go();
           if (event.key === 'Escape') window.close();
         });
       </script>
@@ -179,7 +180,8 @@ function createWindowPrompts({
             window.close();
           }
           document.addEventListener('keydown', event => {
-            if (event.key === 'Enter') go();
+            // Enter on a focused button is that button's own press: Cancel must not rename.
+            if (event.key === 'Enter' && !(event.target instanceof HTMLButtonElement)) go();
             if (event.key === 'Escape') window.close();
           });
         </script>

@@ -484,6 +484,7 @@ class TestTheHandlerReplaysOnlyWhatTheSocketViews:
         expect_ids: set[str] | None = None,
         app: str = "",
         manager=None,
+        restore_pending: bool = False,
     ):
         replayed: list[list[str]] = []
         active = {"now": 0, "peak": 0}
@@ -529,7 +530,14 @@ class TestTheHandlerReplaysOnlyWhatTheSocketViews:
         state._folders = []
         state.folders_generation.return_value = 1
         state.tags_generation.return_value = 1
-        state._slots = {name: MagicMock() for name in slots}
+        restored = {name: MagicMock() for name in slots}
+        # A tab reconnecting into the boot window: the restore has rebuilt no slot
+        # yet, and finishes once the socket's frames are in.
+        state._slots = {} if restore_pending else restored
+        if restore_pending:
+            state.ready = False
+            state.slot_list_rebuilding = True
+            state.startup_tabs_rebuilt = asyncio.Event()
         state.native_subagent_snapshots.return_value = []
         state.subagents = manager
         state._ws_client_allowed.return_value = True
@@ -577,6 +585,12 @@ class TestTheHandlerReplaysOnlyWhatTheSocketViews:
             async def __anext__(self):
                 if self._queue:
                     return Msg(self._queue.pop(0))
+                if restore_pending and not state._slots:
+                    # The subscribe's replay task runs first, so the restore
+                    # ends while it is waiting.
+                    await asyncio.sleep(0)
+                    state._slots.update(restored)
+                    state.startup_tabs_rebuilt.set()
                 # The socket stays open until the replays the frames asked for
                 # have run, as a real client's would.
                 wake["event"] = asyncio.Event()
@@ -586,7 +600,7 @@ class TestTheHandlerReplaysOnlyWhatTheSocketViews:
                 raise StopAsyncIteration
 
         fake = FakeWS()
-        monkeypatch.setattr(dashboard_ws.web, "WebSocketResponse", lambda **kwargs: fake)
+        monkeypatch.setattr(dashboard_ws, "LagTolerantWebSocketResponse", lambda **kwargs: fake)
 
         class Request(dict):
             def __init__(self) -> None:
@@ -616,6 +630,16 @@ class TestTheHandlerReplaysOnlyWhatTheSocketViews:
         assert _drawn(fake.sent) == {
             f"{u}-child-{n}" for u in ("acp-1-0", "acp-2-3", "acp-5-1") for n in range(2)
         }
+
+    def test_a_subscribe_before_the_boot_restore_replays_the_slots_it_rebuilds(
+        self, monkeypatch, folds
+    ):
+        slots = _home(3, 1, {(1, 0)})
+        frames = [{"type": "subscribe_subagents", "slots": [slots[1]]}]
+        _replayed, _peak, fake = self._drive(
+            monkeypatch, frames, slots, expect_units={"acp-1-0"}, restore_pending=True
+        )
+        assert _drawn(fake.sent) == {f"acp-1-0-child-{n}" for n in range(2)}
 
     def test_a_subscribe_naming_no_slots_folds_nothing_until_a_focus(self, monkeypatch, folds):
         slots = _home(6, 3, {(0, 0), (3, 1)})
@@ -699,6 +723,26 @@ class TestTheHandlerReplaysOnlyWhatTheSocketViews:
             manager=manager,
         )
         assert _drawn(fake.sent) == {"acp-1-0-child-1"}
+
+    def test_a_nested_run_replays_into_its_root_chats_slot(self, monkeypatch):
+        """A managed run whose parent is a sub-agent replays, running or done,
+        into the tab of the chat its tree started from, as its live frames do."""
+        from kiro_crew.subagent import SubagentInfo
+
+        running = SubagentInfo(id="b", task="t", parent_session_key="subagent:a")
+        finished = SubagentInfo(id="c", task="t", parent_session_key="subagent:b")
+        running.root_session_key = finished.root_session_key = "dashboard:chat-0"
+        finished.done = True
+        manager = SimpleNamespace(running=[running], all_agents=[running, finished])
+        frames = [{"type": "subscribe_subagents", "slots": ["chat-0"]}]
+        _replayed, _peak, fake = self._drive(
+            monkeypatch, frames, ["chat-0"], expect_units=set(), expect_ids={"c"}, manager=manager
+        )
+        cards = [f for f in fake.sent if f["type"] in ("subagent_snapshot", "subagent_done")]
+        assert [(f["type"], f["data"]["id"], f["data"]["slot"]) for f in cards] == [
+            ("subagent_snapshot", "b", "chat-0"),
+            ("subagent_done", "c", "chat-0"),
+        ]
 
     def test_with_the_crew_log_off_the_folder_replay_still_runs_once(self, monkeypatch, folds):
         """The opt-out keeps its folder reader; the per-slot admit must not refuse it."""

@@ -10,7 +10,10 @@
 #      KIROCREW_ALLOW_EDITION=1) after typechecking it against the core sources,
 #   3. runs packaging/build-desktop.sh with SKIP_FRONTEND=1 for everything else,
 #   4. moves a repo-root .venv aside for the build and puts it back afterwards
-#      (find-bin.js otherwise resolves the dev venv instead of the bundled launcher).
+#      (find-bin.js otherwise resolves the dev venv instead of the bundled launcher),
+#   5. puts this edition's icons and product name into the shell for the length
+#      of the build (editions/saokhue/desktop/brand.mjs) and takes them out again
+#      on exit, so the sources stay as upstream ships them.
 #
 # Usage (every build-desktop.sh variable passes through):
 #   bash packaging/build-saokhue.sh
@@ -49,7 +52,19 @@ restore_venv() {
     log "Restored .venv"
   fi
 }
-trap restore_venv EXIT
+restore_brand() {
+  node "$EDITION/desktop/brand.mjs" restore
+}
+on_exit() {
+  restore_brand
+  restore_venv
+}
+trap on_exit EXIT
+
+# A run that was killed leaves its branding in the tree; take it out first.
+restore_brand
+log "Applying the Sao Khuê icons and product name (restored on exit)"
+node "$EDITION/desktop/brand.mjs" apply
 
 if [ -d "$ROOT/.venv" ]; then
   VENV_ASIDE="$ROOT/.venv.saokhue-build-aside"

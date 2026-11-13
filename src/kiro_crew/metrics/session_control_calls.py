@@ -143,7 +143,7 @@ _OWNED_STEM_PREFIX: Final[str] = "kirocrew-"
 def _kind_from_stem(stem: str) -> str:
     """The ``caller`` value for one owned agent file stem.
 
-    ``saokhue-pipeline-conductor`` -> ``pipeline_conductor``. Derived, not
+    ``kirocrew-pipeline-conductor`` -> ``pipeline_conductor``. Derived, not
     tabulated: a hand-written row per file is a table that drifts silently the
     first time a file is added without it, and the derivation is total -- every
     owned stem has exactly one answer.

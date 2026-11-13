@@ -34,7 +34,7 @@ function setup(openView: (kind: ViewKind) => void = () => {}) {
 }
 
 describe('useCrewModeSwitch pending switches', () => {
-  beforeEach(() => setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor']))
+  beforeEach(() => setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor']))
   afterEach(() => setCrewModeCatalog(undefined, undefined))
 
   it("keeps chat A held when chat B turns Crew Mode on while A's switch is in flight", async () => {
@@ -58,12 +58,12 @@ describe('useCrewModeSwitch pending switches', () => {
 
   it("keeps chat A's turning-off hold when chat B turns off too", async () => {
     const { hook, pending } = setup()
-    hook.rerender({ slot: plain('a', 'saokhue-conductor') })
+    hook.rerender({ slot: plain('a', 'kirocrew-conductor') })
     act(() => { hook.result.current.turnOffCrewMode?.() })
     expect(hook.result.current.crewModeSwitching).toBe('off')
-    hook.rerender({ slot: plain('b', 'saokhue-conductor') })
+    hook.rerender({ slot: plain('b', 'kirocrew-conductor') })
     act(() => { hook.result.current.turnOffCrewMode?.() })
-    hook.rerender({ slot: plain('a', 'saokhue-conductor') })
+    hook.rerender({ slot: plain('a', 'kirocrew-conductor') })
     expect(hook.result.current.crewModeSwitching).toBe('off')
     await act(async () => { pending[1].resolve() })
     expect(hook.result.current.crewModeSwitching).toBe('off')
@@ -73,7 +73,7 @@ describe('useCrewModeSwitch pending switches', () => {
 })
 
 describe('useCrewModeSwitch turning Ultra Mode off', () => {
-  beforeEach(() => { setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor']); vi.mocked(dropPanelViews).mockClear() })
+  beforeEach(() => { setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor']); vi.mocked(dropPanelViews).mockClear() })
   afterEach(() => setCrewModeCatalog(undefined, undefined))
 
   // Ultra Mode turned on in a closed panel, so turning it off again closes the panel.
@@ -81,7 +81,7 @@ describe('useCrewModeSwitch turning Ultra Mode off', () => {
     const s = setup(vi.fn<(kind: ViewKind) => void>())
     act(() => { s.hook.result.current.turnOnCrewMode() })
     await act(async () => { s.pending[0].resolve() })
-    s.hook.rerender({ slot: plain('a', 'saokhue-conductor') })
+    s.hook.rerender({ slot: plain('a', 'kirocrew-conductor') })
     expect(s.store.getState().chat.activityOpen).toBe(true)
     return s
   }
@@ -133,7 +133,7 @@ describe('useCrewModeSwitch turning Ultra Mode off', () => {
     act(() => { hook.result.current.turnOnCrewMode() })
     await act(async () => { pending[1].resolve(true) })
     await act(async () => { pending[2].resolve(true) })
-    hook.rerender({ slot: plain('b', 'saokhue-conductor') })
+    hook.rerender({ slot: plain('b', 'kirocrew-conductor') })
     act(() => { hook.result.current.turnOffCrewMode?.() })
     await act(async () => { pending[3].resolve(true) })
     expect(store.getState().chat.activityOpen).toBe(false)
@@ -141,7 +141,7 @@ describe('useCrewModeSwitch turning Ultra Mode off', () => {
 })
 
 describe('useCrewModeSwitch turning Ultra Mode on fails', () => {
-  beforeEach(() => { setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor']); vi.mocked(dropPanelViews).mockClear(); localStorage.clear(); turnOnCrewModePreview(); __resetPanelTabs() })
+  beforeEach(() => { setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor']); vi.mocked(dropPanelViews).mockClear(); localStorage.clear(); turnOnCrewModePreview(); __resetPanelTabs() })
   afterEach(() => setCrewModeCatalog(undefined, undefined))
 
   it('closes the panel it opened and drops the Crew and Dashboard tabs', async () => {
@@ -184,14 +184,14 @@ describe('useCrewModeSwitch turning Ultra Mode on fails', () => {
 })
 
 describe('useCrewModeSwitch entering an Ultra Mode root', () => {
-  beforeEach(() => setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor']))
+  beforeEach(() => { setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor']); localStorage.clear(); turnOnCrewModePreview() })
   afterEach(() => { setCrewModeCatalog(undefined, undefined); mobile.value = false })
 
   const enter = () => {
     const store = createTestStore()
     const openView = vi.fn()
     const wrapper = ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>
-    renderHook(() => useCrewModeSwitch({ currentSlot: plain('root', 'saokhue-conductor'), defaultAgent: 'default', hasUserMessage: true, switchAgent: vi.fn(), openView }), { wrapper })
+    renderHook(() => useCrewModeSwitch({ currentSlot: plain('root', 'kirocrew-conductor'), defaultAgent: 'default', hasUserMessage: true, switchAgent: vi.fn(), openView }), { wrapper })
     return { store, openView }
   }
 
@@ -207,10 +207,49 @@ describe('useCrewModeSwitch entering an Ultra Mode root', () => {
     expect(store.getState().chat.activityOpen).toBe(false)
     expect(openView).not.toHaveBeenCalled()
   })
+
+  it('keeps a panel the person closed in this chat closed on a return', () => {
+    localStorage.setItem('mc-activity-open:root', 'false')
+    const { store, openView } = enter()
+    expect(store.getState().chat.activityOpen).toBe(false)
+    expect(openView).not.toHaveBeenCalled()
+  })
+
+  it('leaves the tab the person picked in front on a return', () => {
+    localStorage.setItem('mc-activity-open:root', 'true')
+    const { openView } = enter()
+    expect(openView).not.toHaveBeenCalled()
+  })
+})
+
+describe('useCrewModeSwitch a new chat created in Ultra Mode', () => {
+  beforeEach(() => { setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor']); vi.mocked(dropPanelViews).mockClear() })
+  afterEach(() => setCrewModeCatalog(undefined, undefined))
+
+  it('closes the panel its entry opened when it is turned off before the first message', async () => {
+    const { hook, pending, store } = setup()
+    expect(store.getState().chat.activityOpen).toBe(false)
+    // Born on the conductor (`dashboard.new_chat_crew_mode`): entered, never pressed.
+    hook.rerender({ slot: plain('a', 'kirocrew-conductor') })
+    expect(store.getState().chat.activityOpen).toBe(true)
+    act(() => { hook.result.current.turnOffCrewMode?.() })
+    await act(async () => { pending[0].resolve(true) })
+    expect(dropPanelViews).toHaveBeenCalledWith('a', ['workers', 'command-center'])
+    expect(store.getState().chat.activityOpen).toBe(false)
+  })
+
+  it('keeps a panel that was already open when it is turned off', async () => {
+    const { hook, pending, store } = setup()
+    act(() => { store.dispatch(openActivityPanel()) })
+    hook.rerender({ slot: plain('a', 'kirocrew-conductor') })
+    act(() => { hook.result.current.turnOffCrewMode?.() })
+    await act(async () => { pending[0].resolve(true) })
+    expect(store.getState().chat.activityOpen).toBe(true)
+  })
 })
 
 describe('useCrewModeSwitch turning Ultra Mode on', () => {
-  beforeEach(() => setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor']))
+  beforeEach(() => setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor']))
   afterEach(() => { setCrewModeCatalog(undefined, undefined); mobile.value = false })
 
   const turnOn = () => {
@@ -237,14 +276,14 @@ describe('useCrewModeSwitch turning Ultra Mode on', () => {
 })
 
 describe("useCrewModeSwitch the welcome page's Board button", () => {
-  beforeEach(() => setCrewModeCatalog('saokhue-conductor', ['saokhue-conductor']))
+  beforeEach(() => setCrewModeCatalog('kirocrew-conductor', ['kirocrew-conductor']))
   afterEach(() => { setCrewModeCatalog(undefined, undefined); mobile.value = false })
 
   const press = () => {
     const store = createTestStore()
     const openView = vi.fn()
     const wrapper = ({ children }: { children: ReactNode }) => <Provider store={store}>{children}</Provider>
-    const hook = renderHook(() => useCrewModeSwitch({ currentSlot: plain('root', 'saokhue-conductor'), defaultAgent: 'default', hasUserMessage: true, switchAgent: vi.fn(), openView }), { wrapper })
+    const hook = renderHook(() => useCrewModeSwitch({ currentSlot: plain('root', 'kirocrew-conductor'), defaultAgent: 'default', hasUserMessage: true, switchAgent: vi.fn(), openView }), { wrapper })
     store.dispatch(closeActivityPanel())
     openView.mockClear()
     act(() => { hook.result.current.openTaskBoard!() })

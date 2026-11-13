@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Sao Khuê</title>
+  <title>Kiro Crew</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --accent: #008542;                 /* Sao Khuê (VPBank) emerald; overridden per-user at boot */
+      --accent: #008542;                 /* Kiro Crew (VPBank) emerald; overridden per-user at boot */
       --backdrop: #0f1117;               /* neutral shown during the final hand-off fade */
       /* Foreground "ink". Two variables because the two texts have different WCAG
          bars and sit on different parts of the backdrop (see the contrast block):
-           --ink        → large "Sao Khuê" wordmark (AA large = 3:1) at the gradient centre
+           --ink        → large "Kiro Crew" wordmark (AA large = 3:1) at the gradient centre
            --ink-status → 14px status text + dot (AA normal = 4.5:1) at the bottom edge
          Both default to white (dark accents) and flip to dark when the accent is light. */
       --ink: #ffffff;
@@ -69,7 +69,14 @@
     .g-eyes { transform-box: fill-box; transform-origin: center; transition: transform 0.09s ease; }
     .g-eyes.blink { transform: scaleY(0.08); }   /* one whole ghost blinks (both eyes) */
 
-    /* ---- "Sao Khuê" wordmark — appears briefly in the centre on ready ---- */
+    /* ---- a theme pack's own splash art, shown in place of the ghosts ---- */
+    #art, #artStill {
+      position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+      width: min(70vw, 720px); height: 56vh; object-fit: contain;   /* an SVG may carry no size */
+    }
+    #art[hidden], #artStill[hidden] { display: none; }
+
+    /* ---- "Kiro Crew" wordmark — appears briefly in the centre on ready ---- */
     #title {
       position: absolute; left: 50%; top: 50%;
       transform: translate(-50%, -50%) translateY(10px) scale(0.96);
@@ -166,7 +173,9 @@
 <body>
   <div id="stage">
     <div id="ghosts"></div>
-    <div id="title" aria-label="Sao Khuê">
+    <img id="art" alt="" hidden>
+    <canvas id="artStill" aria-hidden="true" hidden></canvas>
+    <div id="title" aria-label="Kiro Crew">
       <svg class="lockup-flower" viewBox="0 0 272 228" aria-hidden="true">
         <g fill="#FFD84D">
           <path d="M 73 4.5 C 73 0 75.5 -0.8 78.5 1.8 L 132.5 62 L 132.5 150.5 L 82.5 92.5 C 75.5 84.5 73 76 73 66 Z"/>
@@ -182,8 +191,8 @@
       <!-- The static copy is the connection-window wording; the script below
            rewrites the label, the hint and the aria-label once it knows which
            window it is in (see closeLabelFor / closeHintFor). -->
-      <button id="closeWin" type="button" aria-describedby="closeHint" aria-label="Close window and stop reconnecting. This connection window closes and stops trying to connect. Sao Khuê itself keeps running; to connect again, pick New Connection Window… from the Sao Khuê icon's menu.">Close window and stop reconnecting</button>
-      <p id="closeHint">This connection window closes and stops trying to connect. Sao Khuê itself keeps running; to connect again, pick New Connection Window… from the Sao Khuê icon's menu.</p>
+      <button id="closeWin" type="button" aria-describedby="closeHint" aria-label="Close window and stop reconnecting. This connection window closes and stops trying to connect. Kiro Crew itself keeps running; to connect again, pick New Connection Window… from the Kiro Crew icon's menu.">Close window and stop reconnecting</button>
+      <p id="closeHint">This connection window closes and stops trying to connect. Kiro Crew itself keeps running; to connect again, pick New Connection Window… from the Kiro Crew icon's menu.</p>
     </div>
   </div>
 
@@ -405,17 +414,17 @@
     }
 
     function maybeResolve() {
-      if (resolved || !ready || shownCount < MIN_GHOSTS) return;
+      if (resolved || !ready || (!artOn && shownCount < MIN_GHOSTS)) return;
       var elapsed = performance.now() - startedAt;
       if (elapsed < MIN_FLOOR_MS) { setTimeout(maybeResolve, MIN_FLOOR_MS - elapsed + 20); return; }
       resolve();
     }
 
-    // Hold the composition; "Sao Khuê" appears briefly; then hand off (fade → bootComplete).
+    // Hold the composition; "Kiro Crew" appears briefly; then hand off (fade → bootComplete).
     function resolve() {
       resolved = true;
       ghosts.forEach(function (g) { if (!g.visible && Math.random() < 0.5) showGhost(g); });
-      setTimeout(function () { title.classList.add("show"); }, 220);
+      if (!artOn) setTimeout(function () { title.classList.add("show"); }, 220);
       setTimeout(fadeOut, 1350);
     }
     function fadeOut() {
@@ -482,13 +491,13 @@
     // label, which follows app.name.
     var COLD_BOOT_STALL_MS = 15000;
     var TRAY_LOCATION = {
-      darwin: "the Sao Khuê icon in the menu bar, at the top-right of the screen",
-      win32: "the Sao Khuê icon in the notification area next to the clock (it may sit behind the ^ chevron)"
+      darwin: "the Kiro Crew icon in the menu bar, at the top-right of the screen",
+      win32: "the Kiro Crew icon in the notification area next to the clock (it may sit behind the ^ chevron)"
     };
     function closeHintFor(primary, platform) {
-      if (!primary) return "This connection window closes and stops trying to connect. Sao Khuê itself keeps running; to connect again, pick New Connection Window… from the Sao Khuê icon's menu.";
-      var where = TRAY_LOCATION[platform] || "the Sao Khuê icon in the system tray";
-      return "This window closes; Sao Khuê keeps running and keeps trying to connect in the background. Bring the window back from " + where + ".";
+      if (!primary) return "This connection window closes and stops trying to connect. Kiro Crew itself keeps running; to connect again, pick New Connection Window… from the Kiro Crew icon's menu.";
+      var where = TRAY_LOCATION[platform] || "the Kiro Crew icon in the system tray";
+      return "This window closes; Kiro Crew keeps running and keeps trying to connect in the background. Bring the window back from " + where + ".";
     }
     function closeLabelFor(primary) {
       return primary ? "Close window" : "Close window and stop reconnecting";
@@ -521,14 +530,61 @@
     }
 
     // ── kick off ──
-    ghosts = GH.map(makeGhost);
-    churnOrder = shuffle(ghosts.slice()); churnPtr = 0;
-    if (reduce) {
-      ghosts.forEach(showGhost); shownCount = ghosts.length;   // calm, instant reveal
-      maybeResolve();
+    function startGhosts() {
+      ghosts = GH.map(makeGhost);
+      churnOrder = shuffle(ghosts.slice()); churnPtr = 0;
+      if (reduce) {
+        ghosts.forEach(showGhost); shownCount = ghosts.length;   // calm, instant reveal
+        maybeResolve();
+      } else {
+        setTimeout(peekNext, 200);
+        setTimeout(blinkLoop, 1200);
+      }
+    }
+    // A theme pack's splash art (?splash=, a file: URL from theme-splash.js)
+    // takes the ghosts' place and the wordmark's; art that fails to load
+    // brings the stock ghosts back. Only the stored theme-splash.png|svg file
+    // is accepted; any other value keeps the stock splash.
+    function themeSplashSrc(raw) {
+      var url;
+      try { url = new URL(raw); } catch (e) { return ""; }
+      if (url.protocol !== "file:" || url.host || url.search || url.hash) return "";
+      return /^\/(?!\/).*\/theme-splash\.(png|svg)$/.test(url.pathname) ? url.href : "";
+    }
+    // Pack art may animate inside the image (an animated raster, or an SVG with
+    // its own CSS or SMIL), where the page's reduced-motion rule cannot reach it.
+    // Under reduced motion the <img> stays hidden and only decodes the art (an
+    // SVG that is not displayed does not advance), and one frame is painted onto
+    // a canvas that never repaints, as the dashboard's PackLoaderImage does.
+    function showThemeArt(art, still, src, reduce, onFail) {
+      art.onerror = function () { art.hidden = true; still.hidden = true; onFail(); };
+      if (reduce) art.onload = function () { still.hidden = false; paintStill(still, art); };
+      art.src = src;
+      if (!reduce) art.hidden = false;
+    }
+    // Paint `img` once into `canvas`, contained and centred like `object-fit: contain`.
+    function paintStill(canvas, img) {
+      var ctx = canvas.getContext && canvas.getContext("2d");
+      if (!ctx) return;
+      var dpr = window.devicePixelRatio || 1;
+      var w = Math.max(1, Math.round((canvas.clientWidth || 1) * dpr));
+      var h = Math.max(1, Math.round((canvas.clientHeight || 1) * dpr));
+      canvas.width = w; canvas.height = h;
+      var iw = img.naturalWidth, ih = img.naturalHeight;
+      var scale = iw > 0 && ih > 0 ? Math.min(w / iw, h / ih) : 0;
+      var dw = scale ? iw * scale : w, dh = scale ? ih * scale : h;
+      try { ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh); } catch (e) {}
+    }
+    var art = document.getElementById("art");
+    var artStill = document.getElementById("artStill");
+    var artSrc = "";
+    var artOn = false;
+    try { artSrc = themeSplashSrc(new URLSearchParams(location.search).get("splash") || ""); } catch (e) {}
+    if (artSrc) {
+      artOn = true;
+      showThemeArt(art, artStill, artSrc, reduce, function () { artOn = false; startGhosts(); });
     } else {
-      setTimeout(peekNext, 200);
-      setTimeout(blinkLoop, 1200);
+      startGhosts();
     }
   })();
   </script>

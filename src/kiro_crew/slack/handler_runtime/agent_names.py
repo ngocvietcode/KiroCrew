@@ -122,7 +122,7 @@ def _list_all_agent_names(cc_plugins_dir: Path | None = None) -> str:
 
     Merges the ``~/.kiro/agents`` spec stems (see
     :func:`kiro_crew.agent_discovery.agent_spec_stems`) with the cc-plugins
-    agents from :func:`_iter_cc_agent_names`. The internal ``saokhue-lite``
+    agents from :func:`_iter_cc_agent_names`. The internal ``kirocrew-lite``
     variant is hidden. Returns ``"(none found)"`` when empty. Reads every
     markdown candidate to decide whether it is a spec, so the async callers
     run it in a thread rather than on the event loop.
@@ -137,16 +137,16 @@ def _list_all_agent_names(cc_plugins_dir: Path | None = None) -> str:
     names: list[str] = []
     agents_dir = kiro_agents_dir()
     if agents_dir.is_dir():
-        # Hide the internal saokhue-lite variant from BOTH sources — a
-        # ~/.kiro/agents/saokhue-lite.json would otherwise leak into the list.
+        # Hide the internal kirocrew-lite variant from BOTH sources — a
+        # ~/.kiro/agents/kirocrew-lite.json would otherwise leak into the list.
         names.extend(
             stem
             for stem in agent_spec_stems(agents_dir, operation="slack_list_agents", source="slack")
-            if stem != "saokhue-lite"
+            if stem != "kirocrew-lite"
         )
     seen = set(names)
     for agent_name in _iter_cc_agent_names(cc_plugins_dir):
-        if agent_name not in seen and agent_name != "saokhue-lite":
+        if agent_name not in seen and agent_name != "kirocrew-lite":
             names.append(agent_name)
             seen.add(agent_name)
     return ", ".join(names) if names else "(none found)"

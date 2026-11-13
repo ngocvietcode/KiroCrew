@@ -20,7 +20,7 @@ rather than the kiro spec:
   crew's definition forks a copy instead of mutating the shared file).
 - ``managed_digest`` (str): the SHA-256 of the exact spec bytes the installer
   last wrote at an OWNED filename whose stem was a user-creatable name before it
-  became owned (today only ``saokhue-dashboard-author``). It is the installer's
+  became owned (today only ``kirocrew-dashboard-author``). It is the installer's
   record that THIS file is its own managed write: a rebuild overwrites the spec
   only when the file on disk reproduces this digest, so a user artefact that
   happens to sit at the stem -- or a copy of another agent renamed onto it -- is
@@ -31,7 +31,7 @@ State file (``~/.kiro/crew/agent_model_state.json``, honoring ``KIROCREW_HOME``)
 
     {
       "kirocrew":           {"model_managed": true},
-      "saokhue-heartbeat": {"cc_model": "auto"}
+      "kirocrew-heartbeat": {"cc_model": "auto"}
     }
 
 This is a near-leaf module: it imports only the stdlib plus the leaf
@@ -53,6 +53,7 @@ from pathlib import Path
 from typing import Iterator, MutableMapping
 
 from kiro_crew.atomic_write import atomic_write
+from kiro_crew.bounded_read import bounded_read
 from kiro_crew.config.paths import config_dir
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,7 @@ _MIRRORED_STAT = "mirrored_stat"
 _FORKED_FROM = "forked_from"
 _PRIVATE_TO = "private_to"
 # Installer-recorded ownership for a spec at an owned filename that was a
-# user-creatable name before it became owned (today: saokhue-dashboard-author).
+# user-creatable name before it became owned (today: kirocrew-dashboard-author).
 # Holds the SHA-256 of the exact spec bytes the installer last wrote there, so
 # "is this file our own managed write?" is answered by a digest the installer
 # recorded, not by marks a user artefact could carry by coincidence.
@@ -154,7 +155,7 @@ def _read(*, strict: bool = False) -> dict:
             ):
                 raise ValueError("agent_state_file_invalid")
             with os.fdopen(fd, "rb", closefd=False) as stream:
-                raw = stream.read(STATE_MAX_BYTES + 1)
+                raw = bounded_read(stream, STATE_MAX_BYTES + 1)
             if len(raw) > STATE_MAX_BYTES:
                 raise ValueError("agent_state_too_large")
             data = json.loads(raw)
@@ -412,8 +413,8 @@ def set_model_managed(name: str, value: bool) -> None:
         _write(data)
 
 
-def claim_model_managed_if_unset(name: str) -> bool:
-    """Record *name* as managed only when it holds no managed flag; True if claimed.
+def claim_model_managed_if_unset(name: str, value: bool = True) -> bool:
+    """Record *value* as *name*'s managed flag only when it holds none; True if claimed.
 
     The read and the write share one cross-process lock, so an explicit pick a
     model editor records concurrently is never overwritten. Strict: an
@@ -426,16 +427,19 @@ def claim_model_managed_if_unset(name: str) -> bool:
             entry = {}
         if _MODEL_MANAGED in entry:
             return False
-        entry[_MODEL_MANAGED] = True
+        entry[_MODEL_MANAGED] = bool(value)
         data[name] = entry
         _write(data)
         return True
 
 
-def get_cc_model(name: str) -> str | None:
-    """Return the agent's claude_code-provider model, or ``None`` when unset."""
+def get_cc_model(name: str, *, strict: bool = False) -> str | None:
+    """Return the agent's claude_code-provider model, or ``None`` when unset.
+
+    ``strict`` raises on an unreadable sidecar, as :func:`get_model_managed` does.
+    """
     with _lock:
-        value = _entry(_read(), name).get(_CC_MODEL)
+        value = _entry(_read(strict=strict), name).get(_CC_MODEL)
     return value if isinstance(value, str) and value else None
 
 
@@ -460,7 +464,7 @@ def set_cc_model(name: str, value: str | None) -> None:
 def get_mirrored_from(name: str) -> str | None:
     """Return the fingerprint of the default spec this agent was mirrored from.
 
-    A DERIVED agent (today only ``saokhue-worker``) is a function of
+    A DERIVED agent (today only ``kirocrew-worker``) is a function of
     ``kirocrew.json``, and this is the only durable record of WHICH generation of
     that file it was derived from. It lives in the sidecar rather than in the spec
     for the reason the whole sidecar exists: kiro-cli validates a spec with
@@ -759,21 +763,22 @@ def lift_and_strip_bookkeeping(config: MutableMapping[str, object], name: str) -
     bad value. The key is ALWAYS stripped from *config* regardless of type,
     since it must never reach the kiro spec either way.
 
+    The unset check reads strict: a present but unreadable sidecar raises
+    (``OSError`` / ``ValueError``) instead of reading as unset, so a transient
+    read error can't lift a stale spec value over the owner's recorded one.
+
     Returns True if either key was present on *config* (and removed).
     """
     changed = False
     if _MODEL_MANAGED in config:
         value = config[_MODEL_MANAGED]
         if isinstance(value, bool):
-            # Hold the lock across the get-and-set so a concurrent writer
-            # (e.g. an explicit-model PATCH racing a stale config PUT)
-            # can't sneak a value in between the unset check and the lift —
-            # the lifted stale value would clobber the fresher one.
-            # ``_lock`` is an RLock, so the nested get/set acquisitions are
-            # re-entrant and safe.
-            with _lock:
-                if get_model_managed(name) is None:
-                    set_model_managed(name, value)
+            # One strict, locked set-if-unset: a concurrent writer (e.g. an
+            # explicit-model PATCH racing a stale config PUT) can't sneak a
+            # value in between the check and the lift, and an unreadable
+            # sidecar raises rather than reading as "unset" -- a lenient read
+            # would lift a stale spec flag over the owner's recorded pick.
+            claim_model_managed_if_unset(name, value)
         else:
             logger.warning("Discarding non-bool model_managed=%r for agent %r", value, name)
         config.pop(_MODEL_MANAGED, None)
@@ -782,7 +787,7 @@ def lift_and_strip_bookkeeping(config: MutableMapping[str, object], name: str) -
         value = config[_CC_MODEL]
         if isinstance(value, str):
             with _lock:
-                if value and get_cc_model(name) is None:
+                if value and get_cc_model(name, strict=True) is None:
                     set_cc_model(name, value)
         elif value:
             logger.warning("Discarding non-string cc_model=%r for agent %r", value, name)

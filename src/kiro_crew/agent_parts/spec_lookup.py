@@ -21,7 +21,7 @@ if TYPE_CHECKING:
         agent_spec_candidates,
         is_markdown_spec,
         is_registered_agent_name,
-        is_sensitive_path,
+        is_sensitive_canonical_path,
         iter_agent_spec_files,
         kiro_agents_dir_path,
         logger,
@@ -84,13 +84,17 @@ def _spec_path_shape_refusal(path: Path, agents_dir: Path) -> str | None:
     is right for a caller that only needs permission to rewrite; it is wrong for
     one that would REPLACE the file on that answer, because then a transient error
     on the probe would destroy a spec that was intact.
+
+    The resolved path is judged on :func:`security.is_sensitive_canonical_path`:
+    off the event loop it answers inline, so a resolver child that misses its
+    deadline cannot refuse a plain spec as a sensitive target.
     """
     if path.is_symlink():
         return "a link stands at the spec's name"
     resolved = path.resolve()
     if resolved.parent != agents_dir.resolve():
         return "the path resolves outside the agents directory"
-    if is_sensitive_path(str(resolved)):
+    if is_sensitive_canonical_path(str(resolved)):
         return "the path resolves to a sensitive target"
     return None
 
@@ -347,7 +351,7 @@ def _project_shadow_of(
     other consumer). There is no parent walk to match: a spec one directory up is not
     dispatchable, so it is not a shadow. The declared ``name`` beats the filename, which
     is why the comparison goes through :func:`agent_discovery.project_agent_name` rather
-    than the stem -- a file called anything at all can declare ``saokhue-worker``.
+    than the stem -- a file called anything at all can declare ``kirocrew-worker``.
 
     Two keywords narrow WHICH project files count, and the default of each is the
     behaviour this function had before they existed. Both matter to a caller asking

@@ -65,7 +65,7 @@ function failEarlyBoot({ app, dialog, glog, logPath }, stage, error) {
   }
   try {
     dialog.showErrorBox(
-      "Sao Khuê failed to start",
+      "Kiro Crew failed to start",
       "An error occurred before the app could open a window:\n\n" + detail
         + (where ? "\n\nA log was written to: " + where : ""),
     );

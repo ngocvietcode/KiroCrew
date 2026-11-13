@@ -5,7 +5,8 @@ until it ends, classifies the end (:func:`~kiro_crew.relay_client.backoff.classi
 and either redials, backs off, renews the host token, or stops with a reason a
 person can read in ``/api/tunnel/status``. When the relay sends ``reconnect`` it opens
 the next connection before it lets go of the current one (make before break): the
-old connection finishes its open HTTP requests and then closes with 1000.
+old connection finishes its open HTTP requests and then closes with 1000: once the
+relay's ``move-done`` says nothing more comes there, when the relay agreed it.
 
 The client reports through the two callbacks the tunnel wrapper registers:
 ``on_connect(url)`` once the Crew's relay URL is live, so the wrapper adds it to the
@@ -114,6 +115,10 @@ class RelayClient:
         self._stopping = asyncio.Event()
         self._live: Set[HostConnection] = set()
         self._draining: Optional[HostConnection] = None
+        #: Moves whose old connection waited for ``move-done`` in vain and closed
+        #: on the quiet grace instead, since the client started. Not in tunnel
+        #: status: each fallback shows as its own warning in the log.
+        self.move_done_fallbacks = 0
         self._background: Set[asyncio.Task[Any]] = set()
         self._credential: Optional[HostCredential] = None
         self._state = STATE_STOPPED
@@ -151,11 +156,25 @@ class RelayClient:
     def relay_connected(self) -> bool:
         """Whether a host connection is up: past ``ready`` and not yet closing.
 
-        A lease renewal reports this as ``relay.connected``, which the contract
-        (section 4.2) makes true only from ``ready`` until that connection ends.
+        A lease renewal reports this as ``relay.connectionStatus``, which the
+        contract (section 4.2) makes ``CONNECTED`` only from ``ready`` until that
+        connection ends.
         During a move the old and the new connection overlap, and either counts.
         """
         return any(conn.serving for conn in self._live)
+
+    def connected_people(self) -> int:
+        """How many people are connected through the relay now.
+
+        A lease renewal reports this as ``connectedCount``. One person is one
+        relayed caller with a WebSocket open, however many tabs they have open,
+        and during a move a caller on both connections counts once.
+        """
+        people: Set[str] = set()
+        for conn in list(self._live):
+            if conn.serving:
+                people |= conn.viewers()
+        return len(people)
 
     def snapshot(self) -> Dict[str, Any]:
         return {
@@ -175,7 +194,7 @@ class RelayClient:
         self._error = ""
         self._started_at = time.time()
         self._tokens.on_new_token(self._forward_token)
-        self._tokens.track_relay(self.relay_connected)
+        self._tokens.track_relay(self.relay_connected, self.connected_people)
         self._task = asyncio.create_task(self._run(), name="relay-client")
 
     async def stop(self, code: int = CLOSE_GOING_AWAY) -> None:
@@ -504,6 +523,8 @@ class RelayClient:
             await old.drain_and_close(quiet=self._timings.move_grace)
             await asyncio.gather(old_run, return_exceptions=True)
         finally:
+            if old.move_done_fell_back:
+                self.move_done_fallbacks += 1
             self._live.discard(old)
             if self._draining is old:
                 self._draining = None

@@ -99,7 +99,10 @@ class _Provider:
         self.approved: list[Any] = []
         self.rejected: list[Any] = []
 
-    async def stream(self, message: str) -> Any:
+    async def stream(self, message: str, *, prompt_gate: Any = None) -> Any:
+        # iMessage hands its roster re-check in as ``prompt_gate``, as the real provider takes it.
+        if prompt_gate is not None:
+            prompt_gate()
         yield AcpEvent(kind=EVENT_PERMISSION_REQUEST, request_id="rq1", options=[{"id": "approve"}])
         yield AcpEvent(kind=EVENT_COMPLETE, stop_reason="end_turn")
 
@@ -358,6 +361,7 @@ def _build_weixin(sessions: Any, ctx: Any) -> tuple[Any, str, Any, Any]:
 def _build_imessage(sessions: Any, ctx: Any) -> tuple[Any, str, Any, Any]:
     from kiro_crew.imessage import transport_dispatch as mod
     from kiro_crew.imessage.client import IMessageInbound
+    from kiro_crew.imessage.transport import IMessageTransport
 
     d = mod.IMessageDispatcher(
         sessions=sessions,
@@ -368,6 +372,8 @@ def _build_imessage(sessions: Any, ctx: Any) -> tuple[Any, str, Any, Any]:
         approval_mode="interactive",
     )
     d.client = _Client()
+    # The turn rechecks the live handle roster as the provider starts.
+    d.transport = IMessageTransport(d.client, allowed_handles=["+15550100"])
     inbound = IMessageInbound(handle="+15550100", text="hi", chat_guid="iMessage;-;+15550100")
     return mod, "IMessageRenderer", d, inbound
 

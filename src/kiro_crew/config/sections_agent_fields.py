@@ -95,7 +95,7 @@ ROLE_MODEL_KEYS: tuple[str, ...] = ("background", "subagent")
 # that branched on them, because the effort chain is now read by two callers (the
 # provider factory and the crews API's readout) and a second copy of the pair
 # would let them disagree about which agents take the role default.
-BACKGROUND_WORKER_AGENTS: tuple[str, ...] = ("saokhue-lite", "saokhue-heartbeat")
+BACKGROUND_WORKER_AGENTS: tuple[str, ...] = ("kirocrew-lite", "kirocrew-heartbeat")
 
 
 def coerce_role_models(raw: object) -> dict[str, str]:

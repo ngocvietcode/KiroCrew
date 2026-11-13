@@ -331,7 +331,7 @@ async def _draft_turn(request: web.Request, prompt: str) -> str:
     later background turn. Here each draft gets a new key, so its session starts
     with no history, and the key is released and destroyed after the turn, so
     nothing is left for a later turn to read. The same shape issue radar's
-    one-shot model call uses: ``saokhue-lite`` (no tools), ``REJECT_ALL`` (every
+    one-shot model call uses: ``kirocrew-lite`` (no tools), ``REJECT_ALL`` (every
     permission request is refused and audited), release and destroy in ``finally``.
     """
     from uuid import uuid4

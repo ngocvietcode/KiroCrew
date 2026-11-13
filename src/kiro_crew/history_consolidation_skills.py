@@ -508,7 +508,7 @@ async def _dedupe_judge(self: HistoryConsolidator, prompt: str) -> str:
         return ""
     try:
         async with background_turn(
-            self._sessions, task="skill_dedupe", agent="saokhue-lite"
+            self._sessions, task="skill_dedupe", agent="kirocrew-lite"
         ) as client:
             text = await _facade_stream_and_collect(
                 client,
@@ -546,7 +546,7 @@ async def _merge_skill_update(
     )
     try:
         async with background_turn(
-            self._sessions, task="skill_merge", agent="saokhue-lite"
+            self._sessions, task="skill_merge", agent="kirocrew-lite"
         ) as client:
             text = await _facade_stream_and_collect(
                 client,

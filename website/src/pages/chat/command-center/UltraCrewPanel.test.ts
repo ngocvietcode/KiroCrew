@@ -17,7 +17,7 @@ const item = (over: Partial<WorkBoardItem>): WorkBoardItem => ({
 })
 
 const worker = (key: string, by: string): CrewWorker => ({
-  key, title: key, agent: 'saokhue-worker', status: 'idle', group: 'working', last_activity: '', ledger_item: '',
+  key, title: key, agent: 'kirocrew-worker', status: 'idle', group: 'working', last_activity: '', ledger_item: '',
   created_by: by, dispatched_by: by,
 })
 
@@ -108,6 +108,14 @@ describe('milestoneState', () => {
 
   it('waiting: an idle session after progress or an answered report', () => {
     expect(milestoneState(item({ status: 'progress', ...R }), false)).toBe('waiting')
+  })
+
+  it('running: an idle worker whose own loop will wake it (waiting on CI)', () => {
+    expect(milestoneState(item({ status: 'progress', looping: true, ...R }), false)).toBe('running')
+    // A report the conductor still owes an answer, or one on the person, keeps its state.
+    expect(milestoneState(item({ status: 'blocked', looping: true, ...R }), false)).toBe('waiting')
+    expect(milestoneState(item({ status: 'blocked', reason: 'needs_human', looping: true, ...R }), false)).toBe('needs_you')
+    expect(milestoneState(item({ status: 'progress', looping: true }), true)).toBe('needs_you')
   })
 
   it('quiet: the board stale flag on a chat that is still there, not stuck', () => {

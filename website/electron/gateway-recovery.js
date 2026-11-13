@@ -27,7 +27,7 @@ const path = require("path");
 //   "none"           — no gateway yet, or an adopted holder that could NOT be
 //                      positively identified as local (tunnel / external).
 //   "spawned"        — this app spawned the bundled backend on this port.
-//   "reused-local"   — adopted a local same-family Sao Khuê process.
+//   "reused-local"   — adopted a local same-family Kiro Crew process.
 //   "reused-service" — like reused-local, but the holder was SERVICE-classified.
 const GATEWAY_OWNERSHIP_STATES = Object.freeze(["none", "spawned", "reused-local", "reused-service"]);
 
@@ -100,12 +100,13 @@ const SERVICE_REBIND_GRACE_MS = 15_000;
  * restart is indistinguishable from a permanent exit. Spawning immediately
  * races the manager for the port — one side loses with EADDRINUSE.
  *
- * But "service-classified" does not guarantee a manager will respawn it: an
- * orphaned gateway reparents to init (PPID 1) and classifies as
- * service-managed too, and an orphan has no KeepAlive — nothing will ever
- * rebind. So: wait a bounded grace for a rebind, report "rebound" the moment
- * something takes the port back (the caller adopts/reconnects to it), and
- * report "spawn" only when the grace expires with the port still free.
+ * But "service-classified" does not guarantee a manager will respawn it: off
+ * macOS (and on macOS when launchd's job list cannot be read) an orphaned
+ * gateway reparents to init (PPID 1) and classifies as service-managed too,
+ * and an orphan has no KeepAlive, so nothing will ever rebind it. So: wait a
+ * bounded grace for a rebind, report "rebound" the moment something takes the
+ * port back (the caller adopts/reconnects to it), and report "spawn" only when
+ * the grace expires with the port still free.
  *
  * Pure/injectable so the decision is unit-testable without Electron.
  *
@@ -438,27 +439,27 @@ function unrecoverableGatewayDialog({
   const held = variant === "held";
   return {
     title: probeFailed
-      ? `Sao Khuê: can't verify what's using port ${port}`
+      ? `Kiro Crew: can't verify what's using port ${port}`
       : held
-        ? `Sao Khuê: port ${port} is in use`
-        : `Sao Khuê: backend stuck on port ${port}`,
+        ? `Kiro Crew: port ${port} is in use`
+        : `Kiro Crew: backend stuck on port ${port}`,
     message: probeFailed
-      ? `Sao Khuê could not verify which process owns port ${port}, so it did not `
+      ? `Kiro Crew could not verify which process owns port ${port}, so it did not `
         + `risk terminating an unrelated process or starting a second gateway. `
-        + `Quit and reopen Sao Khuê to try again. If the port is still blocked, `
+        + `Quit and reopen Kiro Crew to try again. If the port is still blocked, `
         + `restart your computer.`
       : held
-        ? `Another process is holding port ${port}, so Sao Khuê can't reconnect to `
+        ? `Another process is holding port ${port}, so Kiro Crew can't reconnect to `
           + `it or start its own backend there. Quit the process using port ${port} `
           + `(the launch log below names it; look for the "port-owner:" line), `
           + `then reopen this app.`
-        : `The Sao Khuê backend is wedged and cannot be stopped. It is in an `
+        : `The Kiro Crew backend is wedged and cannot be stopped. It is in an `
           + `uninterruptible state and is still holding port ${port}, so it can't be `
           + `force-stopped or restarted in place. Restart your computer to clear it. `
           + `(This is a known backend hang; see the launch log below for the cause.)`,
     portConflict: false,
     primaryAction: "quit",
-    primaryLabel: isPrimaryWindow ? "Quit Sao Khuê" : "Close",
+    primaryLabel: isPrimaryWindow ? "Quit Kiro Crew" : "Close",
     showQuitButton: false,
   };
 }

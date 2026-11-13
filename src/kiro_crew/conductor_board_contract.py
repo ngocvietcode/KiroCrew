@@ -1,7 +1,7 @@
 """The goal conductor's task board: the data shape its drawer template reads.
 
-``saokhue-conductor`` publishes its board with ``panel_publish`` and gets
-``agent_panel_templates/saokhue-conductor.html`` because the file is named for the
+``kirocrew-conductor`` publishes its board with ``panel_publish`` and gets
+``agent_panel_templates/kirocrew-conductor.html`` because the file is named for the
 crew (``agent_panel.template_for_crew`` slugifies the crew name and looks for that
 id). The conductor writes the data by hand each patrol turn, so unlike
 ``pipeline_board_contract`` there is no provider here: this module is only the
@@ -17,8 +17,8 @@ from __future__ import annotations
 from typing import Final, NotRequired, TypedDict
 
 #: The crew whose drawer renders this board, and the template id it slugifies to.
-BOARD_CREW_NAME: Final = "saokhue-conductor"
-BOARD_TEMPLATE_ID: Final = "saokhue-conductor"
+BOARD_CREW_NAME: Final = "kirocrew-conductor"
+BOARD_TEMPLATE_ID: Final = "kirocrew-conductor"
 
 #: A task's ``state``, as the conductor writes it. The template matches these
 #: case-insensitively and reads ``_`` / ``-`` as a space, so ``needs_you`` and

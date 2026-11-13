@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The `saokhue-conductor` page, driven rather than read.
+ * The `kirocrew-conductor` page, driven rather than read.
  *
  * The page ships in the Python package and runs in a sandboxed frame, so its script
  * is exercised here the way `projectReportPage.test.ts` drives its own: set
@@ -16,7 +16,7 @@ import { resolve } from 'node:path'
 
 const TEMPLATE = resolve(
   __dirname,
-  '../../../src/kiro_crew/dashboard_templates/builtin/saokhue-conductor/template.html',
+  '../../../src/kiro_crew/dashboard_templates/builtin/kirocrew-conductor/template.html',
 )
 const RAW = readFileSync(TEMPLATE, 'utf-8')
 
@@ -82,7 +82,7 @@ function refill(fields: Record<string, unknown>, agentic: string[] = ['needs_you
 const text = (sel: string) => document.querySelector(sel)?.textContent ?? ''
 const all = (sel: string) => Array.from(document.querySelectorAll(sel))
 
-describe('saokhue-conductor page', () => {
+describe('kirocrew-conductor page', () => {
   it('keeps stable nodes on refill and animates only new work', () => {
     const frameCallbacks: FrameRequestCallback[] = []
     const raf = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
@@ -230,7 +230,7 @@ describe('saokhue-conductor page', () => {
     const band = document.querySelector('#cb-you .band')
     expect(band).not.toBeNull()
     expect(all('#cb-you .v').map((n) => n.textContent)).toEqual(['Approve the merge of PR 4', HOSTILE])
-    expect(text('#cb-you .tag')).toBe('your Bot wrote this')
+    expect(text('#cb-you .tag')).toBe('your bot wrote this')
     expect(text('#cb-you .band')).toContain('Nothing sends until you press send.')
     expect(document.querySelector('#cb-you img')).toBeNull()
   })
@@ -281,7 +281,7 @@ describe('saokhue-conductor page', () => {
     // The stamp is shown in the reader's own format, never as the raw string.
     expect(note?.textContent).toContain('sent ')
     expect(note?.textContent).not.toContain('2026-10-13T02:00:00')
-    expect(text('#cb-note .tag')).toBe('your Bot wrote this')
+    expect(text('#cb-note .tag')).toBe('your bot wrote this')
     expect(document.querySelector('#cb-note img')).toBeNull()
   })
 
@@ -394,7 +394,7 @@ describe('saokhue-conductor page', () => {
 
   it('says there is no goal yet instead of a dash', () => {
     mount({})
-    expect(text('h1')).toBe('No goal yet. Give this Bot one in chat.')
+    expect(text('h1')).toBe('No goal yet. Give this bot one in chat.')
   })
 
   it('says so when the board is empty and nothing needs the reader', () => {

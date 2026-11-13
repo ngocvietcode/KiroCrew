@@ -15,10 +15,10 @@ Tài liệu này mô tả kiến trúc tổng thể của **Sao Khuê** (`saokhu
    - `saokhue-cli` (`src/kiro_crew/acp/saokhue_server.py`): Built-in ACP v1 Server tích hợp sẵn trong gói Python của Sao Khuê, giao tiếp trực tiếp với cổng AI LLM Gateway nội bộ của VPBank (`https://portal.aws.rpa.vpbank.dev/api/ai-llm`) hoặc bất kỳ cổng OpenAI-compatible nào mà không cần cài thêm binary bên ngoài.
 3. **Hệ sinh thái 15+ Managed Agent Specs (`saokhue-*`):** Định nghĩa tại `src/kiro_crew/agent_files.py`, tự động sinh và đồng bộ (materialize) ra đĩa gồm:
    - Agent chính: `kirocrew.json`
-   - Các Conductor điều phối: `saokhue-conductor.json`, `saokhue-ledger-conductor.json`, `saokhue-pipeline-conductor.json`, `saokhue-security-conductor.json`
-   - Các Worker & Chuyên gia: `saokhue-worker.json`, `saokhue-research.json`, `saokhue-team-lead.json`, `saokhue-knowledge.json`, `saokhue-dashboard-author.json`, `saokhue-dashboard-manager.json`
-   - Các Agent dịch vụ & bảo mật: `saokhue-lite.json` (tác vụ nền: đặt tiêu đề, nén ngữ cảnh), `saokhue-heartbeat.json` (kiểm tra nhịp tim định kỳ), `saokhue-guest.json` (agent không có quyền gọi tool dành cho người gửi không phải chủ sở hữu trên kênh chat)
-   - Các Crewmate Service Agents (lưu tại `~/.vpbank/mates/agents/`): `saokhue-mate-conductor.json`, `saokhue-mate-worker.json`
+   - Các Conductor điều phối: `kirocrew-conductor.json`, `kirocrew-ledger-conductor.json`, `kirocrew-pipeline-conductor.json`, `kirocrew-security-conductor.json`
+   - Các Worker & Chuyên gia: `kirocrew-worker.json`, `kirocrew-research.json`, `kirocrew-team-lead.json`, `kirocrew-knowledge.json`, `kirocrew-dashboard-author.json`, `kirocrew-dashboard-manager.json`
+   - Các Agent dịch vụ & bảo mật: `kirocrew-lite.json` (tác vụ nền: đặt tiêu đề, nén ngữ cảnh), `kirocrew-heartbeat.json` (kiểm tra nhịp tim định kỳ), `kirocrew-guest.json` (agent không có quyền gọi tool dành cho người gửi không phải chủ sở hữu trên kênh chat)
+   - Các Crewmate Service Agents (lưu tại `~/.vpbank/mates/agents/`): `kirocrew-mate-conductor.json`, `kirocrew-mate-worker.json`
 
 ### 1.2. So sánh: Chỉ dùng CLI đơn lẻ vs. Kết hợp cùng Sao Khuê Gateway
 
@@ -28,7 +28,7 @@ Tài liệu này mô tả kiến trúc tổng thể của **Sao Khuê** (`saokhu
 | **Xác thực & Quản lý Model** | Cấu hình qua dòng lệnh hoặc file cấu hình rời rạc | Tích hợp trực tiếp thẻ đăng nhập **Sao Khuê Sign-In Card** (`SaoKhueSignInCard.tsx`) trên giao diện Web hỗ trợ 4 phương thức (Browser SSO PKCE, Device Code, Token/Virtual Key, Password) và chọn model trực quan |
 | **Bộ nhớ dài hạn (Memory)** | Mất ngữ cảnh khi đóng phiên; phải tự quản lý file thủ công | **Hybrid Search** (FTS5 BM25 + Vector Cosine qua `llama-cpp-python` chạy in-process) + **History Decay** (tự động tóm tắt/nén lịch sử cũ) + **Auto-Consolidation** + **Lesson Extraction** |
 | **Chạy tự động & Lập lịch** | Chỉ chạy khi người dùng ngồi gõ lệnh trực tiếp | **Cron Service** (cron, interval, one-shot), chạy Python script đã kiểm duyệt (`_vet_script_contents`) hoặc đánh thức Agent tự hành theo lịch |
-| **Đa luồng & Đa tác tử (Multi-Agent)** | Một phiên làm việc tại một thời điểm | **Session Pool** (`PoolKey(agent, model)`), **Subagent Spawner** (chạy song song có Git worktree riêng), **Task Runner** (tác vụ nhiều bước có checkpoint), và **Crew Mode** (`saokhue-conductor` + `saokhue-worker` + Crewmates) |
+| **Đa luồng & Đa tác tử (Multi-Agent)** | Một phiên làm việc tại một thời điểm | **Session Pool** (`PoolKey(agent, model)`), **Subagent Spawner** (chạy song song có Git worktree riêng), **Task Runner** (tác vụ nhiều bước có checkpoint), và **Crew Mode** (`kirocrew-conductor` + `kirocrew-worker` + Crewmates) |
 | **Tích hợp kênh chat doanh nghiệp** | Không có | Kết nối hai chiều qua **Slack** (Socket Mode) và **Discord** với luồng **Interactive Approval** (phê duyệt quyền chạy lệnh ngay trên tin nhắn) |
 | **Học kỹ năng động (Skills & Learn)** | Cấu hình tĩnh | **Self-Learning Engine** tự động tạo/cập nhật `SKILL.md`, cài đặt từ kho kỹ năng, hot-reload vào ngữ cảnh phiên chat |
 | **Điều khiển máy tính (Computer Use)** | Chỉ thao tác qua dòng lệnh và file | Chụp màn hình, OCR, điều khiển chuột/phím đa màn hình (`@kirocrew-computer`) kèm **Safety Overlay** và phím tắt khẩn cấp (`Cmd+Shift+Escape`) |
@@ -52,7 +52,7 @@ flowchart TB
         API["Dashboard Server (aiohttp)<br/>REST API (/api/*) + WebSocket (/ws)<br/>+ SaoKhue Login API (/api/saokhue-login/*)"]
         CTX["Context Builder & Prompt Optimizer<br/>(Identity, Soul, Memory, Skills, History Decay)"]
         SESS["Session Manager & Warm Pool<br/>(PoolKey(agent, model), Lease/Tenancy)"]
-        ORCH["Orchestration Engines<br/>(Cron Service, Task Runner, Subagent Spawner,<br/>Crew Mode / saokhue-conductor, Dynamic Workflows)"]
+        ORCH["Orchestration Engines<br/>(Cron Service, Task Runner, Subagent Spawner,<br/>Crew Mode / kirocrew-conductor, Dynamic Workflows)"]
         GOV["6-Layer Security & Governance Gate<br/>(PreToolUse Hook, POLICY ∩ PROFILE,<br/>Security paths, Denied Commands, SEL Audit)"]
         MCPG["MCP Gateway & Built-in MCP Servers<br/>(core, cron, dashboard, work, computer, guide, mate)"]
     end
@@ -110,7 +110,7 @@ flowchart TB
 | **ACP Client & Transport** | `acp/` (`client.py`, `client_start.py`, `session_provider.py`, `types.py`) | Quản lý kết nối JSON-RPC 2.0 qua stdio tới tiến trình ACP, khởi tạo phiên, truyền nhận streaming chunk (`session/update`), xử lý yêu cầu cấp quyền (`session/request_permission`) và tự phục hồi khi tiến trình con gặp sự cố. |
 | **Built-in Sao Khuê CLI Server** | `acp/saokhue_server.py` (facade: lớp `SaokhueAcpServer` và `main`), các module chủ trong `saokhue_cli/` (`base` hằng số và thư mục người dùng, `tls` tin cậy chứng chỉ, `auth` đăng nhập, `mcp_client`, `turns` một lượt gọi mô hình, `cli` lệnh terminal), `acp/harness/saokhue.py`. Các module chủ nằm ngoài gói `acp` để khi chạy dạng script, server không nạp client và runtime của gói đó; mọi tên vẫn được truy cập và patch qua `kiro_crew.acp.saokhue_server` nhờ `_facade_mirror`. | Máy chủ ACP v1 tích hợp sẵn (`saokhue-cli`), kết nối tới cổng AI LLM của VPBank hoặc cổng OpenAI-compatible, tích hợp OIDC/OAuth2 SSO, tự động nạp CA Bundle của hệ điều hành, thực thi bộ công cụ workspace nội bộ và đóng vai trò MCP Client (`StdioMcpClient`). |
 | **Agent SDK & Capability Registry** | `agent_sdk/` (`backends.py`, `backends_*.py`, `host_auth.py`, `tool_gate.py`, `backend_install.py`) | Định nghĩa 11 ACP backend (`ACP_BACKENDS_KNOWN`), ma trận năng lực (`ACP_BACKENDS_*`), cơ chế định tuyến quyền (`Routing`), kiểm tra cài đặt (`backend_install.py`), khai báo khóa xác thực (`host_auth.py`) và cổng kiểm duyệt công cụ (`tool_gate.py`). |
-| **Agent Spec Materialization** | `agent.py`, `agent_files.py`, `agent_materialization/` | Sinh và đồng bộ hơn 15 file cấu hình agent (`kirocrew.json`, `saokhue-conductor.json`, `saokhue-worker.json`, `saokhue-lite.json`, `saokhue-guest.json`,...) kèm quy tắc `allowedTools`, `excludedTools` và `mcpServers`. |
+| **Agent Spec Materialization** | `agent.py`, `agent_files.py`, `agent_materialization/` | Sinh và đồng bộ hơn 15 file cấu hình agent (`kirocrew.json`, `kirocrew-conductor.json`, `kirocrew-worker.json`, `kirocrew-lite.json`, `kirocrew-guest.json`,...) kèm quy tắc `allowedTools`, `excludedTools` và `mcpServers`. |
 | **Session & Runtime Ownership** | `session.py`, `session_parts/`, `runtime_ownership.py` | Quản lý vòng đời phiên chat, Warm Session Pool (`PoolKey(agent, model)`), theo dõi PID tiến trình con, cơ chế thuê bao (lease/tenancy) và thu dọn tiến trình mồ côi. |
 | **Context Assembly & History** | `context.py`, `context_assembly/`, `history.py` | Lắp ghép ngữ cảnh gửi vào LLM theo ngân sách ký tự (Identity, Soul, Memory, Skills, History Summary) và quản lý lịch sử hội thoại kèm cơ chế phân rã ngữ cảnh cũ (History Decay). |
 | **Memory & Knowledge** | `memory.py`, `member_memory.py`, `embeddings.py`, `knowledge/` | Bộ nhớ dài hạn V1 (Global) và V2 (theo từng thành viên - Member Scoped), kết hợp tìm kiếm từ khóa SQLite FTS5 (BM25) và tìm kiếm ngữ nghĩa Vector (`EmbeddingGemma-300M` chạy nội bộ qua `llama_cpp`). |
@@ -123,7 +123,7 @@ flowchart TB
 ### 2.2. Bản đồ Frontend (`website/src/` & `website/electron/`)
 
 Frontend là ứng dụng React 19 + TypeScript + Vite + Tailwind CSS v4 (kèm ứng dụng Desktop Electron tại `website/electron/`), bao gồm các phân khu chính:
-- **Chat & Crew Mode (`pages/chat/`):** Giao diện hội thoại thời gian thực qua WebSocket, hiển thị quá trình suy luận (thinking), lời gọi công cụ (tool calls), hộp thoại phê duyệt quyền (`ToolApprovalCard`), bảng điều khiển Crew Mode (`UltraCrewPanel`, `CrewLogPanel`) và bảng công việc của `saokhue-conductor`.
+- **Chat & Crew Mode (`pages/chat/`):** Giao diện hội thoại thời gian thực qua WebSocket, hiển thị quá trình suy luận (thinking), lời gọi công cụ (tool calls), hộp thoại phê duyệt quyền (`ToolApprovalCard`), bảng điều khiển Crew Mode (`UltraCrewPanel`, `CrewLogPanel`) và bảng công việc của `kirocrew-conductor`.
 - **Developer & Agent Harness (`pages/developer/`):** Quản lý lựa chọn ACP Backend (`AgentBackendTab.tsx`), đặc biệt tích hợp thẻ đăng nhập trực tiếp **`SaoKhueSignInCard.tsx`** kết nối với client API `website/src/api/saokhueLogin.ts` cho phép đăng nhập SSO/Device Code/Token/Password và chọn model ngay trên trình duyệt.
 - **Overview, Tasks, Cron, Memory, Skills, Connections, Settings:** Các trang quản trị toàn diện vòng đời tác nhân, lịch chạy tự động, bộ nhớ, kỹ năng và cấu hình bảo mật.
 
@@ -347,9 +347,9 @@ flowchart TB
 - **Không rò rỉ dữ liệu ra đám mây công cộng trái phép:** Kết nối mặc định qua `saokhue-cli` đi thẳng vào cổng **VPBank AI LLM Gateway** (`portal.aws.rpa.vpbank.dev/api/ai-llm`) xác thực bằng SSO nội bộ (`idpOAuth`), đảm bảo dữ liệu ngân hàng không bị gửi lên các dịch vụ AI tiêu dùng bên ngoài.
 - **Kiểm soát tập trung không thể vượt rào (`POLICY ∩ PROFILE`):** Nhờ cơ chế `PreToolUse` và OS Sandbox (`sandbox.py`), bộ phận An ninh thông tin (InfoSec) của VPBank có thể áp đặt chính sách chặn các lệnh nguy hiểm, bảo vệ thư mục nhạy cảm và ghi nhận đầy đủ nhật ký kiểm toán chống giả mạo (`SEL` với `sel_hmac.key`), đáp ứng yêu cầu kiểm toán nội bộ và quy định của Ngân hàng Nhà nước.
 
-### 6.2. Tự động hóa công việc đa bước & Tác nhân đồng hành (`Crew Mode` & `saokhue-conductor`)
+### 6.2. Tự động hóa công việc đa bước & Tác nhân đồng hành (`Crew Mode` & `kirocrew-conductor`)
 - Nhân viên không chỉ "hỏi - đáp" đơn thuần như các chatbot thông thường, mà có một **Đội ngũ Trợ lý (Crew)** thực thụ:
-  - **`saokhue-conductor`** đóng vai trò nhạc trưởng phân rã mục tiêu lớn thành các đầu việc trên bảng **Work Ledger** (`kirocrew-work`) và giao cho các **`saokhue-worker`** hoặc Crewmates thực thi song song.
+  - **`kirocrew-conductor`** đóng vai trò nhạc trưởng phân rã mục tiêu lớn thành các đầu việc trên bảng **Work Ledger** (`kirocrew-work`) và giao cho các **`kirocrew-worker`** hoặc Crewmates thực thi song song.
   - **Cron Service & Dynamic Workflows:** Tự động tổng hợp báo cáo đầu ngày, theo dõi cảnh báo hệ thống, rà soát PR/code, hoặc xử lý dữ liệu định kỳ mà không cần con người can thiệp thủ công.
 
 ### 6.3. Cá nhân hóa sâu theo từng nhân viên & Tích lũy tri thức tổ chức (Memory & Self-Learning Skills)
@@ -362,7 +362,7 @@ flowchart TB
 
 ### 6.5. Chống phụ thuộc nhà cung cấp (Zero Vendor Lock-in) & Tối ưu chi phí
 - Nhờ chuẩn hóa trên giao thức **ACP** và tích hợp sẵn **`saokhue-cli`**, VPBank có thể linh hoạt chuyển đổi hoặc kết hợp nhiều mô hình LLM (Claude, GPT, Gemini, DeepSeek, Qwen, hoặc các mô hình mã nguồn mở tự host nội bộ) phía sau cổng AI LLM Gateway mà không phải thay đổi giao diện hay đào tạo lại người dùng.
-- Cơ chế **`agent.role_models`** (`src/kiro_crew/config/sections_agent_fields.py`) cho phép tự động định tuyến các tác vụ nền (`saokhue-lite`, `saokhue-heartbeat`) sang các mô hình nhỏ chi phí thấp, trong khi giữ các mô hình mạnh nhất cho phiên hội thoại chính và phân tích chuyên sâu.
+- Cơ chế **`agent.role_models`** (`src/kiro_crew/config/sections_agent_fields.py`) cho phép tự động định tuyến các tác vụ nền (`kirocrew-lite`, `kirocrew-heartbeat`) sang các mô hình nhỏ chi phí thấp, trong khi giữ các mô hình mạnh nhất cho phiên hội thoại chính và phân tích chuyên sâu.
 
 ---
 

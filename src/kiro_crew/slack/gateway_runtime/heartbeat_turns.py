@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from kiro_crew.slack.gateway import (
         HEARTBEAT_KEY,
         HEARTBEAT_TASK_TIMEOUT_SECS,
+        UNATTENDED_MCP_WAIT_SECS,
         AgentTurnUsage,
         Any,
         Callable,
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
         _build_heartbeat_hooks,
         configured_fallback_chain,
         consume_reinjection,
+        declared_mcp_not_ready_note,
         is_keep_response,
         logger,
         note_turn_landed,
@@ -49,6 +51,7 @@ if TYPE_CHECKING:
         stop_reason_landed,
         stream_and_collect,
         strip_keep_sentinel,
+        wait_for_declared_mcp,
     )
 
 
@@ -158,15 +161,19 @@ async def _init_heartbeat(self: GatewayOrchestrator) -> None:
             # the heartbeat key to a crew and the shared session resolver
             # answers the default memory store.
             _memory_store = await session_store_for_turn(self.ctx_builder, session_key)
-            # Use the dedicated ``saokhue-heartbeat`` agent — minimal
+            # Use the dedicated ``kirocrew-heartbeat`` agent — minimal
             # MCP surface (kirocrew-core only on public installs) so cycle
             # cold-starts stay cheap.  Tool calls are still gated at
             # runtime by ``_heartbeat_approval``'s read-only allowlist.
             client, is_new, _resumed = await self.sessions.get_or_create(
                 session_key,
-                agent="saokhue-heartbeat",
+                agent="kirocrew-heartbeat",
             )
             _acquired = True
+            if is_new:
+                # Unattended: hold the first prompt (bounded) for the agent spec's
+                # MCP servers, which nobody can reconnect during a heartbeat.
+                await wait_for_declared_mcp(client, UNATTENDED_MCP_WAIT_SECS)
 
             # Prepend an unmissable HEARTBEAT_KEEP reminder to every task
             # text before message build.  This survives context
@@ -192,6 +199,9 @@ async def _init_heartbeat(self: GatewayOrchestrator) -> None:
                 memory_store=_memory_store,
                 needs_reinjection=_needs_reinjection,
                 skill_bodies_session=session_key,
+                # Triggers read the task as the operator wrote it, never the
+                # HEARTBEAT_KEEP reminder prepended above.
+                skill_trigger_text=task_text,
             )
 
             # A heartbeat turn runs unattended. Bound it with a hard deadline
@@ -234,6 +244,9 @@ async def _init_heartbeat(self: GatewayOrchestrator) -> None:
             result_text = _annotate_model_fallback(
                 result_text, client, stop_reason=_turn_stop["reason"]
             )
+            _missing = declared_mcp_not_ready_note(client)
+            if _missing:
+                result_text = f"⚠ {_missing}.\n\n{result_text}"
 
             # ── Per-turn usage row: attribute heartbeat spend. ──
             await _persist_turn_row(
@@ -241,7 +254,7 @@ async def _init_heartbeat(self: GatewayOrchestrator) -> None:
                 session_key,
                 provider=(self._cfg.agent.provider if hasattr(self, "_cfg") else "acp"),
                 surface="heartbeat",
-                agent_fallback=lambda: "saokhue-heartbeat",
+                agent_fallback=lambda: "kirocrew-heartbeat",
                 t0=_turn_t0,
                 trigger="heartbeat",
             )
@@ -273,7 +286,7 @@ async def _init_heartbeat(self: GatewayOrchestrator) -> None:
                 session_key,
                 provider=(self._cfg.agent.provider if hasattr(self, "_cfg") else "acp"),
                 surface="heartbeat",
-                agent_fallback=lambda: "saokhue-heartbeat",
+                agent_fallback=lambda: "kirocrew-heartbeat",
                 t0=_turn_t0,
                 trigger="heartbeat",
             )

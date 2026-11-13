@@ -7,7 +7,7 @@
  * fixtures they share live in KiroPrerequisiteGateTestUtils.tsx.
  */
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import type { KiroPrerequisiteStatus } from '../api/client'
 import KiroPrerequisiteGate, {
   acpBackendsRefetchInterval,
@@ -85,6 +85,19 @@ describe('KiroPrerequisiteGate', () => {
     expect(kiroPrerequisiteIsBlocking(undefined)).toBe(false)
   })
 
+  it('keeps probing while the out-of-date card blocks an established install', () => {
+    // A terminal `kiro-cli update` touches no gateway, so a latch-reading poll
+    // would hold the card until Check again.
+    const tooOld = status({ installed: true, initial_setup_complete: true, acp_supported: false })
+    expect(kiroPrerequisiteIsBlocking(tooOld, true)).toBe(true)
+    expect(kiroPrerequisiteRefetchInterval(tooOld, true)).toBe(5_000)
+    // A non-owner sees the owner screen and must not drive host probes.
+    expect(kiroPrerequisiteIsBlocking({ ...tooOld, setup_allowed: false }, true)).toBe(false)
+    // Another harness's user sees the dashboard, not the card: no forced probes.
+    expect(kiroPrerequisiteIsBlocking(tooOld, false)).toBe(false)
+    expect(kiroPrerequisiteRefetchInterval(tooOld, false)).toBe(30_000)
+  })
+
   it('polls the harness probe at the server\'s cache rate, and only behind a setup screen', () => {
     const missing = probe({ installed: 'missing' })
     // The endpoint serves a 30s cache (backend_install.CACHE_TTL_SECONDS), the
@@ -114,7 +127,7 @@ describe('KiroPrerequisiteGate', () => {
     expect(acpBackendsRefetchInterval(status({ acp_supported: false }), true, kas)).toBe(30_000)
     // KAS loads Kiro Crew's agent specs: a missing or rejected spec keeps the
     // gate on its repair card instead of opening the dashboard.
-    expect(acpBackendsRefetchInterval(status({ missing_agent_specs: ['saokhue-lite'] }), true, kas)).toBe(30_000)
+    expect(acpBackendsRefetchInterval(status({ missing_agent_specs: ['kirocrew-lite'] }), true, kas)).toBe(30_000)
     expect(acpBackendsRefetchInterval(status({ rejected_agent_specs: ['kirocrew'] }), true, kas)).toBe(30_000)
     // Only KAS takes the acp_supported rule: any other backend without
     // independent_setup keeps polling, exactly as the marker refuses it.
@@ -493,7 +506,7 @@ describe('KiroPrerequisiteGate', () => {
       ready: false,
       initial_setup_complete: true,
       repair_required: true,
-      missing_agent_specs: ['kirocrew.json', 'saokhue-lite.json'],
+      missing_agent_specs: ['kirocrew.json', 'kirocrew-lite.json'],
     }))
 
     renderWithProviders(
@@ -504,7 +517,7 @@ describe('KiroPrerequisiteGate', () => {
     expect(screen.queryByText('Dashboard loaded')).not.toBeInTheDocument()
     // Names the actual files, so the user can see what to look for on disk.
     expect(screen.getByText(/kirocrew\.json/)).toBeInTheDocument()
-    expect(screen.getByText(/saokhue-lite\.json/)).toBeInTheDocument()
+    expect(screen.getByText(/kirocrew-lite\.json/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Check again' })).toBeEnabled()
   })
 
@@ -581,7 +594,7 @@ describe('KiroPrerequisiteGate', () => {
       authenticated: true,
       initial_setup_complete: true,
       missing_agent_specs: ['kirocrew.json'],
-      rejected_agent_specs: ['saokhue-lite.json'],
+      rejected_agent_specs: ['kirocrew-lite.json'],
     }))
 
     renderWithProviders(
@@ -921,6 +934,37 @@ describe('KiroPrerequisiteGate', () => {
     expect(screen.queryByText('Dashboard loaded')).not.toBeInTheDocument()
   })
 
+  it('does not mount the app on a first run while the refused status read waits for its retry', async () => {
+    // The dashboard's own retry ladder: a session-expiry 403 gets one more try.
+    // While it waits the query is still pending, and the app's own reads (the
+    // import scan, the sidebar's settings) would be refused the same way.
+    vi.mocked(api.kiroPrerequisite).mockRejectedValue(new ApiError(403, 'session expired', '', true))
+    const { queryClient } = renderWithProviders(
+      <KiroPrerequisiteGate><div>Dashboard loaded</div></KiroPrerequisiteGate>,
+      { queryDefaults: { retry: 1, retryDelay: 60_000 } },
+    )
+    onTestFinished(() => queryClient.cancelQueries())
+
+    expect(await screen.findByRole('heading', { name: 'Sign in again to continue.' })).toBeInTheDocument()
+    expect(queryClient.getQueryState(['kiro-prerequisite'])?.status).toBe('pending')
+    expect(screen.queryByText('Dashboard loaded')).not.toBeInTheDocument()
+  })
+
+  it('keeps a returning browser on its app while the refused status read waits for its retry', async () => {
+    localStorage.setItem('kirocrew:kiro-setup-complete', '1')
+    vi.mocked(api.kiroPrerequisite).mockRejectedValue(new ApiError(403, 'session expired', '', true))
+    const { queryClient } = renderWithProviders(
+      <KiroPrerequisiteGate><div>Dashboard loaded</div></KiroPrerequisiteGate>,
+      { queryDefaults: { retry: 1, retryDelay: 60_000 } },
+    )
+    onTestFinished(() => queryClient.cancelQueries())
+
+    await waitFor(() => expect(queryClient.getQueryState(['kiro-prerequisite'])?.fetchFailureCount).toBe(1))
+    expect(queryClient.getQueryState(['kiro-prerequisite'])?.status).toBe('pending')
+    expect(screen.getByText('Dashboard loaded')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Sign in again to continue.' })).not.toBeInTheDocument()
+  })
+
   it('shows the probe diagnostic when the backend backstop degrades a probe exception to 200', async () => {
     // The backend's last-resort backstop reports an exception as a retryable
     // not-ready 200 body (never a 500), so `prerequisite` resolves and the
@@ -1075,6 +1119,32 @@ describe('KiroPrerequisiteGate', () => {
     await waitFor(() =>
       expect(localStorage.getItem('kirocrew:kiro-setup-complete')).toBe('1'),
     )
+  })
+
+  it('forgets remembered completion when the gateway says setup is not done', async () => {
+    // A reset data home: a later failed read must show the setup error, not the app.
+    localStorage.setItem('kirocrew:kiro-setup-complete', '1')
+    vi.mocked(api.kiroPrerequisite).mockResolvedValue(status())
+
+    renderWithProviders(
+      <KiroPrerequisiteGate><div>Dashboard loaded</div></KiroPrerequisiteGate>,
+    )
+
+    await waitFor(() =>
+      expect(localStorage.getItem('kirocrew:kiro-setup-complete')).toBeNull(),
+    )
+  })
+
+  it('keeps remembered completion through an LTS lock', async () => {
+    localStorage.setItem('kirocrew:kiro-setup-complete', '1')
+    vi.mocked(api.kiroPrerequisite).mockResolvedValue(status({ lts_login_required: true }))
+
+    const view = renderWithProviders(
+      <KiroPrerequisiteGate><div>Dashboard loaded</div></KiroPrerequisiteGate>,
+    )
+
+    await waitFor(() => expect(view.queryClient.getQueryState(['kiro-prerequisite'])?.status).toBe('success'))
+    expect(localStorage.getItem('kirocrew:kiro-setup-complete')).toBe('1')
   })
 
   it('still gates a genuine first run when no prior completion is remembered', async () => {

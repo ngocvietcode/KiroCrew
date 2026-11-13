@@ -77,7 +77,7 @@ describe('CrewWakeSection', () => {
 
   it('shows the empty state when nothing is bound to this crew', async () => {
     H.crons.mockResolvedValue({ jobs: [JOB] })
-    wrap(<CrewWakeSection crew="saokhue-research" memberId="saokhue-research" isDefaultCrew={false} />)
+    wrap(<CrewWakeSection crew="kirocrew-research" memberId="kirocrew-research" isDefaultCrew={false} />)
     expect(await screen.findByText(/No schedules run this agent automatically/i)).toBeTruthy()
     expect(screen.queryAllByTestId('wake-row')).toHaveLength(0)
   })
@@ -283,11 +283,11 @@ describe('CrewWakeSection — inline schedule creation', () => {
     wrap(
       <CrewWakeSection
         crew="radar" memberId="radar" agentTemplate="shared-template" ownedOnly initialAdding
-        pinnedHint="Created from this Bot's profile, so the job runs as this Bot."
+        pinnedHint="Created from this bot's profile, so the job runs as this bot."
       />,
     )
     await screen.findByTestId('crew-wake-create')
-    expect(screen.getByText("Created from this Bot's profile, so the job runs as this Bot.")).toBeTruthy()
+    expect(screen.getByText("Created from this bot's profile, so the job runs as this bot.")).toBeTruthy()
     expect(screen.queryByText(/this crew's editor/)).toBeNull()
   })
 

@@ -37,7 +37,7 @@ function normalizeName(value) {
  * enumeration happens. It exists because the two names an Electron app has are
  * different strings that neither derives from the other:
  *
- * - the DISPLAY name, `app.getName()` — `Sao Khuê`, or `Sao Khuê Nightly`;
+ * - the DISPLAY name, `app.getName()` — `Kiro Crew`, or `Kiro Crew Nightly`;
  * - the EXECUTABLE name, `path.basename(process.execPath)` — on macOS that is
  *   the bundle binary and happens to match, but `electron/package.json` sets
  *   `executableName: "kirocrew-desktop"` for Linux and Windows, and

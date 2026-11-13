@@ -4,7 +4,8 @@ failure streak that refuses a repeat, and ``POST /api/chat/slots/{slot}/end-wait
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
+from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Any
 
 from aiohttp import web
@@ -108,8 +109,14 @@ async def api_chat_slot_continue(request: web.Request) -> web.Response:
     # stopped hands that one member back. A paused root resumes from the Board.
     # Imported here: this module's functions run on chat_handlers' globals.
     import asyncio
+    import contextlib
 
     from kiro_crew import crew_mode, crew_pause
+    from kiro_crew.dashboard.handlers.crew_pause import (
+        _root_lock,
+        drain_held_queue,
+        memory_ready_for_drain,
+    )
 
     if crew_pause.root_paused(slot.key) and crew_mode.slot_is_crew_mode_root(slot):
         return web.json_response(
@@ -117,50 +124,74 @@ async def api_chat_slot_continue(request: web.Request) -> web.Response:
             status=409,
         )
     released: dict[str, dict[str, Any]] = {}
-    if not request.get("app", "") and crew_pause.holds_turn(slot.key):
-        released = await asyncio.to_thread(crew_pause.release, slot.key)
-        queue = list(slot._queue or [])
-        owed = any("stopped" in taken.get("fields", []) for taken in released.values())
-        restored = bool(queue) and all(e.get(RESTORED_QUEUE_KEY) for e in queue)
-        if queue and not slot.running and (owed or not restored):
-            # What queued while it was paused carries the thread on, as on resume.
-            # A member the pause stopped sends its first restored card too (a
-            # restart during the pause); otherwise Continue below runs over a
-            # restored queue, as it does on any interrupted chat.
-            from kiro_crew.dashboard.handlers.crew_pause import drain_held_queue
-
-            drained = await drain_held_queue(state, slot, send_restored=owed)
-            # A chosen restored card that waits (memory still preparing) is sent
-            # by the drain that follows: holding the member again would stop it.
-            if drained == "drained" or (drained == "held" and owed and restored):
-                state.push_slots_update()
+    async with contextlib.AsyncExitStack() as root_locks:
+        if not request.get("app", "") and crew_pause.holds_turn(slot.key):
+            # The release, the Continue and its rollback take the lock Pause all
+            # and Resume all take: a Resume all that dropped the record between
+            # them would leave a refused Continue no record to hold the member on.
+            started = slot._turns_started
+            for root in crew_pause.roots_naming(slot.key):
+                await root_locks.enter_async_context(_root_lock(root))
+            if slot._turns_started != started and not crew_pause.holds_turn(slot.key):
+                # The Resume all this waited behind already handed the member back.
                 return web.json_response({"ok": True, "slot": slot.key})
+            stopped_here = any(
+                slot.key in ((crew_pause.record(root) or {}).get("stopped") or [])
+                for root in crew_pause.roots_naming(slot.key)
+            )
+            if stopped_here and not await memory_ready_for_drain(state):
+                # Its card, or the Continue's own recovery entry, would only park,
+                # and a parked entry owes nothing after a restart: it stays paused,
+                # record unchanged, for Resume all.
+                return web.json_response(
+                    {
+                        "error": "this crew is paused; resume it from the Board",
+                        "code": "crew_paused",
+                    },
+                    status=409,
+                )
+            released = await asyncio.to_thread(crew_pause.release, slot.key)
+            queue = list(slot._queue or [])
+            owed = any("stopped" in taken.get("fields", []) for taken in released.values())
+            restored = bool(queue) and all(e.get(RESTORED_QUEUE_KEY) for e in queue)
+            if queue and not slot.running and (owed or not restored):
+                # What queued while it was paused carries the thread on, as on resume.
+                # A member the pause stopped sends its first restored card too (a
+                # restart during the pause); otherwise Continue below runs over a
+                # restored queue, as it does on any interrupted chat.
+                drained = await drain_held_queue(state, slot, send_restored=owed)
+                # A chosen restored card that waits behind another hold (sub-agents,
+                # an open editor) is sent by the drain that follows: holding the
+                # member again would stop it.
+                if drained == "drained" or (drained == "held" and owed and restored):
+                    state.push_slots_update()
+                    return web.json_response({"ok": True, "slot": slot.key})
 
-    try:
-        await continue_slot_turn(
-            state,
-            slot,
-            directive_user_origin=not bool(request.get("app", "")),
-            # The dashboard Resume button is a human-initiated action: allow
-            # the recovery on a slot whose queue is fully restored. The
-            # restored cards stay queued for the user to send; the drain never
-            # sends them on its own. Agent tools keep the default False.
-            allow_restored_queue=True,
-            # Same-name registration can change while the lock or child probe waits.
-            replaced=lambda: _slot_replaced_while_queued(
-                state, slot, name, request, "chat.slot_continue"
-            ),
-        )
-    except SlotContinueRefusal as exc:
-        if released:
-            # Refused (still tearing down, sub-agents attached): the pause still
-            # owes this member its hand-back, so Resume all continues it later.
-            await asyncio.to_thread(crew_pause.rehold, slot.key, released)
-        if exc.code == "slot_not_found":
-            return _slot_not_found()
-        if exc.response is not None:
-            return exc.response
-        return web.json_response({"error": exc.message, "code": exc.code}, status=exc.status)
+        try:
+            await continue_slot_turn(
+                state,
+                slot,
+                directive_user_origin=not bool(request.get("app", "")),
+                # The dashboard Resume button is a human-initiated action: allow
+                # the recovery on a slot whose queue is fully restored. The
+                # restored cards stay queued for the user to send; the drain never
+                # sends them on its own. Agent tools keep the default False.
+                allow_restored_queue=True,
+                # Same-name registration can change while the lock or child probe waits.
+                replaced=lambda: _slot_replaced_while_queued(
+                    state, slot, name, request, "chat.slot_continue"
+                ),
+            )
+        except SlotContinueRefusal as exc:
+            if released:
+                # Refused (still tearing down, sub-agents attached): the pause still
+                # owes this member its hand-back, so Resume all continues it later.
+                await asyncio.to_thread(crew_pause.rehold, slot.key, released)
+            if exc.code == "slot_not_found":
+                return _slot_not_found()
+            if exc.response is not None:
+                return exc.response
+            return web.json_response({"error": exc.message, "code": exc.code}, status=exc.status)
     return web.json_response({"ok": True, "slot": slot.key})
 
 
@@ -196,10 +227,13 @@ async def continue_slot_turn(
     slot: _ChatSlot,
     *,
     directive_user_origin: bool,
+    directive_channel_origin: bool = False,
     via: str = "",
     require_interrupted: bool = False,
     allow_restored_queue: bool = False,
     before_dispatch: Callable[[], None] | None = None,
+    prepare_dispatch: Callable[[], Awaitable[None]] | None = None,
+    dispatch_guard: Callable[[], AbstractContextManager[Any]] | None = None,
     extra_meta: dict[str, Any] | None = None,
     replaced: Callable[[], bool] | None = None,
 ) -> str:
@@ -221,7 +255,12 @@ async def continue_slot_turn(
     disk (``RESTORED_QUEUE_KEY=True``); agent tools leave it off to keep the
     original refusal. ``before_dispatch`` runs
     synchronously under the slot lock immediately before the queue insert and
-    may raise :class:`SlotContinueRefusal`. ``via`` is recorded on the
+    may raise :class:`SlotContinueRefusal`. ``prepare_dispatch`` is awaited
+    under the lock after the sub-agent probe, for a re-check that cannot run on
+    the event loop, and may raise it too. ``dispatch_guard`` wraps the final
+    synchronous stretch (before_dispatch, containment snapshot, insert).
+    ``directive_channel_origin`` stamps the recovery entry as channel text, so a
+    resumed turn keeps the channel's narrower authority. ``via`` is recorded on the
     ``dashboard_continue`` audit line when set. ``extra_meta`` is merged into
     the queue entry's ``meta`` (session control stamps the sending slot there,
     so a drain-time drop is reported back to it). ``replaced`` is checked after
@@ -291,8 +330,9 @@ async def continue_slot_turn(
         # `hold_users` gate that exists to stop exactly this (chat_runner) — the
         # hold only holds plain USER messages. A parent turn would start and
         # interleave tool calls and repository writes with its own children's
-        # completion injections. `api_chat` queues instead of dispatching for the
-        # same reason; Continue has nowhere to queue to, so it refuses.
+        # completion injections. `api_chat` holds an automated send for the
+        # same reason (the person's own composer send runs, which is their
+        # choice); Continue has nowhere to queue to, so it refuses.
         #
         # Children guard — see _subagents_attached_response for the three
         # probes and why each is load-bearing. `effective_session_key`, never
@@ -308,6 +348,14 @@ async def continue_slot_turn(
             raise SlotContinueRefusal(
                 "sub-agents are running", "slot_subagents_running", response=subagents_denied
             )
+        if prepare_dispatch is not None:
+            # After the last probe: a re-check that must await (a policy read
+            # kept off the event loop). It may raise SlotContinueRefusal; the
+            # synchronous before_dispatch below still runs with no await between
+            # it and the insert.
+            await prepare_dispatch()
+            if replaced is not None and replaced():
+                raise SlotContinueRefusal("not found", "slot_not_found", status=404)
         if not _has_conversation(slot):
             raise SlotContinueRefusal("nothing to continue", "slot_empty")
         # The same session start has already failed twice in a row with nothing
@@ -346,27 +394,43 @@ async def continue_slot_turn(
                 "turn_not_failed",
             )
         resume = _MANUAL_RESUME_MSG if interrupted else _MANUAL_CONTINUE_MSG
-        if before_dispatch is not None:
-            # Synchronous, under the lock, with no await between it and the
-            # insert below: a caller whose authority was decided before the lock
-            # (session control) re-checks it at the last point where refusing
-            # still changes nothing.
-            before_dispatch()
-        # circular import: session_control imports this package's modules at module level.
-        from kiro_crew.dashboard.session_control import containment_meta
+        # ``dispatch_guard`` (when given) is entered around the final check, the
+        # containment snapshot and the insert -- all synchronous -- and may raise
+        # SlotContinueRefusal on entry (a caller that must not wait on a lock the
+        # snapshot's readers take refuses instead of stalling the loop).
+        from contextlib import nullcontext  # this part runs on the facade's globals
 
-        # Admission stamp + provenance: recovery-kind entries are subject
-        # to drain re-validation like any other externally admitted content, and
-        # provenance follows the CALLER — the same request-identity split as
-        # api_chat. An app hitting Continue on its own slot must not gain the
-        # authenticated-human flag that gates session-mutating effects.
-        slot.queue_insert(
-            0,
-            resume,
-            kind=SYNTHETIC_RECOVERY_KIND,
-            meta={**containment_meta(state, slot), **(extra_meta or {})},
-            directive_user_origin=directive_user_origin,
-        )
+        with dispatch_guard() if dispatch_guard is not None else nullcontext():
+            if before_dispatch is not None:
+                # Synchronous, under the lock, with no await between it and the
+                # insert below: a caller whose authority was decided before the lock
+                # (session control) re-checks it at the last point where refusing
+                # still changes nothing.
+                before_dispatch()
+            # circular import: session_control imports this package's modules at module level.
+            from kiro_crew.dashboard import card_send
+            from kiro_crew.dashboard.session_control import containment_meta
+
+            # Admission stamp + provenance: recovery-kind entries are subject
+            # to drain re-validation like any other externally admitted content, and
+            # provenance follows the CALLER — the same request-identity split as
+            # api_chat. An app hitting Continue on its own slot must not gain the
+            # authenticated-human flag that gates session-mutating effects.
+            # The request being continued is a Dashboard card's: so is the continuation, with
+            # the same limits (the drain reads the mark off the entry).
+            _card_meta = (
+                {card_send.CARD_ORIGIN_META_KEY: True}
+                if card_send.latest_user_row_is_card(slot.messages)
+                else {}
+            )
+            slot.queue_insert(
+                0,
+                resume,
+                kind=SYNTHETIC_RECOVERY_KIND,
+                meta={**containment_meta(state, slot), **(extra_meta or {}), **_card_meta},
+                directive_user_origin=directive_user_origin and not _card_meta,
+                directive_channel_origin=directive_channel_origin,
+            )
 
     # The queue entry is already committed; audit failure must not strand it.
     try:

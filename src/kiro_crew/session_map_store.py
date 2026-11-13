@@ -305,6 +305,7 @@ async def _reread_after_failed_load(self: SessionMap) -> None:
             self._rebuild_thread_index()
             self._load_failed = False
             self._dirty = True  # the adopted map is ahead of the file
+            self._touch()
         logger.info("Read %s after a failed load; session-map writes resume", self._path)
 
     if self._reread_task is None:
@@ -322,7 +323,12 @@ def _save(self: SessionMap) -> None:
       that writes in a worker thread and loops until the map is clean, so a
       trailing mutation is never dropped.
     - no running loop (CLI, tests, worker threads): write inline.
+
+    Every mutator calls this AFTER its mutation, so it is also where the map's
+    ``mutation_generation`` moves (a reader keyed on it must never see the bump
+    before the change it announces).
     """
+    self._touch()
     if self._batch_depth:
         self._batch_dirty = True
         return
@@ -486,6 +492,11 @@ async def aclose(self: SessionMap) -> None:
         with _MAP_LOCK:
             if self._flush_task is None:
                 return
+
+
+def writes_refused(self: SessionMap) -> bool:
+    """Whether :func:`_load` could not read the file and no re-read has adopted it since."""
+    return self._load_failed
 
 
 @_guarded

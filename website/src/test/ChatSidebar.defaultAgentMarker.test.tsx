@@ -309,15 +309,15 @@ describe('chat sidebar — row tint survives a session switch (#17814)', () => {
 
 describe('chat sidebar session row — built-in display name (#21531)', () => {
   // The row passes the slot's recorded `agent_kind`, so only a TEMPLATE pick of
-  // `saokhue-conductor` reads "Conductor"; a same-named crewmate keeps its name.
+  // `kirocrew-conductor` reads "Conductor"; a same-named crewmate keeps its name.
   const CONDUCTOR_SLOTS: ChatSlot[] = [
-    { key: 'k-tpl', title: 'tpl', running: false, messages: 1, agent: 'saokhue-conductor', agent_kind: 'template', tags: [], last_ts: LAST_TS },
-    { key: 'k-mate', title: 'mate', running: false, messages: 1, agent: 'saokhue-conductor', agent_kind: 'member', tags: [], last_ts: LAST_TS },
+    { key: 'k-tpl', title: 'tpl', running: false, messages: 1, agent: 'kirocrew-conductor', agent_kind: 'template', tags: [], last_ts: LAST_TS },
+    { key: 'k-mate', title: 'mate', running: false, messages: 1, agent: 'kirocrew-conductor', agent_kind: 'member', tags: [], last_ts: LAST_TS },
   ] as unknown as ChatSlot[]
 
   it('shows "Conductor" for the template conductor and the name for a crewmate', () => {
     const { container } = renderSidebar({ slots: CONDUCTOR_SLOTS })
     expect(label(sessionMetaLine(container, 'tpl'))).toBe('Conductor')
-    expect(label(sessionMetaLine(container, 'mate'))).toBe('saokhue-conductor')
+    expect(label(sessionMetaLine(container, 'mate'))).toBe('kirocrew-conductor')
   })
 })

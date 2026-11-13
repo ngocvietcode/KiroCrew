@@ -64,6 +64,14 @@ class TestSsmValidation:
             with pytest.raises(SsmValidationError):
                 validate_aws_region(bad)
 
+    @pytest.mark.parametrize("region", ["us-east-\uff11", "us-east-\u0661", "eu-west-\u0662\u0663"])
+    def test_region_refuses_non_ascii_digits(self, region):
+        """Python's ``\\d`` matches any Unicode digit; AWS region names are ASCII."""
+        from kiro_crew.instances.validation import SsmValidationError, validate_aws_region
+
+        with pytest.raises(SsmValidationError):
+            validate_aws_region(region)
+
     def test_ssm_run_as_accepts_unix_usernames_and_defaults_when_empty(self):
         """Empty means "the default user", never an empty ``sudo -u``."""
         from kiro_crew.instances.validation import validate_ssm_run_as
@@ -463,6 +471,19 @@ class TestSsmRegistry:
         with pytest.raises(InvalidInstanceError):
             reg.add(name="Bogus", connection_method="telnet", ssh_host="h")
 
+    def test_add_refuses_a_region_with_non_ascii_digits(self, tmp_path):
+        """The record check agrees with ``validate_aws_region``: ASCII digits only."""
+        from kiro_crew.instances.registry import InvalidInstanceError
+
+        reg = self._reg(tmp_path)
+        with pytest.raises(InvalidInstanceError):
+            reg.add(
+                name="Wide",
+                connection_method="ssm",
+                ssm_target="i-0123456789abcdef0",
+                aws_region="us-east-\uff11",
+            )
+
     def test_update_can_switch_method(self, tmp_path):
         reg = self._reg(tmp_path)
         reg.add(name="Dev", ssh_host="dev-1", instance_id="dev")
@@ -828,6 +849,34 @@ class TestSsmTunnelProcessGroup:
         child_path = seen["env"]["PATH"].split(os.pathsep)
         assert child_path.index(str(inherited)) < child_path.index(str(install_dir))
 
+    @pytest.mark.asyncio
+    async def test_ssm_child_gets_no_python_interpreter_settings(self, monkeypatch):
+        """aws-cli v1 is Python: the gateway's PYTHONPATH/PYTHONHOME must not reach it.
+
+        Everything else ``tool_spawn_env`` builds, the widened PATH included, still does.
+        """
+        import kiro_crew.instances.ssh_tunnel_manager as mod
+
+        seen = {}
+
+        async def fake_exec(*argv, **kw):
+            seen.update(kw)
+            raise OSError("stop here — we only care about the spawn kwargs")
+
+        spawn_env = {
+            "PATH": "<widened>",
+            "PYTHONPATH": "<gw>",
+            "PYTHONHOME": "<gw>",
+            "AWS_PROFILE": "k",
+        }
+        monkeypatch.setattr(mod, "tool_spawn_env", lambda head: dict(spawn_env))
+        monkeypatch.setattr(mod.asyncio, "create_subprocess_exec", fake_exec)
+        monkeypatch.setattr(mod.platform_compat, "IS_POSIX", True)
+
+        await self._tunnel("ssm").start()
+
+        assert seen["env"] == {"PATH": "<widened>", "AWS_PROFILE": "k"}
+
     def test_teardown_routes_through_the_platform_shim(self, monkeypatch):
         """Not raw os.killpg — that leaves the plugin alive on Windows."""
         import kiro_crew.instances.ssh_tunnel_manager as mod
@@ -1109,6 +1158,9 @@ class TestSsmTransportSelection:
         st = await mgr.connect("ec2")
         assert st.state == TunnelState.ERROR
         assert "session-manager-plugin" in st.error
+        # The dashboard shows this (Connect in Settings, Retry in the crew panel), not a CLI.
+        assert "then connect again:" in st.error
+        assert "kirocrew cloud connect" not in st.error
         # No tunnel was spawned for a missing prerequisite.
         assert mgr.status("ec2") is None
         await mgr.shutdown()
@@ -1293,7 +1345,7 @@ class TestSsmDiagnostics:
         import kiro_crew.instances.diagnostics as diag
 
         async def no_node(*a, **k):
-            return False
+            return diag._NODE_UNREACHABLE
 
         monkeypatch.setattr(diag, "_probe_ssm_managed", no_node)
         res = await diag.diagnose_instance_ssm("i-0123456789abcdef0", 7777, 7777)
@@ -1303,23 +1355,107 @@ class TestSsmDiagnostics:
         assert "ssh" not in res.reason.lower()
 
     @pytest.mark.asyncio
+    async def test_unlisted_node_is_target_missing_not_unreachable(self, monkeypatch):
+        """A replaced instance's old id is reported as gone, not as offline.
+
+        After an Auto Scaling instance refresh the row keeps the old ``ssm_target``.
+        SSM lists no node with that id (``[0].PingStatus`` prints ``None``), and
+        the ladder reports ``ssm_target_missing`` rather than ``ssm_unreachable``
+        with its "check the SSM agent" advice. Driven through the real ``cloud.ssm`` read with a fake
+        ``run_aws``, so the whole first rung is exercised without AWS.
+        """
+        import kiro_crew.instances.diagnostics as diag
+        from kiro_crew.cloud import aws, ssm
+
+        calls: list[list[str]] = []
+
+        def fake_run_aws(argv, profile="", region=""):
+            calls.append(list(argv))
+            return 0, "None\n", ""
+
+        monkeypatch.setattr(aws, "run_aws", fake_run_aws)
+        res = await diag.diagnose_instance_ssm(
+            "i-0123456789abcdef0", 7777, 7777, aws_profile="dev", aws_region="us-east-1"
+        )
+        assert res.code == diag.SSM_TARGET_MISSING == "ssm_target_missing"
+        assert res.ok is False
+        assert res.probes == [{"name": "ssm_managed_node", "ok": False}]
+        assert "replaced" in res.reason and "SSM target" in res.reason
+        # A running instance whose agent never registered lists no node either.
+        assert "instance profile" in res.reason
+        assert "ssh" not in res.reason.lower()
+        # One read, the same one the rung always made: no new AWS call.
+        assert len(calls) == 1
+        assert calls[0][:2] == ["ssm", "describe-instance-information"]
+        assert ssm.NODE_NOT_REGISTERED == ssm.managed_node_ping_status("i-0123456789abcdef0")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("rc", "out"),
+        [(0, "ConnectionLost\n"), (0, "Inactive\n"), (0, ""), (255, ""), (254, "None\n")],
+    )
+    async def test_listed_offline_or_failed_read_stays_unreachable(self, monkeypatch, rc, out):
+        """Only a SUCCESSFUL read that prints ``None`` means missing.
+
+        A listed node whose agent is offline, a read that printed nothing, and a
+        read that failed (credentials, IAM denial, bad region) establish nothing
+        about the node's existence, so they keep ``ssm_unreachable``.
+        """
+        import kiro_crew.instances.diagnostics as diag
+        from kiro_crew.cloud import aws
+
+        monkeypatch.setattr(aws, "run_aws", lambda *a, **k: (rc, out, "err"))
+        res = await diag.diagnose_instance_ssm("i-0123456789abcdef0", 7777, 7777)
+        assert res.code == diag.SSM_UNREACHABLE
+
+    @pytest.mark.parametrize(
+        ("rc", "out", "expected"),
+        [
+            (0, "Online\n", "Online"),
+            (0, "ConnectionLost\n", "ConnectionLost"),
+            (0, "None\n", "NotRegistered"),
+            (0, "", None),
+            (0, "  \n", None),
+            (255, "", None),
+            (254, "None\n", None),
+        ],
+    )
+    def test_managed_node_ping_status_answers(self, monkeypatch, rc, out, expected):
+        from kiro_crew.cloud import aws, ssm
+
+        monkeypatch.setattr(aws, "run_aws", lambda *a, **k: (rc, out, ""))
+        assert ssm.managed_node_ping_status("i-0123456789abcdef0") == expected
+        assert ssm.instance_is_managed("i-0123456789abcdef0") is (expected == "Online")
+
+    @pytest.mark.asyncio
+    async def test_probe_exception_is_unreachable(self, monkeypatch):
+        import kiro_crew.instances.diagnostics as diag
+        from kiro_crew.cloud import ssm
+
+        def boom(*a, **k):
+            raise RuntimeError("dispatch failed")
+
+        monkeypatch.setattr(ssm, "managed_node_ping_status", boom)
+        assert await diag._probe_ssm_managed("i-0123456789abcdef0") == diag._NODE_UNREACHABLE
+
+    @pytest.mark.asyncio
     async def test_remote_down_then_not_connected_then_ok(self, monkeypatch):
         import kiro_crew.instances.diagnostics as diag
 
         async def node_ok(*a, **k):
-            return True
+            return diag._NODE_ONLINE
 
         monkeypatch.setattr(diag, "_probe_ssm_managed", node_ok)
 
         async def dash_down(*a, **k):
-            return False
+            return diag.REMOTE_DOWN, diag._SSM_REASONS[diag.REMOTE_DOWN]
 
         monkeypatch.setattr(diag, "_probe_remote_dashboard_ssm", dash_down)
         res = await diag.diagnose_instance_ssm("i-0123456789abcdef0", 7777, 7777)
         assert res.code == diag.REMOTE_DOWN
 
         async def dash_ok(*a, **k):
-            return True
+            return diag.OK, ""
 
         monkeypatch.setattr(diag, "_probe_remote_dashboard_ssm", dash_ok)
         # local_port == 0 -> never connected (not a broken tunnel)
@@ -1338,6 +1474,12 @@ class TestSsmDiagnostics:
         import kiro_crew.instances.diagnostics as diag
 
         res = await diag.diagnose_instance_ssm("-oProxyCommand=evil", 7777, 7777)
+        assert res.code == diag.UNKNOWN
+        assert res.probes == []
+        # remote_bin reaches the remote shell, so it is validated before any dispatch too.
+        res = await diag.diagnose_instance_ssm(
+            "i-0123456789abcdef0", 7777, 7777, remote_bin="$(id)"
+        )
         assert res.code == diag.UNKNOWN
         assert res.probes == []
 
@@ -1372,6 +1514,16 @@ class TestSsmExitErrorClassification:
         t = self._tunnel("")
         t._probe_failed = True
         assert "health probe failed" in t._exit_error(0)
+
+    def test_target_not_connected_names_a_replaced_instance(self):
+        """StartSession's error for a replaced instance's old id is the same
+        as for an offline agent, so the message names both and points at Diagnose."""
+        msg = self._tunnel(
+            "An error occurred (TargetNotConnected) when calling the StartSession "
+            "operation: i-0123456789abcdef0 is not connected."
+        )._exit_error(255)
+        assert "not a connected managed node" in msg
+        assert "replaced" in msg and "SSM target" in msg and "Diagnose shows" in msg
 
     def test_ssh_classification_unchanged(self):
         """Regression guard: the ssh classifier still owns ssh instances."""

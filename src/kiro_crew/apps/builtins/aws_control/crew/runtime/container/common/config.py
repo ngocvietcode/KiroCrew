@@ -55,8 +55,8 @@ CONTROL_SECRET_HEADER = "X-SMC-Control-Secret"
 
 # The namespace every installed crew spec lives in, as a filename stem AND as the
 # spec's declared ``name``. Kiro Crew derives specs of its own into the same directory
-# -- ``kirocrew.json``, ``saokhue-lite.json`` and the ``saokhue-worker.json`` mirror
-# it rebuilds from the default -- and a crew called ``saokhue-worker`` is not
+# -- ``kirocrew.json``, ``kirocrew-lite.json`` and the ``kirocrew-worker.json`` mirror
+# it rebuilds from the default -- and a crew called ``kirocrew-worker`` is not
 # hypothetical: it is the crew this deployment ships. Without a namespace the install
 # lands ON the mirror, and the next spawn-path re-derivation replaces the shared crew's
 # prompt and tools with Kiro Crew's own, with no error.

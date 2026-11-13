@@ -189,23 +189,31 @@ _HISTORY_DASHBOARD_VERBS: frozenset[str] = frozenset(
 # ledger verbs were on the goal AND pipeline conductors for one release before the
 # ledger flow moved to its own spec, and came back to the goal conductor with
 # ``work_brief`` when it took the alias's spec over; they are the base every
-# conductor ships; ``work_report`` is the
-# WORKER's verb and no conductor has ever shipped it, so it is nobody's to drop.
+# conductor ships. ``work_report``, the worker's verb, joined them so a
+# nested conductor reports without a prompt; the pipeline and security
+# conductors have never shipped it.
 _HISTORY_WORK_VERBS: frozenset[str] = frozenset(
     {
         "@kirocrew-work/work_ledger_read",
         "@kirocrew-work/work_ledger_record",
         "@kirocrew-work/work_brief",
+        "@kirocrew-work/work_report",
     }
 )
+#: The goal conductor's fixed checks: ``accept_eval`` (``mcp_work.CHECK_TOOLS``)
+#: and the retired ``patrol_budget``, kept here so an existing install drops it
+#: (rfc-permanent-patrol.md: a work-ledger patrol has no bound to check).
+_HISTORY_CHECK_VERBS: frozenset[str] = frozenset(
+    {"@kirocrew-work/accept_eval", "@kirocrew-work/patrol_budget"}
+)
 #: Spec name -> every ``allowedTools`` grant any release has shipped on it. Retired
-#: today: the goal conductor's bare ``@kirocrew-core``. Beyond each spec's current
-#: tuple the table holds exactly that entry (pinned by test), so an entry can join
-#: it only as a grant some release is shown to have shipped. The pipeline
+#: today: the goal conductor's bare ``@kirocrew-core`` and ``patrol_budget``. Beyond
+#: each spec's current tuple the table holds exactly those entries (pinned by test),
+#: so an entry can join it only as a grant some release is shown to have shipped. The pipeline
 #: conductor's two work-ledger verbs were shipped for one release, retired, and are
 #: shipped again as the base every conductor holds.
 _SHIPPED_GRANT_HISTORY: dict[str, frozenset[str]] = {
-    "saokhue-conductor": (
+    "kirocrew-conductor": (
         frozenset({"session", "report", "tool_search", "@kirocrew-core"})
         | _HISTORY_CORE_VERBS
         | {"@kirocrew-core/select_crew", "@kirocrew-core/reset_conversation"}
@@ -213,8 +221,9 @@ _SHIPPED_GRANT_HISTORY: dict[str, frozenset[str]] = {
         | {"@kirocrew-dashboard/chat_folder_file_self"}
         | _HISTORY_WORK_VERBS
         | {"@kirocrew-work/work_ledger_rebuild"}
+        | _HISTORY_CHECK_VERBS
     ),
-    "saokhue-ledger-conductor": (
+    "kirocrew-ledger-conductor": (
         frozenset({"session", "report", "tool_search"})
         | _HISTORY_CORE_VERBS
         | {"@kirocrew-core/select_crew", "@kirocrew-core/reset_conversation"}
@@ -222,14 +231,15 @@ _SHIPPED_GRANT_HISTORY: dict[str, frozenset[str]] = {
         | {"@kirocrew-dashboard/chat_folder_file_self"}
         | _HISTORY_WORK_VERBS
         | {"@kirocrew-work/work_ledger_rebuild"}
+        | _HISTORY_CHECK_VERBS
     ),
-    "saokhue-pipeline-conductor": (
+    "kirocrew-pipeline-conductor": (
         frozenset({"session", "report", "tool_search"})
         | _HISTORY_CORE_VERBS
         | _HISTORY_DASHBOARD_VERBS
         | {"@kirocrew-work/work_ledger_read", "@kirocrew-work/work_ledger_record"}
     ),
-    "saokhue-security-conductor": (
+    "kirocrew-security-conductor": (
         frozenset({"session", "report", "tool_search"})
         | _HISTORY_CORE_VERBS
         | _HISTORY_DASHBOARD_VERBS
@@ -639,8 +649,8 @@ def _conductor_spec(
     when the spec on disk is the user's and unreadable, and must be left in place
     rather than replaced (``_governed_grants``).
 
-    ``saokhue-conductor`` and its deprecated alias
-    ``saokhue-ledger-conductor`` differ in ``name`` and ``description`` and in
+    ``kirocrew-conductor`` and its deprecated alias
+    ``kirocrew-ledger-conductor`` differ in ``name`` and ``description`` and in
     nothing else, and that is enforced here rather than trusted: two installers
     that each hand-built the same list are exactly where a grant lands on one
     spec and not the other, and the alias exists so an in-flight session keeps
@@ -679,9 +689,11 @@ def _conductor_spec(
     ``session_send`` (runs text as a peer's turn) and ``chat_folder_move_session``
     (writes a peer session's ``folder_id``) are withheld, because the conductor
     ingests untrusted content by design and the server-side gates bound which
-    target is reachable, not what is done to it. ``work_report`` is withheld on
-    the same rule: it writes into a PARENT's record, across a dispatch
-    relationship.
+    target is reachable, not what is done to it. A send or close into a session
+    the conductor itself created is instead auto-approved at approval time
+    (``_conductor_own_child_call`` in ``dashboard/chat_turn/tool_approval.py``).
+    ``work_report`` is granted: it writes only the caller's own bound item, as it
+    does for every worker.
 
     ``execute_bash`` is withheld for a different reason that is worth keeping
     distinct: ``allowedTools`` is name-scoped with no argument matching, so
@@ -777,15 +789,15 @@ def _conductor_spec(
 
 
 def _install_conductor_agent(*, clean: bool = False) -> bool:
-    """Generate and install the saokhue-conductor agent config.
+    """Generate and install the kirocrew-conductor agent config.
 
     THE conductor: it owns a goal, and it tracks that goal in the work ledger.
-    The ledger flow shipped on a separate ``saokhue-ledger-conductor`` spec
+    The ledger flow shipped on a separate ``kirocrew-ledger-conductor`` spec
     first so that migrating every existing conductor user was a decision and not
     a side effect, and the decision has now been taken — the flow ran end to end
     (7 items across 3 rounds, each acceptance settled by the evaluator rather
     than by a transcript read), so it is what this spec emits.
-    ``saokhue-ledger-conductor`` stays for one release as a deprecated alias
+    ``kirocrew-ledger-conductor`` stays for one release as a deprecated alias
     emitting this same spec under its old name, because an in-flight session
     names its agent by string and a deleted name is a broken session.
 
@@ -809,7 +821,7 @@ def _install_conductor_agent(*, clean: bool = False) -> bool:
     path = agents_dir / _CONDUCTOR_AGENT_FILENAME
     with agent_mod.agents_spec_lock(agents_dir):
         config = _conductor_spec(
-            name="saokhue-conductor",
+            name="kirocrew-conductor",
             description=(
                 "Owns a long-horizon goal and tracks it in the work ledger: "
                 "decomposes it into items, dispatches one session per item, reads "
@@ -839,14 +851,14 @@ def _install_conductor_agent(*, clean: bool = False) -> bool:
 #: ``docs/request-for-change/rfc-conductor-work-ledger.md``, "What retired
 #: means for the name").
 DEPRECATED_AGENT_SPECS: dict[str, str] = {
-    "saokhue-ledger-conductor": "saokhue-conductor",
+    "kirocrew-ledger-conductor": "kirocrew-conductor",
 }
 
 
 def _install_ledger_conductor_agent(*, clean: bool = False) -> bool:
-    """Install the deprecated ``saokhue-ledger-conductor`` alias spec.
+    """Install the deprecated ``kirocrew-ledger-conductor`` alias spec.
 
-    The ledger flow is ``saokhue-conductor`` now, and this name is kept for one
+    The ledger flow is ``kirocrew-conductor`` now, and this name is kept for one
     release because it is a public, user-facing string: it is what a running
     session records as its agent, what a seed prompt names for a second-level
     conductor, and what an operator typed into a cron. Deleting it in the same
@@ -862,9 +874,9 @@ def _install_ledger_conductor_agent(*, clean: bool = False) -> bool:
     path = agents_dir / _LEDGER_CONDUCTOR_AGENT_FILENAME
     with agent_mod.agents_spec_lock(agents_dir):
         config = _conductor_spec(
-            name="saokhue-ledger-conductor",
+            name="kirocrew-ledger-conductor",
             description=(
-                "Deprecated alias of saokhue-conductor (removed next release). "
+                "Deprecated alias of kirocrew-conductor (removed next release). "
                 "Owns a long-horizon goal and tracks it in the work ledger: "
                 "decomposes it into items, dispatches one session per item, reads "
                 "their reported status as data rather than as a transcript, "
@@ -883,7 +895,7 @@ def _install_ledger_conductor_agent(*, clean: bool = False) -> bool:
 
 
 def _install_pipeline_conductor_agent(*, clean: bool = False) -> bool:
-    """Generate and install the saokhue-pipeline-conductor agent config.
+    """Generate and install the kirocrew-pipeline-conductor agent config.
 
     Follows ``_install_conductor_agent`` above deliberately — one standalone
     installer per generated agent is the file's established pattern — and
@@ -901,7 +913,7 @@ def _install_pipeline_conductor_agent(*, clean: bool = False) -> bool:
     free-form goal.
     """
     config = agent_mod.build_agent_config()
-    config["name"] = "saokhue-pipeline-conductor"
+    config["name"] = "kirocrew-pipeline-conductor"
     config["description"] = (
         "Runs one repository pipeline as a supervised fleet: picks up queued "
         "work items, dispatches one worker session per item, probes and "
@@ -939,7 +951,7 @@ def _install_pipeline_conductor_agent(*, clean: bool = False) -> bool:
     with agent_mod.agents_spec_lock(agents_dir):
         granted = _governed_grants(
             shipped,
-            name="saokhue-pipeline-conductor",
+            name="kirocrew-pipeline-conductor",
             filename=_PIPELINE_CONDUCTOR_AGENT_FILENAME,
             source="_install_pipeline_conductor_agent",
             clean=clean,
@@ -948,7 +960,7 @@ def _install_pipeline_conductor_agent(*, clean: bool = False) -> bool:
             return False
         config["allowedTools"] = granted
         config["mcpServers"] = _conductor_mcp_servers(config)
-        _merge_template_additions(config, "saokhue-pipeline-conductor")
+        _merge_template_additions(config, "kirocrew-pipeline-conductor")
         # The shared tail derives the KAS policy from the filtered grant list, on the
         # same derive-don't-restate rationale as the conductor above.
         auto_approve.write_governed_spec(path, config, source="_install_pipeline_conductor_agent")
@@ -957,7 +969,7 @@ def _install_pipeline_conductor_agent(*, clean: bool = False) -> bool:
 
 
 def _install_security_conductor_agent(*, clean: bool = False) -> bool:
-    """Generate and install the saokhue-security-conductor agent config.
+    """Generate and install the kirocrew-security-conductor agent config.
 
     A third standalone installer, following ``_install_pipeline_conductor_agent``
     above for the same reason that one follows ``_install_conductor_agent`` — one
@@ -996,7 +1008,7 @@ def _install_security_conductor_agent(*, clean: bool = False) -> bool:
     ``security-conductor`` skill's ledger scripts as the detail behind that row.
     """
     config = agent_mod.build_agent_config()
-    config["name"] = "saokhue-security-conductor"
+    config["name"] = "kirocrew-security-conductor"
     config["description"] = (
         "Runs one security audit as a supervised fleet: decomposes a target "
         "into attack surfaces, dispatches one auditor session per surface and "
@@ -1032,7 +1044,7 @@ def _install_security_conductor_agent(*, clean: bool = False) -> bool:
     with agent_mod.agents_spec_lock(agents_dir):
         granted = _governed_grants(
             shipped,
-            name="saokhue-security-conductor",
+            name="kirocrew-security-conductor",
             filename=_SECURITY_CONDUCTOR_AGENT_FILENAME,
             source="_install_security_conductor_agent",
             clean=clean,
@@ -1041,7 +1053,7 @@ def _install_security_conductor_agent(*, clean: bool = False) -> bool:
             return False
         config["allowedTools"] = granted
         config["mcpServers"] = _conductor_mcp_servers(config)
-        _merge_template_additions(config, "saokhue-security-conductor")
+        _merge_template_additions(config, "kirocrew-security-conductor")
         # The shared tail derives the KAS policy from the FILTERED grant list rather
         # than restating it, so a ceiling that strips a grant strips its KAS rule too.
         auto_approve.write_governed_spec(path, config, source="_install_security_conductor_agent")

@@ -133,17 +133,17 @@ function populatedBundle(overrides: Record<string, unknown> = {}) {
         by_id: {
           'sub-1': {
             agent_id: 'sub-1', seq_spawned: 1200,
-            agent: 'saokhue-worker', model: 'a-model',
+            agent: 'kirocrew-worker', model: 'a-model',
             outcome: 'completed', ms: 41000, credits: 1.75, reason: '',
           },
           'sub-2': {
             agent_id: 'sub-2', seq_spawned: 1400,
-            agent: 'saokhue-worker', model: 'a-model',
+            agent: 'kirocrew-worker', model: 'a-model',
             outcome: 'stopped', ms: 900, credits: null, reason: 'kill failed: pid 8821 still alive',
           },
           'sub-3': {
             agent_id: 'sub-3', seq_spawned: 1830,
-            agent: 'saokhue-knowledge', model: 'a-model',
+            agent: 'kirocrew-knowledge', model: 'a-model',
             outcome: null, ms: null, credits: null, reason: '',
           },
         },
@@ -711,7 +711,7 @@ describe('CrewLogTab', () => {
     for (let i = 4; i <= 17; i += 1) {
       byId[`sub-${i}`] = {
         agent_id: `sub-${i}`, seq_spawned: 1830 + i,
-        agent: 'saokhue-worker', model: 'a-model',
+        agent: 'kirocrew-worker', model: 'a-model',
         outcome: 'completed', ms: 1000, credits: 0.5, reason: '',
       }
     }
@@ -821,7 +821,7 @@ describe('CrewLogTab', () => {
     fireEvent.click(screen.getByText('Subagents'))
     const all = [...screen.getByText('subagent').closest('table')!.querySelectorAll('tbody tr')]
     const cells = all.filter(tr => tr.querySelectorAll('td').length === 5)[2].querySelectorAll('td')
-    expect(cells[0].getAttribute('title')).toBe('saokhue-knowledge')
+    expect(cells[0].getAttribute('title')).toBe('kirocrew-knowledge')
     expect(cells[1].getAttribute('title')).toBe('a-model')
   })
 

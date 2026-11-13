@@ -35,12 +35,12 @@ i18next.addResource('en', 'translation', 'test.updating_product', 'Updating {{pr
 describe('productName interpolation variable', () => {
   it('defaults to the stock product name', () => {
     expect(i18next.options.interpolation?.defaultVariables).toMatchObject({
-      productName: 'Sao Khuê',
+      productName: 'Kiro Crew',
     })
   })
 
-  it('renders a placeholder-bearing value identically to the default literal', () => {
-    expect(i18next.t('test.updating_product')).toBe('Updating Sao Khuê…')
+  it('renders a placeholder-bearing value identically to the old literal', () => {
+    expect(i18next.t('test.updating_product')).toBe('Updating Kiro Crew…')
   })
 
   it('lets a call-time variable win over the default', () => {
@@ -48,9 +48,9 @@ describe('productName interpolation variable', () => {
   })
 
   it('keeps the update-restart handoff copy rebrandable', () => {
-    const copy = i18next.t('pages.settings.aboutPanel.installing_quiet_note', { productName: 'Acme' })
+    const copy = i18next.t('components.updateModal.armed_installs_on_quit', { productName: 'Acme' })
     expect(copy).toContain('Acme')
-    expect(copy).not.toContain('Sao Khuê')
+    expect(copy).not.toContain('Kiro Crew')
   })
 
   it('refuses a late override rather than half-applying it', () => {

@@ -144,7 +144,7 @@ def member_has_mate_tools(member: str) -> bool:
 #: The built-ins that write a file, in kiro-cli's names: governance's write class
 #: (``platform.governance.BUILTIN_TOOL_SCOPES`` files ``code`` there beside
 #: ``fs_write``, since it edits files as well as shelling out). The shell is not
-#: one: a template that mounts it with no writer (``saokhue-conductor``) mounts it
+#: one: a template that mounts it with no writer (``kirocrew-conductor``) mounts it
 #: for named scripts, and text that sent a crewmate there to keep a file would talk
 #: it past that template's no-write property.
 _FILE_WRITE_TOOLS = frozenset({"fs_write", "code"})
@@ -298,6 +298,19 @@ def binding_has_ledger_tools(binding: Any) -> bool:
     except Exception:
         logger.debug("chat spec unreadable; keeping the no-ledger wording", exc_info=True)
         return False
+
+
+def member_has_ledger_tools(member: str) -> bool:
+    """:func:`binding_has_ledger_tools` for the configured crewmate *member*; False
+    when the config is unreadable, as an unreadable spec is. Blocking IO."""
+    from kiro_crew.config.loader import KiroCrewConfig
+
+    try:
+        binding = KiroCrewConfig.load().agents.get(member)
+    except Exception:
+        logger.debug("config unreadable; keeping the no-ledger wording", exc_info=True)
+        return False
+    return binding_has_ledger_tools(binding)
 
 
 def grant_mate_tools_to_new_member(

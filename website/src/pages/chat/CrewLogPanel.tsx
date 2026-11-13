@@ -713,7 +713,7 @@ function SubagentsBody({ value }: { value: Record<string, unknown> }) {
               <tr>
                 {/* Both cells truncate, and a truncated name with no recovery is a name the
                     reader cannot read at all: agent templates and model ids are long and
-                    differ in their TAILS (`saokhue-worker` / `kirocrew-writer-critic`), so
+                    differ in their TAILS (`kirocrew-worker` / `kirocrew-writer-critic`), so
                     an ellipsis can hide the part that identifies the row. The full value is
                     the element's own `title`, which is where the rest of this panel puts a
                     value it had to shorten. */}

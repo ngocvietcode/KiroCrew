@@ -231,7 +231,7 @@ _USER_TOKEN_RE = re.compile(r"/[a-z][a-z0-9-]*")
 # pins this set against every source.
 _RESERVED_TOKENS = frozenset(QUICK_PROMPTS) | frozenset("""
     /agent /agents /bg /btw /cancel /changelog /chat /clear /code /commands
-    /compact /context /cron /crons /dashboard /editor /exit /experiment /goal
+    /compact /context /cron /crons /dashboard /editor /exit /experiment /fork /goal
     /help /hooks /incognito /init /issue /kb /kirocrew /link /logdump /mcp
     /model /models /new /onboarding /paste /ping /prompts /q /queue /quit
     /reply /reset /review /security-review /session /sessions /side /spawn
@@ -305,4 +305,22 @@ def user_quick_prompt_menu() -> list[dict[str, str]]:
     tokens = sorted({f"/{path.stem.lower()}" for path in _user_prompts_dir().glob("*.md")})
     return [
         {"name": t, "description": p.description} for t in tokens if (p := user_quick_prompt(t))
+    ]
+
+
+def reserved_user_prompts() -> list[Path]:
+    """The opted-in prompts in ``~/.kiro/prompts`` that a built-in command shadows.
+
+    A file named after a reserved token never expands and has no menu row, so
+    ``kirocrew doctor`` names it and asks for a rename. A directory scan.
+    """
+    prompts_dir = _user_prompts_dir()
+    try:
+        root = str(prompts_dir.resolve())
+    except (OSError, RuntimeError):
+        return []
+    return [
+        path
+        for path in sorted(prompts_dir.glob("*.md"))
+        if f"/{path.stem.lower()}" in _RESERVED_TOKENS and _read_user_prompt(path, root)
     ]

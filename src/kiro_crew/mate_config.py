@@ -153,8 +153,8 @@ def write_mate_config(mate_id: str) -> Path:
     """Write *mate_id*'s crewmate file as the RFC §5.4 minimal file: its identity
     and empty additions.
 
-    The worker base (``saokhue-mate-worker``) and the chat conductor
-    (``saokhue-mate-conductor``) are source-defined, so a new mate gets its
+    The worker base (``kirocrew-mate-worker``) and the chat conductor
+    (``kirocrew-mate-conductor``) are source-defined, so a new mate gets its
     baseline capabilities from them at projection time, and the file holds only
     what the owner later adds (Add abilities). No agent file on disk is read: a
     new crewmate is the source-defined worker exactly, so neither the machine's

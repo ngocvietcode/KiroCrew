@@ -320,7 +320,7 @@ describe('MembersPage Profile card Schedules tab', () => {
     vi.mocked(api.crons).mockResolvedValue({ jobs: [] } as never)
     await openCrewmate()
     const list = await openSchedulesTab()
-    expect(await within(list).findByTestId('crew-schedule-empty')).toHaveTextContent(/Nothing wakes this Bot on its own yet/i)
+    expect(await within(list).findByTestId('crew-schedule-empty')).toHaveTextContent(/Nothing wakes this bot on its own yet/i)
     // No `0` anywhere — not on the rail, not in the list.
     expect(screen.queryByTestId('member-schedules-count')).toBeNull()
     expect(within(screen.getByTestId('crew-profile-tabs')).queryByText('0')).toBeNull()
@@ -346,7 +346,7 @@ describe('MembersPage Profile card Schedules tab', () => {
     // The failed read is handled once the list draws its error line; the empty line is withheld with it.
     await screen.findByTestId('crew-schedule-error')
     expect(within(list).queryByTestId('crew-schedule-empty')).toBeNull()
-    expect(list).not.toHaveTextContent(/Nothing wakes this Bot/i)
+    expect(list).not.toHaveTextContent(/Nothing wakes this bot/i)
   })
 
   it('a row opens that job on the Schedule page; the footer opens the page itself', async () => {
@@ -402,11 +402,11 @@ describe('MembersPage Profile card — New schedule', () => {
     // second "What wakes this crewmate" and no second close control under the bar.
     expect(section).toHaveAttribute('data-chromeless', 'true')
     expect(within(section).queryByTestId('crew-wake-add')).toBeNull()
-    expect(within(page).queryByText('What wakes this Bot')).toBeNull()
+    expect(within(page).queryByText('What wakes this bot')).toBeNull()
     expect(within(page).queryAllByRole('button', { name: /cancel new schedule/i })).toHaveLength(0)
     // The form's pinned-crew hint speaks this page's noun: the reader is on the
     // crewmate's Profile, not in the crew editor the editor's sentence names.
-    expect(within(section).getByText("Created from this Bot's profile, so the job runs as this Bot.")).toBeInTheDocument()
+    expect(within(section).getByText("Created from this bot's profile, so the job runs as this bot.")).toBeInTheDocument()
     expect(within(section).queryByText(/this crew's editor/)).toBeNull()
     // A clean form: back pops to the list with no question asked.
     fireEvent.click(screen.getByTestId('crew-profile-back'))
@@ -422,7 +422,7 @@ describe('MembersPage Profile card — New schedule', () => {
     // `/schedule` labels the job by. `member_id` is the roster row's NAME, never a
     // derived id: slugification is lossy and a derived id can collide.
     mockRoster([row({
-      name: 'radar', slug: 'radar', slot_key: 'member-radar', kiro_agent: 'saokhue-worker',
+      name: 'radar', slug: 'radar', slot_key: 'member-radar', kiro_agent: 'kirocrew-worker',
       memory_version: 2, memory_owner: 'radar',
     })])
     renderWithProviders(<NavigationLeaveGuardProvider><MembersPage /><LeaveProbe /></NavigationLeaveGuardProvider>)
@@ -436,11 +436,11 @@ describe('MembersPage Profile card — New schedule', () => {
 
     await waitFor(() => expect(api.createCron).toHaveBeenCalled())
     const submitted = vi.mocked(api.createCron).mock.calls[0][0] as { agent?: string; member_id?: string }
-    expect(submitted.agent).toBe('saokhue-worker')
+    expect(submitted.agent).toBe('kirocrew-worker')
     expect(submitted.member_id).toBe('radar')
     // And the record the server would keep is listed back under this crewmate.
     expect(wakesCrew(
-      { id: 'j-new', name: 'Check the board', member_id: 'radar', agent: 'saokhue-worker' } as never,
+      { id: 'j-new', name: 'Check the board', member_id: 'radar', agent: 'kirocrew-worker' } as never,
       'radar', false, 'radar',
     )).toBe(true)
   })
@@ -451,7 +451,7 @@ describe('MembersPage Profile card — New schedule', () => {
     // display name. Writing the provider template there matched neither field.
     mockRoster([row({
       name: 'Radar One', slug: 'radar-one', slot_key: 'member-radar-one',
-      kiro_agent: 'saokhue-worker', memory_version: 1, memory_owner: '',
+      kiro_agent: 'kirocrew-worker', memory_version: 1, memory_owner: '',
     })])
     renderWithProviders(<NavigationLeaveGuardProvider><MembersPage /><LeaveProbe /></NavigationLeaveGuardProvider>)
     fireEvent.click(await screen.findByText('Radar One'))
