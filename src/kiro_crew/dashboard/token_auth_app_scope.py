@@ -141,7 +141,8 @@ async def _prime_app_api_allowlist(app_name: str) -> None:
 # ``kiro_crew.apps.routes.setup_routes`` (the ``add_get``/``add_post`` calls for
 # ``/api/apps/registry``, ``/api/apps/registries``, ``/api/apps/blob``,
 # ``/api/apps/registry/install``, ``/api/apps/install`` and
-# ``/api/apps/register``), all registered BEFORE ``/api/apps/{name}``.
+# ``/api/apps/register`` and ``/api/apps/market/install``), all registered BEFORE
+# ``/api/apps/{name}``.
 #
 # These segments resolve to SHARED literal routes (registry listing, registry
 # install, blob proxy, install, self-registration, registry refresh — which
@@ -153,7 +154,7 @@ async def _prime_app_api_allowlist(app_name: str) -> None:
 # mirrors this set to also refuse such names at manifest validation for NEW apps
 # (defense-in-depth). Keep both lists in sync with the routes.py table.
 RESERVED_APP_PATH_SEGMENTS: frozenset[str] = frozenset(
-    {"registry", "registries", "blob", "install", "register"}
+    {"registry", "registries", "blob", "install", "register", "market"}
 )
 
 
@@ -182,16 +183,28 @@ def _app_owns_path(app_name: str, path: str) -> bool:
     return False
 
 
+#: The leading mark of a ``permissions.api`` entry that names one path and no child:
+#: ``=/api/apps`` matches ``/api/apps`` and refuses ``/api/apps/install``. A host
+#: below App Kit seam level 7 reads such an entry as a literal that matches no path,
+#: so declaring one fails closed there.
+EXACT_API_ENTRY_MARK = "="
+
+
 def _api_pattern_matches(pattern: str, path: str) -> bool:
     """Match a ``permissions.api`` entry against a request path.
 
     Supports trailing ``/*`` and ``*`` wildcards; a bare prefix matches the
     exact path or any child under a path boundary (``/api/chat`` matches
-    ``/api/chat`` and ``/api/chat/slots`` but NOT ``/api/chatx``).
+    ``/api/chat`` and ``/api/chat/slots`` but NOT ``/api/chatx``). An entry that
+    starts with :data:`EXACT_API_ENTRY_MARK` matches the rest of it exactly, and
+    no wildcard is read inside it.
     """
     pattern = pattern.strip()
     if not pattern:
         return False
+    if pattern.startswith(EXACT_API_ENTRY_MARK):
+        exact = pattern[len(EXACT_API_ENTRY_MARK) :]
+        return bool(exact) and path == exact
     if pattern.endswith("/*"):
         base = pattern[:-2]
         return path == base or path.startswith(base + "/")

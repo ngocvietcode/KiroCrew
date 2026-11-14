@@ -781,8 +781,9 @@ Wired sites:
   cannot disable or weaken the outer sandbox. A transient adapter error falls
   back to the original executable (outer sandbox still applies); a
   `PlatformCompositionError` propagates fail-closed.
-  `kiro_cli.mandatory_mcps_drop_allowed` resolves both the spawned path and the
-  pinned install through the same seam before its checks, so the Tool Search
+  `kiro_cli.mandatory_mcps_drop_allowed` resolves the spawned path and the
+  install it is compared with (the pin, or the `PATH`-only install) through the
+  same seam before its checks, so the Tool Search
   deferral gate judges the executable that will run, not the launcher.
 - `hooks.py` — the deny check routes through `current_context().security.is_denied`;
   the kiro-hooks egress (`dashboard/handlers/hooks_scripts.py`) scrubs command/matcher
@@ -937,7 +938,9 @@ Wired sites:
   returns `frozenset()` so standalone redaction is byte-identical.
 - `agent_parts/spec_build.py` and `agent.py` — `current_context().mcp_tooling.extra_mcp_servers()` merged
   additively into the agent config build; the dynamic refresh also re-pins an
-  existing entry's `command`/`args` and keeps its other keys. A server first
+  existing entry's `command`/`args`, puts back any `env` key the edition ships
+  that the entry lacks (a key the user set keeps the user's value), and keeps its
+  other keys. A server first
   supplied on an existing spec gains its `@name` ref in `tools` once
   (`agent_materialization/guide_platform.py`, `grant_edition_refs_once`).
 - `slack/events.py` / `slack/handler_runtime/dispatch.py` / `dashboard/handlers_system.py` —
@@ -1119,7 +1122,9 @@ Wired sites:
   `relay_client/lease.py::LeaseHostTokenSource`: it calls `RenewCrewLease` on the
   answer's schedule with the credential `tunnel.relay_lease_credential` points at
   (`secret://NAME` or a file, never the value), and hands each new host token to
-  the client. Each call's `connectedCount` is `RelayClient.connected_people()`:
+  the client. With `kiro-sign-in` instead, a personal Crew leases with the Crew's
+  own Kiro sign-in (`relay_client/lease_signin.py::read_lease_sign_in`), refreshed
+  as needed, and sends that sign-in's `profileArn`. Each call's `connectedCount` is `RelayClient.connected_people()`:
   the distinct relayed callers with a WebSocket open on a serving connection, so
   one person on two tabs counts once. It is display-only, so a count that cannot
   be read is sent as 0 and never fails the renewal. When the relay stops, it
@@ -1386,7 +1391,7 @@ is byte-identical) with no `CONTRACT_VERSION` bump.
   (structured entries — the manager parses its own output; the core keeps no
   text grammar; **`list_skills()` containment invariant:** every skill row MUST
   live under an `McpToolingProvider.extra_skills()` root, because the skill
-  browser (`/api/skills/package/<name>/tree` + detail) resolves paths by
+  browser (`/api/skills/<name>/-/tree` + detail) resolves paths by
   searching those roots — a row outside them lists but 404s on tree/detail, so an
   edition satisfying both Protocols MUST keep them consistent; the core enforces
   this at runtime — `collect_skills_blocking` logs a loud warning for any listed

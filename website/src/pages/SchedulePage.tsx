@@ -42,6 +42,7 @@ import type { CronFolder } from '../utils/cronFolders'
 import CronFolderHeader from '../components/CronFolderHeader'
 import CronBatchActionsMenu from '../components/CronBatchActionsMenu'
 import { useScheduleBatchActions, BatchRunConfirmDialog } from './SchedulePageBatchActions'
+import ScheduleCrewmateRosterNotice from './ScheduleCrewmateRosterNotice'
 import CronRowActions from '../components/CronRowActions'
 import AddJobSplitButton from '../components/AddJobSplitButton'
 import {
@@ -359,7 +360,8 @@ export default function SchedulePage() {
   // "By crewmate": '' lists every job, a crewmate name lists only that
   // crewmate's own schedules (rows whose `member_id` resolves to it).
   const [crewmateFilter, setCrewmateFilter] = useState('')
-  const { data: rosterData, isError: crewmateRosterFailed, error: crewmateRosterError, refetch: reloadCrewmateRoster, isFetching: crewmateRosterReloading } = useQuery(membersRosterQuery)
+  const crewmateRosterRead = useQuery(membersRosterQuery)
+  const rosterData = crewmateRosterRead.data
   const roster = useMemo(() => (Array.isArray(rosterData) ? rosterData : []), [rosterData])
   const [selected, setSelected] = useState<CronJob | null>(null)
   /**
@@ -548,6 +550,8 @@ export default function SchedulePage() {
   const handleMoveJob = useCallback(async (jobId: string, folderId: string) => {
     try {
       await api.updateCron(jobId, { folder_id: folderId })
+      // Only this job's own refusal: the slot is shared with other rows' errors.
+      setActionError(prev => (prev?.id === jobId ? null : prev))
       // Auto-expand the target folder so moved job stays visible
       if (folderId) {
         setCollapsedFolders(prev => {
@@ -608,7 +612,7 @@ export default function SchedulePage() {
   }), [sanitizedJobs, cronFilter, activeCrewmate, roster])
   const filterActive = !!cronFilter || !!activeCrewmate
   const scheduleComparators = useMemo(() => ({
-    name: (a: CronJob, b: CronJob) => a.name.localeCompare(b.name),
+    name: (a: CronJob, b: CronJob) => compareText(a.name, b.name),
     // Clock time first, so `9:00 AM` precedes `1:00 PM` -- the label sorts wrongly
     // as text. Rows with no clock (raw fallback, intervals) go last, then by label.
     schedule: (a: CronJob, b: CronJob) => {
@@ -786,22 +790,7 @@ export default function SchedulePage() {
           )}
           {/* Only when a listed job needs the roster: with no crewmate job the
               failed read costs the page nothing worth reporting. */}
-          {crewmateRosterFailed && jobs.some(j => j.member_id) && !detailDialogOpen && (
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              {/* askAgent on: the job dialog is closed, so no job draft can be lost. */}
-              <ErrorNotice
-                variant="inline"
-                className="flex-1 min-w-0"
-                title={i18nT('pages.membersPage.roster_load_failed')}
-                message={queryErrorMessage(crewmateRosterError)}
-                askAgent
-                testId="schedule-crewmate-roster-error"
-              />
-              <Btn onClick={() => void reloadCrewmateRoster()} disabled={crewmateRosterReloading} aria-busy={crewmateRosterReloading}>
-                {i18nT('pages.schedulePage.retry')}
-              </Btn>
-            </div>
-          )}
+          <ScheduleCrewmateRosterNotice read={crewmateRosterRead} show={jobs.some(j => j.member_id) && !detailDialogOpen} errorMessage={queryErrorMessage} />
           {lateFailures.map(f => (
             <ErrorNotice
               key={f.id}
@@ -932,6 +921,7 @@ export default function SchedulePage() {
                         setActionError({ id: 'batch-move', msg: i18nT('pages.schedulePage.cronFolders.batch_move_failed', { count: failedIds.length, total: ids.length }) })
                       } else {
                         setSelectedIds(new Set())
+                        setActionError(prev => (prev?.id === 'batch-move' ? null : prev))
                       }
                       if (folderId) {
                         setCollapsedFolders(prev => {

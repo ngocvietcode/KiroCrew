@@ -178,6 +178,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _PROBE_CACHE_SECS,
         _PROBE_ERROR_MAX_CHARS,
         _PROBE_TIMEOUT_SECS,
+        _RESOLVED_ROUTE_RECHECK_SECS,
         _TURN_AUTH_MAX_AGE_SECS,
         _UPDATE_TIMEOUT_SECS,
         _WHOAMI_SIGNED_OUT_MARKER,
@@ -191,6 +192,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _probe_acp_support,
         _probe_failure_text,
         _relay_route_configured,
+        _relay_route_resolved,
         _run_auth_command,
         _set_terminal_audit,
         _stamp_probe,
@@ -202,6 +204,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
     )
     from kiro_crew.kiro_prerequisite_process import (  # noqa: F401
         _MAX_CAPTURED_OUTPUT,
+        _NOT_IN_CREW_SANDBOX_ERROR,
         _PROCESS_GROUP_SUPERVISOR,
         _PROCESS_GROUP_SUPERVISOR_CODE,
         _PROCESS_GROUP_SUPERVISOR_ERROR,
@@ -364,6 +367,7 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
         resource_limit_supervisor_argv,
         sandboxed_spawn_argv,
         shielded_prepare_off_loop,
+        wrapped_by_crew_sandbox,
     )
     from kiro_crew.security import (  # noqa: F401
         redact,

@@ -320,7 +320,12 @@ figure and the unreadable-host fallback), dispatched per operating system (see
   `deferred_low_memory` SEL row carries `cause: cgroup_usage_unreadable`
   (`MEMORY_CAUSE_CGROUP_USAGE_UNREADABLE`). Measured zero usage retains the full
   limit as headroom. Missing discovery retains the conventional root-path
-  fallback; ancestors hidden above a mount cannot be measured. Usage at every
+  fallback; ancestors hidden above a mount cannot be measured. The walk is
+  `_container_cgroup_reading()`, which also returns the tightest finite limit;
+  `_container_cgroup_available_gb()` is its headroom half, and
+  `session_transfer._cgroup_memory_bounds()` turns it into the `(limit, headroom)`
+  bytes both session import admission and the dashboard's `/api/system` read.
+  Usage at every
   level is the working set: `memory.current` (v1 `memory.usage_in_bytes`)
   minus the group's clean page cache (`active_file + inactive_file -
   file_dirty - file_writeback` in v2 `memory.stat`, the `total_` keys in v1),
@@ -1400,7 +1405,8 @@ made; no gate reads it back. Two consumers:
   The label is remembered per parent (`_queue_wait`) so the drain's,
   the claim path's, the cancel paths' and the terminal reports' requests —
   which carry no verdict of their own — keep it. A frame at depth 0 is the
-  bare `{"queued": 0}`, and a 0 read no request overlapped forgets the label.
+  bare `{"queued": 0}`, and a 0 read no request overlapped forgets the label,
+  whether or not that read sends a frame.
   A 0 read that a request overlapped (published once the withhold cap passes)
   keeps it: that request may be the verdict which wrote the label, for a row
   the read predates, and the burst's next read answers it.
@@ -3178,6 +3184,15 @@ per-sub-agent completion note. Dashboard chat only.
   mixed-turn leak notice (`should_notice_mixed_turn_leak`): earlier calls may
   already have taken effect, so the outcome stays `completed`, nothing is
   re-issued, and a failed or stopped run is not flagged.
+- **An unverified model pin** — a completed run whose effective pin
+  (`requested_model`) is set, not `auto`, while `resolved_model` is still `""`
+  (`SubagentInfo.served_model_unverified`) gets one ``⚠ Agent `<id>` has its
+  served model unverified…`` line on the lone completion event and under its
+  digest entry, a `served_model_unverified` field on the `spawn_sub_agents`
+  record, the same line ahead of a `spawn_status` result, and
+  `served_model_unverified` on `GET /api/spawn/{id}` (`constants.UNVERIFIED_MODEL_NOTE`).
+  The dashboard's downgrade chip cannot fire there, since it needs a served id.
+  The pin is not refused at spawn: the backend's model list can be stale.
 - **Per-result turns kept** — each completion is still processed in its own turn
   (no raw buffering) to avoid a context-window blowup; the synthesis works over
   the already-condensed per-result turns.
@@ -3865,7 +3880,7 @@ Large waves must not flood the WS socket, the parent LLM's context, or the UI. T
 
 - **Batch identity**: `spawn(batch_id=..., batch_total=...)` (threaded from `spawn_run tasks=[...]` — one 12-hex id per multi-task call — via `POST /api/spawn` transport params; survives the stagger queue). `spawn_batch_started {batch_id, count}` fires once per batch on its first started member; the id rides every WS frame (`base["batch_id"]`).
 - **Event coalescing** (`subagent_scale.SubagentEventCoalescer`, wired in the gateway's `_subagent_event`): above 8 active agents, `subagent_tool`/`subagent_stalled`/`subagent_retrying` buffer per-agent (latest state wins, merged; retrying and stalled are one health state, so the later of `attempt` and `stalled: true` drops the other from the entry) and flush every ~1s as ONE `subagent_batch_update {updates:[...]}` frame to all clients; `subagent_chunk` text buffers append-concatenated (16KB/agent cap) and flushes as `subagent_batch_chunks {chunks:[...]}` to subagent subscribers only. Lifecycle events (`spawn`/`done`/`recovering`/`injection_failed`/`batch_*`) are NEVER coalesced, and a `done`/`spawn` flushes buffered state first so ordering is preserved. Non-int active-count fails open to pass-through.
-- **Chunked wave-digest completion injection** (gateway `_subagent_done`): every batch member is accounted per `batch_id` (this is the single completion consumer for all terminal paths). Every multi-task wave (`batch_total > 1`) delivers results to the parent queue-style: completed members are HELD, and every `SUBAGENT_DIGEST_CHUNK_SIZE` completions (default 10, env `KIROCREW_SUBAGENT_DIGEST_CHUNK_SIZE`, clamped 1..1000) flush ONE `[Subagent batch completion event]` chunk digest — failures first with detail, successes as one-line `result_path` pointers (60KB cap per chunk); the final member flushes the remaining partial chunk. A 60-agent wave = 6 digest turns spread across the wave's runtime — bounded chunk size, incremental signal, and no straggler-gated mega-digest. Chunk buffers (`fail_lines`/`ok_lines`/`guard_msgs`/`held_ok_deliveries`) reset per flush; cumulative `ok`/`err`/`stopped` counts ride the final chunk's summary. **Spawn discipline**: non-final chunks instruct the parent NOT to spawn new sub-agents while batches are still arriving; the final chunk releases the gate ("finish processing all results before spawning follow-ups") — mirrored by a line in the `spawn_run` tool description. **Chunk order is FIFO**: the injection busy-check (`_injection_slot_busy`) treats a live `slot.task` — the claim assigned synchronously at dispatch — as busy in addition to `slot.running`, so a later chunk waits behind an injection that is dispatched but still inside `bounded_chat_turn`'s off-loop timeout resolution, instead of racing ahead of it or assigning `slot.task` over the earlier chunk's still-pending task. Single-task spawns have no batch identity and keep the plain per-agent injection. A batch member rejected at spawn (empty task, low memory, cwd, governance, bad agent) is counted as submitted AND announced through the done callback with its batch identity (`_announce_rejection`) — so a rejection that closes the wave still reaches the consumer and releases held sibling results (non-batch rejections do not announce; the caller gets the error synchronously). `batch_finished {batch_id, total, ok, err, stopped}` broadcasts for every batch regardless of size. **Wave liveness (lost-submission backstop)**: a member rejected before reaching `spawn()` or lost during transport is counted in every sibling's `batch_total` but never in `submitted` — un-reconciled, the count-driven `batch_members_pending()` wedges the wave forever. Three layers close it: (1) `api_spawn` marks in-process rejections/capacity with `counted: true` (preserved through the MCP client's error flattening); (2) `spawn_run` best-effort POSTs `/api/spawn/lost` for each explicit UNcounted rejection, which calls `record_lost_submission` — counts the member as submitted and announces a synthetic terminal failure through the completion consumer so the wave closes; uncertain transport failures are not immediately reconciled because the gateway may have accepted them; (3) the reaper's `_sweep_stuck_waves` (every sweep) force-reconciles uncertain or lost submissions when `submitted < expected`, all registered members are terminal, nothing is queued, and no submission progress (a `time.monotonic()` stamp aged against the reaper's monotonic reading, so a wall-clock step cannot move it) occurred for `_WAVE_STUCK_SECS` (1800s / 30 minutes — deliberately generous; it is a lost-submission backstop, not an execution deadline, and it only fires once every registered member is already terminal, so it never cuts a live member) — one lost member per sweep, converging across sweeps; this also bounds the `_batch_submitted`/`_batch_progress_ts` leak. Straggler-held partial chunks are bounded by the **hold deadline** (below), not by the member's hard ceiling.
+- **Chunked wave-digest completion injection** (gateway `_subagent_done`): every batch member is accounted per `batch_id` (this is the single completion consumer for all terminal paths). Every multi-task wave (`batch_total > 1`) delivers results to the parent queue-style: completed members are HELD, and every `SUBAGENT_DIGEST_CHUNK_SIZE` completions (default 10, env `KIROCREW_SUBAGENT_DIGEST_CHUNK_SIZE`, clamped 1..1000) flush ONE `[Subagent batch completion event]` chunk digest — failures first with detail, successes as one-line `result_path` pointers (60KB cap per chunk); the final member flushes the remaining partial chunk. A 60-agent wave = 6 digest turns spread across the wave's runtime — bounded chunk size, incremental signal, and no straggler-gated mega-digest. Chunk buffers (`fail_lines`/`ok_lines`/`held_ok_deliveries`) reset per flush; cumulative `ok`/`err`/`stopped` counts ride the final chunk's summary. **Spawn discipline**: non-final chunks instruct the parent NOT to spawn new sub-agents while batches are still arriving; the final chunk releases the gate ("finish processing all results before spawning follow-ups") — mirrored by a line in the `spawn_run` tool description. **Chunk order is FIFO**: the injection busy-check (`_injection_slot_busy`) treats a live `slot.task` — the claim assigned synchronously at dispatch — as busy in addition to `slot.running`, so a later chunk waits behind an injection that is dispatched but still inside `bounded_chat_turn`'s off-loop timeout resolution, instead of racing ahead of it or assigning `slot.task` over the earlier chunk's still-pending task. Single-task spawns have no batch identity and keep the plain per-agent injection. A batch member rejected at spawn (empty task, low memory, cwd, governance, bad agent) is counted as submitted AND announced through the done callback with its batch identity (`_announce_rejection`) — so a rejection that closes the wave still reaches the consumer and releases held sibling results (non-batch rejections do not announce; the caller gets the error synchronously). `batch_finished {batch_id, total, ok, err, stopped}` broadcasts for every batch regardless of size. **Wave liveness (lost-submission backstop)**: a member rejected before reaching `spawn()` or lost during transport is counted in every sibling's `batch_total` but never in `submitted` — un-reconciled, the count-driven `batch_members_pending()` wedges the wave forever. Three layers close it: (1) `api_spawn` marks in-process rejections/capacity with `counted: true` (preserved through the MCP client's error flattening); (2) `spawn_run` best-effort POSTs `/api/spawn/lost` for each explicit UNcounted rejection, which calls `record_lost_submission` — counts the member as submitted and announces a synthetic terminal failure through the completion consumer so the wave closes; uncertain transport failures are not immediately reconciled because the gateway may have accepted them; (3) the reaper's `_sweep_stuck_waves` (every sweep) force-reconciles uncertain or lost submissions when `submitted < expected`, all registered members are terminal, nothing is queued, and no submission progress (a `time.monotonic()` stamp aged against the reaper's monotonic reading, so a wall-clock step cannot move it) occurred for `_WAVE_STUCK_SECS` (1800s / 30 minutes — deliberately generous; it is a lost-submission backstop, not an execution deadline, and it only fires once every registered member is already terminal, so it never cuts a live member) — one lost member per sweep, converging across sweeps; this also bounds the `_batch_submitted`/`_batch_progress_ts` leak. Straggler-held partial chunks are bounded by the **hold deadline** (below), not by the member's hard ceiling.
 
 - **Digest hold deadline (straggler escape hatch)**: both chunk triggers are event-driven — a COUNT trigger (`SUBAGENT_DIGEST_CHUNK_SIZE` pending completions) and wave close — so neither can fire while a straggler is simply *not finishing*. With the default count (10) above any wave size the concurrency cap realistically produces (2–5), the count trigger is unreachable and wave close becomes the ONLY flush: every sibling's finished result is withheld for the slowest member's entire remaining runtime, and a member that HANGS rather than fails withholds them for the full `_TIMEOUT_SECS` reap — up to 3 hours of total silence, indistinguishable from a dead session (issue #2215). The reaper's `_sweep_digest_holds` supplies the LATENCY trigger the count lacks: when the OLDEST outstanding hold in a live wave ages past `DIGEST_HOLD_SECS` (default 120s, env `KIROCREW_SUBAGENT_DIGEST_HOLD_SECS`, clamped to `_TIMEOUT_SECS`; `0` opts back out to count-trigger-only), `force_digest_flush` announces a synthetic **flush-only** record through the single completion consumer — the same re-entry mechanism `record_lost_submission` uses, so digest composition, routing, and the held-tombstone settle contract stay in one place. The record carries the wave's `batch_id` but is NOT a member: `_digest_flush_only` makes the gateway skip every per-member side effect (terminal WS event, orchestration tracker accounting, `done`/`ok`/`err` counters, digest lines) and only force the pending chunk out. **One knob, two jobs, now split**: the count keeps bounding digest SIZE for large waves; the deadline caps worst-case delivery LATENCY at every wave size. A wave whose members all finish within the deadline of each other still delivers ONE consolidated digest, so the deliberate small-wave behavior is unchanged. The forced chunk is labelled honestly as a PARTIAL release (`k/k+1`, "N of M delivered, R still running.") and tells the parent to synthesize what it has rather than keep waiting. Every mid-wave chunk dates those counts in the sentence after that header ("These counts were taken when this digest was composed; a running agent may have finished since."), because a chunk can wait in a busy parent's queue while the remaining members finish. The header line itself is unchanged: a channel parent's replay row carries no meta and is classified by it. The card meta's `running` keeps the same composition-time number. Hold bookkeeping: the gateway stamps `_digest_held_at` (a `time.monotonic()` reading, aged against the reaper's monotonic `now`) when it holds a member and clears it when that member's chunk fires — deliberately separate from `_digest_held`, which is the restart-safety flag the run loop reads and which the sweep must never mutate. The sweep is skipped entirely when `batch_members_pending()` is False, so it can never race the real wave-close digest into a duplicate delivery.
 - **Reconnect replay batching** (`ws.py`): more than `SUBAGENT_REPLAY_BATCH_THRESHOLD` (8) replay frames collapse into ONE `subagent_snapshot_batch {items:[{type, data}]}` frame; the client fans items into the per-frame reducers. A dashboard socket (never an app socket) then receives `subagent_replay_done {}`, which closes the in-memory part of the replay; the durable CREW LOG fold runs afterwards on the socket's replay queue, and its `subagent_done` frames add cards of their own. Before it subscribes, the client marks every card that is not a pending approval as unconfirmed (`clearSubagentsForSnapshot`) instead of dropping it; each replayed snapshot or done item reconciles into its existing card, keeping the card object when nothing changed and its tool-call timeline either way (a snapshot's `last_tool_call_id` reconciles the newest timeline row by id, so an approval that moves `tool_count` with no frame adds no row), and `subagent_replay_done` drops the cards the replay did not name.
@@ -4025,6 +4040,14 @@ turn. This is model guidance, not a runtime timer. Without that receipt, or
 without useful parent work, yield immediately. Channel-only, nested and
 background callers retain the immediate-yield boundary. `spawn_continue` also retains its
 immediate-yield guidance. Do not duplicate delegated work or poll to stay busy.
+A nested (`subagent:`) caller is the exception to both: its children's
+completions ring the bell only and nothing resumes it after its turn ends, so
+neither receipt tells it to end its turn (#36973). The `spawn_run` receipt says
+it is for parallel work alongside the caller's own and that `spawn_sub_agents`
+collects a child's result in the same turn; it does not tell the caller to
+poll, because a `spawn_run` parent keeps its slot. The `spawn_continue` receipt
+names `spawn_status` for the continued run, since `spawn_sub_agents` cannot wait
+on one.
 
 `POST /api/spawn` answers `{id, task, status, parent_work_supported}`. `status` is
 `spawned`, or `queued` with `reason` and `reason_detail` when the gate deferred or held
@@ -5092,7 +5115,8 @@ The mechanism is one extra window plus one env value, applied at three seams:
   `$KIROCREW_SCRATCH` — the one it inherited when it joined a tree, else its
   own allocation. `session_allocation.parent_work_scratch_dir(owner, parent_key)`
   reads the capability off the parent's live provider, never probes a client
-  attribute (`None` when the parent has none).
+  attribute (`None` when the parent has none); session scratch recording uses
+  the same helper.
 - **How a spawn takes it.** `AcpRuntime(shared_scratch=…)` and
   `AcpClient(shared_scratch=…)`, threaded through `AcpProvider` and the `_acp`
   provider factory. `AcpProvider` keeps the value itself, because on the kiro
@@ -5148,6 +5172,78 @@ The mechanism is one extra window plus one env value, applied at three seams:
   spawns with the replacement's own directory — the sessions lose their staged
   files to the tampering, the tree stays on disk unowned for a human, and the
   `_bg` slot is never locked out of a runtime.
+- **A resumed conversation rejoins its tree.** A key whose process ended (a
+  gateway restart, a transient backend exit) used to resume on a fresh
+  allocation, and its old tree, now ownerless, was swept an hour later with the
+  work in it. The index lives in `agent_scratch_trees`. `get_or_create` awaits
+  `agent_scratch_trees.record_tree` off-loop and attempts best-effort persistence
+  before publishing the session's SID. A failed write, or an index that cannot be
+  opened, logs a warning and the session starts: the in-process binding to the
+  tree this session uses is kept, so a resume in the same process rejoins it, and
+  only a disk row naming another tree for the key is dropped
+  (`drop_other_row`). After a gateway restart the session may get a
+  fresh tree, as it did before scratch bindings were persisted. A binding
+  that was not admitted (a stale ticket or a cap), or one whose earlier row
+  for another tree was read and could not be dropped, is retired with
+  `abandon_tree`, under the warn-and-start rule below. A provider
+  exposing no work tree retires the key's prior binding with
+  `abandon_tree` before publishing its SID.
+  Fresh no-tree starts, including pooled claims and reset successors, skip the
+  retirement write when neither memory nor the persisted index has a binding
+  for the key. The guard checks disk-only bindings after a gateway restart,
+  including reset successors whose resume SID has already been cleared.
+  Retirement screens the managed root from its existing `lstat` result, including
+  Windows name-surrogate tags, instead of probing the name again.
+  The retirement is read back. The in-process binding is dropped first, so a
+  reset followed by a no-tree provider never resumes the discarded tree in this
+  process. The old directory itself is left on disk.
+  A linked or absent managed root makes retirement a successful no-op: no index
+  is read or written through it. An unreadable real root is not treated as absent.
+  Registration, no-tree retirement and failed-join retirement drain their executor
+  work under the existing allocation registry lock before propagating cancellation,
+  including repeated cancellation. A replacement waits until the old write has
+  finished: a late retirement cannot remove its binding, and a late registration
+  cannot restore a binding it retires. A failed-join retirement retires only the
+  binding that still names the tree that failed to join
+  (`abandon_tree(key, only=...)`), so a successor another allocation already
+  bound for the key is kept. Retirement issues no registration ticket
+  and does not advance the ticket floor beyond the binding it removes.
+  Shutdown and end-of-session fences are
+  checked again after the write attempt. If retirement cannot be persisted, allocation
+  logs a warning naming the resolved index path and the session starts, as a resume
+  did before the index existed; after a gateway restart the key may rejoin its own earlier
+  tree, never another key's. A resume
+  (`resume_sid` set, persistent memory only) reads the binding with `agent_scratch_trees.recorded_tree` as
+  `shared_scratch`; the in-process cache is optional for restart durability.
+  A fresh conversation on a reused key, including a provider switch, starts its own tree. The
+  index is `.trees.json` in the managed root, not `session_map.json`: the root is
+  masked from every sandboxed process, while the session map is agent-writable,
+  and a tree name an agent could rewrite would let it mount another session's
+  directory on its next resume. The sweep removes directories only, so it never
+  touches the index, rows whose tree is gone are dropped on each write, and an
+  update exceeding the 1 MiB read limit leaves the existing index untouched.
+  Live bindings, registration tickets and persistence guards share admission capped at 4096 keys,
+  with keys at most 1024 characters, directory names at most 255, and retained
+  full paths at most 32768. A cached path from a different data home is retired,
+  never remapped by basename under the current root.
+  Admission retires reclaimed bindings and their tickets. A scalar retired-ticket
+  floor refuses delayed writers for unretained keys; retained keys keep their
+  own ticket ordering, including after a failed persistence attempt. A verified
+  matching disk row clears the persistence guard, so retiring a successfully
+  persisted binding preserves other disk-only resumes. Retiring an unresolved
+  guard or refusing admission captures one disk snapshot, bounded by the same
+  1 MiB read limit, with one warning on that transition. The snapshot excludes
+  all live bindings and the affected key; subsequent admissions and refusals
+  remove only their own key. It only shrinks, so rejected keys cannot grow an
+  unbounded tombstone set. Unrelated disk-only resumes keep their trees, while
+  an affected key starts fresh rather than resurrect a persisted predecessor.
+  The snapshot is bound to its original root and never refreshed until gateway
+  restart; a failed snapshot read leaves no disk fallback and logs a warning.
+  Retained bindings still resume normally, and a newer registration can use capacity freed by
+  reclamation. A failed binding write or full admission cap logs a warning and
+  skips persistence without refusing session starts; an in-memory binding alone
+  does not establish restart durability.
+  The artifact store refuses the index on both its read and its write side.
 - **Every process seam is enumerated.** A seam that starts a kiro-cli process
   and forgets `shared_scratch` reproduces the bug with no red test, so
   `test_subagent_shared_scratch.py::TestEveryProcessSpawnSeamIsAccountedFor`

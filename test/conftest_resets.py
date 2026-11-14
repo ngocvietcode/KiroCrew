@@ -20,6 +20,21 @@ from kiro_crew.safety_override import reset_yolo_policy_state as _reset_yolo_pol
 
 
 @pytest.fixture(autouse=True)
+def _ledger_create_ignores_live_memory(_floor_monkeypatch):
+    """A work-ledger ``create`` never depends on this runner's free memory.
+
+    ``_create_item`` refuses ``host_pressure_critical`` when the cached admission
+    verdict refuses, and that verdict probes live memory, which a CI runner can
+    have at under 2 GB. So every create in the suite would pass or fail by runner.
+    The refusal is pinned off here; the refusal tests put the real one back.
+    """
+    from kiro_crew import work_ledger
+
+    # Through the facade, which writes the patch into every module holding the name.
+    _floor_monkeypatch.setattr(work_ledger, "_refuse_if_host_critical", lambda: None)
+
+
+@pytest.fixture(autouse=True)
 def _small_default_host(_floor_monkeypatch):
     """Size every ``"auto"`` start limit from a fixed small host, not this machine.
 
@@ -171,6 +186,28 @@ def _drop_live_config_snapshot():
     live.reset_for_tests()
     yield
     live.reset_for_tests()
+
+
+@pytest.fixture(autouse=True)
+def _forget_tracing_switch():
+    """Give every test an unread tracing switch.
+
+    ``kiro_crew.tracing.provider`` resolves the switch once and serves the cached
+    answer until ``reset_for_testing()``. A test that boots the gateway services
+    (``service_boot`` calls ``watch_config``, which resolves it) leaves "off" cached,
+    so a later test on the same worker that writes its own config is told tracing
+    is off and exports nothing, with no log line. Measured: ``test_slack_gateway.py``'s
+    ``test_init_services_creates_all`` followed by ``test_tracing_otlp.py``'s
+    ``test_a_traced_turn_reaches_a_loopback_receiver_with_its_vault_header``.
+
+    Reset at setup, not teardown, so ``_no_leaked_telemetry_exporter`` still sees
+    (and reports) an exporter thread a test left running. A test that never
+    imported the module pays one dict lookup.
+    """
+    provider = sys.modules.get("kiro_crew.tracing.provider")
+    if provider is not None:
+        provider.reset_for_testing()
+    yield
 
 
 @pytest.fixture(autouse=True)
@@ -474,6 +511,24 @@ def _fresh_aws_bin_dir_trust(_floor_monkeypatch):
     if engine is not None:
         _floor_monkeypatch.setattr(engine, "_TRUSTED_AWS_BIN_DIRS", ())
         _floor_monkeypatch.setattr(engine, "_WARNED_AWS_BIN_DIR_REFUSALS", set())
+
+
+@pytest.fixture(autouse=True)
+def _fresh_hardlink_spec_warnings():
+    """Start each test with no hardlink refusal of an agent spec already warned about.
+
+    ``agent_discovery_parts.spec_reads._HARDLINK_WARNED`` holds the resolved paths
+    whose refusal this process logged at WARNING; a path an earlier test on the same
+    worker refused would turn this test's first WARNING into DEBUG. The facade and
+    its owner hold one set, so it is cleared in place. Only when already imported,
+    and read with ``getattr`` so a tree without the set (``prove.py``'s revert of the
+    fix) still runs its tests.
+    """
+    spec_reads = sys.modules.get("kiro_crew.agent_discovery_parts.spec_reads")
+    warned = getattr(spec_reads, "_HARDLINK_WARNED", None)
+    if warned is not None:
+        warned.clear()
+    yield
 
 
 @pytest.fixture(autouse=True)

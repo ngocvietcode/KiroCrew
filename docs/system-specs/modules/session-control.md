@@ -42,6 +42,7 @@ unreachable in production because the caller's `X-Internal-Secret` is ignored.
 | `session_read_message` | `GET /api/session-control/read` | Read another session's transcript tail + liveness |
 | `session_summary` | `GET /api/session-control/summary` | Read another session's cached intent summary + liveness, authorized as `session_read_message` is; never generates one |
 | `work_dispatch` | `POST /api/work-ledger/record`, then `POST /api/session-control/create`, `record` again and `POST /api/session-control/send` | Create a work item, open its worker, bind it and seed it in one call ([rfc-work-dispatch](../../request-for-change/rfc-work-dispatch.md)). No route of its own: the MCP process calls the four routes in order as the caller, sends the seed only after `bind` succeeded and only to the key `create` returned, and on a failure names the step and closes what it made (session, then item). The step-1 create carries `dispatch`; `/api/work-ledger/record` strips it before schema validation and refuses `no_ledger` when the verified caller owns no ledger, so `work_dispatch` never opens one and only `kirocrew-work`'s `work_ledger_record` does (rfc-work-dispatch amendment 2026-10-28); not auto-approved |
+| `session_queue` | `POST /api/session-control/queue` | List or move queue entries on a session the caller manages (its creator until `session_handoff` names another manager; with `agent.session_manager_chain` on, any manager up the line); move reaches only entries the caller queued (sender stamp), and a move earlier may pass only the caller's own entries |
 
 `session_adopt` and `session_release` reshape the session tree, so both go
 through `authorize_target` like every other verb and add tree checks of their
@@ -101,7 +102,15 @@ other caller, keeps `target_not_found`.
 **Two verbs here write into another session's conversation: `session_send` and
 `session_broadcast`.** Reading returns a transcript tail, stopping cancels a turn
 the way the Stop button does, creating opens an empty session, and sending
-delivers a message that the target runs as its next turn. Delivery is the
+delivers a message that the target runs as its next turn. `session_queue` adds
+no new content to the target: its `move` arm reorders an entry already in the
+target's queue, and the queued transcript row that mirrors it, and only for
+entries the caller itself queued. It has no `cancel`, because a queued send to a
+ledger-bound worker can already be the recorded hand-back. `move` takes the queue
+card's own path (`PUT .../queue/order`): the change
+lands in memory, the same tab frame is broadcast, and the periodic flush saves
+it, so the verb makes no durability promise the card does not. Nothing in
+`queue_target` suspends between the gate and the reply. Delivery is the
 sharpest verb and is bounded accordingly: the body is redacted through
 `sanitize_outbound` before it is persisted, it is prefixed with a `[sent by
 session <caller> via <verb>]` envelope so the target's transcript can never
@@ -215,7 +224,9 @@ The MCP tool writes `released` on an `idle` or `queued` row's line, never on a
 process exists.
 
 The row's `status` separates `working` / `queued` / `idle` / `closed` / `lost` /
-`unknown`. A tree-backed row absent from the dashboard is `closed` or `lost`: the
+`unknown`. `queued` means an entry will start on its own: a queue holding only
+cards restored after a restart (`is_held_queue_entry`) reads `idle`, since those
+wait for a person. A tree-backed row absent from the dashboard is `closed` or `lost`: the
 roster records that a session the dashboard no longer holds still existed, and
 its folded lifecycle says which fate it met. `closed` (carrying `closed_at`) is
 the DELIBERATE tab close -- the worker finished and its tab was closed
@@ -610,9 +621,9 @@ and the workspace default when the caller has none
 with 400 `folder_project_invalid`, and a folder whose project changes while the
 creation is in flight refuses with 409 `folder_target_changed`.
 
-A caller inside an Ultra Mode tree — a chat that turned Ultra Mode on, or a session
+A caller inside a conductor mode tree — a chat that turned conductor mode on, or a session
 such a chat dispatched (`crew_mode.slot_in_turned_on_tree`, the rule the slot
-list stamps; see [crew-mode](crew-mode.md) § Ultra Mode) — files nothing: the
+list stamps; see [crew-mode](crew-mode.md) § conductor mode) — files nothing: the
 chat is the person's one entry for the whole crew. `session_create` with a
 `folder` still resolves it (an unknown or ambiguous reference is refused, no
 path segment is created), gives the child that folder's project directory, and
@@ -620,7 +631,7 @@ leaves the child unfiled; the reply carries `folder_ignored: "crew_mode"` when
 a folder was named and `crew_mode: true` whenever the caller is in such a tree.
 `session_fork` from such a caller clears even the folder the source transcript
 carried before the child's first save and answers the same two fields.
-The MCP tools' replies say "unfiled (this chat is in Ultra Mode)"
+The MCP tools' replies say "unfiled (this chat is in conductor mode)"
 so the agent does not report a filing that did not happen.
 
 `session_create` also takes an optional `agent_kind`, with one value: `template`.
@@ -705,7 +716,7 @@ MCP folder-path walk reaches it through this route. A session a Bot's conductor 
 `_conducts_for_a_worker`, the worker hand-off's own test, run off the loop
 so it never schedules an installed-agents rescan) is filed in the folder it named when that
 folder is inside the home, else in the home itself. A person's folder it named
-still supplies the child's project directory, as in Ultra Mode (filing dropped,
+still supplies the child's project directory, as in conductor mode (filing dropped,
 project kept), and the late folder re-check compares that folder's project; a
 named folder that does not exist, or one in another Bot's home, supplies
 nothing and the home is used for both. Any other caller naming a
@@ -914,7 +925,7 @@ session-control verb calls the same two, so what an agent's fork copies and what
 it inherits — agent, model, memory store and mode bound at birth, project,
 folder, tags, sidebar color, `forked_from` — is by construction what a person's
 fork copies and inherits, except the sidebar pin (last table row) and the folder of a
-Ultra Mode caller's child, which is cleared (§ `session_create`'s Ultra Mode
+conductor mode caller's child, which is cleared (§ `session_create`'s conductor mode
 filing rule). The human route's behaviour is unchanged by the split; the core
 takes the request-derived facts as arguments (`request_app`, `origin`,
 `count_user_session`, `jev_route_allowed`, the SEL caller and operation) and the
@@ -1210,14 +1221,14 @@ checked against the grant again at drain, so one queued before a withdrawal stil
 
 ### Handoff: the manager a fenced caller is checked against
 
-The ownership fence below admits a fenced caller to the sessions it CREATED. A lead
-that opens a conductor and its workers cannot put the workers under the conductor that
-way, because the conductor created none of them. `session_handoff` names a MANAGER for
-a session, and for the verbs that run a session (`HANDOFF_WIDENED_OPERATIONS`: `send`,
-`read`, `summary`, `stop`, `close`, `adopt`, `release`, `handoff`) the fence checks the
-manager instead of the creator (`_outside_reach`). Every other verb, `fork`, `rename`
-and `set_model` among them, and `session_create`'s delegation lineage, still read
-`_created_by`, which a handoff never rewrites. So a manager runs the sessions it was
+The ownership fence below admits a fenced caller to the sessions it CREATED. A lead that
+opens a conductor and its workers cannot put the workers under the conductor that way,
+because the conductor created none of them. `session_handoff` names a MANAGER for a
+session, and for the verbs that run a session (`HANDOFF_WIDENED_OPERATIONS`: `send`,
+`read`, `summary`, `queue`, `stop`, `close`, `adopt`, `release`, `handoff`) the fence
+checks the manager instead of the creator (`_outside_reach`). Every other verb, `fork`,
+`rename` and `set_model` among them, and `session_create`'s delegation lineage, still
+read `_created_by`, which a handoff never rewrites. So a manager runs the sessions it was
 handed and cannot fork them or open sessions against the creator's memory.
 
 The reach moves: once a session is handed on, a fenced giver is refused the widened
@@ -1369,7 +1380,7 @@ every caller class.
 The shipped Conductor (`kirocrew-conductor`, and its deprecated alias
 `kirocrew-ledger-conductor`) exists to open and drive worker sessions. When the
 person starts it in their own dashboard tab, it gets the member bypass on the
-member's terms, so Ultra Mode works on an install whose stored
+member's terms, so conductor mode works on an install whose stored
 `agent.session_control` is `false`:
 
 - **Who.** `_owner_tab_conductor` reads positive identity off the caller's own
@@ -2856,7 +2867,7 @@ Wave 1 of [rfc-conductor-remote-dispatch.md](../../request-for-change/rfc-conduc
 Each call is checked in this order, and each refusal has its own code:
 
 1. **Switch.** `work_ledger.remote_dispatch` (default `false`, read per call) off refuses `remote_dispatch_disabled` before anything else. `agent.session_control` off then refuses `session_control_disabled`, as it does for every local verb. Off, the dashboard MCP server's `tools/list` is byte-for-byte the table's own; on, it adds a `crew` property to exactly these five schemas. The validator schemas accept `crew` either way, so the gateway, not an unknown-field error, answers a call that carries it.
-2. **Owner-only caller.** The declared key is owner-minted (`is_owner_minted_session_key`, the `dashboard` namespace; `owner_only`); the shared agent-caller resolver (`handlers/guide.py` `_resolve_agent_caller`) admits it with its own codes; the slot was not opened on another caller's behalf (`_created_by` / `_lineage_minted`) and is not a crew member's thread (`owner_only`); the session is an Ultra Mode chat, judged by the predicate the Ultra Mode agent lock uses (`crew_mode.slot_is_crew_mode_root`), so a plain chat on any other agent is refused (`ultra_mode_only`); the session is not bound to a private member store (`private_memory`); the session is not the bound worker of any work-ledger item here, read through the same binding `work_brief` resolves and refused when it cannot be read (`crew_caller_is_worker`), which keeps dispatch one level deep: a session another gateway's conductor opens here is bound to its mailbox item once the peer side binds at create (RFC wave 2), and a nested conductor is a bound worker too; and finally the running turn must be one the owner sent (`crew_owner_unverifiable`). That last arm, `owner_unverifiable_reason`, is the crew-read gate's slot check (`handlers_instances_crew_reads._slot_refusal`): the turn carries `_turn_owner_sent` and the slot was not opened on another caller's behalf. A dashboard login a messaging channel minted for someone else fails it, and so does a turn the person did not send (a loop wake, a `session_send`, a sub-agent completion). The earlier arms refuse first, so each refusal still names the rule a caller fails.
+2. **Owner-only caller.** The declared key is owner-minted (`is_owner_minted_session_key`, the `dashboard` namespace; `owner_only`); the shared agent-caller resolver (`handlers/guide.py` `_resolve_agent_caller`) admits it with its own codes; the slot was not opened on another caller's behalf (`_created_by` / `_lineage_minted`) and is not a crew member's thread (`owner_only`); the session is a conductor mode chat, judged by the predicate the conductor mode agent lock uses (`crew_mode.slot_is_crew_mode_root`), so a plain chat on any other agent is refused (`conductor_mode_only`); the session is not bound to a private member store (`private_memory`); the session is not the bound worker of any work-ledger item here, read through the same binding `work_brief` resolves and refused when it cannot be read (`crew_caller_is_worker`), which keeps dispatch one level deep: a session another gateway's conductor opens here is bound to its mailbox item once the peer side binds at create (RFC wave 2), and a nested conductor is a bound worker too; and finally the running turn must be one the owner sent (`crew_owner_unverifiable`). That last arm, `owner_unverifiable_reason`, is the crew-read gate's slot check (`handlers_instances_crew_reads._slot_refusal`): the turn carries `_turn_owner_sent` and the slot was not opened on another caller's behalf. A dashboard login a messaging channel minted for someone else fails it, and so does a turn the person did not send (a loop wake, a `session_send`, a sub-agent completion). The earlier arms refuse first, so each refusal still names the rule a caller fails.
 
    **The patrol-wake exception (wave 4, maintainer decision by buluoray on #26651).** Two wave 4 paths are NOT held to the owner-sent arm: the pull `work_ledger_read` runs for a remote item, and the decide forward a recorded `decide` on a remote item sends. Both may run on a turn the owner did not send, such as a patrol wake, because the conductor's own patrol is what drives them. Their reach is the one remote item bound on the caller's own ledger: the pull reads only that item's crew and slot, and the forward PATCHes only that slot's `work-item`. Both run only with `work_ledger.remote_dispatch` on, which defaults to off. This is a deliberate exception, not a precedent: any later crew-scoped read still applies the owner-sent arm above.
 3. **Crew.** An exact id wins over any name; a name resolves only when one crew carries it (`crew_unknown`, `crew_ambiguous`, `crew_invalid`).
@@ -3064,9 +3075,9 @@ goes to its owner, and the owners import each other lowest layer first, in this 
 - `src/kiro_crew/dashboard/session_control_parts/session_titles.py`: title cleaning,
   `session_rename`, `session_generate_title`, `session_set_color`, and
   `authorize_created_target`, the gate `session_set_color` and `session_set_note` share.
-- `src/kiro_crew/dashboard/session_control_parts/crew_filing.py`: the Ultra Mode filing
+- `src/kiro_crew/dashboard/session_control_parts/crew_filing.py`: the conductor mode filing
   rule `session_create` and `session_fork` share: whether the caller is in a turned-on
-  Ultra Mode tree, and the `folder_ignored` / `crew_mode` reply keys.
+  conductor mode tree, and the `folder_ignored` / `crew_mode` reply keys.
 - `src/kiro_crew/dashboard/session_control_parts/session_create.py`: `session_create` and
   the spawn record a created or forked child gets.
 - `src/kiro_crew/dashboard/session_control_parts/session_tree.py`: `session_fork`,

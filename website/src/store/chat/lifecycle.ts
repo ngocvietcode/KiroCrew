@@ -20,6 +20,7 @@ import { entryActivityOpen, type ChatState } from './state'
 import { filterMessages, safeKey } from './wire'
 import { enterActiveSlot, pushHistory } from './runState'
 import { parkActiveTranscript, setPagingCursor } from './slotCache'
+import { abortActiveOlderFetch } from './paging'
 
 export const fetchHistory = createAsyncThunk(
   'chat/fetchHistory',
@@ -41,7 +42,7 @@ export const fetchHistory = createAsyncThunk(
 type NewChatConfig = { default_memory_mode?: unknown; new_chat_crew_mode?: unknown }
 
 /**
- * `dashboard.new_chat_crew_mode`: turn Ultra Mode on for a just-created New chat
+ * `dashboard.new_chat_crew_mode`: turn conductor mode on for a just-created New chat
  * the way a press of the composer chip does, by the ordinary agent switch to the
  * conductor (docs/decisions/2026-10-27-crew-mode-is-a-composer-switch-to-the-conductor-template.md):
  * the create itself is unchanged. Runs before the create's `fulfilled`, so the chat
@@ -259,6 +260,8 @@ export const resumeFromHistory = createAsyncThunk<
     const origin = captureForkOrigin(getState() as RootState)
     const d = await api.resumeChatSlot(key, title)
     if (d.ok) {
+      // A resume re-bases the cursor of the chat it opens, which may own the page in flight.
+      abortActiveOlderFetch()
       dispatch(addSlotOptimistic({ key: d.key, title: title || d.key, messages: 0, running: false, memory_mode: d.memory_mode, mode: d.mode, surface: d.surface ?? d.mode, pending_approval: false, waiting_for_input: false, last_activity_ts: undefined, ...(d.folder_id ? { folder_id: d.folder_id } : {}), ...(d.history_key ? { history_key: d.history_key } : {}) }))
       dispatch(updateSlot({ key: d.key, mode: d.mode, surface: d.surface ?? d.mode }))
     }

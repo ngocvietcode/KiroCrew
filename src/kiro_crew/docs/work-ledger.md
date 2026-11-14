@@ -29,7 +29,7 @@ a conductor would only add overhead.
 
 To start one, open a session on the **`kirocrew-conductor`** agent (see
 [Agents](agents.md) for the per-session, per-thread and per-cron selectors), which
-is what an Ultra Mode chat runs on, and give it the goal. Its operating procedure ships as the `goal-conductor` skill.
+is what a conductor mode chat runs on, and give it the goal. Its operating procedure ships as the `goal-conductor` skill.
 `kirocrew-ledger-conductor` is a deprecated alias of the same spec, kept for one
 release so an existing session or cron that names the old string keeps resolving.
 
@@ -55,7 +55,11 @@ An item is the unit of dispatch. It holds:
 
 The conductor writes its half with `work_ledger_record` (one action per call:
 `goal`, `create`, `bind`, `decide`, `verdict`, `accept`, `close`) and reads the
-ledger back with `work_ledger_read`. A patrol cycle reads it with `compact=true`
+ledger back with `work_ledger_read`. When it relays an item's question to the
+person, it records what the item needs, why, each option with what it leads to,
+and its pick with `work_ask_record`, a deferred tool it loads first; the
+person's welcome shows that record, and `decide` or `close` clears it. A patrol
+cycle reads it with `compact=true`
 (status columns and derived flags only); `item_id`, `state`, `since` and
 `events` narrow a full read. A reply over the tool-result limit comes back as
 valid JSON marked `truncated`: event tails go first, then oversized acceptances
@@ -195,7 +199,7 @@ the goal popover says it is waiting on you. A worker's new report releases it;
 the conductor's own writes do not.
 
 **`wake_at` says a `progress` report is a wait until a known time.** The item is
-not flagged `stale` before that time, so the Ultra Mode sidebar does not call the
+not flagged `stale` before that time, so the conductor mode sidebar does not call the
 worker stalled; once it passes, the staleness window runs from it. The exception is
 a worker whose own loop is active but cannot fire (held on an unanswered approval,
 or past its budget or cycle cap): its `wake_at` is ignored and the normal window
@@ -249,7 +253,7 @@ at the cap still reads.
 
 An item can carry a `steer` event: the time, actor `person`, and the person's own
 text, redacted and cut to 500 characters. It records that the person typed into
-the crew member (the worker session) that holds the item, from an Ultra Mode chat.
+the crew member (the worker session) that holds the item, from a conductor mode chat.
 It is also written, with fixed text and nothing from the tool call, when the
 person answers a tool approval in that crew member's chat while the item's last
 report is `blocked` or `question` with reason `approval` and nobody has answered
@@ -322,8 +326,10 @@ spend, an irreversible step or deleting someone's work, a costly preference
 they cannot infer, or a choice the person said they want to make.
 
 Parallel work is bounded in code, not only in the prompt. Each goal may hold at
-most `concurrency_cap` items open at once. The default is 6; a `goal` write sets
-it (`concurrency_cap`, 1 to 32). A `create` past it is refused
+most `concurrency_cap` items open at once. `resource_status` decides the wave;
+a bound the user set is `concurrency_cap`, written by a `goal` write (1 to 32).
+With none set it is 32, the store's own open bound, which refuses first with
+`item_cap_exceeded`. A `create` past a lower cap is refused
 `goal_concurrency_cap_reached`, and the board writes nothing. That is not a
 stop: the next item that lands frees a seat, and the conductor waits for it
 rather than asking to raise the cap. Closed items never count toward it.
@@ -336,6 +342,17 @@ the cap keeps it. A board that never records a goal, such as a pipeline or
 security conductor's queue, has no concurrency cap. After two rounds in a row with
 nothing accepted the conductor tells the user and re-plans the failing items
 once; a third stops new dispatches until the user answers.
+
+Host memory pressure pauses dispatch too. While the gateway sees host memory
+tight (sustained for ten minutes) or critical, the `conductor` block carries
+`host_pressure` (`level`, `since`, `age_secs`, `reading`, `load_per_cpu`), and
+a record nobody refreshed for 90 seconds reads as absent (a `clear`, written
+once, reads for 900 seconds so a busy conductor still gets its resume wake). Each level change
+(tight, critical, clear) wakes every watched conductor once. At `tight` the
+conductor starts nothing new; at `critical` it also holds its workers' heavy
+steps, and a `create` is refused `host_pressure_critical` (409) with nothing
+written; at `clear` it resumes. The signal is memory only: CPU load is shown,
+not acted on.
 
 ## Not the same as the session ledger, or subagents
 

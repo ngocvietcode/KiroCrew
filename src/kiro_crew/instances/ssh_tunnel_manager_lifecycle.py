@@ -35,6 +35,7 @@ from kiro_crew.instances.registry import (
     _UNALLOCATED_PORT,
     Instance,
     InstanceDisabledError,
+    InstanceStoppedError,
     ancestor_ids,
     descendant_ids,
     is_headless_provisioner,
@@ -169,7 +170,9 @@ async def connect(
     the browser could.
 
     A disabled crew raises :class:`InstanceDisabledError` and spawns nothing,
-    and so does a chained crew with a disabled crew anywhere up its chain.
+    and so does a chained crew with a disabled crew anywhere up its chain. A
+    crew whose cloud machine was stopped raises its subclass,
+    :class:`InstanceStoppedError`.
     The check reads the record under the same lock the disabling write is
     made under (see :meth:`reconfigure`), so a connect racing a disable either
     finishes first and is torn down by it, or starts after and is refused.
@@ -206,6 +209,8 @@ async def connect(
             )
         if inst.disabled:
             raise InstanceDisabledError(f"crew {instance_id!r} is disabled")
+        if inst.cloud_stopped:
+            raise InstanceStoppedError(f"crew {instance_id!r} is stopped")
         if inst.via_instance_id:
             # A chained crew's forward dials its parent's host, so a disabled
             # crew anywhere up the chain keeps this one closed as well.
@@ -247,8 +252,8 @@ async def connect(
             # terminated and the local forward freed before we spawn a
             # replacement. Otherwise the old child orphans (dropped from
             # _tunnels below, never killed) and keeps the port — every
-            # replacement then hits ExitOnForwardFailure while _port_reachable
-            # is still satisfied by the orphan -> tight respawn loop.
+            # replacement then loses its bind while _port_reachable is still
+            # satisfied by the orphan -> tight respawn loop.
             with contextlib.suppress(Exception):
                 await existing.stop()
 
@@ -447,7 +452,7 @@ async def connect(
         # The probe above is advisory — there is an inherent TOCTOU window
         # between probing and ssh actually binding — so re-check immediately
         # before spawning and fail with an actionable message rather than
-        # letting the child exit on ExitOnForwardFailure.
+        # letting the child fail its bind.
         if not await asyncio.to_thread(_is_port_free, local_port):
             return self._error_status(
                 inst,
@@ -862,13 +867,16 @@ async def shutdown(self: SshTunnelManager) -> None:
             self._cancel_token_refresh(instance_id)
         ids = list(self._tunnels)
         for instance_id in ids:
-            tunnel = self._tunnels.pop(instance_id, None)
+            tunnel = self._tunnels.get(instance_id)
             self._tokens.pop(instance_id, None)
             self._peer_sessions.pop(instance_id, None)
             self._chained_far_end.pop(instance_id, None)
             if tunnel is not None:
                 with contextlib.suppress(Exception):
                     await tunnel.stop()
+            # Only once the stop has returned: a shutdown cut mid-stop leaves the
+            # tunnel here, so the next shutdown (the gateway's exit path) stops it.
+            self._tunnels.pop(instance_id, None)
         # Every lent hop port goes with the process, so nothing stays bound by a
         # guard whose gateway is gone. The LEASE survives this, and
         # `sync_hop_holds` at the next startup is what re-takes the ports.

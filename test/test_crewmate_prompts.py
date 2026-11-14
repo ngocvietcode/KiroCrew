@@ -167,6 +167,7 @@ _EXEMPT: dict[str, str] = {
     "work_report": "a worker's tool (mcp_work.WORKER_TOOLS), never the conductor's",
     "work_ledger_rebuild": "repairs a damaged or missing ledger, not part of the ordinary loop",
     "accept_eval": "named by the act-by-status rule, rendered only with the ledger (see below)",
+    "work_ask_record": "named by the act-by-status rule, rendered only with the ledger (see below)",
     "offer_dashboard_page": (
         "named by its per-turn note (dashboard/page_offer.py), which is the only time "
         "the crewmate may call it"
@@ -356,7 +357,7 @@ def test_the_patrol_piece_names_the_gated_ledger_watch_band_and_renewal() -> Non
 
 
 def test_both_conductors_send_one_final_report_before_they_stop_the_patrol() -> None:
-    """Bot and Ultra Mode end a patrol the same way: the final report first, the stop
+    """Bot and conductor mode end a patrol the same way: the final report first, the stop
     in a later step, and no bound for the model to pick (rfc-permanent-patrol.md)."""
     from kiro_crew import agent
     from kiro_crew.context_assembly import member

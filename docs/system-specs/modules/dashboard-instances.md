@@ -10,10 +10,10 @@ The instance store is two modules and one route, each with one job:
 | Piece | Where | What it owns |
 |---|---|---|
 | registry | `dashboard_templates/catalog.py` | the built-in templates and the operator's own, one loader |
-| instance | `dashboard_templates/instance.py` | the copy, its versions, rollback, state, history |
+| instance | `dashboard_templates/instance.py`, with `instance_adopt.py` for the adopt-only-while-empty form | the copy, its versions, rollback, state, history |
 | route | `dashboard/handlers/member_dashboard.py` | what the frame reads |
 
-The agent-facing surface is separate and MCP-only: `dashboard/handlers/agent_panel_dashboard.py`, behind the `dashboard/handlers/agent_panel.py` facade, serves the `/api/agent-panel/dashboard/{fields,write,templates,preview,apply,rollback}` routes, `dashboard_agentic.py` checks and records agentic field writes and the mistake book, and `dashboard_feed.py` is the O(fields) subscription channel a filled page reads fold values through.
+The agent-facing surface is separate and MCP-only: `dashboard/handlers/agent_panel_dashboard.py`, behind the `dashboard/handlers/agent_panel.py` facade, serves the `/api/agent-panel/dashboard/{fields,types,write,save,templates,preview,apply,rollback}` routes (`record` and `snapshot` have their own modules, `agent_panel_record.py` and `agent_panel_snapshot.py`), `dashboard_agentic.py` checks and records agentic field writes and the mistake book, and `dashboard_feed.py` is the O(fields) subscription channel a filled page reads fold values through.
 
 An array or object field is emptied with `dashboard_write` `clear: true` and no
 `value`. The MCP server (`mcp_panel.py`) reads the field's declared type from the
@@ -103,13 +103,13 @@ Bot's own. An `empty` root session is shown `DEFAULT_TEMPLATE_ID`. Only shipped 
 match by name; an operator's page never does. The read route and the `[DASHBOARD]` turn
 block both resolve through it, and nothing is written. No shipped page may be named
 `default`.
-A ROOT session running the Ultra Mode conductor template (`crew_mode.runs_crew_mode`) gets the same
+A ROOT session running the conductor template of conductor mode (`crew_mode.runs_crew_mode`) gets the same
 `[DASHBOARD]` block on every dashboard turn, keyed by its own store key
 (`session_turn_block`), but only once a page is ADOPTED: the default page it is shown
 while `empty` asks nothing of it, so it gets no block. A root session on any other agent
-(not in Ultra Mode) or on a Bot (`agent_kind == "member"`), a dispatched or adopted
+(not in conductor mode) or on a Bot (`agent_kind == "member"`), a dispatched or adopted
 session, and a Bot DM get no session block; the page itself is left as it is.
-Switching a root session to the Ultra Mode conductor template (Ultra Mode on) adopts `goal-board` through the ordinary
+Switching a root session to the conductor template of conductor mode (conductor mode on) adopts `goal-board` through the ordinary
 `adopt` (`adopt_crew_mode_board_on_switch`, called by `switch_slot_agent`), only while the
 page is `empty`, so a page already chosen is kept and switching away changes nothing.
 It applies to a Persistent chat only (an unset memory mode counts as one): an Incognito

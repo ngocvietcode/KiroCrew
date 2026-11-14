@@ -22,6 +22,7 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
+    ACP_BACKEND_MIMOCODE,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
     ACP_BACKEND_SAOKHUE,
@@ -175,11 +176,13 @@ ACP_BACKENDS_ACP_RUNTIME = frozenset({ACP_BACKEND_KIRO, ACP_BACKEND_KAS, ACP_BAC
 # (report not-spawnable) rather than silently fall to the kiro-cli branch under
 # its own identity the way kas and codex do today -- the exact bug this fact
 # exists to let a caller avoid.
+# mimocode is a member: ``MimoCodeLaunch`` is its entry in ``_PROCESS_ADAPTERS``.
 ACP_BACKENDS_ACP_CLIENT_SPAWNABLE = frozenset(
     {
         ACP_BACKEND_KIRO,
         ACP_BACKEND_CLAUDE,
         ACP_BACKEND_OPENCODE,
+        ACP_BACKEND_MIMOCODE,
         ACP_BACKEND_GOOSE,
         ACP_BACKEND_PI,
         ACP_BACKEND_DEEPSEEK,
@@ -298,11 +301,17 @@ ACP_BACKENDS_SERIAL_SESSION_STARTS = frozenset({ACP_BACKEND_KIRO})
 # restored session came back with ``allow_all`` as it was LEFT -- ``on`` after a
 # ``/allow-all on`` -- which is why the routing write runs after a load too. It is
 # NOT in ``ACP_BACKENDS_LOAD_WITHOUT_MODES``: that same load answer carries ``modes``.
+# mimocode is a member on a capture: a second ``mimo acp`` process answered
+# ``session/load`` for the first one's id from the id alone, replayed the
+# conversation, and answered a question only that history held
+# (``test/fixtures/acp_frames/mimocode/session-load-live.jsonl``). Its load result
+# carries ``modes``, so it is NOT in ``ACP_BACKENDS_LOAD_WITHOUT_MODES``.
 ACP_BACKENDS_HARNESS_OWNED_SESSIONS = frozenset(
     {
         ACP_BACKEND_CLAUDE,
         ACP_BACKEND_CODEX,
         ACP_BACKEND_OPENCODE,
+        ACP_BACKEND_MIMOCODE,
         ACP_BACKEND_PI,
         ACP_BACKEND_GOOSE,
         ACP_BACKEND_DEEPSEEK,
@@ -377,6 +386,18 @@ ACP_BACKENDS_LOAD_WITHOUT_MODES = frozenset(
 # set is the record, and adding a harness to it is a deliberate edit with a capture
 # behind it (harness-parity H6, the same reason every capability here is opt-in).
 ACP_BACKENDS_RESUME_WITHOUT_LOAD = frozenset({ACP_BACKEND_DEEPSEEK})
+
+# Harnesses that keep a saved session on the directory it was created in, so it is
+# restored only in that directory. opencode 1.x runs one instance per directory and
+# a session stays with the instance it was created by: a ``session/load`` naming
+# another ``cwd`` answers from the new instance while the session's permission asks
+# keep coming from the old one, so every approval reply is dropped, and the MCP
+# servers sent with the load are mounted on the instance the model is not using.
+# For a member, a chat whose folder changed since its session was saved starts a
+# fresh session in the new folder and gets its conversation replayed as text
+# (``session_allocation_parts.get_or_create``). kiro-cli takes the cwd from each
+# load, so it is not a member and a moved chat keeps its native history.
+ACP_BACKENDS_CWD_BOUND_SESSIONS = frozenset({ACP_BACKEND_OPENCODE})
 
 # Harnesses whose ``session/fork`` copies a stored session only up to a given
 # assistant message, which is what lets a rewind keep the native history it

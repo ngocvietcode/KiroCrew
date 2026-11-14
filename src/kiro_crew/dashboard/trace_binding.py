@@ -2,12 +2,15 @@
 
 ``_run_chat`` calls :func:`bind_turn` once per turn. While tracing is on, every turn,
 including a nested ``/prompts get`` turn sharing its task, reads its crew attributes
-when the slot is an Ultra Mode or Bot conductor or one of their workers
-(``tracing.crew``).
+when the slot is the conductor of a conductor mode chat or of a Bot, or one of their workers
+(``tracing.crew``), and joins its board's round, or its item's anchor for a worker
+(``tracing.work.binding``), unless a run it delivers joins it first.
 
 Only a top-level turn takes the sub-agent completions handed over by the queue drain
 (``tracing.subagents.delivered``), and only while tracing is on: one joins that run's
-trace, several give links. The work-item read touches disk, so it runs on a worker
+trace, several give links. A top-level turn reporting a finished workflow run
+(``tracing.workflows.delivering``) joins that run's trace instead and links to the
+turn that launched it. The work-item read touches disk, so it runs on a worker
 thread before anything is bound.
 """
 
@@ -22,6 +25,8 @@ from kiro_crew.tracing import crew as trace_crew
 from kiro_crew.tracing import provider as trace_provider
 from kiro_crew.tracing import subagents as trace_subagents
 from kiro_crew.tracing import turns as trace_turns
+from kiro_crew.tracing import work as trace_work
+from kiro_crew.tracing import workflows as trace_workflows
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +46,22 @@ def _stamped_row(state: Any, slot_key: str) -> dict[str, Any]:
         return {}
 
 
-async def _crew_attrs(state: Any, slot_key: str, hash_key: bytes | None) -> dict[str, Any]:
+async def _crew_attrs(
+    state: Any, slot_key: str, hash_key: bytes | None
+) -> tuple[dict[str, Any], Any, str]:
+    """The turn's crew attributes, and the round or item anchor it joins (``tracing.work``)."""
     row = _stamped_row(state, slot_key)
-    root, _dispatcher, _kind = trace_crew.root_of(slot_key, row)
+    root, _dispatcher, kind = trace_crew.root_of(slot_key, row)
     if not root:
-        return {}
+        return {}, None, ""
     item = await asyncio.to_thread(trace_crew.bound_item, slot_key) if root != slot_key else None
-    return trace_crew.attrs(hash_key, slot_key, row, item)
+    join, rollup_key = await asyncio.to_thread(trace_work.binding, slot_key, item, kind)
+    return trace_crew.attrs(hash_key, slot_key, row, item), join, rollup_key
+
+
+def root_kind(state: Any, slot_key: str) -> str:
+    """``conductor_mode`` or ``mate`` when *slot_key* is on a crew tree, else ``""``. No I/O."""
+    return trace_crew.root_of(slot_key, _stamped_row(state, slot_key))[2]
 
 
 async def bind_turn(state: Any, slot: Any, turn_id: str, *, top: bool) -> contextvars.Token | None:
@@ -58,18 +72,35 @@ async def bind_turn(state: Any, slot: Any, turn_id: str, *, top: bool) -> contex
     Release with ``tracing.turns.release_turn_root``. Nothing is bound until every
     read is done, so a cancelled read leaves nothing to release.
     """
-    join, links, attrs = None, (), None
+    join, links, attrs, rollup_key = None, (), None, ""
     trace = trace_provider.peek()
     if trace is not None:
         # Taken first, so a failed attribute read below cannot leave them for a
         # later turn of this task.
         causes = trace_subagents.take_causes(turn_id) if top else ()
+        # A turn reporting a finished workflow run joins that run (tracing/workflows.py).
+        wf_join, wf_links, wf_attrs = (
+            trace_workflows.completion_binding(turn_id) if top else (None, (), {})
+        )
         try:
             if top:
                 join, links = trace_subagents.completion_binding(causes)
-            attrs = await _crew_attrs(state, str(getattr(slot, "key", "") or ""), trace.hash_key)
+                if wf_join is not None:
+                    # A drain may deliver sub-agent results too: their links stay.
+                    join, links = wf_join, wf_links + tuple(links)
+            attrs, board_join, board_rollup = await _crew_attrs(
+                state, str(getattr(slot, "key", "") or ""), trace.hash_key
+            )
+            if join is None and board_join is not None:
+                # A turn a run caused joins that run; any other turn on a board, its round.
+                join, rollup_key = board_join, board_rollup
         except asyncio.CancelledError:
             raise
         except Exception:
             logger.debug("trace root binding failed", exc_info=True)
-    return trace_turns.bind_turn_root(turn_id, join=join, links=links, attrs=attrs)
+        if wf_attrs:
+            # After the crew read, so its failure cannot strip the run id off a joined turn.
+            attrs = {**(attrs or {}), **wf_attrs}
+    return trace_turns.bind_turn_root(
+        turn_id, join=join, links=links, attrs=attrs, rollup_key=rollup_key
+    )

@@ -36,6 +36,7 @@ from kiro_crew.dashboard.slot_queue_repository import (
     refused_durable_ids,
     warn_if_not_durable,
 )
+from kiro_crew.dashboard.steer_supersedes_approval import reject_approvals_superseded_by_steer
 from kiro_crew.history import HUMAN_TURN_META_KEY
 from kiro_crew.security import redact_credentials, redact_exfiltration_urls
 
@@ -518,7 +519,8 @@ async def steer_into_running_turn(
     a restored transcript, and only an id names THIS delivery.
 
     ``nudge_meta`` says the text is AUTOMATION (a monitor loop's work-ledger
-    wake), and is the ``meta.nudge`` (``{"cycle", "loop_id"}``) its row carries.
+    wake), and is the ``meta.nudge`` (``{"cycle", "loop_id"}``) its row carries,
+    plus the loop's ``session_deliver.WAKE_GENERATION``, which no row carries.
     The row's role follows the origin, not the branch that ran: the steer is
     persisted as a ``nudge`` row, the same role the idle fire writes, so it
     draws as the nudge chip rather than a bubble the person typed. It
@@ -1211,6 +1213,10 @@ async def steer_into_running_turn(
         # the sender it would show the raw provenance prefix until a reload.
         push_payload.setdefault("meta", {})["relay"] = dict(relay_meta)
     state.broadcast_ws("steer_push", push_payload)
+    if _state == STEER_STATE_WRITTEN and _shown_as_typed and owner_origin:
+        # Still held, so a card open now is the one it was typed over. Without
+        # this the steer waits behind the card until someone clicks it.
+        reject_approvals_superseded_by_steer(state, slot)
     return STEER_STEERED
 
 

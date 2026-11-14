@@ -203,6 +203,8 @@ _SETTING_ORDER: dict[str, tuple[Any, ...]] = {
     # On, the dashboard also listens on a loopback port for AWS SSM port forwards.
     "dashboard.shared_crew.ssm": (False, True),
     "skills.approval_required": (True, False),
+    # On, an agent may start a Task Runner run (``task_run``); off, every start refuses.
+    "taskrunner.enabled": (False, True),
     "telemetry.beacon_enabled": (False, True),
     # Kiro's own Chromium holds none of the person's logins; ``auto`` and
     # ``user_chrome`` hand the agent the person's Chrome, signed in.
@@ -255,6 +257,9 @@ _CANNOT_WIDEN_SETTINGS: frozenset[str] = frozenset(
         # A list, so no card reaches it (see ``skills.extra_paths``). Loopback
         # ``host:port`` entries only, for the Preview tab, which no agent drives.
         "dashboard.browser_local_origins",
+        # Which surface the quick-search shortcut opens; both show only what the
+        # dashboard already shows this person.
+        "dashboard.command_bar_enabled",
         "dashboard.crewmate_threads",
         "dashboard.dynamic_dashboard_cards",
         # A feature preview only decides whether the dashboard OFFERS an
@@ -281,6 +286,7 @@ _CANNOT_WIDEN_SETTINGS: frozenset[str] = frozenset(
         "dashboard.terminal.external_app",
         "dashboard.terminal.reuse_current",
         "dashboard.title_refresh_every_turns",
+        "dashboard.unfiled_sessions_above_folders",
         "dashboard.update_nudge",
         "dashboard.user_role",
         "dashboard.user_role_other",
@@ -325,6 +331,9 @@ _CANNOT_WIDEN_SETTINGS: frozenset[str] = frozenset(
         # Generated skills still wait for approval unless
         # ``skills.approval_required`` (ordered above) is turned off.
         "skills.auto_create_from_sessions",
+        # The weekly repeated-failures bell note: a reminder to the owner, which
+        # writes no memory and grants nothing.
+        "memory.repeated_failures_notice",
         # Local recording only: the write route refuses the enable on a host
         # where it would start sending data out.
         "telemetry.enabled",

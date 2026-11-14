@@ -62,6 +62,7 @@ import FollowUpCard, { type FollowupStartMode } from '../../../components/Follow
 import PendingQuestionCard from '../../../components/PendingQuestionCard'
 import FlyingQuote from '../../../components/FlyingQuote'
 import QueueStack, { SubagentDeliveryProgress } from '../../../components/QueueStack'
+import McpLoadingBar from '../McpLoadingBar'
 import SubagentProgressBar from '../SubagentProgressBar'
 import TaskProgressBar from '../TaskProgressBar'
 import type { ChatConfig } from '../ChatSettings'
@@ -294,7 +295,7 @@ interface ComposerDockViewProps {
   /** The Crew Mode chip (crewModeSwitch): offered on this chat, and its switch on. */
   crewModeOffered: boolean
   /** A plain chat that already has messages: the same chip sits right of the
-   *  permission button and turns this chat into an Ultra Mode chat, one way. */
+   *  permission button and turns this chat into a conductor mode chat, one way. */
   crewModeMidChatOffered?: boolean
   turnOnCrewMode: () => void
   /** Set only while Crew Mode is on and no message is sent yet: the composer's
@@ -306,7 +307,7 @@ interface ComposerDockViewProps {
   /** A conductor session (Crew Mode): the composer offers no agent picker, since
    *  the conductor is chosen by Crew Mode itself. Workspace and model stay. */
   agentPickerHidden?: boolean
-  /** Ultra Mode is on and no message is sent yet: the chip row stays
+  /** Conductor mode is on and no message is sent yet: the chip row stays
    *  with the chip pressed (a toggle), the memory chip is held, and the agent
    *  slot shows nothing. */
   crewChipPressed?: boolean
@@ -426,6 +427,10 @@ export default function ComposerDockView({
                   still fuses. Layout-neutral when the queue is empty: the pair
                   cancels. */}
               <div ref={composerBandRef} className="max-h-[50svh] overflow-y-auto overscroll-contain pb-[11px] mb-[-11px] dock-inert" data-testid="composer-status-stack">
+              {/* Topmost, furthest from the composer: it is about the session's
+                  setup, not about the work in hand, and is gone once every MCP
+                  server has connected. */}
+              <McpLoadingBar slot={activeSlot} />
               {/* Not gated on activityOpen (unlike the two bars below): the
                   activity sidebar has no TODO view, so hiding it there would
                   lose the information rather than de-duplicate it. */}

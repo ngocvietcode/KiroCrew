@@ -23,6 +23,7 @@ from contextlib import aclosing
 from pathlib import Path
 from typing import Any, cast
 
+from kiro_crew.acp import session_provider_context as _sp_context
 from kiro_crew.acp import session_provider_keepalive as _sp_keepalive
 from kiro_crew.acp import session_provider_mcp_reinject as _sp_mcp_reinject
 from kiro_crew.acp import session_provider_shared as _sp_shared
@@ -83,6 +84,7 @@ from kiro_crew.runtime_ownership import (
     release_runtime_tenancy,
 )
 from kiro_crew.session_token_sig import schedule_session_token_publish
+from kiro_crew.tracing import turn_anomalies
 from kiro_crew.tracing import turns as trace_turns
 from kiro_crew.trust_patterns import GrantDeadline
 
@@ -477,6 +479,7 @@ class AcpSessionProvider(LLMProvider):
         # Still the session the keepalive route's registry holds, if it was.
         new_handle.keepalive_routed = getattr(old, "keepalive_routed", False) is True
         self._handle = new_handle
+        old.mcp_session_report().hand_over(new_handle.mcp_session_report())  # its reader follows
         # The fresh session/new restored nothing: a session/load observation from
         # the old handle would make the next turn skip its history replay
         # (``turn_dispatch_gates``) and run on an empty conversation. Same as
@@ -576,6 +579,13 @@ class AcpSessionProvider(LLMProvider):
     def kas_withheld_credentials_notice(self) -> str:
         """See ``AcpSessionHandle.kas_withheld_credentials_notice``."""
         value = getattr(self._handle, "kas_withheld_credentials_notice", "")
+        return value if isinstance(value, str) else ""
+
+    @property
+    def zero_tool_ban_notice(self) -> str:
+        """See ``AcpSessionHandle.zero_tool_ban_notice``."""
+        read = getattr(self._handle, "zero_tool_ban_notice", None)
+        value = read() if callable(read) else ""
         return value if isinstance(value, str) else ""
 
     @property
@@ -788,32 +798,31 @@ class AcpSessionProvider(LLMProvider):
 
     @property
     def context_incarnation(self) -> object:
-        return (id(self._handle), self.session_id, self.process_instance)
+        return _sp_context.context_incarnation(self)
 
     @property
     def context_provider_type(self) -> str:
-        from kiro_crew.providers.acp import provider_label
-
-        return provider_label(self)
+        return _sp_context.context_provider_type(self)
 
     @property
     def native_context_documents(self) -> dict[str, str]:
-        fit = getattr(self._handle, "native_context_documents_fit", None)
-        if fit is not None and not fit():
-            return {}
-        return dict(self._handle.native_context_documents)
+        return _sp_context.native_context_documents(self)
+
+    @property
+    def session_head_held(self) -> bool:
+        return _sp_context.session_head_held(self)
 
     @property
     def member_dispatch_mounted(self) -> bool | None:
-        # A handle that never recorded an answer is no evidence, not a refusal.
-        mounted = getattr(self._handle, "member_dispatch_mounted", None)
-        return None if mounted is None else bool(mounted)
+        return _sp_context.member_dispatch_mounted(self)
 
     @property
     def native_steering(self) -> bool:
-        from kiro_crew.acp.types import ACP_BACKEND_KAS
+        return _sp_context.native_steering(self)
 
-        return self.backend == ACP_BACKEND_KAS
+    @property
+    def reports_compaction(self) -> bool:
+        return _sp_context.reports_compaction(self)
 
     def prompt_timeout_for_deadline(self, deadline: float) -> float:
         """Resolve the immutable transport budget this ACP session supports."""
@@ -913,9 +922,14 @@ class AcpSessionProvider(LLMProvider):
         emitted = False
         try:
             async with aclosing(
-                trace_turns.traced(
+                turn_anomalies.watched(
                     self,
-                    self.essential_delivery.stream(message, send, lambda: self.context_incarnation),
+                    trace_turns.traced(
+                        self,
+                        self.essential_delivery.stream(
+                            message, send, lambda: self.context_incarnation
+                        ),
+                    ),
                 )
             ) as events:
                 async for event in events:

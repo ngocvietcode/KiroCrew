@@ -36,8 +36,10 @@ from unittest import mock
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
+from redaction_structured_cases import github_classic
 
 from kiro_crew.apps.builtins.papyrus.backend import gitops, latex, routes, store, tectonic
+from kiro_crew.testing.synthetic_credentials import SAMPLE_AWS_SECRET
 from kiro_crew.testing.wait import async_wait_until, await_until
 
 
@@ -538,21 +540,27 @@ class TestClone:
         self, enabled: None, data_root: Path
     ) -> None:
         """A title write racing an unlocked cleanup would recreate the rejected paper."""
+        cloned: list[Path] = []
+
         async def fake_clone(_url: str, destination: Path) -> None:
             destination.mkdir(parents=True)
             (destination / "README.md").write_text("", encoding="utf-8")
+            cloned.append(destination)
 
         with (
             mock.patch.object(gitops, "clone", fake_clone),
             mock.patch.object(store, "delete_project", wraps=store.delete_project) as delete,
         ):
-            await routes._handle_clone_project(
+            response = await routes._handle_clone_project(
                 _request(
                     "POST", "/api/apps/papyrus/projects/clone",
                     {"url": "https://example.com/g/p.git"},
                 )
             )
         delete.assert_called_once()
+        assert response.status == 422
+        assert json.loads(response.text)["code"] == "no_tex_in_repository"
+        assert len(cloned) == 1 and not cloned[0].exists()
 
     async def test_derives_the_name_from_the_url(self, enabled: None, data_root: Path) -> None:
         async def fake_clone(_url: str, destination: Path) -> None:
@@ -1119,8 +1127,8 @@ class TestFieldCoercion:
 # ── redaction of subprocess output ───────────────────────────────────────────
 
 
-_FAKE_PAT = "ghp_" + "A" * 36
-_FAKE_AWS_SECRET = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+_FAKE_PAT = github_classic(seed=63)
+_FAKE_AWS_SECRET = SAMPLE_AWS_SECRET
 
 
 @pytest.mark.asyncio

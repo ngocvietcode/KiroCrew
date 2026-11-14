@@ -302,6 +302,7 @@ from kiro_crew.security import (  # noqa: F401 - the path owners read these
     sensitive_path_refusal,
     sensitive_write_path_refusal,
 )
+from kiro_crew.security.paths_resolver import bounded_judgment
 from kiro_crew.security.readonly_bash import (  # noqa: F401 - the owners read them
     command_invokes_git,
     is_read_only_bash,
@@ -839,12 +840,15 @@ class HookManager:
             deny_waivers=frozenset(deny_waivers),
             pre_tool_hooks_fire=pre_tool_hooks_fire,
         )
-        for tier in GATE_TIERS:
-            verdict = tier.judge(facts, tier)
-            if verdict is not None:
-                if not verdict.tier:
-                    verdict.tier = tier.name
-                return verdict
+        # One shared resolver budget for every path this call names; it binds only
+        # off the event loop, where the loop's own allowance does not apply.
+        with bounded_judgment():
+            for tier in GATE_TIERS:
+                verdict = tier.judge(facts, tier)
+                if verdict is not None:
+                    if not verdict.tier:
+                        verdict.tier = tier.name
+                    return verdict
         return ToolHookResult.allow(facts.ask_note)
 
     @_fail_closed_on_gate_crash
@@ -1501,8 +1505,8 @@ class FileTooLargeError(Exception):
 _INTERNAL_READ_ALLOWLIST: dict[str, str] = {
     # ``kiro_crew.dashboard.handlers.kiro_usage_api`` reads the kiro-cli SSO
     # access token to authenticate a single ``GetUsageLimits`` call to the
-    # hardcoded CodeWhisperer RTS endpoint
-    # (``codewhisperer.us-east-1.amazonaws.com``) that powers the dashboard
+    # hardcoded Kiro control-plane endpoint
+    # (``management.us-east-1.kiro.dev``) that powers the dashboard
     # credit-usage pill -- the same API the Kiro IDE credit meter uses. The
     # token bytes go only to that AWS endpoint over TLS; only the parsed numeric
     # usage dict returns to the process, and it is run through

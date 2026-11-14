@@ -601,7 +601,7 @@ async def _run_side_turn(
             # read is proven, and every other call is refused before the gate.
             side_agent: str | None = kiro_agent or slot_agent
             approval_policy = ToolApprovalPolicy.READ_ONLY
-            binding = (side_agent or "", project or "", "strands_read_only")
+            binding: tuple[str, ...] = (side_agent or "", project or "", "strands_read_only")
             side_session_kwargs["side_read_only"] = True
         elif goose_side:
             # goose reads no kiro agent spec either. Its launch starts the side
@@ -649,6 +649,11 @@ async def _run_side_turn(
             side_agent = kiro_agent or slot_agent
             approval_policy = ToolApprovalPolicy.REJECT_ALL
             binding = (side_agent or "", project or "", "reject_all")
+        if slot.is_restricted:
+            # Memory withheld as in the incognito or temporary parent (on claude,
+            # Claude Code's auto-memory off); in the binding so a tightening rebinds.
+            side_session_kwargs["include_memory"] = False
+            binding = (*binding, "memory_withheld")
 
         # The derivation suspended this task; a close (or close+reopen) may have
         # landed meanwhile. A stale task must not touch any session: its own
@@ -1173,14 +1178,14 @@ async def api_side_turn(request: web.Request) -> web.Response:
         return own
 
     if not request.body_exists:
-        return web.json_response({"error": "missing JSON body"}, status=400)
+        return web.json_response({"error": "missing JSON body", "code": "invalid_json"}, status=400)
     try:
         body = await request.json()
     except Exception:
-        return web.json_response({"error": "invalid JSON body"}, status=400)
+        return web.json_response({"error": "invalid JSON body", "code": "invalid_json"}, status=400)
     if not isinstance(body, dict):
         return web.json_response(
-            {"error": "body must be a JSON object"},
+            {"error": "body must be a JSON object", "code": "body_not_object"},
             status=400,
         )
 

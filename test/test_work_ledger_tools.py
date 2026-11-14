@@ -404,6 +404,7 @@ async def test_every_store_code_maps_to_the_status_the_rfc_tabulates():
         "item_closed": 409,
         "item_cap_exceeded": 409,
         "goal_concurrency_cap_reached": 409,
+        "host_pressure_critical": 409,
         "depth_exceeded": 409,
         "crew_log_incomplete": 409,
         "cache_dirty": 409,
@@ -862,10 +863,11 @@ async def test_a_done_item_waiting_on_the_conductor_is_not_stale():
 
 @pytest.mark.asyncio
 async def test_accept_is_a_route_action_not_a_store_action():
-    """The store's six are pinned by Phase 1, so the seventh lives one layer up."""
+    """The store's six are pinned by Phase 1, so accept and ask live one layer up."""
     assert "accept" not in wl.CONDUCTOR_ACTIONS
+    assert "ask" not in wl.CONDUCTOR_ACTIONS
     assert "accept" in routes.RECORD_ACTIONS
-    assert routes.RECORD_ACTIONS == wl.CONDUCTOR_ACTIONS | {"accept"}
+    assert routes.RECORD_ACTIONS == wl.CONDUCTOR_ACTIONS | {"accept", "ask"}
     assert routes.RECORD_ACTIONS == validation._WORK_RECORD_ACTIONS
 
 

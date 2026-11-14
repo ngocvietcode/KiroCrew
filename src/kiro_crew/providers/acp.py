@@ -50,11 +50,13 @@ from kiro_crew.acp.types import (  # noqa: F401
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
+    ACP_BACKEND_MIMOCODE,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
     ACP_BACKEND_STRANDS,
     ACP_BACKENDS_ACP_RUNTIME,
     ACP_BACKENDS_COMPACT,
+    ACP_BACKENDS_COMPACTION_REPORTED,
     ACP_BACKENDS_CONTEXT_RECYCLE,
     ACP_BACKENDS_EFFORT_FROM_ADVERTISED_OPTION,
     ACP_BACKENDS_EFFORT_OVERLAY,
@@ -520,11 +522,22 @@ class AcpProvider(LLMProvider):
     @property
     def tested_version_notice(self) -> str:
         """The notice when this session's harness reports a release outside the one
-        Crew tested it on (goose and codex today), else ``""``. A warning, never a refusal."""
+        Crew tested it on (goose, codex, claude and pi today), else ``""``. A warning, never a refusal.
+        """
         from kiro_crew.acp.client_turn_control import untested_version_issue
 
         backend = str(getattr(self._client, "backend", "") or "")
         return untested_version_issue(backend, self.agent_version)
+
+    @property
+    def known_limitation_notice(self) -> str:
+        """The notice for a known problem this session's adapter release has and a
+        newer one fixes (``KNOWN_LIMITATIONS``), else ``""``. Read from the session's
+        ``session/new`` options, the ones its permission write reads."""
+        from kiro_crew.agent_sdk.backends import known_limitation_issue
+
+        backend = str(getattr(self._client, "backend", "") or "")
+        return known_limitation_issue(backend, getattr(self._client, "acp_config_options", None))
 
     @property
     def agent_prompt_upgrade_notice(self) -> str:
@@ -562,6 +575,14 @@ class AcpProvider(LLMProvider):
         ``env`` or ``headers``, by key name only, else ``""``. Recorded when the
         session registered its ``customAgents``."""
         notice = getattr(self._client, "kas_withheld_credentials_notice", "")
+        return notice if isinstance(notice, str) else ""
+
+    @property
+    def zero_tool_ban_notice(self) -> str:
+        """The notice that this session's ``"tools": []`` is refused only at the permission
+        request, so calls the harness runs without asking still run, else ``""``.
+        Read from the session the runtime created or loaded."""
+        notice = getattr(self._client, "zero_tool_ban_notice", "")
         return notice if isinstance(notice, str) else ""
 
     @property
@@ -657,6 +678,11 @@ class AcpProvider(LLMProvider):
     def is_opencode_backend(self) -> bool:
         """True when this ACP provider talks to OpenCode (vs kiro-cli)."""
         return self._client.backend == ACP_BACKEND_OPENCODE
+
+    @property
+    def is_mimocode_backend(self) -> bool:
+        """True when this ACP provider talks to MiMo Code (vs kiro-cli)."""
+        return self._client.backend == ACP_BACKEND_MIMOCODE
 
     @property
     def is_pi_backend(self) -> bool:
@@ -996,6 +1022,11 @@ class AcpProvider(LLMProvider):
             return self._client.native_context_documents
         return {}
 
+    @property
+    def session_head_held(self) -> bool:
+        # Only the shared runtime's session records a head (KAS, kiro_crew.session_head).
+        return isinstance(self._client, AcpSessionProvider) and self._client.session_head_held
+
     def note_user_message(self, text: str) -> None:
         # Only the shared runtime's session starts a KAS sign-in; the direct
         # client gets the engine's own OAuth requests and has no trigger.
@@ -1026,6 +1057,10 @@ class AcpProvider(LLMProvider):
         # Kiro ACP manual/fileMatch support depends on version and engine;
         # the fallback keeps those guides reachable without a false capability.
         return self._client.backend == ACP_BACKEND_KAS
+
+    @property
+    def reports_compaction(self) -> bool:
+        return self._client.backend in ACP_BACKENDS_COMPACTION_REPORTED
 
     def prompt_timeout_for_deadline(self, deadline: float) -> float:
         """Resolve the immutable transport budget this ACP session supports."""

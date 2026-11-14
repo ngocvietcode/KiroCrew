@@ -938,8 +938,9 @@ def wrap_argv(
 
     backend = detect_backend(config_mode=mode)
 
-    # An LTS build's sandboxed processes resolve the ceiling from the governance
-    # cache, so it is shown to them READ-ONLY (the plan seals a lifted cache). After the
+    # An LTS build's sandboxed processes, and the cache-only MCP children of a host
+    # whose ceiling came from central distribution, resolve the ceiling from the
+    # governance cache, so it is shown to them READ-ONLY (the plan seals a lifted cache). After the
     # delegation branch on purpose: a delegated sandbox applies none of Kiro Crew's masks,
     # and adding a path here would cost the delegation.
     cache_view = tuple(
@@ -1109,7 +1110,9 @@ def wrap_argv(
                     "the credential directories, so this keeps isolation rather "
                     "than weakening it), then restart the gateway. Other outer "
                     "sandboxes (e.g. an operator-wrapped gateway) hit the same "
-                    "nesting limit — see docs/system-specs/modules/security.md "
+                    "nesting limit — see "
+                    "https://github.com/kirodotdev/KiroCrew/blob/main/"
+                    "docs/system-specs/modules/security.md "
                     '("macOS marker site and the kernel cross-check"). '
                 )
             elif is_docker_container():
@@ -1150,7 +1153,8 @@ def wrap_argv(
                         "        docker run -e KIROCREW_ALLOW_UNSANDBOXED=1 ...\n"
                         "  (c) Manually set agent.sandbox_allow_unsandboxed_exec=true "
                         "in ~/.kiro/crew/config.json inside the container.\n"
-                        "See docs/guides/docker.md for the full sandbox troubleshooting guide."
+                        "Full sandbox troubleshooting guide: "
+                        "https://github.com/kirodotdev/KiroCrew/blob/main/docs/guides/docker.md"
                     )
                 else:
                     guidance = (
@@ -1175,7 +1179,8 @@ def wrap_argv(
                         "        docker run -e KIROCREW_ALLOW_UNSANDBOXED=1 ...\n"
                         "  (c) Manually set agent.sandbox_allow_unsandboxed_exec=true "
                         "in ~/.kiro/crew/config.json inside the container.\n"
-                        "See docs/guides/docker.md for the full sandbox troubleshooting guide."
+                        "Full sandbox troubleshooting guide: "
+                        "https://github.com/kirodotdev/KiroCrew/blob/main/docs/guides/docker.md"
                     )
             else:
                 guidance = _no_backend_guidance()
@@ -1195,7 +1200,9 @@ def wrap_argv(
                     "also withholds the first-party carve-out, so Kiro Crew's own "
                     "built-in spawns are refused here too: this host runs no "
                     "agent subprocess until it has a working sandbox backend "
-                    "(see docs/system-specs/modules/security.md) or the policy "
+                    "(see "
+                    "https://github.com/kirodotdev/KiroCrew/blob/main/"
+                    "docs/system-specs/modules/security.md) or the policy "
                     "owner relaxes sandbox.min_level."
                 )
                 sel_reason = (

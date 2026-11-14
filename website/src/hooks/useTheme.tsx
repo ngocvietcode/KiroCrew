@@ -598,6 +598,8 @@ export interface ThemeContextValue {
    */
   privacyAckVersion: number | null
   themeBootReady: boolean
+  /** The boot read answered. `themeBootReady` also turns true when it failed. */
+  themeBootRead: boolean
   markOnboarded: () => void
   markImportOnboarded: () => void
   /** Persists the ack (and the notice version unless told not to); rejects, marking nothing, when the write fails. */
@@ -1648,6 +1650,7 @@ function useThemeState(): ThemeContextValue {
     privacyAcked,
     privacyAckVersion,
     themeBootReady,
+    themeBootRead: !!bootData,
     markOnboarded,
     markImportOnboarded,
     markPrivacyAcked,

@@ -263,7 +263,9 @@ for _stem in _FLOOR_PARTS:
 from conftest_floor_configure import (  # noqa: E402,F401 -- bound for pytest and for tests
     _AsyncFixtureScanGate,
     _gate_pytest_asyncio_fixture_scan,
+    _hide_the_hosts_companion_plugins,
     _pin_crew_log_off_for_the_process,
+    _pin_the_profile_standalone_for_the_process,
     _put_the_tree_under_test_first_on_child_paths,
     _redirect_bytecode_cache,
     _redirect_hypothesis_database,
@@ -597,6 +599,7 @@ def pytest_configure(config: pytest.Config) -> None:
     _refuse_a_real_data_home()
     _pin_telemetry_off_for_the_process()
     _pin_crew_log_off_for_the_process()
+    _pin_the_profile_standalone_for_the_process()
     _prefer_short_tmp_base()
     _install_short_tmp_root()
     _redirect_hypothesis_database()
@@ -604,6 +607,7 @@ def pytest_configure(config: pytest.Config) -> None:
     _install_determinism_audit_hook()
     _put_the_tree_under_test_first_on_child_paths()
     _gate_pytest_asyncio_fixture_scan()
+    _hide_the_hosts_companion_plugins()
     global _SESSION_CWD
     try:
         _SESSION_CWD = os.getcwd()
@@ -1041,8 +1045,8 @@ def _publish_runner_timeout(seconds: float | None) -> None:
     sees it. The module is imported here once its package is loaded, which is cheap
     (only ``wait`` itself and ``kiro_crew.loop_lock``) and lets a test that imports
     ``wait`` inside its body see its own timeout. The package itself is never
-    imported here: its ``__init__`` loads the gateway harness, which must not happen
-    under one test's pinned home. A test in a suite that never loaded
+    imported here, so a suite that does not use the helpers loads none of them.
+    A test in a suite that never loaded
     ``kiro_crew.testing`` waits on the module's fallback instead.
 
     The module captures the clocks it waits with when it is first imported, so a test

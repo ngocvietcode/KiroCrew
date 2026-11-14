@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import functools
 import hashlib
+import json
 from typing import TYPE_CHECKING, Any
 
 from kiro_crew.agent_files import is_kirocrew_default_agent
@@ -23,7 +24,7 @@ from kiro_crew.agent_sdk.spec_hooks import (
     observer_spec_hooks,
     overlong_spec_hook_commands,
     post_tool_matchers_no_builtin_meets,
-    project_hook_files_present,
+    project_hook_file_names,
     provider_session_key,
     session_agent,
     spec_hook_events,
@@ -49,6 +50,7 @@ from kiro_crew.dashboard.chat_utils_injected_rows import (
     SPEC_HOOKS_RUN_NOWHERE_NOTICE,
 )
 from kiro_crew.dashboard.engine_fallback import hook_session_model
+from kiro_crew.dashboard.session_notice_marks import _session_notice_is_new
 from kiro_crew.dashboard.state import (
     DENY_CAUSE_POLICY,
     HOOK_CONTINUATION_RECOVERY_PREFIX,
@@ -88,6 +90,7 @@ if TYPE_CHECKING:
         redact_exfiltration_urls,
     )
     from kiro_crew.dashboard.chat_turn.deny_chokepoints import _redact_display_text
+    from kiro_crew.dashboard.chat_turn.mcp_oauth_notice import _notice_dropped_mcp_oauth
     from kiro_crew.dashboard.chat_turn.recipient import (
         _cross_surface_images,
         _cross_surface_reply_text,
@@ -213,10 +216,13 @@ async def _prepare_spec_hooks(
     ``file://`` steering (``spec_steering_read_nowhere``) gets one naming those
     entries, and one where nothing applies the spec's ``toolsSettings``
     (``spec_tools_settings_applied_nowhere``) gets one naming what of it goes
-    unapplied. None of them runs silently.
+    unapplied, and one that drops a remote MCP server's ``oauth`` block gets one
+    naming those servers. None of them runs silently.
     """
     if is_new and spec_steering_read_nowhere(client):
         await _notice_unread_steering(state, slot, client, agent)
+    if is_new:
+        await _notice_dropped_mcp_oauth(state, slot, client, agent)
     if not capabilities_of(client).crew_fires_spec_hooks:
         if is_new and spec_hooks_run_nowhere(client):
             await _notice_spec_hooks_run_nowhere(state, slot, client, agent)
@@ -285,24 +291,30 @@ async def _prepare_spec_hooks(
     except Exception:  # noqa: BLE001 - a hook-file read must never fail a turn
         logger.debug("user hook files could not be merged; none added", exc_info=True)
     if is_new and lost:
-        append_and_surface(
-            state,
-            slot,
-            "notice",
-            _redact_display_text(_spec_keys_notice(agent, lost)),
-            "msg msg-info",
-            meta=(
-                {"kind": MCP_SIGN_IN_UNSUPPORTED_NOTICE_KIND} if oauth_servers_in(lost) else None
-            ),
-        )
+        text = _redact_display_text(_spec_keys_notice(agent, lost))
+        if _session_notice_is_new(slot, text):
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                text,
+                "msg msg-info",
+                meta=(
+                    {"kind": MCP_SIGN_IN_UNSUPPORTED_NOTICE_KIND}
+                    if oauth_servers_in(lost)
+                    else None
+                ),
+            )
     if is_new and unconfirmable:
-        append_and_surface(
-            state,
-            slot,
-            "notice",
-            _redact_display_text(_spec_confirm_hooks_notice(agent, unconfirmable)),
-            "msg msg-info",
-        )
+        text = _redact_display_text(_spec_confirm_hooks_notice(agent, unconfirmable))
+        if _session_notice_is_new(slot, text):
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                text,
+                "msg msg-info",
+            )
     if is_new:
         await _surface_overlong_hook_commands(
             state,
@@ -327,6 +339,11 @@ async def _prepare_spec_hooks(
         if is_kas:
             await _surface_withheld_project_hook_files(state, slot, client)
             await _surface_kas_project_hooks(state, slot, client, agent)
+            # The user's own agent file that lists no tools runs with none on KAS;
+            # the chat says so once, with a link to where its tools are chosen.
+            from kiro_crew.dashboard.agent_no_tools_notice import surface_agent_no_tools
+
+            await surface_agent_no_tools(state, slot, by_session.get("session_key", ""), agent)
     return hooks, False, work_dir
 
 
@@ -542,33 +559,39 @@ async def _prepare_observer_spec_hooks(
     if is_new:
         unmet = post_tool_matchers_no_builtin_meets(client, observed)
         if len(observed) < len(hooks):
-            append_and_surface(
-                state,
-                slot,
-                "notice",
-                _redact_display_text(
-                    _pre_tool_hooks_run_nowhere_notice(agent, others_run=not unmet)
-                ),
-                "msg msg-info",
-                meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+            text = _redact_display_text(
+                _pre_tool_hooks_run_nowhere_notice(agent, others_run=not unmet)
             )
+            if _session_notice_is_new(slot, text):
+                append_and_surface(
+                    state,
+                    slot,
+                    "notice",
+                    text,
+                    "msg msg-info",
+                    meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+                )
         if unmet:
-            append_and_surface(
-                state,
-                slot,
-                "notice",
-                _redact_display_text(_post_tool_matchers_unmet_notice(agent, unmet)),
-                "msg msg-info",
-                meta={"kind": SPEC_HOOKS_NOTICE_KIND},
-            )
+            text = _redact_display_text(_post_tool_matchers_unmet_notice(agent, unmet))
+            if _session_notice_is_new(slot, text):
+                append_and_surface(
+                    state,
+                    slot,
+                    "notice",
+                    text,
+                    "msg msg-info",
+                    meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+                )
         if unconfirmable:
-            append_and_surface(
-                state,
-                slot,
-                "notice",
-                _redact_display_text(_spec_confirm_hooks_notice(agent, unconfirmable)),
-                "msg msg-info",
-            )
+            text = _redact_display_text(_spec_confirm_hooks_notice(agent, unconfirmable))
+            if _session_notice_is_new(slot, text):
+                append_and_surface(
+                    state,
+                    slot,
+                    "notice",
+                    text,
+                    "msg msg-info",
+                )
         await _surface_overlong_hook_commands(state, slot, agent, project_dir, session_key)
         await _surface_withheld_project_hooks(
             state, slot, client, agent, user_hooks_run=bool(observed)
@@ -631,14 +654,16 @@ async def _surface_overlong_hook_commands(
         logger.debug("too-long spec hooks for %r could not be read", agent, exc_info=True)
         return
     if hooks:
-        append_and_surface(
-            state,
-            slot,
-            "notice",
-            _redact_display_text(_overlong_hook_commands_notice(agent, hooks)),
-            "msg msg-info",
-            meta={"kind": SPEC_HOOKS_NOTICE_KIND},
-        )
+        text = _redact_display_text(_overlong_hook_commands_notice(agent, hooks))
+        if _session_notice_is_new(slot, text, project_dir, kas_checkout):
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                text,
+                "msg msg-info",
+                meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+            )
 
 
 async def _surface_withheld_project_hook_files(
@@ -654,18 +679,19 @@ async def _surface_withheld_project_hook_files(
     files exist. The checkout is the session's OWN working directory (``client.cwd``)
     rather than ``spec_project_dir``, which answers ``None`` on KAS (KAS resolves its
     agent spec from the user level alone), so the notice would otherwise never fire.
-    Best-effort: a failed check renders nothing rather than failing the turn.
+    Best-effort: a failed check renders nothing rather than failing the turn. A
+    chat shows it once (``_project_hook_files_notice_is_new``).
     """
     cwd = getattr(client, "cwd", "")
     project_dir = cwd if isinstance(cwd, str) and cwd else None
     if not project_dir:
         return
     try:
-        present = await asyncio.to_thread(project_hook_files_present, project_dir)
+        names = await asyncio.to_thread(project_hook_file_names, project_dir)
     except Exception:  # noqa: BLE001 - a notice must never fail a turn
         logger.debug("could not check %s for project hook files", project_dir, exc_info=True)
         return
-    if present:
+    if names and _project_hook_files_notice_is_new(slot, project_dir, names):
         append_and_surface(
             state,
             slot,
@@ -674,6 +700,24 @@ async def _surface_withheld_project_hook_files(
             "msg msg-info",
             meta={"kind": SPEC_HOOKS_NOTICE_KIND},
         )
+
+
+def _project_hook_files_notice_is_new(
+    slot: "_ChatSlot", project_dir: str, names: list[str]
+) -> bool:
+    """Whether *slot*'s chat has yet to show the hook-files notice for these files.
+
+    Every new backend session of a chat (a reconnect, a reload, a restart) would
+    show it again, and nothing in the chat changes the files, so the chat shows it
+    once. It shows again only for another folder or another set of file names. The
+    mark is saved on the chat's metadata line, as ``_telemetry_notice_is_new``'s is.
+    """
+    key = json.dumps([project_dir, names])
+    mark = hashlib.sha256(key.encode()).hexdigest()[:16]
+    if slot._project_hook_files_notice_shown == mark:
+        return False
+    slot._project_hook_files_notice_shown = mark
+    return True
 
 
 async def _notice_spec_hooks_run_nowhere(
@@ -700,14 +744,16 @@ async def _notice_spec_hooks_run_nowhere(
         # not run gets no tag: the dashboard offers no Dismiss link on it.
         if "preToolUse" not in events:
             meta["spec_hooks_notice"] = SPEC_HOOKS_RUN_NOWHERE_NOTICE
-        append_and_surface(
-            state,
-            slot,
-            "notice",
-            _redact_display_text(_spec_hooks_run_nowhere_notice(agent, events)),
-            "msg msg-info",
-            meta=meta,
-        )
+        text = _redact_display_text(_spec_hooks_run_nowhere_notice(agent, events))
+        if _session_notice_is_new(slot, text):
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                text,
+                "msg msg-info",
+                meta=meta,
+            )
 
 
 async def _notice_tools_settings_applied_nowhere(
@@ -739,13 +785,15 @@ async def _notice_tools_settings_applied_nowhere(
         logger.debug("agent spec toolsSettings for %r could not be read", agent, exc_info=True)
         return
     if unapplied:
-        append_and_surface(
-            state,
-            slot,
-            "notice",
-            _redact_display_text(_spec_keys_notice(agent, unapplied)),
-            "msg msg-info",
-        )
+        text = _redact_display_text(_spec_keys_notice(agent, unapplied))
+        if _session_notice_is_new(slot, text):
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                text,
+                "msg msg-info",
+            )
 
 
 #: How many ``file://`` entries the unread-steering notice names before it counts the rest.
@@ -792,33 +840,40 @@ async def _notice_unread_steering(
         logger.debug("agent spec resources for %r could not be read", agent, exc_info=True)
         return
     if entries:
-        append_and_surface(
-            state,
-            slot,
-            "notice",
-            _redact_display_text(_unread_steering_notice(agent, entries)),
-            "msg msg-info",
-        )
+        text = _redact_display_text(_unread_steering_notice(agent, entries))
+        if _session_notice_is_new(slot, text):
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                text,
+                "msg msg-info",
+            )
 
 
 def _notice_steer_upgrade(state: "DashboardState", slot: "_ChatSlot", client: Any) -> None:
     """One notice row on a new session whose adapter is too old to take a mid-turn
-    message, one whose KAS drops its agent's prompt, and one whose goose or codex is
-    outside its tested range: the chat runs, and each row names the installed version, the
+    message, one whose KAS drops its agent's prompt, and one whose goose, codex, claude or
+    pi adapter is outside its tested range: the chat runs, and each row names the installed version, the
     tested one and the command that installs it. One more on a session whose MCP
     servers start without part of their env or headers, naming each server and the
     key names it lost, never a value. One more on a KAS session told to turn telemetry
     off, since Crew cannot confirm the engine applied it; a chat shows that one once
     (``_telemetry_notice_is_new``). One more on a claude session that runs in Default
-    instead of the Auto it asked for, naming the ways back."""
+    instead of the Auto it asked for, naming the ways back. One more on a codex
+    session whose spec declares ``"tools": []``, which Crew enforces only at the
+    permission request. One more on a session whose adapter release has a known
+    problem a newer release fixes (``KNOWN_LIMITATIONS``)."""
     for name in (
         "steer_upgrade_notice",
         "agent_prompt_upgrade_notice",
         "tested_version_notice",
+        "known_limitation_notice",
         "withheld_credentials_notice",
         "telemetry_unconfirmed_notice",
         "kiro_cli_model_notice",
         "mode_pinned_notice",
+        "zero_tool_ban_notice",
     ):
         notice = getattr(client, name, "")
         if not (isinstance(notice, str) and notice):
@@ -913,19 +968,23 @@ async def _surface_withheld_project_hooks(
         logger.debug("could not check %r's project spec for withheld hooks", agent, exc_info=True)
         return
     if withheld:
-        append_and_surface(
-            state,
-            slot,
-            "notice",
-            _redact_display_text(_spec_withheld_hooks_notice(agent, user_hooks_run=user_hooks_run)),
-            "msg msg-info",
-            meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+        text = _redact_display_text(
+            _spec_withheld_hooks_notice(agent, user_hooks_run=user_hooks_run)
         )
+        if _session_notice_is_new(slot, text, project_dir):
+            append_and_surface(
+                state,
+                slot,
+                "notice",
+                text,
+                "msg msg-info",
+                meta={"kind": SPEC_HOOKS_NOTICE_KIND},
+            )
 
 
-def _on_kas(client) -> bool:
-    """Whether *client* runs on KAS."""
-    return capabilities_of(client).backend == ACP_BACKEND_KAS
+def _crew_fires_agent_spawn(client) -> bool:
+    """Whether Crew, not the harness, fires the spec's ``agentSpawn`` on *client*."""
+    return capabilities_of(client).crew_fires_spec_observer_hooks
 
 
 async def _fire(

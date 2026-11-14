@@ -28,6 +28,10 @@ HISTORY_IDLE_HOURS_MIN = 0.5
 #: ``memory.kind_routing`` values; :mod:`kiro_crew.memory_kind_routing` says what each does.
 KIND_ROUTING_MODES = ("off", "shadow", "enforce")
 
+#: Longest ``memory.extraction_instructions`` kept on load; the rest is dropped so one
+#: pasted page cannot crowd the transcript out of the consolidation prompt.
+EXTRACTION_INSTRUCTIONS_MAX_CHARS = 2000
+
 #: ``memory.lesson_origin_gate`` values; :mod:`kiro_crew.memory_origin_gate` says what each does.
 LESSON_ORIGIN_GATE_MODES = ("off", "shadow", "enforce")
 
@@ -43,6 +47,9 @@ RELEVANCE_RULE_MODES = ("off", "shadow", "enforce")
 
 #: ``memory.member_lesson_dedup`` values; :mod:`kiro_crew.memory_lesson_dedup` says what each does.
 MEMBER_LESSON_DEDUP_MODES = ("off", "shadow", "enforce")
+
+#: ``memory.dream`` values; :mod:`kiro_crew.memory_dream` says what each does.
+DREAM_MODES = ("off", "propose")
 
 #: ``memory.embedding_provider`` values. ``ollama_http`` selects the Ollama server
 #: backend in :mod:`kiro_crew.embeddings_ollama`.
@@ -407,6 +414,16 @@ class MemoryConfig:
             "lessons; every other memory write, learn_add and injection carry on.",
         ),
     )
+    repeated_failures_notice: bool = field(
+        default=False,
+        metadata=_meta(
+            "Weekly Repeated-Failures Note",
+            "On: at most once a week, when an agent tool failure kept coming back "
+            "during the last seven days, the bell gets one note that links to the "
+            "Repeated failures card on the Memory page. Off by default; nothing is "
+            "written to memory either way.",
+        ),
+    )
     kind_routing: str = field(
         default="off",
         metadata=_meta(
@@ -419,6 +436,19 @@ class MemoryConfig:
             "ledger already holds) and writes facts and events as before. Stored "
             "facts are never changed.",
             enum=list(KIND_ROUTING_MODES),
+        ),
+    )
+    extraction_instructions: str = field(
+        default="",
+        metadata=_meta(
+            "Consolidation Instructions",
+            "Free text, in your own words, that steers what history consolidation "
+            "extracts: what to keep (for example 'keep build commands') and what never "
+            "to store (for example 'never store customer names'). Empty (default) "
+            "keeps today's prompt. It guides the model and is not a filter: it cannot "
+            "change the answer format or the fixed rules, it does not touch memory "
+            "that is already stored, and it never applies to facts you save "
+            "yourself. Text past 2000 characters is ignored.",
         ),
     )
     lesson_origin_gate: str = field(
@@ -511,6 +541,19 @@ class MemoryConfig:
             enum=list(RELEVANCE_RULE_MODES),
         ),
     )
+    dream: str = field(
+        default="off",
+        metadata=_meta(
+            "Dreaming",
+            "Whether an offline pass looks over stored lessons and facts for "
+            "copies, near-copies, work status and old untagged rules while no chat "
+            "turn is running. 'off' (default) schedules and reads nothing. 'propose' "
+            "runs at most once a day per store, 200 rows and 10 minutes at a time, "
+            "and writes an approval list (kirocrew memory dream list); nothing in "
+            "it is applied, and lessons you taught are never proposed for change.",
+            enum=list(DREAM_MODES),
+        ),
+    )
     inject_memory: bool = field(
         default=True,
         metadata=_meta(
@@ -601,6 +644,19 @@ def kind_routing_mode_from(raw: object) -> str:
     return str(field_default(MemoryConfig, "kind_routing"))
 
 
+def extraction_instructions_from(raw: object) -> str:
+    """A stored ``memory.extraction_instructions`` ready for the prompt, or ``""``.
+
+    Anything that is not text reads as empty, so a wrong-typed key behaves like an
+    absent one. Control characters other than newline and tab are dropped, the
+    text is trimmed, and it is cut to :data:`EXTRACTION_INSTRUCTIONS_MAX_CHARS`.
+    """
+    if not isinstance(raw, str):
+        return ""
+    text = "".join(c for c in raw if c in "\n\t" or c.isprintable())
+    return text.strip()[:EXTRACTION_INSTRUCTIONS_MAX_CHARS].strip()
+
+
 def lesson_origin_gate_mode_from(raw: object) -> str:
     """A stored ``memory.lesson_origin_gate``, or the field default for anything unknown."""
     if isinstance(raw, str) and raw in LESSON_ORIGIN_GATE_MODES:
@@ -641,6 +697,13 @@ def relevance_rule_mode_from(raw: object) -> str:
     if isinstance(raw, str) and raw in RELEVANCE_RULE_MODES:
         return raw
     return str(field_default(MemoryConfig, "relevance_rule"))
+
+
+def dream_mode_from(raw: object) -> str:
+    """A stored ``memory.dream``, or the field default for anything unknown."""
+    if isinstance(raw, str) and raw in DREAM_MODES:
+        return raw
+    return str(field_default(MemoryConfig, "dream"))
 
 
 def lesson_extraction_enabled(memory: object) -> bool:

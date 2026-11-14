@@ -793,6 +793,7 @@ class TestRestart:
         ):
             cli_server._restart(5999)
         mock_spawn.assert_called_once()
+        assert "Started detached gateway (pid 4321)" in capsys.readouterr().out
 
     @contextlib.contextmanager
     def _probe_missed_gateway(self, holder_pid: int, *, kirocrew: bool):
@@ -1104,6 +1105,8 @@ class TestRestart:
         out = capsys.readouterr().out
         assert "Gateway (pid 4242) did not exit within" in out
         assert "Not starting a replacement" in out
+        # The fixture runs the POSIX path: the hint is main's text, byte for byte.
+        assert "   If the process is wedged, force it: kill -9 4242\n" in out
         audit = mock_sel.log_api_access.call_args.kwargs
         assert audit["outcome"] == "denied"
         assert "reason=incumbent_still_running" in audit["resources"]

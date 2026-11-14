@@ -42,6 +42,7 @@ from kiro_crew.embeddings import (
 )
 from kiro_crew.executors import subprocess_executor
 from kiro_crew.loop_lock import LoopBoundLock
+from kiro_crew.owner_only_files import restrict_file_to_owner_soft
 from kiro_crew.platform import current_context
 from kiro_crew.safety_override import (
     cached_disabled_approval_modes,
@@ -164,7 +165,7 @@ def _get_telemetry_salt() -> bytes:
             os.write(tmp_fd, salt)
             os.close(tmp_fd)
             tmp_fd = -1
-            platform_compat.chmod_safe(tmp_path, 0o600)
+            restrict_file_to_owner_soft(tmp_path)  # the hard link shares the DACL
             os.link(tmp_path, str(salt_file))
             return salt
         except FileExistsError:
@@ -370,8 +371,15 @@ def _get_static_system_info() -> dict[str, object]:
             with open("/proc/meminfo") as f:
                 for line in f:
                     if line.startswith("MemTotal:"):
-                        kb = int(line.split()[1])
-                        info["mem_total_gb"] = round(kb / (1024**2), 1)
+                        total_bytes = int(line.split()[1]) * 1024
+                        from kiro_crew.dashboard import session_transfer
+
+                        limit, _headroom = session_transfer._cgroup_memory_bounds(
+                            measured_only=True
+                        )
+                        if limit is not None:
+                            total_bytes = min(total_bytes, limit)
+                        info["mem_total_gb"] = round(total_bytes / (1024**3), 1)
                         break
                 else:
                     logger.warning("/proc/meminfo has no MemTotal line; mem_total_gb unavailable")
@@ -672,17 +680,13 @@ def _collect_system_metrics() -> dict[str, object]:
                 # with large dentry/inode caches). Fall back to the estimate
                 # (now including SReclaimable) on kernels without MemAvailable.
                 if "MemAvailable" in meminfo:
-                    mem_free = round(meminfo["MemAvailable"] / (1024**2), 1)
+                    free_kb = meminfo["MemAvailable"]
                 else:
-                    mem_free = round(
-                        (
-                            meminfo.get("MemFree", 0)
-                            + meminfo.get("Buffers", 0)
-                            + meminfo.get("Cached", 0)
-                            + meminfo.get("SReclaimable", 0)
-                        )
-                        / (1024**2),
-                        1,
+                    free_kb = (
+                        meminfo.get("MemFree", 0)
+                        + meminfo.get("Buffers", 0)
+                        + meminfo.get("Cached", 0)
+                        + meminfo.get("SReclaimable", 0)
                     )
                 # A /proc/meminfo with no MemTotal line is a probe that read
                 # nothing usable, not a 0 GB host, and a total defaulted to 0
@@ -691,7 +695,17 @@ def _collect_system_metrics() -> dict[str, object]:
                 # tolerates the absent shape) and say so.
                 total_kb = meminfo.get("MemTotal", 0)
                 if total_kb > 0:
-                    mem_total = round(total_kb / (1024**2), 1)
+                    total_bytes, free_bytes = total_kb * 1024, free_kb * 1024
+                    from kiro_crew.dashboard import session_transfer
+
+                    limit, headroom = session_transfer._cgroup_memory_bounds(measured_only=True)
+                    if limit is not None:
+                        total_bytes = min(total_bytes, limit)
+                        if headroom is not None:
+                            free_bytes = min(free_bytes, headroom)
+                        free_bytes = min(free_bytes, total_bytes)
+                    mem_total = round(total_bytes / (1024**3), 1)
+                    mem_free = round(free_bytes / (1024**3), 1)
                     data["mem_total_gb"] = mem_total
                     data["mem_free_gb"] = mem_free
                     data["mem_used_gb"] = round(mem_total - mem_free, 1)
@@ -768,10 +782,12 @@ def _collect_system_metrics() -> dict[str, object]:
         if _prev_net["ts"] > 0:
             dt = now - _prev_net["ts"]
             if dt > 0.1:
-                _net_speed["rx_kbs"] = round(((rx_mb - _prev_net["rx"]) * 1024) / dt, 1)
-                _net_speed["tx_kbs"] = round(((tx_mb - _prev_net["tx"]) * 1024) / dt, 1)
-        _prev_net["rx"] = rx_mb
-        _prev_net["tx"] = tx_mb
+                # Raw byte counts, not the rounded MB totals: a 0.1 MB step
+                # would hide any rate below 0.1 MB per poll interval.
+                _net_speed["rx_kbs"] = round((rx_total - _prev_net["rx"]) / 1024 / dt, 1)
+                _net_speed["tx_kbs"] = round((tx_total - _prev_net["tx"]) / 1024 / dt, 1)
+        _prev_net["rx"] = rx_total
+        _prev_net["tx"] = tx_total
         _prev_net["ts"] = now
         data["net_rx_kbs"] = max(0, _net_speed["rx_kbs"])
         data["net_tx_kbs"] = max(0, _net_speed["tx_kbs"])

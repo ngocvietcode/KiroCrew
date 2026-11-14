@@ -86,6 +86,7 @@ from kiro_crew.agent_parts.kirocrew_launcher import (
     _kirocrew_mcp_invocation,
     _launcher_works,
     _migrations_dir,
+    _refresh_windows_forwarder,
     _resolve_kirocrew_bin,
     _stale_mcp_purge_marker,
     _through_stable_link,
@@ -102,6 +103,7 @@ from kiro_crew.agent_parts.shared_home import (
     _existing_specs_are_mine,
     _rebuild_spec_install_admitted,
     _warn_declined_home_once,
+    _worktree_declined_spec_hint,
 )
 from kiro_crew.agent_parts.spec_build import (
     _BACKGROUND_CC_MODEL,
@@ -170,6 +172,7 @@ from kiro_crew.agent_parts.spec_lookup import (
     _project_shadow_of,
     _read_spec_capped,
     _resolve_spec_path,
+    _scanned_name,
     _spec_path_is_safe,
     _spec_path_shape_refusal,
     agent_spec_path,
@@ -185,8 +188,11 @@ from kiro_crew.agent_parts.spec_prompts import (
     _DEPENDENT_CALLS_RULE,
     _LEDGER_CONDUCTOR_RULES,
     _PIPELINE_CONDUCTOR_SYSTEM_PROMPT,
+    _SEALED_CREW_PATHS_LEAD,
+    _SEALED_CREW_PATHS_RULE,
     _SECURITY_CONDUCTOR_SYSTEM_PROMPT,
     _TEAM_LEAD_SYSTEM_PROMPT,
+    _WORKER_SEALED_CREW_PATHS_RULE,
     _WORKER_SYSTEM_PROMPT,
     GUEST_AGENT_PROMPT,
 )
@@ -414,6 +420,7 @@ if TYPE_CHECKING:  # served by ``__getattr__`` at runtime; named here for mypy
         _MANAGED_MCP_ENTRY_VALUE_TYPES,
         _MCP_REGISTRY_TYPE,
         CU_MCP_SERVER,
+        POLICY_MARKER_KEYS,
         _enforce_managed_mcp_ownership,
         _gated_off_servers,
         _managed_mcp_env,
@@ -423,10 +430,13 @@ if TYPE_CHECKING:  # served by ``__getattr__`` at runtime; named here for mypy
         _mcp_spec_gate_open,
         _registry_marker_for,
         _spec_gate_answers_closed,
+        add_policy_markers,
         crew_owned_mcp_servers,
+        drop_policy_markers,
         emission_eligible_mcp_servers,
         managed_mcp_spec_entry,
         managed_member_transport,
+        policy_cache_only_env,
         sanitize_spec_env,
         with_managed_launch,
     )
@@ -489,6 +499,8 @@ if TYPE_CHECKING:  # served by ``__getattr__`` at runtime; named here for mypy
         knowledge_view_without_registered_injection,
         repair_guest_agent_spec,
         repair_knowledge_agent_spec,
+        repair_lite_agent_spec,
+        reset_after_spec_repair,
     )
     from kiro_crew.agent_materialization.shared_template_view import (  # noqa: F401
         govern_shared_template_injected_servers,
@@ -1001,6 +1013,10 @@ _EXPORTS_BY_OWNER: dict[str, tuple[str, ...]] = {
         "_managed_opt_in_entry",
         "CU_MCP_SERVER",
         "sanitize_spec_env",
+        "POLICY_MARKER_KEYS",
+        "policy_cache_only_env",
+        "drop_policy_markers",
+        "add_policy_markers",
     ),
     "kiro_crew.agent_materialization.mcp_aliases": (
         "_norm_mcp_spec",
@@ -1094,6 +1110,8 @@ _EXPORTS_BY_OWNER: dict[str, tuple[str, ...]] = {
         "_install_team_lead_agent",
         "_install_dashboard_manager_agent",
         "repair_knowledge_agent_spec",
+        "repair_lite_agent_spec",
+        "reset_after_spec_repair",
         "knowledge_view_without_registered_injection",
         "_DASHBOARD_MANAGER_AGENT_FILENAME",
         "_GUEST_AGENT_FILENAME",
@@ -1289,12 +1307,15 @@ def _refresh_dynamic_fields(
     managed_mcp.refresh_managed_servers(mcp, gated_off=gated_off, registry_mode=registry_mode)
 
     # Edition-contributed MCP servers (PlatformContext).  Seed a missing entry
-    # whole.  On an existing entry the edition owns only the invocation
+    # whole.  On an existing entry the edition owns the invocation
     # (``command``/``args``, which can name a versioned interpreter that a later
-    # install deletes), so refresh those and keep every other key the user set
-    # (env, autoApprove, disabled, ...).  A non-object entry (null included)
-    # occupies the name as the user's and is left alone.  Standalone
-    # contributes {} (unchanged).
+    # install deletes), so refresh those.  It also owns the env keys it ships:
+    # one the entry lacks is restored (a same-named hand-added server could
+    # replace the whole env, and the server then runs without what the edition
+    # needs), while a key the user set keeps the user's value.  Every other key
+    # the user set (autoApprove, disabled, ...) is kept.  A non-object entry
+    # (null included) occupies the name as the user's and is left alone.
+    # Standalone contributes {} (unchanged).
     for name, extra_spec in _extra_mcp_servers().items():
         if name not in mcp:
             mcp[name] = dict(extra_spec)
@@ -1305,6 +1326,13 @@ def _refresh_dynamic_fields(
                 if key in extra_spec:
                     value = extra_spec[key]
                     entry[key] = list(value) if isinstance(value, list) else value
+            extra_env = extra_spec.get("env")
+            if isinstance(extra_env, dict) and extra_env:
+                user_env = entry.get("env")
+                if isinstance(user_env, dict):
+                    entry["env"] = {**extra_env, **user_env}
+                elif user_env is None:
+                    entry["env"] = dict(extra_env)
 
     # Security: hooks always from bundled config.
     # Hard-fail if bundled defaults are missing — deny-by-default.

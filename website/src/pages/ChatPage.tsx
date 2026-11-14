@@ -4,7 +4,7 @@ import { useSessionPalette } from '../hooks/useSessionPalette'
 import { resolveSessionColor, headerBandStyle } from '../utils/sessionColors'
 import { useAppSelector, store, type AppDispatch } from '../store'
 import {
-  switchSlot, openActivityPanel, openActivityToTab, selectSubagent, mcpAppKey,
+  switchSlot, openActivityPanel, openActivityToTab, selectSubagent, mcpAppKey, selectSlotToolLog,
 } from '../store/chatSlice'
 import { DeliveryWarningStrip } from '../components/DeliveryWarningStrip'
 import { useDeliveryWarningStrip } from '../components/useDeliveryWarningStrip'
@@ -26,7 +26,7 @@ import { useActiveSlotState } from './chat/page/activeSlotState'
 import { useComposerDraftState, ComposerDraftSync, useComposerIntakeRefs, useMainComposerHandoff, useComposerVoiceHost } from './chat/page/composerHost'
 import { useModelPickerModels, useNewSessionPicks, useSessionChoices, useSlotSelectionCapabilitiesQuery } from './chat/page/sessionPicks'
 import { useCrewModeSwitch } from './chat/page/crewModeSwitch'
-import UltraModeEffect from '../components/crew/UltraModeEffect'
+import ConductorModeEffect from '../components/crew/ConductorModeEffect'
 import { crewModeRoot, crewRootOf, mateRootOf, runsCrewMode } from '../lib/crewMode'
 import { useCrewMode, useMateSessionsHidden } from '../hooks/usePreviewFlag'
 import { useCrewRoot } from '../components/crew/useCrewRoot'
@@ -78,6 +78,7 @@ export { PREFILL_STORAGE_KEY } from '../utils/navIntent'
 export { shouldAutoFillOlder } from './chat/page/transcriptPaging'
 import { claimAppAutoOpen } from '../hooks/usePanelTabs'
 import { useListboxKeyboard } from '../hooks/useListboxKeyboard'
+import { usePinnedScrollOrigin } from '../hooks/usePinnedScrollOrigin'
 
 import ChatDropOverlay from '../components/ChatDropOverlay'
 import SessionGridView from '../components/SessionGridView'
@@ -89,7 +90,7 @@ import SearchHighlightContext from '../hooks/SearchHighlightContext'
 import { useChatProjectDir } from '../components/sessionEnvironmentHooks'
 import { loadChatConfig, CONTENT_WIDTH, type ChatConfig } from './chat/ChatSettings'
 import { scaleContentWidth } from './chat/contentWidth'
-import { transcriptActivityKey, turnSentHere } from './chat/ChatFooter'
+import { allToolCallsReturned, transcriptActivityKey, turnSentHere } from './chat/ChatFooter'
 import { TOGGLE_RECT } from './chat/SessionFlyout'
 
 
@@ -99,6 +100,7 @@ import { useLanguageGeneration } from '../i18n/useLanguageGeneration'
 
 
 import { i18nT } from '../i18n/t'
+import { isUntitledSession } from '../utils/sessionDisplayTitle'
 
 /**
  * Horizontal room the chat pane reclaims (negative margin) while the desktop
@@ -191,6 +193,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
   const pendingInput = useAppSelector(s => s.chat.pendingInput)
   const pendingInputSend = useAppSelector(s => s.chat.pendingInputSend)
   const mainComposerAppend = useAppSelector(s => s.chat.mainComposerAppend)
+  const footerToolsReturned = useAppSelector(s => allToolCallsReturned(selectSlotToolLog(s, activeSlot)))
 
   const [chatConfig, setChatConfig] = useState<ChatConfig>(loadChatConfig)
   useEffect(() => {
@@ -349,6 +352,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
     uploadError, setUploadError, uploadHint, setUploadHint,
     resizedInfo, setResizedInfo,
   } = staging
+  usePinnedScrollOrigin(chatPaneEl)
   const { reconcileFileChipsRef, onComposerDraftCommit, noCarryCreateIdsRef } = useComposerDraftLifecycle({
     activeSlot,
     stores: draftStores,
@@ -404,7 +408,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
   })
 
   const memorySwitchingRef = useRef(false) // Held true while a memory-mode switch runs (see usePanelLayout).
-  // An Ultra Mode chat (a crew root or one of its workers, the same test the
+  // A conductor mode chat (a crew root or one of its workers, the same test the
   // side panel uses to put the Board first): only a person moves its focus.
   const crewModePreview = useCrewMode()
   const boardFirst = useAppSelector(st => {
@@ -606,6 +610,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
     sidMatches,
     setSidMatches,
     openShortNameMatch,
+    resumeSidClosed,
     ownChatClosedElsewhere,
   } = session
 
@@ -673,7 +678,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
   // The side panel can hold on to the callback it was last rendered with for a
   // render after this page has moved on (it sits under AnimatePresence), so it
   // is handed a stable forwarder to the latest handler: a Submit right after
-  // Auto (Jev) consent arrives must carry the auto flag, not the steer the
+  // Auto (decision model) consent arrives must carry the auto flag, not the steer the
   // previous render would have sent.
   const { submitComments } = useStableCallbackProps({ submitComments: (message: string): false | Promise<boolean> => {
     // Defense-in-depth: the panels' submit buttons are gated on `connected`,
@@ -734,7 +739,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
   // entrance twice. Sending, a running reply or a question card still end it.
   const crewWelcomeHeld = crewModeChosen && messages.length === 0 && !slotRunning && !sendingRef.current && !pendingQuestion
   const transcriptWelcome = isWelcomeState || crewWelcomeHeld
-  // on a brand-new chat the Ultra Mode chip is a toggle until the first
+  // on a brand-new chat the conductor mode chip is a toggle until the first
   // message: on, it stays in place pressed. A chat with messages never shows it.
   const crewChipPressed = crewModeEligible && crewModeChosen && !hasUserMessage && transcriptWelcome
   // App-contributed session controls and the folder context they are handed.
@@ -811,7 +816,7 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
   // Session mode of the active slot. In the unified chat view the page-level
   // `mode` prop is always '' — the slot's own mode is the source of truth.
   const effectiveMode = currentSlot?.mode || mode
-  const title = currentSlot?.title && currentSlot.title !== currentSlot.key ? currentSlot.title : activeSlot || ''
+  const title = currentSlot?.title && !isUntitledSession(currentSlot) ? currentSlot.title : activeSlot || ''
   const displayMode = slotApprovalMode(approvalMode, currentSlot)
   // What the composer's model, effort and project chips show.
   const {
@@ -1114,13 +1119,13 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
 
       {/* Chat pane */}
       {embedMode !== 'sessions' && (
-      <div ref={setChatPaneEl} onPointerDownCapture={launchedDraftInteracted} onKeyDownCapture={launchedDraftInteracted} onInputCapture={launchedDraftInteracted} onChangeCapture={launchedDraftInteracted} className={`relative flex flex-col ${embedded || popout ? 'bg-bg ' : ''}min-w-0 min-h-0 h-full overflow-hidden ${(activityOpen && !activitySlot) || search.isOpen ? 'flex-[1_1_60%]' : 'flex-1'}`} style={{ transition: 'flex 0.2s', ...(!sidebarOpen && !isMobile ? { marginLeft: -COLLAPSED_PANE_RECLAIM_PX } : {}), '--mc-content-width': scaleContentWidth(CONTENT_WIDTH[chatConfig.contentWidth], chatConfig.contentWidth, chatConfig.messageFontSize).messages, '--mc-input-width': scaleContentWidth(CONTENT_WIDTH[chatConfig.contentWidth], chatConfig.contentWidth, chatConfig.messageFontSize).input } as React.CSSProperties}>
+      <div ref={setChatPaneEl} data-chat-scope="" onPointerDownCapture={launchedDraftInteracted} onKeyDownCapture={launchedDraftInteracted} onInputCapture={launchedDraftInteracted} onChangeCapture={launchedDraftInteracted} className={`relative flex flex-col ${embedded || popout ? 'bg-bg ' : ''}min-w-0 min-h-0 h-full overflow-hidden ${(activityOpen && !activitySlot) || search.isOpen ? 'flex-[1_1_60%]' : 'flex-1'}`} style={{ transition: 'flex 0.2s', ...(!sidebarOpen && !isMobile ? { marginLeft: -COLLAPSED_PANE_RECLAIM_PX } : {}), '--mc-content-width': scaleContentWidth(CONTENT_WIDTH[chatConfig.contentWidth], chatConfig.contentWidth, chatConfig.messageFontSize).messages, '--mc-input-width': scaleContentWidth(CONTENT_WIDTH[chatConfig.contentWidth], chatConfig.contentWidth, chatConfig.messageFontSize).input } as React.CSSProperties}>
         <ChatPaneChrome
           embedded={embedded} activeSlot={activeSlot} connected={connected} dispatch={dispatch} isMobile={isMobile} navigate={navigate} provider={provider} setVoiceRecoverySlot={setVoiceRecoverySlot}
           switchSlotGone={switchSlotGone} titleInTopbar={titleInTopbar} undeletableHistory={undeletableHistory} unresumableResume={unresumableResume} crewWindow={crewWindow} messages={messages}
           slotRunning={slotRunning} splitMode={splitMode} selectionCapabilitiesQ={selectionCapabilitiesQ} actionError={actionError} setActionError={setActionError} setUploadError={setUploadError}
           setUploadHint={setUploadHint} snipFrame={snipFrame} uploadError={uploadError} uploadHint={uploadHint} handleSnipCancel={handleSnipCancel} handleSnipComplete={handleSnipComplete}
-          closeSessionTab={closeSessionTab} openShortNameMatch={openShortNameMatch} ownsSessionTabs={ownsSessionTabs} selectSessionTab={selectSessionTab} sessionTabs={sessionTabs}
+          closeSessionTab={closeSessionTab} openShortNameMatch={openShortNameMatch} resumeSidClosed={resumeSidClosed} ownsSessionTabs={ownsSessionTabs} selectSessionTab={selectSessionTab} sessionTabs={sessionTabs}
           setSidError={setSidError} setSidMatches={setSidMatches} sidError={sidError} sidMatches={sidMatches} splitFeatureEnabled={splitFeatureEnabled} chipDefault={chipDefault}
           dismissPinStatus={dismissPinStatus} pinError={pinError} pinStatus={pinStatus} inlineSidePanelShowing={inlineSidePanelShowing} openSidebar={openSidebar} sidebarOpen={sidebarOpen}
           COLLAPSED_SESSION_TABS_INSET={COLLAPSED_SESSION_TABS_INSET}
@@ -1142,6 +1147,9 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
                 : (embedMode !== 'chat' && embedMode !== 'sessions' && filteredSlots.length > 0 && !sidebarOpen ? { inset: true } : undefined)
             }
             onFileOpen={handleFileOpen}
+            // Withheld offline like `openSideChat`: its switch to a pane's chat
+            // would be rejected and blank that pane until reconnect.
+            onFolderOpen={connected ? handleFolderOpen : undefined}
             onOpenCrewTab={handleOpenCrewTab}
             onClose={() => setSplitMode(false)}
             onCollapse={(slot, anchorTs, anchorMid, gesture) => {
@@ -1186,11 +1194,12 @@ export default function ChatPage({ mode, embedded, embedMode, popout, noUrlSync 
               currentSlot={currentSlot} projectDir={transcriptProjectDir} regenerating={regenerating} sendUnconfirmed={sendUnconfirmed} dockH={dockH} lastRole={lastRole} streamTick={streamTick}
               footerActivityKey={!slotLoading && slotSwitchTarget !== activeSlot && (slotRunning || !currentSlot?.preparing) ? transcriptActivityKey(messages) : undefined}
               footerSentHere={turnSentHere(messages)}
+              footerToolsReturned={footerToolsReturned}
               toggleAct={toggleAct} renderedDisplayItems={renderedDisplayItems} stableMsgKey={stableMsgKey} virtualKey={virtualKey} handleLoadEarlier={handleLoadEarlier}
               spinnerNearTop={spinnerNearTop} virt={virt} visibleDisplayItems={visibleDisplayItems} chatNav={chatNav} navigateToTurn={navigateToTurn} turnStepAnnouncement={turnStepAnnouncement}
               renderFarmItem={renderFarmItem} renderMessage={renderMessage} renderTurnItem={renderTurnItem}
             />
-            <UltraModeEffect />
+            <ConductorModeEffect />
             <ComposerDockView
               embedded={embedded} forkUnavailable={forkUnavailable} mode={mode} activeSlot={activeSlot} connected={connected} dispatch={dispatch} isMobile={isMobile} isTouch={isTouch} navigate={navigate} provider={provider}
               activityOpen={activityOpen} composerBusy={composerBusy} contextPct={contextPct} contextTokens={contextTokens} knowledgeFetch={knowledgeFetch} messages={messages}

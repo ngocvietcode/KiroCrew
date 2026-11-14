@@ -13,14 +13,20 @@ import type { AcpBackendConfig } from '../../api/acpBackend'
 import { TokenDailyChart } from './TokenDailyChart'
 import { TokenStackedAreaChart } from './TokenStackedAreaChart'
 import { formatCost } from '../../utils/formatCost'
+import { parseLocalDay } from '../telemetryRange'
 
-import { fmtCompact, fmtElapsed, fmtNumber, fmtPercent } from '../../i18n/format'
+import { fmtCompact, fmtDate, fmtElapsed, fmtNumber, fmtPercent } from '../../i18n/format'
 import { i18nT } from '../../i18n/t'
 const EM_DASH = '\u2014'
 
 /** A day's credits, localized, in the Billing card's two decimals; a dash when the day has no figure. */
 function fmtCredits(credits: number | undefined): string {
   return credits == null ? EM_DASH : fmtNumber(credits, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+/** A Billing card amount in its own unit, localized like the rest of the page. */
+function fmtBillingAmount(unit: 'credits' | 'usd' | 'tokens', value: number): string {
+  return unit === 'usd' ? formatCost(value) : unit === 'tokens' ? fmtNumber(value) : fmtCredits(value)
 }
 
 /**
@@ -34,6 +40,14 @@ function fmtCredits(credits: number | undefined): string {
 function fmtCreditsPct(credits: number | undefined, limit: number | undefined): string {
   if (credits == null || limit == null || !(limit > 0)) return EM_DASH
   return fmtPercent(credits / limit, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+}
+
+/** A `YYYY-MM-DD` history day in the app's date format. Parsed as a local
+ *  calendar date: `new Date('2026-11-13')` is UTC midnight, which shows the
+ *  previous day west of UTC. Anything else is shown as-is. */
+function historyDate(value: string): string {
+  const day = parseLocalDay(value)
+  return day ? fmtDate(day) : value
 }
 
 export default function UsageTab() {
@@ -93,9 +107,11 @@ export default function UsageTab() {
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 max-[600px]:grid-cols-1">
             <Row label={i18nT('pages.overview.usageTab.plan')} value={b.plan} />
             <Row label={b.unit === 'tokens' ? i18nT('pages.overview.usageTab.tokens') : b.unit === 'usd' ? i18nT('pages.overview.usageTab.spend') : i18nT('pages.overview.usageTab.credits')}
-              value={b.limit ? `${b.used ?? 0} / ${b.limit}` : String(b.used ?? 0)}
+              value={b.limit
+                ? `${fmtBillingAmount(b.unit, b.used ?? 0)} / ${fmtBillingAmount(b.unit, b.limit)}`
+                : fmtBillingAmount(b.unit, b.used ?? 0)}
               badge={pct != null ? (pct >= 90 ? 'err' : pct >= 70 ? 'warn' : 'ok') : undefined}
-              badgeText={pct != null ? `${pct}%` : undefined} />
+              badgeText={pct != null ? fmtPercent(pct / 100, { maximumFractionDigits: 1 }) : undefined} />
             {b.resets && <Row label={i18nT('pages.overview.usageTab.resets')} value={b.resets} />}
           </div>
         </Card>
@@ -111,7 +127,7 @@ export default function UsageTab() {
             {data.tokens.cacheRead > 0 && <Row label={i18nT('pages.overview.usageTab.cache_read')} value={fmtCompact(data.tokens.cacheRead)} />}
             <Row label={i18nT('pages.overview.usageTab.total_tokens')} value={fmtCompact(data.tokens.total)} />
             {data.costUsd != null && <Row label={i18nT('pages.overview.usageTab.total_cost')} value={formatCost(data.costUsd)} />}
-            {data.totalTurns != null && data.totalTurns > 0 && <Row label={i18nT('pages.overview.usageTab.total_turns')} value={data.totalTurns} />}
+            {data.totalTurns != null && data.totalTurns > 0 && <Row label={i18nT('pages.overview.usageTab.total_turns')} value={fmtNumber(data.totalTurns)} />}
             {data.totalDurationMs != null && data.totalDurationMs > 0 && <Row label={i18nT('pages.overview.usageTab.total_api_time')} value={fmtElapsed(data.totalDurationMs)} />}
           </div>
         </Card>
@@ -186,8 +202,8 @@ export default function UsageTab() {
               <PeriodCard label={i18nT('pages.overview.usageTab.this_month')} p={s.thisMonth} />
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 max-[600px]:grid-cols-1">
-              <Row label={i18nT('pages.overview.usageTab.total_sessions_30d')} value={s.total} />
-              <Row label={i18nT('pages.overview.usageTab.avg_messages_session')} value={s.avgMsgsPerSession} />
+              <Row label={i18nT('pages.overview.usageTab.total_sessions_30d')} value={fmtNumber(s.total)} />
+              <Row label={i18nT('pages.overview.usageTab.avg_messages_session')} value={fmtNumber(s.avgMsgsPerSession)} />
             </div>
           </>
         )}
@@ -219,10 +235,10 @@ export default function UsageTab() {
                   return (
                     <Fragment key={d.date}>
                       <tr className="border-t border-border">
-                        <td className="py-1.5 font-mono text-[13px]">{d.date}</td>
-                        <td className="py-1.5 text-right">{d.sessions}</td>
-                        <td className="py-1.5 text-right">{d.messages}</td>
-                        <td className="py-1.5 text-right">{d.toolCalls}</td>
+                        <td className="py-1.5 font-mono text-[13px]">{historyDate(d.date)}</td>
+                        <td className="py-1.5 text-right">{fmtNumber(d.sessions)}</td>
+                        <td className="py-1.5 text-right">{fmtNumber(d.messages)}</td>
+                        <td className="py-1.5 text-right">{fmtNumber(d.toolCalls)}</td>
                         <td className="py-1.5 text-right max-[600px]:hidden">{credits}</td>
                         <td className="py-1.5 text-right max-[600px]:hidden">{pct}</td>
                         {showCost && <td className="py-1.5 pl-4 text-right whitespace-nowrap max-[600px]:hidden">{cost}</td>}
@@ -267,9 +283,9 @@ function PeriodCard({ label, p }: { label: string; p: { sessions: number; messag
   return (
     <div className="bg-bg-elevated rounded-lg p-3 text-center">
       <div className="text-muted text-[13px] mb-1">{label}</div>
-      <div className="text-2xl font-bold text-text">{p.sessions}</div>
+      <div className="text-2xl font-bold text-text">{fmtNumber(p.sessions)}</div>
       <div className="text-muted text-[12px] mt-1">
-        {p.messages} {i18nT('pages.overview.usageTab.msgs')} {p.toolCalls} {i18nT('pages.overview.usageTab.tools')}
+        {fmtNumber(p.messages)} {i18nT('pages.overview.usageTab.msgs')} {fmtNumber(p.toolCalls)} {i18nT('pages.overview.usageTab.tools')}
       </div>
     </div>
   )

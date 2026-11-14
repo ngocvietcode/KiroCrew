@@ -155,6 +155,7 @@ _BASE_SLOT_MEMBERS: dict[str, tuple[str, bool, bool, str]] = {
     "_has_reader": ("property", False, False, "(self) -> 'bool'"),
     "_trust": ("property", False, False, "(self) -> 'bool'"),
     "_trust_reads": ("property", False, False, "(self) -> 'bool'"),
+    "_turn_timeout_hydrated": ("property", False, False, "(self) -> 'bool'"),
     "_note_enqueue": ("function", False, False, "(self) -> 'None'"),
     "_pr_source_links": ("function", False, False, "(self) -> 'list[dict]'"),
     "_retry_deferred_release": ("function", False, False, "(self) -> 'int'"),
@@ -179,7 +180,8 @@ _BASE_SLOT_MEMBERS: dict[str, tuple[str, bool, bool, str]] = {
         False,
         "(self, role: 'str', content: 'str', cls: 'str' = '', ts: 'str' = '', *, "
         "broadcast: 'bool' = True, broadcast_user: 'bool' = False, meta: 'dict | None' = "
-        "None, mint_mid: 'bool' = True) -> 'dict[str, Any]'",
+        "None, mint_mid: 'bool' = True, note_participant: 'bool' = True) -> "
+        "'dict[str, Any]'",
     ),
     "append_pending_context": (
         "function",
@@ -397,6 +399,7 @@ _BASE_SLOT_MEMBERS: dict[str, tuple[str, bool, bool, str]] = {
     "todo_task_text": ("function", False, False, "(self, task_id: 'str') -> 'str | None'"),
     "turn_running": ("property", False, False, "(self) -> 'bool'"),
     "_turn_lineage_generation": ("function", False, False, "(self) -> 'int'"),
+    "turn_timeout_secs": ("property", False, False, "(self) -> 'int | None'"),
     "unattended": ("property", False, False, "(self) -> 'bool'"),
     "unregister_approval": (
         "function",
@@ -542,6 +545,7 @@ _BASE_SLOT_DEFAULTS: dict[str, tuple[str, str | None]] = {
     "_mcp_report_session_id": ("value", "''"),
     "_mcp_banner_shown": ("value", "{}"),
     "_hidden_scratch_notice_shown": ("value", "False"),
+    "_mcp_sign_in_notice_shown": ("value", "False"),
     "_member_approval_seeded": ("value", "False"),
     "_memory_assignment_from_history": ("value", "False"),
     "_messages": ("value", "[]"),
@@ -575,11 +579,15 @@ _BASE_SLOT_DEFAULTS: dict[str, tuple[str, str | None]] = {
     "_pending_steers": ("value", "[]"),
     "_pending_subagent_failures": ("value", "[]"),
     "_pending_synthesis": ("value", "False"),
+    "_pending_thread_parent": ("value", "None"),
     "_pending_variants": ("value", "[]"),
+    "_participants": ("value", "[]"),
+    "_participants_dropped": ("type", "builtins.dict"),
     "_poisoned_reset_used": ("value", "False"),
     "_posttoken_retry_used": ("value", "False"),
     "_prefetch_ttl_task": ("value", "None"),
     "_prestream_exhausted_cycles": ("value", "0"),
+    "_project_hook_files_notice_shown": ("value", "''"),
     "_projection": ("type", "kiro_crew.dashboard.slot_projection.SlotProjection"),
     "_promise_only_retries": ("value", "0"),
     "_prompt_busy_retries": ("value", "0"),
@@ -606,6 +614,7 @@ _BASE_SLOT_DEFAULTS: dict[str, tuple[str, str | None]] = {
     "_row_summary_memo": ("value", "None"),
     "_saved_created_by": ("value", "''"),
     "_session_not_found_retry_used": ("value", "False"),
+    "_session_notice_marks": ("value", "[]"),
     "_session_requested_model": ("value", "None"),
     "_side": ("value", "None"),
     "_slack_channel": ("value", "''"),
@@ -693,11 +702,11 @@ _BASE_SLOT_DEFAULTS: dict[str, tuple[str, str | None]] = {
     "_turn_agent_started": ("value", "False"),
     "_turn_reply_mids": ("value", "[]"),
     "_turn_retries": ("value", "{}"),
-    "_turn_timeout_hydrated": ("value", "True"),
     "_turn_user_sent": ("value", "False"),
     "_turn_wrote_text": ("value", "False"),
     "_turns_started": ("value", "0"),
     "_unknown_row_fields_bytes": ("value", "0"),
+    "_unsent_resends": ("value", "None"),
     "_unstarted_generation": ("value", "-1"),
     "_wait_contested": ("value", "False"),
     "_wait_last_ping": ("value", "0.0"),
@@ -749,7 +758,6 @@ _BASE_SLOT_DEFAULTS: dict[str, tuple[str, str | None]] = {
     "theme_consent_sha": ("value", "None"),
     "title": ("value", "'k'"),
     "total_messages": ("value", "0"),
-    "turn_timeout_secs": ("value", "None"),
     "workspace": ("value", "'default'"),
 }
 

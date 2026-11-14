@@ -57,6 +57,11 @@ function statusOn() {
   stored = { recording: true, beacon: true }
   statusFromStore()
 }
+function renderChapter(props: { passWhenOff?: boolean; onContinue?: ReturnType<typeof vi.fn> } = {}) {
+  const onContinue = props.onContinue ?? vi.fn()
+  renderWithProviders(<PrivacyChapter open onContinue={onContinue} passWhenOff={props.passWhenOff} />)
+  return { onContinue }
+}
 
 describe('PrivacyChapter', () => {
   beforeEach(() => {
@@ -241,6 +246,13 @@ describe('PrivacyChapter', () => {
     expect(screen.getByRole('button', { name: 'Turn off' })).toBeEnabled()
   })
 
+  it('the Stays on your device line states the recording it read, not the default', async () => {
+    renderWithProviders(<PrivacyChapter open onContinue={vi.fn()} />)
+    expect(
+      await screen.findByText('Usage and context records. Performance metrics are being recorded on this device now.'),
+    ).toBeInTheDocument()
+  })
+
   it('the off variant says nothing is sent and lists no collection', async () => {
     stored = { recording: false, beacon: false }
     renderWithProviders(<PrivacyChapter open onContinue={vi.fn()} />)
@@ -254,6 +266,37 @@ describe('PrivacyChapter', () => {
     expect(screen.getByTestId('privacy-details-off')).toHaveTextContent('Usage and context records still stay on this device')
     expect(screen.getByTestId('privacy-details-off')).not.toHaveTextContent(/nothing described below/)
     expect(screen.queryByTestId('privacy-turn-off-scope')).not.toBeInTheDocument()
+  })
+
+  it('keeps the off form when usage data is pinned off, recording nothing on its own', async () => {
+    beaconStatus.mockResolvedValue({ ...BEACON_ON, enabled: false, env_override: true, env_var: 'DO_NOT_TRACK' })
+    collectionStatus.mockResolvedValue({ enabled: false, env_pinned: true, env_var: 'DO_NOT_TRACK' })
+    const { onContinue } = renderChapter({ passWhenOff: true })
+    expect(await readyButton('Continue')).toBeTruthy()
+    expect(onContinue).not.toHaveBeenCalled()
+  })
+
+  it('keeps the off form when a config.local.json entry holds usage data off', async () => {
+    beaconStatus.mockResolvedValue({ ...BEACON_ON, enabled: false, overlay_override: true })
+    collectionStatus.mockResolvedValue({ enabled: false, env_pinned: false })
+    const { onContinue } = renderChapter({ passWhenOff: true })
+    expect(await readyButton('Continue')).toBeTruthy()
+    expect(onContinue).not.toHaveBeenCalled()
+  })
+
+  it('passes on its own when the user turned usage data off, recording the ack', async () => {
+    beaconStatus.mockResolvedValue({ ...BEACON_ON, enabled: false })
+    collectionStatus.mockResolvedValue({ enabled: false, env_pinned: false })
+    const { onContinue } = renderChapter({ passWhenOff: true })
+    await waitFor(() => expect(onContinue).toHaveBeenCalledWith({ noticeVersion: false }))
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull()
+  })
+
+  it('shows the off form with its error when the ack for an off install fails', async () => {
+    beaconStatus.mockResolvedValue({ ...BEACON_ON, enabled: false })
+    collectionStatus.mockResolvedValue({ enabled: false, env_pinned: false })
+    renderChapter({ passWhenOff: true, onContinue: vi.fn().mockRejectedValue(new Error('500')) })
+    expect(await screen.findByRole('button', { name: 'Continue' })).toBeTruthy()
   })
 
   it('counts the heartbeat fields it points to below', async () => {
@@ -421,6 +464,18 @@ describe('PrivacyChapter', () => {
     renderWithProviders(<PrivacyChapter open onContinue={vi.fn()} />)
 
     expect(await screen.findByText(/also sent to the metrics destination set up for it. No heartbeat is sent./)).toBeInTheDocument()
+  })
+
+  it('says metrics stay local while export waits for an explicit opt-in', async () => {
+    // On by default only: the provider attaches no export reader until
+    // telemetry.enabled: true is written, so nothing is sent yet.
+    collectionStatus.mockImplementation(async () => ({
+      enabled: true, env_pinned: false, otlp_configured: true, export_permitted: false,
+    }))
+    renderWithProviders(<PrivacyChapter open onContinue={vi.fn()} />)
+
+    expect(await screen.findByText(/Performance metrics stay on this machine. Once a day/)).toBeInTheDocument()
+    expect(screen.queryByText(/also sent to the metrics destination/)).not.toBeInTheDocument()
   })
 
   it('renders nothing while closed', () => {

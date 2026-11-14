@@ -215,8 +215,9 @@ def _matcher_ok(matcher: object) -> bool:
     """The object form's matcher rules, plus the kinds in :data:`_SPEC_MATCHER_RE`.
 
     Both are length-capped. The extra kinds are accepted here only: kiro-cli runs
-    its spec's ``hooks`` itself and never reaches this conversion, so the
-    materialized spec's rule stays as it is.
+    its spec's ``hooks`` itself and never reaches this conversion. The materialized
+    spec has its own rule (``agent_materialization.kiro_hooks._kiro_cli_matcher_ok``),
+    which also takes an app bridge's ``@<app>:<server>`` name.
     """
     # circular import: agent imports hooks, which this module imports at load time.
     from kiro_crew.agent import _MAX_MATCHER_LEN, _hook_matcher_ok
@@ -872,24 +873,24 @@ def spec_script_hooks(agent_id: str, spec: dict[str, Any]) -> list[ScriptHook]:
     return list(_convert(agent_id, spec)[0])
 
 
-def project_hook_files_present(project_dir: str | None) -> bool:
-    """Whether the session's checkout has standalone ``<project>/.kiro/hooks/*.json``.
+def project_hook_file_names(project_dir: str | None) -> list[str]:
+    """The sorted names of the checkout's standalone ``<project>/.kiro/hooks/*.json``.
 
     These files do NOT run in a dashboard KAS session: a project hook is a command
     from a checkout, gated on the trust verdict Crew cannot read
     (:func:`kiro_crew.acp.session_mcp._project_mcp_trusted`). This only reports that
     such files exist, so a session-start notice can say they are withheld rather
     than let them fail silently -- the same shape as the withheld project spec
-    hooks notice. Best-effort: any read error answers ``False`` (no notice) rather
-    than failing the turn.
+    hooks notice. The names tell a chat a changed file set. Best-effort: any read
+    error answers ``[]`` (no notice) rather than failing the turn.
     """
     if not project_dir:
-        return False
+        return []
     try:
         hooks_dir = Path(project_dir) / ".kiro" / "hooks"
-        return any(p.is_file() for p in hooks_dir.glob("*.json"))
+        return sorted(p.name for p in hooks_dir.glob("*.json") if p.is_file())
     except OSError:
-        return False
+        return []
 
 
 def _user_hooks_dir() -> Path | None:

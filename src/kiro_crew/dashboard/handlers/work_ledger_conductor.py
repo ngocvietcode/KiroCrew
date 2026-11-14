@@ -23,7 +23,7 @@ from kiro_crew import conductor_patrol, session_ledger, work_ledger
 from kiro_crew.constants import env_file_display
 from kiro_crew.crew_log import emit as crew_log_emit
 from kiro_crew.crew_log.errors import CrewLogError
-from kiro_crew.dashboard import session_control
+from kiro_crew.dashboard import session_control, trace_binding
 from kiro_crew.dashboard.handlers.work_ledger_caller import (
     _caller_key,
     _code_channel_caller,
@@ -68,6 +68,7 @@ from kiro_crew.dashboard.handlers.work_ledger_refusals import (
 )
 from kiro_crew.dashboard.state import DashboardState
 from kiro_crew.metrics import work as work_metrics
+from kiro_crew.tracing import work as trace_work
 from kiro_crew.validation import WORK_LEDGER_RECORD_SCHEMA, ValidationError, validate_tool_args
 from kiro_crew.work_ledger import WorkLedgerError
 from kiro_crew.work_vocab import (
@@ -85,8 +86,9 @@ logger = logging.getLogger("kiro_crew.dashboard.handlers.work_ledger")
 #: :data:`work_ledger.CONDUCTOR_ACTIONS`: ``accept`` promotes a worker's claimed
 #: ``pr`` into the item's ``acceptance`` and is served by
 #: :func:`work_ledger.apply_acceptance_update`, which is deliberately not a
-#: seventh member of that frozenset (see its docstring).
-RECORD_ACTIONS: frozenset[str] = work_ledger.CONDUCTOR_ACTIONS | {"accept"}
+#: seventh member of that frozenset (see its docstring). ``ask`` records what an
+#: item needs from the person (:func:`work_ledger.apply_ask_record`).
+RECORD_ACTIONS: frozenset[str] = work_ledger.CONDUCTOR_ACTIONS | {"accept", "ask"}
 
 
 def _count_recorded(action: str, item: Any, header: Any) -> None:
@@ -215,6 +217,19 @@ async def _record_conductor_write(
         closed_at=_WIDEST_STAMP,
         decided_at=_WIDEST_STAMP,
         pending_since=_WIDEST_STAMP,
+        # The record this request would commit, at its widest stamp.
+        ask=(
+            {
+                "what": cleaned.get("what") or "",
+                "why": cleaned.get("why") or "",
+                "options": cleaned.get("options") or [],
+                "pick": cleaned.get("pick") or "",
+                "pick_why": cleaned.get("pick_why") or "",
+                "written_at": _WIDEST_STAMP,
+            }
+            if action == "ask"
+            else None
+        ),
     )
     if invalid is not None:
         return invalid
@@ -263,6 +278,8 @@ async def _record_conductor_write(
             stop = await before_write()
             if stop is not None:
                 return stop
+        # What the header held before this write, when it may open a round (tracing).
+        before = await trace_work.header_before(key, action)
         # The worker key is folded through ``session_ledger.ledger_key`` before the
         # store writes the binding (see the ``handlers.work_ledger`` note); the snapshot names the
         # same path, or a failed bind's binding would escape the undo.
@@ -385,6 +402,7 @@ async def _record_conductor_write(
                 pending_since=(
                     getattr(item, "pending_since", None) if action == "verdict" else None
                 ),
+                ask=getattr(item, "ask", None) if "ask" in sets else None,
             ),
         )
         if not landed:
@@ -415,6 +433,17 @@ async def _record_conductor_write(
         # write whose record did not land is undone above, so this point is
         # reached once per write the route reports as successful.
         _count_recorded(action, item, header)
+        await trace_work.recorded(
+            unit,
+            key,
+            action,
+            actor="conductor",
+            item=item,
+            header=header,
+            event_id=getattr(event, "id", None),
+            before=before,
+            root_kind=lambda: trace_binding.root_kind(state, key),
+        )
         if action == "close" and item is not None:
             await _count_crew_mode_run(state, key, item)
         # A remote bind names a PEER's slot, which no local crew record can resolve.
@@ -562,7 +591,20 @@ async def api_work_ledger_record(request: web.Request) -> web.Response:
     )
     if action == "decide" and resp.status == 200:
         resp = await _forward_remote_decide(state, key, cleaned, resp)
+    elif resp.status == 200 and cleaned.get("item_id"):
+        await _revoke_closed_remote_trust(state, key, str(cleaned["item_id"]))
     return resp
+
+
+async def _revoke_closed_remote_trust(state: DashboardState, key: str, item_id: str) -> None:
+    """A write that closed a REMOTE item also ends its worker's remote grant (RFC §4)."""
+    from kiro_crew.dashboard.handlers.work_ledger_read import _remote_dispatch_on
+
+    if not await asyncio.to_thread(_remote_dispatch_on):
+        return
+    from kiro_crew.dashboard.handlers import remote_ingest
+
+    await remote_ingest.revoke_if_closed(state, key, item_id)
 
 
 async def _forward_remote_decide(
@@ -618,7 +660,18 @@ async def _refuse_dispatch_without_ledger(key: str) -> web.Response | None:
     The one remedy is ``action=goal``: unlike ``_own_ledger``'s text, it does not
     suggest ``action=create``, which ``work_dispatch`` would send marked again.
     """
-    record = await asyncio.to_thread(work_ledger.read_conductor, key)
+    # Strict, as in ``_own_ledger``: an I/O fault on conductor.json is a
+    # transient 503, never a false "no ledger, open one with action=goal".
+    try:
+        record = await asyncio.to_thread(work_ledger.read_conductor, key, strict=True)
+    except OSError:
+        _audit(key, "work_dispatch", "denied", error="ledger_unreadable")
+        return _refuse_503(
+            "ledger_unreadable",
+            "This session's work ledger could not be read right now (a transient "
+            "I/O error). Retry; it was not interpreted as having no ledger. "
+            "Nothing was created.",
+        )
     if record is not None:
         return None
     _audit(key, "work_dispatch", "denied", error=work_ledger.CODE_NO_LEDGER)
@@ -1030,6 +1083,16 @@ def _write(key: str, action: str, cleaned: dict[str, Any]) -> dict[str, Any]:
             str(cleaned.get("item_id") or ""),
             worker_session_key=cleaned.get("worker_session_key"),
             worker_instance_id=cleaned.get("worker_instance_id"),
+        )
+    if action == "ask":
+        return work_ledger.apply_ask_record(
+            key,
+            str(cleaned.get("item_id") or ""),
+            what=cleaned.get("what"),
+            why=cleaned.get("why"),
+            options=cleaned.get("options"),
+            pick=cleaned.get("pick"),
+            pick_why=cleaned.get("pick_why"),
         )
     if action == "accept":
         return work_ledger.apply_acceptance_update(

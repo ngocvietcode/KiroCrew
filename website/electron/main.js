@@ -56,6 +56,7 @@ const { resolveLinuxInstall, readExternallyManaged, runStartupApply } = require(
 const { createStartupGatewayProbe } = require("./runtime/update/gateway-probe");
 const { reregisterBundleIfManaged } = require("./mac-launch-services");
 const { initNativeLogging } = require("./native-logging");
+const { watchSessionLock } = require("./session-lock");
 const { armCrashCollector, collectCrashReports } = require("./crash-collector");
 const { initGpuPolicy } = require("./disable-gpu");
 const { applyAuthServerAllowlist } = require("./auth-allowlist");
@@ -72,8 +73,20 @@ const {
   shutdownCrewCompanion,
   suspendCrewCompanion,
   resumeCrewCompanion,
-  hostsDashboard,
 } = require("./crew-companion/index");
+const { hostsDashboard, openDashboardSession } = require("./dashboard-session");
+// A session opened from outside the dashboard (a Crew Companion notification, an
+// app window) is a user-intent show: unhide the app a fullscreen tray-close hid,
+// then bring it in front, as the summon hotkey does.
+const SURFACE_APP = {
+  showApp: () => {
+    if (process.platform === "darwin" && typeof app.show === "function") app.show();
+  },
+  focusApp: () => {
+    if (process.platform === "darwin") app.focus({ steal: true });
+  },
+};
+const { openExternalSafely } = require("./external-scheme");
 const { createDeepLinkHandler, installDeepLinks, installNavigateReady } = require("./deep-link-handler");
 
 // An update install stops the gateway and quits the app. Close the Crew
@@ -737,6 +750,14 @@ app.whenReady().then(async () => {
     glog("power: could not watch for resume: " + (error && error.message));
   }
 
+  // A dictation left running when the person locks the screen keeps the
+  // microphone open in an empty room; the dashboard stops it on this message.
+  try {
+    watchSessionLock(electron.powerMonitor, () => electron.BaseWindow.getAllWindows(), glog);
+  } catch (error) {
+    glog("power: could not watch for screen lock: " + (error && error.message));
+  }
+
   // Chromium has opened `--log-file` by now, so this is the moment the live log's
   // mode can be asserted rather than assumed. The pre-create in
   // `initNativeLogging` only holds if Chromium opened the inode it created; if it
@@ -910,6 +931,7 @@ app.whenReady().then(async () => {
       fetchGatewayAuth: () => fetchMochiGatewayAuth(BACKEND_URL),
       glog,
       getDashboardWindow: () => windows.focusedDashboardWindow() || null,
+      surfaceApp: SURFACE_APP,
     });
   } catch (error) {
     glog("crew-companion: init failed — " + (error && error.message));
@@ -922,6 +944,13 @@ app.whenReady().then(async () => {
       cookieHeader: sessionCookieHeader,
       preloadPath: path.join(__dirname, "app-window-preload.js"),
       log: glog,
+      displayMemoryPath: path.join(app.getPath("userData"), "app-window-displays.json"),
+      showDashboardSession: (slotKey) => openDashboardSession(
+        windows.focusedDashboardWindow() || null, BACKEND_URL, slotKey, SURFACE_APP,
+      ),
+      openExternal: (url) => openExternalSafely(shell.openExternal, url, glog),
+      // Which crew each app's windows show is this computer's choice, kept by the shell.
+      gatewayStore: store,
     });
     appWindowHost.start();
   } catch (error) {

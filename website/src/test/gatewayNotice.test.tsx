@@ -178,6 +178,35 @@ describe('resolveGatewayNotice', () => {
     expect(resolveGatewayNotice(retrying, withTool, 0)?.text).toBe(COPY.restored)
   })
 
+  it('words a throttle retry as the provider throttling, never as the connection', () => {
+    // A throttle is the provider's answer: the network was fine, so neither the
+    // pending card nor either settled card may speak of a connection.
+    const throttled = withNotice('transient_throttle_retrying', 'transient_retry')
+    expect(COPY.throttle_retrying).toBe('The model provider is throttling requests — retrying…')
+    expect(resolveGatewayNotice(throttled, [throttled], 0)).toEqual({ text: COPY.throttle_retrying, card: 'notice', tone: 'warn' })
+    const answered = [throttled, throttled, msg('assistant', { content: 'ok' })]
+    for (const i of [0, 1]) {
+      expect(resolveGatewayNotice(throttled, answered, i)).toEqual({ text: COPY.throttle_restored, card: 'notice', tone: 'info' })
+    }
+    expect(resolveGatewayNotice(throttled, [throttled, giveUp], 0)).toEqual({ text: COPY.throttle_interrupted, card: 'notice', tone: 'info' })
+    // The terminal row of a throttle ladder is its own error card.
+    const throttleGiveUp = withNotice('transient_throttle_give_up')
+    expect(resolveGatewayNotice(throttleGiveUp, [throttled, throttleGiveUp], 1)).toEqual({ text: COPY.throttle_give_up, card: 'error' })
+    expect(resolveGatewayNotice(throttled, [throttled, throttleGiveUp], 0)?.text).toBe(COPY.throttle_interrupted)
+    // A throttle that cut off a streamed answer finishes it under the same wording.
+    const throttleResuming = withNotice('transient_throttle_resuming', 'transient_retry')
+    expect(resolveGatewayNotice(throttleResuming, [throttleResuming], 0)).toEqual({ text: COPY.throttle_resuming, card: 'notice', tone: 'warn' })
+    expect(resolveGatewayNotice(throttleResuming, [throttleResuming, msg('assistant', { content: 'ok' })], 0)?.text).toBe(COPY.throttle_restored)
+    expect(resolveGatewayNotice(throttleResuming, [throttleResuming, throttleGiveUp], 0)?.text).toBe(COPY.throttle_interrupted)
+    for (const text of [COPY.throttle_retrying, COPY.throttle_restored, COPY.throttle_interrupted, COPY.throttle_give_up, COPY.throttle_resuming]) {
+      expect(text).not.toMatch(/connection/i)
+    }
+    // A plain 5xx in the same ladder keeps its own connection wording.
+    const mixed = [throttled, retrying, msg('assistant', { content: 'ok' })]
+    expect(resolveGatewayNotice(retrying, mixed, 1)?.text).toBe(COPY.restored)
+    expect(resolveGatewayNotice(throttled, mixed, 0)?.text).toBe(COPY.throttle_restored)
+  })
+
   it('never settles the terminal shape', () => {
     const list = [giveUp, msg('assistant', { content: 'a later, unrelated turn' })]
     expect(resolveGatewayNotice(giveUp, list, 0)?.text).toBe(COPY.give_up)
@@ -390,10 +419,10 @@ describe('the recovery, cancelled-replay, end-of-turn and admission rows', () =>
     ).toBe('The last tool call was refused because the gateway was at capacity — retrying it in 9s (attempt 3).')
     expect(
       resolveGatewayNotice(legacy('notice', '📌 Agent switch to x was blocked — this chat is in Crew Mode, which stays on its conductor. The next turn restarts on the conductor.'), [], 0)?.text,
-    ).toBe('Switching to x was blocked — this chat is in Ultra Mode, which stays on its own agent. The next turn restarts on that agent.')
+    ).toBe('Switching to x was blocked — this chat is in conductor mode, which stays on its own agent. The next turn restarts on that agent.')
     expect(
-      resolveGatewayNotice(legacy('notice', '📌 Agent switch to x was blocked — this chat is in Ultra Mode, which stays on its own agent. The next turn restarts on that agent.'), [], 0)?.text,
-    ).toBe('Switching to x was blocked — this chat is in Ultra Mode, which stays on its own agent. The next turn restarts on that agent.')
+      resolveGatewayNotice(legacy('notice', '📌 Agent switch to x was blocked — this chat is in conductor mode, which stays on its own agent. The next turn restarts on that agent.'), [], 0)?.text,
+    ).toBe('Switching to x was blocked — this chat is in conductor mode, which stays on its own agent. The next turn restarts on that agent.')
     // A notice wording on an error row is not ours.
     expect(resolveGatewayNotice(legacy('error', 'ℹ Auto-continue cancelled — your message takes over.'), [], 0)).toBeNull()
   })
@@ -550,7 +579,7 @@ describe('wire parity with the gateway constants', () => {
   const metaKeys = sources.flatMap((py) => [...py.matchAll(/^(?:TRANSIENT|GATEWAY)_NOTICE_META_KEY\s*=\s*"([^"]+)"/gm)].map((m) => m[1]))
 
   it('finds every backend token and the one meta field name the frontend reads', () => {
-    expect(backend).toHaveLength(82)
+    expect(backend).toHaveLength(86)
     expect(new Set(metaKeys)).toEqual(new Set(['notice']))
   })
 

@@ -91,8 +91,11 @@ hatches exist for mirrored or airgapped installs:
 - `KIROCREW_EMBED_MODEL_PATH` (or `memory.embed_model_path`) runs a local GGUF
   of your own instead. In that mode the default model is never downloaded.
 
-`memory.embedding_provider` accepts only `llama_cpp`; any other value in an old
-config is coerced to it on load.
+`memory.embedding_provider` accepts `llama_cpp` (the default, in-process) and
+`ollama_http`, which sends memory and knowledge text to the Ollama server at
+`memory.ollama_url` (set `memory.ollama_model` and `memory.embedding_dim` to
+match its model). Any other value in an old config, `ollama` and `none`
+included, is coerced to `llama_cpp` on load.
 
 Global V1 retains its existing session-start memory retrieval. Crew Member V2
 injects current persona, permanent rules and admitted project guides every turn;
@@ -653,7 +656,7 @@ Linux, `.\make.ps1 <target>` on Windows.
 | `make backend` | Backend only: `.venv` + editable install with the `dev` extra |
 | `make wheel` | Self-contained pip wheel with the dashboard bundled, into `dist/` |
 | `make backend-bin` | Frozen standalone backend binary (host arch only) |
-| `make desktop` | Full desktop app: DMG on macOS, AppImage on Linux, NSIS installer on Windows |
+| `make desktop` | Full desktop app: DMG on macOS, AppImage plus `.deb` and `.rpm` on Linux, NSIS installer on Windows |
 | `make test` | Build, then run the `pytest` suite |
 | `make clean` | Remove build artifacts, dists, and caches |
 
@@ -680,6 +683,9 @@ After any install, the desktop app included, install Kiro CLI from
 ```bash
 kiro-cli login
 ```
+
+On Linux the Kiro CLI installer needs `unzip`; the one-line install (`cli.sh`)
+says so before its next steps when the host has neither `unzip` nor `kiro-cli`.
 
 The desktop app does not carry its own kiro-cli: it detects the one you
 installed, and the **Set up Kiro** page shows the install and sign-in commands
@@ -794,7 +800,7 @@ it. Details: [browser module spec](../system-specs/modules/browser.md).
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `KIROCREW_HOME` | `~/.kiro/crew` | Data directory (config, credentials, databases) |
+| `KIROCREW_HOME` | `~/.kiro/crew` | Data directory (config, credentials, databases). Some folders stay under `~/.kiro` whatever it is set to (see [Folders beside the data home](#folders-beside-the-data-home)) |
 | `KIROCREW_PORT` | `5476` | Port the gateway / dashboard listens on |
 | `KIROCREW_EMBED_MODEL_URL` | CDN default | Mirror for the embedding model download |
 | `KIROCREW_EMBED_MODEL_PATH` | unset | Run a local GGUF instead of the bundled model |

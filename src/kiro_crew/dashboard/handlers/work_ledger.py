@@ -106,6 +106,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _refuse_dispatch_without_ledger,
         _refuse_dispatched_worker,
         _refuse_unowned_worker,
+        _revoke_closed_remote_trust,
         _set_pair_field,
         _widest_retired_bindings,
         _worker_slot,
@@ -217,6 +218,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
 if TYPE_CHECKING:  # names it serves from outside the family, from their homes
     from kiro_crew import (  # noqa: F401
         conductor_patrol,
+        host_pressure,
         ledger_wake,
         session_ledger,
         work_ledger,
@@ -235,6 +237,7 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
     )
     from kiro_crew.dashboard import (  # noqa: F401
         session_control,
+        trace_binding,
     )
     from kiro_crew.dashboard.handlers._shared import (  # noqa: F401
         _is_restricted_session,
@@ -255,12 +258,14 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
         is_channel_session_key,
     )
     from kiro_crew.metrics import work as work_metrics  # noqa: F401
+    from kiro_crew.tracing import work as trace_work  # noqa: F401
     from kiro_crew.validation import (  # noqa: F401
         WORK_LEDGER_READ_SCHEMA,
         WORK_LEDGER_RECORD_SCHEMA,
         WORK_REPORT_REMOTE_DISPATCH_SCHEMA,
         WORK_REPORT_SCHEMA,
         ValidationError,
+        sanitize_string,
         validate_tool_args,
     )
     from kiro_crew.work_ledger import (  # noqa: F401

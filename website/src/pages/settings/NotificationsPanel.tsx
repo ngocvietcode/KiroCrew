@@ -25,7 +25,7 @@ import { loadUnreadOnAttention, saveUnreadOnAttention } from '../../hooks/unread
 import { useNotificationPermission } from '../../hooks/useNotificationPermission'
 
 import { i18nT } from '../../i18n/t'
-import { fmtTime } from '../../i18n/format'
+import { compareText, fmtTime } from '../../i18n/format'
 const PRESET_OPTIONS: SoundPreset[] = ['none', ...SOUND_PRESETS]
 
 /** localStorage key the sound settings persist under. Mirrors the private
@@ -204,6 +204,9 @@ const CHANNEL_LABELS: Record<string, () => string> = {
   // handoffs) and is jargon besides -- this channel carries the bell entry a chat
   // raises when it STOPS with an error, so it is labelled in task language.
   'system.turn': () => i18nT('pages.settings.notificationsPanel.channel_turn'),
+  // The bare id is "memory", which reads as memory in general; this channel
+  // carries only the opt-in weekly note that tool failures keep coming back.
+  'system.memory': () => i18nT('pages.settings.notificationsPanel.channel_memory'),
 }
 
 /** Catalog KEY for each system channel's "when does this fire?" tip, one entry
@@ -228,6 +231,7 @@ const CHANNEL_TIP_KEY: Record<string, string> = {
   'system.member': 'pages.settings.notificationsPanel.channel_tip_member',
   'system.apps': 'pages.settings.notificationsPanel.channel_tip_apps',
   'system.turn': 'pages.settings.notificationsPanel.channel_tip_turn',
+  'system.memory': 'pages.settings.notificationsPanel.channel_tip_memory',
 }
 
 /** Human label for a channel within its group (drop the source prefix apps
@@ -305,7 +309,7 @@ function ChannelsSection({ patch }: { patch: (channel: string, settings: Channel
   }
 
   const sources = Array.from(new Set(channels.map(c => c.source)))
-    .sort((a, b) => (a === 'system' ? -1 : b === 'system' ? 1 : a.localeCompare(b)))
+    .sort((a, b) => (a === 'system' ? -1 : b === 'system' ? 1 : compareText(a, b)))
 
   return (
     <SettingsSection title={i18nT('pages.settings.notificationsPanel.sources')} hint={i18nT('pages.settings.notificationsPanel.mute_notification_sources_or_override_their_prio')}>

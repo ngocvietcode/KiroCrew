@@ -222,8 +222,9 @@ use [SECURITY.md](SECURITY.md) for private vulnerability reporting.
 
 The [install guide](docs/guides/install.md) owns every install path, first-run
 step, optional dependency, upgrade, uninstall, and recovery procedure. User data
-lives under `~/.kiro/crew` by default and moves with `KIROCREW_HOME`; configuration
-keys and precedence are canonical in the
+lives under `~/.kiro/crew` by default and moves with `KIROCREW_HOME`, except some
+[folders that stay under `~/.kiro`](docs/guides/install.md#folders-beside-the-data-home);
+configuration keys and precedence are canonical in the
 [config spec](docs/system-specs/modules/config.md).
 
 For a new source or wheel install:
@@ -277,8 +278,11 @@ kirocrew telemetry status         # print both switches and exactly what would b
 Turn off and `kirocrew telemetry disable` write the same settings, so either
 one sticks across restarts and upgrades. `KIROCREW_TELEMETRY_DISABLED` and
 `DO_NOT_TRACK` override them: when one is set, the dashboard toggle is disabled
-and says so. When the Privacy screen's text changes, existing users see it once
-more at their next dashboard load while local recording is on.
+and says so. An existing install that turned the heartbeat off, wrote
+`telemetry.enabled: false`, or sets `DO_NOT_TRACK` keeps local recording off
+after an upgrade and is not asked again. When the Privacy screen's text changes,
+existing users see it once more at their next dashboard load while local
+recording is on.
 
 **Exactly these five fields are sent, at most once per day, and nothing else:**
 
@@ -338,7 +342,10 @@ would not take effect:
 See [docs/system-specs/modules/governance.md](docs/system-specs/modules/governance.md).
 
 This is separate from `telemetry.enabled`, which controls **local-only**
-performance metrics that never leave your machine. See
+performance metrics. They are on by default, stay on your machine, are capped at
+30 days and 100 MB, and turn off with the same Turn off button,
+`kirocrew telemetry disable`, `KIROCREW_TELEMETRY=0` or `DO_NOT_TRACK=1`. A
+terminal-only install prints a one-line notice about them on its first start. See
 [docs/system-specs/modules/metrics.md](docs/system-specs/modules/metrics.md).
 
 ## Docs and contributing

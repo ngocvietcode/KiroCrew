@@ -44,7 +44,8 @@ import { toolRailColor } from '../utils/toolRailColor'
 import SkillLoadCard, { isSkillLoadRow } from '../pages/chat/SkillLoadCard'
 import { ErrorCard } from '../pages/chat/ErrorCard'
 import { decisionStripFieldOf } from '../pages/chat/decisionRecord'
-import { resolveGatewayNotice } from '../pages/chat/gatewayNotice'
+import { agentNoToolsAgent, resolveGatewayNotice } from '../pages/chat/gatewayNotice'
+import AgentNoToolsNotice from '../pages/chat/AgentNoToolsNotice'
 import StopEventCard from '../pages/chat/StopEventCard'
 import { warmBriefBodyOf } from '../components/chat/WarmBriefCard'
 import { ToolDetails } from '../pages/chat/ToolDetails'
@@ -549,7 +550,9 @@ export interface AssistantBubbleOptions {
   onRegenerate?: () => void
   /** The LOCAL slot these rows belong to. Set, the reply draws its lock tags
    *  from `meta.redactions` and their card offers the owner's reveal of the
-   *  removed value. A host drawing another gateway's rows leaves it unset. */
+   *  removed value, and its Blocked link chips from `meta.blocked_links`, whose
+   *  card can allow the host for this slot. A host drawing another gateway's
+   *  rows leaves it unset. */
   redactionSlot?: string
   /** The reply menu's Read aloud, for a host that can read this reply aloud
    *  (a crewmate's chat). Absent: no Read aloud item. */
@@ -631,6 +634,9 @@ export function renderAssistantBubble(
       onSpeak={opts.onSpeak}
       revealActions={opts.revealActions}
       redactions={opts.redactionSlot ? (m.meta as Record<string, unknown> | undefined)?.redactions : undefined}
+      // The Blocked link chip and its card (Allow for this host saves for this
+      // slot), on the same local-slot rule as the lock tags (#36862).
+      blockedLinks={opts.redactionSlot ? (m.meta as Record<string, unknown> | undefined)?.blocked_links : undefined}
       redactionSlot={opts.redactionSlot}
       suppressSteerAck={opts.suppressSteerAck || turnHadPolicyBlock(ctx.messages, ctx.index)}
       bubbleClassName={bubbleClassName}
@@ -828,6 +834,19 @@ export const defaultMessageRenderers: readonly MessageRenderer[] = [
         <ProjectHooksNotice message={m} askAgent={ctx.handOff !== false} />
       </Suspense>,
     ),
+  },
+  {
+    // A new chat's notice that its agent lists no tools, with a link to that
+    // agent's page under Customize. Matched on its token, like the rows above.
+    id: 'agent_no_tools',
+    roles: ['*'],
+    match: m => agentNoToolsAgent(m) !== null,
+    render: (m, ctx) => {
+      const notice = resolveGatewayNotice(m, ctx.messages, ctx.index)
+      return ctx.row(
+        <AgentNoToolsNotice content={notice?.text ?? m.content} agent={agentNoToolsAgent(m) ?? ''} />,
+      )
+    },
   },
   {
     id: 'notice',

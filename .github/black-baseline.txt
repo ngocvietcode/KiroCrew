@@ -294,7 +294,6 @@ test/test_build_desktop_rm_resilient.py
 test/test_builtin_app_lifecycle.py
 test/test_builtin_app_optional_enable.py
 test/test_builtin_discovery.py
-test/test_builtin_projects_manifest.py
 test/test_builtin_skill_sync_safety.py
 test/test_capability_agents_plugins.py
 test/test_capability_mcp_registry.py
@@ -317,7 +316,6 @@ test/test_chat_title.py
 test/test_cli_desktop.py
 test/test_cli_lazy_imports.py
 test/test_cloud_ec2.py
-test/test_collection_status_endpoint.py
 test/test_computer_use_apps.py
 test/test_computer_use_overlay.py
 test/test_computer_use_skylight.py
@@ -613,7 +611,6 @@ test/test_session_grid.py
 test/test_session_map_migration.py
 test/test_session_mtime_ordering.py
 test/test_session_spend_identity.py
-test/test_session_start_timeout_diagnostics.py
 test/test_session_summary_api.py
 test/test_session_summary_extract.py
 test/test_session_thread_map.py

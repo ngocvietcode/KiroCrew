@@ -483,6 +483,10 @@ async def api_mcp_sync(request: web.Request) -> web.Response:
                     return _agent_home_not_owned_response(
                         ", ".join(s.name for s in to_sync) or "servers"
                     )
+                except PermissionError:
+                    return _mcp_config_busy("mcp servers sync")
+                except OSError:
+                    return _mcp_write_failed("mcp servers sync", "kirocrew.json")
 
     # The reset exists only to make kiro-cli re-read a file it may already
     # watch. Runs even with no new servers: an enable/disable toggle also wrote
@@ -674,6 +678,8 @@ async def api_mcp_toggle(request: web.Request) -> web.Response:
                 return _agent_home_not_owned_response(name)
             except PermissionError:
                 return _mcp_config_busy("mcp toggle")
+            except OSError:
+                return _mcp_write_failed("mcp toggle", "kirocrew.json")
 
     return web.json_response({"ok": True, "name": name, "enabled": enabled, "applied": True})
 
@@ -827,6 +833,8 @@ async def api_mcp_toggle_all(request: web.Request) -> web.Response:
                 return _agent_home_not_owned_response(", ".join(toggled) or "servers")
             except PermissionError:
                 return _mcp_config_busy("mcp toggle-all")
+            except OSError:
+                return _mcp_write_failed("mcp toggle-all", "kirocrew.json")
 
     return web.json_response({"ok": True, "enabled": enabled, "count": len(servers)})
 
@@ -939,6 +947,8 @@ async def api_mcp_remove(request: web.Request) -> web.Response:
                 return _agent_home_not_owned_response(name)
             except PermissionError:
                 return _mcp_config_busy("mcp remove")
+            except OSError:
+                return _mcp_write_failed("mcp remove", "kirocrew.json")
 
     await _forget_owner_servers([name])
     return web.json_response({"ok": True, "name": name, "removed": removed})
@@ -1034,6 +1044,8 @@ async def api_mcp_server_detail(request: web.Request) -> web.Response:
                     return _agent_home_not_owned_response(name)
                 except PermissionError:
                     return _mcp_config_busy("mcp server delete")
+                except OSError:
+                    return _mcp_write_failed("mcp server delete", "kirocrew.json")
         sel().log_api_access(
             caller="dashboard",
             operation="mcp_server_remove",
@@ -1086,6 +1098,14 @@ async def api_mcp_server_detail(request: web.Request) -> web.Response:
     entry: dict[str, Any] = {"command": command}
     if body.get("args"):
         entry["args"] = body["args"]
+    # Saved as before (back-compat), but a field of the wrong shape is named in
+    # the reply: this file is the one kiro-cli reads too, and a list command,
+    # string args or list env lands there unchanged. The shape rule is the
+    # Add Custom form's; body-scope import because mcp_custom imports this module.
+    from kiro_crew.dashboard.handlers.mcp_custom import _validate_spec
+
+    shape_error = _validate_spec({**entry, **({"env": body["env"]} if body.get("env") else {})})
+    warnings = [shape_error] if shape_error else []
     if body.get("env"):
         # This file is consumed directly by the ACP runtime (declared env is
         # applied per key), and this caller is programmatic (App Kit), not a
@@ -1117,15 +1137,25 @@ async def api_mcp_server_detail(request: web.Request) -> web.Response:
                 await asyncio.to_thread(_sync_mcp_to_agent, name, True)
             except SharedAgentHomeRefused:
                 return _agent_home_not_owned_response(name)
+            except PermissionError:
+                return _mcp_config_busy("mcp server register")
+            except OSError:
+                return _mcp_write_failed("mcp server register", "kirocrew.json")
 
     logger.info("MCP register via REST: %s command=%s", name, command)
+    if warnings:
+        # The name only: the warning text is built from the body, which can carry env secrets.
+        logger.warning("MCP register via REST: %s saved with a wrongly shaped field", name)
     sel().log_api_access(
         caller="dashboard",
         operation="mcp_server_register",
         outcome="completed",
         resources=name,
     )
-    return web.json_response({"ok": True, "name": name}, status=200)
+    reply: dict[str, Any] = {"ok": True, "name": name}
+    if warnings:
+        reply["warnings"] = warnings
+    return web.json_response(reply, status=200)
 
 
 if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and IDEs
@@ -1377,6 +1407,13 @@ async def _do_mcp_apply(request: web.Request) -> web.Response:
             loaded = await asyncio.to_thread(_load_config_or_refusal, path)
             if isinstance(loaded, web.Response):
                 return loaded
+        # The store too: every apply writes it, and a toggle that read it as empty
+        # would write back only its own entry.
+        loaded = await asyncio.to_thread(
+            _load_config_or_refusal, _kirocrew_mcp_json(), name="the Kiro Crew mcp.json"
+        )
+        if isinstance(loaded, web.Response):
+            return loaded
         try:
             await asyncio.to_thread(_refuse_commented_config, *_user_mcp_config_paths())
         except UnicodeDecodeError:
@@ -1466,6 +1503,11 @@ async def _do_mcp_apply(request: web.Request) -> web.Response:
 
         async with _get_mcp_lock():
             for change in changes:
+                # Phases 0 and 1 skip a non-object change; this loop read it
+                # with `.get` and raised (500). Reported like an empty name.
+                if not isinstance(change, dict):
+                    results.append({"error": "change must be an object", "change": change})
+                    continue
                 name = str(change.get("name", "")).strip()
                 if not name:
                     results.append({"error": "empty name", "change": change})

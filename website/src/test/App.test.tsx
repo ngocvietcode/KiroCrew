@@ -18,6 +18,7 @@ import SegmentedControl from '../components/SegmentedControl'
 import { safeSetItem } from '../utils/safeStorage'
 import { FEATURE_REQUEST_PROMPT_FALLBACK } from '../prompts/featureRequest'
 import { consumeChatHandoff } from '../utils/errorReport'
+import { ApiError } from '../api/apiError'
 
 /** Chrome the side tracks never get: the header's own `pl-2 pr-3` (20px) plus the
  *  two 12px track gaps. Subtracted before reasoning about a group's width —
@@ -478,8 +479,67 @@ describe('App routing', () => {
       expect(screen.queryByRole('dialog', { name: 'Privacy' })).not.toBeInTheDocument()
     })
 
-    it('shows the neutral notice, with the read error, when the status cannot be read', async () => {
+    // What the gateway answers once the dashboard sign-in has run out.
+    const signInRefused = () => new ApiError(403, 'Token required', '', true)
+    // Put back here, not at the end of a test body, so a test that fails cannot
+    // hand its status reads to the next one.
+    afterEach(async () => {
+      const { api } = await import('../api/client')
+      vi.mocked(api.collectionStatus).mockReset().mockResolvedValue({ enabled: false, env_pinned: false } as never)
+    })
+
+    it('does not show the notice to an existing user when the status cannot be read', async () => {
       const api = await existingUser(0)
+      vi.mocked(api.collectionStatus).mockRejectedValue(new Error('502'))
+      renderWithProviders(<App />, { route: '/chat' })
+
+      await waitFor(() => expect(api.collectionStatus).toHaveBeenCalled())
+      await shellSettled()
+      await act(async () => {})
+      expect(screen.queryByRole('dialog', { name: 'Privacy' })).not.toBeInTheDocument()
+      // A read that did not answer stores nothing.
+      expect(api.updateThemeConfig).not.toHaveBeenCalled()
+    })
+
+    it('does not show the notice when the sign-in had run out and stays refused', async () => {
+      const api = await existingUser(0)
+      vi.mocked(api.collectionStatus).mockRejectedValue(signInRefused())
+      renderWithProviders(<App />, { route: '/chat' })
+
+      // The first read and the one more try.
+      await waitFor(() => expect(api.collectionStatus).toHaveBeenCalledTimes(2))
+      await shellSettled()
+      await act(async () => {})
+      expect(screen.queryByRole('dialog', { name: 'Privacy' })).not.toBeInTheDocument()
+      expect(api.updateThemeConfig).not.toHaveBeenCalled()
+    })
+
+    it('reads once more when the sign-in had run out, and stays closed on an "off" answer', async () => {
+      const api = await existingUser(0)
+      vi.mocked(api.collectionStatus).mockRejectedValueOnce(signInRefused())
+      renderWithProviders(<App />, { route: '/chat' })
+
+      await waitFor(() => expect(api.collectionStatus).toHaveBeenCalledTimes(2))
+      await shellSettled()
+      await act(async () => {})
+      expect(screen.queryByRole('dialog', { name: 'Privacy' })).not.toBeInTheDocument()
+      expect(api.updateThemeConfig).not.toHaveBeenCalled()
+    })
+
+    it('shows the changed notice from the second read when the first was refused', async () => {
+      const api = await existingUser(0)
+      vi.mocked(api.collectionStatus)
+        .mockRejectedValueOnce(signInRefused())
+        .mockResolvedValue({ enabled: true, env_pinned: false } as never)
+      renderWithProviders(<App />, { route: '/chat' })
+
+      const dialog = await screen.findByRole('dialog', { name: 'Privacy' }, { timeout: 5000 })
+      // Opened by a read that answered, so it says what is on from its first frame.
+      expect(within(dialog).getByRole('heading', { name: 'Performance metrics are on' })).toBeInTheDocument()
+    })
+
+    it('still shows the chapter on a first run whose status cannot be read', async () => {
+      const api = await freshFirstRun()
       vi.mocked(api.collectionStatus).mockRejectedValue(new Error('502'))
       renderWithProviders(<App />, { route: '/chat' })
 
@@ -488,10 +548,6 @@ describe('App routing', () => {
         await within(dialog).findByRole('heading', { name: 'What can be collected' }, { timeout: 5000 }),
       ).toBeInTheDocument()
       expect(within(dialog).getByText(/Could not check what is on right now/)).toBeInTheDocument()
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Continue without changes' }))
-      // Told nothing about recording being on, so no notice version.
-      await waitFor(() => expect(api.updateThemeConfig).toHaveBeenCalledWith({ privacy_acked: true }))
-      vi.mocked(api.collectionStatus).mockResolvedValue({ enabled: false, env_pinned: false } as never)
     })
 
     it('never shows the notice to an existing user whose usage data is already off', async () => {
@@ -1108,8 +1164,9 @@ describe('App routing', () => {
     renderWithProviders(<App />, { route: '/chat' })
     const toggle = await screen.findByTitle(/more app/i)
     // Hover -> the portaled label mounts (collapsed rows carry no inline text).
+    // Ten apps plus Task Runner's row, which the Apps group lists with them.
     fireEvent.mouseEnter(toggle)
-    expect(await screen.findByText('4 more')).toBeInTheDocument()
+    expect(await screen.findByText('5 more')).toBeInTheDocument()
     // Press it the way a mouse does: pointerdown -> focus -> click. Neither the
     // focus the press produces nor the surviving hover state may leave a label
     // on screen — and the dismissal must be immediate, with no fade-out: the
@@ -1118,7 +1175,7 @@ describe('App routing', () => {
     fireEvent.pointerDown(toggle)
     fireEvent.focus(toggle)
     act(() => { toggle.click() })
-    expect(screen.queryByText('4 more')).toBeNull()
+    expect(screen.queryByText('5 more')).toBeNull()
     expect(screen.queryByText('Show less')).toBeNull()
     // ...and the press still did its job: dismissing the label must not swallow
     // the toggle's own activation (the title flips once the list is expanded).

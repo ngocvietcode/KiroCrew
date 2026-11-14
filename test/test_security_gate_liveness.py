@@ -787,7 +787,47 @@ def _url_payload_command(n: int) -> str:
 #: ``is_denied`` opens, in a leaf module with ``once_per_call`` on the pure readers one
 #: judgement repeats (shell tokens, program basename, operand, self-program test, line
 #: fold, Python lexer, quoted scripts). Same verdicts, less work. Re-measured.
-_PACKAGE_LINE_BUDGET = 35_712
+#: Raised by 92 more, from 35,712, in ``paths_resolver``: the test that confines the
+#: cumulative wait allowance to a thread running an event loop, and
+#: ``bounded_judgment``, one shared budget of resolver wait that every off-loop
+#: request checks before it is sent and that clamps only candidate waits; and the
+#: three lines the ``paths`` facade's manifest lists for them. No check was relaxed.
+#: Raised by 20, from 35,804, to 35,824, for ``StreamRedactor.release_sentence_end`` in
+#: ``text_redaction``: a withheld run that is one plain word ending a sentence can be
+#: committed before the next chunk arrives. No pattern, pass or commit boundary moved.
+#: Raised by 77, from 35,824, to 35,901, for ``paths_targets._app_readonly_dir_rows``
+#: and its facade manifest rows: the write gate's listing of the apps'
+#: ``agentReadOnlyDirs`` rows runs on the ``mc-pathres`` threads within the anchor
+#: rebuild's budget for every caller and is reused for a second on the event loop, so
+#: no gate scans ``apps/`` on its own thread. A miss refuses, and refuses later callers
+#: at once while that listing is still in flight. Re-measured.
+#: Raised by 96, from 35,901, to 35,997, for the ``local-destructive-rm-rf-root``
+#: row's scratch view (``rm_floor.scratch_rm_view``): the words of a plain ``rm``
+#: whose every operand is a direct ``/tmp/<name>`` entry are blanked for the shipped
+#: row only, and ``is_denied`` judges that row on the view while its events keep the
+#: command as submitted. Every other row, an operator's copy, and the rm floor for
+#: ``/`` and ``~`` read the full text. Re-measured.
+#: Raised by 3, from 35,997, for the ``chat_steering_off.json`` leaf on the read-gate
+#: floor in ``paths_lists`` (per-chat steering switch-offs). Re-measured.
+#: Raised by 18, from 36,000, to 36,018, for ``paths.py``'s scratch tree-index fence:
+#: artifact reads refuse the canonical index path even during replacement.
+#: Raised by 179, from 36,018, for ``s3_direction`` reading a SEQUENCE of statements
+#: instead of one command: the quote-aware statement split (reusing
+#: ``shell_commands.read_commands``), the plain single-assignment resolver, the
+#: per-statement transfer classification, the short list of inert programs a
+#: non-transfer statement may run (with no ``>`` or ``<`` redirect), and its
+#: structural gate (refusing a pipe, a
+#: background ``&``, a subshell, a command substitution and an unquoted
+#: here-document), the refusal of names bash sets itself (``_``, ``RANDOM``,
+#: ``BASH*``), plus their comments and the rewritten module docstring.
+#: The reader only ever NARROWS a row it fully read; an upload anywhere on the line,
+#: an unresolvable variable, a here-document body that holds an upload or an unclear
+#: split keeps the deny. Re-measured.
+#: Raised by 48, from 36,197, for ``s3_direction`` reading assignments and
+#: ``$NAME`` / ``${NAME}`` references with plain string code instead of regex
+#: (``_is_assignment_prefix``, ``_lone_assignment``, a one-pass ``_substitute``).
+#: Raised by 8, from 36,245, for ``_substitute``'s cap on how much text resolving adds.
+_PACKAGE_LINE_BUDGET = 36_253
 
 #: Ceiling on any ONE file in the package. This is what the bound is really for --
 #: a package total says nothing about a single file growing back into a second

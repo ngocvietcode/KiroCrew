@@ -64,6 +64,7 @@ FEATURE_PREVIEW_FLAGS: tuple[str, ...] = (
     "layout_harness",
     "mate_sessions",
     "remote_crew_chat",
+    "secrets_vault",
     "session_environments",
     "session_harness",
     "webhooks",
@@ -459,7 +460,7 @@ class DashboardConfig:
             "Raise it on a host that does heavy subprocess work (long builds, "
             "test suites, many child reaps), which can wedge the loop briefly "
             "without being genuinely dead. Clamped to 10s..300s. The desktop app's "
-            "liveness probe kills at roughly 20s independently, so a value "
+            "liveness probe kills after about a minute independently, so a value "
             "above that only takes effect for a headless gateway — the desktop "
             "probe wins first and the stack dump is lost.",
             restart=True,
@@ -517,11 +518,11 @@ class DashboardConfig:
     new_chat_crew_mode: bool = field(
         default=False,
         metadata=_meta(
-            "Start new chats in Ultra Mode",
-            "Open each new dashboard chat with Ultra Mode already on. It can "
+            "Start new chats in conductor mode",
+            "Open each new dashboard chat with conductor mode already on. It can "
             "still be turned off before the first message. Applies only where "
-            "Ultra Mode is offered: a Persistent chat on the default agent, "
-            "with the Ultra Mode preview on.",
+            "conductor mode is offered: a Persistent chat on the default agent, "
+            "with the conductor mode preview on.",
         ),
     )
     widget_density: str = field(
@@ -994,6 +995,15 @@ class DashboardConfig:
             "are not affected.",
         ),
     )
+    command_bar_enabled: bool = field(
+        default=True,
+        metadata=_meta(
+            "Command Bar Enabled",
+            "Open the Command Bar launcher on the quick-search shortcut (Cmd+K or "
+            "Ctrl+K). Off opens the search palette instead, which also searches "
+            "knowledge, skills and prompts.",
+        ),
+    )
     # Literal enum rather than FOLDER_SORT_MODES: that constant lives in
     # sections_limits with the other write/load bounds, and this field spells the
     # same list. test_config_patch.py::TestFolderSortRoundTrip::
@@ -1035,6 +1045,21 @@ class DashboardConfig:
                 "name-desc",
                 "manual",
             ],
+        ),
+    )
+    # Default FALSE: unfiled sessions below the folders is the layout every
+    # install has drawn. A config that never mentions the key must render it.
+    unfiled_sessions_above_folders: bool = field(
+        default=False,
+        metadata=_meta(
+            "Unfiled sessions above folders",
+            "Where the chat sidebar draws sessions that are not filed in any folder: "
+            "above the folder list when on, below it when off. Applies to the list "
+            "view's folder tree and to each board column; flat view draws no folders "
+            "and is unaffected. In the list view, dropping a session on the unfiled "
+            "area removes it from its folder either way. New sessions start unfiled, "
+            "so with many folders turning this on keeps the ones still to sort on "
+            "screen instead of below the last folder.",
         ),
     )
     update_nudge: dict = field(

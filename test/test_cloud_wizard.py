@@ -400,6 +400,68 @@ class TestLaunchResume:
         )
         assert "is live on AWS" not in out
 
+    def test_an_unapproved_sign_in_states_its_limit_and_one_recovery_command(
+        self, monkeypatch, capsys
+    ):
+        """The launch's sign-in wait says how long it waits, and when it ends
+        unapproved every recovery line names the same command: ``cloud login``
+        for the launch's own target, never ``cloud connect`` (which only opens
+        the tunnel)."""
+        from kiro_crew.cloud.login_target import KiroLoginTarget
+
+        target = KiroLoginTarget(
+            license="pro", start_url="https://example.awsapps.com/start", region="us-east-1"
+        )
+        cfg = LaunchState(profile="dev", region="us-west-2", last_tag="kc-old")
+        _patch_post_launch(monkeypatch, logged_in=False)
+        monkeypatch.setattr(wizard.LaunchState, "load", classmethod(lambda cls, *a: cfg))
+        monkeypatch.setattr(wizard.LaunchState, "record", classmethod(lambda cls, **k: None))
+        monkeypatch.setattr(
+            ec2,
+            "describe",
+            lambda tag, *_a, **_k: {
+                "tag": tag,
+                "exists": True,
+                "stack_name": "kirocrew-kc-old",
+                "stack_status": "CREATE_COMPLETE",
+                "instance_id": "i-old",
+                "public_dns": "",
+                "region": "us-west-2",
+                "instance_state": "running",
+            },
+        )
+        monkeypatch.setattr(login, "remote_identity_state", lambda *a, **k: "absent")
+        monkeypatch.setattr(
+            login,
+            "start_device_login",
+            lambda *a, **k: login.LoginPrompt(url="https://device.example/x", code="ABCD-EFGH"),
+        )
+        monkeypatch.setattr(login, "wait_until_logged_in", lambda *a, **k: False)
+        spinners: list[str] = []
+        real_spinner = wizard.ui.Spinner
+
+        def recording_spinner(text, *a, **k):
+            spinners.append(text)
+            return real_spinner(text, *a, **k)
+
+        monkeypatch.setattr(wizard.ui, "Spinner", recording_spinner)
+        monkeypatch.setattr(wizard.ui, "choose", lambda *a, **k: 0)
+        monkeypatch.setattr(wizard.ui, "confirm", lambda *a, **k: False)
+
+        rc = wizard.launch(profile="dev", region="us-west-2", assume_yes=False, login_target=target)
+        out = capsys.readouterr().out
+        login_cmd = (
+            "kirocrew cloud login --identity-provider https://example.awsapps.com/start"
+            " --license pro --idp-region us-east-1"
+        )
+        assert rc == 0
+        assert "Waiting for sign-in approval (up to about 2.5 min plus check time)…" in spinners
+        assert "Sign-in not approved within about 2.5 min plus check time." in out
+        assert "cloud connect" not in out.split("Open the dashboard")[0]
+        recovery = [ln for ln in out.splitlines() if "kirocrew cloud login" in ln]
+        assert len(recovery) == 2
+        assert all(login_cmd in ln for ln in recovery)
+
     def test_stale_saved_tag_failed_stack_is_not_resumed(self, monkeypatch):
         # A new launch saves last_tag before provisioning, so the saved tag may
         # point at a FAILED / no-instance stack: `launch` must NOT resume it
@@ -1027,6 +1089,7 @@ class TestSessionManagerPluginPrereq:
     def test_ensure_session_manager_plugin_installs_when_missing(self, monkeypatch, capsys):
         monkeypatch.setattr(wizard.ssm, "session_manager_plugin_installed", lambda: False)
         monkeypatch.setattr(wizard.ssm, "session_manager_plugin_refusal", lambda: None)
+        monkeypatch.setattr(wizard.ssm, "session_manager_plugin_can_install", lambda: True)
         monkeypatch.setattr(wizard.ui, "confirm", lambda *a, **k: True)
         monkeypatch.setattr(
             wizard.ssm,
@@ -1037,12 +1100,38 @@ class TestSessionManagerPluginPrereq:
         assert wizard._ensure_session_manager_plugin() is True
         assert "installed" in capsys.readouterr().out
 
-    def test_ensure_session_manager_plugin_decline(self, monkeypatch):
+    def test_ensure_session_manager_plugin_decline(self, monkeypatch, capsys):
         monkeypatch.setattr(wizard.ssm, "session_manager_plugin_installed", lambda: False)
         monkeypatch.setattr(wizard.ssm, "session_manager_plugin_refusal", lambda: None)
+        monkeypatch.setattr(wizard.ssm, "session_manager_plugin_can_install", lambda: True)
+        monkeypatch.setattr(wizard.ssm, "session_manager_plugin_install_command", lambda: "sudo x")
         monkeypatch.setattr(wizard.ui, "confirm", lambda *a, **k: False)
 
         assert wizard._ensure_session_manager_plugin() is False
+        out = capsys.readouterr().out
+        assert "Launch stopped: it needs session-manager-plugin." in out
+        assert "then rerun `kirocrew cloud launch`:" in out
+        assert "  sudo x" in out
+        assert "cloud doctor" not in out
+
+    def test_ensure_session_manager_plugin_with_no_built_in_install(self, monkeypatch, capsys):
+        """Windows has no install plan: no offer, even under --yes."""
+        monkeypatch.setattr(wizard.ssm, "session_manager_plugin_installed", lambda: False)
+        monkeypatch.setattr(wizard.ssm, "session_manager_plugin_refusal", lambda: None)
+        monkeypatch.setattr(wizard.ssm, "session_manager_plugin_can_install", lambda: False)
+        monkeypatch.setattr(wizard.ssm, "session_manager_plugin_install_command", lambda: "")
+
+        def _no_prompt(*_a, **_k):
+            raise AssertionError("must not offer an install this system has no plan for")
+
+        monkeypatch.setattr(wizard.ui, "confirm", _no_prompt)
+        monkeypatch.setattr(wizard.ssm, "install_session_manager_plugin", _no_prompt)
+
+        assert wizard._ensure_session_manager_plugin(assume_yes=True) is False
+        out = capsys.readouterr().out
+        assert "Kiro Crew has no built-in install for it on this system." in out
+        assert "Sudo may ask" not in out
+        assert "Install it from AWS's page, then rerun `kirocrew cloud launch`:" in out
 
     def test_ensure_session_manager_plugin_names_a_refusal_instead_of_offering_install(
         self, monkeypatch, capsys

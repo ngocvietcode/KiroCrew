@@ -86,6 +86,7 @@ from kiro_crew.agent_sdk.backends import (
 )
 from kiro_crew.executors import subprocess_executor
 from kiro_crew.security import redact_credentials, redact_exfiltration_urls
+from kiro_crew.tracing import steps as trace_steps
 
 if TYPE_CHECKING:
     from kiro_crew.acp.client import AcpClient
@@ -172,6 +173,17 @@ GOOSE_TESTED_RANGE = ((1, 50, 0), (1, 51, 0))
 CODEX_ACP_TESTED_VERSION = "2.3.0"
 CODEX_ACP_TESTED_RANGE = ((2, 0, 0), (3, 0, 0))
 
+#: The claude-agent-acp release the Real Adapter Contract lane pins in
+#: ``test/real_adapters/package.json``, which the live claude captures report. Its
+#: releases are 0.x, where each minor line can break, so the tested range is 0.94.x.
+CLAUDE_ACP_TESTED_VERSION = "0.94.0"
+CLAUDE_ACP_TESTED_RANGE = ((0, 94, 0), (0, 95, 0))
+
+#: The pi-acp release the same lane pins (spawning pi 1.4.0), which the live pi captures
+#: report. It is 0.0.x, where each patch can break, so the range is that release.
+PI_ACP_TESTED_VERSION = "0.0.34"
+PI_ACP_TESTED_RANGE = ((0, 0, 34), (0, 0, 35))
+
 #: Per backend: the tested range and the command that installs the tested release.
 #: Opt-in by membership, as :data:`_STEER_MIN_VERSIONS`.
 _TESTED_VERSION_RANGES: dict[str, tuple[tuple[tuple[int, int, int], tuple[int, int, int]], str]] = {
@@ -186,13 +198,24 @@ _TESTED_VERSION_RANGES: dict[str, tuple[tuple[tuple[int, int, int], tuple[int, i
         f"npm i -g {ACP_BACKEND_NODE_ADAPTER_PACKAGES[ACP_BACKEND_CODEX]}"
         f"@{CODEX_ACP_TESTED_RANGE[0][0]}",
     ),
+    ACP_BACKEND_CLAUDE: (
+        CLAUDE_ACP_TESTED_RANGE,
+        f"npm i -g {ACP_BACKEND_NODE_ADAPTER_PACKAGES[ACP_BACKEND_CLAUDE]}"
+        f"@{CLAUDE_ACP_TESTED_VERSION}",
+    ),
+    ACP_BACKEND_PI: (
+        PI_ACP_TESTED_RANGE,
+        f"npm i -g {ACP_BACKEND_NODE_ADAPTER_PACKAGES[ACP_BACKEND_PI]}@{PI_ACP_TESTED_VERSION}",
+    ),
 }
 
 
 def _tested_range_label(low: tuple[int, int, int], high: tuple[int, int, int]) -> str:
-    """``2.x`` for a whole major, else ``1.50.x`` for a minor line."""
+    """``2.x`` for a whole major, ``0.0.34`` for one release, else ``1.50.x`` for a minor line."""
     if low[1:] == (0, 0) and high == (low[0] + 1, 0, 0):
         return f"{low[0]}.x"
+    if high == (low[0], low[1], low[2] + 1):
+        return ".".join(str(part) for part in low)
     return f"{low[0]}.{low[1]}.x"
 
 
@@ -539,6 +562,9 @@ async def steer(self: AcpClient, message: str) -> bool:
     A backend in ``ACP_BACKENDS_STEER_CONCURRENT_PROMPT`` takes the steer as
     a second ``session/prompt`` instead (:meth:`_steer_via_concurrent_prompt`),
     whose answer the turn's own read loop settles.
+
+    A steer that went out gets a point span in the turn it went into
+    (``tracing/steps.py``): its mode, never its text.
     """
     text = (message or "").strip()
     if not text or not self._session_id:
@@ -547,19 +573,26 @@ async def steer(self: AcpClient, message: str) -> bool:
         sent = await pi_steer_turn.steer(self, text)
         if sent:
             batch_guard.note_prompt(getattr(self, "_batch_window", None), text)
-        return sent
-    if self._speaks_steering_request:
-        return await self._steer_via_request(_CLIENT_STEERING_REQUEST_METHODS[self.backend], text)
-    if self.backend in ACP_BACKENDS_STEERING_REQUEST:
+    elif self._speaks_steering_request:
+        sent = await self._steer_via_request(_CLIENT_STEERING_REQUEST_METHODS[self.backend], text)
+    elif self.backend in ACP_BACKENDS_STEERING_REQUEST:
+        # A steer held behind an open tool call is not delivered yet: its span is
+        # written where it is injected (``_send_steering_request``), not here.
         return await self._steer_via_steering_request(text)
-    if self.backend in ACP_BACKENDS_STEER_CONCURRENT_PROMPT:
-        return await self._steer_via_concurrent_prompt(text)
-    wrapped = wrap_user_message(text)
-    await self._send_request("_session/steer", {"sessionId": self._session_id, "message": wrapped})
-    batch_guard.note_prompt(getattr(self, "_batch_window", None), text)
-    # See AcpSessionHandle.steer for why the stamp is taken at the write.
-    self._last_steer_monotonic = time.monotonic()
-    return True
+    elif self.backend in ACP_BACKENDS_STEER_CONCURRENT_PROMPT:
+        sent = await self._steer_via_concurrent_prompt(text)
+    else:
+        wrapped = wrap_user_message(text)
+        await self._send_request(
+            "_session/steer", {"sessionId": self._session_id, "message": wrapped}
+        )
+        batch_guard.note_prompt(getattr(self, "_batch_window", None), text)
+        # See AcpSessionHandle.steer for why the stamp is taken at the write.
+        self._last_steer_monotonic = time.monotonic()
+        sent = True
+    if sent:
+        trace_steps.steered(trace_steps.STEER_INTERRUPT, source=self)
+    return sent
 
 
 def _steering_request_ready(self: AcpClient) -> bool:
@@ -825,6 +858,7 @@ async def _send_steering_request(self: AcpClient, aimed_at: int, text: str) -> b
         return None
     self._steers_accepted.append((aimed_at, wrap_user_message(text)))
     self._last_steer_monotonic = time.monotonic()
+    trace_steps.steered(trace_steps.STEER_INTERRUPT, source=self)
     return True
 
 

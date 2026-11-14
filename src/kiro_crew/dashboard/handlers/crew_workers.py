@@ -30,6 +30,7 @@ are read fresh each time, so an unchanged world costs the live rows and nothing 
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import threading
 import time
@@ -40,6 +41,7 @@ from typing import Any, NamedTuple
 from aiohttp import web
 
 from kiro_crew import crew_mode
+from kiro_crew.dashboard.conditional_get import conditional_json_response
 from kiro_crew.dashboard.handlers._shared import require_owner_dashboard_request
 from kiro_crew.dashboard.handlers.members import _deny_app_caller
 from kiro_crew.dashboard.slot_projection import summary_rows
@@ -127,7 +129,9 @@ def _dispatcher_of(row: Mapping[str, Any]) -> str:
 
 
 def _not_root() -> web.Response:
-    return _bad("not_crew_mode_root", "this session is not an Ultra Mode root or a Bot", status=404)
+    return _bad(
+        "not_crew_mode_root", "this session is not a conductor mode root or a Bot", status=404
+    )
 
 
 def _status(row: Mapping[str, Any]) -> str:
@@ -822,7 +826,7 @@ async def api_crew_workers(request: web.Request) -> web.Response:
     if root_closed:
         out["root_closed"] = True
         out["root_title"] = closed_meta.get(root, ("", ""))[0]
-    return web.json_response(out)
+    return await conditional_json_response(request, json.dumps(out).encode())
 
 
 #: The longest tool input an approval card shows: enough to read a command whole,

@@ -95,7 +95,7 @@ async def handle_update_app(request: web.Request) -> web.Response:
 
     try:
         body = await request.json()
-    except json.JSONDecodeError:
+    except (LookupError, RecursionError, ValueError):
         body = {}
     not_object = body_not_object_error(body)
     if not_object is not None:
@@ -125,6 +125,26 @@ async def handle_update_app(request: web.Request) -> web.Response:
                 ),
                 "code": "invalid_repository_consent",
             },
+            status=400,
+        )
+
+    # A marketplace app is never updated from a folder, whether the request names
+    # its recorded source (``market:<ref>@<n>``, what the Update button and
+    # ``kirocrew app update`` send) or a ``--source`` folder: refuse before anything
+    # is stopped or deregistered. ``update_app`` refuses the same way.
+    from kiro_crew.apps.market_source import MARKET_OVERWRITE_HINT, is_market_source
+
+    if is_market_source(source) or is_market_source(info.get("source")):
+        error = f"{name!r} cannot be updated from a folder. {MARKET_OVERWRITE_HINT}"
+        sel().log_api_access(
+            caller="dashboard",
+            operation="provenance",
+            outcome="rejected",
+            resources=name,
+            error=error,
+        )
+        return web.json_response(
+            {"ok": False, "name": name, "error": error, "code": "app_update_market_source"},
             status=400,
         )
 
@@ -423,8 +443,8 @@ async def handle_register_external(request: web.Request) -> web.Response:
         return denied
     try:
         body = await request.json()
-    except json.JSONDecodeError:
-        return web.json_response({"error": "invalid JSON"}, status=400)
+    except (LookupError, RecursionError, ValueError):
+        return web.json_response({"error": "invalid JSON", "code": "invalid_json"}, status=400)
     not_object = body_not_object_error(body)
     if not_object is not None:
         return not_object
@@ -509,8 +529,8 @@ async def handle_install_app(request: web.Request) -> web.Response:
         return denied
     try:
         body = await request.json()
-    except json.JSONDecodeError:
-        return web.json_response({"error": "invalid JSON"}, status=400)
+    except (LookupError, RecursionError, ValueError):
+        return web.json_response({"error": "invalid JSON", "code": "invalid_json"}, status=400)
     not_object = body_not_object_error(body)
     if not_object is not None:
         return not_object

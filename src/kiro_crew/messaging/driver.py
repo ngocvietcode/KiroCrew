@@ -69,6 +69,7 @@ from kiro_crew.messaging.empty_turn_copy import (
     EMPTY_TURN_NOTICE_UNCLOSED_AFTER_WORK,
     UNFINISHED_TURN_NOTICE,
 )
+from kiro_crew.messaging.link import CHANNEL_SESSION_NAMESPACES, channel_namespace_of
 from kiro_crew.messaging.renderer import (
     COMPACTION,
     DONE,
@@ -94,6 +95,8 @@ from kiro_crew.security import StreamRedactor, redact_credentials, redact_exfilt
 from kiro_crew.sel import sel
 from kiro_crew.tool_call_title import derive_tool_call_title
 from kiro_crew.tool_gate_busy import TOOL_GATE_BUSY_REASON
+from kiro_crew.tracing import steps as trace_steps
+from kiro_crew.tracing import surfaces as trace_surfaces
 
 logger = logging.getLogger(__name__)
 
@@ -690,6 +693,21 @@ class TurnDriver:
 
     async def run(self, message: str) -> str:
         """Drive one turn; return the accumulated channel-safe assistant text."""
+        with trace_surfaces.root(trace_surfaces.TRIGGER_CHANNEL, channel=self._trace_channel()):
+            return await self._drive(message)
+
+    def _trace_channel(self) -> str:
+        """The channel this turn's message arrived on, from a closed vocabulary.
+
+        The renderer's transport first: a reply in a dashboard-linked thread runs
+        under the dashboard session's key, which names no channel.
+        """
+        transport = str(getattr(self.renderer, "channel_type", "") or "")
+        if transport in CHANNEL_SESSION_NAMESPACES:
+            return transport
+        return channel_namespace_of(self.audit_session_key)
+
+    async def _drive(self, message: str) -> str:
         # Bound here, not at module scope: ``kiro_crew.acp`` imports this package
         # while it initialises (``acp.prompt_blocks`` reads ``messaging.raster``).
         from kiro_crew.agent_sdk.drivers.acp_vocab import continue_timed_out_calls
@@ -1301,6 +1319,8 @@ class TurnDriver:
                 # Only render approve/deny buttons when there's a decider to
                 # await the click. Without one, _approve() denies by default,
                 # so posting buttons would leave the user with dead controls.
+                # The prompt is answerable from its dispatch: its wait starts here.
+                _asked = trace_steps.asked_now()
                 if self.approval_mode == APPROVAL_INTERACTIVE and self.decider is not None:
                     # The prompt names the tool from the PERMISSION event's own
                     # title, and its purpose from the tool_call that shares the
@@ -1331,7 +1351,7 @@ class TurnDriver:
                             tool_name=_redact(_mcp_tool),
                         )
                     )
-                approved = await self._approve(event)
+                approved = await self._approve(event, asked=_asked)
                 if approved:
                     approval_sent = await self.provider.approve_tool(event.request_id)
                     permission_outcome = (
@@ -1570,8 +1590,11 @@ class TurnDriver:
         except Exception:
             logger.debug("host-deny steer notice failed; rejecting anyway", exc_info=True)
 
-    async def _approve(self, event: Any) -> bool:
-        """Apply the approval ladder to a permission-request event."""
+    async def _approve(self, event: Any, *, asked: trace_steps.Asked | None = None) -> bool:
+        """Apply the approval ladder to a permission-request event.
+
+        *asked* is when the prompt became answerable, for its trace span's wait.
+        """
         from kiro_crew.approval_mode_policy import session_mode_permitted
 
         if self.approval_mode == APPROVAL_AUTO:
@@ -1584,5 +1607,25 @@ class TurnDriver:
             return bool(getattr(event, "tool_kind", "") == "read")
         # interactive: deny-by-default unless a decider approves.
         if self.decider is not None:
-            return bool(await self.decider(event))
+            # The one wait a person can answer here: its span (tracing/steps.py).
+            approval = trace_steps.approval_opened(
+                str(event.request_id) if getattr(event, "request_id", None) is not None else "",
+                tool_call_id=str(getattr(event, "tool_call_id", "") or ""),
+                since=asked,
+            )
+            approved = False
+            answered = False
+            try:
+                approved = bool(await self.decider(event))
+                answered = True
+            finally:
+                # A cancel or a raise out of the wait is no one's answer: the host's.
+                trace_steps.approval_closed(
+                    approval,
+                    approved=approved,
+                    by=trace_steps.decided_by(
+                        host=not answered, cause=getattr(self.decider, "last_deny_cause", "")
+                    ),
+                )
+            return approved
         return False

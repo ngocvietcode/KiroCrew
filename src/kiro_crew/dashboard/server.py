@@ -80,6 +80,7 @@ from kiro_crew.dashboard.chat_utils import (  # noqa: F401
 from kiro_crew.dashboard.crash_dump_store import (  # noqa: F401
     claim_dump_notification,
     dump_age_seconds,
+    dump_fired_at,
     dump_replay_lines,
     newest_dump_with_stacks,
     open_dump_file,
@@ -1424,7 +1425,7 @@ async def start_dashboard(
     handlers.install_crew_log_publisher(state)
     # The OTel usage export's own subscription to the same bus, gated on telemetry
     # consent rather than on the crew-log flag above: a no-op when
-    # ``telemetry.enabled`` is off (the default), so an unopted host installs no
+    # ``telemetry.enabled`` is off, so a host that turned recording off installs no
     # subscriber and sends nothing. Kicked as a tracked task off the loop, not called
     # inline: on an opted-in host the first ``get_recorder()`` the install reaches
     # builds the recorder synchronously (SDK import plus the install-id write), which

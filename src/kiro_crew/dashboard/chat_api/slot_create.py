@@ -30,7 +30,9 @@ if TYPE_CHECKING:
         _ChatSlot,
         _coerce_requested_mode,
         _history_key_for,
+        _loading_refusal,
         _normalize_slot_key,
+        _read_model_field,
         _rebase_rehydrated_refresh_mark,
         _record_explicit_agent_selection,
         _rehydrate_slot_title,
@@ -271,7 +273,12 @@ async def api_chat_slot_create(request: web.Request) -> web.Response:
         # `get_or_create_slot` normalizes the key with string operations, so a
         # non-string name would surface there as an unhandled 500.
         name = str(name)
-    agent = body.get("agent", "")
+    # A falsy agent (missing, null, "") keeps meaning "the default"; any other
+    # non-string would be stored on the new slot and break every read of it.
+    agent = body.get("agent") or ""
+    agent_error = string_field_error("agent", agent)
+    if agent_error is not None:
+        return agent_error
     # The selection NAMESPACE, when the caller states one. "member" names a
     # configured crew, "template" a shared provider template; an omitted kind
     # keeps the legacy name-only resolution. The kind is selection input, never
@@ -302,7 +309,9 @@ async def api_chat_slot_create(request: web.Request) -> web.Response:
                 status=400,
             )
         app_agent_owner = f"{app_agent_owner_raw}/{agent}"
-    model = body.get("model", "")
+    model, model_warning, model_refusal = _read_model_field(body)
+    if model_refusal is not None:
+        return model_refusal
     # Folder membership at BIRTH. Assigning it afterwards (client PATCH) is
     # visibly too late: get_or_create_slot broadcasts the new slot before this
     # handler returns, so the dashboard renders it at the top level for a frame
@@ -616,6 +625,8 @@ async def api_chat_slot_create(request: web.Request) -> web.Response:
     # from; an omitted or degenerate name is always a mint. The creator fence
     # already read any saved cron state before this decision.
     _requested_key = _normalize_slot_key(str(name)) if name else ""
+    if _requested_key and (_refused := await _loading_refusal(request, state, _requested_key)):
+        return _refused
     reopening_persisted_cron = bool(
         cron_creator
         and _requested_key
@@ -1174,6 +1185,14 @@ async def api_chat_slot_create(request: web.Request) -> web.Response:
 
             creation_stack.push_async_exit(_unbind_retracted_worker)
             refusal = await bind_work_item(request, slot.key, work_item)
+            if refusal is None:
+                # Reserved before the first frame, so a person's mode pick on the
+                # newborn always lands after it and clears it; armed at the end.
+                from kiro_crew.dashboard.handlers.remote_work_item import (
+                    reserve_remote_trust,
+                )
+
+                reserve_remote_trust(slot, work_item)
             if refusal is not None:
                 if _retract_failed_newborn(state, slot):
                     await drained_to_thread(
@@ -1289,6 +1308,13 @@ async def api_chat_slot_create(request: web.Request) -> web.Response:
         created["headroom"] = headroom
     if work_item is not None:
         created["work_item_id"] = work_item.item_id
+        if work_item.trust:
+            # Armed only once the create stands, so a retracted worker never holds it.
+            from kiro_crew.dashboard.handlers.remote_work_item import grant_remote_trust
+
+            await grant_remote_trust(state, slot, work_item)
+    if model_warning:
+        created["warning"] = model_warning
     return web.json_response(created)
 
 

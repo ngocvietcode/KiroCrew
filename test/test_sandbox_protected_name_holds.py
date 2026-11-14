@@ -50,14 +50,14 @@ def _no_host_ssh_probe(monkeypatch):
 
 TIERS = ("standard", "cc", "strict")
 
-#: Protected names held by an ENCLOSING stand-in mask today. Measured, not aspired
-#: to: it is EMPTY, because nothing in the launcher holds a protected
-#: name for the namespace lifetime. Every mask is placed once, at spawn.
+#: Protected names held by an ENCLOSING stand-in mask today. The scratch
+#: index stays behind the whole scratch-root mask for the namespace lifetime,
+#: including after the gateway atomically republishes the index.
 #:
 #: A fix that gives a name a durable hold adds it here, and the equality
 #: assertion below then locks it: the name can never fall back to leaf-name
 #: holding without this constant being edited in the same diff.
-HELD_BY_ENCLOSING_MASK: frozenset[str] = frozenset()
+HELD_BY_ENCLOSING_MASK: frozenset[str] = frozenset({"scratch/.trees.json"})
 
 
 def _launcher_sets(tier: str) -> tuple[list[str], list[str]]:
@@ -494,7 +494,26 @@ class TestLeafOnlyPopulationIsRecorded:
     #: read-only so an agent cannot turn a folder's hooks on for itself; a file at
     #: the data-home root, so leaf-only is the only hold, as for
     #: ``ssh_auth_sock_consent.json``.
-    EXPECTED: dict[str, int] = {"standard": 336, "cc": 343, "strict": 344}
+    #:
+    #: Four app-declared directories, a dozen entries per tier (the data and the
+    #: lifecycle's move-aside spelling, at each data-home spelling):
+    #:
+    #: * ``apps/meetings/data/notes`` and ``apps/spec-builder/data/trust`` -- the
+    #:   directories the two built-ins declare in ``agentReadOnlyDirs``
+    #:   (``apps.agent_readonly_dirs``), sealed read-only so an agent can neither
+    #:   rewrite the owner's notes nor forge or erase a recorded decision. Each app
+    #:   writes by a create or rename INSIDE its directory, so the directory's own
+    #:   inode stays the same on a republish. The parent is the app's data
+    #:   directory, which agents read and write, so an enclosing mask would hide the
+    #:   app's data and leaf-only is the only hold, as for ``host-exec-grants``.
+    #:
+    #: One more root-level leaf, three entries per tier (one per data-home path):
+    #:
+    #: * ``chat_steering_off.json`` -- the steering files each chat switched off,
+    #:   sealed read-only so an agent cannot switch off a rule for its own chat. A
+    #:   file at the data-home root beside writable siblings, rewritten in place,
+    #:   so leaf-only is the only hold, as for ``shared_crew_preview.json``.
+    EXPECTED: dict[str, int] = {"standard": 351, "cc": 358, "strict": 359}
 
     @pytest.mark.parametrize("tier", TIERS)
     def test_leaf_only_count_has_not_grown(self, tier: str) -> None:

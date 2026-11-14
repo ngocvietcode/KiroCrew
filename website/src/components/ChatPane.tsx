@@ -24,8 +24,9 @@ import { crewmateFollowUps } from './chat/crewmateChips'
 import { AWAITING_REPLY_ACTIVITY, useCrewmateAwaitingReply } from './chat/useCrewmateAwaitingReply'
 import { preparingCaption as preparingCaptionFor } from './chat/preparingCaption'
 import CrewmateLiveActivity from './chat/CrewmateLiveActivity'
-import type { PillActivity } from '../pages/members/pillActivity'
+import PreparingReplyBubble from './chat/PreparingReplyBubble'
 import { useUnreadLanding } from './chat/useUnreadLanding'
+import { useRedactionHostsReload } from './chat/useRedactionHostsReload'
 import ErrorNotice from './ErrorNotice'
 import VoicePlaybackNotice from './VoicePlaybackNotice'
 import StatusNotice from './StatusNotice'
@@ -34,8 +35,9 @@ import ChatDropOverlay from './ChatDropOverlay'
 import PaneDim from './PaneDim'
 import PendingQuestionCard from './PendingQuestionCard'
 import QueueStack, { SubagentDeliveryProgress, splitPaneMessages } from './QueueStack'
+import McpLoadingBar from '../pages/chat/McpLoadingBar'
 import SubagentProgressBar from '../pages/chat/SubagentProgressBar'
-import ChatFooter, { transcriptActivityKey, turnSentHere } from '../pages/chat/ChatFooter'
+import ChatFooter, { allToolCallsReturned, transcriptActivityKey, turnSentHere } from '../pages/chat/ChatFooter'
 import { useChatProjectDir, useEnvironmentStartLabel, useSlotRunsHere } from './sessionEnvironmentHooks'
 import { ChatProjectDirCtx } from './markdown/contexts'
 import PinnedPrompt from '../pages/chat/PinnedPrompt'
@@ -56,8 +58,9 @@ import { legacyCodexEffort } from '../hooks/useInteractiveModels'
 import { selectionCapabilitiesFailed } from '../lib/effort'
 import { isUnpinnedModel } from '../lib/jevRoute'
 import { useQueuedMessageActions } from '../hooks/useQueuedMessageActions'
+import { usePinnedScrollOrigin } from '../hooks/usePinnedScrollOrigin'
 import { useAppSelector, useAppDispatch, store } from '../store'
-import { PANE_HYDRATE_LIMIT, selectSlotMessages, selectSlotStreamState, selectComposerBusy, hydrateSlotMessages, clearSlotHydrated, holdHydratedSlotPane, appendSlotMessage, loadOlderMessages, loadOlderSlotMessages, stageToMainComposer, pendingQuestionFor } from '../store/chatSlice'
+import { PANE_HYDRATE_LIMIT, selectSlotMessages, selectSlotStreamState, selectSlotToolLog, selectComposerBusy, hydrateSlotMessages, clearSlotHydrated, holdHydratedSlotPane, appendSlotMessage, loadOlderMessages, loadOlderSlotMessages, stageToMainComposer, pendingQuestionFor } from '../store/chatSlice'
 import { deriveFollowUpOptions } from '../app-sdk/protocol'
 import { appendFollowUpOption, removeFollowUpOption, selectSingleFollowUpOption, type OwnedSuffix } from '../lib/followUpToggle'
 import { CONTENT_WIDTH, loadChatConfig, type ChatConfig } from '../pages/chat/ChatSettings'
@@ -154,6 +157,8 @@ export default function ChatPane({
   // keeps the element ref for the pinned-prompt hook, a handle for the jump
   // pill, and the rendered at-bottom state that shows it.
   const scrollerRef = useRef<HTMLDivElement | null>(null)
+  const paneRootRef = useRef<HTMLDivElement | null>(null)
+  usePinnedScrollOrigin(paneRootRef)
   const listRef = useRef<VirtualTranscriptHandle | null>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const scrollToBottom = useCallback(() => { listRef.current?.scrollToBottom() }, [])
@@ -202,6 +207,7 @@ export default function ChatPane({
     setInput((cur) => mergeCarriedDraft(cur, carried))
   }, [mainComposerAppend, slotKey, dispatch, carryIntoComposer, setInput])
   const streamState = useAppSelector((s) => selectSlotStreamState(s, slotKey))
+  const toolsReturned = useAppSelector((s) => allToolCallsReturned(selectSlotToolLog(s, slotKey)))
   const running = streamState !== 'idle'
   // Per-slot context-window usage for the input-bar ring (mirrors ChatPage; the
   // store keys these by slot). Undefined until the slot has a reading: the ring
@@ -338,16 +344,15 @@ export default function ChatPane({
   // that answers is live (useCrewmateAwaitingReply).
   const { awaitingReply, markSent: markCrewmateSent } = useCrewmateAwaitingReply(!!crewmate, slotKey, allMessages, crewmateLive, paneSlot)
   // The gateway is preparing a message for this slot outside any turn (a
-  // background reply such as the warm task brief). It shows the same working
-  // indicator a turn shows, but is not a turn: the composer stays idle.
+  // background reply such as the warm task brief). It shows a pending reply
+  // bubble holding the caption, but is not a turn: the composer stays idle.
   const preparing = !!paneSlot?.preparing
-  const crewmateTyping = crewmateLive || awaitingReply || preparing
+  const crewmateTyping = crewmateLive || awaitingReply
   // The only background message today is the warm catch-up (warm_task_brief.py).
   // Resolved per render, not as a module constant, so the caption follows a
   // language switch; the held caption compares by content, not identity.
   // The gateway's own caption, when it sent one, names what is being checked.
   const preparingCaption = preparingCaptionFor(paneSlot)
-  const preparingActivity: PillActivity = { kind: 'working', text: preparingCaption }
   // The composer agrees with the typing bubble: from the person's Send it is
   // busy (Stop while empty), not idle, though the answering turn's first frame
   // can be seconds away. `busy` alone is the store's word, and the store has
@@ -495,7 +500,7 @@ export default function ChatPane({
   // Quick Send parity with ChatPage: same query key, so the cache is shared
   // with the page and no extra request is made for a pane.
   const { data: dashCfg, error: dashCfgError } = useQuery<{ quick_send?: boolean; decisions_enabled?: boolean; upload_max_mb?: number }>({ queryKey: ['dashboardConfig'], queryFn: fetchDashboardConfig, staleTime: 30_000 })
-  // Whether the split send button may offer `Auto (Jev)`: the fleet ceiling and
+  // Whether the split send button may offer `Auto (decision model)`: the fleet ceiling and
   // the owner's consent, both the gateway's answers (see useJevAutoSend).
   const jevAutoConsented = useJevAutoSend()
   // Follow-up bar layout: the same persisted setting ChatPage reads, kept live
@@ -604,6 +609,9 @@ export default function ChatPane({
       setHydratedSlot(slotKey)
     }
   }, [slotDetail, slotKey, dispatch, hydrateLimit, paneIsActive])
+  // A Blocked link card's Allow / Undo on this slot: re-read it so the link
+  // shows in place of the chip (#36862).
+  useRedactionHostsReload(slotKey)
   // Whether this pane's transcript is its loaded page, for the footer's stall
   // watch: the active slot's page comes from the slot switch; a background
   // slot's is any page the store has described (its `slotPaneHasMore` marker),
@@ -651,7 +659,7 @@ export default function ChatPane({
   const {
     uploadError, setUploadError, uploadHint, setUploadHint, sendHeld, uploadCount, uploadMutation,
     cancelUpload, uploadFiles, dragOver, dropTargetProps,
-  } = useChatPaneUploads({ slotKey, dispatch, slotKeyRef, mountedRef, setInput, dashCfg, dashCfgError })
+  } = useChatPaneUploads({ slotKey, slotKeyRef, mountedRef, setInput, dashCfg, dashCfgError })
 
 
   const { messageQuote, paneHiddenCommands, slashError, setSlashError, doSend, doSteer, onDirectQuestionSend } = useChatPaneSend({
@@ -761,6 +769,7 @@ export default function ChatPane({
   return (
     <SlotProvider slotId={slotKey}>
       <div
+        ref={paneRootRef}
         onMouseDownCapture={onFocus}
         /* Focus capture keeps the grid's focused-pane state true under
            KEYBOARD navigation: tabbing into a pane (or into its portaled
@@ -786,6 +795,7 @@ export default function ChatPane({
            `activeSlot`, so without this nothing in the DOM could say which
            pane renders the session the user just opened. */
         data-pane-slot={slotKey}
+        data-chat-scope=""
         {...dropTargetProps}
         className={`relative flex flex-col h-full min-h-0 overflow-hidden bg-bg ${
           frameless
@@ -993,15 +1003,17 @@ export default function ChatPane({
                    was otherwise invisible between tool steps. */
                 <>
                 {crewmate
-                  ? crewmateTyping && (
+                  ? (
+                    <>
+                    {/* Kept mounted so it folds out in place as the welcome lands. */}
+                    <PreparingReplyBubble caption={preparingCaption} shown={preparing && !crewmateLive && !awaitingReply} testId="chat-pane-preparing-catch-up" />
+                    {crewmateTyping && (
                     <CrewmateLiveActivity
                       key={slotKey}
                       // Before the answering turn runs there is no live reading
                       // to name (the slot's status record is the last turn's),
                       // so the caption says it is working on it.
-                      // The gateway preparing the warm catch-up says so; the
-                      // finished message then lands where the bubble was.
-                      activity={crewmateLive ? liveActivity : preparing && !awaitingReply ? preparingActivity : AWAITING_REPLY_ACTIVITY}
+                      activity={crewmateLive ? liveActivity : AWAITING_REPLY_ACTIVITY}
                       streamingText={messages[messages.length - 1]?.role === 'streaming' && streamState === 'streaming'}
                       streamTick={
                         messages[messages.length - 1]?.role === 'streaming'
@@ -1009,12 +1021,14 @@ export default function ChatPane({
                           : 0
                       }
                     />
+                    )}
+                    </>
                   )
                   : (
                     <>
                     <ChatFooter
                       statusLabel={paneEnvironmentStart}
-                      running={running || !!paneSlot?.running || preparing}
+                      running={running || !!paneSlot?.running}
                       stopping={stopUnderWay}
                       state={streamState}
                       lastRole={messages[messages.length - 1]?.role ?? ''}
@@ -1028,12 +1042,9 @@ export default function ChatPane({
                       sentHere={turnSentHere(messages)}
                       browserSessionKey={slotKey}
                       waitingOnUser={!!paneSlot?.pending_approval || !!paneSlot?.needs_input}
+                      toolsReturned={toolsReturned}
                     />
-                    {preparing && !crewmateLive && (
-                      <div className="px-4 text-[12px] text-muted" data-testid="chat-pane-preparing-catch-up" role="status">
-                        {preparingCaption}
-                      </div>
-                    )}
+                    <PreparingReplyBubble caption={preparingCaption} shown={preparing && !crewmateLive} testId="chat-pane-preparing-catch-up" />
                     </>
                   )}
                 </>
@@ -1065,6 +1076,10 @@ export default function ChatPane({
         <JumpToBottomButton visible={!isAtBottom && messages.length > 0} onClick={scrollToBottom} unreadCount={unreadCount} />
 
         <div className="dock-inert" data-testid="composer-status-stack">
+        {/* Never in a Bot's chat: that surface draws messages only
+            (docs/decisions/2026-10-09-crewmate-chat-draws-messages-only.md),
+            and the Bot says in its own words when a server it needs is not up. */}
+        {!crewmate && <McpLoadingBar slot={slotKey} />}
         {!crewmate && <SubagentProgressBar slot={slotKey} />}
 
         {!crewmate && <SubagentDeliveryProgress count={systemDeliveryCount} />}

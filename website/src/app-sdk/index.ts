@@ -34,7 +34,7 @@ import { chatLaunchMemoryMode, chatLaunchOpensDraft, type ChatLaunchMemoryMode }
 // Re-exported as TYPES: the barrel<->vendor-stub parity gate counts value
 // exports, and a type vanishes at runtime, so an app author keeps these names
 // without the stub needing an entry it could not provide.
-export type { AppApi, AppApiError, AppInfo, AppPermissions, AppUpdate } from './scopedApi'
+export type { AppApi, AppApiError, AppInfo, AppPermissions, AppSession, AppUpdate } from './scopedApi'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -603,6 +603,11 @@ export { default as ChatMessageList } from './ChatMessageList'
 export { default as PullRequestPanel } from './PullRequestPanel'
 export type { AppPullRequestPanelProps } from './PullRequestPanel'
 export type { PullRequestLink } from '../utils/pullRequestLinks'
+// Issue lists from GitHub, GitLab, Jira and Linear behind the app's declared
+// `/api/source/issues` (see ./issues/useIssues).
+export { useIssues, IssueList, IssueCard } from './issues'
+export type { UseIssuesOptions, UseIssuesResult, IssueCardProps, IssueListProps, IssueView } from './issues'
+export type { IssueSearchRequest, IssueSearchResponse, IssueSummary, IssuePerson, IssueLabel, IssueLinkedChange } from '../types'
 // The transcript's row registry, so an app can add a row type or replace one
 // instead of forking the message list.
 export {

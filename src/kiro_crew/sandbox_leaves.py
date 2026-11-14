@@ -219,6 +219,7 @@ _CREW_HIDDEN_LEAVES: tuple[str, ...] = (
     # as a second such window, so ``$KIROCREW_SCRATCH`` names one place for the
     # whole tree. Siblings from other trees stay hidden either way.
     "scratch",
+    "scratch/.trees.json",
     # The cross-process work root (``work_root``): ``<home>/work/<key>``, for
     # state that must OUTLIVE the process that created it. Masked as a whole and
     # given NO window, which is the difference from ``scratch`` above: the only
@@ -539,6 +540,12 @@ _CREW_READONLY_LEAVES: tuple[str, ...] = (
     # operator's own ``kirocrew update``, outside the sandbox; in-sandbox code may
     # read the arm and the error the last apply left.
     "update_next_start.json",
+    # The steering files each chat switched off (``steering_off``). A writable
+    # record lets an agent switch off, for its own chat, a steering rule the
+    # operator wrote; the gateway's dashboard route is the only writer. Same hold
+    # as the consent records here: this kernel write-denial is the load-bearing
+    # half, since the shell gate matches no paths.
+    "chat_steering_off.json",
     # The owner's Shared Crew preview switch. A writable record lets an
     # auto-approved agent choose whether the Crew opens to other people on its
     # next start. The read-only mount is the load-bearing half; the shell gate
@@ -1095,6 +1102,11 @@ _CREW_CHILD_READABLE_LEAVES: tuple[str, ...] = (
     # Allowed hosts for the exfiltration check. Host names, not credentials; the
     # risk is a write, answered by the read-only seal.
     "redaction-allow",
+    # The steering files each chat switched off: resolved paths keyed by session key,
+    # no credential and no consent. Unlike the withheld consent records it settles
+    # nothing about the agent's own ceiling, and the gateway reads it outside the
+    # sandbox. The risk is a write, answered by the read-only seal.
+    "chat_steering_off.json",
     # The operator's cloud configuration and the launch record beside it. Neither holds
     # a credential (``CloudConfig`` documents the file as the operator's own, with none),
     # and in-sandbox code READS both: the provisioner selector resolves the Fargate block

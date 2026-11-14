@@ -181,7 +181,14 @@ async def api_completions(request: web.Request) -> web.StreamResponse:
         body = await request.json()
     except Exception:
         return web.json_response(
-            {"error": {"message": "invalid JSON", "type": "invalid_request_error"}},
+            {
+                "error": {
+                    "message": "invalid JSON",
+                    "type": "invalid_request_error",
+                    "code": "invalid_json",
+                },
+                "code": "invalid_json",
+            },
             status=400,
         )
     from kiro_crew.dashboard.handlers._shared import body_not_object_error
@@ -377,6 +384,23 @@ async def api_completions(request: web.Request) -> web.StreamResponse:
         # Membership must be checked on the canonical (filename-charset) key —
         # get_or_create_slot folds unsafe chars, so a raw slot_id may map to an
         # existing slot even when the raw string is absent from _slots.
+        # Authorization first: an app caller can never mint a slot here (the fresh slot
+        # has no app, so it is refused below exactly as for any unknown key), so only
+        # the dashboard's own caller is told a restored tab is still loading.
+        if not request.get("app", "") and await state.session_still_loading(
+            _normalize_slot_key(slot_id)
+        ):
+            return web.json_response(
+                {
+                    "error": {
+                        "message": "Session is still loading",
+                        "type": "invalid_request_error",
+                        "code": "session_loading",
+                    },
+                    "code": "session_loading",
+                },
+                status=409,
+            )
         freshly_created = _normalize_slot_key(slot_id) not in state._slots
         try:
             slot = state.get_or_create_slot(slot_id)

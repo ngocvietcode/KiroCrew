@@ -55,6 +55,7 @@ from kiro_crew.config.integration_sections import (
     McpGatewayConfig,
     PublishConfig,
     TunnelConfig,
+    _resolve_cwd_use,
     _resolve_stub_overrides,
     _resolve_stub_roster,
     _resolve_stub_servers,
@@ -68,6 +69,8 @@ from kiro_crew.config.memory_sections import (
     SkillsConfig,
     _coerce_embedding_provider,
     _read_auto_add_documents,
+    dream_mode_from,
+    extraction_instructions_from,
     kind_routing_mode_from,
     lesson_fold_mode_from,
     lesson_origin_gate_mode_from,
@@ -158,6 +161,8 @@ def _build_taskrunner_config(taskrunner_data: dict) -> TaskRunnerConfig:
     section = SectionReader(TaskRunnerConfig, taskrunner_data)
     argv = section.get("test_command")
     return TaskRunnerConfig(
+        # Only a literal false turns it off: Task Runner shipped on.
+        enabled=section.get("enabled") is not False,
         max_parallel_steps=section.get("max_parallel_steps"),
         workspace_dir=str(section.get("workspace_dir")),
         # All or nothing: dropping one bad element would run a different command.
@@ -320,6 +325,7 @@ def _build_memory_config(memory_data: dict) -> MemoryConfig:
         consolidation_write_child_process=section.read(
             "consolidation_write_child_process", _safe_bool
         ),
+        repeated_failures_notice=section.read("repeated_failures_notice", _safe_bool),
         recall_pool_processes=section.read("recall_pool_processes", _safe_int, 0, 8),
         recall_pool_worker_max_mb=section.read(
             "recall_pool_worker_max_mb", _safe_int, 256, 1024 * 1024
@@ -357,12 +363,16 @@ def _build_memory_config(memory_data: dict) -> MemoryConfig:
         writes_enabled=section.read("writes_enabled", _safe_bool),
         lesson_extraction_enabled=section.read("lesson_extraction_enabled", _safe_bool),
         kind_routing=kind_routing_mode_from(section.get("kind_routing")),
+        extraction_instructions=extraction_instructions_from(
+            section.get("extraction_instructions")
+        ),
         lesson_fold=lesson_fold_mode_from(section.get("lesson_fold")),
         lesson_origin_gate=lesson_origin_gate_mode_from(section.get("lesson_origin_gate")),
         lesson_tier_policy=lesson_tier_policy_mode_from(section.get("lesson_tier_policy")),
         rule_authority_order=rule_authority_order_mode_from(section.get("rule_authority_order")),
         member_lesson_dedup=member_lesson_dedup_mode_from(section.get("member_lesson_dedup")),
         relevance_rule=relevance_rule_mode_from(section.get("relevance_rule")),
+        dream=dream_mode_from(section.get("dream")),
         inject_memory=section.read("inject_memory", _safe_bool),
         inject_lessons=section.read("inject_lessons", _safe_bool),
         inject_lessons_per_turn=section.read("inject_lessons_per_turn", _safe_bool),
@@ -553,6 +563,7 @@ def _build_mcp_gateway_config(mcp_gateway_data: dict) -> McpGatewayConfig:
         # from the roster. Shares the resolver with the runtime so a
         # non-bool value is dropped in exactly one place.
         stub_overrides=_resolve_stub_overrides(mcp_gateway_data),
+        cwd_use=_resolve_cwd_use(mcp_gateway_data),
         # The file's own roster, carried so ``save()`` can put it back
         # instead of flattening it to the effective set above. See the
         # field's own comment for why that flattening is a data loss.
@@ -669,9 +680,20 @@ def _relay_viewer_targets(section: SectionReader) -> dict[str, str]:
     domain = str(section.get("relay_viewer_relay_domain") or "").strip()
     if domain.isascii():
         domain = domain.lower()
+    prefix = str(section.get("relay_viewer_oidc_scope_prefix") or "").strip()
+    if prefix:
+        from kiro_crew.auth.login.endpoints import OIDC_SCOPE_PREFIX_RE
+
+        if OIDC_SCOPE_PREFIX_RE.fullmatch(prefix) is None:
+            logger.warning(
+                "tunnel.relay_viewer_oidc_scope_prefix ignored: it must be lower-case "
+                "letters and underscores"
+            )
+            prefix = ""
     return {
         "relay_viewer_cps_url": url,
         "relay_viewer_credential": ref,
+        "relay_viewer_oidc_scope_prefix": prefix,
         "relay_viewer_relay_domain": domain,
     }
 

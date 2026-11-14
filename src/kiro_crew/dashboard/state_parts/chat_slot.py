@@ -83,8 +83,6 @@ class _ChatSlot:
         "_crew_log_pending_channel",
         "_reasoning_effort",
         "_effort_pick_gen",
-        "turn_timeout_secs",
-        "_turn_timeout_hydrated",
         "mode",
         "workspace",
         "memory_store",
@@ -104,6 +102,7 @@ class _ChatSlot:
         "_unstarted_generation",
         "_handoff_generation",
         "_handoff_mark",
+        "_unsent_resends",
         "_wake_starting_task",
         "_chunk_seq",
         "event",
@@ -144,6 +143,8 @@ class _ChatSlot:
         "_last_stop_reason",
         "_created_by",
         "_attribution",
+        "_participants",
+        "_participants_dropped",
         "_created_by_sid",
         "_saved_created_by",
         "_lineage_minted",
@@ -162,7 +163,10 @@ class _ChatSlot:
         "_mcp_report_session_id",
         "_mcp_banner_shown",
         "_hidden_scratch_notice_shown",
+        "_mcp_sign_in_notice_shown",
         "_telemetry_notice_shown",
+        "_project_hook_files_notice_shown",
+        "_session_notice_marks",
         "_on_message",
         "_on_row",
         "_on_card_event",
@@ -200,6 +204,7 @@ class _ChatSlot:
         "_slack_linked",
         "_slack_channel",
         "_slack_thread_ts",
+        "_pending_thread_parent",
         "channel_origin",
         "_channel_runtime_origin",
         "folder_id",
@@ -445,8 +450,6 @@ class _ChatSlot:
     served_model: str
     _effort_pick_gen: int
     _reasoning_effort: str
-    turn_timeout_secs: int | None
-    _turn_timeout_hydrated: bool
     memory_store: str
     _memory_assignment_from_history: bool
     _binding: TranscriptBinding
@@ -470,6 +473,8 @@ class _ChatSlot:
     _last_stop_reason: str
     _created_by: str
     _attribution: Any
+    _participants: list[dict[str, Any]]
+    _participants_dropped: dict[str, Any]
     _created_by_sid: str
     _saved_created_by: str
     _lineage_minted: bool
@@ -481,9 +486,18 @@ class _ChatSlot:
     # Whether this chat already showed the hidden-scratch-folder start notice in
     # this gateway run; in memory only, so a restart shows it once more.
     _hidden_scratch_notice_shown: bool
+    # Whether this chat has shown its "waiting for a sign-in" notice during this
+    # gateway run; in memory only, so a restart shows it once more.
+    _mcp_sign_in_notice_shown: bool
     # A mark of the last KAS telemetry notice this chat showed, "" for none; saved
     # on the metadata line, so a restart does not show the same notice again.
     _telemetry_notice_shown: str
+    # A mark of the project folder and hook-file names whose withheld-files notice
+    # this chat last showed, "" for none; saved on the metadata line like the above.
+    _project_hook_files_notice_shown: str
+    # Marks of the session-start spec notices this chat showed, oldest first
+    # (``dashboard.session_notice_marks``); saved on the metadata line.
+    _session_notice_marks: list[str]
     _pending_reset_history_key: str | None
     _pending_reset_clears_cwd: bool
     _pending_discard_conversation_key: str | None
@@ -498,6 +512,10 @@ class _ChatSlot:
     _slack_linked: bool
     _slack_channel: str
     _slack_thread_ts: str
+    #: ``(channel, thread_ts, parent text)`` of the Slack thread this new session
+    #: joined (``chat_slack._seed_thread_parent``), handed to each prompt built
+    #: until the session holds a reply, then dropped.
+    _pending_thread_parent: tuple[str, str, str] | None
     _model_pick_gen: int
     _model_runtime_pick_gen: int | None
     _pending_memory_mode: str | None
@@ -537,6 +555,7 @@ class _ChatSlot:
     _unstarted_generation: int
     _handoff_generation: int
     _handoff_mark: asyncio.Future[None] | None
+    _unsent_resends: tuple[dict[str, Any], str, dict[str, Any]] | None
     _wake_starting_task: asyncio.Task[Any] | None
     _chunk_seq: int
     event: asyncio.Event
@@ -840,6 +859,25 @@ class _ChatSlot:
     def autocompact_pct(self, value: float | None) -> None:
         self._binding.autocompact_pct = value
         self._binding.autocompact_set = True
+
+    @property
+    def turn_timeout_secs(self) -> int | None:
+        """The session's own turn time limit, held in the binding aliases share."""
+        return self._binding.turn_timeout_secs
+
+    @turn_timeout_secs.setter
+    def turn_timeout_secs(self, value: int | None) -> None:
+        self._binding.turn_timeout_secs = value
+        self._binding.turn_timeout_hydrated = True
+
+    @property
+    def _turn_timeout_hydrated(self) -> bool:
+        """False until the shared limit is read from the transcript or set."""
+        return self._binding.turn_timeout_hydrated
+
+    @_turn_timeout_hydrated.setter
+    def _turn_timeout_hydrated(self, value: bool) -> None:
+        self._binding.turn_timeout_hydrated = value
 
     @property
     def reasoning_effort(self) -> str:
@@ -1174,7 +1212,7 @@ class _ChatSlot:
         so two concurrent callers targeting the same slot cannot both observe
         ``running == False`` within a single loop iteration.
         """
-        # An Ultra Mode "Pause all" holds this session: queue, never start.
+        # A conductor mode "Pause all" holds this session: queue, never start.
         from kiro_crew import crew_pause
 
         # circular import: chat_utils_injected_rows imports through state.

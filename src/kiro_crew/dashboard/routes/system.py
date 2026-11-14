@@ -27,6 +27,7 @@ from kiro_crew.dashboard.handlers.remote_control import (
     api_remote_control_get,
     api_remote_control_put,
 )
+from kiro_crew.dashboard.handlers.sel_failures import api_sel_recurring_failures
 from kiro_crew.dashboard.handlers.tunnel import api_tunnel_status
 from kiro_crew.dashboard.token_auth_paths import AGENT_HOOK_STATUS_PATH
 from kiro_crew.edition_locks import local_enable_locked
@@ -132,6 +133,7 @@ def register(app: web.Application) -> None:
     app.router.add_post("/api/wakatime/oauth/authorize", handlers.api_wakatime_oauth_authorize)
     app.router.add_get("/api/wakatime/oauth/callback", handlers.api_wakatime_oauth_callback)
     app.router.add_post("/api/wakatime/oauth/disconnect", handlers.api_wakatime_oauth_disconnect)
+    app.router.add_get("/api/wakatime/oauth/status", handlers.api_wakatime_oauth_status)
     app.router.add_get("/api/telemetry/beacon", handlers.api_beacon_status)
     app.router.add_get("/api/telemetry/collection", handlers.api_collection_status)
     # Owner-only, closed one-field body, no disk write (handlers/telemetry_ui_control.py).
@@ -160,6 +162,7 @@ def register(app: web.Application) -> None:
     app.router.add_get("/api/logs/level", handlers.api_log_level_get)
     app.router.add_post("/api/logs/level", handlers.api_log_level)
     app.router.add_get("/api/sel/events", handlers.api_sel_events)
+    app.router.add_get("/api/sel/recurring-failures", api_sel_recurring_failures)
     app.router.add_get("/api/sel/verify", handlers.api_sel_verify)
     app.router.add_get("/api/security/stats", handlers.api_security_stats)
     app.router.add_get("/api/security/posture", handlers.api_security_posture)

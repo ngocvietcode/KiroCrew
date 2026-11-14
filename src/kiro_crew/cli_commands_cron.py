@@ -557,10 +557,12 @@ def _cron_add(svc: CronService, args: argparse.Namespace) -> None:
     print(f"Added job: {job.id} ({job.name}) [{sched_desc}]")
     # Read from its home, not bound here: ``cli_commands`` serves this module's
     # names through a frozen import inventory.
-    from kiro_crew.cron_service.schedule import never_fires_warning
+    from kiro_crew.cron_service.schedule import never_fires_warning, raised_interval_warning
 
     if never_fires := never_fires_warning(job.schedule):
         print(f"Warning: {never_fires}", file=sys.stderr)
+    if raised := raised_interval_warning(every, job.schedule):
+        print(f"Warning: {raised}", file=sys.stderr)
 
 
 def _cron(args: argparse.Namespace) -> None:
@@ -613,13 +615,52 @@ def _cron(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def _ownerless_hint(job: object) -> str:
+    """Where a job with no owning session is turned on and off.
+
+    The Schedule page leaves out a Bot's goal check-ins, its Heartbeat and the
+    stale-wake job (``GET /api/crons``), so for those the hint names the switch
+    that does control them instead of a page that does not list them.
+    """
+    from kiro_crew import member_goals
+    from kiro_crew.dashboard.goal_reminder import cadence_of
+    from kiro_crew.dashboard.stale_wake import is_stale_wake_job
+
+    cadence = cadence_of(job)
+    if cadence == member_goals.CADENCE_HEARTBEAT:
+        return "turned on and off by the Heartbeat row on the bot's Schedules tab"
+    if cadence is not None:
+        return "turned on and off on the bot's Goals tab"
+    if is_stale_wake_job(job):
+        return (
+            "turned on and off by 'Wake bots to update out-of-date fields' "
+            "in Settings > Developer > Feature Previews"
+        )
+    return "manage from CLI or the dashboard Schedule page"
+
+
 def _cron_dispatch(args: argparse.Namespace) -> None:
     """Dispatch cron subcommands: list, add, remove, pause, resume."""
     from kiro_crew.cron import job_zone_name
 
+    action = getattr(args, "cron_action", None)
+    if action not in (
+        "list",
+        "adopt",
+        "add",
+        "update",
+        "remove",
+        "pause",
+        "resume",
+        "trigger",
+        "preview",
+    ):
+        # Before the service below, which creates cron-history/ on a fresh data home.
+        print("Usage: kirocrew cron {list|add|update|remove|pause|resume|trigger|preview}")
+        return
+
     svc = CronService(base_dir=config_dir())
 
-    action = getattr(args, "cron_action", None)
     if action == "list":
         # Read-only on folders: the filter resolves an EXISTING folder and never
         # creates one, and an unknown or ambiguous reference is an error rather
@@ -663,7 +704,7 @@ def _cron_dispatch(args: argparse.Namespace) -> None:
             if owner:
                 detail = f"owner: {owner}"
             else:
-                detail = "owner: none (manage from CLI or the dashboard Schedule page)"
+                detail = f"owner: none ({_ownerless_hint(j)})"
             if provenance:
                 detail += f"  created by: {provenance}"
             if j.managed_by:
@@ -789,8 +830,12 @@ def _cron_dispatch(args: argparse.Namespace) -> None:
             if val is not None:
                 if field == "channel":
 
-                    val = val.strip() or None
-                    if val is None:
+                    val = val.strip()
+                    if not val:
+                        # Blank clears the delivery channel, as cron_update does,
+                        # and the thread, which belongs to the channel it was in.
+                        kwargs[field] = ""
+                        kwargs["thread_ts"] = ""
                         continue
                     if len(val) > CHANNEL_MAX_LEN or not CHANNEL_ID_RE.match(val):
                         print(
@@ -825,6 +870,14 @@ def _cron_dispatch(args: argparse.Namespace) -> None:
         # ``--every 0`` and a blank ``--cron`` name no schedule, and the store
         # treats an empty schedule value as "unchanged". Say so instead of
         # reporting an update that did not happen; the other fields still apply.
+        # A blank ``--name`` or ``--message`` is kept as it was by the store too;
+        # warn, and leave the update (and its exit code) as it is.
+        for text_field in ("name", "message"):
+            if text_field in kwargs and not kwargs[text_field]:
+                print(
+                    f"Warning: an empty --{text_field} leaves the {text_field} unchanged",
+                    file=sys.stderr,
+                )
         blank_schedule = False
         if "every_secs" in kwargs and kwargs["every_secs"] == 0:
             del kwargs["every_secs"]
@@ -986,9 +1039,6 @@ def _cron_dispatch(args: argparse.Namespace) -> None:
     elif action == "preview":
         _cron_preview(args)
 
-    else:
-        print("Usage: kirocrew cron {list|add|update|remove|pause|resume|trigger|preview}")
-
 
 def _cron_preview(args: argparse.Namespace) -> None:
     """Dry-run a script cron with real MCP tools but suppressed hooks."""
@@ -1007,7 +1057,7 @@ def _cron_preview(args: argparse.Namespace) -> None:
     # format, existence, sensitive path, containment under ~/.kiro/crew/crons/)
     try:
         script_path, func_name = resolve_script_path(args.script)
-    except (ValueError, FileNotFoundError, PermissionError) as e:
+    except (ValueError, FileNotFoundError, PermissionError, OSError, RuntimeError) as e:
         sel().log_api_access(
             caller="cli",
             operation="cron.preview",
@@ -1033,7 +1083,23 @@ def _cron_preview(args: argparse.Namespace) -> None:
     # Registered before exec, as the production child does: dataclasses resolves
     # a postponed annotation through sys.modules[cls.__module__].
     sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as e:
+        # A script that fails to import (a syntax error, a missing module) is the
+        # common case while debugging one: report it like the function-error path
+        # below, not as a traceback through the CLI, and still audit the run.
+        sys.modules.pop(spec.name, None)
+        print(f"Error: cannot load {script_path}: {type(e).__name__}: {e}", file=sys.stderr)
+        traceback.print_exc()
+        sel().log_api_access(
+            caller="cli",
+            operation="cron.preview",
+            outcome="error",
+            source="cli",
+            resources=f"script={script_path}:{func_name}",
+        )
+        sys.exit(1)
     func = getattr(module, func_name, None)
     if func is None:
         print(f"Error: function '{func_name}' not found in {script_path}", file=sys.stderr)

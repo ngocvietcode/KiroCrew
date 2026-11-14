@@ -1,195 +1,232 @@
-"""Kiro sign-in and token refresh reach the network through the configured proxy.
+"""Kiro sign-in and token renewal requests go through the proxy the environment names.
 
-aiohttp reads no proxy setting on its own (``trust_env`` is off), so every request
-in ``kiro_crew.auth`` names its proxy explicitly with ``http_proxy.resolve_proxy``.
-Without that, a host that reaches the internet only through a proxy can never sign
-in, and every KAS turn fails once the access token needs a refresh.
+Every request ``kiro_crew.auth`` sends to the sign-in service passes an explicit
+``proxy=`` chosen by :func:`kiro_crew.http_proxy.resolve_proxy`, so ``HTTPS_PROXY`` /
+``HTTP_PROXY`` / ``NO_PROXY`` apply while the session keeps ``trust_env`` off (no
+``~/.netrc`` credentials). The fake session records each request's keyword arguments
+and then fails the connection, so no test touches the network.
 """
 
 from __future__ import annotations
 
-import ast
-from datetime import datetime, timezone
-from pathlib import Path
+import urllib.request
+from datetime import datetime, timedelta, timezone
 
+import aiohttp
 import pytest
 
-import kiro_crew.auth as auth_pkg
-from kiro_crew.auth.login import builder_id
-from kiro_crew.auth.refresh import ensure_fresh
-from kiro_crew.auth.store import KasToken, TokenStore
+from kiro_crew import http_proxy
+from kiro_crew.auth import refresh
+from kiro_crew.auth.login import builder_id, control_plane, device, external_idp, portal
+from kiro_crew.auth.login.builder_id import DeviceAuthorization as OidcDeviceAuthorization
+from kiro_crew.auth.login.builder_id import RegisteredClient
+from kiro_crew.auth.login.device import DeviceAuthorization
+from kiro_crew.auth.login.external_idp import ExternalIdpMetadata
+from kiro_crew.auth.provider import KasAuthProvider
+from kiro_crew.auth.service import KasLoginService
+from kiro_crew.auth.store import KasToken, SocialProvider, TokenStore
 
-_PROXY = "http://proxy.corp.test:3128"
-_PROXY_VARS = (
-    "HTTPS_PROXY",
-    "HTTP_PROXY",
-    "ALL_PROXY",
-    "NO_PROXY",
-    "https_proxy",
-    "http_proxy",
-    "all_proxy",
-    "no_proxy",
-)
-_HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options", "request"})
-#: Long past, so every token below is due for refresh without reading the clock.
-_EXPIRED = datetime(2000, 1, 1, tzinfo=timezone.utc)
+pytestmark = pytest.mark.asyncio
+
+_PROXY = "http://proxy.example:3128"
+_SOCIAL = "https://auth.issuer.example"
+_IDP_TOKEN = "https://idp.example/oauth2/token"
 
 
-class _Resp:
-    def __init__(self, status: int, payload):
-        self.status = status
-        self._payload = payload
+class _Refused:
+    """A request whose connection fails, which every auth caller handles or raises."""
 
     async def __aenter__(self):
-        return self
+        raise aiohttp.ClientConnectionError("test double: no network")
 
     async def __aexit__(self, *a):
         return False
 
-    async def json(self, *, content_type: str | None = "application/json"):
-        return self._payload
-
-    async def text(self):
-        return str(self._payload)
-
 
 class _RecordingSession:
-    """Answers each post with the next response and records the proxy it was given."""
+    closed = False
 
-    def __init__(self, responses):
-        self._responses = list(responses)
-        self.proxies: list[str | None] = []
+    def __init__(self):
+        self.requests: list[tuple[str, dict]] = []
 
-    def post(self, url, *, json=None, data=None, headers=None, proxy=None):  # noqa: A002
-        self.proxies.append(proxy)
-        return self._responses.pop(0)
+    def post(self, url, **kwargs):
+        self.requests.append((url, kwargs))
+        return _Refused()
+
+    async def close(self):
+        return None
 
 
 @pytest.fixture
 def proxy_env(monkeypatch):
-    """A proxy set in the environment, with nothing bypassed."""
-    for name in _PROXY_VARS:
+    # Pin the readers to environment-only variants on every OS, as test_http_proxy does.
+    for name in ("http_proxy", "https_proxy", "no_proxy", "all_proxy"):
         monkeypatch.delenv(name, raising=False)
+        monkeypatch.delenv(name.upper(), raising=False)
     monkeypatch.setenv("HTTPS_PROXY", _PROXY)
-    monkeypatch.setenv("HTTP_PROXY", _PROXY)
+    monkeypatch.setenv("KIRO_AUTH_SERVICE_URL", _SOCIAL)
+    monkeypatch.setattr(
+        http_proxy.urllib.request, "getproxies", urllib.request.getproxies_environment
+    )
+    monkeypatch.setattr(
+        http_proxy.urllib.request, "proxy_bypass", urllib.request.proxy_bypass_environment
+    )
     return monkeypatch
 
 
-def _social() -> KasToken:
+def _later(secs: int = 300) -> datetime:
+    return datetime.now(timezone.utc) + timedelta(seconds=secs)
+
+
+def _social_auth() -> DeviceAuthorization:
+    return DeviceAuthorization(
+        device_code="dc",
+        user_code="UC",
+        verification_uri="https://app.example/device",
+        verification_uri_complete="https://app.example/device?c=UC",
+        expires_at=_later(),
+        interval_secs=0.0,
+    )
+
+
+def _oidc_auth() -> OidcDeviceAuthorization:
+    return OidcDeviceAuthorization(
+        device_code="dc",
+        user_code="UC",
+        verification_uri="https://device.example",
+        verification_uri_complete="https://device.example?c=UC",
+        expires_at=_later(),
+        interval_secs=0.0,
+    )
+
+
+_CLIENT = RegisteredClient(client_id="cid", client_secret="cs")
+
+
+def _token(identity: str, **kw) -> KasToken:
     return KasToken(
-        access_token="old",
-        expires_at=_EXPIRED,
-        provider="Google",
-        identity="social",
+        access_token="at",
+        expires_at=_later(-60),
+        provider="p",
+        identity=identity,
         refresh_token="rt",
         profile_arn="arn:x",
-    )
-
-
-def _builder_id() -> KasToken:
-    return KasToken(
-        access_token="old",
-        expires_at=_EXPIRED,
-        provider="BuilderId",
-        identity="builder_id",
-        refresh_token="rt",
         region="us-east-1",
-        client_id="cid",
-        client_secret="csec",
+        **kw,
     )
 
 
-def _external_idp() -> KasToken:
-    return KasToken(
-        access_token="old",
-        expires_at=_EXPIRED,
-        provider="ExternalIdp",
-        identity="external_idp",
-        refresh_token="rt",
-        auth_method="external_idp",
-        client_id="cid",
-        token_endpoint="https://idp.corp.test/token",
-    )
+_IDP = ExternalIdpMetadata(
+    issuer_url="https://idp.example",
+    client_id="cid",
+    scopes="openid",
+    authorization_endpoint="https://idp.example/authorize",
+    token_endpoint=_IDP_TOKEN,
+)
 
-
-_REFRESH_CASES = [
-    pytest.param(
-        _social,
-        {"accessToken": "new", "refreshToken": "rt2", "expiresIn": 3600, "profileArn": "arn:x"},
-        id="social",
+# One entry per request site in kiro_crew.auth: (label, coroutine factory).
+_SITES = [
+    (
+        "social device authorization",
+        lambda s: device.initiate_device_authorization(SocialProvider.GOOGLE, session=s),
     ),
-    pytest.param(_builder_id, {"accessToken": "new", "expiresIn": 3600}, id="builder_id"),
-    pytest.param(
-        _external_idp,
-        {"access_token": "new", "refresh_token": "rt2", "expires_in": 1800},
-        id="external_idp",
+    (
+        "social device poll",
+        lambda s: device.poll_device_token(_social_auth(), SocialProvider.GOOGLE, session=s),
+    ),
+    (
+        "portal code exchange",
+        lambda s: portal.exchange_code(
+            SocialProvider.GOOGLE, "code", "verifier", "http://127.0.0.1:3128", session=s
+        ),
+    ),
+    ("OIDC register client", lambda s: builder_id.register_client("us-east-1", session=s)),
+    (
+        "OIDC device authorization",
+        lambda s: builder_id.start_device_authorization(_CLIENT, region="us-east-1", session=s),
+    ),
+    (
+        "OIDC poll once",
+        lambda s: builder_id.poll_token_once(_CLIENT, _oidc_auth(), region="us-east-1", session=s),
+    ),
+    (
+        "OIDC poll loop",
+        lambda s: builder_id.poll_token(_CLIENT, _oidc_auth(), region="us-east-1", session=s),
+    ),
+    (
+        "external IdP code exchange",
+        lambda s: external_idp.exchange_code(
+            _IDP, code="c", code_verifier="v", redirect_uri="http://127.0.0.1:3128", session=s
+        ),
+    ),
+    (
+        "control-plane profile page",
+        lambda s: control_plane._profiles_page(
+            "https://cps.issuer.example/", {}, {}, s  # noqa: SLF001
+        ),
+    ),
+    ("social refresh", lambda s: refresh._refresh(_token("social"), session=s)),  # noqa: SLF001
+    (
+        "SSO-OIDC refresh",
+        lambda s: refresh._refresh(  # noqa: SLF001
+            _token("identity_center", client_id="cid", client_secret="cs"), session=s
+        ),
+    ),
+    (
+        "external IdP refresh",
+        lambda s: refresh._refresh(  # noqa: SLF001
+            _token("external_idp", token_endpoint=_IDP_TOKEN), session=s
+        ),
     ),
 ]
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("make_token, answer", _REFRESH_CASES)
-async def test_refresh_goes_through_the_environment_proxy(
-    proxy_env, tmp_path: Path, make_token, answer
-):
-    store = TokenStore(tmp_path)
-    stale = make_token()
-    store.save(stale)
-    session = _RecordingSession([_Resp(200, answer)])
-
-    out = await ensure_fresh(store, stale, session=session)
-
-    assert out.access_token == "new"
-    assert session.proxies == [_PROXY]
+async def _drive(factory) -> _RecordingSession:
+    session = _RecordingSession()
+    try:
+        await factory(session)
+    except Exception:  # noqa: BLE001 - the double refuses every connection
+        pass
+    assert session.requests, "the site sent no request"
+    return session
 
 
-@pytest.mark.asyncio
-async def test_a_host_in_no_proxy_is_reached_directly(proxy_env, tmp_path: Path):
-    proxy_env.setenv("NO_PROXY", ".corp.test")
-    store = TokenStore(tmp_path)
-    stale = _external_idp()
-    store.save(stale)
-    session = _RecordingSession([_Resp(200, {"access_token": "new", "expires_in": 1800})])
-
-    await ensure_fresh(store, stale, session=session)
-
-    assert session.proxies == [None]
+@pytest.mark.parametrize(("label", "factory"), _SITES, ids=[s[0] for s in _SITES])
+async def test_every_auth_request_goes_through_the_env_proxy(proxy_env, label, factory):
+    session = await _drive(factory)
+    for url, kwargs in session.requests:
+        assert kwargs.get("proxy") == _PROXY, f"{label}: {url} sent without the proxy"
 
 
-@pytest.mark.asyncio
-async def test_sign_in_goes_through_the_environment_proxy(proxy_env):
-    session = _RecordingSession(
-        [_Resp(200, {"clientId": "cid", "clientSecret": "csec", "clientSecretExpiresAt": 0})]
-    )
-
-    await builder_id.register_client("us-east-1", session=session)
-
-    assert session.proxies == [_PROXY]
+@pytest.mark.parametrize(("label", "factory"), _SITES, ids=[s[0] for s in _SITES])
+async def test_no_proxy_host_is_sent_direct(proxy_env, label, factory):
+    proxy_env.setenv("NO_PROXY", ".example,.amazonaws.com")
+    session = await _drive(factory)
+    for url, kwargs in session.requests:
+        assert "proxy" in kwargs, f"{label}: {url} never chose a proxy"
+        assert kwargs["proxy"] is None, f"{label}: {url} used a proxy for a NO_PROXY host"
 
 
-def _session_calls(tree: ast.AST):
-    """Every ``<something>session.<http method>(...)`` call in *tree*."""
-    for node in ast.walk(tree):
-        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)):
-            continue
-        if node.func.attr not in _HTTP_METHODS:
-            continue
-        receiver = node.func.value
-        name = receiver.id if isinstance(receiver, ast.Name) else getattr(receiver, "attr", "")
-        if name.lstrip("_").endswith("session"):
-            yield node
+async def test_login_service_poll_goes_through_the_env_proxy(proxy_env, tmp_path):
+    session = _RecordingSession()
+    service = KasLoginService(TokenStore(tmp_path), session=session)  # type: ignore[arg-type]
+
+    async def _fake_initiate(provider, *, session):
+        return _social_auth()
+
+    proxy_env.setattr(device, "initiate_device_authorization", _fake_initiate)
+    login_id = (await service.begin_device("google"))["login_id"]
+    await service.poll_device(login_id)
+    assert [kw.get("proxy") for _, kw in session.requests] == [_PROXY]
 
 
-def test_every_auth_request_names_its_proxy():
-    root = Path(auth_pkg.__file__).parent
-    seen = 0
-    missing: list[str] = []
-    for path in sorted(root.rglob("*.py")):
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for call in _session_calls(tree):
-            seen += 1
-            if not any(kw.arg == "proxy" for kw in call.keywords):
-                missing.append(f"{path.relative_to(root).as_posix()}:{call.lineno}")
-    # The scan must find the requests it pins, or it pins nothing.
-    assert seen >= 13, f"found only {seen} auth requests; the scan no longer sees them"
-    assert not missing, f"auth requests without proxy=resolve_proxy(url): {missing}"
+async def test_renewal_session_is_bounded_and_ignores_env_credentials(tmp_path):
+    provider = KasAuthProvider(TokenStore(tmp_path))
+    session, temp = await provider._session_or_temp()  # noqa: SLF001
+    try:
+        assert temp
+        # aiohttp's own default is five minutes, far past the engine's patience.
+        assert session.timeout.total is not None and session.timeout.total <= 30
+        assert session.trust_env is False
+    finally:
+        await session.close()

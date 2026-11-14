@@ -58,6 +58,7 @@ from kiro_crew.acp_backends import (
     ACP_BACKEND_GOOSE,
     ACP_BACKEND_KAS,
     ACP_BACKEND_KIRO,
+    ACP_BACKEND_MIMOCODE,
     ACP_BACKEND_OPENCODE,
     ACP_BACKEND_PI,
     ACP_BACKENDS_ACP_RUNTIME,
@@ -71,6 +72,7 @@ from kiro_crew.messaging.commands import compact_unsupported_backend
 from kiro_crew.providers.acp import AcpProvider
 from kiro_crew.session import SessionManager
 from kiro_crew.session_compaction import CompactionCoordinator, _compact_unsupported_backend
+from kiro_crew.testing.synthetic_credentials import github_classic
 from kiro_crew.testing.wait import FALLBACK_TIMEOUT_SECS, await_until
 
 
@@ -190,6 +192,7 @@ class TestMembership:
                 ACP_BACKEND_KAS,
                 ACP_BACKEND_PI,
                 ACP_BACKEND_COPILOT,
+                ACP_BACKEND_MIMOCODE,
             }
         )
         assert ACP_BACKENDS_INLINE_COMPACTION == frozenset(
@@ -200,6 +203,7 @@ class TestMembership:
                 ACP_BACKEND_GOOSE,
                 ACP_BACKEND_PI,
                 ACP_BACKEND_COPILOT,
+                ACP_BACKEND_MIMOCODE,
             }
         )
 
@@ -947,7 +951,7 @@ def test_native_compaction_failure_preserves_counts(transport: str) -> None:
     [
         ("too_few_groups", "too_few_groups"),
         (
-            "too_few_groups: key AKIAIOSFODNN7EXAMPLE rejected",
+            f"too_few_groups: key {github_classic(seed=111)} rejected",
             "too_few_groups: key [REDACTED: credential] rejected",
         ),
     ],

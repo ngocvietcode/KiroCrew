@@ -15,6 +15,17 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "occurrence": 1
   },
   {
+    "id": "about.release-notes",
+    "labelKey": "pages.settings.releases.section_label",
+    "tab": "about",
+    "type": "select",
+    "occurrence": 1,
+    "params": {
+      "release": "notes"
+    },
+    "label": "Release notes"
+  },
+  {
     "id": "about.update-channel",
     "labelKey": "pages.settings.aboutPanel.update_channel",
     "tab": "about",
@@ -31,6 +42,24 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "type": "toggle",
     "occurrence": 1,
     "configKey": "auto_update"
+  },
+  {
+    "id": "about.version",
+    "labelKey": "pages.settings.aboutPanel.version_label",
+    "tab": "about",
+    "type": "select",
+    "occurrence": 1,
+    "label": "Version",
+    "description": "Version, update channel, check for updates, and license"
+  },
+  {
+    "id": "advanced.all-settings",
+    "labelKey": "settings.advanced.title",
+    "tab": "advanced",
+    "type": "input",
+    "occurrence": 1,
+    "label": "All settings",
+    "description": "Each change is checked before it saves. Change a setting here, or follow its link to the page where it lives. A read-only row says why."
   },
   {
     "id": "agent.kiro-sign-in",
@@ -1891,10 +1920,10 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     }
   },
   {
-    "id": "chat.start-new-chats-in-ultra-mode",
-    "label": "Start New Chats in Ultra Mode",
+    "id": "chat.start-new-chats-in-conductor-mode",
+    "label": "Start New Chats in conductor mode",
     "labelKey": "pages.settings.chatPanel.new_chat_crew_mode",
-    "description": "Ultra Mode runs each task in its own chat and reports back on the new chat's Board. You can turn it off on any new chat before the first message.",
+    "description": "Conductor mode runs each task in its own chat and reports back on the new chat's Board. You can turn it off on any new chat before the first message.",
     "hint": "Not for Incognito or Temporary chats, or chats on another agent.",
     "tab": "chat",
     "type": "toggle",
@@ -2022,7 +2051,8 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "occurrence": 1,
     "params": {
       "sub": "sessions"
-    }
+    },
+    "configKey": "dashboard.topic_tags_enabled"
   },
   {
     "id": "chat.turn-time-limit-seconds",
@@ -2121,30 +2151,6 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "occurrence": 1
   },
   {
-    "id": "connections.client-id",
-    "label": "Client ID",
-    "labelKey": "pages.settings.connectionsPanel.client_id",
-    "tab": "connections",
-    "type": "input",
-    "occurrence": 1
-  },
-  {
-    "id": "connections.client-secret",
-    "label": "Client secret",
-    "labelKey": "pages.settings.connectionsPanel.client_secret",
-    "tab": "connections",
-    "type": "input",
-    "occurrence": 1
-  },
-  {
-    "id": "connections.client-secret-2",
-    "label": "Client secret",
-    "labelKey": "pages.settings.connectionsPanel.client_secret",
-    "tab": "connections",
-    "type": "input",
-    "occurrence": 2
-  },
-  {
     "id": "connections.oauth-client-github",
     "labelKey": "pages.settings.connectionsPanel.oauth_app",
     "labelSuffix": "GitHub",
@@ -2167,70 +2173,15 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "description": "Client ID, client secret and redirect URI for a provider that needs a registered OAuth app"
   },
   {
-    "id": "connections.oauth-client-gmail",
+    "id": "connections.oauth-client-google",
     "labelKey": "pages.settings.connectionsPanel.oauth_app",
-    "labelSuffix": "Gmail",
+    "labelSuffix": "Google",
     "tab": "connections",
     "type": "input",
     "occurrence": 1,
-    "settingId": "connections-oauth-client-gmail",
+    "settingId": "connections-oauth-client-google",
     "label": "OAuth app",
-    "description": "Client ID, client secret and redirect URI for a provider that needs a registered OAuth app"
-  },
-  {
-    "id": "connections.oauth-client-google-drive",
-    "labelKey": "pages.settings.connectionsPanel.oauth_app",
-    "labelSuffix": "Google Drive",
-    "tab": "connections",
-    "type": "input",
-    "occurrence": 1,
-    "settingId": "connections-oauth-client-google-drive",
-    "label": "OAuth app",
-    "description": "Client ID, client secret and redirect URI for a provider that needs a registered OAuth app"
-  },
-  {
-    "id": "connections.oauth-client-google-calendar",
-    "labelKey": "pages.settings.connectionsPanel.oauth_app",
-    "labelSuffix": "Google Calendar",
-    "tab": "connections",
-    "type": "input",
-    "occurrence": 1,
-    "settingId": "connections-oauth-client-google-calendar",
-    "label": "OAuth app",
-    "description": "Client ID, client secret and redirect URI for a provider that needs a registered OAuth app"
-  },
-  {
-    "id": "connections.oauth-client-google-sheets",
-    "labelKey": "pages.settings.connectionsPanel.oauth_app",
-    "labelSuffix": "Google Sheets",
-    "tab": "connections",
-    "type": "input",
-    "occurrence": 1,
-    "settingId": "connections-oauth-client-google-sheets",
-    "label": "OAuth app",
-    "description": "Client ID, client secret and redirect URI for a provider that needs a registered OAuth app"
-  },
-  {
-    "id": "connections.oauth-client-google-docs",
-    "labelKey": "pages.settings.connectionsPanel.oauth_app",
-    "labelSuffix": "Google Docs",
-    "tab": "connections",
-    "type": "input",
-    "occurrence": 1,
-    "settingId": "connections-oauth-client-google-docs",
-    "label": "OAuth app",
-    "description": "Client ID, client secret and redirect URI for a provider that needs a registered OAuth app"
-  },
-  {
-    "id": "connections.oauth-client-google-slides",
-    "labelKey": "pages.settings.connectionsPanel.oauth_app",
-    "labelSuffix": "Google Slides",
-    "tab": "connections",
-    "type": "input",
-    "occurrence": 1,
-    "settingId": "connections-oauth-client-google-slides",
-    "label": "OAuth app",
-    "description": "Client ID, client secret and redirect URI for a provider that needs a registered OAuth app"
+    "description": "One Google OAuth client for Gmail, Drive, Calendar, Sheets, Docs and Slides"
   },
   {
     "id": "developer.agent-harness-for-worker-chats",
@@ -2267,8 +2218,8 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     },
     "type": "toggle",
     "occurrence": 1,
-    "label": "Also send snippets of recalled memories so Jev can drop the ones that do not help",
-    "description": "When the assistant asks its own memory a question, the entries closest in wording come back. This also sends each one's id and the first 200 characters of its text to Jev, which then says which ones to keep. It can only remove them — never add one, never reorder them — and if it is slow or unreachable they all come back as before. Passwords and keys are replaced before anything is sent. Off until you turn it on, even if the switch above is already on."
+    "label": "Also send snippets of recalled memories so the decision model can drop the ones that do not help",
+    "description": "When the assistant asks its own memory a question, the entries closest in wording come back. This also sends each one's id and the first 200 characters of its text to the decision model, which then says which ones to keep. It can only remove them, never add one or reorder them, and if it is slow or unreachable they all come back as before. Passwords and keys are replaced before anything is sent. Off until you turn it on, even if the switch above is already on."
   },
   {
     "id": "developer.also-send-the-conversation-and-tool-call-inputs-so-jev-can-score-compaction",
@@ -2279,8 +2230,8 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     },
     "type": "toggle",
     "occurrence": 1,
-    "label": "Also send the conversation and tool-call inputs so Jev can score compaction",
-    "description": "Every time context fills up and {{productName}} compacts a session automatically, this sends that conversation and the inputs of the tool calls in it to Jev, and asks which ones would have been worth keeping. Tool OUTPUT is never sent — only how many characters it was. Passwords and keys are replaced before anything is sent. It is a measurement: the compaction happens exactly as it does now whatever Jev answers, and the answer appears as one line on the compaction notice. It is wider than sending one tool call's arguments — a whole session's conversation goes, not one call — so it is off until you turn it on, whatever else you have already agreed to."
+    "label": "Also send the conversation and tool-call inputs so the decision model can score compaction",
+    "description": "Every time context fills up and Kiro Crew compacts a session automatically, this sends that conversation and the inputs of the tool calls in it to the decision model, and asks which ones would have been worth keeping. Tool OUTPUT is never sent, only how many characters it was. Passwords and keys are replaced before anything is sent. It is a measurement: the compaction happens exactly as it does now whatever the decision model answers, and the answer appears as one line on the compaction notice. It is wider than sending one tool call's arguments (a whole session's conversation goes, not one call), so it is off until you turn it on, whatever else you have already agreed to."
   },
   {
     "id": "developer.also-send-tool-call-arguments-so-jev-can-flag-risky-calls",
@@ -2291,8 +2242,8 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     },
     "type": "toggle",
     "occurrence": 1,
-    "label": "Also send tool-call arguments so Jev can flag risky calls",
-    "description": "In a session that approves its own tool calls, this also sends the name and arguments of each call to Jev, which then puts a note on the ones it thinks are worth a look. Passwords and keys are replaced before anything is sent. It changes nothing about which tool calls are allowed. Off until you turn it on, even if the switch above is already on."
+    "label": "Also send tool-call arguments so the decision model can flag risky calls",
+    "description": "In a session that approves its own tool calls, this also sends the name and arguments of each call to the decision model, which then puts a note on the ones it thinks are worth a look. Passwords and keys are replaced before anything is sent. It changes nothing about which tool calls are allowed. Off until you turn it on, even if the switch above is already on."
   },
   {
     "id": "developer.artifact-deploy",
@@ -2360,8 +2311,21 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     }
   },
   {
-    "id": "developer.decisions-jev",
-    "label": "Decisions (Jev)",
+    "id": "developer.conductor-mode",
+    "label": "Conductor mode",
+    "labelKey": "pages.developer.featurePreviewsTab.crew_mode",
+    "description": "Hands a chat's tasks to a crew.",
+    "hint": "Lets a chat hand tasks to a crew and track them on a Board.",
+    "tab": "developer",
+    "type": "toggle",
+    "occurrence": 1,
+    "params": {
+      "sub": "feature-previews"
+    }
+  },
+  {
+    "id": "developer.decisions",
+    "label": "Decisions",
     "labelKey": "pages.developer.featurePreviewsTab.decisions",
     "hint": "A small, fast model makes quick calls for Kiro Crew, such as which of your skills fits your message. Pick the model below. If it is slow or does not answer, the built-in rule decides instead, so your reply is never held up.",
     "tab": "developer",
@@ -2376,7 +2340,7 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "label": "Earlier conversation one decision may carry, in characters",
     "labelKey": "pages.developer.featurePreviewsTab.decisions_history_label",
     "description": "A larger number sends more of the conversation off this machine.",
-    "hint": "Earlier messages of yours and of the agent go with the question, newest first, up to this many characters. Tool output is never sent. Zero sends the message on its own, which is what the main Jev switch was agreed for, so a larger number sends more off the machine.",
+    "hint": "Earlier messages of yours and of the agent go with the question, newest first, up to this many characters. Tool output is never sent. Zero sends the message on its own, which is what the main decision model switch was agreed for, so a larger number sends more off the machine.",
     "tab": "developer",
     "type": "input",
     "occurrence": 1,
@@ -2411,11 +2375,24 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     }
   },
   {
-    "id": "developer.github-sign-in-by-kiro-crew",
-    "label": "GitHub sign-in by Kiro Crew",
-    "labelKey": "pages.developer.featurePreviewsTab.crew_oauth",
-    "description": "Lets Kiro Agent chats use your GitHub profile, orgs and public repos. Turn it on, then connect GitHub in Customize > Connections.",
-    "hint": "Kiro Crew signs in to GitHub itself. Disconnect GitHub on Connections to remove access.",
+    "id": "developer.jev-api-key",
+    "labelKey": "pages.developer.featurePreviewsTab.decisions_api_key_label",
+    "tab": "developer",
+    "params": {
+      "sub": "feature-previews"
+    },
+    "type": "input",
+    "occurrence": 1,
+    "settingId": "developer.jev-api-key",
+    "label": "Jev API key",
+    "description": "Kept in this dashboard's secret store on the machine that runs Kiro Crew, never in config.json, and never shown again once you save it."
+  },
+  {
+    "id": "developer.mark-out-of-date-dashboard-fields",
+    "label": "Mark out-of-date Dashboard fields",
+    "labelKey": "pages.developer.featurePreviewsTab.dashboard_stale_fields",
+    "description": "Marks bot-written Dashboard fields that are out of date.",
+    "hint": "When a bot has not rewritten a field it writes on its Dashboard page for a day (or the field's own limit), the page marks that field with how long ago it was updated, and the bot is reminded to write it again in its next turn and check-in.",
     "tab": "developer",
     "type": "toggle",
     "occurrence": 1,
@@ -2424,23 +2401,11 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     }
   },
   {
-    "id": "developer.jev-api-key",
-    "label": "Jev API key",
-    "labelKey": "pages.developer.featurePreviewsTab.decisions_api_key_label",
-    "description": "Kept in this dashboard's secret store on the machine that runs Kiro Crew, never in config.json, and never shown again once you save it.",
-    "tab": "developer",
-    "type": "input",
-    "occurrence": 1,
-    "params": {
-      "sub": "feature-previews"
-    }
-  },
-  {
-    "id": "developer.mark-out-of-date-dashboard-fields",
-    "label": "Mark out-of-date Dashboard fields",
-    "labelKey": "pages.developer.featurePreviewsTab.dashboard_stale_fields",
-    "description": "Marks bot-written Dashboard fields that are out of date.",
-    "hint": "When a bot has not rewritten a field it writes on its Dashboard page for a day (or the field's own limit), the page marks that field with how long ago it was updated, and the bot is reminded to write it again in its next turn and check-in.",
+    "id": "developer.mcp-sign-in-by-kiro-crew",
+    "label": "MCP sign-in by Kiro Crew",
+    "labelKey": "pages.developer.featurePreviewsTab.crew_oauth",
+    "description": "Lets chats use MCP servers that Kiro Crew signs in to, such as GitHub, Asana, Google and servers you add. Turn it on, then connect them in Settings > Connections.",
+    "hint": "Kiro Crew signs in to MCP servers itself and passes the sign-in to chats on a harness it supports, such as Kiro Agent, Claude or Codex. kiro-cli chats sign in as before. Disconnect a server on Connections to remove access.",
     "tab": "developer",
     "type": "toggle",
     "occurrence": 1,
@@ -2464,8 +2429,8 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "id": "developer.remote-dispatch",
     "label": "Remote dispatch",
     "labelKey": "pages.developer.featurePreviewsTab.remote_dispatch",
-    "description": "Runs Ultra Mode tasks on connected machines.",
-    "hint": "Lets Ultra Mode chats run tasks on machines you've connected under Remote Crew. Nothing is sent until a machine is connected.",
+    "description": "Runs conductor mode tasks on connected machines.",
+    "hint": "Lets conductor mode chats run tasks on machines you've connected under Remote Crew. Nothing is sent until a machine is connected.",
     "tab": "developer",
     "type": "toggle",
     "occurrence": 1,
@@ -2504,6 +2469,18 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "label": "Run KAS on Kiro Crew's own engine",
     "labelKey": "pages.developer.kasBundleCard.toggle_label",
     "description": "Uses the KAS engine version this Kiro Crew release was tested with, instead of the Kiro CLI. Applies to every new session on this Kiro Crew, not just this device. Signs in with your Kiro account from Settings → Agent Harness. Takes effect when Kiro Crew restarts.",
+    "tab": "developer",
+    "type": "toggle",
+    "occurrence": 1,
+    "params": {
+      "sub": "feature-previews"
+    }
+  },
+  {
+    "id": "developer.secrets-vault-redesign",
+    "label": "Secrets vault redesign",
+    "labelKey": "pages.developer.featurePreviewsTab.secrets_vault",
+    "description": "Shows Secrets as a list beside the open item, and lets you save logins and notes.",
     "tab": "developer",
     "type": "toggle",
     "occurrence": 1,
@@ -2555,19 +2532,6 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "label": "Shared Crew",
     "labelKey": "sharedCrew.preview_title",
     "description": "People tab, invites and shared sessions",
-    "tab": "developer",
-    "type": "toggle",
-    "occurrence": 1,
-    "params": {
-      "sub": "feature-previews"
-    }
-  },
-  {
-    "id": "developer.ultra-mode",
-    "label": "Ultra Mode",
-    "labelKey": "pages.developer.featurePreviewsTab.crew_mode",
-    "description": "Hands a chat's tasks to a crew.",
-    "hint": "Lets a chat hand tasks to a crew and track them on a Board.",
     "tab": "developer",
     "type": "toggle",
     "occurrence": 1,
@@ -2918,6 +2882,19 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     }
   },
   {
+    "id": "display.show-task-runner",
+    "label": "Show Task Runner",
+    "labelKey": "pages.settings.displayPanel.task_runner",
+    "description": "Off takes Task Runner off the left rail and out of Search Everywhere and stops new task runs. Nothing is deleted: your plans, past runs and runs already going are kept.",
+    "tab": "display",
+    "type": "toggle",
+    "occurrence": 1,
+    "params": {
+      "sub": "view"
+    },
+    "configKey": "taskrunner.enabled"
+  },
+  {
     "id": "display.show-tray-icon",
     "label": "Show tray icon",
     "labelKey": "pages.settings.displayPanel.show_tray_icon",
@@ -2989,6 +2966,19 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "params": {
       "sub": "view"
     }
+  },
+  {
+    "id": "display.use-command-bar",
+    "label": "Use Command Bar",
+    "labelKey": "pages.settings.displayPanel.command_bar",
+    "description": "Cmd+K or Ctrl+K opens the Command Bar: type a command to jump to an app, a setting or a session. Off, the shortcut opens the search palette, which also searches knowledge, skills and prompts.",
+    "tab": "display",
+    "type": "toggle",
+    "occurrence": 1,
+    "params": {
+      "sub": "view"
+    },
+    "configKey": "dashboard.command_bar_enabled"
   },
   {
     "id": "display.zoom-level",
@@ -3349,8 +3339,8 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
       "section": "posture"
     },
     "settingId": "security.config-pending",
-    "label": "Settings files changed outside {{productName}}",
-    "description": "Review edits made to settings files outside {{productName}}, then apply or discard them."
+    "label": "Settings files changed outside Kiro Crew",
+    "description": "Review edits made to settings files outside Kiro Crew, then apply or discard them."
   },
   {
     "id": "security.trust-every-third-party-app",
@@ -3385,7 +3375,7 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
       "section": "rules"
     },
     "label": "Your custom denies",
-    "description": "Add your own deny patterns (Python-compatible regex). These are enforced at {{productName}}'s PreToolUse gate alongside the built-in rules."
+    "description": "Add your own deny patterns (Python-compatible regex). These are enforced at Kiro Crew's PreToolUse gate alongside the built-in rules."
   },
   {
     "id": "session-environments.coder-url",

@@ -69,6 +69,7 @@ from kiro_crew.acp.prompt_blocks import (
     summarize_prompt_structure,
 )
 from kiro_crew.acp.session_handle_lifecycle import _CANCEL_GRACE_SECS
+from kiro_crew.acp.session_handle_mcp import hold_untold_first_turn
 from kiro_crew.acp.session_handle_runtime_contract import AcpRuntimeError
 from kiro_crew.acp.session_handle_watchdog import _WORKING_NEVER_LOGGED
 from kiro_crew.acp.stale_compaction import consume_stale_compaction_status
@@ -95,6 +96,11 @@ from kiro_crew.acp.types import (
     STOP_REASON_TOOL_STALL,
     AcpEvent,
     JsonRpcMessage,
+)
+from kiro_crew.metrics.chat_runtime_share import (
+    chat_leases_on,
+    record_turn_ended,
+    record_turn_started,
 )
 
 if TYPE_CHECKING:
@@ -279,6 +285,9 @@ async def prompt(
         )
         yield AcpEvent(kind=EVENT_COMPLETE, stop_reason=STOP_REASON_END_TURN)
         return
+    # The servers this session's start left to its first turn: a prompt that
+    # does not carry them waits briefly here, before any turn state is touched.
+    await hold_untold_first_turn(self, message)
     turn = self._run_turn(_build, timeout, sign_in_ask=sign_in_ask, prompt_gate=prompt_gate)
     try:
         async for event in turn:
@@ -351,6 +360,8 @@ async def stream_command(
             "command": {"command": cmd_name, "args": cmd_args},
         }
 
+    # A command carries no context block, so it is never told (see prompt()).
+    await hold_untold_first_turn(self)
     # Same deterministic finalization as prompt(): see the comment there.
     turn = self._run_turn(
         _build,
@@ -861,6 +872,13 @@ async def _run_turn(
     # logged by whoever caused them.
     _yielded_terminal = False
     _exhausted_clean = False
+    # Chat runtime sharing telemetry: the chat leases on this process when the
+    # prompt went out, ``0`` unless this session holds one of them (a subagent
+    # on its host's process, a background runtime), and whether this turn's
+    # first event has been counted yet.
+    _share_tenants = chat_leases_on(self._runtime, getattr(self, "_session_key", ""))
+    _share_backend = getattr(self._runtime, "acp_backend", None)
+    _share_started = False
     # A provider failure that codex-acp wrote as text (see
     # ``ACP_BACKENDS_UNATTRIBUTED_TERMINAL_ERROR``). A candidate chunk is
     # HELD, together with a steer-consumed report behind it, until the turn
@@ -899,6 +917,20 @@ async def _run_turn(
                 ),
             )
         async for _incoming in _dispatch:
+            if (
+                not _share_started
+                and not _incoming.runtime_global
+                and not _incoming.synthetic_completion
+            ):
+                # Prompt written -> this turn's first own event back. A
+                # co-tenant's fanned frame is not this turn starting, and a
+                # terminal the watchdog made up is not the backend answering.
+                _share_started = True
+                record_turn_started(
+                    tenants=_share_tenants,
+                    delay_secs=time.monotonic() - _sent_at,
+                    backend=_share_backend,
+                )
             _out: list[AcpEvent] = [_incoming]
             _failure: dict[str, Any] | None = None
             if _hold_unattributed:
@@ -954,6 +986,12 @@ async def _run_turn(
                 # places and every one of them funnels through this `async for`.
                 self._parked_since = time.monotonic()
                 if event.kind == EVENT_COMPLETE:
+                    if not _yielded_terminal:
+                        record_turn_ended(
+                            tenants=_share_tenants,
+                            stop_reason=event.stop_reason,
+                            backend=_share_backend,
+                        )
                     # A codex compaction that errors sends no terminal of its own,
                     # so close it out HERE -- before the turn's terminal, so a
                     # consumer that reads a compaction terminal to leave its

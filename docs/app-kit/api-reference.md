@@ -93,9 +93,11 @@ failure is thrown.
 
 The path matcher uses the backend's declared-pattern semantics: `/api/example`
 matches itself and slash-delimited children; `/api/example/*` also includes the
-base path; `/api/example*` includes any string prefix match. Blank entries match
-nothing, surrounding whitespace is stripped, and request paths are normalized
-before matching. A bare trailing slash is literal, not shorthand for `/*`.
+base path; `/api/example*` includes any string prefix match; `=/api/example`
+matches that one path and no child, and reads no wildcard (seam level 7: an older
+host matches such an entry to nothing, so the request is refused there). Blank
+entries match nothing, surrounding whitespace is stripped, and request paths are
+normalized before matching. A bare trailing slash is literal, not shorthand for `/*`.
 
 An explicit authentication-expiry response (`403`, `X-Auth-Required: true`)
 notifies the dashboard's existing recovery handler. It does not turn ordinary
@@ -292,7 +294,13 @@ the transcript shows its load error, and sending and approving fail. Supplying
 
 For app-token callers, approvals also require `permissions.sessionApproval`.
 Without that permission, the Gateway returns 403 `session_approval_not_granted`,
-even for the app's own slots. The API-path grant alone does not authorize an
+even for the app's own slots. The body's `cause` says which part is missing:
+`not_declared` (add `"sessionApproval": true` to `permissions` and install that
+version with `kirocrew app update` or a new registration; the owner then clicks **Enable and allow chat control** on the app's page),
+`consent_pending` (the owner clicks **Enable and allow chat control**),
+`disabled` (the owner clicks **Enable**) or `unavailable` (retry). `error` says
+the same and gives the steps. For every cause but `unavailable` it names the
+app's page. The API-path grant alone does not authorize an
 approval; the session ownership rules still apply. See **Ownership for app
 callers** under [Approvals](#approvals).
 
@@ -702,9 +710,11 @@ composer and source strip, which an app page does not have.
 ## Issue Search
 
 `POST /api/source/issues` lists or searches the issues of one GitHub repository
-(`owner/repo`), GitLab project (`group/sub/project`) or Jira project (`PROJ`), through
-the gateway's own `gh`/`glab` sign-in or the Jira API token in `dashboard.jira_auth`
-(the one the Issues panel reads Jira with). It answers the owner's dashboard session only: an app token is
+(`owner/repo`), GitLab project (`group/sub/project`), Jira project (`PROJ`) or Linear
+team (`ENG`), through the gateway's own `gh`/`glab` sign-in, the Jira API token in
+`dashboard.jira_auth` (the one the Issues panel reads Jira with), or a Linear personal
+API key stored in Settings > Secrets as `LINEAR_API_KEY` (without one, the answer is a
+503 `provider_error` that says to add it). It answers the owner's dashboard session only: an app token is
 refused (403) whatever its manifest declares, as for `/api/source/pull-request`. On an
 app page, `useAppApi()` allows the path only when the manifest declares
 `/api/source/issues` in `permissions.api`. The grant is separate from
@@ -717,17 +727,71 @@ The request and response types are `IssueSearchRequest` and `IssueSearchResponse
 
 | Field | Meaning |
 |---|---|
-| `provider`, `scope` | Required. `github`, `gitlab` or `jira`; `linear` answers 400 `provider_not_supported` |
-| `host` | A GitHub Enterprise or self-managed GitLab host on the gateway's allowlist (`dashboard.github_hosts`, `dashboard.gitlab_hosts`); defaults to github.com / gitlab.com. Required for Jira: a `*.atlassian.net` site or a `dashboard.jira_hosts` entry, with credentials in `dashboard.jira_auth` (a Jira served under a context path such as `/jira` is not searchable yet) |
-| `state`, `assignee`, `author`, `labels`, `text` | Structured filters; `assignee: 'me'` is the signed-in user. A Jira `assignee`/`author` is an account ID on Cloud and a username on Server/Data Center |
-| `raw` | GitHub search qualifiers, a GitLab filter string (`labels=bug&milestone=v1`) or Jira JQL. Replaces the structured filters. GitHub's cannot name another repo, org, user or owner, or use `OR`/`AND`/`NOT` or parentheses; GitLab's cannot set paging, ordering or `scope`; JQL is ANDed, in parentheses, with `project = <scope>`, so its parentheses must balance, and it cannot use `ORDER BY` |
+| `provider`, `scope` | Required. `github`, `gitlab`, `jira` or `linear` |
+| `host` | A GitHub Enterprise or self-managed GitLab host on the gateway's allowlist (`dashboard.github_hosts`, `dashboard.gitlab_hosts`); defaults to github.com / gitlab.com. Required for Jira: a `*.atlassian.net` site or a `dashboard.jira_hosts` entry, with credentials in `dashboard.jira_auth` (a Jira served under a context path such as `/jira` is not searchable yet). Omitted for Linear |
+| `state`, `assignee`, `author`, `labels`, `text` | Structured filters; `assignee: 'me'` is the signed-in user. A Jira `assignee`/`author` is an account ID on Cloud and a username on Server/Data Center. A Linear person is `me`, an email address or a display name |
+| `raw` | GitHub search qualifiers, a GitLab filter string (`labels=bug&milestone=v1`), Jira JQL or a Linear `IssueFilter` JSON object (`{"priority":{"eq":1}}`). Replaces the structured filters. GitHub's cannot name another repo, org, user or owner, or use `OR`/`AND`/`NOT` or parentheses; GitLab's cannot set paging, ordering or `scope`; JQL is ANDed, in parentheses, with `project = <scope>`, so its parentheses must balance, and it cannot use `ORDER BY`. A Linear filter may use `or`/`and`, and is ANDed under the team, so nothing in it can reach another team |
 | `sort`, `order`, `limit`, `cursor`, `refresh` | `updated`/`created`, `desc`/`asc`, 1 to 100 (25), the previous page's `nextCursor`, and a cache bypass (results are kept 30 seconds) |
 
 Each `IssueSummary` carries a url built from the validated scope, a display `key`,
 labels, people, counts, a plain-text `excerpt` and `linkedChanges` (`[]` from every list
 API). GitHub pull requests never appear. `total` is `null` when the provider does not
-report one (Jira Cloud never does); GitHub search stops at its 1,000-result window. Jira
-fills `priority` and reports `commentCount` as 0, because its search API returns no count.
+report one (Jira Cloud and Linear never do); GitHub search and Linear stop at a
+1,000-result window. Jira fills `priority` and reports `commentCount` as 0, because its
+search API returns no count, and a Linear `commentCount` is `0` because its list API
+reports none.
+
+## Issue List
+
+`useIssues`, `IssueList` and `IssueCard` show the issues [Issue Search](#issue-search)
+returns, through one query (`IssueSearchRequest`) and one result shape
+(`IssueSummary`). The views draw all four providers the route serves (GitHub, GitLab,
+Jira and Linear) from that shape. They need
+`APP_SDK_LEVEL >= 6` and `/api/source/issues` in your manifest's `permissions.api`.
+Without the declaration, or outside an app, the components render a refusal naming
+the path and send nothing; the hook reports an `AppApiPermissionError`. Declaring
+`/api/source/issue` (one issue) does not cover the list. A built-in page keeps the
+dashboard's client. [issues-guide.md](issues-guide.md) walks through a first list.
+
+```tsx
+import * as sdk from '@kirocrew/app-sdk'
+
+sdk.APP_SDK_LEVEL >= 6 && sdk.IssueList
+  ? <sdk.IssueList query={{ provider: 'github', scope: 'acme/widgets', state: 'open' }} view="expanded" showFilters />
+  : <a href="https://github.com/acme/widgets/issues">Open the issues on GitHub</a>
+```
+
+The query is the request body [Issue Search](#issue-search) describes.
+
+`useIssues(query, { enabled? })` pages through the response's `nextCursor`. The query
+minus its cursor is the cache key, so a changed query starts again from the first
+page.
+
+| Returns | Type | Purpose |
+|---|---|---|
+| `issues` | `IssueSummary[]` | Every page loaded so far |
+| `isLoading` | `boolean` | The first page is loading |
+| `error` | `Error \| null` | The last failure, or the refusal |
+| `hasNextPage`, `fetchNextPage` | `boolean`, `() => void` | Paging |
+| `isFetchingNextPage` | `boolean` | A next page is loading |
+| `refetch` | `() => void` | Read every loaded page again |
+
+| `IssueList` prop | Type | Required | Purpose |
+|---|---|---|---|
+| `query` | `IssueSearchRequest` | yes | What to list; a new query replaces the filter bar's edits |
+| `view` | `'condensed' \| 'expanded'` | no | One row per issue (default) or one card |
+| `showFilters` | `boolean` | no | State, assignee (`me` included), labels and search text; hidden while `query.raw` is set, since a raw query replaces those filters |
+| `onSelect` | `(issue: IssueSummary) => void` | no | Makes each row a button; without it a row links out |
+| `emptyText` | `string` | no | Replaces the empty-state text |
+
+`IssueCard` takes `issue`, `view` and `onSelect` and renders one issue on its own.
+The condensed row shows the provider mark, the key (`#4821`, `CREW-142`), the title,
+up to two labels (hidden when narrow), the provider's `statusLabel` and the updated
+time. The expanded card adds the project, a three-line excerpt, priority, every
+label, the first assignee, the author, the comment count (left out for Jira and Linear, whose searches return none) and linked-change count, and an
+**Open in &lt;provider&gt;** link. Every provider string is rendered as text, links
+open only `http(s)` urls in a new tab with `rel="noopener noreferrer"`, and an avatar
+loads only from an `http(s)` url.
 
 ## Chat Marker Protocol
 
@@ -917,7 +981,7 @@ A failed approval decision, a refused tool-output copy and a failed MCP sign-in 
 `ErrorNotice` with the "Ask the agent" hand-off, which navigates to the main chat. A host holding unsaved local state that the
 navigation would drop passes `handOff={false}` to `ChatMessageList`: those notices then render
 without the button, and renderers see `ctx.handOff === false`. The failed sign-in banner then
-names where to sign in again (Customize → Connections → MCP Servers) as plain text, not a link,
+names where to sign in again (MCP Servers) as plain text, not a link,
 so it still offers a next step without navigating away. `ChatEmbed` does this because its
 composer draft lives only in the embed; `ChatPane` does too, for its staged message quote. `ToolCallPill` takes the same switch as `askAgent`.
 Default is `true`, so a host with nothing to lose keeps the hand-off.
@@ -1365,14 +1429,14 @@ state = await ctx.crewmate.status(card_id)     # {"status": "pending"} ... {"sta
 
 | Code | Cause |
 |---|---|
-| `unknown_param` | an unknown key in the bundle, `crewmate`, `agent`, `goals`, `rules`, `sender` or `avatar` (`{"type", "size"}`); crons and key results are only counted |
-| `invalid_bundle` | not `format: "kirocrew.crewmate"`, a bad shape, or a `dashboardTemplate` that is not a `builtin:` or `user:` id |
+| `unknown_param` | an unknown key in the bundle, `crewmate`, `agent`, `goals`, `rules`, `sender`, `avatar` (`{"type", "size"}`) or a cron |
+| `invalid_bundle` | not `format: "kirocrew.crewmate"`, a bad shape, or a `dashboardTemplate` that is not a `builtin:` id |
 | `newer_format` | a `formatVersion` this version does not read |
 | `grant_in_bundle` | `allowedTools`, `autoApprove` or `permissions` in `agent.json` |
 | `needs_mate_config` | any `mcpServers` or `skills` entry, until the mate-owned agent file exists (RFC §5.7) |
-| `rules_unsupported` | non-empty rules, which this version cannot import yet |
+| `user_template` | a `user:` `dashboardTemplate`, which stays with its sender |
 
-The card creates the Bot from the `kirocrew` template with a fresh member id, its own empty memory and workspace, and `approval_mode: "normal"` in the create. It writes the long-term goal when the bundle has one. It lists the crons, key results, picture or face, model or effort hints and dashboard template a bundle carries under "Not brought over", as codes the dashboard words, and memory, history, credentials and the sender's approval settings under "Stays with the sender". A taken name becomes the first free `<name> 2` to `<name> 9`, and the owner can edit it.
+The card creates the Bot from the `kirocrew` template with a fresh member id, its own empty memory and workspace, and `approval_mode: "normal"` in the create. It writes the long-term goal and the rules when the bundle has them, and creates each cron paused. It lists the key results, a reasoning-effort hint without a model hint, and the dashboard template a bundle carries under "Not brought over", as codes the dashboard words, and memory, history, credentials and the sender's approval settings under "Stays with the sender". A taken name becomes the first free `<name> 2` to `<name> 9`, and the owner can edit it.
 
 The card is stored under the key `app:<name>` with no conversation, so an app's open cards count against one per-app cap. `status` reads only this app's own cards. The dashboard view where the owner presses an app card is not built yet.
 
@@ -1559,6 +1623,65 @@ Every turn is admitted as Crew
 automation; a refused one raises `TurnRefused` and never runs. No session manager (a bare test host) raises
 `RuntimeError`.
 
+### Chat slots (`ctx.chat_slots`)
+
+Present when the manifest declares `permissions.chatSlots` and `None` otherwise. A
+host without this seam has no `chat_slots` attribute at all, so read it with
+`getattr(ctx, "chat_slots", None)`. It is a level-7 seam, and level 7 is shared by
+several seams that land separately, so a host reporting level 7 can still lack it:
+test for the attribute, never for the level alone. It opens and drives dashboard chat slots your app
+owns: a visible conversation, listed under your app in the sidebar and shown by
+[`ChatEmbed`](#embedded-chat), whose turns run through the host's own chat runner.
+Every call takes the dashboard state the Gateway hands each route as
+`request.app["state"]`:
+
+```python
+slots = ctx.chat_slots
+state = request.app["state"]
+key = f"{ctx.name}-{job_id}"
+if slots.get(state, key) is None:
+    await slots.restore(state, key, adopt_closed=True)
+slot, created = await slots.open(state, key)
+slot.project = project_dir
+slots.set_title(state, slot, f"Job {job_id}", only_untitled=True)
+slots.send(state, slot, "Start with the README.")
+```
+
+| Call | Returns | What it does |
+|------|---------|--------------|
+| `get(state, key)` | slot or `None` | The live slot under *key* when it is yours |
+| `restore(state, key, *, adopt_closed)` | slot or `None` | Bring *key*'s saved transcript back into a cold slot (async). Pass `adopt_closed=True` for a slot whose lifecycle you own, never for a key you are creating anew. The slot is returned only when it is yours; a saved transcript another app or a person owns is never brought back |
+| `open(state, key)` | `(slot, created)` | Your slot under *key*, created when absent, with a restored sidebar row's rows read in off the event loop (async). A slot under *key* that is not yours, or a saved transcript under it that records another owner, raises `ChatSlotRefused` and is left untouched. Read the key back from `slot.key`: the Gateway folds it to its session-file charset |
+| `set_title(state, slot, title, *, only_untitled=False)` | bool | Title the slot, redacted, push it to the sidebar and mark it for the next save. Withheld (`False`) when redaction fails |
+| `send(state, slot, message, *, meta=None, append_user=True, user_origin=False, typed=True, on_consumed=None, on_irreversibly_consumed=None, reservation=None)` | task or `None` | Start a turn under the operator's unattended-turn cap, or queue *message* behind the running one (`None`, and the consumption callbacks are not attached). `user_origin` says a person sent the text, `typed` that they typed it; both default to the cautious answer, and a queued message keeps `user_origin` only when `typed` is true. Pass the task `reserve` returned as `reservation` to start the turn in its place. A slot that did not come through `open` or `restore` and still has its rows unread raises `RuntimeError` |
+| `reserve(state, slot)` | task or `None` | Mark an idle slot busy for the calling task while it validates, so other starters queue. Released when the task ends, and anything queued meanwhile is started |
+| `discard_queued(slot)` | `None` | Drop queued messages, unconsumed steers and a pending synthesis |
+| `stop_turn(state, slot)` | bool | Drop queued work, stop the running turn cooperatively (not while the session compacts), then cancel it (async). Whether a turn was running |
+| `archive(state, slot)` | bool | Close the slot the way a tab's close button does (async): its AutoNudge loop retired, its turn ended, its transcript saved as closed and its session torn down, by the Gateway's own close. `False` when that close did not commit; the Gateway has then put the slot back where it could. A slot-close hook your app registered runs |
+| `transcript(state, key)` | list | The live slot's rows, else the saved ones when the saved transcript records your app as its owner (async). Raw: redact them (`ctx.scrub`) before you serve them |
+| `track(state, task)` | `None` | Hold a follow-up task with the Gateway's background work, so shutdown cancels and awaits it |
+| `nudges(state=None)` | view or `None` | The AutoNudge loops on live slots you own (`get_by_slot`, `list_all`, `remove`, `remove_on_slot`, `deactivate_and_wait`); `None` when AutoNudge is not running. Non-blocking |
+| `nudge_maintenance(state=None)` | async context manager | The same view over the AutoNudge store, serialized with startup, for recovery; it also lists loops whose slot is not live when the saved transcript records your app. A loop you pause there stays paused until you remove it or the block ends |
+| `arm_nudge(state, slot, *, message, idle_secs, max_cycles, stop_sentinel_path="", caller="")` | `(loop, error, status)` | Arm a loop through the same authorization `POST /api/autonudge` uses, with source `app:<your app>` (async). Armed only when `error` is `None` |
+
+A key is `<app>-<id>`, where *id* is 1 to 400 of `A-Z a-z 0-9 . _ -`, as for
+`ctx.turns`, and the whole key is at most 193 characters, the length the Gateway folds a
+long slot key to, so it is kept as spelled and its transcript file names fit; any other
+key raises `ValueError`. A slot is yours when it carries your
+app's name (the key prefix alone proves nothing: another app's name can extend
+yours), and every call that acts on a slot raises
+`ChatSlotRefused` (a `PermissionError`) for any other slot: a person's chat, a core
+session, another app's slot, or an unscoped chat someone opened under your key.
+`send`, `reserve`, `set_title`, `stop_turn` and `arm_nudge` also refuse a slot object
+that is not the live slot under its key, such as one kept after `archive`. A
+turn runs under your app's name, recorded and admitted as the app's (actor `app`, as an
+app's own `/api/chat` send), so the operator's profile for your app applies to
+its tools, and through the same admission, approval and stop paths a typed message
+takes. A queued message carries the containment stamp the queue drain re-checks, and
+the `queued` row it adds is redacted (withheld when redaction fails), because every
+connected dashboard receives it. The AutoNudge view never shows or touches a loop on
+a slot you do not own. `state` for the AutoNudge calls defaults to the Gateway's own.
+
 ### Untrusted text (`ctx.untrusted`)
 
 Always present on a level-2 host, like `ctx.scrub`. An older host has no
@@ -1659,15 +1782,78 @@ the untrusted-text controls (`ctx.untrusted`), the manifest's `agentTools`
 block (see [manifest-reference.md](manifest-reference.md)) and the dashboard's
 [`PullRequestPanel`](#pull-request-panel) to everything level 1 has, level 3
 adds the manifest's `credentialMasks` (see
-[manifest-reference.md](manifest-reference.md#credential-masks)), and level 4 adds the
+[manifest-reference.md](manifest-reference.md#credential-masks)), level 4 adds the
 `agentTools` keys `namespace`, `timeoutSeconds` and `result` and an app's own bell
 notes (`/api/notifications/own` and the dashboard's `useAppNotifications()`, see
-[Backend Environment Variables](#backend-environment-variables)), and level 5 adds
-[`ctx.app_token()` and `ctx.gateway_origin()`](#app-token-ctxapp_token); each level
-includes every level below it. Read it
+[Backend Environment Variables](#backend-environment-variables)), level 5 adds
+[`ctx.app_token()` and `ctx.gateway_origin()`](#app-token-ctxapp_token), level 6
+adds the dashboard's [issue list](#issue-list) (`useIssues`, `IssueList`, `IssueCard`),
+and level 7 adds the manifest's `agentReadOnlyDirs` (see
+[manifest-reference.md](manifest-reference.md#agent-read-only-directories)), the
+[backend SDK](#backend-sdk-kiro_crewappsbackend_sdk), the `desktop` block's
+`displays: "all"`, `background` kind and `gutter` (see
+[manifest-reference.md](manifest-reference.md#desktop-windows)), the exact
+`permissions.api` entry (`=/api/example`, see the path matcher above),
+[`ctx.chat_slots`](#chat-slots-ctxchat_slots) and the manifest's
+`permissions.desktopCapabilities`; each level
+includes every level below it. Several seams share level 7, so an app that needs one
+feature-detects it, never the level alone. Read it
 with `getattr(ctx, "sdk_level", 0)`. When it is lower than your app needs, call
 `ctx.health.mark_degraded(...)` with the consequence and keep serving what you can.
 The dashboard exports the same number as `APP_SDK_LEVEL`.
+
+### Backend SDK (`kiro_crew.apps.backend_sdk`)
+
+The host controls your backend's own Python may call when no `ctx` seam fits: a
+sensitive-path check, a no-follow read, an atomic write, outbound redaction, an audit
+row, a sandboxed child process and the cross-platform process and lock helpers. Each
+name calls the control the Gateway itself enforces, so a check tightened in a later
+release reaches your app with the upgrade. Use these instead of a private `kiro_crew`
+name: a private name moves between releases, and these do not.
+
+It works the same in a hooks backend (in the Gateway process) and in an `entryPoint`
+backend the Gateway spawns on its own interpreter. A backend on its own venv
+interpreter cannot import it. Feature-detect it, and keep your own refusal when it is
+absent or older than level 7:
+
+```python
+import importlib
+
+def backend_sdk():
+    try:
+        sdk = importlib.import_module("kiro_crew.apps.backend_sdk")
+    except ImportError:
+        return None
+    return sdk if getattr(sdk, "SDK_LEVEL", 0) >= 7 else None
+
+def read_attachment(path: str, root: str) -> bytes | None:
+    sdk = backend_sdk()
+    if sdk is None or sdk.is_sensitive_path(path):
+        return None  # no gate to ask, or the gate refused: do not read it
+    return sdk.read_bytes_nofollow(path, within_root=root, max_bytes=5_000_000)
+```
+
+| Name | What it does |
+|---|---|
+| `is_sensitive_path(path)` | `True` when `path` is inside a location the Gateway never reads or writes (credential homes, its own policy files). Refuse on `True`. |
+| `contains_sensitive_path(directory)` | `True` when such a location lies under `directory`. Check it before a bulk operation rooted there (`git add -A`, an archive, a recursive copy). |
+| `read_bytes_nofollow(path, *, within_root=None, max_bytes=None, within_root_is_canonical=False)` | The file's bytes, or `None` when refused: a link at the last component, a hardlinked or non-regular file, a sensitive path, or a file whose opened descriptor resolves outside `within_root`. Raises `FileTooLargeError` past `max_bytes`. |
+| `atomic_write(path, content, *, fsync=False, mode=None, newline=None, restrict_to_owner=False)` | Writes through a temp file and one rename, so a reader never sees a torn file. `restrict_to_owner=True` makes the file owner-only on every platform. |
+| `ensure_owner_only_dir(path)` | `mkdir -p`, owner-only (`0700`) inside the data home and a plain `mkdir -p` elsewhere. |
+| `scrub_outbound(text)` | The same pass as [`ctx.scrub.outbound`](#content-scrubbing-ctxscrub), with the same rules: send only `.text`, and do not send when it raises. |
+| `audit_log(app_name=None)` | The same writer as [`ctx.audit`](#audit-events-ctxaudit). Without a name it uses `KIROCREW_APP_NAME`, which a spawned backend always has; with neither it raises `LookupError`. `record(...)` never raises. |
+| `run_sandboxed(argv, *, mode="standard", env=None, strip_python_env=False, **run_kwargs)` | Runs `argv` to completion in the Gateway's OS sandbox, with its resource limits and a scrubbed environment, and returns a `subprocess.CompletedProcess`. `run_kwargs` are the `subprocess.run` keywords that shape stdio, the working directory and the result (`input`, `capture_output`, `timeout`, `check`, `cwd`, `stdin`, `stdout`, `stderr`, `text`, `encoding`, `errors`, `universal_newlines`, `bufsize`); any other keyword raises `TypeError` and starts nothing. Past `timeout` the child is killed (its whole tree on Windows), but a POSIX descendant that outlives it is not: use `run_sandboxed_async` for a child that leaves work running in the background. `mode` is `"standard"` or `"strict"`; anything else raises `ValueError`. Raises `SandboxUnavailableError` when the host cannot sandbox the child, and then no child starts. |
+| `run_sandboxed_async(argv, *, mode="standard", env=None, strip_python_env=False, input=None, timeout=None, cwd=None)` | The same for an event loop, with stdout and stderr captured as bytes. The child starts in its own process group, so past `timeout`, or on a cancel, the child and its descendants are killed, a descendant that outlived the child included (one that called `setsid()` is outside the group), and `subprocess.TimeoutExpired` (or the cancel) is raised. |
+| `sandboxed_argv(...)`, `sandboxed_argv_async(...)` | Only the preparation, `(argv, env, cleanup)`, for a child whose output you stream yourself. Run that argv with that env, and delete `cleanup`, when it is not `None`, after the child exits. |
+| `kill_and_reap(proc, *, timeout=None)` | A coroutine. Kills a child and its descendants and waits for it, for a `communicate()` you abandoned on a timeout or a cancel. On POSIX the descendants are reached through the child's own process group, so start it with `start_new_session=True`; a descendant that outlives an already-reaped child is not reached. `run_sandboxed_async` covers that case itself. |
+| `is_link_or_junction(path)`, `first_linked_ancestor(path)` | A symlink (or Windows junction) at `path`, or the first linked ancestor above it. |
+| `rmtree_force(path)` | Removes a tree, read-only files included; `True` when it is gone. Never raises. |
+| `file_lock(fd, *, exclusive=True, required=False, wait=True, timeout=None)` | An advisory lock for a `with` block. It raises rather than run the block unlocked, so call it from a worker thread when it may wait. |
+| `IS_WINDOWS`, `IS_MACOS`, `IS_LINUX`, `IS_POSIX` | The platform flags. |
+
+The sandbox has no option to show a hidden directory or open a sealed one for
+writing: those choices are the Gateway's. None of these names needs a permission,
+because none of them adds reach. Your manifest declares nothing for them.
 
 ### Lessons
 
@@ -1704,8 +1890,9 @@ POST /api/member-records/{slug}
   that namespace grants nothing here. The grant reaches any Bot the app names by
   slug; there is no per-crewmate form of it.
 - **Who wrote it.** The gateway stamps `writer` from the token's app claim and `member`
-  from the path. The body is read for `type` and `data` only; a `writer`, `member`,
-  `src`, `seq` or `time` in the body is ignored.
+  from the path. The body is read for `type`, `data` and the optional `max_age_s`
+  (whole seconds, 60 to 30 days, after which the fold marks the row stale); a `writer`,
+  `member`, `src`, `seq` or `time` in the body is ignored.
 - **Where it lands.** The record is stored under the key `<app>__<type>`: your app id
   with each `-` written `_`, two underscores, your type (`github-pr` + `status` is
   `github_pr__status`). A page binds
@@ -1725,8 +1912,9 @@ POST /api/member-records/{slug}
 - **Refusals.** `403 app_token_required` (no app claim: the owner and internal callers
   have their own write paths), `403 crew_panel_disabled`, `404 member_not_found`,
   `409 ambiguous_slug` (two Bots share the slug), `409 crew_log_unavailable`
-  (the Bot's chat has never started), `400 bad_record_type` / `invalid_record` /
-  `record_too_deep` / `record_too_large`, `503 crew_log_off`.
+  (the Bot's chat has never started), `400 invalid_json` / `invalid_body` / `bad_max_age` /
+  `bad_record_type` / `invalid_record` / `record_too_deep` / `record_too_large`,
+  `503 crew_log_off` / `append_failed`.
 - **What it is not.** The record is text a page draws. It is never read into an
   agent's context as an instruction; a Bot sees at most a one-line fold summary
   of it through `dashboard_fields`, marked as fold-sourced. It is the same door a
@@ -1971,7 +2159,7 @@ does so before each reconnect.
 | `ackNotifications()` | `ack_notification(ts)` / `ack_all_notifications()` |
 | `approveAction(slot, task, pattern?)` | `resolve_approval(request_id, "approved", slot_id=slot, pattern=pattern)`; command/base trust passes the pending card pattern |
 | `rejectAction(slot, task)` | `resolve_approval(request_id, "rejected", slot_id=slot)` |
-| `resolveApproval(id, action, slot?, pattern?)` | `resolve_approval(id, action="approve", slot_id="", pattern="")`; `approve`/`approved` and `reject`/`rejected` are aliases; without a slot, accepted actions are `approve`, `reject`, `reject_once`; with a slot, accepted actions are `approved`, `rejected`, `trust`, `trust_reads`, `trust_command`, `trust_base`, `yolo`; command/base trust requires `pattern` |
+| `resolveApproval(id, action, slot?, pattern?)` | `resolve_approval(id, action="approve", slot_id="", *, pattern="")`; `approve`/`approved` and `reject`/`rejected` are aliases; without a slot, accepted actions are `approve`, `reject`, `reject_once`; with a slot, accepted actions are `approved`, `rejected`, `trust`, `trust_reads`, `trust_command`, `trust_base`, `yolo`; command/base trust requires `pattern` |
 | `listApprovals()` | `list_approvals()`; pending background approvals only (cron, autonudge, subagent, task runner), never a slot's own tool prompts; empty for an app token |
 | `getApprovalMode()` | `get_gateway_config("kirocrew")`, then read `agent.approval_mode` |
 | `setApprovalMode(mode)` | `set_approval_mode(mode, slot_id="")`; accepted modes are `normal`, `trust_reads`, `trust`, `yolo`; `normal`, `trust_reads`, and `trust` may target one slot, while `yolo` is process-global and rejects `slot_id` |

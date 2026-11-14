@@ -314,7 +314,7 @@ def _verify_operational(
         ui.detail(f"Verification code: {prompt.code}")
     login.resume_login_daemon(instance_id, profile, region, target=target)
     try:
-        with ui.Spinner("Waiting for sign-in approval…"):
+        with ui.Spinner(f"Waiting for sign-in approval (up to {login.signin_wait_limit()})…"):
             signed = login.wait_until_logged_in(instance_id, profile, region, target=target)
     finally:
         prompt.close()
@@ -701,15 +701,17 @@ def launch(
                 ui.detail(f"Verification code: {prompt.code}")
             ui.info("Approve in the browser to finish sign-in…")
             try:
-                with ui.Spinner("Waiting for sign-in approval…"):
+                with ui.Spinner(
+                    f"Waiting for sign-in approval (up to {login.signin_wait_limit()})…"
+                ):
                     signed = login.wait_until_logged_in(instance_id, profile, region, target=target)
             finally:
                 prompt.close()
             if signed:
                 ui.ok("Signed in.")
             else:
-                ui.warn("Sign-in not detected yet — you can finish it later.")
-                ui.detail("Re-run: kirocrew cloud connect (then sign in from the dashboard/SSM).")
+                ui.warn(f"Sign-in not approved within {login.signin_wait_limit()}.")
+                ui.detail(f"Sign in later with: {target.login_command()} (it shows a new code).")
         else:
             prompt.close()
             if prompt.identity_mismatch:
@@ -744,7 +746,7 @@ def launch(
     if signin_state == "unsigned":
         ui.warn(
             "Kiro backend is not signed in — new chats will error until you "
-            "sign in. Run: kirocrew cloud login"
+            f"sign in. Run: {target.login_command()}"
         )
 
     steps.step("Open the dashboard")
@@ -831,18 +833,21 @@ def _ensure_session_manager_plugin(*, assume_yes: bool = False) -> bool:
         return False
 
     ui.warn("session-manager-plugin is required for SSM dashboard tunnels.")
-    ui.detail("KiroCrew can install AWS's official Session Manager plugin locally.")
-    if not assume_yes and not ui.confirm("Install session-manager-plugin now?", default=True):
-        ui.detail("Install it later with: kirocrew cloud doctor")
-        return False
-
-    ui.info("Installing session-manager-plugin locally. Sudo may ask for your password.")
-    result = ssm.install_session_manager_plugin()
-    if result.ok:
-        ui.ok(result.message or "session-manager-plugin installed")
-        return True
-    ui.fail("Could not install session-manager-plugin.")
-    ui.detail(result.message)
+    if not ssm.session_manager_plugin_can_install():
+        ui.detail("Kiro Crew has no built-in install for it on this system.")
+    else:
+        ui.detail("Kiro Crew can install AWS's official package. It needs admin rights.")
+        if assume_yes or ui.confirm("Install session-manager-plugin now?", default=True):
+            ui.info("Installing session-manager-plugin locally. Sudo may ask for your password.")
+            result = ssm.install_session_manager_plugin()
+            if result.ok:
+                ui.ok(result.message or "session-manager-plugin installed")
+                return True
+            ui.fail("Could not install session-manager-plugin.")
+            ui.detail(result.message)
+    ui.fail("Launch stopped: it needs session-manager-plugin.")
+    for line in ssm.session_manager_plugin_next_step("kirocrew cloud launch"):
+        ui.detail(line)
     return False
 
 

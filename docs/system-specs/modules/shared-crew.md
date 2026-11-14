@@ -820,7 +820,9 @@ the Crew. `test_no_external_requested_by_attribution_is_emitted` pins it.
 
 ### Session list query
 
-`session_query.query_sessions` runs over the whole persisted catalog: machine
+`session_query.query_sessions` runs over the whole persisted catalog, which the
+route reads from the listing index (`routes_identity._catalog_rows`, through
+`ConversationLog.list_sessions_indexed`): machine
 transcripts are dropped, then the search (`q`, case-insensitive over title and
 key) and the creator filter, then the page is cut. Order is newest `modified`
 first with a key digest as the tiebreak. The cursor is a keyset position, so one
@@ -1375,6 +1377,20 @@ or YOLO, the no-request-id path, a channel resolver) or the responder is not a
 verified human (an app token), `person` otherwise, an owner's dashboard click
 included. A record without the field reads as `person`. Approval decision frames ride `broadcast_ws` like approval frames.
 
+A session's own approval card (`POST /api/chat/slots/{slot}/approve`) is decided by
+the owner or by a Shared Crew teammate (`slot_approval._shared_crew_teammate`): a
+team Crew teammate the Kiro relay verified (`routes_identity._relay_teammate`) or a
+collaborator (`collaborators.is_collaborator_request`). Teammates already open and
+run turns in every session, so they decide its tool approvals too, and nobody is a
+teammate while the Shared Crew preview is off. A teammate may approve or reject the
+live card the decide names (`origin: "native"` with its `request_mid`); a decide by
+request id alone answers them 404 `approval_target_required`. The trust verbs, YOLO and a deny-rule override change the
+session's approval mode or are the owner's alone, so they answer a teammate 403
+`owner_only`, and `POST /api/chat/mode` stays owner-only. Each teammate decision,
+admitted or refused, writes an SEL row (source `shared_crew_teammate`) under the
+teammate's subject, and the decision names them as its responder. Any other
+non-owner dashboard session keeps the owner gate's 403.
+
 An agent question belongs to every collaborator. `collaborators.is_collaborator_request`
 admits the owner (`is_owner_dashboard_request`) and a dashboard-user session whose
 verified actor is a person a membership boundary admitted: provenance
@@ -1391,6 +1407,28 @@ and to every collaborator socket (`collaborators.broadcast_to_collaborators`, wh
 reads the socket's `_shared_crew_actor`), the same audience the pending read has.
 Nothing else the owner set receives reaches a collaborator socket. `GET /api/shared-crew/presence` and `GET /api/shared-crew/decisions` (in
 `routes_collab`) answer the same state for a reconnecting tab.
+
+Participants. A slot keeps who has written in it (`shared_crew.participants`):
+one public principal and last-activity time per person, noted by
+`slot_transcript.append` on a live user row whose server-stamped author is a
+person. Unknown authors and Crew automation are not participants, and replayed
+rows (`broadcast=False`) are not counted. The list is capped at
+`MAX_PARTICIPANTS`, never dropping the creator; the people the cap drops are
+kept by id (up to `MAX_DROPPED_IDS`, then counted), so one who writes again is
+not counted twice. It is persisted under the metadata-line key `participants`
+(`{entries, dropped_ids, dropped_more}`), read back on restore as a display
+claim like a message row's `author` (agent-editable, so only well-formed person
+principals with a finite time survive, and their labels go through
+`redact_external_text`), and granted nothing: nothing but the rows' display may
+read it, never presence or a permission. The slot projection and the owner's
+`GET /api/members` row carry `participants` (creator first, then most recent) and
+`participants_dropped`; the roster reads the live slot only, never a transcript.
+A relay teammate's narrowed Bots roster carries neither, since it masks the
+owner's DM thread. The session row draws up to three initials chips after the
+creator byline under the byline's rule, then "+N" counting the rest and the
+dropped; the Bots roster draws the same chips after the Bot's name on a team
+Crew (`ParticipantChips`). A session written before this field draws none until
+someone writes in it again.
 
 Message attribution. The session's creator is its default owner, shown on the
 session row in the list (`SessionCreatorByline`). In the transcript a user message

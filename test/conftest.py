@@ -268,6 +268,7 @@ from conftest_opt_in import (  # noqa: E402,F401 -- bound for pytest and importe
     named_cron_caller,
     opened,
     plant_day_link,
+    rss_runtimes_read_under_ceiling,
     short_sock_dir,
 )
 
@@ -285,7 +286,9 @@ from conftest_resets import (  # noqa: E402,F401 -- bound for pytest and importe
     _forget_legacy_auth_sweep_clean_roots,
     _forget_mount_source_sweep_pacing,
     _forget_sandbox_launch_mark,
+    _forget_tracing_switch,
     _fresh_aws_bin_dir_trust,
+    _fresh_hardlink_spec_warnings,
     _fresh_reexec_environment,
     _fresh_released_sessions_warning,
     _history_cleanup_throttle_closed,
@@ -293,6 +296,7 @@ from conftest_resets import (  # noqa: E402,F401 -- bound for pytest and importe
     _isolate_advertised_model_cache,
     _isolate_display_verdicts,
     _isolate_kiro_window_cache,
+    _ledger_create_ignores_live_memory,
     _no_boot_heap_freeze,
     _no_boot_sandbox_sweep,
     _no_carried_auto_update_effect,
@@ -331,6 +335,8 @@ from conftest_slack import (  # noqa: E402,F401 -- bound for pytest and importer
     _enterprise_bypass,
     _reset_options_control_state,
 )
+
+from kiro_crew.testing import synthetic_credentials as _synthetic_credentials  # noqa: E402
 
 # ``make_dir_link`` lives in kiro_crew.testing.links so the app-embedded test
 # packages, which never see this conftest, share the one copy. Re-exported so
@@ -383,20 +389,27 @@ _PEM_TAIL_HALF = f"ATE KEY{_PEM_DASHES}\nMIIBOgIBAAJBAKJ2\n"
 #: Shared because two suites pin the same table -- the primitive that decides where
 #: a cut may fall (``test_display_split_safety.py``) and the renderer that applies
 #: it (``test_wecom_renderer.py``) -- and a duplicated fixture table drifts.
+#:
+#: The key-shaped rows split a synthetic 40-character secret the redactor removes
+#: (letters and digits only, so no half carries markup of its own); an AWS key ID
+#: stays visible as an identifier and would prove nothing here.
+_STRADDLE_KEY = _synthetic_credentials.synth(40, seed=17)
 CREDENTIAL_STRADDLE_SHAPES = [
-    pytest.param("[AKIA](https://ex.test/a,b)", "IOSFODNN7EXAMPLE", id="link-target-comma"),
+    pytest.param(
+        f"[{_STRADDLE_KEY[:4]}](https://ex.test/a,b)", _STRADDLE_KEY[4:], id="link-target-comma"
+    ),
     pytest.param(
         "Authorization: Bearer",
         " abcdefghijklmnopqrstuvwxyz0123456789",
         id="header-whitespace",
     ),
-    pytest.param("AKIAIOSF_", "_ODNN7EXAMPLE", id="underscore-emphasis"),
-    pytest.param("AKIAIOSF~", "~ODNN7EXAMPLE", id="tilde-emphasis"),
+    pytest.param(f"{_STRADDLE_KEY[:8]}_", f"_{_STRADDLE_KEY[8:]}", id="underscore-emphasis"),
+    pytest.param(f"{_STRADDLE_KEY[:8]}~", f"~{_STRADDLE_KEY[8:]}", id="tilde-emphasis"),
     pytest.param("https://evil.test/?q=AKIAIOSFODNN7", "EXAMPLE.", id="url-punctuation"),
     pytest.param("[l](https://ex.test/x/AKIAIOSF", "ODNN7EXAMPLE)", id="cut-inside-a-url"),
     pytest.param(f"{_PEM_DASHES}BEGIN RSA PRIV", _PEM_TAIL_HALF, id="pem-anchor"),
     pytest.param(f"{_PEM_DASHES}BEG**IN** RSA PRIV", _PEM_TAIL_HALF, id="pem-anchor-markup-split"),
-    pytest.param("AKIAIOSF", "ODNN7EXAMPLE", id="no-markup-at-all"),
+    pytest.param(_STRADDLE_KEY[:8], _STRADDLE_KEY[8:], id="no-markup-at-all"),
 ]
 
 
@@ -651,6 +664,27 @@ def _registry_governance_reachability_unknown(_floor_monkeypatch):
     _floor_monkeypatch.setattr(kiro_cli, "registry_governance_known_unreachable", lambda: False)
     _floor_monkeypatch.setattr(kiro_cli, "_governance_unreachable_cache", None)
     _floor_monkeypatch.setattr(kiro_cli, "_governance_warm_running", False)
+
+
+@pytest.fixture(autouse=True)
+def _tool_deferral_state_starts_empty(_floor_monkeypatch):
+    """Start every test with no tools-list refusal on record and no PATH probe answer.
+
+    Both are process slots that decide whether a kiro-cli spawn defers Kiro Crew's
+    own MCP servers: a refusal one test feeds the error classifier would keep
+    every later test's spawn on the full list, and the probe would run the
+    runner's own kiro-cli inside the sandbox on a thread. The boot hook that
+    warms the probe starts that thread from any test that boots a gateway, and it
+    would outlive the test, so it is off here too. The tests of each put their
+    own answer in with ``monkeypatch``.
+    """
+    from kiro_crew import kiro_cli, kiro_cli_path_probe
+
+    _floor_monkeypatch.setattr(kiro_cli, "_tools_list_refused_at", None)
+    _floor_monkeypatch.setattr(kiro_cli_path_probe, "_versions", {})
+    _floor_monkeypatch.setattr(kiro_cli_path_probe, "_in_flight", set())
+    _floor_monkeypatch.setattr(kiro_cli_path_probe, "_sandboxed_version", lambda _binary: None)
+    _floor_monkeypatch.setattr(kiro_cli_path_probe, "warm", lambda: None)
 
 
 @pytest.fixture(autouse=True)
@@ -1308,9 +1342,10 @@ class _InertGatewayPosts(list):
 def _exported_gateway_ports() -> frozenset[int]:
     """Client ports the shell that started pytest exports, read once at import.
 
-    ``KIROCREW_PORT`` is the first step of the client's port resolution and the
-    floor does not clear it, so a developer who exports it to reach their own
-    gateway sends every unconfigured test there. ``KIROCREW_BOUND_PORT`` names the
+    ``KIROCREW_PORT`` is the first step of the client's port resolution. The floor
+    clears it for each test, but a session or module fixture runs outside that, so a
+    developer who exports it to reach their own gateway can still send a test there.
+    ``KIROCREW_BOUND_PORT`` names the
     gateway that spawned the run when an agent session runs the suite. Read here,
     before any test edits the environment, so a test that sets either variable to
     its own server's port is not mistaken for the shell's choice.

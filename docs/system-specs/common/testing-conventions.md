@@ -2162,12 +2162,9 @@ tests; the classes below are what the rest was made of.
   after `await act(render)`, so the positive assertion flaked (1 in 5 runs) and every
   "not listed" assertion in the block was vacuous (absent BEFORE the fetch resolves
   whether or not the filter works). Render, wait for the mocked fetch to have been
-  CALLED, drain the chain, then assert (`renderPopoverSettled`). And `App`'s startup
-  video gate read a `startupInterruptionSeen` latch that an effect sets AFTER the commit
-  showing the changelog, while `changelogDecided` is set one microtask later on the
-  same fetch chain: when that microtask landed between the commit and its passive
-  effects, the gate opened beside the changelog (2 in 5 runs). The gate now reads the
-  live conditions in the same commit as well as the latch, the `onboardingOwed` shape.
+  CALLED, drain the chain, then assert (`renderPopoverSettled`). A gate that reads a
+  latch an effect sets AFTER the commit lags its source by one commit: read the live
+  conditions in the same commit as well as the latch.
 
 Two ways to see all of the above on your own machine: run a touched file under
 `trace_home.py`-style tracing (an `sys.addaudithook` that prints the stack of every
@@ -5894,10 +5891,12 @@ regenerate it when the Linux shards' `Run tests` times drift apart again. Window
 macOS, release and the reduced and leaf scopes keep pure hash ownership.
 
 macOS assigns whole files like the other platforms, in eight shards. The shard
-count is the knob to reach for there rather than the 40-minute cap, because that
-cap is a spend guard as much as a hang guard on a lane billed at ten times Linux:
-a higher cap bounds a runaway more loosely, while a higher count is what divides
-the work. The macOS shards run an explicit `-n 2` (`platform-tests.yml`), which
+count is the knob to reach for when the suite grows, not the 60-minute cap,
+because that cap is a spend guard as much as a hang guard on a lane billed at ten
+times Linux: a higher cap bounds a runaway more loosely, while a higher count is
+what divides the work. The cap sits at 60 rather than at the shards' usual 20-30
+minutes because a macOS arm64 runner that is slow or short of capacity can push a
+shard past 40 minutes with no failing test. The macOS shards run an explicit `-n 2` (`platform-tests.yml`), which
 bypasses the xdist memory budget behind `-n auto`. `test-durations.yml` still
 invokes pytest-split to RECORD `.test_durations`, and three tests load its plugin
 directly, but no sharding lane reads that file, so the recording balances

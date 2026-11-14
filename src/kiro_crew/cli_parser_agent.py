@@ -67,8 +67,32 @@ Tool permission prompt (same keys as kiro-cli chat):
         parents=[_jail_opts],
     )
     chat_parser.add_argument("-m", "--message", help="Single message (non-interactive)")
-    chat_parser.add_argument("--model", help="Model to use (default: from config)")
+    chat_parser.add_argument(
+        "--model", help="Model to use (default: from config; `kirocrew models` lists the names)"
+    )
     chat_parser.add_argument("--agent", help="Agent to use (default: from config)")
+
+
+def register_models_parser(sub: _Commands) -> None:
+    models_parser = cli_help.add_command(
+        sub,
+        "models",
+        epilog="""
+Examples:
+  kirocrew models                  # Names --model accepts; * marks the default
+  kirocrew models --json           # The same list for scripts
+  kirocrew models claude-sonnet    # Is this name valid? Exit 1 with the closest if not
+""",
+        formatter_class=_fmt,
+    )
+    models_parser.add_argument("name", nargs="?", default=None, help="A model name to check")
+    models_parser.add_argument("--json", action="store_true", help="Print JSON instead of text")
+    models_parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Dashboard port (default: found as `kirocrew status` finds it)",
+    )
 
 
 def register_cron_parser(sub: _Commands) -> None:
@@ -210,7 +234,7 @@ Examples:
         "--model",
         dest="model",
         default="",
-        help="Model id for the agent wake (as advertised by kiro-cli --list-models)",
+        help="Model id for the agent wake (`kirocrew models` lists the names)",
     )
     cron_add.add_argument(
         "--persistent-session",
@@ -301,7 +325,7 @@ Examples:
         help=_ALERT_AFTER_HELP,
     )
     cron_update.add_argument("--cron", dest="cron_expr", help="New cron expression")
-    cron_update.add_argument("--channel", help="New channel ID")
+    cron_update.add_argument("--channel", help='New channel ID ("" clears it)')
     cron_update.add_argument(
         "--agent",
         dest="agent",
@@ -848,6 +872,52 @@ def register_memory_parser(sub: _Commands) -> None:
     mem_import.add_argument(
         "--store", default=None, help="Store to import into (default: the default store)"
     )
+    mem_dream = mem_sub.add_parser(
+        "dream",
+        help="Ask for a Dreaming run, or list what it proposed (memory.dream propose)",
+        description="Dreaming looks over stored lessons and facts while no chat turn "
+        "runs and writes an approval list. Nothing in the list is applied.",
+    )
+    dream_sub = mem_dream.add_subparsers(dest="dream_action", required=True)
+    dream_sub.add_parser("run", help="Ask the gateway for a run now (it still waits for idle)")
+    dream_list = dream_sub.add_parser("list", help="Print the approval list (read-only)")
+    dream_list.add_argument(
+        "--store", default=None, help="Store to read (default: the default store)"
+    )
+    dream_list.add_argument("--json", action="store_true", help="Print JSON")
+    mem_shadow = mem_sub.add_parser(
+        "shadow",
+        help="Report what each shadow memory stage would change (read-only)",
+        description="Reads the injection receipts and the store's memory_meta logs "
+        "that shadow stages already write, and prints counts per stage. Writes nothing.",
+    )
+    shadow_sub = mem_shadow.add_subparsers(dest="shadow_action", required=True)
+    shadow_report = shadow_sub.add_parser(
+        "report", help="Per stage: flag, window, days, sessions, would-change rate"
+    )
+    # Literal like carve's choices: this parser is built on the gateway boot path.
+    shadow_report.add_argument(
+        "--stage",
+        default=None,
+        choices=[
+            "rule_authority_order",
+            "relevance_rule",
+            "lesson_fold",
+            "kind_routing",
+            "lesson_origin_gate",
+            "lesson_tier_policy",
+            "member_lesson_dedup",
+            "dream",
+        ],
+        help="Only this stage, with its counts by day",
+    )
+    shadow_report.add_argument(
+        "--since", default=None, help="Start no earlier than YYYY-MM-DD or <n>d ago"
+    )
+    shadow_report.add_argument(
+        "--store", default=None, help="Store to read (default: the default store)"
+    )
+    shadow_report.add_argument("--json", action="store_true", help="Print JSON")
 
 
 def register_agent_parser(sub: _Commands) -> None:
@@ -923,6 +993,28 @@ def register_agent_parser(sub: _Commands) -> None:
         "file", nargs="?", help="Bare file name in the agents directory, e.g. PkgA-helper.json"
     )
     agent_pin.add_argument("--clear", action="store_true", help="Remove the pin for this name")
+    agent_validate = agent_sub.add_parser(
+        "validate",
+        help=(
+            "Check agent specs offline (unknown fields, wrong value shapes, malformed "
+            "tools entries); exits 1 on a problem"
+        ),
+    )
+    agent_validate.add_argument(
+        "path",
+        nargs="?",
+        help="Spec file, or a directory of specs (default: the user-level agents directory)",
+    )
+    agent_validate.add_argument(
+        "--allow-unknown-fields",
+        action="store_true",
+        help="Do not report top-level fields this release does not list",
+    )
+    agent_validate.add_argument(
+        "--print-schema",
+        action="store_true",
+        help="Print the JSON Schema of an agent spec and exit",
+    )
     agent_reset_model = agent_sub.add_parser(
         "reset-model",
         help="Clear an agent spec's pinned model so it tracks the shipped default again",
@@ -948,7 +1040,7 @@ def register_workspace_parser(sub: _Commands) -> None:
         "--dir",
         default=None,
         help=(
-            "Workspace directory NAME, relative to the KiroCrew data home "  # brand-ok: help text kept as it was
+            "Workspace directory NAME, relative to the Kiro Crew data home "
             "(default: workspace-<name>). Any path resolving outside the data "
             "home is rejected."
         ),
@@ -959,7 +1051,7 @@ def register_workspace_parser(sub: _Commands) -> None:
     ws_update.add_argument(
         "--dir",
         help=(
-            "New workspace directory NAME, relative to the KiroCrew data home. "  # brand-ok: help text kept as it was
+            "New workspace directory NAME, relative to the Kiro Crew data home. "
             "Any path resolving outside the data home is rejected."
         ),
     )

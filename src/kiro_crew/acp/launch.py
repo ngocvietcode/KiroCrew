@@ -47,6 +47,7 @@ from types import ModuleType
 from typing import Any, Awaitable, Callable, Iterator, Mapping, Protocol, Sequence
 
 from kiro_crew import acp_tool_gate, platform_compat
+from kiro_crew.acp.spawn_blocked import SPAWN_BLOCKED_BINARY_ATTR, is_windows_spawn_blocked
 from kiro_crew.acp.transport_errors import AcpError, AcpToolGateUnroutable
 from kiro_crew.acp.transport_framing import _STDOUT_BUFFER_LIMIT
 from kiro_crew.agent_sdk.backends import launch_for
@@ -1237,6 +1238,15 @@ async def launch(host: LaunchHost, request: LaunchRequest, tools: LaunchTools) -
     env = tools.scrub_agent_subprocess_env(env, forward_ssh_auth_sock=forward_ssh_auth_sock)
     if had_ssh_auth_sock and not forward_ssh_auth_sock:
         await _note_ssh_auth_sock_withheld(host, tools, request)
+    # ACP harnesses can start their own managed MCP children, which boot an
+    # independent platform context. When this gateway installed its ceiling
+    # from central distribution, let those children inherit the verified local
+    # cache without exposing the control-plane URL or headers that the scrub
+    # above deliberately removed. The wrap above already showed this tree the
+    # cache read-only (``sandbox_tiers.enterprise_policy_cache_view``).
+    from kiro_crew.agent import policy_cache_only_env
+
+    env.update(policy_cache_only_env())
     # Bundled skill scripts must not depend on a system ``python`` name. The
     # desktop bundles carry their interpreter outside the user's PATH, while this
     # path is already running under the exact environment that can import
@@ -1317,7 +1327,11 @@ async def launch(host: LaunchHost, request: LaunchRequest, tools: LaunchTools) -
         factory = functools.partial(tools.retrying_spawn_factory, factory)
     try:
         process = await tools.platform_compat.create_windows_cleanup_owned_process(factory)
-    except BaseException:
+    except BaseException as exc:
+        if is_windows_spawn_blocked(exc):
+            # Marked here, at process creation, so the client reads only this
+            # refusal as a policy block, never a later access denied (a cleanup).
+            setattr(exc, SPAWN_BLOCKED_BINARY_ATTR, getattr(exc, "filename", None) or argv[0])
         await host._discard_bound_workspace()
         host._discard_sandbox_cleanup()
         raise

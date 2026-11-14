@@ -69,6 +69,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
+from kiro_crew import mcp_cleanup
 from kiro_crew.acp import kas_engine_features as engine
 from kiro_crew.acp import kas_env_launch, session_label
 from kiro_crew.acp.kas_agents_registered import (  # noqa: F401 - re-exported
@@ -186,6 +187,7 @@ from kiro_crew.agent_sdk.spec_hooks import spec_script_hooks, user_hook_files
 from kiro_crew.agent_sdk.tools_settings_reach import GATE_READ_MARK, tools_settings_unapplied
 from kiro_crew.agent_spec_format import agent_spec_candidates, is_markdown_spec
 from kiro_crew.agent_spec_pins import pinned_memo_key
+from kiro_crew.file_uri import file_uri_path_text
 from kiro_crew.hooks import HOOK_EVENT_PRE_TOOL_USE, get_global_hook_store, persisted_hook_store
 from kiro_crew.mcp_cleanup import (
     KIROCREW_BIN_MCP_SERVERS,
@@ -518,7 +520,7 @@ def resolve_prompt(
         )
     if not raw.startswith(_PROMPT_FILE_SCHEME):
         return raw
-    ref = raw[len(_PROMPT_FILE_SCHEME) :]
+    ref = file_uri_path_text(raw)
     try:
         path = prompt_file_path(ref, agents_dir)
     except (OSError, RuntimeError) as exc:  # ``~nosuchuser``, a symlink loop
@@ -732,6 +734,7 @@ def _project_mcp_servers(
     launch_key: str = "",
     engine_features: frozenset[str] = frozenset(),
     forward_ssh_auth_sock: bool = False,
+    scope_muted: frozenset[str] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """The spec's ``mcpServers``, minus stubbed names and minus two field classes.
 
@@ -831,6 +834,8 @@ def _project_mcp_servers(
     absent" state this function exists to end — so the residue is accepted and
     stated rather than papered over.
     """
+    from kiro_crew import agent as agent_facade
+
     servers = spec.get("mcpServers")
     if not isinstance(servers, dict):
         return {}
@@ -841,11 +846,15 @@ def _project_mcp_servers(
     relayed = _relayed_env_references()
     warned_about_the_marker = False
     launch_key = launch_key or session_key
+    # Every scope read once for the whole projection, not per server: the caller's
+    # reading, else this pass's, through the one reader (and patch seam).
+    if scope_muted is None:
+        scope_muted = mcp_cleanup.mcp_scope_muted_aliases()
     for name, entry in servers.items():
         if not isinstance(name, str) or not name or not isinstance(entry, dict):
             continue
         managed = name in MANAGED_MCP_SERVER_NAMES
-        if mcp_server_muted_in_any_store(name, entry):
+        if mcp_server_muted_in_any_store(name, entry, scope_muted=scope_muted):
             # ``mcp_server_muted_in_any_store`` is ``mcp_entry_is_muted`` plus the config scopes
             # (why, for a spec that DECLARES the server: see it), so this stays the shared
             # launch-decision reading and the gateway rewriter still cannot wrap an entry this
@@ -969,9 +978,15 @@ def _project_mcp_servers(
                 "/".join(discarded),
             )
         dropped_env: list[str] = []
+        if managed:
+            # The spec's own marker copies are not a withheld credential to report.
+            agent_facade.drop_policy_markers(projected)
         withheld = _withhold_credential_fields(
             projected, managed=managed, relayed=relayed, dropped_env=dropped_env
         )
+        if managed and projected.get("command"):
+            # KAS starts managed stdio children with a minimal environment.
+            agent_facade.add_policy_markers(projected)
         stdio = bool(projected.get("command"))
         if managed:
             # Native MCP children do not inherit the gateway's environment.
@@ -1054,6 +1069,7 @@ def to_client_custom_agent(
     engine_features: frozenset[str] = frozenset(),
     forward_ssh_auth_sock: bool = False,
     governance_app: str | None = None,
+    scope_muted: frozenset[str] | None = None,
 ) -> dict[str, Any]:
     """Project one Crew agent spec onto a KAS ``ClientCustomAgent`` descriptor.
 
@@ -1423,6 +1439,7 @@ def to_client_custom_agent(
         launch_key=launch_key,
         engine_features=engine_features,
         forward_ssh_auth_sock=forward_ssh_auth_sock,
+        scope_muted=scope_muted,
     )
     if mcp_servers:
         out["mcpServers"] = mcp_servers
@@ -1629,10 +1646,11 @@ def build_kas_custom_agents(
     engine_features: frozenset[str] = frozenset(),
     forward_ssh_auth_sock: bool = False,
     governance_app: str | None = None,
+    scope_muted: frozenset[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Build the ``_meta.kiro.customAgents`` batch that binds *agent_id* on KAS.
 
-    *withheld_out*, *engine_features* and *forward_ssh_auth_sock* are handed to
+    *withheld_out*, *engine_features*, *forward_ssh_auth_sock* and *scope_muted* are handed to
     :func:`_project_mcp_servers`.
 
     A ``file://`` prompt that is missing, unreadable or empty
@@ -1685,6 +1703,7 @@ def build_kas_custom_agents(
             engine_features=engine_features,
             forward_ssh_auth_sock=forward_ssh_auth_sock,
             governance_app=governance_app,
+            scope_muted=scope_muted,
             # Any key turns the relay on (its reference is shared), so a session
             # with none yet (a background or pooled runtime) still relays env.
             launch_key=session_key or f"unkeyed-{secrets.token_hex(8)}",

@@ -335,7 +335,10 @@ from kiro_crew.dashboard.handlers.agents_session_commands import (
     menu_backend,
     menu_with_session_commands,
 )
-from kiro_crew.dashboard.handlers.models_kas_bundle import api_models_kas_bundle
+from kiro_crew.dashboard.handlers.models_kas_bundle import (
+    api_models_kas_bundle,
+    api_models_kas_crew_relay,
+)
 from kiro_crew.dashboard.handlers.source_providers import (  # noqa: F401
     owner_view_for_request,
 )
@@ -483,6 +486,7 @@ def _supply_live_enum(entry: dict) -> None:
 
 async def api_config_schema(request: web.Request) -> web.Response:
     """GET /api/config/schema — return config schema entries."""
+    from kiro_crew.dashboard.handlers.config_all_settings import attach_descriptor
     from kiro_crew.edition_locks import LOCKED_BY_POLICY, config_path_locked
 
     entries = SCHEMA_REGISTRY
@@ -498,8 +502,7 @@ async def api_config_schema(request: web.Request) -> web.Response:
     if dep_param == "false":
         entries = [e for e in entries if not e.deprecated]
 
-    # Serialize, masking sensitive defaultValues and converting dataclass
-    # defaults to None (they aren't JSON-serializable).
+    # Serialize; a sensitive or dataclass default (not JSON-serializable) is sent as None.
     result = []
     for entry in entries:
         d = config_entry_to_dict(entry)
@@ -509,7 +512,7 @@ async def api_config_schema(request: web.Request) -> web.Response:
         # An LTS build ignores this local value (RFC D3, kiro_crew.edition_locks).
         if config_path_locked(entry.path):
             d["lockedByPolicy"] = LOCKED_BY_POLICY
-        result.append(d)
+        result.append(attach_descriptor(d, entry))
 
     return web.json_response({"entries": result})
 
@@ -1457,7 +1460,8 @@ async def api_models(request: web.Request) -> web.Response:
         if cached is None or not await kiro_latched_ready(request):
             blocked = await reject_if_kiro_unverified(request)
             if blocked is not None:
-                return blocked
+                crew_relay = await api_models_kas_crew_relay(request, backend, blocked)
+                return blocked if crew_relay is None else crew_relay
         if cached is not None:
             # Serve the last good catalog straight away; a stale one is refreshed
             # behind the reply (stale-while-revalidate). Entitlement narrowing

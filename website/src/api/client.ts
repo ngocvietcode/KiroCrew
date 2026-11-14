@@ -32,6 +32,7 @@ import { isDeadlineError, queryClient, invalidateAcrossQueryClients } from './qu
 import { recordError, recordTransportRejection, attachReport, parseErrorCode, requestPath } from '../utils/errorReport'
 import { i18nT } from '../i18n/t'
 import type { ClientTransport } from './client/transport'
+import { gatedRead } from './readGate'
 import { createSystemEndpoints } from './client/system'
 import { createTelemetryEndpoints } from './client/telemetry'
 import { createChatEndpoints } from './client/chat'
@@ -88,7 +89,7 @@ import { createSharedCrewEndpoints } from './client/sharedCrew'
 import type { DecisionsConsentData } from './client/decisions'
 
 export type { TunnelStatus } from './client/system'
-export type { WakaTimeStatsEntry, WakaTimeStats } from './client/telemetry'
+export type { WakaTimeStatsEntry, WakaTimeStats, WakaTimeOauthStatus } from './client/telemetry'
 export type {
   UsageSeriesDimension,
   UsageSeriesLayer,
@@ -135,7 +136,14 @@ export type {
   TrustedRegistryRow,
   TrustedRegistriesData,
   ManagedSecret,
+  SecretItemBody,
+  SecretItemFields,
+  SecretItemType,
+  SecretListItem,
+  SecretLoginPublicFields,
   SecretsListResponse,
+  SecretUsagePlace,
+  SecretsUsageResponse,
 } from './client/security'
 export type {
   RemoteControlState,
@@ -176,7 +184,7 @@ export type {
   LaunchTaskSighting,
   LaunchTaskReport,
 } from './client/cloud'
-export type { MemoryCarveQuery, MemoryCarveResult } from './client/memory'
+export type { MemoryCarveQuery, MemoryCarveResult, RecurringFailure } from './client/memory'
 export { SEARCH_MIN_CHARS } from './client/sessions'
 export type { ArchiveEntry } from './client/sessions'
 export type {
@@ -184,6 +192,7 @@ export type {
   McpShareRecommendation,
   McpMeasureProgress,
   McpGatewayFootprint,
+  McpCwdUse,
   McpManagedServer,
 } from './client/mcp'
 export type {
@@ -1459,7 +1468,10 @@ function jfetch(input: string, init?: RequestInit, send: (input: string, init?: 
   // keeping the shapes identical means this wrapper is observable only on the
   // rejection path it exists for).
   const generation = callerGeneration
-  const request = init === undefined ? send(input) : send(input, init)
+  const start = () => (init === undefined ? send(input) : send(input, init))
+  // A read takes its turn among the reads that are out, so they cannot hold every
+  // connection the browser has to the gateway; a write goes straight out.
+  const request = isRead ? gatedRead(input, init?.signal, start) : start()
   return request.then((r) => (isRead ? keepIfRefused(input, r, generation) : r)).catch((error: unknown) => {
     if (!isDeliberateAbort(error)) {
       const report = recordTransportRejection({
@@ -1566,6 +1578,8 @@ export interface KiroUsagePayload {
    * tied to it); absent when the gateway simply holds no reading.
    */
   reason?: string
+  /** With `reason: signin_required`: the API refused a credential it was shown. */
+  credential_rejected?: boolean
   credits_used?: number
   credits_covered?: number
   credits_overage?: number

@@ -2,15 +2,17 @@
 
 import asyncio
 import hashlib
+import json
 import logging
 import threading
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from llm_pool_helpers import FakeWorker, _make_pool_with_fake_workers
 
 from kiro_crew.artifacts import ArtifactNotFoundError, ArtifactStore
-from kiro_crew.knowledge import artifact_ingest, ingestion
+from kiro_crew.knowledge import artifact_ingest, ingestion, llm_pool
 from kiro_crew.knowledge.artifact_ingest import (
     ARTIFACT_SOURCE_TYPE,
     ARTIFACT_SOURCE_URI,
@@ -21,10 +23,12 @@ from kiro_crew.knowledge.artifact_ingest import (
     refresh_artifact_name,
     remove_artifact,
 )
+from kiro_crew.knowledge.extractor import EntityExtractor
 from kiro_crew.knowledge.ingestion import DUPLICATE_JOB_STATUS, IngestionPipeline
 from kiro_crew.knowledge.readers import FileReader
 from kiro_crew.knowledge.store import KnowledgeStore
 from kiro_crew.on_loop_db import OnLoopStoreError
+from kiro_crew.testing.synthetic_credentials import SAMPLE_AWS_SECRET
 
 DEFAULT_KINDS = {"markdown", "text", "html", "json"}
 
@@ -214,8 +218,8 @@ class TestIngestArtifact:
     @pytest.mark.asyncio
     async def test_credentials_and_name_redacted(self, pipeline, art_store, kstore):
         sid, _ = ensure_artifact_source(kstore)
-        secret = "AKIAIOSFODNN7EXAMPLE"
-        name_secret = "AKIAIOSFODNN7TITLE00"
+        secret = SAMPLE_AWS_SECRET
+        name_secret = "Qh4Tm2Vx9KpRc/Z8Nw3Hd/" + "Jf1Lb5Gsq7RmW2nXsT"
         art = art_store.create(
             name=f"Leaky {name_secret}", content=f"config key {secret} here", kind="text")
         await ingest_artifact(pipeline, art_store, art.slug, sid, DEFAULT_KINDS)
@@ -989,6 +993,53 @@ class TestArtifactKnowledgeSyncStop:
         # The reconcile extracts through the pools, so it stops first.
         assert cleanup.index(knowledge_lifecycle._stop_artifact_ingest) < cleanup.index(
             knowledge_lifecycle._shutdown_knowledge_pools)
+
+
+class TestPoolShutdownUnderTheIngestInHand:
+    """Gateway exit shuts the extraction pool down under the artifact in hand.
+
+    The extraction it cuts short must fail that ingest. Stored with no entities
+    under the current content hash, the artifact would read as converged, and
+    no later pass would extract it until its content changed.
+    """
+
+    @pytest.mark.asyncio
+    async def test_the_next_pass_ingests_it_again_with_its_entities(
+        self, pipeline, art_store, kstore
+    ):
+        sid, _ = ensure_artifact_source(kstore)
+        art_store.create(name="A", content="alpha body", kind="markdown")
+        in_flight, killed = asyncio.Event(), asyncio.Event()
+
+        class _KilledMidReply(FakeWorker):
+            async def send_message(self, prompt, timeout=60.0):
+                in_flight.set()
+                await killed.wait()
+                raise RuntimeError("process exited during prompt")
+
+            async def shutdown(self):
+                killed.set()
+
+        pool = _make_pool_with_fake_workers(pool_size=1)
+        pool._workers[0] = _KilledMidReply()
+        pipeline.extractor = EntityExtractor(pool=pool)
+        task = asyncio.create_task(
+            reconcile_artifacts(pipeline, art_store, sid, DEFAULT_KINDS))
+        await asyncio.wait_for(in_flight.wait(), _STOP_DEADLINE_S)
+        await pool.shutdown()
+        assert await asyncio.wait_for(task, _STOP_DEADLINE_S) == (0, 0, 0)
+        assert artifact_ingest._known_kinds(kstore, sid) == {}, "recorded as converged"
+        with pytest.raises(llm_pool.LLMPoolClosed):
+            await pool.send("a later prompt")  # refused, never a respawn at exit
+
+        reply = json.dumps({"title": "t", "summary": "s", "category": "document",
+                            "entities": [{"name": "Alpha", "type": "concept"}]})
+        pipeline.extractor = EntityExtractor(
+            pool=_make_pool_with_fake_workers(pool_size=1, responses=[reply]))
+        assert await reconcile_artifacts(
+            pipeline, art_store, sid, DEFAULT_KINDS) == (1, 0, 0)
+        names = [r["name"] for r in kstore.db.execute("SELECT name FROM entities")]
+        assert names == ["Alpha"]
 
 
 class TestArtifactKnowledgeSync:

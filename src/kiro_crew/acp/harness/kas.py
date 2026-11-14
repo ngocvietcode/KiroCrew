@@ -35,7 +35,9 @@ from typing import Any
 # stub. Only the exception type is bound directly -- an exception class is
 # compared by identity, never substituted.
 from kiro_crew import agent as agent_mod
+from kiro_crew import build_reuse
 from kiro_crew import sandbox as sandbox_mod
+from kiro_crew import session_head
 from kiro_crew.acp import kas_agents as kas_agents_mod
 from kiro_crew.acp import kas_route as kas_route_mod
 from kiro_crew.acp._dispatch import advertised_mode_origin
@@ -59,7 +61,12 @@ from kiro_crew.acp.kas_app_identity import resolve_app_identity_launches
 from kiro_crew.acp.kas_host_auth import answer_get_access_token, vault_holds_identity_off_loop
 from kiro_crew.acp.kas_mcp_json_legacy import legacy_mcp_json
 from kiro_crew.acp.kas_prompt import prompt_unread_notice, spec_prompt
-from kiro_crew.acp.kas_settings_mcp import excluded_whole, include_mcp_json, stamp_settings_mcp
+from kiro_crew.acp.kas_settings_mcp import (
+    declared_servers,
+    excluded_whole,
+    include_mcp_json,
+    stamp_settings_mcp,
+)
 from kiro_crew.acp.kas_spec_carry import use_aws_notice
 from kiro_crew.acp.kas_start_agent import START_AGENT_ID, with_start_agent
 from kiro_crew.acp.kas_steering import inheritance_off_notice, with_kas_steering
@@ -89,7 +96,9 @@ from kiro_crew.acp.types import (
     METHOD_KAS_SESSION_DELETE,
     METHOD_KAS_TOOLS_CHANGED,
     METHOD_SESSION_CLOSE,
+    METHOD_SESSION_LOAD,
     METHOD_SESSION_NEW,
+    PROVIDER_LABEL_KAS,
 )
 from kiro_crew.agent import ForkGovernanceUnresolved
 from kiro_crew.config import paths as paths_mod
@@ -97,6 +106,8 @@ from kiro_crew.kiro_cli import (
     chat_sibling,
     installed_kiro_cli_version,
     kas_auth_client_flag_supported,
+    resolved_kiro_cli_version,
+    standalone_kiro_cli,
 )
 from kiro_crew.mate_worker import MATE_WORKER_AGENT
 from kiro_crew.mcp_gateway import session_servers as session_servers_mod
@@ -573,7 +584,12 @@ def mate_worker_projection(
     return worker_session_spec(literal, session_key)
 
 
-def withdrawn_worker_stubs(spec: dict[str, Any], stub_names: frozenset[str]) -> frozenset[str]:
+def withdrawn_worker_stubs(
+    spec: dict[str, Any],
+    stub_names: frozenset[str],
+    *,
+    scope_muted: frozenset[str] | None = None,
+) -> frozenset[str]:
     """The names in *stub_names* whose server *spec* does not mount unmuted.
 
     *spec* is the governed worker spec the KAS payload is built from. A stub
@@ -594,7 +610,8 @@ def withdrawn_worker_stubs(spec: dict[str, Any], stub_names: frozenset[str]) -> 
     servers = spec.get("mcpServers")
     if not isinstance(servers, dict):
         return frozenset(stub_names)
-    scope_muted = mcp_scope_muted_aliases()
+    if scope_muted is None:
+        scope_muted = mcp_scope_muted_aliases()
     return frozenset(
         name
         for name in stub_names
@@ -856,10 +873,15 @@ class KasHarness(MembershipHarness):
             # needs kiro-cli signed in anyway, so the gate costs it nothing.
             # An operator's KIROCREW_KIRO_BIN is exactly what they asked for --
             # a wrapper of theirs named `kiro-cli` is never swapped out from
-            # under them.
+            # under them. From 3.0.0 `kiro-cli` is the chat binary itself, so a
+            # `kiro-cli-chat` an older install left beside it is never entered.
+            # The version is that of the binary spawned (not only the pin), read
+            # as the route and doctor read it, so the three agree.
             if not operator_override:
                 chat_bin = await asyncio.to_thread(chat_sibling, kas_bin)
-                if chat_bin:
+                if chat_bin and not standalone_kiro_cli(
+                    await asyncio.to_thread(resolved_kiro_cli_version, kas_bin)
+                ):
                     kas_bin = chat_bin
             logger.info(
                 "KAS auth owner=crew — Crew vault holds an identity; relay spawned "
@@ -970,6 +992,11 @@ class KasHarness(MembershipHarness):
         every TLS call. kiro-cli sets the same default when it spawns KAS
         (``apply_node_system_ca_env`` in its ``launch.rs``), so the relay needs
         nothing from Crew.
+
+        Both routes get ``KIRO_DISABLE_SESSION_TITLE_LLM=true`` unless the
+        inherited env already sets it (``false`` included): it stops the engine's
+        own title request at a session's first prompt, a title Crew never reads
+        (acp-client.md, "No engine session titles on KAS").
         """
         from kiro_crew.config.loader import inject_kiro_cli_api_key, strip_kiro_cli_api_key
 
@@ -983,6 +1010,7 @@ class KasHarness(MembershipHarness):
         else:
             pin_mandatory_mcps_env(env, spawned_binary=spawned_binary)
         apply_child_env_defaults(env)
+        env.setdefault("KIRO_DISABLE_SESSION_TITLE_LLM", "true")
 
     @property
     def verifies_agent_activation(self) -> bool:
@@ -1229,6 +1257,11 @@ class KasHarness(MembershipHarness):
                     exc_info=True,
                 )
                 stubbed = frozenset()
+            # The MCP config scopes, read once for this whole projection: the worker
+            # withdrawal, the agent block and the declared names all answer from it.
+            from kiro_crew import mcp_cleanup
+
+            scope_muted = mcp_cleanup.mcp_scope_muted_aliases()
             withdrawn: frozenset[str] = frozenset()
             if worker_stub_names is not None and agent == MATE_WORKER_AGENT:
                 # A crewmate's worker: the names of the stubs its session/new
@@ -1240,7 +1273,7 @@ class KasHarness(MembershipHarness):
                 # The worker spec above was read AFTER those stubs were picked,
                 # so a server muted or removed in between is withdrawn from the
                 # session-level array too: this payload is the later reading.
-                withdrawn = withdrawn_worker_stubs(spec, worker_stub_names)
+                withdrawn = withdrawn_worker_stubs(spec, worker_stub_names, scope_muted=scope_muted)
             else:
                 # A server this spec declares muted (a checkout's switch-off,
                 # ``_with_project_switch_offs``) is withdrawn from the session-level
@@ -1296,6 +1329,7 @@ class KasHarness(MembershipHarness):
                 engine_features=engine_features,
                 forward_ssh_auth_sock=forward_ssh_auth_sock,
                 governance_app=governance_app,
+                scope_muted=scope_muted,
             )
             # Every per-tool switch, the global settings file's included: the spec
             # rebuild never copies one onto Crew's own servers. Read here, off the loop.
@@ -1319,14 +1353,11 @@ class KasHarness(MembershipHarness):
             unmatched.update(unmatched_disabled_globs(projected.get("mcpServers")))
             # The mcp.json / cli.json reads the wire envelope finishes the block
             # from, read here off the loop and beside the session's own directory.
-            declared = spec.get("mcpServers")
             custom_agents = stamp_settings_mcp(
                 custom_agents,
                 agent,
                 session_cwd or work_dir,
-                declared=(
-                    [n for n in declared if n not in muted] if isinstance(declared, dict) else ()
-                ),
+                declared=declared_servers(spec, scope_muted=scope_muted),
                 # Called for every session so the first one records the list; only
                 # a user-level spec can be on it, since a checkout's spec of the
                 # same name is not the file that was recorded.
@@ -1361,6 +1392,7 @@ class KasHarness(MembershipHarness):
                 engine_features=engine_features,
                 settings_dir=session_cwd or work_dir,
                 forward_ssh_auth_sock=forward_ssh_auth_sock,
+                scope_muted=scope_muted,
             )
             custom_agents = [*custom_agents, *targets]
             # Resolved HERE, in this thread, for the runtime's hoist: the managed
@@ -1380,6 +1412,10 @@ class KasHarness(MembershipHarness):
                 )
                 if n
             )
+            # Only an engine known to apply a client prompt carries the session head.
+            if self.agent_prompt_applied:
+                head = session_head.head_blocks(agent, spec, session_key, PROVIDER_LABEL_KAS)
+                custom_agents = session_head.with_head(custom_agents, head)
             return custom_agents, snapshot, managed, apps, withdrawn, notice
 
         try:
@@ -1390,7 +1426,12 @@ class KasHarness(MembershipHarness):
                 app_launches,
                 withdrawn_stubs,
                 withheld_notice,
-            ) = await asyncio.to_thread(_build)
+            ) = await asyncio.to_thread(
+                # The session's agent and each of its sub-agent targets read the same
+                # app manifests, skill files and agent specs: one start reads each once.
+                build_reuse.in_one_build,
+                _build,
+            )
             return SessionExtras(
                 custom_agents=built,
                 derived_spec_snapshot=built_from,
@@ -1435,10 +1476,15 @@ class KasHarness(MembershipHarness):
         after the batch's entries, so the ``set_mode`` that follows is what
         queues the agent's servers, behind Kiro Crew's.
 
-        ``session/load`` and a batch whose first entry has no id are sent as built,
-        as the same object; the caller's dicts are never mutated.
+        ``session/load`` names no mode, because the engine resumes in the one it
+        stored, but registers the start agent under the same refusals: that
+        stored mode is the start agent while a re-open a person waits on is under
+        way (:func:`~kiro_crew.acp.kas_start_agent.parking_load`), and a mode the
+        batch does not carry resumes in ``vibe``. Any other method, and a batch
+        whose first entry has no id, is sent as built, as the same object; the
+        caller's dicts are never mutated.
         """
-        if method != METHOD_SESSION_NEW:
+        if method not in (METHOD_SESSION_NEW, METHOD_SESSION_LOAD):
             return params, agent
         meta = params.get("_meta")
         if not isinstance(meta, dict):
@@ -1456,6 +1502,10 @@ class KasHarness(MembershipHarness):
         if held is not None:
             kiro = {**kiro, "customAgents": held}
             wire_id = START_AGENT_ID
+        if method == METHOD_SESSION_LOAD:
+            if held is None:
+                return params, agent
+            return {**params, "_meta": {**meta, "kiro": kiro}}, agent
         return {**params, "_meta": {**meta, "kiro": {**kiro, "modeId": wire_id}}}, agent
 
     def start_mode_ran_servers(self, mode_id: str) -> bool:

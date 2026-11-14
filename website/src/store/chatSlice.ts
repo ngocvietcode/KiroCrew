@@ -32,7 +32,7 @@ import { initialState, type ChatState } from './chat/state'
 import type { AgentSwitchNotice } from '../utils/agentSwitchFeedback'
 import { filterMessages, isUnsafeKey, safeKey } from './chat/wire'
 import { ensureMsgId, finalizeTrailingStreaming, floorForGen, isRedeliveredMessage, mintMsgId, reconcileOptimisticEcho } from './chat/transcript'
-import { OLDER_PAGE_LIMIT, OLDER_WALK_PAGE_LIMIT, claimOlderFetchAbort, isSupersededPagingRejection, releaseOlderFetchAbort } from './chat/paging'
+import { OLDER_PAGE_LIMIT, OLDER_WALK_PAGE_LIMIT, abortActiveOlderFetch, claimOlderFetchAbort, isSupersededPagingRejection, releaseOlderFetchAbort } from './chat/paging'
 import { reinsertThinkingOrphans } from './chat/thinking'
 import { isPendingCoordinatorApproval } from './chat/coordinatorApprovals'
 import { pruneDeliveredAttempts } from './chat/sendAttempts'
@@ -692,6 +692,8 @@ export const deleteSlot = createAsyncThunk<
       const prev = !discard && ((landing !== key ? landing : null)
         || root.chat.slotHistory.filter(k => k !== key && sameSurface.has(k)).pop()
         || root.dashboard.slots.filter(s => s.key !== key && sameSurface.has(s.key)).map(s => s.key)[0])
+      // Supersede an older page in flight, as a switch does: it would clear the next chat's loading flag.
+      abortActiveOlderFetch()
       // Closing a chat is not choosing the landing: the page picks it. Both
       // moves count as automatic, so a create or fork still pending from
       // before the close opens its new session when it resolves, while a
@@ -1013,8 +1015,15 @@ const chatSlice = createSlice({
       const p = action.payload
       state.agentSwitchNotice = p === null ? null : typeof p === 'string' ? { message: p } : { ...p }
     },
-    setVoicePlaying(state, action: PayloadAction<boolean>) { state.voicePlaying = action.payload },
-    setVoicePreparing(state, action: PayloadAction<boolean>) { state.voicePreparing = action.payload },
+    setVoicePlaying(state, action: PayloadAction<boolean>) {
+      state.voicePlaying = action.payload
+      if (!state.voicePlaying && !state.voicePreparing) state.voicePaused = false
+    },
+    setVoicePreparing(state, action: PayloadAction<boolean>) {
+      state.voicePreparing = action.payload
+      if (!state.voicePlaying && !state.voicePreparing) state.voicePaused = false
+    },
+    setVoicePaused(state, action: PayloadAction<boolean>) { state.voicePaused = action.payload },
     setVoiceAudio(state, action: PayloadAction<string | null>) { state.voiceAudio = action.payload },
     /** Ask the sidebar to reveal a session row (expand collapsed ancestor
      *  folders, scroll it into view, flash it). Consumed and cleared by
@@ -1169,7 +1178,7 @@ export const {
   setCloseRefused,
   setActiveSlot, dropActiveSlot, forkOpenStarted, forkOpenSettled, clearSlotState, setPendingInput, stagePendingSend, stageToMainComposer, setAgentSwitchNotice, clearUnresumableResume, clearUndeletableHistory, setQuestionCard, clearQuestionCard, setQuestionDraft, setQuestionNotice, setQuestionRequestInFlight, markQuestionSettled, resolveQuestionCard, setFollowupCard, clearFollowupCard, dismissFollowupItem, setFolderSuggestion, clearFolderSuggestion, ageFolderSuggestion, appendMessage, appendSlotMessage, updateStreamingMessage, finalizeAssistant,
   removeThinking, confirmOptimisticSend, markSendUnconfirmed, dropUnconfirmedRow, recordSendAttempt, resolveOptimisticSteer, removeByApprovalId, retireSwappedRows, resolveApprovalRow, resolveShownApprovalRow, resolveNativeApprovalRows, resolveElicitationRow, clearSlotHydrated, holdHydratedSlotPane, clearPendingPermissions, setSlotRunning, setSlotStopping, settleStopNotRunning, startLocalTurn, startServerTurn, endLocalTurn, syncSlotRunningFromServer, setSlotState, setSlotStatusDetail, setStopPressedAt, clearMessages, clearSlotCache, truncateAfterIndex, replaceMessages, hydrateSlotMessages, sseChatMessage, sseChatMessageUpdate, sseChatMessagePatchByTs, sseThinkingChunk, removeQueuedMessage, appendQueuedMessage, cancelQueuedMessage, editQueuedMessage, reorderQueuedMessages,
-  sseContextUsage, setVoicePlaying, setVoicePreparing, setVoiceAudio,
+  sseContextUsage, setVoicePlaying, setVoicePreparing, setVoicePaused, setVoiceAudio,
   toggleActivity, openActivityToTab, openActivityPanel, closeActivityPanel, setSidePanelAlwaysOpen, openActivityToTool, clearFocusToolCallId, requestSlotReveal, requestSlotFolderOpen, clearSlotReveal, requestFolderReveal, clearSubagentsForSnapshot, subagentReplayDone, sseSubagentPending, setSubagentApprovalTarget, markSubagentApproving, markSubagentApprovalGone, reconcileSubagentApprovalGone, sseSubagentSpawn, sseSubagentTool, sseSubagentStalled, sseSubagentRetrying, sseSubagentDone, sseSubagentQueued, reconcileSubagentQueuedFromSlots,
   sseSubagentBatchUpdate, sseSubagentBatchChunks, selectSubagent, clearTerminalSubagents,
   setAutomations, sseAutomation, removeAutomation,

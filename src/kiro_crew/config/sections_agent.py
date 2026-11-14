@@ -24,6 +24,7 @@ from kiro_crew.config.sections_agent_fields import (
     DEFAULT_CWD_ALLOWED_ROOTS,
     JAIL_MODE_AUTO,
     KAS_BUNDLE_DEFAULT_URL,
+    KAS_FAIL_CLOSED_WEB_FETCH_BLOCKED_HELP,
     KAS_REFUSE_PLAIN_HTTP_MCP_HEADERS_HELP,
     YOLO_UNTIL_SHUTDOWN,
     coerce_model_context_tokens,
@@ -356,6 +357,13 @@ class AgentConfig:
             "KAS: refuse MCP headers over plain http", KAS_REFUSE_PLAIN_HTTP_MCP_HEADERS_HELP
         ),
     )
+    kas_fail_closed_web_fetch_blocked: bool = field(
+        default=False,
+        metadata=_meta(
+            "KAS: refuse all fetches on an unapplied blocked entry",
+            KAS_FAIL_CLOSED_WEB_FETCH_BLOCKED_HELP,
+        ),
+    )
     kas_bundle_url: str = field(
         default=KAS_BUNDLE_DEFAULT_URL,
         metadata=_meta(
@@ -391,8 +399,8 @@ class AgentConfig:
     crew_mode_agent: str = field(
         default=_CREW_MODE_AGENT_DEFAULT,
         metadata=_meta(
-            "Ultra Mode agent",
-            "The agent template a chat runs when Ultra Mode is turned on. "
+            "Conductor mode agent",
+            "The agent template a chat runs when conductor mode is turned on. "
             "Empty falls back to the default. Takes effect live for new chats; "
             "no gateway restart.",
         ),
@@ -763,8 +771,13 @@ class AgentConfig:
             "Deferral only starts once the specs cross tool_search_min_pct or "
             "tool_search_min_tokens; disabling reverts to sending full tool "
             "specs. Crew's servers defer only when the spawn runs the pinned "
-            "kiro-cli install or its kiro-cli-chat, and both are >= 2.27.0; any "
-            "other executable, an older or unknown version keeps them resident. "
+            "kiro-cli install or its kiro-cli-chat, and both are >= 2.27.0, or "
+            "runs a KIROCREW_KIRO_BIN override or a kiro-cli found only on PATH "
+            "that is itself >= 2.27.0 (and, when named kiro-cli on macOS or "
+            "Linux, >= 3.0.0); a PATH install is checked inside the sandbox, "
+            "which Windows lacks. Any other executable, an older or unknown "
+            "version keeps them resident, and so does every spawn after a "
+            "request is refused for a changed tool list, until restart. "
             "On Kiro Crew's own KAS engine bundle they always defer: that engine "
             "keeps its tools array fixed when a tool loads. To override the "
             "never-defer list, set "
@@ -1344,6 +1357,18 @@ class AgentConfig:
             "and additionally to 60s below the turn ceiling at load time.",
         ),
     )
+    deny_override: bool = field(
+        default=True,
+        metadata=_meta(
+            "Deny Rule Override Card",
+            "When a deny rule refuses the agent's shell command in a dashboard "
+            "session you drive, show a card that lets you allow it once or for the "
+            "session. Turn this off to refuse every such command at once, with no "
+            "card and no wait for an answer; session overrides granted earlier "
+            "stop applying while it is off and apply again if it is turned back on, "
+            "until that session ends. Read on each request, so no restart is needed.",
+        ),
+    )
     session_control: bool = field(
         default=True,
         metadata=_meta(
@@ -1427,7 +1452,7 @@ class AgentConfig:
         default=True,
         metadata=_meta(
             "Conductor Own-Child Sends",
-            "Let the Conductor and the Ultra Mode team lead send to and close a "
+            "Let the Conductor and the conductor mode team lead send to and close a "
             "session they created themselves without an approval prompt, the way a "
             "Bot already does. A send or close aimed at any other session still "
             "prompts, and the child keeps its own approval mode. Turn this off to "
@@ -1509,6 +1534,24 @@ class AgentConfig:
             "controller cuts the cap when admitted work fails (timeouts, slow "
             "starts, fd or process exhaustion), so this is a smoothing "
             "interval rather than the memory guard.",
+        ),
+    )
+    windows_background_qos: bool = field(
+        default=False,
+        metadata=_meta(
+            "Windows Background QoS",
+            "Windows only. Mark the separate processes that run a chat's task "
+            "runs, and its sub-agents when the chat cannot host them itself, as "
+            "background work when they start: below-normal priority (inherited by "
+            "the git, build and test processes they run), a lower Job object CPU "
+            "weight, and EcoQoS. Priority and weight only matter when the CPU is "
+            "busy; EcoQoS can slow that work even on an idle machine. Sub-agents "
+            "that share the chat's own process (the default while Session Sharing "
+            "is on) are not marked, because the chat runs in that process too. A "
+            "task run a person opened is not marked when it starts the process, "
+            "but one that reuses a process background work started runs marked. "
+            "Applies to processes started "
+            "after the change. Off by default; no effect on macOS or Linux.",
         ),
     )
     subagent_max_turns: int = field(

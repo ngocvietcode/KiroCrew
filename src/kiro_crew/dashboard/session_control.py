@@ -220,6 +220,7 @@ if TYPE_CHECKING:  # every owner-defined name this module forwards, for type che
         SEND_DISCARD_QUEUE_CANCEL,
         SEND_DROP_EXCERPT_CHARS,
         SEND_ORIGIN_META_KEY,
+        SESSION_SEND_QUEUED_META,
         _audit_queue_drain,
         _has_channel_mirror,
         _in_runner_turn,
@@ -525,6 +526,7 @@ if TYPE_CHECKING:  # names this module re-exported from other modules
     from kiro_crew.dashboard.relay_archive import RELAY_ARCHIVE_ERROR  # noqa: F401
     from kiro_crew.dashboard.relay_archive import is_relay_archive  # noqa: F401
     from kiro_crew.dashboard.slot_color import write_slot_color  # noqa: F401
+    from kiro_crew.dashboard.slot_queue_repository import is_held_queue_entry  # noqa: F401
     from kiro_crew.dashboard.state import MAX_LIVE_SLOTS  # noqa: F401
     from kiro_crew.dashboard.state import SlotOrigin  # noqa: F401
     from kiro_crew.dashboard.state import _normalize_slot_key  # noqa: F401

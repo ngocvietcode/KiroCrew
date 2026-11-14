@@ -907,6 +907,12 @@ async def route_linked_thread(
     # context). The LLM's own output is redacted before display.
     _safe_text, _ = redact_exfiltration_urls(text)
     _safe_text, _ = redact_credentials(_safe_text)
+    # circular import: the dashboard package imports the Slack handlers.
+    from kiro_crew.dashboard.slot_buffers import flush_restored_hold
+
+    # A hold a restart restored into this idle slot is owed to this message's
+    # turn, above its user row. A running slot keeps it for that turn's seams.
+    flush_restored_hold(_linked_slot, logger=logger)
     # Nothing rendered this Slack-typed row optimistically in the dashboard, so
     # broadcast_user=True: append delivers the ONE identity-carrying frame
     # (a frame without ``meta.mid`` lets a client receiving the row through a
@@ -921,7 +927,7 @@ async def route_linked_thread(
         **({"meta": dict(user_meta)} if user_meta else {}),
     )
     _queued_text = text
-    # Ultra Mode "Pause all" holds this session: the message queues as it does
+    # Conductor mode "Pause all" holds this session: the message queues as it does
     # behind a running turn, and Resume all (or its own Continue) runs it.
     from kiro_crew import crew_pause
 

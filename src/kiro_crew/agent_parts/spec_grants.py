@@ -144,6 +144,10 @@ _MATE_AUTO_GRANTS = (
 #:   ``session_read_message`` is and returns a digest of the same transcript: a
 #:   verb is granted for a step, and no conductor step calls it yet. A skill that
 #:   adopts it for the patrol cycle adds it here with that step as the reason.
+#: * ``session_queue`` — WITHHELD. Its ``move`` action reorders instructions
+#:   waiting in another session's queue, which is a write to
+#:   what that session runs next, and no conductor step calls it yet. The same
+#:   step-adopts-it rule as ``session_summary`` applies.
 #: * ``chat_folder_move_session`` — WITHHELD. It writes another session's
 #:   ``folder_id``: the PATCH goes to ``/api/chat/slots/<target>/folder`` where the
 #:   target is the session named in the ARGUMENTS, and the strictly-resolved
@@ -451,7 +455,9 @@ _MEMBER_PANEL_GRANTS: tuple[str, ...] = (
 #: still an installed spec.
 #:
 #: ``work_ledger_rebuild`` is the goal conductor's recovery step and no other
-#: conductor's procedure names it. ``work_brief`` is a worker-half verb
+#: conductor's procedure names it. ``work_ask_record`` writes only the ask record
+#: on the conductor's own item, the goal-conductor skill's step when it relays a
+#: question to the person. ``work_brief`` is a worker-half verb
 #: granted: it only READS the caller's own bound item (or answers ``not_bound``),
 #: which is the same rule the two conductor verbs rest on. It is also a
 #: second-level conductor's mandated FIRST call, in a child session nobody opened —
@@ -476,6 +482,7 @@ _CONDUCTOR_BASE_WORK_GRANTS: tuple[str, ...] = (
 #: ``not_bound``. The pipeline and security conductors keep it gated.
 _LEDGER_CONDUCTOR_WORK_GRANTS: tuple[str, ...] = _CONDUCTOR_BASE_WORK_GRANTS + (
     "@kirocrew-work/work_ledger_rebuild",
+    "@kirocrew-work/work_ask_record",
     "@kirocrew-work/work_brief",
     "@kirocrew-work/work_report",
     "@kirocrew-work/accept_eval",

@@ -355,6 +355,9 @@ async def _write_denied_state(mutate, *, resolving_pending: bool = False) -> dic
     def _read_modify_write() -> dict:
         from kiro_crew.config import loosening_provenance
 
+        if not resolving_pending:
+            # Before the read: a stale endorsed copy must not be published over an Apply.
+            loosening_provenance.refuse_save_if_pending(loosening_provenance.LEAF_DENIED_COMMANDS)
         denied = _read_denied_strict()
         mutate(denied)
         payload = text_bytes(json.dumps(denied, indent=2) + "\n")
@@ -472,7 +475,7 @@ async def api_denied_command_builtin_toggle(request: web.Request) -> web.Respons
         body = await request.json()
     except Exception:
         _audit(request, operation=op, outcome="denied", resources=f"{rule_id}=invalid_json")
-        return web.json_response({"error": "invalid JSON"}, status=400)
+        return web.json_response({"error": "invalid JSON", "code": "invalid_json"}, status=400)
 
     # A valid-but-non-object body (e.g. `[]`) must yield a clean 400, not a 500.
     if not isinstance(body, dict):
@@ -549,7 +552,7 @@ async def api_denied_commands_disable_all(request: web.Request) -> web.Response:
         body = await request.json()
     except Exception:
         _audit(request, operation=op, outcome="denied", resources="invalid_json")
-        return web.json_response({"error": "invalid JSON"}, status=400)
+        return web.json_response({"error": "invalid JSON", "code": "invalid_json"}, status=400)
 
     if not isinstance(body, dict):
         body = {}
@@ -778,7 +781,7 @@ async def api_denied_command_user_add(request: web.Request) -> web.Response:
         body = await request.json()
     except Exception:
         _audit(request, operation=op, outcome="denied", resources="invalid_json")
-        return web.json_response({"error": "invalid JSON"}, status=400)
+        return web.json_response({"error": "invalid JSON", "code": "invalid_json"}, status=400)
 
     if not isinstance(body, dict):
         body = {}
@@ -831,7 +834,7 @@ async def api_denied_command_user_toggle(request: web.Request) -> web.Response:
         body = await request.json()
     except Exception:
         _audit(request, operation=op, outcome="denied", resources=f"{rule_id}=invalid_json")
-        return web.json_response({"error": "invalid JSON"}, status=400)
+        return web.json_response({"error": "invalid JSON", "code": "invalid_json"}, status=400)
 
     # A valid-but-non-object body (e.g. `[]`) must yield a clean 400, not a 500.
     if not isinstance(body, dict):

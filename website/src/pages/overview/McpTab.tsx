@@ -21,7 +21,7 @@ import McpCustomServerModal from '../../components/McpCustomServerModal'
 import type { McpServer, McpApplyChange, McpScopePresence, McpGlobalScope, McpTempRefusal } from '../../types'
 import { useSortableTable } from '../../hooks/useSortableTable'
 import { useScrollEdges } from '../../hooks/useScrollEdges'
-import { fmtDateTime, fmtNumber, fmtTime } from '../../i18n/format'
+import { compareText, fmtDateTime, fmtNumber, fmtTime } from '../../i18n/format'
 
 /** Same calendar day as now — the boundary where a bare time stops being honest. */
 function isToday(epochSecs: number): boolean {
@@ -648,6 +648,8 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
   // the Customize → Connections panel's provider.
   const setMcpStagedEdits = useSetMcpStagedEdits()
   useEffect(() => { setMcpStagedEdits(pendingCount > 0) }, [pendingCount, setMcpStagedEdits])
+  // Gone with the list: its staged edits are gone too.
+  useEffect(() => () => setMcpStagedEdits(false), [setMcpStagedEdits])
 
   // Toggle a tool override.  If the new value matches the server's current
   // on-disk state (i.e. this is a revert), drop the override.  If all
@@ -800,8 +802,8 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
     [servers, mcpFilter]
   )
   const mcpComparators = useMemo(() => ({
-    name: (a: McpServer, b: McpServer) => a.name.localeCompare(b.name),
-    status: (a: McpServer, b: McpServer) => (a.status || '').localeCompare(b.status || ''),
+    name: (a: McpServer, b: McpServer) => compareText(a.name, b.name),
+    status: (a: McpServer, b: McpServer) => compareText(a.status || '', b.status || ''),
     tools: (a: McpServer, b: McpServer) => (a.tools?.length || 0) - (b.tools?.length || 0),
   }), [])
   const { sorted: sortedServers, sort: mcpSort, toggle: toggleMcpSort } = useSortableTable(filtered, 'mcp-overview', mcpComparators, { key: 'name', dir: 'asc' })
@@ -1180,11 +1182,7 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
                       {i18nT('pages.overview.mcpTab.agent_dropped_not_found', { command: s.agentDropped.command })}
                       <span className="block mt-0.5">
                         {i18nT('pages.overview.mcpTab.agent_dropped_fix', {
-                          page: [
-                            i18nT('nav.agent_capabilities'),
-                            i18nT('pages.capabilitiesPage.connections_label'),
-                            i18nT('pages.connectionsPage.mcp_servers'),
-                          ].join(' → '),
+                          page: i18nT('nav.mcp_servers'),
                         })}
                       </span>
                     </div>
@@ -1282,6 +1280,15 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
                       <McpRowSignIn target={signInTarget} serverName={s.name} again kasChatNote={s.kasChatSignIn} />
                       <span className="text-muted text-[12px]">{i18nT('pages.overview.mcpTab.sign_in_again_no_tools_hint')}</span>
                     </div>
+                  ) : mcpAuthState(s) === 'signed_in' && connectionsUi && !signInTarget && !s.tools?.length && !s.authCrewHeld ? (
+                    /* A held grant on a server this page cannot sign in to: the
+                       gateway signs in only for a server the owner added here.
+                       The probe carries no token, so a working server lands here
+                       too: the line opens with Signed in, and names the chat
+                       sign-in only as the step after a tool fails. */
+                    <span className="text-muted text-[12px] break-words" data-testid="mcp-signed-in-no-row-sign-in">
+                      {i18nT('pages.overview.mcpTab.signed_in_no_row_sign_in', { name: s.name })}
+                    </span>
                   ) : s.tools?.length ? (<div>
                     <button className="flex items-center gap-1 text-[12px] text-accent hover:text-accent-hover cursor-pointer transition-colors mb-1" onClick={() => setExpandedTools(prev => { const next = new Set(prev); if (next.has(s.name)) next.delete(s.name); else next.add(s.name); return next })}>{i18nT('pages.overview.mcpTab.tools_count', { count: s.tools.length, n: fmtNumber(s.tools.length) })}{!expandedTools.has(s.name) && (s.disabledTools?.length || 0) > 0 && <span className="text-muted ml-1">{i18nT('pages.overview.mcpTab.off_count', { count: s.disabledTools!.length })}</span>}<ChevronRight size={14} className={`transition-transform duration-200 ${expandedTools.has(s.name) ? 'rotate-90' : ''}`} /></button>
                     <AnimatePresence>{expandedTools.has(s.name) && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">

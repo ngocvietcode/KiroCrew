@@ -29,10 +29,11 @@ import TrustAppModal, {
   isTrustDeniedError, localOnlyTrustRepository, SESSION_APPROVAL_CONSENT_REQUIRED, useTrustGate,
 } from '../components/appstore/TrustAppModal'
 import { isRegistrySourced } from '../components/appstore/types'
+import { desktopRequestOf } from '../components/appstore/desktopRequest'
 import { REGISTRY_STALE_MS, registryQueryFn } from './apps/useAppsData'
 import AppSource from '../components/appstore/AppSource'
 import { consentTierFor } from '../components/appstore/registryTier'
-import { backendRefusedNotice } from '../components/appstore/backendRefused'
+import { appActionNotice, backendRefusedNotice } from '../components/appstore/backendRefused'
 import { recordEvent } from '../rum'
 import { useTheme } from '../hooks/useTheme'
 import { useActionsInFlight } from '../hooks/useActionsInFlight'
@@ -51,7 +52,7 @@ import {
   appDisplayName, appDescription, appHighlights, appUseCases, appConfiguration,
 } from '../components/appstore/appManifest'
 import { isBuiltinServerRow, mergeBuiltinRow } from '../components/appstore/mergeBuiltinRow'
-import { classifyManifestArt, installedArt, installedArtList, installedArtListAligned, installedIcon } from '../components/appstore/useHeroArt'
+import { installedArt, installedArtList, installedArtListAligned, installedIcon, installedPageIcon } from '../components/appstore/useHeroArt'
 import { fmtDateNumeric, fmtCompact, fmtNumber, fmtList } from '../i18n/format'
 import { HeroBanner, ScreenshotGallery } from './AppDetailPageArt'
 import { messageActionGrantLabel } from '../messageActions/messageActionRegistry'
@@ -62,13 +63,16 @@ import { openLocalSourceSwitch } from './appDetailPageLocalSwitch'
 import { selectionActionGrantLabel } from '../selectionActions/selectionActionRegistry'
 import type { AppInfo, NormalizedRegistryEntry, RegistryEntry } from './appDetailPageTypes'
 import { actionGrant } from '../composerActions/composerActionRegistry'
-import { memoryAccessLabel } from '../components/appstore/memoryAccessLabel'
+import { memoryAccessLabel, memoryRequested } from '../components/appstore/memoryAccessLabel'
 import { managerLabel, originLabel } from './appDetailPageLabels'
-import { UserSessionReachBox, UserSessionReachStaged, WorkerAutoApproveBox, reachVerbs } from './AppDetailGrantBoxes'
+import { ChatSlotsBox, DesktopCapabilitiesBox, DesktopCapabilitiesStaged, UserSessionReachBox, UserSessionReachStaged, WorkerAutoApproveBox, WorkerAutoApproveStaged, knownDesktopCapabilities, reachVerbs } from './AppDetailGrantBoxes'
+import { trustGrants } from '../components/appstore/trustGrants'
+import { stagedGrantsOf } from './appDetailPageStagedGrants'
 // The page's parts live in sibling owners that never import this module:
 // `AppDetailPageArt.tsx` (the hero banner and the screenshot gallery, each with
 // its local-art second chance), `appDetailPageTypes.ts` (the page's view
-// model) and `appDetailPageLabels.ts` (the origin and lifecycle words).
+// model), `appDetailPageLabels.ts` (the origin and lifecycle words) and
+// `appDetailPageStagedGrants.ts` (what the approved set holds back).
 // Callers import the two art components from this module.
 export { HeroBanner, ScreenshotGallery }
 
@@ -102,39 +106,15 @@ export default function AppDetailPage() {
    * Stays until the next action, which is the user's chance to act on it.
    */
   const [backendRefusedMsg, setBackendRefusedMsg] = useState('')
-  // The page is reused across /apps/detail/:name, so a refusal belongs to the
-  // app it was reported for and goes when the route names another one.
-  useEffect(() => { setBackendRefusedMsg('') }, [name])
   const reconsentMsg = app?.sessionApprovalConsentPending
     ? i18nT('pages.appDetailPage.session_approval_reconsent_notice', { name: appDisplayName(app) })
     : ''
-  // Declared api/events entries outside the approved set (`approvedGrants`) are
-  // held back: the app runs without them until the owner approves them here.
-  const stagedApi = app?.approvedGrants
-    ? (app.manifest?.permissions?.api || []).filter(p => !(app.approvedGrants?.api || []).includes(p))
-    : []
-  const stagedEvents = app?.approvedGrants
-    ? (app.manifest?.permissions?.events || []).filter(e => !(app.approvedGrants?.events || []).includes(e))
-    : []
-  // Link-preview hosts and text patterns an update widened wait the same way.
-  const stagedLinkHosts = app?.linkPreviewGrant?.stagedHosts || []
-  const stagedLinkPatterns = app?.linkPreviewGrant?.stagedTextPatterns || []
-  const stagedFullUrl = app?.linkPreviewGrant?.stagedFullUrl === true
-  // Message-action reach an update widened (the user role, markdown, a new action).
-  const stagedMessageActions = app?.messageActionGrant?.staged || []
-  const declaredMessageActions = (app?.manifest as { contributes?: { messageActions?: unknown } } | undefined)?.contributes?.messageActions
-  // So do link-open hosts and whole URLs for opened links.
-  const stagedOpenHosts = app?.linkOpenGrant?.stagedHosts || []
-  const stagedOpenFullUrl = app?.linkOpenGrant?.stagedFullUrl === true
-  // A composer button an update added waits the same way.
-  const stagedComposerActions = app?.composerActionGrant?.staged || []
-  // Selection actions an update added or changed (a new source, more text, a new effect).
-  const stagedSelection = app?.selectionActionGrant?.staged || []
-  const declaredSelectionActions = (app?.manifest as { contributes?: { selectionActions?: unknown } } | undefined)?.contributes?.selectionActions
-  // An update that added `permissions.workerAutoApprove` waits the same way.
-  const stagedWorkerAutoApprove = app?.workerAutoApproveGrant?.staged === true
-  const stagedUserSessionReach = app?.userSessionReachGrant?.staged || []
-  const hasStagedGrants = stagedApi.length + stagedEvents.length + stagedLinkHosts.length + stagedLinkPatterns.length + stagedMessageActions.length + stagedOpenHosts.length + stagedComposerActions.length + stagedSelection.length + stagedUserSessionReach.length > 0 || stagedFullUrl || stagedOpenFullUrl || stagedWorkerAutoApprove
+  const {
+    stagedApi, stagedEvents, stagedLinkHosts, stagedLinkPatterns, stagedFullUrl,
+    stagedMessageActions, declaredMessageActions, stagedOpenHosts, stagedOpenFullUrl,
+    stagedComposerActions, stagedSelection, declaredSelectionActions, stagedWorkerAutoApprove,
+    stagedUserSessionReach, stagedDesktopCapabilities, hasStagedGrants,
+  } = stagedGrantsOf(app)
   // Shown where the notice was once the owner approves, so the moment is confirmed.
   const [grantsApprovedMsg, setGrantsApprovedMsg] = useState('')
   const enableLabel = app?.sessionApprovalConsentPending
@@ -243,6 +223,11 @@ export default function AppDetailPage() {
 
   // Abort in-flight streaming install on unmount
   useEffect(() => () => { installAbortRef.current?.abort() }, [])
+  // A failed Retry refocuses the new Retry if focus fell to <body>; only the load Retry starts claims the press.
+  const retryRef = useRef<HTMLButtonElement>(null)
+  const retryPressed = useRef(false)
+  const [refocusRetry, setRefocusRetry] = useState(false)
+  useEffect(() => { if (!refocusRetry) return; setRefocusRetry(false); if (!document.activeElement || document.activeElement === document.body) retryRef.current?.focus() }, [refocusRetry])
 
   /**
    * Resolve the page's record. The three reads are independent, so they run at
@@ -259,6 +244,7 @@ export default function AppDetailPage() {
    */
   const load = useCallback(async ({ shareListing = false, keepView = false }: { shareListing?: boolean; keepView?: boolean } = {}) => {
     if (!name) return
+    const fromRetry = retryPressed.current; retryPressed.current = false; let failed = false
     // `keepView` refreshes in place: the loader would unmount the pressed button.
     if (!keepView) {
       setLoading(true)
@@ -358,6 +344,7 @@ export default function AppDetailPage() {
             selectionActionGrant: installed.selectionActionGrant,
             workerAutoApproveGrant: installed.workerAutoApproveGrant,
             userSessionReachGrant: installed.userSessionReachGrant,
+            desktopCapabilitiesGrant: installed.desktopCapabilitiesGrant,
             managed: installed.managed,
             source: installed.source,
             installedAt: installed.installedAt,
@@ -381,17 +368,6 @@ export default function AppDetailPage() {
           // since the app IS installed those paths resolve against its own
           // install directory through `installedArt` — no repo identifier, no
           // clone, no network.
-          // A page's own icon ships inside the app's UI bundle, not at the repo
-          // root, so a relative value resolves against the app's UI asset route —
-          // the same base the rail and the command palette use. A cross-origin
-          // value is refused here for the same reason it is everywhere else on
-          // this path: the manifest is untrusted, and requesting it would leak the
-          // viewer to whatever host it names.
-          const pageIcon: unknown = m.ui?.pages?.[0]?.iconUrl
-          const pageIconKind = classifyManifestArt(pageIcon)
-          const pageIconUrl = pageIconKind === 'same-origin' ? pageIcon as string
-            : pageIconKind === 'relative' ? `/apps/${installed.name}/ui/${pageIcon as string}`
-              : ''
           setApp({
             name: installed.name,
             displayName: installed.displayName || m.displayName || installed.name,
@@ -419,7 +395,7 @@ export default function AppDetailPage() {
             // through the same resolver rather than straight to `<img>`, so a
             // manifest naming an external host is refused on this surface too.
             iconUrl: registryEntry?.iconUrl
-              || installedIcon(m.iconPath, m.iconUrl, installed.name) || pageIconUrl || '',
+              || installedIcon(m.iconPath, m.iconUrl, installed.name) || installedPageIcon(m.ui?.pages?.[0]?.iconUrl, installed.name) || '',
             iconUrlDark: registryEntry?.iconUrlDark
               || installedIcon(m.iconPathDark, m.iconUrlDark, installed.name) || '',
             // The app IS installed on this branch, so its icon bytes are on
@@ -494,6 +470,7 @@ export default function AppDetailPage() {
             selectionActionGrant: installed.selectionActionGrant,
             workerAutoApproveGrant: installed.workerAutoApproveGrant,
             userSessionReachGrant: installed.userSessionReachGrant,
+            desktopCapabilitiesGrant: installed.desktopCapabilitiesGrant,
             managed: installed.managed,
             source: installed.source,
             installedAt: installed.installedAt,
@@ -526,9 +503,9 @@ export default function AppDetailPage() {
       }
       if (sideFailure) setError(sideFailure instanceof Error ? sideFailure.message : String(sideFailure))
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : i18nT('pages.appDetailPage.failed_to_load_app'))
+      failed = true; setError(e instanceof Error ? e.message : i18nT('pages.appDetailPage.failed_to_load_app'))
     } finally {
-      setLoading(false)
+      setLoading(false); if (fromRetry && failed) setRefocusRetry(true)
     }
   }, [name, clearError, queryClient])
 
@@ -688,7 +665,7 @@ export default function AppDetailPage() {
     const shownMemberThreads = memberThreads ?? app?.manifest?.permissions?.memberThreads === true
     const result = await api.enableApp(name, consent, undefined, consent && shownMemberThreads)
     recordEvent('app_enable', { app: name, version: app?.installedVersion || app?.version })
-    setBackendRefusedMsg(backendRefusedNotice(app ? appDisplayName(app) : name, result))
+    setBackendRefusedMsg(appActionNotice(app ? appDisplayName(app) : name, result, 'enable'))
     await load({ keepView: true })
     window.dispatchEvent(new Event('mc:apps-changed'))
   }, [app, load])
@@ -729,10 +706,8 @@ export default function AppDetailPage() {
         displayName: app.displayName,
         trustRepository: app.trustRepository,
         origin: app.origin,
-        sessionApproval: app.manifest?.permissions?.sessionApproval === true,
-        memberThreads: app.manifest?.permissions?.memberThreads === true,
-        workerAutoApprove: app.manifest?.permissions?.workerAutoApprove === true,
-        reachableByUserSessions: app.manifest?.permissions?.reachableByUserSessions,
+        ...trustGrants(app.manifest?.permissions),
+        desktop: desktopRequestOf(app.manifest),
         retryInstalls: true,
         // The Update buttons funnel here too, over an app that is already there.
         replacesInstalled: app.installed === true,
@@ -828,7 +803,7 @@ export default function AppDetailPage() {
         await runEnable(app.name, memberThreads)
         return
       }
-      if (action === 'disable') await api.disableApp(app.name)
+      if (action === 'disable') setBackendRefusedMsg(appActionNotice(appDisplayName(app), await api.disableApp(app.name), 'disable'))
       else if (action === 'update') updateResult = await api.updateApp(app.name)
       if (action === 'disable') {
         recordEvent('app_disable', { app: app.name, version: app.installedVersion || app.version })
@@ -867,10 +842,8 @@ export default function AppDetailPage() {
           displayName: app.displayName,
           trustRepository: app.trustRepository,
           origin: app.origin,
-          sessionApproval: app.manifest?.permissions?.sessionApproval === true,
-          memberThreads: app.manifest?.permissions?.memberThreads === true,
-          workerAutoApprove: app.manifest?.permissions?.workerAutoApprove === true,
-          reachableByUserSessions: app.manifest?.permissions?.reachableByUserSessions,
+          ...trustGrants(app.manifest?.permissions),
+          desktop: desktopRequestOf(app.manifest),
         })
       } else if (action === 'enable' && isSessionApprovalConsentRequiredError(e)) {
         // The grant changed under the dialog (an update added a scope it did not
@@ -929,7 +902,7 @@ export default function AppDetailPage() {
           {/* Nothing on this page is editable, so the hand-off loses nothing. */}
           <ErrorNotice message={error} askAgent />
           <div className="flex items-center gap-2">
-            {error && <Btn onClick={() => { void load() }}>{i18nT('pages.appDetailPage.retry')}</Btn>}
+            {error && <Btn ref={retryRef} onClick={() => { retryPressed.current = true; void load() }}>{i18nT('pages.appDetailPage.retry')}</Btn>}
             <Btn onClick={() => navigate('/apps')}><ArrowLeft size={14} /> {i18nT('pages.appDetailPage.back_to_apps')}</Btn>
           </div>
         </div>
@@ -1233,13 +1206,10 @@ export default function AppDetailPage() {
                   </ul>
                 </div>
               )}
-              {stagedOpenFullUrl && (
-                <div className="text-[13px]">{i18nT('pages.appDetailPage.grants_reconsent_link_open_full_url')}</div>
-              )}
-              {stagedWorkerAutoApprove && (
-                <div className="text-[13px]">{i18nT('pages.appDetailPage.grants_reconsent_worker_auto_approve')}</div>
-              )}
+              {stagedOpenFullUrl && <div className="text-[13px]">{i18nT('pages.appDetailPage.grants_reconsent_link_open_full_url')}</div>}
+              {stagedWorkerAutoApprove && <WorkerAutoApproveStaged />}
               <UserSessionReachStaged staged={stagedUserSessionReach} />
+              <DesktopCapabilitiesStaged staged={stagedDesktopCapabilities} />
               {app.enabled && (
                 <span className="text-[13px] text-muted">{i18nT('pages.appDetailPage.grants_reconsent_undo', { name: appDisplayName(app) })}</span>
               )}
@@ -1252,7 +1222,7 @@ export default function AppDetailPage() {
               primary
               onClick={async () => {
                 startAction('approve_grants')
-                const approved = fmtList([...stagedApi, ...stagedEvents, ...stagedLinkHosts, ...stagedLinkPatterns, ...(stagedFullUrl ? ['fullUrl'] : []), ...stagedMessageActions.map(e => messageActionGrantLabel(e, declaredMessageActions)), ...stagedOpenHosts, ...(stagedOpenFullUrl ? ['fullUrl'] : []), ...stagedComposerActions, ...stagedSelection.map(e => selectionActionGrantLabel(e, declaredSelectionActions)), ...(stagedWorkerAutoApprove ? ['workerAutoApprove'] : []), ...stagedUserSessionReach], { style: 'narrow' })
+                const approved = fmtList([...stagedApi, ...stagedEvents, ...stagedLinkHosts, ...stagedLinkPatterns, ...(stagedFullUrl ? ['fullUrl'] : []), ...stagedMessageActions.map(e => messageActionGrantLabel(e, declaredMessageActions)), ...stagedOpenHosts, ...(stagedOpenFullUrl ? ['fullUrl'] : []), ...stagedComposerActions, ...stagedSelection.map(e => selectionActionGrantLabel(e, declaredSelectionActions)), ...(stagedWorkerAutoApprove ? ['workerAutoApprove'] : []), ...stagedUserSessionReach, ...stagedDesktopCapabilities], { style: 'narrow' })
                 try {
                   const result = await api.enableApp(app.name, false, {
                     api: stagedApi,
@@ -1267,8 +1237,9 @@ export default function AppDetailPage() {
                     selectionActions: stagedSelection,
                     workerAutoApprove: stagedWorkerAutoApprove ? ['ownSlots'] : [],
                     reachableByUserSessions: stagedUserSessionReach,
+                    desktopCapabilities: stagedDesktopCapabilities,
                   })
-                  setBackendRefusedMsg(backendRefusedNotice(appDisplayName(app), result))
+                  setBackendRefusedMsg(appActionNotice(appDisplayName(app), result, 'enable'))
                   setGrantsApprovedMsg(i18nT('pages.appDetailPage.grants_approved', { entries: approved }))
                   await load({ keepView: true })
                   window.dispatchEvent(new Event('mc:apps-changed'))
@@ -1811,12 +1782,14 @@ export default function AppDetailPage() {
                   </div>
                 )}
                 {app.manifest.permissions.workerAutoApprove && <WorkerAutoApproveBox staged={stagedWorkerAutoApprove} />}
+                {app.manifest.permissions.chatSlots === true && <ChatSlotsBox />}
                 <UserSessionReachBox declared={reachVerbs(app.manifest.permissions.reachableByUserSessions)} staged={stagedUserSessionReach} />
+                <DesktopCapabilitiesBox declared={knownDesktopCapabilities(app.manifest.permissions.desktopCapabilities)} staged={stagedDesktopCapabilities} />
                 <div className="flex flex-wrap gap-3 text-[12px] text-muted mt-1">
                   {app.manifest.permissions.storage && <span className="flex items-center gap-1">{i18nT('pages.appDetailPage.storage_yes')}</span>}
                   {app.manifest.permissions.cron && <span className="flex items-center gap-1">{i18nT('pages.appDetailPage.cron_yes')}</span>}
                   {app.manifest.permissions.network && <span className="flex items-center gap-1">{i18nT('pages.appDetailPage.network_yes')}</span>}
-                  {app.manifest.permissions.memory && <span className="flex items-center gap-1">{memoryAccessLabel(app.manifest.permissions.memory)}</span>}
+                  {memoryRequested(app.manifest.permissions.memory) && <span className="flex items-center gap-1">{memoryAccessLabel(app.manifest.permissions.memory as boolean | string)}</span>}
                 </div>
               </div>
             </Card>

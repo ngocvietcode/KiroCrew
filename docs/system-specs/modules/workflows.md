@@ -102,7 +102,7 @@ param-by-param (name, kind, default) and for async-ness by
 
 | Attribute | Type | Semantics |
 |-----------|------|-----------|
-| `args` | `dict` | the run's arguments, from `workflow_run` / the HTTP body |
+| `args` | `dict` | the run's arguments, from `workflow_run` / the HTTP body. The script gets its own deep copy, so editing `ctx.args` as scratch state never changes the args stored on the run, its `run_started` event, or what a rerun starts from |
 | `now` | `str` | a **fixed run-start stamp** supplied by the caller |
 | `owner_dm` | `str` | the owner's Slack DM target, the intended argument to `send_slack` |
 | `budget` | `Budget` | token accounting (below) |
@@ -371,6 +371,15 @@ same terminal path; `parallel` and `pipeline` pass it on rather than resolving i
 > `remaining()` stays at `total`, so a script's `ctx.budget.remaining()`-based
 > early-stop never trips and no `budget_update` event is ever emitted. Wiring
 > per-call token cost into `charge()` is the missing half.
+>
+> Until that is decided, `workflows.budget_watch.BudgetWatch` measures and warns
+> only. After each live (not replayed) agent call it adds an estimate of the call's
+> tokens (characters of prompt and result / 4, at least 1, since the executors do
+> not hand per-call usage back), and the first time the estimate passes
+> `budget_total` it writes one `log` event, `budget_total N passed: about M tokens
+> used so far (estimated from prompt and result size); the run is not stopped`,
+> and a gateway warning. It never calls `charge()`, so `spent()`, `remaining()` and
+> whether a run stops are unchanged; stopping the run is the open question above.
 
 ### ports native to Kiro Crew
 
@@ -451,7 +460,7 @@ untouched. On top of those verbs the port adds only:
   `mode_raise_refused` for a mode above the target session's current mode or
   above the launching session's own posture (`_trust` → `trust`, `_trust_reads`
   → `trust_reads`, else `normal`; a launching slot that closed or was replaced
-  reads as `normal`, and an Ultra Mode card trust (`_trust_card_scoped`), which
+  reads as `normal`, and a conductor mode card trust (`_trust_card_scoped`), which
   `approval_posture.trust_carries` keeps from passing to the sessions it
   starts though it reaches its subagents, counts as no `_trust`). So a session the person lowered stays lowered, and the
   mode write's `trust` arm, which also approves the session's pending tool calls,
@@ -531,8 +540,8 @@ are allowed** so a journal stays forward-compatible.
 | `type` | required `data` keys | Notes |
 |--------|----------------------|-------|
 | `run_started` | `name`, `args`, `script_hash`, `budget_total` | first event of every run. `name` comes from `META["name"]` (empty on the author-in-run and validation-failure paths). `budget_total` may be `None` |
-| `phase_started` | `title` | from `ctx.phase()`, and from the runner's own `"Authoring"` phase |
-| `agent_started` | `agent_id`, `label`, `phase`, `call_index` | `agent_id` is `a<call_index>` |
+| `phase_started` | `title` | from `ctx.phase()`, and from the runner's own `"Authoring"` phase; also an optional `phase_index`, the phase's 1-based ordinal in the run (counted by `EventStream`) |
+| `agent_started` | `agent_id`, `label`, `phase`, `call_index` | `agent_id` is `a<call_index>`; also an optional `phase_index`, the ordinal of the phase the call runs in (0 when the call names its own `phase=` or runs before any phase) |
 | `agent_progress` | `agent_id`, `turns`, `last_tool`, `elapsed_s` | **builder exists, nothing emits it.** The frontend reads `last_tool` from it |
 | `agent_finished` | `agent_id`, `result_summary`, `ok` | plus an optional `error` (bounded, redacted; empty when `ok`). `result_summary` is `str(result)[:120]`, empty when the result is `None`. `error` is deliberately **not** in `REQUIRED_DATA_KEYS` so journals from an older build still deserialize |
 | `log` | `message` | from `ctx.log()`, from authoring progress, and from nudge outcomes |
@@ -548,6 +557,17 @@ terminal event is always last, and `seq` is contiguous from 0. For the canonical
 happy path the stream is `run_started, phase_started, log, agent_started,
 agent_finished, run_finished`.
 
+**Traces.** While `telemetry.traces_enabled` is on, `WorkflowRunner.run` opens the run's
+trace root around everything the run does (`tracing/workflows.py`; spec:
+[metrics](metrics.md), "Workflow runs"). The trace has a `workflow <name>` anchor, one
+`phase <title>` span per `phase_started` (read from its `phase_index`), each live
+`ctx.agent()` call as one turn under its phase, and a `workflow outcome <status>` marker.
+A call replayed from a prior run streams no turn, so it emits no span.
+`run_background` pins the turn that launched the run. The completion turn that
+`workflow_startup`'s auto-turn starts joins the run's trace and links to that launcher;
+a queued one, and a retry of either, carries `meta.workflow_run_id` for the drain to
+hand over. Off, the runner opens no span.
+
 `where` maps to a cause:
 
 | `where` | Cause |
@@ -555,7 +575,7 @@ agent_finished, run_finished`.
 | `author` | author-in-run raised, or produced no valid script |
 | `validate` | static validation failed, or the script references a ctx primitive this host did not wire |
 | `ceiling` | wall-clock timeout, `BudgetExceeded`, or the per-run agent-call cap |
-| `exec` | the script itself raised |
+| `exec` | the script itself raised, a `BaseException` included (it is in the script's builtins); the background driver also marks the run `failed` on one, so a script's `BaseException` no longer leaves the run `running` with a Cancel that reports success on nothing. A cancel still ends the run `cancelled`; a process `KeyboardInterrupt` or `SystemExit` is recorded, then re-raised; a `GeneratorExit` (a coroutine being closed) is re-raised with nothing awaited |
 | `interrupted` | the script returned, but a `ctx.agent()` step's turn was stopped from outside (`WorkflowStepInterrupted`); `error` is that step's error |
 
 ### Persistence of the stream
@@ -825,7 +845,8 @@ entry is dropped. The built-in Workflows app's `/run` handler returns its result
 `RunHandle` holds `run_id`, `name`, `status`, the growing `events` list, `result`,
 `error`, `author`, `session_key`, `source`, `args`, `agent_results`,
 `agent_errors`, exact saved-definition provenance, optional `derived_from`
-ancestry, and the driving `task`. Statuses: `running`, `paused`, `finished`,
+ancestry, the launch limits `timeout_secs` and `budget_total` (stored, and read
+back as `None` from an older record that lacks them), and the driving `task`. Statuses: `running`, `paused`, `finished`,
 `failed`, `cancelled`; `running` and `paused` are active states.
 
 Two distinct serializations:
@@ -1413,7 +1434,8 @@ remains an exact saved invocation and cannot be promoted into a duplicate or
 appended as a revision. An
 edited rerun clears that saved-definition identity because its submitted source
 is no longer the exact saved revision, and keeps the former id and revision only
-as `derived_from` ancestry; any later rerun carries that ancestry forward.
+as `derived_from` ancestry; any later rerun carries that ancestry forward. A rerun also runs under the prior run's own `timeout_secs` and
+`budget_total`; a `timeout_secs` the caller passes still wins.
 
 TaskRunner applies the same rule to saved task plans. A user edit or automatic
 replan clears the run's exact definition id, slug, and revision before publishing
@@ -1782,6 +1804,10 @@ an object, list or boolean is absent, so it never titles the chat with its repr,
 while a string passes unchanged and a non-zero number keeps its text (zero stays
 absent).
 
+A rerun keeps the fallback `title` and `folder` its run was launched with, so a
+rerun whose chat slot is gone lands in the same titled, filed slot as the run it
+repeats.
+
 When the originating chat slot is gone at delivery (the common case for a
 webhook-driven run, whose ephemeral session is destroyed when its turn ends),
 `inject_workflow_result` falls back to a dedicated `workflow-<run_id>` slot
@@ -1814,7 +1840,7 @@ allocate nothing and are not tested.
 
 Live progress reaches the browser as a `workflow_run_event` WS broadcast carrying
 the redacted event plus the run's `session_key`, and the frontend
-(`website/src/apps/workflows/runModel.ts`) folds the stream into a phase tree and a
+(`website/src/components/workflows/runModel.ts`) folds the stream into a phase tree and a
 budget snapshot. On a terminal state, `dashboard/workflow_inject.py` posts the
 result into the originating chat slot and starts (or queues) an agent turn so the
 user gets a synthesized answer rather than a raw blob. That turn's prompt is the
@@ -1910,7 +1936,7 @@ nothing -- honest at run time even if the pin is ever relaxed. `open_session` an
 `session` node, because the work it starts runs in another session and never reports
 in this run's stream; `set_session_mode` starts nothing and is narration.
 
-`website/src/apps/workflows/planModel.ts` merges the plan with the stream. Both inputs
+`website/src/components/workflows/planModel.ts` merges the plan with the stream. Both inputs
 are coerced to text at that seam, because nothing between a script and the graph
 guarantees a string: `ctx.phase(123)` records a numeric `title`, `ctx.agent(...,
 label=123)` a numeric `label`, and `runModel` reads event fields with a cast and no
@@ -1980,6 +2006,15 @@ false` and `hidden: true`; it exposes `/validate`, `/run` and `/examples` over i
 own stdlib HTTP server. Its `/run` endpoint uses the deterministic `_stub_agent`;
 real agent orchestration runs through the gateway service and the MCP/HTTP surfaces
 above.
+
+The run views are core, not part of that app: `website/src/components/workflows/`
+holds the event-stream and plan models, the run snapshot hook, the run tree and
+graph, the source panel and the Runs list. They read only the core run registry
+(`/api/workflows/*`), and the chat, the session sidebar and Customize → Workflows
+render them whether or not the app is installed. The app's own UI is the
+`/workflows` page in `website/src/apps/workflows/` (the Author view over its
+backend, plus the core Runs list), reached from core only through its
+`builtinRegistry.ts` row; `workflowsBoundary.test.ts` pins that.
 
 `/examples` serves the scripts in [`examples/workflows/`](examples/workflows/),
 which `server.py::_examples_dir()` locates by walking up from the module toward the
@@ -2144,8 +2179,8 @@ crashing.
 
 | Gate | Guarantees | Pinned by | Constrains |
 |---|---|---|---|
-| E1 | Undocumented. The only statement of intent is an inline comment in `website/src/apps/workflows/WorkflowsPage.tsx` ("invalid script blocks the run") on the run handler, which validates before it runs. No test asserts it by id. | Nearest coverage: `website/src/test/WorkflowsPage.test.ts` (pure event-stream folding), `website/playwright/builtin-apps.spec.ts` (`/workflows` renders). | `website/src/apps/workflows/WorkflowsPage.tsx` |
-| E2, E3, E4 | Undocumented. These ids appear only inside the range `E1-E4`, described as Playwright gates against a dev instance; no individual id is defined or asserted anywhere in the tree. | See `website/src/test/WorkflowsPage.test.ts` (which names the range) and `website/playwright/builtin-apps.spec.ts`. | `website/src/apps/workflows/` |
+| E1 | Undocumented. The only statement of intent is an inline comment in `website/src/apps/workflows/WorkflowsPage.tsx` ("invalid script blocks the run") on the run handler, which validates before it runs. No test asserts it by id. | Nearest coverage: `website/src/test/workflowRunModel.test.ts` (pure event-stream folding), `website/playwright/builtin-apps.spec.ts` (`/workflows` renders). | `website/src/apps/workflows/WorkflowsPage.tsx` |
+| E2, E3, E4 | Undocumented. These ids appear only inside the range `E1-E4`, described as Playwright gates against a dev instance; no individual id is defined or asserted anywhere in the tree. | See `website/src/test/workflowRunModel.test.ts` (which names the range) and `website/playwright/builtin-apps.spec.ts`. | `website/src/apps/workflows/` |
 
 The backend half of the tab is covered without gate ids, in
 `test_workflows_app.py` (manifest shape, `handle_validate` / `handle_run` /

@@ -135,7 +135,7 @@ async def api_kirocrew_agent_update(request: web.Request) -> web.Response:
     try:
         body = await request.json()
     except Exception:
-        return web.json_response({"error": "invalid JSON"}, status=400)
+        return web.json_response({"error": "invalid JSON", "code": "invalid_json"}, status=400)
     if not isinstance(body, dict):
         return web.json_response(
             {"error": "body must be an object", "code": "body_not_object"}, status=400
@@ -1004,11 +1004,14 @@ async def api_kirocrew_agent_update(request: web.Request) -> web.Response:
             # compare-and-set above, so no browser write can land out of order.
             await _apply_member_approval_to_live_thread(request, name, agent.approval_mode)
         if "display_name" in changed:
-            # The mate's home folder carries its display name.
+            # The mate's home folder carries its display name. Cleared back to
+            # blank, it carries the label the rest of the dashboard falls back
+            # to, so the first mate's folder reads "Bot" and not its key.
+            from kiro_crew.agent_files import member_label
             from kiro_crew.dashboard.mate_folders import follow_display_name
 
             await follow_display_name(
-                request.app.get("state"), agent.memory_store, agent.display_name or name
+                request.app.get("state"), agent.memory_store, member_label(name, agent)
             )
         # Best-effort per-member event log: the save succeeded, so emit a
         # config snapshot with the list of fields that actually changed.
@@ -1068,8 +1071,21 @@ async def api_kirocrew_agent_update(request: web.Request) -> web.Response:
     # A harness pin is read by the provider factory from the config it was built
     # with, the same staleness the effort pin has, so it takes the same refresh,
     # unless the chat's reload already ran it after the write.
-    if (effort_inputs_after != effort_inputs_before or harness_changed) and not harness_refreshed:
+    # A changed Bot model takes the same refresh: a Bot that inherits a model
+    # reaches the session through the manager's own config, which the refresh
+    # replaces, so the chat's reset below does not restart on the old model.
+    model_changed = "model" in changed and agent.model != _ev_before["model"]
+    if (
+        effort_inputs_after != effort_inputs_before or harness_changed or model_changed
+    ) and not harness_refreshed:
         await _refresh_session_defaults(request, name)
+    if {"model", "reasoning_effort"} & set(changed):
+        # On every save that carries the field, an unchanged value included. After
+        # the refresh, so a turn that consumes the chat's reset restarts through a
+        # factory that already holds the saved effort.
+        from kiro_crew.dashboard.bot_chat_follow import follow_bot_save
+
+        await follow_bot_save(request.app.get("state"), name, cfg, changed)
     _sel().log_api_access(
         caller=request.get("user", "dashboard"),
         operation="agent.update",

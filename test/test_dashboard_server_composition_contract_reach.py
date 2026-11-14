@@ -789,7 +789,7 @@ _DASHBOARD_BOOT = tuple("""
     _deferred _deferred _deferred _deferred _deferred _deferred
     _deferred _deferred _deferred _deferred _deferred _deferred _deferred _deferred _deferred _deferred
     _deferred
-    _deferred _deferred_instances _deferred_instances _deferred_instances _deferred _deferred _deferred
+    _deferred _deferred_instances _deferred_instances _deferred_instances _deferred _deferred _deferred _deferred
     register_all subprocess_executor subprocess_executor subprocess_executor
     subprocess_executor subprocess_executor subprocess_executor subprocess_executor
     _register_deploy_routes
@@ -843,6 +843,7 @@ _DASHBOARD_ELSEWHERE = tuple("""
     T:_write_instance_credentials T:_write_secret_file T:_write_secret_file
     T:_write_secret_file T:apply_config_duration T:cleanup_migrated_builtin
     T:cleanup_migrated_builtin T:cleanup_migrated_builtin T:cleanup_migrated_builtin
+    T:cleanup_migrated_builtin T:cleanup_migrated_builtin
     T:migrate_channel_transcripts T:migrate_existing_crewmates T:newest_dump_with_stacks T:open_dump_file
     T:prune_synced_crewmates T:record_healthy_boot T:refresh_config_meta_stamp
     T:refresh_materialized_agents
@@ -876,7 +877,7 @@ _API_BOOT = tuple("""
     _deferred _deferred _deferred _deferred _deferred _deferred
     _deferred _deferred _deferred _deferred _deferred _deferred _deferred
     _deferred
-    _deferred _deferred_instances _deferred_instances _deferred_instances _deferred _deferred _deferred
+    _deferred _deferred_instances _deferred_instances _deferred_instances _deferred _deferred _deferred _deferred
     _register_deploy_routes _register_stt_hooks _register_own_host_warm
     _register_config_watch _register_prevent_sleep_shutdown
     _register_listener_guard_shutdown
@@ -1121,8 +1122,8 @@ def _routes(app: web.Application) -> list[tuple[str, str, str]]:
 #: SHA-256 of the MCP route table's ``"<method> <path> <handler>"`` rows in
 #: registration order, and their count. The table is shared by both entrypoints, so a
 #: route added to it on purpose updates these with it.
-_MCP_TABLE_ROWS = 351
-_MCP_TABLE_DIGEST = "8b5ffabac11a5b2cbcc1df9fa6dd707962df7d86be1b2e5307d62bd7f1e5a9b5"
+_MCP_TABLE_ROWS = 352
+_MCP_TABLE_DIGEST = "0ae9f68843a5652d7a2ef3a87511400a0d5763ba5cc02839f26a6f9aaa93f07a"
 
 
 def test_the_mcp_route_table_keeps_its_rows_and_order() -> None:

@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, NamedTuple, Sequence
 
 from kiro_crew import member_records
-from kiro_crew.apps import credential_masks, protected_app_state
+from kiro_crew.apps import agent_readonly_dirs, credential_masks, protected_app_state
 from kiro_crew.apps.execution import APP_NAME_RE
 from kiro_crew.apps.host_exec_grants import revoke_host_exec
 from kiro_crew.apps.manifest import AppManifest, Permissions
@@ -169,6 +169,15 @@ def _read_not_before(data: dict[str, Any]) -> float:
     return cutoff if math.isfinite(cutoff) else math.inf
 
 
+class InstalledRecordShapeError(ValueError):
+    """``installed.json`` parsed as JSON, but not as the object a record is.
+
+    Raised rather than read as "not installed": an absent record lets install and
+    cleanup paths treat the app's tree as a leftover, so a damaged one must stay
+    visible as damaged.
+    """
+
+
 @dataclass
 class InstalledApp:
     """Metadata persisted in ``installed.json`` for each installed app.
@@ -273,6 +282,10 @@ class InstalledApp:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> InstalledApp:
+        if not isinstance(data, dict):
+            raise InstalledRecordShapeError(
+                f"installed record is a JSON {type(data).__name__}, not an object"
+            )
         inst = cls(
             name=str(data.get("name", "")),
             version=str(data.get("version", "")),
@@ -309,7 +322,9 @@ class InstalledApp:
                 inst.resources = "gateway"
                 inst.lifecycle = "locked"
             elif old_managed in ("kirocrew", ""):
-                source = data.get("source", "")
+                # The coerced field, as read above: a non-string source must
+                # classify, not crash the read.
+                source = inst.source
                 if source.startswith("registry:"):
                     inst.origin = "registry"
                 elif source and not source.startswith("builtin"):
@@ -673,6 +688,10 @@ def _write_installed(
             credential_masks.remember_declaration(name)
         except OSError:
             logger.warning("could not record %s's credential masks", name, exc_info=True)
+        try:
+            agent_readonly_dirs.remember_declaration(name)
+        except OSError:
+            logger.warning("could not record %s's agent read-only dirs", name, exc_info=True)
         # REVOKE-ONLY: drop any host-exec grant whenever a write leaves the app
         # disabled, so no disable path (disable, widen-until-consent, update) can leave
         # a stale grant that still starts a pod. Deliberately never GRANTS here: this
@@ -776,7 +795,8 @@ def _disabled_before_upgrade(name: str, meta_path: Path) -> bool:
 
     True for a record reading ``enabled: false``, and for one that cannot be read
     (fail closed: the owner enables it again). A built-in still owed its default-on
-    promotion is left to ``backfill_default_on_builtins``, which turns it on.
+    promotion is left to ``backfill_default_on_builtins``, which turns it on, or, for
+    a folded one, to the carry that reads it as on.
     """
     try:
         raw = member_records._read_regular_no_follow(meta_path)
@@ -788,10 +808,14 @@ def _disabled_before_upgrade(name: str, meta_path: Path) -> bool:
     if _read_enabled(data):
         return False
     # Deferred: manager_builtins imports this module.
+    from kiro_crew.apps.builtins import _FOLDED_PROMOTED_BUILTINS
     from kiro_crew.apps.manager_builtins import _DEFAULT_ON_BACKFILL
 
+    # A folded built-in's record still owed the promotion is read as on when its
+    # switch is carried over (``manager_builtins.folded_switch_state``), so it is
+    # not recorded as the owner's disable here either.
     owed_promotion = (
-        name in _DEFAULT_ON_BACKFILL
+        (name in _DEFAULT_ON_BACKFILL or name in _FOLDED_PROMOTED_BUILTINS)
         and data.get("source") == "builtin"
         and data.get("defaultOnBackfilled") is not True
     )
@@ -896,6 +920,8 @@ def _freeze_declared(
     was written before. Each such family takes what the manifest declares at this
     read, which is what it granted until now, and the result is stored, so a later
     write to the agent-writable ``app.json`` is held back like any other widening.
+    An explicit-only family takes nothing even then: no owner saw it in a prompt
+    before approved sets existed, so it waits for the owner's approval.
     Built-ins never get here: they store their shipped set at every start.
 
     Nothing is stored inside a sandbox, during an update's tree swap, without a
@@ -911,7 +937,11 @@ def _freeze_declared(
         return recorded
     declared = _declared_grant_entries(grant_source(manifest))
     frozen = {
-        family: base[family] if family in base else declared[family]
+        family: (
+            base[family]
+            if family in base
+            else [] if family in _EXPLICIT_ONLY_FAMILIES else declared[family]
+        )
         for family in STAGED_GRANT_FAMILIES
     }
     try:

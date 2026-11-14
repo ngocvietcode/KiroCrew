@@ -21,6 +21,7 @@ from kiro_crew.config.loader import DASHBOARD_PORT, config_dir
 from kiro_crew.dashboard import pinned_session_order
 from kiro_crew.dashboard.folder_repository import FOLDERS_FILE
 from kiro_crew.dashboard.interaction_coordinator import ApprovalCoordinator, QuestionCoordinator
+from kiro_crew.dashboard.repeated_failures_notice import RepeatedFailuresNotifier
 from kiro_crew.dashboard.slot_registry import SlotRegistry, TakeoverWatch, TruncationClaim
 from kiro_crew.dashboard.state_parts import dashboard_services as _dashboard_services
 from kiro_crew.dashboard.state_parts import session_events as _session_events
@@ -119,6 +120,7 @@ class DashboardState:
     bridge_actions: BridgeActionRegistry
     notification_channel_settings: ChannelSettings
     resource_pressure_notifier: ResourcePressureNotifier
+    repeated_failures_notifier: RepeatedFailuresNotifier
     file_indexes: FileIndexRegistry
     _chat_pins_lock: LoopBoundLock
     _folders_lock: LoopBoundLock
@@ -142,6 +144,8 @@ class DashboardState:
     _slots_push_overlapped: bool = False
 
     restoring_open_slots: bool = False
+    # Open-tab keys the startup restore owes and has not built; empty otherwise.
+    restoring_open_slot_keys: frozenset[str] = frozenset()
 
     # False until the startup open-tab restore has run once. The periodic flush
     # loop is armed BEFORE that restore, so a flush firing in the gap sees a
@@ -539,6 +543,10 @@ class DashboardState:
         # being restored from with a half-populated slot set — see
         # _persist_open_slots.
         self.restoring_open_slots = False
+        # Set once the startup restore has read its snapshot and published the tabs it
+        # owes (``restoring_open_slot_keys``), or ended without one; see
+        # ``session_still_loading``.
+        self.owed_slot_keys_known = asyncio.Event()
         # Cleared until the open-tab restore has run once this boot; see the
         # class-level default and _persist_open_slots.
         self.open_slots_restored = False
@@ -594,6 +602,8 @@ class DashboardState:
         # system.resources. State-owned like the bus/limiter/settings so its
         # lifecycle matches the gateway instance.
         self.resource_pressure_notifier = ResourcePressureNotifier(self.notification_bus)
+        # The opt-in weekly repeated-failures note, checked from the heartbeat.
+        self.repeated_failures_notifier = RepeatedFailuresNotifier()
         # Channel turn-ceiling producer. Registered HERE, once, beside the bus it
         # delivers through, rather than injected per channel: a channel that
         # forgot the wire would be a channel whose pauses are invisible to the
@@ -649,6 +659,14 @@ class DashboardState:
         # connection (``slot_retention.note_foreground``). The idle sweep never
         # archives a slot someone is looking at.
         self._foreground_slots: dict[int, str] = {}
+        # The slot an owner dashboard last reported focused, and the other slots
+        # reported alongside it, kept across a blur or a closed socket so the
+        # shutdown flush still records what the person was looking at.
+        self.last_focused_slot: str = ""
+        self.last_visible_slots: tuple[str, ...] = ()
+        # Tabs a client focused while the startup restore still owed them, in the
+        # order asked; the restore builds them before the rest of its queue.
+        self.restore_front_keys: list[str] = []
         # Return-triggered warm task briefs: when each thread was last on screen
         # in an owner view (wall time, this process only), a read-saving "not
         # eligible before" cache, and the live tasks. The claim and the durable
@@ -656,9 +674,6 @@ class DashboardState:
         self._warm_task_brief_last_seen: dict[str, float] = {}
         self._warm_task_brief_not_before: dict[str, float] = {}
         self._warm_task_brief_tasks: dict[str, asyncio.Task[Any]] = {}
-        self._warm_task_brief_model_active: set[str] = set()
-        # Threads whose in-flight model call was dropped by a real cancel.
-        self._warm_task_brief_abandoned: set[str] = set()
         # Threads whose brief has posted its opener: leaving keeps the brief.
         self._warm_task_brief_opened: set[str] = set()
         # Truncating-save claims, keyed by slot map key (see
@@ -1220,6 +1235,7 @@ class DashboardState:
     ack_notification = _dashboard_services.ack_notification
     unack_notification = _dashboard_services.unack_notification
     resolve_skill_review_notifications = _dashboard_services.resolve_skill_review_notifications
+    acknowledge_notifications_where = _dashboard_services.acknowledge_notifications_where
     clear_notifications = _dashboard_services.clear_notifications
     ensure_context_snapshots_loaded = _dashboard_services.ensure_context_snapshots_loaded
     context_snapshot_for = _dashboard_services.context_snapshot_for
@@ -1252,6 +1268,7 @@ class DashboardState:
     native_subagent_snapshots = _slot_directory.native_subagent_snapshots
     has_slot = _slot_directory.has_slot
     slot_exists = _slot_directory.slot_exists
+    session_still_loading = _slot_directory.session_still_loading
     get_linked_slot = _slot_directory.get_linked_slot
     resolve_slot = _slot_directory.resolve_slot
     link_slack = _slot_directory.link_slack

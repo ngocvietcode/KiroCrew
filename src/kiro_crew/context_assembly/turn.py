@@ -58,6 +58,7 @@ def post_compaction_parts(
     context_provider: Any,
     native_launch_sources: Collection[str],
     query_text: str = "",
+    steering_off: frozenset[str] = frozenset(),
 ) -> list[str]:
     """What a turn re-injects after a confirmed compaction dropped session start.
 
@@ -200,6 +201,7 @@ def post_compaction_parts(
         essentials=_essentials,
         context_groups=context_groups,
         project=project,
+        steering_off=steering_off,
     )
     if _steering_ctx:
         parts.append(
@@ -596,7 +598,12 @@ def interactive_guidance(
     minimal_context: bool,
     producer_is_user_facing: bool = False,
 ) -> list[str]:
-    """The per-turn ``[OPTIONS:]`` and dashboard-tool guidance paragraphs.
+    """The ``[OPTIONS:]`` and dashboard-tool guidance paragraphs of a turn.
+
+    Every built message carries them. Whether the engine is sent them again is
+    the provider's call at the wire (``build_message`` binds the block as the
+    turn's delivery envelope): once per engine conversation on a harness whose
+    compaction Kiro Crew sees, every message elsewhere and in a member's chat.
 
     *producer_is_user_facing* says a person sent this turn on a dashboard
     slot. It defaults to False, the applier's own default, so a caller that

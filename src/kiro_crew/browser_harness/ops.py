@@ -72,6 +72,7 @@ OPS: tuple[str, ...] = (
     "console",
     "screenshot",
     "tabs",
+    "dialog",
     "reflex",
     # Served by the gateway route itself (``dashboard/handlers/browser_ask.py``):
     # it needs the live card, which this module never sees. ``run_op`` refuses it.
@@ -120,10 +121,20 @@ NAV_POLL_S = 0.05
 RESOLVE_SETTLE_S = 0.1
 RESOLVE_SETTLE_TRIES = 6
 RESOLVE_SETTLE_PX = 1.0
+#: ``screenshot`` ``max_dim`` bounds (pixels on the longest side), and the size a
+#: zoomed region is fitted to when ``max_dim`` is not given.
+SHOT_MIN_DIM = 64
+SHOT_MAX_DIM = 4096
+SHOT_ZOOM_DIM = 1568
+#: A zoomed region is magnified at most this many times, an element not at all.
+SHOT_ZOOM_MAGNIFY = 4.0
 WAIT_DEFAULT_S = 5.0
 WAIT_MAX_S = 30.0
 WAIT_POLL_S = 0.1
 CONSOLE_CAP = 500
+#: Longest dialog message passed on: the page writes it, and a long one is noise.
+DIALOG_MESSAGE_CAP = 1000
+_DIALOG_ACTIONS = {"accept": "accepted", "dismiss": "dismissed"}
 SCROLL_DEFAULT_PX = 300
 TEXT_CAP = 20_000
 _URL_MAX = 4096
@@ -536,7 +547,14 @@ async def _resolve(ctx: OpContext, ref: Any) -> dict[str, Any]:
     if not last_ok:
         # The ref measured empty to the end: the page dropped or hid it.
         return refusal("ref_stale", f"ref {ref} is not on the current page; re-snapshot")
-    return {"ok": True, "x": float(found["x"]), "y": float(found["y"]), "tag": found.get("tag")}
+    box = {k: float(found[k]) for k in ("w", "h") if isinstance(found.get(k), (int, float))}
+    return {
+        "ok": True,
+        "x": float(found["x"]),
+        "y": float(found["y"]),
+        "tag": found.get("tag"),
+        **box,
+    }
 
 
 async def _point(ctx: OpContext, args: dict[str, Any], ref_key: str, x_key: str, y_key: str) -> Any:
@@ -1056,7 +1074,90 @@ def _screenshot_path(ctx: OpContext) -> Path:
     return directory / f"shot-{stamp}-{secrets.token_hex(3)}.png"
 
 
-async def _screenshot(ctx: OpContext, _args: dict[str, Any]) -> dict[str, Any]:
+def _shot_options(args: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """The valid optional ``screenshot`` arguments (``full``, ``max_dim``, ``ref``, ``region``)
+    and a note for each one that is left out.
+
+    No option makes a screenshot fail: an option that is not valid is left out, and
+    when more than one of ``full``, ``ref`` and ``region`` is given, all of them are
+    left out. The screenshot is then taken as without them, the visible page by
+    default, and the notes go back to the agent as the result's ``warning``.
+    """
+    out: dict[str, Any] = {}
+    notes: list[str] = []
+    full = args.get("full")
+    if full is not None:
+        if isinstance(full, bool):
+            out["full"] = full
+        else:
+            notes.append("`full` ignored: it must be true or false")
+    max_dim = args.get("max_dim")
+    if max_dim is not None:
+        size = _number(max_dim)
+        if size is not None and SHOT_MIN_DIM <= size <= SHOT_MAX_DIM:
+            out["max_dim"] = int(size)
+        else:
+            notes.append(f"`max_dim` ignored: it must be {SHOT_MIN_DIM} to {SHOT_MAX_DIM} pixels")
+    ref = args.get("ref")
+    if ref is not None:
+        if _is_ref(ref):
+            out["ref"] = ref
+        else:
+            notes.append("`ref` ignored: it is not a ref from a snapshot")
+    region = args.get("region")
+    if region is not None:
+        box = _region_box(region)
+        if box is not None:
+            out["region"] = box
+        else:
+            notes.append(
+                "`region` ignored: it needs [x, y, width, height] with x, y >= 0 and "
+                "width, height > 0, in the same page pixels as click x,y"
+            )
+    chosen = [k for k in ("full", "ref", "region") if k in out and out[k] is not False]
+    if len(chosen) > 1:
+        for key in chosen:
+            del out[key]
+        names = ", ".join(f"`{k}`" for k in chosen)
+        notes.append(f"{names} ignored: give only one of `full`, `ref` and `region`")
+    return out, notes
+
+
+def _region_box(region: Any) -> list[float] | None:
+    """``[x, y, width, height]`` as four numbers, or ``None`` if not a box.
+
+    A list, not an object: the ``browser`` tool passes only scalars and lists of
+    them (``_args_are_scalar``), so an object-valued ``region`` never gets here.
+    """
+    if not isinstance(region, list) or len(region) != 4:
+        return None
+    x, y, width, height = (_number(value) for value in region)
+    if x is None or y is None or width is None or height is None:
+        return None
+    if x < 0 or y < 0 or width <= 0 or height <= 0:
+        return None
+    return [x, y, width, height]
+
+
+async def _shot_clip(ctx: OpContext, options: dict[str, Any]) -> tuple[list[float] | None, str]:
+    """The viewport box ``[x, y, width, height]`` to photograph, or ``None`` for the
+    page itself, and a note when ``ref`` could not be used and the page is taken."""
+    if "region" in options:
+        return options["region"], ""
+    if "ref" not in options:
+        return None, ""
+    ref = options["ref"]
+    resolved = await _resolve(ctx, ref)
+    if not resolved["ok"]:
+        return None, f"`ref` {ref} ignored: it is not on the current page; re-snapshot"
+    width, height = resolved.get("w"), resolved.get("h")
+    if not width or not height:
+        return None, f"`ref` {ref} ignored: the element has no size; re-snapshot"
+    return [resolved["x"] - width / 2, resolved["y"] - height / 2, width, height], ""
+
+
+async def _screenshot(ctx: OpContext, args: dict[str, Any]) -> dict[str, Any]:
+    options, notes = _shot_options(args)
     # A field the person filled through `ask` would be in the pixels (a code, an
     # email; a password once a "show" toggle is clicked). The snapshot withholds it.
     refused = await _refuse_current_url(ctx)
@@ -1066,11 +1167,31 @@ async def _screenshot(ctx: OpContext, _args: dict[str, Any]) -> dict[str, Any]:
     if blocked is not None:
         return blocked
     await _step(ctx, "Take a screenshot")
+    clip, note = await _shot_clip(ctx, options)
+    if note:
+        notes.append(note)
     path = _screenshot_path(ctx)
     # The gateway is the directory's only writer, so it bounds it on each write.
     await asyncio.to_thread(prune_snapshots, path.parent, time.time())
     staged = await asyncio.to_thread(_staged_path, ctx, path)
-    await ctx.helper("screenshot", path=str(staged))
+    if clip is None:
+        # Only what was asked for is passed: no argument leaves today's call as it was.
+        extra = {k: options[k] for k in ("full", "max_dim") if k in options}
+        await ctx.helper("screenshot", path=str(staged), **extra)
+    else:
+        x, y, width, height = clip
+        magnify = SHOT_ZOOM_MAGNIFY if "region" in options else 1.0
+        fit = options.get("max_dim", SHOT_ZOOM_DIM if "region" in options else SHOT_MAX_DIM)
+        await ctx.helper(
+            "screenshot_clip",
+            path=str(staged),
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            max_dim=fit,
+            magnify=magnify,
+        )
     if not await asyncio.to_thread(staged.exists):
         return refusal("screenshot_error", "the browser wrote no image")
     # Judged again AFTER the capture, as the decision hooks do: a filled field, a
@@ -1083,7 +1204,10 @@ async def _screenshot(ctx: OpContext, _args: dict[str, Any]) -> dict[str, Any]:
         return blocked
     if staged != path:
         await asyncio.to_thread(os.replace, staged, path)
-    return {"ok": True, "path": str(path)}
+    result: dict[str, Any] = {"ok": True, "path": str(path)}
+    if notes:
+        result["warning"] = "; ".join(notes)
+    return result
 
 
 async def _screenshot_blocked(ctx: OpContext, *, after: bool = False) -> dict[str, Any] | None:
@@ -1226,6 +1350,83 @@ async def _tabs(ctx: OpContext, args: dict[str, Any]) -> dict[str, Any]:
     return refusal("bad_action", "tabs action must be one of: list, switch, new")
 
 
+def _dialog_view(raw: Any) -> dict[str, Any] | None:
+    """What the agent is told of an open dialog: its kind, text and default answer.
+
+    The page writes all three, so the text is capped, and the page's address is
+    left out (it can carry a token).
+    """
+    if not isinstance(raw, dict):
+        return None
+    view: dict[str, Any] = {
+        "type": str(raw.get("type") or "alert"),
+        "message": str(raw.get("message") or "")[:DIALOG_MESSAGE_CAP],
+    }
+    default = raw.get("defaultPrompt")
+    if isinstance(default, str) and default:
+        view["default"] = default[:DIALOG_MESSAGE_CAP]
+    return view
+
+
+async def _dialog(ctx: OpContext, args: dict[str, Any]) -> dict[str, Any]:
+    """Report the page's open JavaScript dialog, and answer it when asked.
+
+    A dialog (alert, confirm, prompt, leave-page) holds the page's script until it
+    is answered, so every other op fails while one is open. With no ``action`` the
+    dialog is only reported. A bad ``action`` or ``text`` is left out and named in
+    the ``warning``; it never makes the op fail.
+    """
+    notes: list[str] = []
+    action = args.get("action")
+    if action is not None and (not isinstance(action, str) or action not in _DIALOG_ACTIONS):
+        notes.append("`action` ignored: it must be accept or dismiss; the dialog is only reported")
+        action = None
+    text = args.get("text")
+    if text is not None and (not isinstance(text, str) or len(text) > TEXT_CAP):
+        notes.append(f"`text` ignored: it must be a string of at most {TEXT_CAP} characters")
+        text = None
+    if text is not None and action != "accept":
+        notes.append("`text` ignored: it is only used with action accept")
+        text = None
+    await _step(ctx, f"{action.capitalize()} a dialog" if action else "Check for a dialog")
+    kwargs: dict[str, Any] = {}
+    if action:
+        kwargs["action"] = action
+    if text is not None:
+        kwargs["text"] = text
+    reply = await ctx.helper("dialog", **kwargs)
+    shown = _dialog_view(reply.get("dialog") if isinstance(reply, dict) else None)
+    result: dict[str, Any] = {"ok": True, "dialog": shown}
+    if shown is not None and action and reply.get("answered") == action:
+        result["answered"] = _DIALOG_ACTIONS[action]
+        if text is not None and shown["type"] != "prompt":
+            notes.append("`text` ignored: the dialog is not a prompt")
+    if notes:
+        result["warning"] = "; ".join(notes)
+    return result
+
+
+def _dialog_open(shown: dict[str, Any]) -> dict[str, Any]:
+    """The refusal for an op the page could not answer because a dialog holds it."""
+    kind = shown["type"]
+    answer = " (and `text` for the prompt's answer)" if kind == "prompt" else ""
+    return refusal(
+        "dialog_open",
+        f"the page has an open {kind} dialog with the text {json.dumps(shown['message'])}, "
+        f"which blocks it until it is answered. Call `dialog` with action accept or dismiss"
+        f"{answer}; an op sent just before it may or may not have taken effect.",
+    )
+
+
+async def _open_dialog(ctx: OpContext) -> dict[str, Any] | None:
+    """The dialog the page holds open now, or ``None`` (also when it cannot be read)."""
+    try:
+        info = await ctx.helper("page_info")
+    except Exception:  # noqa: BLE001 - unreadable: the op's own error is the one to report
+        return None
+    return _dialog_view(info.get("dialog")) if isinstance(info, dict) else None
+
+
 async def _reflex(ctx: OpContext, args: dict[str, Any]) -> dict[str, Any]:
     """The fast loop (``browser_harness.reflex``), resolved at call time: it imports
     this module, and it is only ever needed when the agent asks for it."""
@@ -1253,6 +1454,7 @@ _HANDLERS: dict[str, Callable[[OpContext, dict[str, Any]], Awaitable[dict[str, A
     "console": _console,
     "screenshot": _screenshot,
     "tabs": _tabs,
+    "dialog": _dialog,
     "reflex": _reflex,
     "ask": _ask_elsewhere,
 }
@@ -1279,6 +1481,7 @@ async def run_op(op: str, args: dict[str, Any], ctx: OpContext) -> dict[str, Any
             "type_text",
             "press_key",
             "screenshot",
+            "screenshot_clip",
             "page_info",
             "wait_for_load",
         }:
@@ -1309,3 +1512,16 @@ async def run_op(op: str, args: dict[str, Any], ctx: OpContext) -> dict[str, Any
         return result  # type: ignore[no-any-return]
     except _PageRefused as exc:
         return exc.result
+    except Exception as exc:
+        # Imported here: the MCP servers' tool listing imports this module, and the
+        # supervisor module loads the HTTP client stack.
+        from kiro_crew.browser_harness.supervisor import HelperError
+
+        if not isinstance(exc, HelperError) or op == "dialog":
+            raise
+        # A dialog holds the page's script, so an op the page cannot answer times out:
+        # say what holds it. With none open the helper's own error is kept.
+        shown = await _open_dialog(raw_ctx)
+        if shown is None:
+            raise
+        return _dialog_open(shown)

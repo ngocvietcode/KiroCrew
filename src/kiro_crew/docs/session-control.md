@@ -5,13 +5,13 @@ another one, change its model, reload its agent process, color it, leave it a no
 one under itself in the sidebar. The tools come from the
 `kirocrew-dashboard` MCP server, so an agent that does not mount that server
 never has them — exactly like any other MCP server. This page is the reference
-for all 40 of its tools, written for the agent that is about to use them.
+for all 41 of its tools, written for the agent that is about to use them.
 
 The server is defined in `src/kiro_crew/mcp_dashboard.py` and its `mcp_dashboard_*`
 owner modules. Two halves:
 
 - **Session control** — `session_create`, `session_fork`, `session_send`,
-  `session_read_message`, `session_summary`, `session_stop`, `session_end_wait`, `session_retry`,
+  `session_read_message`, `session_summary`, `session_queue`, `session_stop`, `session_end_wait`, `session_retry`,
   `session_continue`, `session_set_model`, `session_reload`, `session_rename`, `session_generate_title`,
   `session_set_color`, `session_set_note`, `session_close`, `session_revive`, `session_history_list`,
   `session_broadcast`,
@@ -308,7 +308,7 @@ Takes no arguments. The roster of sessions you stood up, and what each is doing.
 | `status` | Meaning | What to do |
 |---|---|---|
 | `working` | A turn is in flight | Wait |
-| `queued` | Idle, messages waiting to run | Wait; a steer would land on nothing |
+| `queued` | Idle, messages waiting that will run on their own (a card restored after a restart waits for a person, so it reads `idle`) | Wait; a steer would land on nothing |
 | `idle` | Open and doing nothing | This is the one that needs a decision, unless the row's `looping` is true: its own loop (a `monitor_start` waiting on CI) will wake it, so wait |
 | `closed` | The crew log has it, the dashboard does not, and its last life ended by a deliberate tab close (carries `closed_at`) | It finished and closed its tab; nothing to re-dispatch |
 | `lost` | The crew log has it, the dashboard does not, and it did not close cleanly — a turn was open, a process recycle or destroy tore it down, or its lifecycle could not be read | Re-dispatch it |
@@ -441,6 +441,69 @@ Each goal carries the panel's state word (`in-progress`, `needs-you`, `done`,
 failed (`verified=false`); a completed goal never checked either way reads
 `done`.
 
+### `session_queue`
+
+| Argument | Required | Meaning |
+|---|---|---|
+| `target` | yes | Session key, or its exact title, of a session you manage |
+| `action` | no | `list` (default) or `move` |
+| `entry` | for `move` | Queue entry id from `list` |
+| `position` | for `move` | 0-based position; 0 runs next, past the end means last |
+
+`session_send` to a busy session answers `started: false` and puts the message in
+the target's queue. `session_queue` is how the sender sees that queue and reorders
+its own entries in it by priority. In the example, the login fix should run
+before the changelog update. Moving `q-5e6f` to position 0 is refused
+(`move_blocked`), because it would pass the person's `q-3c4d`. Move `q-1a2b` to
+position 2 instead: moving your own entry later is how you reorder around a
+person's message. The queue becomes `q-3c4d`, `q-5e6f`, `q-1a2b`, and the
+person's message still runs first.
+
+```
+📥 `chat-7` — fix the build (still working), 3 queued
+0  q-1a2b  yours   "Then update the changelog for the build fix"
+1  q-3c4d  person  "stop after this one, I'll take over"
+2  q-5e6f  yours   "Fix the failing login test first, it blocks the release"
+```
+
+- `list` shows the first 50 queued entries in run order; any beyond that are
+  counted in `omitted`, not listed. `yours` marks entries you queued;
+  `person` marks a message the session's own human typed; `other` is anything
+  else (another session, an app, a scheduled job). Excerpts are redacted and cut
+  to 200 characters.
+- `move` puts one of YOUR entries at `position`. It can always move later. It can
+  move earlier only past your own entries, so it never jumps ahead of a person's
+  message or another session's (`move_blocked`).
+- A `move` behaves exactly like the queue card's own drag. It changes the queue in memory, tells open tabs, and is saved by the next
+  periodic flush. A gateway restart before that flush can bring the old queue
+  order back, just as it can after a person drags a card.
+
+A person's queued message is never movable here, and neither is
+another session's (`not_your_entry`). Neither is a steer of yours that missed
+its turn and was put back in the queue: its steer row already promises it will
+run. Ownership is what `session_send` writes on an entry it queues: your slot
+key, your tab identity, and a queued-send mark that a requeued steer never
+carries. The restore path drops the sender stamp on purpose, so entries that
+were queued before a gateway restart list as `other` and only the person can
+move them.
+
+There is no `cancel` here. A queued `session_send` to a worker on your work
+ledger can already be recorded as your answer to its report, so removing it
+could leave a decision the worker never gets. To correct a queued message, send
+the correction with `session_send` and leave it after the message it corrects:
+the target then reads the correction last. Moving it ahead would make the older
+message run last and undo the correction.
+
+The target must be a session you manage: one you created, or one handed to you
+with `session_handoff`. With `agent.session_manager_chain` on, it can also be a
+session managed by a session you manage, down the line. With the switch off,
+once you hand a session on, you lose its queue as you do its transcript
+(`not_creator`); with it on, you keep it while you still manage the session you
+handed it to. It passes the
+same gate as the other session tools: an archived session is not open
+(`target_not_found`), and scheduled-run, incognito, app-scoped, channel-linked
+and mirrored sessions are refused.
+
 ### `session_adopt` and `session_release`
 
 Both take only `target`. They change where a session sits in the sidebar and
@@ -492,7 +555,8 @@ own.
 ### `session_handoff`
 
 Takes `target` and `to`. It makes `to` the session that MANAGES `target`: from then
-on `to` can send to, read, summarize, stop, close, adopt, release and hand on the
+on `to` can send to, read, summarize, see and reorder the queue of, stop, close,
+adopt, release and hand on the
 target. With `agent.session_manager_chain` off (the default), a fenced session
 (see the `not_creator` row below) can no longer do those on a session it handed
 away; with it on, it keeps that reach while it still manages `to`. An agent in a person's own tab is not fenced for
@@ -648,7 +712,7 @@ running or queued sub-agent by id and state, and says when some could not be
 checked. The tool never stops anything itself. To force the change, call
 `session_stop`, then retry once the target is idle.
 
-Also refused: `auto` and `Auto (Jev)` (`model_owner_only`), because with the Jev
+Also refused: `auto` and `Auto (decision model)` (`model_owner_only`), because with the Jev
 preview on a slot on `auto` hands each turn's model to Jev routing, which only the
 owner may arm; and a read-only relay archive (`relay_archive_read_only`).
 
@@ -1141,7 +1205,7 @@ gateway-issued key counts. Refusals you should expect, by code:
 | `memory_delegation_denied` | HTTP 403: session_create named a Bot's agent the caller may not bind (a cron, a fenced deputy, a peer member, a member thread on the shared store naming a member with private memory). The member's memory binding cannot be changed in Settings. Re-send with `agent_kind: "template"` to run that name's shared template on your own memory (a `kirocrew-worker` needs no memory of its own), or ask the owner to make the create from their own tab. The tool reply says the same |
 | `agent_kind_requires_agent` | `agent_kind` was given without `agent`. The namespace qualifies an explicit selection, not an inherited caller agent |
 | `invalid_agent_kind` | `agent_kind` is not `template`, the one value it takes |
-| `model_owner_only` | HTTP 403: `auto` and **Auto (Jev)** can only be picked by the owner from the model picker |
+| `model_owner_only` | HTTP 403: `auto` and **Auto (decision model)** can only be picked by the owner from the model picker |
 | `model_rejected` | The model id is missing, malformed, looks like a credential, or is one the target's backend would refuse |
 | `effort_rejected` | session_create or session_set_model: `reasoning_effort` is not one of the five standard levels (low, medium, high, xhigh, max). On session_set_model `""` is refused too; set it from the target's effort dropdown |
 | `target_replaced` | HTTP 409: the target was replaced by another session under the same key while the call ran (or, for title generation, closed); nothing was changed. Try again |

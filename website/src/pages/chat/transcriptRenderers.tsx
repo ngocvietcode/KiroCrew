@@ -47,6 +47,7 @@ import NoticeCard from './NoticeCard'
 import { kasSignedOutBesideButton, resolveGatewayNotice } from './gatewayNotice'
 import CrewDispatchNoticeCard from './CrewDispatchNoticeCard'
 import CrewPausedNoticeCard from './CrewPausedNoticeCard'
+import McpSignInNeededNotice, { isMcpSignInNeededNotice } from './McpSignInNeededNotice'
 import TrustResetNoticeCard, { type LostMode } from './TrustResetNoticeCard'
 import WorkflowRunCard, { extractWorkflowRunId, isWorkflowRunTool } from './WorkflowRunCard'
 import SubagentRunCard, { extractSpawnRunLaunch, isSpawnRunTool } from './SubagentRunCard'
@@ -447,7 +448,15 @@ export function createTranscriptRenderers(
       ),
     },
     {
-      // The main chat's one "You paused the crew" row (Ultra Mode Pause all).
+      // The row a chat shows once when its MCP servers wait for a sign-in; its
+      // sentence names the chat message that signs in.
+      id: 'mcp_sign_in_needed',
+      roles: ['notice'],
+      match: isMcpSignInNeededNotice,
+      render: (m, ctx) => ctx.row(<McpSignInNeededNotice key={ctx.key} content={m.content} meta={m.meta} />),
+    },
+    {
+      // The main chat's one "You paused the crew" row (conductor mode Pause all).
       id: 'crew_paused_notice',
       roles: ['notice'],
       match: m => m.meta?.kind === 'crew_paused_notice',
@@ -935,7 +944,7 @@ export function createTranscriptRenderers(
           id: 'assistant',
           roles: ['assistant', 'streaming'],
           render: (m: ChatMessage, ctx: MessageRenderContext) => {
-            const bubble = renderAssistantBubble(m, ctx, undefined, { redactionSlot: o.revealSlot })
+            const bubble = renderAssistantBubble(m, ctx, undefined, { redactionSlot: o.revealSlot, messageTs: m.ts })
             return bubble === null ? null : ctx.wrapper(bubble)
           },
         } satisfies MessageRenderer]

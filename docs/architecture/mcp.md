@@ -104,14 +104,21 @@ kirocrew`). Onto that base:
    before. The unit is projected, not merged: a key the source dropped is removed.
    A name the edition supplies through `extra_mcp_servers()` keeps its whole
    command unit (`command`, `args` and `env`), because that invocation is the
-   edition's (`_refresh_dynamic_fields()` refreshes its `command` and `args`);
-   only `timeout` and `disabled` are reconciled onto it, here and in step 3.
+   edition's (`_refresh_dynamic_fields()` refreshes its `command` and `args`, and
+   puts back any `env` key the edition ships that the entry lacks, keeping the
+   user's value for a key both set); only `timeout` and `disabled` are reconciled
+   onto it, here and in step 3.
 3. **Seam-contributed provider globals**, so they can only fill gaps the Kiro
    global did not: a name step 1 or step 2 already claimed in this pass has been
    retired, so it is left alone. Empty in this build.
 4. **`~/.kiro/crew/mcp.json`** via `update()` on an existing entry, so
    Kiro Crew's `command`/`args`/`env` win while user-set fields such as
-   `autoApprove` survive.
+   `autoApprove` survive. On an edition-supplied name the store's `env` is
+   merged over the `env` the edition ships instead of replacing it, so the
+   store's keys win and the edition's other keys stay. The spec then carries
+   exactly those two sets: a key the store set on an earlier build but leaves
+   out of its `env` now is removed, and a key the edition ships stays; to turn
+   one off, set it to another value in the store.
 
 Kiro global outranks any seam-contributed provider global because Kiro Crew is
 kiro-cli-only. Managed servers are skipped by every merge loop: their
@@ -572,7 +579,20 @@ of `http` or `sse`, or a `url` with a blank or absent `command`), the same rule
 the sharing rows and the gateway rewriter use; otherwise it is stdio.
 
 - **stdio** servers are spawned and driven through an MCP `initialize` handshake
-  followed by `tools/list`.
+  followed by `tools/list`. One of Kiro Crew's own servers that lists its tools
+  before it loads its handlers (`mcp_entry.lists_before_handlers`) is then sent
+  one `ping`: its tool list does not show that it can run a tool, and only its
+  dispatch loop, which runs once the handlers have loaded, answers. Any answer
+  passes; a stream that ends first is the error `the server listed its tools and
+  then stopped before it could run one`, with the END of the child's stderr,
+  which is where a handler import error shows. A failed probe of any stdio
+  server reads that stderr from its first byte until it ends or goes quiet (at
+  most 8 reads of 4 KiB), redacts ALL of it, and only then shows its last
+  whole lines, at most 500 characters: a server prints its start-up warnings
+  first and the reason it stopped last, and the redactors know a private key by
+  its first line, so the text is never cut at its start before they run
+  (`_stderr_text`, `_last_lines`; `test/test_mcp_probe_past_listing.py`). No
+  other server is sent the request.
 - **HTTP** servers get the same two JSON-RPC calls over POST. The configured url
   is first SSRF-vetted off the event loop through `link_unfurl.vet_unfurl_url`
   (the vet the link preview, calendar, WeCom and OAuth-discovery fetches share)
@@ -671,6 +691,13 @@ the sharing rows and the gateway rewriter use; otherwise it is stdio.
   the reference as text and reporting the server's correct rejection as a
   failing row. Probe-error redaction keys on the resolved values the probe
   actually sent.
+- On Windows a placeholder name matches its variable in any letter case, as the
+  platform's environment does: `${SystemRoot}`, `${env:Path}` and `${SYSTEMROOT}`
+  all resolve. Every lookup against `_placeholder_source_env()` goes through
+  `rewriter_env._placeholder_value` (the declared-env expander, the remote-probe
+  headers and the session-start unset notice), so they agree. A credential-filtered
+  name is absent from the view in every spelling and still misses, and only that
+  miss is logged as credential-filtered. POSIX names stay case-sensitive.
 - A stdio server's `command`, `args` and `env` values have their home and
   login-name references (`${HOME}`, `${USER}`, `${LOGNAME}`, `${USERPROFILE}`,
   `${USERNAME}`, also as `${env:NAME}`) resolved by `env.expand_spec_args`,
@@ -1316,7 +1343,7 @@ file under the same prefix, and the same spelling in any other slot (the package
 directory as a `--plugin-root` value, or under another env key), hashes
 literally and is a changed launch. Every process that hashes a launch (the rewriter, gatewayd, the broker stub) computes the table from itself and they agree because they run from one install; the one spelling they can disagree on is Windows' 8.3 short name, which the stub is launched through when the install path holds a space (`rewriter._cmd_safe_command`), so on Windows each of the three also enters under its long name (`GetLongPathNameW` of the process's own path, never of a token; no link is followed). An approval whose digest was recorded without this encoding
 reads as `changed_needs_reapproval` and needs one re-approve in
-**Customize → Connections → MCP Servers** (MCP Management, reachable without developer mode). No digest without
+**MCP Servers** (MCP Management, reachable without developer mode). No digest without
 the encoding is accepted. Two installs sharing one data home (the desktop app and a
 dev venv, say) therefore admit each other's approvals of a `python3`-pinned
 launch, since each reads the alias as its own interpreter; that widens nothing,
@@ -1326,7 +1353,7 @@ without a matching fingerprint stays on the session's unpooled, sandboxed launch
 path. A queued cold spawn reloads the store after admission and resolves the same
 command and environment identity again immediately before the fork, so revoking
 an approval while it waits prevents the process from starting. A stub with no
-recorded approval needs one in **Customize → Connections → MCP Servers** before it pools. Cached recommendation
+recorded approval needs one in **MCP Servers** before it pools. Cached recommendation
 seeding may add a stub route, but it grants no launch approval; the seeded
 row stays on the session-sandboxed path until the operator approves it.
 A rewrite pass checks a launch's approval before the per-server launch cap
@@ -1396,32 +1423,47 @@ environment requires the same re-approve flow.
 `kirocrew config set mcp_gateway.stub_servers` (on `--local` and `--file` too)
 writes the list unchanged, then names on stderr each listed server the store
 holds no approved launch for: the next gateway start refuses it as
-`added_outside_dashboard` until it is approved in **Customize → Connections →
-MCP Servers**, and a `secret://` reference in its env resolves only once the
+`added_outside_dashboard` until it is approved on **MCP Servers → Sharing**,
+and a `secret://` reference in its env resolves only once the
 gateway runs it. A reserved `kirocrew-*` server, whose managed launch needs no
 approval, and a never-pooled one are not named.
 
 On the page, the hero card holds the page-wide sharing switch and the
 measured memory figures (`GET /api/mcp-gateway/footprint`, owner only, PSS read
-from `/proc`; hidden when any process cannot be read). Turning that switch on
+from `/proc`; both hidden when any process cannot be read). "Using now" shows
+whenever it was read, on its own; "with sharing" shows only when it was read
+too, so with sharing off, when no stub runs to price it, the row shows "Using
+now" alone. Turning that switch on
 asks first and names every server it shares: the ones enabled by hand, and the
 shareable ones nobody chose for, each pinned to the launch read for it. It
 never enables a server turned off by hand (a `false` entry in
 `stub_overrides`), a credential vendor, or a server waiting for approval.
 
-Under **Advanced**, each row's control is one switch, **Enable MCP sharing**.
+With sharing off no stub runs, so the footprint has no stub to price "with
+sharing" by. The gateway then reads one, once per gateway run
+(`mcp_gateway/footprint_probe.py`, Linux only): it starts a single idle stub
+through the sandbox, has it register on a private unix socket (a fresh `0700`
+directory under the gateway's runtime dir, the socket `0600`, no TCP, removed
+on every way out, a timeout included), round-trips one `initialize`, reads its
+PSS, stops it, and keeps the reading. That probe serves no backend, so no
+server starts.
+
+On the **Sharing** view, each row's control is one switch, **Enable MCP sharing**.
 Turning it on reads the launch, then sends the stub write carrying that
 `expected_launch`. Turning a row's switch off turns a share off. A row refused
 as `changed_needs_reapproval` reads **Paused · command changed**. It runs
-nothing shared, so its switch reads off; pressing it writes nothing and moves
-focus to **Approve update**, which is the only control that approves the new
-launch, pinned to the refused launch's own `expected_launch` (or to the launch a
-`launch_display_stale` answer brought, which Details then shows). That answer is
-a rejected write, so both surfaces say it through `ErrorNotice` with the agent
-hand-off: the page in one notice naming the server and pointing at its Details,
-and the Review dialog inside that server's block, above the launch it then
-shows, never on the page as well. An answer that brings no launch to show reads
-as a changed launch. A row refused as
+nothing shared, so it draws no switch. It offers two buttons: **Approve
+update**, the only control that approves the new launch, pinned to the
+refused launch's own `expected_launch` (or to the launch a
+`launch_display_stale` answer brought, which Details then shows), and **Don't
+share this server**, which takes the mark off and approves nothing. Below
+`md`, those buttons take a full-width line under the server's name, so they
+cannot squeeze the name column. A `launch_display_stale` answer is a rejected
+write, so both surfaces say it through `ErrorNotice` with the agent hand-off:
+the page in one notice naming the server and pointing at its Details, and the
+Review dialog inside that server's block, above the launch it then shows,
+never on the page as well. An answer that brings no launch to show reads as a
+changed launch. A row refused as
 `added_outside_dashboard` reads **Paused · not approved yet** and behaves the
 same with **Approve**. A marked row that cannot share (a refusal with no
 approvable identity, or an env a shared copy would withhold) has no switch,
@@ -1443,8 +1485,37 @@ does an approved launch that changed, whatever was added beside it. The control 
 same **Approve update**, and `kirocrew doctor` names such a server `new launch
 not approved yet` from the same record (`doctor_checks/mcp.py`, mirroring
 `refusalOnlyAddsLaunches` in `mcpManagementModel.ts`).
+The hint under a **Paused · command changed** row says what moved
+(`changedHintKey`): the command when the approved and the new command lines
+differ as a set, otherwise the environment variables. One line is drawn per
+launch, so one program listed more often, as when launches differ only in an
+expanded `PATH`, is not a changed command. A redaction tag hides the value, so
+lines carrying one never read as the same program: a list that differs keeps
+the command wording, and an unchanged one gets the general line.
+The **Customize** rail row, and the **MCP Servers** tab inside Customize, carry
+the count of servers set to share that wait for an approval (the status read's
+`share_refused`). The shell and the tab read it through
+`pages/overview/mcpShareRefusedQuery.ts`, the same query the servers list's
+notice uses. A refusal is recorded when the gateway starts, so the shell
+re-reads on each socket connect (`hooks/useWebSocket.ts`) and otherwise only
+every five minutes. That poll stops only for a viewer the gateway refuses; it
+keeps running while sharing is off, so a tab notices sharing turned on elsewhere.
 **Review and approve** opens a dialog over the waiting servers only, one
 Approve per server, the same pinned write; there is no approve-all.
+A gateway start that pauses a shared server whose launch was approved before
+(`changed_needs_reapproval`) publishes one `system.approval` bell note naming
+the paused servers (`notifications/mcp_share_paused_note.py`, called once the
+start's refusals are saved; a start whose broker fails to start skips it).
+Its link, `/mcp?view=sharing&review=1`, opens this dialog when a server waits,
+and the page drops `review` either way. The note carries one key, so the bell holds one, and
+records the launch each server was refused for. A later start that finds the
+same launches paused publishes nothing, read or not; a server refused for
+another launch publishes again, after removing the stored note so the new one
+rings instead of replacing it quietly. A start that finds nothing paused removes
+the note, so the same launches can be announced if they pause again; a start
+with no shared server runs this too. Only a stored note stops a repeat: a note
+the owner deleted is published again at the next start while the servers stay
+paused. A server never approved raises no note.
 **Enable all shareable** lists the candidates by name and shares on one more
 press. Below the table, **Pre-install npm servers** carries a one-line
 description of what it installs (the approved `npx` launches of the servers with
@@ -2143,7 +2214,7 @@ Containment for app agents has three layers:
 |-------|-----------|----------------|
 | Agent config | `managedToolPolicy` renders as `disabledTools`; a `neutralize` entry re-declares a server with every tool disabled and does not add it to `tools` | Written at registration, no network |
 | kiro-cli | Reads `disabledTools` and filters before the model sees the list | In-process, no network |
-| MCP server | `GET /api/session-tool-policy` returns the calling session's `managedToolPolicy.exclude`, and the server filters `tools/list` and `tools/call`. A spec that sets `managedToolPolicy.honourToolRefs: true` also gets an `include` entry for each Kiro Crew managed server it grants only through `@<server>/<tool>` refs (`include: {"kirocrew-dashboard": [...]}`): that server lists only those tools and refuses any other call (`rejected_not_included`). Each server named in `managedToolPolicy.excludeServers` is answered as an empty include entry (`include: {"<server>": []}`), overriding any per-tool entry: that server lists nothing and refuses every call; a present `excludeServers` that is not a list of server names makes the policy unreadable. A malformed `include` is `unresolved` like a malformed `exclude`. When that read fails the policy is `unresolved`: `tools/call` refuses with an audited error, `tools/list` still lists everything | Gateway round-trip |
+| MCP server | `GET /api/session-tool-policy` returns the calling session's `managedToolPolicy.exclude`, and the server filters `tools/list` and `tools/call`. A spec that sets `managedToolPolicy.honourToolRefs: true` also gets an `include` entry for each Kiro Crew managed server it grants only through `@<server>/<tool>` refs (`include: {"kirocrew-dashboard": [...]}`): that server lists only those tools and refuses any other call (`rejected_not_included`). Each server named in `managedToolPolicy.excludeServers` is answered as an empty include entry (`include: {"<server>": []}`), overriding any per-tool entry: that server lists nothing and refuses every call; a present `excludeServers` that is not a list of server names makes the policy unreadable. A malformed `include` is `unresolved` like a malformed `exclude`. When that read fails the policy is `unresolved`: `tools/call` refuses with an audited error, `tools/list` still lists everything. A server that names itself in the read's `listing` parameter is answered its `initialize` result and filtered tool list beside the policy, or the reason it must build them itself ("The gateway builds, the server relays") | Gateway round-trip |
 
 Which session that third layer asks for is resolved by `mcp_shared._policy_session_key`
 in the same order the strict resolver uses — the gateway's per-call caller, then the
@@ -2285,7 +2356,10 @@ kiro-cli calls it once at session start and caches the answer, so hiding tools o
 transient failure would leave that session permanently believing the server has no
 tools, unrecoverable without a restart. A listed tool that refuses when called is
 not a hole; an unlisted tool that runs is. Each unfiltered listing is audited as
-`tool_policy.unfiltered_listing`.
+`tool_policy.unfiltered_listing`. A list the gateway built for the server to relay is
+not one: the gateway read the policy first and answers a list for a session that is
+not registered yet only when its policy withholds nothing ("A session that is still
+starting").
 
 A session that has ever resolved its policy is served from the per-session cache and
 never reaches these paths again, so a refusal only affects a session whose policy has
@@ -2374,13 +2448,13 @@ Managed servers, registered by `agent._MANAGED_MCP_SERVERS` and installed into
 | `kirocrew-cron` | `kirocrew mcp-cron` (`mcp_cron.py` + `mcp_cron_*.py`) | `cron_add`, `cron_list`, `cron_update`, `cron_remove`, `cron_remove_all`, `cron_pause`, `cron_resume`, `cron_trigger`, `cron_secret_request` |
 | `kirocrew-core` | `kirocrew mcp-core` (`mcp_core.py` + `mcp_core_parts/` + `mcp_tools/`) | spawn/subagent, learn, task, messaging, artifact, workflow, knowledge and session-directive tools (see below) |
 | `kirocrew-computer` | `kirocrew mcp-computer` (`mcp_computer.py`) | `computer_list_apps`, `computer_launch_app`, `computer_get_state`, `computer_click`, `computer_drag`, `computer_type_text`, `computer_press_key`, `computer_set_value`, `computer_scroll`, `computer_perform_action`, `computer_end_turn` |
-| `kirocrew-dashboard` | `kirocrew mcp-dashboard` (`mcp_dashboard.py` + `mcp_dashboard_*.py`) | `chat_folder_tree`, `chat_folder_create`, `chat_folder_move`, `chat_folder_update`, `chat_folder_move_session`, `chat_folder_delete`, `chat_tag_list`, `chat_tag_create`, `chat_tag_update`, `chat_tag_assign`, `chat_tag_column_list`, `chat_tag_column_create`, `chat_tag_column_move`, `session_move_to_column`, `chat_session_pin`, `chat_session_pin_move`, `session_create`, `session_fork`, `session_stop`, `session_end_wait`, `session_retry`, `session_continue`, `session_set_model`, `session_reload`, `session_rename`, `session_generate_title`, `session_set_color`, `session_set_note`, `session_close`, `session_revive`, `session_history_list`, `session_send`, `session_broadcast`, `session_status`, `session_adopt`, `session_handoff`, `session_release`, `session_read_message`, `session_summary` |
-| `kirocrew-work` | `kirocrew mcp-work` (`mcp_work.py`) | `work_brief`, `work_report`, `work_ledger_read`, `work_ledger_rebuild`, `work_ledger_record` |
+| `kirocrew-dashboard` | `kirocrew mcp-dashboard` (`mcp_dashboard.py` + `mcp_dashboard_*.py`) | `chat_folder_tree`, `chat_folder_create`, `chat_folder_move`, `chat_folder_update`, `chat_folder_move_session`, `chat_folder_delete`, `chat_tag_list`, `chat_tag_create`, `chat_tag_update`, `chat_tag_assign`, `chat_tag_column_list`, `chat_tag_column_create`, `chat_tag_column_move`, `session_move_to_column`, `chat_session_pin`, `chat_session_pin_move`, `session_create`, `session_fork`, `session_stop`, `session_end_wait`, `session_retry`, `session_continue`, `session_set_model`, `session_reload`, `session_rename`, `session_generate_title`, `session_set_color`, `session_set_note`, `session_close`, `session_revive`, `session_history_list`, `session_send`, `session_broadcast`, `session_status`, `session_adopt`, `session_handoff`, `session_release`, `session_read_message`, `session_summary`, `session_queue`, `work_dispatch` |
+| `kirocrew-work` | `kirocrew mcp-work` (`mcp_work.py`) | `work_brief`, `work_report`, `work_ledger_read`, `work_ledger_rebuild`, `work_ask_record`, `work_ledger_record`, `accept_eval` |
 | `kirocrew-crew-log` | `kirocrew mcp-crew-log` (`mcp_crew_log.py`) | `crew_log_list`, `crew_log_read`, `crew_log_projection` |
 | `kirocrew-debug` | `kirocrew mcp-debug` (`mcp_debug.py`) | `debug_gateway`, `debug_refusals`, `debug_threads`, `debug_processes`, `debug_snapshots` |
-| `kirocrew-panel` | `kirocrew mcp-panel` (`mcp_panel.py`) | `panel_publish`, `panel_templates`, `dashboard_fields`, `dashboard_types`, `dashboard_write`, `dashboard_templates`, `dashboard_preview`, `dashboard_apply`, `dashboard_rollback`, `dashboard_snapshot` |
+| `kirocrew-panel` | `kirocrew mcp-panel` (`mcp_panel.py`) | `panel_publish`, `panel_templates`, `dashboard_fields`, `dashboard_types`, `dashboard_write`, `dashboard_save`, `dashboard_templates`, `dashboard_preview`, `dashboard_apply`, `dashboard_rollback`, `dashboard_snapshot` |
 | `kirocrew-guide` | `kirocrew mcp-guide` (`mcp_guide.py`) | `guide_list_actions`, `guide_start`, `guide_status`, `guide_cancel`, `list_change_kinds`, `find_setting`, `get_member_capabilities`, `diagnose_settings`, `propose_change`, `get_change_status`, `search_docs`, `find_ui` |
-| `kirocrew-mate` | `kirocrew mcp-mate` (`mcp_mate.py`) | `update_self`, `set_model`, `set_approval_mode`, `find_capabilities`, `request_capabilities`, `goal_read`, `set_goal`, `set_key_results`, `key_result_progress`, `save_goal_report`, `save_notes` |
+| `kirocrew-mate` | `kirocrew mcp-mate` (`mcp_mate.py`) | `update_self`, `set_model`, `set_approval_mode`, `find_capabilities`, `request_capabilities`, `goal_read`, `set_goal`, `set_key_results`, `set_check_ins`, `offer_dashboard_page`, `key_result_progress`, `save_goal_report`, `save_notes` |
 | `kirocrew-secrets` | `kirocrew mcp-secrets` (`mcp_secrets.py`) | `call_api_with_secret` |
 
 `kirocrew-guide` is a platform capability: it is always emitted (not `opt_in`),
@@ -2483,7 +2557,7 @@ are admitted without a turn the user sent: any turn in the Bot's own
 pinned thread (a check-in, a sub-agent's result coming back, the goal-setup
 nudge of `dashboard/goal_setup.py`) may call `set_goal`, `set_key_results` and
 `set_check_ins`. `_resolve_agent_caller(..., own_goal=True)` (passed only by
-`member.propose_self`) admits such a turn when the slot is a Bot DM thread
+`member_self.api_member_self_propose`) admits such a turn when the slot is a Bot DM thread
 and marks the request `REQ_OWN_GOAL_TURN`; a channel turn is still refused. The
 route then refuses every other request (`model`, `approval_mode`,
 `capabilities`) with `not_user_turn`. Each is a card: nothing changes until the
@@ -2520,7 +2594,7 @@ and each refused tool answers one line --
 changed. ...` (`mcp_guide._off_dashboard`, keyed on the gateway's
 `no_live_slot`/`no_dashboard_turn`/`channel_caller`/`subagent_caller`/
 `unattended_caller`/`app_caller`/`app_scoped_caller`/`missing_session_key`/
-`not_user_turn` codes) -- while `find_ui` and
+`not_user_turn`/`unattested_caller` codes) -- while `find_ui` and
 `search_docs` still answer in text, every result `live: not_observed`. `guide_start` only offers a
 card the user must press Start on, and `guide_cancel` only stops this
 conversation's guide, undoing nothing the user saved. A conversation has at most
@@ -2696,9 +2770,13 @@ credential and security-ceiling controls are excluded from the catalog.
 The same server carries **change cards**. `propose_change(kind, params, reason?)`
 names one REGISTERED kind (`change_card_catalog.KINDS`: `setting.change`,
 `schedule.create`/`.update`, `crewmate.create`/`.update`/`.capabilities`,
+`crewmate.goal`/`.key_results`/`.check_ins`,
 `template.update`, `mcp.install`/`.add_custom`/`.toggle`, `connection.connect`,
 `secret.save`, `trust.app`, `denied_command`, `folder.steering`,
 `workflow.save`/`.update`); trust-root files have no kind.
+`crewmate.import` is the owner's own (`APP_ONLY_KINDS`, refused `app_only`) and
+`crewmate.dashboard_page` the Bot's own `offer_dashboard_page` ask
+(`SELF_ONLY_KINDS`, refused `self_only`).
 `template.mcp_server` is not one of them: its server entry is the gateway's own, so
 only `request_server` raises it (see *Asking for an MCP server mid-chat*).
 `setting.change` takes a Settings-registry `setting_id` (found with
@@ -2777,7 +2855,11 @@ as `how`, `do` and `I` (kept when nothing else is left) and one common ending
 `max_cycles`). A page ranks by the query words it holds, each worth more the
 fewer pages hold it, twice as much in the page name and half again in its
 opening lines, then by how often it says them; a word found on nearly every page
-(`use`, `set`) counts for little. The word itself, with a common ending
+(`use`, `set`) counts for little. A page that misses some query words keeps
+only the share of that word score its held words carry, each word's share being
+its rarity, so a name holding `task` and the start of `run` (`task-runner`)
+cannot outrank a page holding every word of "run a task in the background",
+while a missed common word costs almost nothing. The word itself, with a common ending
 (`updat` + `e`, `automatic` + `ally`), counts full; only the start of a longer
 word (`mode` in `model`, `run` in `runner`) counts half. A tie goes to the
 shorter page name. It calls no
@@ -3041,6 +3123,11 @@ answers `tools/list` from):
 
 - **Subagents:** `spawn_status`, `spawn_continue`, `spawn_steer`,
   `spawn_release`, `spawn_sub_agents`, `wait`
+- **Lessons:** `learn_update`
+- **Questions:** `ask_question`
+- **The session's own MCP servers:** `mcp_server_wait` (one parked call that
+  returns when a named server of the calling session has connected, or says why
+  it will not; see "A server that is still starting" below)
 - **Messaging and notification:** `send_message`, `send_notification`,
   `dismiss_notification`,
   `delete_message`, `update_message`, `file_send`, `read_slack_profile`,
@@ -3126,6 +3213,14 @@ answers `tools/list` from):
   serves each call from its own process; this server lists the tool and forwards the
   call (below).
 - **Browser:** `browser`
+- **Slack code channels:** `code_channel_set_view`,
+  `code_channel_publish_plan_canvas`, `code_channel_set_context_bar`,
+  `code_channel_rename`, `code_channel_set_status`, `code_channel_wrap_up`
+  (`mcp_tools/catalog/code_channels.py` declares them, `mcp_tools/code_channels.py`
+  serves them). They are listed only while `slack.code_channels` is on, and each
+  acts on the calling session's own bound code channel: no argument names a
+  channel. The gateway side, its checks and the SEL rows are in
+  [slack-gateway § Code-channel agent surface](../system-specs/modules/slack-gateway.md#code-channel-agent-surface)
 - **Diagnostics:** `resource_status`, `kiro_cli_logs` — a redacted tail of kiro-cli's own mcp/lsp protocol logs, so
   the agent can self-diagnose a rejected turn. Reads log files only: never the
   fenced identity/token stores, and never the conversation-bearing sources
@@ -3420,6 +3515,7 @@ of its responsibility:
 | `control_parts/schemas.py` | every control descriptor, and the structured-arming and runtime-ceiling reads that shape one |
 | `control_parts/directive.py` | `_emit_directive`, and the tools whose effect is one directive: `nothing_to_do`, `set_project`, `reset_conversation`, `chat_tag`, `suggest_followup` |
 | `control_parts/monitor.py` | `monitor_start`, `monitor_watch`, `monitor_inspect`, `monitor_update`, `monitor_stop`, `autonudge_stop`, and their context and preflight refusals |
+| `control_parts/mcp_wait.py` | `mcp_server_wait` with its deferred step, and the text the model is given for each state a server can be in |
 | `spawn.py` | `spawn_run` with its deferred step and receipt, `spawn_continue`, `spawn_steer`, `spawn_release`, `resource_status`, `HANDLERS` |
 | `spawn_parts/schemas.py` | every spawn descriptor, the agent roster hint and the parent allowlist filter |
 | `spawn_parts/listing.py` | `spawn_list`, `spawn_status` and the queued-wait wording |
@@ -3498,7 +3594,7 @@ silently escape every such patch. `mcp_core._HANDLER_SURFACE` names the bindings
 that exist only for this purpose, so an import cleanup cannot quietly delete one.
 
 `mcp_core.py` keeps the server itself — `tools/list`, the call path and its call
-context, directive capture, the knowledge cache, `_send` and the five verbs — and is a
+context, directive capture and the knowledge cache — and is a
 mirror facade (`kiro_crew._facade_mirror`) over the owners in `mcp_core_parts/`, so
 every name they define still reads and patches as `mcp_core.<name>`. New plumbing goes
 to the owner of its responsibility:
@@ -3506,10 +3602,18 @@ to the owner of its responsibility:
 | Owner | Owns |
 |---|---|
 | `identity` | which session is calling: the lenient and strict resolvers, `require_strict_session_key` and its diagnosis, `REFLEXIVE_TOOL_MODULES`, the Slack identity classification |
-| `gateway` | where a call goes: the port, base URL and unix-socket caches, one request's target, the refused-target replay and re-verification, the internal secret, the identity headers, `_send`'s retry schedule, and failure text and error body |
+| `gateway` | where a call goes and the call itself: the port, base URL and unix-socket caches, one request's target, the refused-target replay and re-verification, the internal secret, the identity headers, `_send` with its retry schedule, failure text and error body, and the five verbs (`_get`, `_post`, `_patch`, `_put`, `_delete`) |
 | `governance` | channel-agent containment and the messaging, browse, channel and memory-write vets |
-| `crew` | Ultra Mode's `route_crew` and `select_crew` bodies |
+| `crew` | Conductor mode's `route_crew` and `select_crew` bodies |
 | `history` | the chat-history search tools' scoping, redaction and snippet helpers |
+
+The other own servers (`kirocrew-cron`, `kirocrew-guide`, `kirocrew-mate`) take the
+verbs and the identity resolvers from `mcp_core_parts.gateway` and
+`mcp_core_parts.identity`, never from `mcp_core`: importing the facade loads the whole
+core server (agent discovery, the conversation store, knowledge search), and each of
+those servers loads its handlers right after its list, in every chat.
+`test/test_mcp_listing_import_budget.py` holds their handler modules to that and to
+a count of package modules each.
 
 `mcp_cron.py` keeps the cron server itself — argument validation, the call path, the
 caller's identity and ownership checks, the tool bodies (`_call_tool_inner`) and the
@@ -3543,6 +3647,11 @@ goes to the owner of its responsibility:
 | `mcp_shared_listing` | what a server says before it can run a tool: `initialize_result` and `listable_tools`, the one builder of each answer; `StdioServer`, a server's declaration; `serve_before_handlers` and the frames it hands the loop |
 | `mcp_shared_dispatch` | `_run_stdio_dispatch_loop`, the loop `run_mcp_stdio_loop` runs, with its worker, wake pipe and tunables |
 
+Two modules outside the family carry a server's first two answers from its gateway
+(below, "The gateway builds, the server relays"): `mcp_listing_relay`, the server's one
+request before it boots, and `mcp_listing_gateway`, the gateway's builder behind the
+policy route.
+
 A global the family rebinds at run time (the framing, the stdout fd, the policy's failure
 state) lives in the one owner that rebinds it, beside every reader of it, and the owners
 log as `kiro_crew.mcp_shared`. `test/test_mcp_shared_facade.py` pins the contract.
@@ -3562,18 +3671,101 @@ There is one listing path, for every launch mode:
 
 - **One builder per answer.** `mcp_shared_listing.initialize_result` builds the
   `initialize` result and `mcp_shared_listing.listable_tools` the filtered tool
-  list. The dispatch loop answers from them, and so does
-  `serve_before_handlers`; nothing else builds either, so a client cannot tell
-  which of the two wrote an answer.
+  list, through the one filter `within_policy`. The dispatch loop answers from
+  them, and so does `serve_before_handlers`; nothing else builds either, so a
+  client cannot tell which of the two wrote an answer. The gateway is a third
+  caller of the same functions, for a server to relay (next point).
+- **The gateway builds, the server relays.** Building the list in the server
+  costs its whole start-up first: the configuration, the platform, and for
+  `kirocrew-core` the live reads its descriptions carry. The gateway has all of
+  that loaded, so before a server in `mcp_entry.EARLY_ANSWERS` loads any of it,
+  it asks its gateway once (`mcp_listing_relay.relay_before_boot`): the policy
+  read it already makes, `GET /api/session-tool-policy`, with a `listing`
+  parameter naming the server, and the credential, session key and session
+  token that read carries. The gateway answers the policy with the server's
+  `initialize` result and filtered tool list beside it
+  (`mcp_listing_gateway.session_listing_body`): the server's declared
+  `list_tools` behind `within_policy`, and `initialize_result`, run in a worker
+  thread under that session as the request-local caller, restored on failure,
+  with nothing kept between requests. The server writes both answers and goes
+  on starting; the handlers load where they always did. The relay imports the
+  standard library and leaf modules only: no configuration loader, no platform,
+  no audit log (`test/test_mcp_listing_relay.py` holds that, and that the bytes
+  a client reads are the same from either builder, for all four servers and
+  with a policy that withholds tools).
+- **A list is relayed only on an install the sandbox seals.** Building a list
+  imports listing modules into the gateway, which runs outside the sandbox, on
+  a request a session can cause. So the gateway builds one only where the
+  sandbox seals the package tree it imports from against a session's agent, by
+  the sandbox's own classification (`sandbox_tiers.install_root_targets_for`,
+  read by `mcp_listing_gateway._package_tree_is_sealed`; no second rule): a
+  packaged install (a wheel, the desktop bundle), on every system. An editable
+  or from-source checkout is the developer's working copy and stays writable to
+  the agent, so there the gateway answers "build locally" before any listing
+  code runs and the server starts as it does on main. The classification is the
+  install kind and does not read the sandbox setting: with `agent.sandbox` off
+  nothing confines the agent, a packaged install is still answered a list and a
+  source checkout still is not. An answer that cannot be had counts as not
+  sealed. The stamp below is not extended to bytecode, and no seal is added.
+- **A list is relayed only where it is the server's own.** The gateway answers
+  a reason instead of a list (`{"listing": {"local": ...}}`), and the server
+  then builds both answers itself in the order it always started in, when: the
+  gateway has not read its code stamp yet (it is read once, by a startup hook
+  in a worker thread, `mcp_listing_gateway.startup_stamp`: nothing is read when
+  the route module is imported or before the listener accepts requests, and it
+  is read at start and not at first use because a later stamp would vouch for
+  what is on disk by then, not for the code the gateway loaded); the
+  server finds other listing code on disk than the gateway found as it started
+  (`code_stamp`, over the modules that build the lists and every module of the
+  package those import by name, a set `test/test_mcp_listing_relay.py` derives
+  from their import statements: a package replaced under a running gateway, or
+  one of those modules edited by hand; not a hand edit one import deeper), or
+  reads another
+  data home or agents directory (`place_stamp`, device and inode); the session
+  is a private member's; the platform is not the standalone composition (an
+  overlay, an edition); a governance policy is installed or a profile is bound
+  to the session; the policy's `exclude` or `include` is malformed. A server
+  does not ask at all without a session key, a session token and a gateway port
+  in its own environment (a pooled backend has no session of its own), or when
+  it holds an enforced harness's pickup in place of the credential. A
+  `tools/list` frame that carries a gateway-stamped caller is left for the
+  loop. One description reads a value only the gateway process holds, the
+  sub-agent cap in force; a list built for relay reads it as a tool server does
+  (`mcp_listing_relay.as_a_tool_server`), so the sentence is the server's.
+- **A session that is still starting.** A session's servers ask while the start
+  that spawned them is waiting for them, so before the session is registered
+  and before its policy read can name its agent (that read answers
+  `404 agent not resolved`, and a server that builds its list then lists
+  everything, audited). For a `listing` request alone the route reads the agent
+  the start recorded (`SessionManager.starting_agent`, session.md) and answers
+  the list only when that agent's policy withholds none of the server's tools,
+  which is that same unfiltered list; no policy is answered, and one that
+  withholds a tool is answered as "build locally". A plain policy read keeps
+  its `404` in that window, so nothing a `tools/call` is judged by moves. A
+  relayed list at session start writes neither `tool_policy.agent_not_resolved`
+  nor `tool_policy.unfiltered_listing`: the gateway read the policy and nothing
+  went out unfiltered by default. A server that builds its own list writes both
+  as before.
+- **The wait is bounded, and a fallback is logged.** The server waits
+  `RELAY_FETCH_TIMEOUT_SECS` (1.0 s per socket wait) on the gateway. A warm
+  gateway answers in tens of milliseconds; a server that waited the whole bound
+  starts as it always has, that much later, and logs a warning. Every other
+  fallback logs one informational line with its reason
+  (`mcp_listing_relay.report_outcome`).
 - **One declaration per server.** A server declares itself as a `StdioServer`
   (`SERVER`) in a module that imports no handler: `mcp_core_tool_list`,
   `mcp_cron_tool_list`, `mcp_guide_tool_list`, `mcp_mate_tool_list`. It names the
   server, its tool-list builder and its loop options, and the server's `run`
   passes the same values to `run_mcp_stdio_loop` (`**SERVER.loop_options()`).
-- **The entry answers, then loads.** `mcp_entry.slim_server` runs every start-up
-  step it always ran (the root-run refusal, the data home, logging, the platform
-  boot, which fails closed), then calls `serve_before_handlers` for a server in
-  `mcp_entry.EARLY_ANSWERS`, and only then imports the server module. The early
+- **The entry answers, then loads.** `mcp_entry.slim_server` refuses a root run
+  aimed at another account's data home, relays the gateway's answers when it has
+  them (above; not for a server whose stderr is the gateway log), then runs
+  every start-up step it always ran (the data home, logging, the platform boot,
+  which fails closed), then calls `serve_before_handlers` for a server in
+  `mcp_entry.EARLY_ANSWERS`, which answers what the relay did not and hands the
+  loop the frames either of them read, and only then imports the server module.
+  A gateway relays nothing on a platform that composes an overlay, so a server
+  that fails closed on its platform still ends before it has answered. The early
   answers stop at the first frame they do not serve and leave it unanswered; the
   loop reads those frames before it reads stdin, so each frame is handled once,
   in the order it arrived. A `tools/call` that arrives while the handlers load
@@ -3587,6 +3779,10 @@ There is one listing path, for every launch mode:
   is when: the client already holds the tool list, so it sees a server that
   listed its tools and then closed its pipe, which an MCP client reports as a
   server that stopped, the same state as a server that crashed mid-session.
+  The discovery probe, which `kirocrew doctor` and the dashboard's server list
+  run, does not stop at the list for these servers: it asks for one more answer
+  (above, "stdio servers"), so such a server probes as an error with its reason,
+  never as `ok` (`test/test_mcp_probe_past_listing.py`).
 - **What a listing may import is bounded.** `test/test_mcp_listing_import_budget.py`
   runs each server's real entry in a fresh interpreter, feeds it the two
   requests, and holds the modules loaded at that moment to a named denylist
@@ -4421,7 +4617,7 @@ entry and another navigation entry of the same name (a Customize tab) stay
 ambiguous. With `location_id`, a visible
 control carrying that id is the match before any name is compared, whatever
 its label reads in the page's current state (the top bar's Search reads "Open
-command bar" while an app owns the slot): `data-ui-location` on the control,
+command bar" while the Command Bar is on): `data-ui-location` on the control,
 or on a wrapper holding exactly one, or `data-guide-target` (`guide/trustRoot.ts`)
 for a row a shared primitive builds from its props, such as a Settings
 sub-page row (`SettingsSubNav` `guideTargetPrefix`, `settings.sub.<tab>.<key>`),
@@ -4569,10 +4765,11 @@ Two steps, and the generator fails on either one alone; then regenerate:
    to the DOM node a person clicks (a forwarding component re-emits it with
    `forwardUiLocation(id, ...ownRefs)`), proven by a rendered test: `uiIndex.test.ts` scans every production marker and
    accepts an intrinsic element, or a component in its `FORWARDING_PROVEN`
-   list (`Btn`, `SendBtn`, `DropdownMenuItem`, `Glass`, `IconButton`,
-   `Clickable`, `Link`, `NavItem`, `Row`, `AddMenuItem`, `SimpleSelect`,
-   `SegmentedControl`, `CrewEditorNextRail`, `Tablist`, `SidePanel`, `Table`,
-   `DropdownMenuSubTrigger`, `Item` today),
+   list (`Btn`, `SendBtn`, `DropdownMenuItem`, `Glass`, `HeaderControl`,
+   `IconButton`, `Clickable`, `Link`, `NavItem`, `Row`, `AddMenuItem`,
+   `SimpleSelect`, `SegmentedControl`, `CrewEditorNextRail`, `Tablist`,
+   `SidePanel`, `Table`, `DropdownMenuSubTrigger`, `Item`,
+   `NotificationClearButton`, `TipClickable` today),
    each with its own rendered forwarding test, whose `afterEach` fails on any
    `data-ui-location` in the document not registered under that same id
    (`unregisteredMarkers`, `src/test/guideTargets.ts`). `NavItem` (`shell/nav/navRow.tsx`) takes a fixed
@@ -4699,14 +4896,45 @@ once per session, so a tool listed there spends context in every request of ever
 session for as long as the session lives — whether or not that session will ever
 use it. With `agent.tool_search` on (the default), kiro defers MCP specs once they
 cross `agent.tool_search_min_pct` or `agent.tool_search_min_tokens`, and Crew's own
-servers defer like any other when the spawn runs the pinned kiro-cli install or its
-`kiro-cli-chat`, and both are >= 2.27.0. Both the spawned path and the pin are first
+servers defer like any other when the file the spawn runs is new enough. Three install
+shapes can earn that (`kiro_cli.mandatory_mcps_drop_allowed`):
+
+| The spawn runs | Version read | Defers when |
+|---|---|---|
+| the pinned kiro-cli install or its `kiro-cli-chat` | `kiro_cli_version_at`, on the pinned files only, inside the sandbox at the configured tier | both are >= 2.27.0 |
+| the operator's `KIROCREW_KIRO_BIN` | the same read: an absolute override is the pin | that one file is >= 2.27.0, and >= 3.0.0 when it is a POSIX `kiro-cli` |
+| a kiro-cli found only through `PATH` | `kiro_cli_path_probe`, inside the strict sandbox, in the background | the same, once the answer is in |
+
+The last two derive no sibling: a POSIX `kiro-cli` below 3.0.0 is a launcher that execs
+a `kiro-cli-chat` nobody probed, so it stays resident there. A `PATH` file can sit in a
+directory an agent writes to, so its `--version` never runs unconfined, whatever the
+configured tier: it goes
+through the readiness probe's own runner for an unverified candidate
+(`kiro_prerequisite._run_process`: `sandboxed_spawn_argv(mode="strict")`, entered
+through the system `env`, output captured up to a fixed bound, the process tree ended
+on a timeout), with that probe's credential-free environment,
+and is not run at all when the wrap did not put it in Crew's own sandbox (the runner's
+`require_crew_sandbox`) or on Windows,
+which has no sandbox backend. It is started at gateway boot and on a spawn's first
+miss, and never waited for: a spawn that finds no answer
+keeps the servers resident. The file's own answer is cached by path and mtime; a read
+that did not run or was cut off (a timeout, a sandbox that could not be built, more
+output than the bound) is not
+kept, so the next spawn starts another. Both the spawned path and the pin are first
 passed through the edition's `agent_executable` resolver, the one the OS sandbox applies
-to argv[0], so a managed launcher is judged by the install it runs. For any other executable (a pod bundle, a `kiro-cli`
-found on `PATH`), below that floor, or when the version is unknown, Crew keeps its
+to argv[0], so a managed launcher is judged by the install it runs. For any other executable (a pod bundle,
+a sibling nobody probed), below that floor, or when the version is unknown, Crew keeps its
 servers resident to avoid the thinking-signature
 "tools list differs" rejection that bricks a session. That floor is kiro-cli's own
-engine and the KAS relay, which runs whatever KAS its kiro-cli carries. On Crew's
+engine and the KAS relay, which runs whatever KAS its kiro-cli carries. The floor is
+measured, not promised, so a refusal above it is handled too: the first request refused
+with that reason (`transport_errors._is_tools_list_refusal`, on a kiro-family backend)
+is remembered for the life of the process (`kiro_cli.note_tools_list_refusal`), every
+later spawn keeps the servers resident, a warm-pool process started before it is
+discarded at claim, and the dashboard's one-shot rebuild of the refused conversation
+therefore starts its process with the full list. One case is not covered: with the
+`chat_runtime_sharing` preview on (off by default), the rebuilt conversation can be
+placed on a shared process that started before the refusal and still defers. On Crew's
 own KAS engine bundle (a spawn whose program sits under `<data home>/engines/kas` or the desktop app's
 staged engine copy),
 Crew's servers always defer: `tool_load` returns a tool's schema as a tool result and the call runs
@@ -4733,15 +4961,79 @@ the agent's spec mounts on `toolSearch.neverDefer` for a spec that grants
 
 | Agents | Job tools | Budget (schema tokens per request, as the engine counts them) |
 |---|---|---:|
-| `kirocrew` | `spawn_run`, `spawn_sub_agents`, `spawn_status` | 3,300 |
-| `kirocrew-worker`, `kirocrew-mate-worker` | `work_brief`, `work_report` | 1,200 |
-| `kirocrew-pipeline-conductor`, `kirocrew-security-conductor` | `work_dispatch`, `session_create`, `session_send`, `session_read_message`, `session_close`, `work_ledger_read`, `work_ledger_record`, `accept_eval`, `monitor_start`, `wait` | 7,600 |
-| `kirocrew-conductor`, `kirocrew-ledger-conductor`, `kirocrew-team-lead` | the ten above and `work_brief` | 7,800 |
+| `kirocrew` | `spawn_run`, `spawn_sub_agents`, `spawn_status`, `mcp_server_wait`; and its six most used small tools: `autonudge_stop`, `memory_recall`, `nothing_to_do`, `search_chat_history`, `skill_search`, `wait` | 4,950 |
+| `kirocrew-worker`, `kirocrew-mate-worker` | `work_brief`, `work_report`, `mcp_server_wait` | 1,200 |
+| `kirocrew-pipeline-conductor`, `kirocrew-security-conductor` | `work_dispatch`, `session_create`, `session_send`, `session_read_message`, `session_close`, `work_ledger_read`, `work_ledger_record`, `accept_eval`, `monitor_start`, `wait`, `mcp_server_wait` | 7,700 |
+| `kirocrew-conductor`, `kirocrew-ledger-conductor`, `kirocrew-team-lead` | the eleven above and `work_brief` | 7,850 |
+| a custom agent (`CUSTOM_AGENT_JOB_TOOLS`) | `mcp_server_wait` | none: one tool of 63 tokens |
+
+A custom agent grants no loader, so every MCP tool it can call is on
+`neverDefer`, except the tools of the Kiro Crew servers Crew itself added to it
+(`acp/default_crew_servers.crew_added_servers`: the managed entry, byte for byte).
+Those are left behind KAS's loader, as on the default agent, so Crew's own tool
+specs (about 137 K characters, measured on an agent with no server of its own) no
+longer ride in each of its requests; its
+`CUSTOM_AGENT_JOB_TOOLS` and any added-server tool its author named one by one stay
+direct (`custom_agent_never_defer_ids`).
+
+`mcp_server_wait` is in every row because every shipped agent's turn can be told a
+server is still starting (the `[MCP SERVERS]` block), and a load in front of the
+wait would spend the model round trip the wait exists to save. Its descriptor is
+kept to 63 schema tokens. The workers' row fits the budget it had. The pipeline
+and security conductors' row measures 7,653 with it, so its budget is 7,700; the
+goal conductor's, ledger conductor's and team lead's row measures 7,808, so its
+budget is 7,850.
+
+The default agent's row also carries its six most used small tools
+(`_MAIN_CHAT_MOST_USED`). They were picked by counting, in a long-running
+installation's dashboard chats, how many sessions of the default agent called
+each Kiro Crew tool at least once (a deferred tool costs one load round trip per
+session, so sessions are what a listing saves), and keeping, in that order, each
+tool whose definition is small: `autonudge_stop`, `wait`, `skill_search`,
+`memory_recall`, `nothing_to_do` and `search_chat_history`, about 6 KB in all
+(1,491 schema tokens). `monitor_start`, `send_message` and `monitor_update` were
+called in more sessions than some of these, but each is 4 to 10 KB, so they stay
+deferred. With the six the row measures 4,673, so its budget is 4,950. A first
+use of one of them no longer spends a model round trip on a load.
+
+#### A server that is still starting
+
+A session's start does not wait for the agent's own MCP servers when a person
+is waiting on it (`acp/mcp_start_wait.py`), a new chat and a re-opened one
+alike, so a turn can begin while some of
+them are still connecting. Such a server is not in the model's tool list yet, and
+the host's tool loader answers a request for one of its tools as though it did
+not exist. Two parts keep the model from repeating that to the user. Both reach
+only a turn whose prompt carries the block (the gateway's context builder builds
+it: a dashboard or channel turn). A first turn whose prompt does not, such as
+`kirocrew chat` or a side question, holds its prompt for those servers instead,
+at most five seconds, as the start did before
+([acp-client](../system-specs/modules/acp-client.md), *Which servers the first prompt waits for*):
+
+- The turn's `[MCP SERVERS]` block (`context_assembly/mcp_servers.py`) names each
+  server the session cannot use by its state and says what to do.
+- `mcp_server_wait(server)` on `kirocrew-core` (`mcp_tools/control_parts/mcp_wait.py`).
+  It resolves the caller's STRICT session key, parks as a `DeferredTool`, and once
+  a second asks the gateway what is true of that server through the route every
+  parked tool already pings, `POST /api/session-keepalive` with
+  `{"mcp_server": name}` (reply `mcp_server_state`; the route reads only the
+  report of the session the key names, `agent_sdk.mcp_problems.mcp_server_state`).
+  It answers the moment the server is connected, at once for a state that will
+  not change by waiting (failed, needs a sign-in, switched off, left out by a
+  registry), at once for a name no report holds, and after
+  `MCP_SERVER_WAIT_SECS` (90 s) otherwise. A name no report holds is never
+  called missing: some hosts report none of their servers, so the answer sends
+  the model to its tool list. The
+  ping doubles as the keepalive, the liveness watchdog knows the tool as one that
+  pings (`_KEEPALIVE_TOOL_NAMES`), and a Stop drops the parked call like any
+  other deferred tool. No new listener, route or credential.
 
 The rules the table is held to (`test/test_job_tools.py`):
 
 - **A row is the tools the agent's own prompt makes its procedure**, not the tools
-  it might use. Anything else is one `tool_search` away.
+  it might use. Anything else is one `tool_search` away. The one addition is the
+  default agent's most used small tools above, chosen from measured use, never
+  from guesses.
 - **A row fits its budget.** Its tools ride in every request of that agent. The
   budgets live in `test/test_job_tools.py` (`JOB_TOOL_BUDGETS`), beside the test
   that enforces them, because nothing at run time reads one. They are counted the
@@ -5004,6 +5296,12 @@ are checked against one artifact. Digits are ASCII `0-9` on both sides (never
 `str.isdigit`, which reads the interpreter's tables) and a digit run compares by
 value without ever becoming a number, for the same reason the name compare never
 folds outside `A`-`Z`.
+
+The sidebar's browser-local **Move folders with unread chats to the top** view is
+the one place the drawn order can differ from the listing: when the person turns it
+on, folders holding an unread chat are drawn first. It lives in localStorage, so
+the tool cannot read it, and its description says so instead. It writes no `order`
+and no `folder_sort`, so an anchor still lands in the stored order the tool lists.
 
 The tool's header line names the active mode (`folder order: name`). A POSITION is
 still a stored-order concept: the placement helpers compute a `before`/`after` gap in

@@ -396,7 +396,7 @@ def _read_model(r: _Read) -> None:
     # tools, so a value read back from this file would let a prompt-injected
     # agent grant itself routing the owner never selected. The flag lives in
     # memory only: a restart leaves the slot on its persisted model -- the
-    # documented refusal -- and the owner re-picks "Auto (Jev)" to route again.
+    # documented refusal -- and the owner re-picks "Auto (decision model)" to route again.
     from kiro_crew.dashboard import chat_persistence as cp  # circular import: facade imports owners
 
     purpose = r.purpose
@@ -444,8 +444,11 @@ def _staged_autocompact(slot: Any, folds: SaveFolds) -> float | None:
 
 def _read_turn_timeout_secs(r: _Read) -> None:
     from kiro_crew.dashboard import chat_persistence as cp  # circular import: facade imports owners
+    from kiro_crew.dashboard.transcript_binding import seed_turn_timeout_from_disk
 
-    r.slot.turn_timeout_secs = cp._validate_turn_timeout_secs(r.meta.get("turn_timeout_secs"))
+    seed_turn_timeout_from_disk(
+        r.state, r.slot, cp._validate_turn_timeout_secs(r.meta.get("turn_timeout_secs"))
+    )
 
 
 def _staged_turn_timeout(slot: Any, folds: SaveFolds) -> int | None:
@@ -628,6 +631,20 @@ def _attribution_value(slot: Any, folds: SaveFolds) -> object:
     return OMIT if value is None else value
 
 
+def _read_participants(r: _Read) -> None:
+    # Shared Crew participants, display only. Function-local like attribution's.
+    from kiro_crew.shared_crew import participants as shared_crew_participants
+
+    shared_crew_participants.restore_from_metadata(r.slot, r.meta)
+
+
+def _participants_value(slot: Any, folds: SaveFolds) -> object:
+    from kiro_crew.shared_crew import participants as shared_crew_participants
+
+    value = shared_crew_participants.metadata_value(slot)
+    return OMIT if value is None else value
+
+
 def _read_folder_id(r: _Read) -> None:
     folder_id = r.meta.get("folder_id")
     if not folder_id:
@@ -745,15 +762,36 @@ def _read_human_seen(r: _Read) -> None:
         r.slot._human_seen = True
 
 
-#: The characters of the mark ``_telemetry_notice_is_new`` writes: 16 of these.
-#: Any other value is not a mark.
+#: The characters of the mark ``_telemetry_notice_is_new`` and
+#: ``_project_hook_files_notice_is_new`` write: 16 of these. Any other value is not
+#: a mark.
 _HEX = frozenset("0123456789abcdef")
 
 
-def _read_telemetry_notice_shown(r: _Read) -> None:
-    mark = r.meta.get("telemetry_notice_shown")
+def _notice_mark(r: _Read, key: str) -> str | None:
+    mark = r.meta.get(key)
     if isinstance(mark, str) and len(mark) == 16 and set(mark) <= _HEX:
+        return mark
+    return None
+
+
+def _read_telemetry_notice_shown(r: _Read) -> None:
+    if mark := _notice_mark(r, "telemetry_notice_shown"):
         r.slot._telemetry_notice_shown = mark
+
+
+def _read_project_hook_files_notice_shown(r: _Read) -> None:
+    if mark := _notice_mark(r, "project_hook_files_notice_shown"):
+        r.slot._project_hook_files_notice_shown = mark
+
+
+def _read_session_notice_marks(r: _Read) -> None:
+    from kiro_crew.dashboard.session_notice_marks import SESSION_NOTICE_MARKS
+
+    marks = r.meta.get("session_notice_marks")
+    if isinstance(marks, list):
+        kept = [m for m in marks if isinstance(m, str) and len(m) == 16 and set(m) <= _HEX]
+        r.slot._session_notice_marks = kept[-SESSION_NOTICE_MARKS:]
 
 
 def _read_deferred_notes(r: _Read) -> None:
@@ -1132,6 +1170,16 @@ FIELDS: tuple[Field, ...] = (
         merge=_attribution_value,
         read=_read_attribution,
     ),
+    # Shared Crew participants: who has written here, for the session and Bot
+    # rows' initials (``shared_crew.participants``). Read after ``attribution``,
+    # which names the creator the list keeps first. Display only.
+    Field(
+        "participants",
+        _ALL,
+        line=_participants_value,
+        merge=_participants_value,
+        read=_read_participants,
+    ),
     Field(
         "folder_id",
         _ALL,
@@ -1303,6 +1351,25 @@ FIELDS: tuple[Field, ...] = (
         line=_truthy(lambda s: s._telemetry_notice_shown),
         merge=_truthy(lambda s: s._telemetry_notice_shown),
         read=_read_telemetry_notice_shown,
+    ),
+    # The project hook-files notice the chat showed, as a mark of its folder and
+    # file names; kept the same way, so a restart does not show it again.
+    Field(
+        "project_hook_files_notice_shown",
+        _ALL,
+        attr="_project_hook_files_notice_shown",
+        line=_truthy(lambda s: s._project_hook_files_notice_shown),
+        merge=_truthy(lambda s: s._project_hook_files_notice_shown),
+        read=_read_project_hook_files_notice_shown,
+    ),
+    # The session-start spec notices the chat showed, as marks; kept the same way.
+    Field(
+        "session_notice_marks",
+        _ALL,
+        attr="_session_notice_marks",
+        line=_truthy(lambda s: s._session_notice_marks),
+        merge=_truthy(lambda s: s._session_notice_marks),
+        read=_read_session_notice_marks,
     ),
     Field(
         "last_user_at",
@@ -1476,6 +1543,7 @@ LINE_ORDER: tuple[str, ...] = (
     "origin",
     "created_by",
     "attribution",
+    "participants",
     "artifact",
     "pinned",
     "mutes_opened",
@@ -1487,6 +1555,8 @@ LINE_ORDER: tuple[str, ...] = (
     "auto_tagged",
     "human_seen",
     "telemetry_notice_shown",
+    "project_hook_files_notice_shown",
+    "session_notice_marks",
     "last_user_at",
     "deferred_notes",
     "queued_prompts",
@@ -1533,6 +1603,7 @@ MERGE_ORDER: tuple[str, ...] = (
     "origin",
     "created_by",
     "attribution",
+    "participants",
     "linked_session_key",
     "channel_origin",
     "forked_from",
@@ -1546,6 +1617,8 @@ MERGE_ORDER: tuple[str, ...] = (
     "auto_tagged",
     "human_seen",
     "telemetry_notice_shown",
+    "project_hook_files_notice_shown",
+    "session_notice_marks",
     "channel_folder_filed",
     "closed",
     "closed_at",

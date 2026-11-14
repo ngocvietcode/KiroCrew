@@ -140,6 +140,17 @@ export type CostConvo = {
 
 export type Cost = {
   window_days: number
+  /**
+   * What every amount in this block is counted in. `usd` when the window's turns
+   * were billed in dollars; absent from an older gateway, which means credits.
+   * The amount keys keep their `credits` names either way.
+   */
+  unit?: 'credits' | 'usd'
+  /**
+   * The same view over the window's dollar-billed turns, present only when the
+   * window also holds credit-billed ones; this block is then the credits view.
+   */
+  usd?: Cost | null
   credits: number
   turns: number
   per_turn: number
@@ -157,6 +168,14 @@ export type Cost = {
   conversation_count: number
   navigable_category: string
 }
+
+/**
+ * Every spend row of a block, both units included. A window billed in both
+ * units carries its dollar-billed sessions only in the nested `usd` view, and
+ * the Context tab titles and links its rows from this list.
+ */
+export const allConversations = (c: Cost | null | undefined): CostConvo[] | undefined =>
+  c ? [...c.conversations, ...(c.usd?.conversations ?? [])] : undefined
 
 export type Resp = {
   enabled: boolean

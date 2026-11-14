@@ -66,7 +66,7 @@ export interface SettingEntryScore {
  * re-append it.
  */
 /**
- * Registry id of the Decisions (Jev) main toggle — the card's own switch.
+ * Registry id of the Decisions main toggle — the card's own switch.
  *
  * The card carries more rows than this one; :data:`DECISIONS_SETTING_IDS` below is
  * the whole governed set, and the predicate reads that.
@@ -74,16 +74,16 @@ export interface SettingEntryScore {
  * The registry is CODEGEN'd from the static settings tree, so it lists every entry
  * the build ships regardless of whether the running gateway offers it. This one is
  * governed: `capabilities.decisions` can withdraw the feature, and
- * `FeaturePreviewsSection` then renders no card at all. A search result is a promise
+ * the card then draws only the administrator's notice, with none of its controls. A search result is a promise
  * that the page has the row, so an unfiltered corpus would land the user on a section
  * where nothing is there — which reads as a broken page rather than an absent feature.
  */
-export const DECISIONS_SETTING_ID = 'developer.decisions-jev'
+export const DECISIONS_SETTING_ID = 'developer.decisions'
 
 /**
- * Every registry id the Decisions (Jev) card owns, the main toggle included.
+ * Every registry id the Decisions card owns, the main toggle included.
  *
- * The card is one governed unit: `capabilities.decisions` withdraws the WHOLE card,
+ * The card is one governed unit: `capabilities.decisions` withdraws every control on it,
  * so a search that knows the feature is denied must withhold the address field and
  * the credential row too. Withholding only the toggle left the rest reachable, and a
  * result row is a promise that the page has the control — landing a user on a
@@ -122,9 +122,9 @@ export const DECISIONS_SETTING_IDS: ReadonlySet<string> = new Set([
 export const PREVIEW_FLAG_SETTING_IDS: ReadonlySet<string> = new Set([
   'developer.artifact-deploy',
   'developer.webhooks',
-  'developer.ultra-mode',
+  'developer.conductor-mode',
   'developer.explore',
-  'developer.github-sign-in-by-kiro-crew',
+  'developer.mcp-sign-in-by-kiro-crew',
   'developer.chat-on-a-crew',
   'developer.composable-layout',
   'developer.folder-conductor',
@@ -208,7 +208,7 @@ export function settingEntryOffered(
   }
   // Display > Explore is drawn only while the Explore preview is on.
   if (entry.configKey === 'dashboard.milestones_enabled') return readPreviewFlag(PREVIEW_EXPLORE)
-  // Chat > Sessions draws Start New Chats in Ultra Mode only while the Ultra Mode preview is on.
+  // Chat > Sessions draws Start New Chats in conductor mode only while the conductor mode preview is on.
   if (entry.configKey === 'dashboard.new_chat_crew_mode') return readPreviewFlag(PREVIEW_CREW_MODE)
   // Feature Previews draws the stale-wake switch only while the stale-fields mark is on.
   if (entry.labelKey === 'pages.developer.featurePreviewsTab.dashboard_stale_wake') {

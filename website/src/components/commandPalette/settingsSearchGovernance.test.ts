@@ -3,8 +3,8 @@
  *
  * `settingsRegistry.gen.ts` is codegen'd from the static settings tree, so it lists
  * every entry the build ships whether or not the running gateway offers it. The
- * Decisions (Jev) toggle is governed by `capabilities.decisions`: under a pin
- * `FeaturePreviewsSection` renders no card, and an unfiltered corpus would then hand
+ * Decisions toggle is governed by `capabilities.decisions`: under a pin
+ * the card draws only the administrator's notice, and an unfiltered corpus would then hand
  * the user a search result that navigates to a section where the row is absent —
  * which reads as a broken page rather than a feature the fleet withdrew.
  *
@@ -115,7 +115,7 @@ describe('settingEntryOffered', () => {
     expect(settingEntryOffered(tipsEntry(), ON)).toBe(true)
   })
 
-  it('offers Start New Chats in Ultra Mode only while the Ultra Mode preview draws its row', () => {
+  it('offers Start New Chats in conductor mode only while the conductor mode preview draws its row', () => {
     const entry = SETTINGS_REGISTRY.find(e => e.configKey === 'dashboard.new_chat_crew_mode')
     if (!entry) throw new Error('dashboard.new_chat_crew_mode missing from the registry')
     localStorage.removeItem(PREVIEW_CREW_MODE)

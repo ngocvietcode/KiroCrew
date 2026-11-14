@@ -357,7 +357,7 @@ The class attribute IS the owner's function, so a patch of a member on the class
 an instance reaches every caller, and members still call each other through `self`. A
 bound function reports its owner as `__module__` and its bare name as `__qualname__`;
 nothing reads either. Three members stay in the class body whatever else moves:
-`clear_publication`, because `test_publish_delete_race` treats every line naming it
+`clear_publication`, because `test/test_publish_delete_race.py` treats every line naming it
 as a caller that must pin both generations; `list`, whose module-level `def list`
 would shadow the builtin `list` for its whole owner; and `__init__`, which reads the
 facade-only seams. New store code goes to the owner whose responsibility it shares.
@@ -1721,6 +1721,30 @@ to this kind would store content no reader can parse.
   match but raised with the producer's own "could not be verified" wording.
   The file-backed `source_path` pointers stay on the bounded
   `security.is_sensitive_path()` and fall back to the snapshot silently.
+- **Scratch tree index** — `agent_scratch_trees`'s `.trees.json` maps session keys to
+  their scratch work trees, so a read would expose every tree name and a write
+  would remap the next resume onto another conversation's directory. It is
+  refused on both sides of this store's boundary through the existing sensitive-path
+  mechanism: `security/paths_lists.py` declares `scratch/.trees.json` as a crew-home
+  sensitive leaf, including relocated homes, links, case aliases and publish temps.
+  Both the path and descriptor gates use this shared declaration through
+  `_fence_refuses` as well as `_fence_refusal`, which is what covers the
+  descriptor: `pinned_fs.open_fenced_for_read` asks that predicate about the
+  kernel's path for the inode it actually opened, so an ancestor swapped between
+  the judged name and the open is refused on the inode reached rather than on the
+  name judged. Snapshot writes pin the judged parent once (`pinned_fs.pin_parent`)
+  and stage into a fresh, unpredictable temp name created `O_CREAT|O_EXCL`
+  relative to that descriptor, then rename it, so neither the same swap nor a
+  link planted at a staging name can redirect a publish onto the index; an
+  exclusive create never opens an existing entry, so this holds on Windows too.
+  The Windows fallback holds `platform_compat.pinned_directory` through staging
+  and replacement, reporting a link or non-directory refusal as `ArtifactError`.
+  It rechecks the canonical destination against the fence only when the pinned
+  parent's real path differs from the judged one. Its non-share-delete handle
+  prevents parent swaps.
+  Live source reads and writes also refuse the index at the hooks
+  canonical-path gate and on the opened descriptor, so re-resolution cannot
+  bypass the fence.
 - **Relocate root confinement** — `PATCH /api/artifacts/{slug}/relocate`
   points a file-backed artifact at a `source_path`; a later GET reads
   that file, so an unconfined relocate would be an agent-reachable
@@ -1744,6 +1768,8 @@ to this kind would store content no reader can parse.
   loaded companion's extra credential/cookie regexes apply to the audit trail.
 - **Atomic writes** — `_write_text()` writes to a `.tmp` sibling and renames,
   so a crash mid-write cannot corrupt `current.html` or `meta.json`.
+  Cleanup of a leftover legacy staging file is best-effort: an `OSError` is logged
+  at debug level and does not fail a save whose replacement already published.
 - **Tolerant load** — `ArtifactStore._read_meta_file()` hands the parsed file to
   `decode_meta` in `kiro_crew.artifact_store.records`, which ignores unknown keys
   and supplies defaults for missing keys, so future schema additions don't break
@@ -1868,6 +1894,20 @@ to this kind would store content no reader can parse.
     scheduled off the `load` event is a race on a slow connection. Content height
     only ever *correlated* with the symptom because tall content happened to
     trigger one of those invalidations.
+  - Because the frame is as tall as its document, its own viewport never
+    scrolls, so an in-page `#id` link (a table of contents) cannot move the
+    view by itself: the browser's fragment scroll does not cross from the
+    opaque-origin frame into the page. The frame keeps the browser's fragment
+    navigation, then posts `mc-widget-scroll-to {top}` with the target's offset
+    (`website/src/lib/widgetFragmentScroll.ts`, injected with the height
+    reporter), and the page scrolls its container to the frame's offset plus
+    `top` (`website/src/hooks/useFrameFragmentScroll.ts`). Only that frame's
+    window is heard and `top` is clamped to the frame's height. A same-document
+    link with no `target` under `<base target="_blank">` is set to `_self`, so it
+    scrolls instead of asking for a window the sandbox refuses. The side panel's
+    fixed-height frame scrolls itself and ignores the message. A
+    `position: sticky` element inside the artifact still scrolls away here: it
+    sticks to the frame's viewport, which is the whole document.
 - **A frame showing something that is not ours offers a retry.** The document URL
   is single-use, so a navigation the ENGINE starts on its own (memory pressure, a
   back/forward cache eviction) re-requests a spent URL and lands the frame on a
@@ -2116,8 +2156,9 @@ adding a parallel watcher (see `kiro_crew.knowledge.artifact_ingest`):
   artifact in hand. `stop()` neither cancels nor waits: a cancel mid-ingest
   skips finalize and strands committed chunks that no artifact owns, and a
   wait would hold the live-config applier's timeout or the 10 s graceful
-  shutdown on an LLM-backed ingest. The artifact in hand at exit can still
-  be cut short by the pool shutdown, as before this stop existed.
+  shutdown on an LLM-backed ingest. When the pool shutdown cuts the artifact
+  in hand short, its ingest fails and records no content hash, so the next
+  start ingests it again (`knowledge.md`, Pool mechanics).
   - **Converged is free.** `ingest_artifact` already skips unchanged content, so
     the steady state spends no extraction calls and logs at debug.
   - **Removals are judged against every artifact, not the eligible kinds.**

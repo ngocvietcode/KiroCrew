@@ -542,6 +542,7 @@ _OWNER_MODULES = frozenset(
         "prompt_queue",
         "resume",
         "resume_identity",
+        "resume_live",
         "resume_window",
         "session_relaunch",
         "slot_approval",
@@ -643,17 +644,6 @@ _BASE_SURFACE: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("api_chat_slot_detail", "async function", "(request: 'web.Request') -> 'web.Response'"),
     ),
     "resume": (
-        (
-            "_resume_session_identity",
-            "function",
-            "(state: 'DashboardState', history_key: 'str') -> 'str'",
-        ),
-        (
-            "_live_slot_for_resume",
-            "async function",
-            "(state, request_app: 'str', history_key: 'str', name: 'str', caller_label: 'str' = '') -> \"'ResumeOutcome | None'\"",
-        ),
-        ("_live_slot_resume_payload", "async function", "(state, existing) -> 'dict'"),
         ("_normalise_structured_content", "function", "(value: 'object') -> 'str'"),
         (
             "_redact_history_rows",
@@ -677,6 +667,19 @@ _BASE_SURFACE: dict[str, tuple[tuple[str, str, str], ...]] = {
             "async function",
             "(state: \"'DashboardState'\", *, name: 'str', history_key: 'str | None' = None, request_app: 'str' = '', caller_label: 'str' = '', request_title: 'str' = '', expected_created_at: 'str | None' = None, containment: \"'Callable[[_ChatSlot], Awaitable[ResumeRefusal | None]] | None'\" = None, final_check: \"'Callable[[_ChatSlot], ResumeRefusal | None] | None'\" = None, rebind_manager: 'bool' = True) -> 'ResumeOutcome'",
         ),
+    ),
+    "resume_live": (
+        (
+            "_resume_session_identity",
+            "function",
+            "(state: 'DashboardState', history_key: 'str') -> 'str'",
+        ),
+        (
+            "_live_slot_for_resume",
+            "async function",
+            "(state, request_app: 'str', history_key: 'str', name: 'str', caller_label: 'str' = '') -> \"'ResumeOutcome | None'\"",
+        ),
+        ("_live_slot_resume_payload", "async function", "(state, existing) -> 'dict'"),
     ),
     "resume_window": (
         (
@@ -797,6 +800,7 @@ slot_guards | _slot_replaced_while_queued | function | (state: 'DashboardState',
 slot_guards | _switch_target_busy | function | (state: 'DashboardState', slot: '_ChatSlot', session_key: 'str', provider: 'object', *, own_turn: 'bool' = False) -> 'bool'
 slot_guards | _subagents_attached_response | async function | (state: 'DashboardState', slot: '_ChatSlot', session_key: 'str', operation: 'str') -> 'web.Response | None'
 slot_guards | _reset_slot_session_or_warn | async function | (state: 'DashboardState', slot: '_ChatSlot', session_key: 'str', *, switch_kind: 'str') -> 'bool | None'
+slot_guards | _send_writes_persona | function | (body: 'dict') -> 'bool'
 slot_model | _model_rejected_reason | function | (model_name: 'str', backend: 'str | None' = None, *, session_keys: 'Iterable[str | None] | None' = None) -> 'str | None'
 slot_model | _is_jev_route_pick | function | (raw: 'object') -> 'bool'
 slot_model | _wire_model_id | function | (provider: 'AcpProvider', model_name: 'str') -> 'str'
@@ -820,7 +824,6 @@ slot_settings | api_chat_slot_turn_timeout | async function | (request: 'web.Req
 slot_settings | api_chat_slot_color | async function | (request: 'web.Request') -> 'web.Response'
 chat_send | _sweep_stale_permissions | function | (slot: "'_ChatSlot'") -> 'None'
 chat_send | _send_binds_agent | function | (agent: 'str', slot: 'Any') -> 'bool'
-chat_send | _send_writes_persona | function | (body: 'dict') -> 'bool'
 chat_send | _send_harness_command | async function | (message: 'str', state: 'DashboardState', slot: '_ChatSlot') -> 'str'
 chat_send | steer_is_auto | function | (value: 'object') -> 'bool'
 chat_send | decided_message_handling | async function | (slot: 'Any', message: 'str') -> 'tuple[bool, dict | None]'
@@ -838,6 +841,7 @@ app_admission | _app_claim_refused | async function | (state: 'DashboardState', 
 app_admission | _app_cancel_denied | function | (request: 'web.Request | Mapping[str, Any]', slot: '_ChatSlot', operation: 'str', target_key: 'str') -> 'web.Response | None'
 app_admission | _app_resume_refusal | async function | (state: "'DashboardState'", request_app: 'str', name: 'str', history_key: 'str', meta: 'dict') -> 'ResumeRefusal | None'
 app_admission | _reauthorize_after_await | function | (state: 'DashboardState', slot: '_ChatSlot', name: 'str', request_app: 'str', operation: 'str') -> 'web.Response | None'
+app_admission | _loading_refusal | async function | (request: 'web.Request', state: 'DashboardState', key: 'str') -> 'web.Response | None'
 turn_stop | _reject_pending_approvals | function | (slot: '_ChatSlot') -> 'None'
 turn_stop | _resolve_stop_event | function | (slot: '_ChatSlot', outcome: 'str') -> 'None'
 turn_stop | _rearm_stop_event | function | (slot: '_ChatSlot', stop_data: 'dict[str, Any]') -> 'bool'

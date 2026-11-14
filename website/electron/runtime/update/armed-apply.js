@@ -34,14 +34,27 @@ function createRelaunch({ managed, app, log, existsSync = (p) => require("fs").e
 }
 
 /**
+ * Say why the update command did not succeed. A run that was killed or never
+ * started has no exit code of its own, so it is named for what happened rather
+ * than for the placeholder code 1 the executor resolves with.
+ */
+function applyFailureMessage({ code, failed, timedOut, signal, exec }) {
+  // This message is shown to the user, so the 30 minute ceiling is in minutes.
+  if (timedOut) return `managed update command timed out after ${exec.MANAGED_APPLY_TIMEOUT_MS / 60000} minutes`;
+  if (failed && signal) return `managed update command was killed by ${signal}`;
+  if (failed) return "managed update command could not run";
+  return `managed update command exited ${code}`;
+}
+
+/**
  * Run the update command for an armed record and say how it went.
  *
  * @returns {Promise<{ok: boolean, message: string}>}
  */
 async function runArmedApply({ exec, version, log }) {
-  const { code, failed } = await exec.runUpdateCommand();
+  const { code, failed, timedOut, signal } = await exec.runUpdateCommand();
   if (code !== 0 || failed) {
-    return { ok: false, message: `managed update command exited ${code}` };
+    return { ok: false, message: applyFailureMessage({ code, failed, timedOut, signal, exec }) };
   }
   if (await exec.applyChangedNothing(version)) {
     return { ok: false, message: exec.unchangedMessage(version) };
@@ -94,6 +107,9 @@ async function applyArmedAtStart({ arm, exec, currentVersion, relaunch, app, log
   }
   log.error(`[update] armed update ${rec.version} failed at start (${result.message}) - starting the version that is installed`);
   arm.recordApplyError(rec.version, result.message);
+  // The hosted gateway still holds this arm (the old version runs), and syncing it
+  // back would re-run a failed update on every quit.
+  arm.recordFailedVersion(rec.version);
   return { outcome: "failed", error: result.message };
 }
 

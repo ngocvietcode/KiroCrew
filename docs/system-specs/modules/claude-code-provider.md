@@ -27,8 +27,8 @@ PATCH allowlist, and `GET /api/config/schema` together
 this deployment cannot select to the Kiro harness. This boundary is load-bearing:
 `AcpProvider` rejects unknown harnesses, so normalization prevents a persisted or
 hand-edited value from becoming a startup failure.
-`TestConfigRoundTrip.test_unselectable_values_degrade_to_the_default` exercises
-that path, and `test_harness_parity.test_unselectable_backend_degrades_to_kiro`
+`TestConfigRoundTrip.test_unselectable_explicit_values_degrade_to_the_kiro_floor` exercises
+that path, and `test_harness_parity.test_unselectable_backend_degrades_to_default`
 asserts the outcome against the live registry rather than a hardcoded verdict —
 which is why `claude` *survives* that gate instead of degrading.
 
@@ -461,6 +461,17 @@ missed: the seed then
 omits Crew's list as it does on a cold cache, so a versioned `[1m]` pick can resolve
 to the 200K window under that policy.
 
+The model-substitution retry is the one case that writes `model` on a cold cache.
+When `session/new` returns the policy advisory ("Model X is restricted ... Using Y
+instead") with no session, `_new_session_following_substitution` adopts Y and re-seeds
+with `model` set to Y as the backend spelled it. Without that key the user's own
+`settings.json` still names X, so the retry would be refused the same way. That is
+the state of every install whose pinned model is restricted from its first session,
+because no `session/new` has ever succeeded to warm the cache. The adapter reads
+`ANTHROPIC_MODEL` ahead of every settings file, so a restricted id set there is not
+replaced by this re-seed. Pinned by
+`test/test_acp_client_model_substitution.py::TestSubstitutionFollow::test_retry_on_cold_cache_seeds_the_substitute_model`.
+
 With `agent.model` at `auto` the seed writes no `model` key, so the adapter takes the
 model from the user's own settings (`ANTHROPIC_MODEL`, then `settings.model`). After
 `session/new` or `session/load`, Crew sends that reported id back to the adapter.
@@ -522,7 +533,7 @@ live tenancy: the successor cannot re-write the file).
 Two sessions of the same agent in the same `work_dir` render the same permissions,
 and refusing the second one bought nothing — it ran with the whole `mcpServers` array
 withheld, so only one session per project directory ever had Crew's tools
-(`spawn_run`, `cron_*`, `session_checkpoint`). When the file on disk is a live
+(`spawn_run`, `cron_*`, `session_ledger_record`). When the file on disk is a live
 sibling's seed whose bytes are the ones Crew's durable record names
 (`seed_provenance.share`, checked ignoring the live holder) and that carries this
 session's permission keys, the client takes a shared-reader state
@@ -1079,10 +1090,13 @@ before the client starts, and a restricted session never takes a warm-pool child
 native resume, so every `session/new` it sends carries the variable. A sub-agent
 spawned with `include_memory=false` gets the same envelope in any memory mode, never
 takes a warm-pool child, and keeps it across a continuation, a reset successor and a
-compaction restart. Not covered: a live chat tightened to
-incognito or temporary while its claude session runs, which keeps the envelope it
-started with until its next `session/new`. Contract tests:
-`test_claude_auto_memory_envelope.py`.
+compaction restart. A Side Chat or reply thread opened on an incognito or temporary
+chat starts its own session with `include_memory=False`, so it gets the same envelope;
+the Side Chat's binding carries that restriction, so a side session kept from before
+the parent was tightened is destroyed and cold-started (a thread cold-starts every
+turn). Not covered: a live chat tightened to incognito or temporary while its claude
+session runs, which keeps the envelope it started with until its next `session/new`.
+Contract tests: `test_claude_auto_memory_envelope.py`.
 
 ### `/clear` is answered by the dashboard
 

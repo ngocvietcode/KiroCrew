@@ -2,13 +2,13 @@ import { useEffect, useRef, useCallback } from 'react'
 import { isLookPreviewFrame } from '../utils/lookPreview'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAppDispatch } from '../store'
-import { sseTodoUpdate, sseMcpReportUpdate, sseSlotTitle, triggerRefresh, triggerCronRefresh, fetchSlots, remoteSlotRead } from '../store/dashboardSlice'
+import { sseTodoUpdate, sseMcpReportUpdate, sseSlotTitle, triggerRefresh, triggerLiveRefresh, triggerCronRefresh, fetchSlots, remoteSlotRead } from '../store/dashboardSlice'
 import { addNotification, ackNotificationByTs, unackNotificationByTs, applyNotificationDismiss, clearAllNotifications } from '../store/notificationsSlice'
 import { dispatchMcNotification, dispatchLiveNotification } from './notificationEvent'
 import {
   fetchHistory, sseChatMessage, sseChatMessageUpdate, sseChatMessagePatchByTs, refreshSlot, retireSwappedRows, warmSlotCache, sseContextUsage, clearMessages, clearSlotCache, resolveElicitationRow, sseSubagentPending, setSubagentApprovalTarget, sseSubagentSpawn, sseSubagentQueued, sseSubagentTool, sseSubagentStalled, sseSubagentRetrying, sseSubagentDone, sseSubagentSnapshot, subagentReplayDone, sseSubagentBatchUpdate, sseSubagentBatchChunks, sseToolResult, sseActivityEvent, sseSideResult, sseWorkflowEvent, removeQueuedMessage, appendQueuedMessage, cancelQueuedMessage, editQueuedMessage, reorderQueuedMessages, sseMcpAppRender, sseSideQueue, sideClose, sideClosedElsewhere, queueEntryAttachments, isTerminalWorkflowStatus,
   forgetSideSteerSubmittedText, noteSideQueueDroppedByClose, readSideSteerSubmittedText,
-  takeSideQueueEditForClose,
+  takeSideQueueEditForClose, abortActiveOlderFetch,
 } from '../store/chatSlice'
 import { store } from '../store'
 import { TAB_ID } from '../api/tabId'
@@ -20,6 +20,7 @@ import { applyCardUpdate } from '../api/cards'
 import type { Notification, TodoList, McpSessionReport } from '../types'
 import { i18nT } from '../i18n/t'
 import { CONFIG_PENDING_QUERY_KEY } from '../pages/settings/configPendingQuery'
+import { MCP_GATEWAY_STATUS_QUERY_KEY } from '../pages/overview/mcpShareRefusedQuery'
 import { teamRoots } from '../pages/chat/command-center/model'
 import {
   applySessionProjection,
@@ -233,6 +234,9 @@ export function useWebSocket() {
       // `config_pending_changed` is one-shot: a change while the socket was down
       // is only seen by re-reading.
       void queryClient.invalidateQueries({ queryKey: CONFIG_PENDING_QUERY_KEY }, { cancelRefetch: false })
+      // A refused share is recorded when the gateway starts, which this tab sees
+      // as a new connection: the waiting-share count on Customize re-reads it here.
+      void queryClient.invalidateQueries({ queryKey: MCP_GATEWAY_STATUS_QUERY_KEY }, { cancelRefetch: false })
       // The Context tab's usage revisions belong to the previous process too.
       resetContextTraceRefresh()
       // Cache auto-speak preference
@@ -557,8 +561,11 @@ export function useWebSocket() {
             break
           case 'refresh': {
             const kinds: string[] = Array.isArray(data.kinds) ? data.kinds.filter((k: unknown): k is string => typeof k === 'string') : []
-            dispatch(triggerRefresh())
-            invalidateRefreshQueries(queryClient, kinds, () => dispatch(triggerCronRefresh()))
+            // A turn-end frame inside the window re-reads none of the config caches,
+            // but the page on screen still follows it (`liveRefreshTrigger`).
+            let othersNow = false
+            invalidateRefreshQueries(queryClient, kinds, () => dispatch(triggerCronRefresh()), () => { othersNow = true; dispatch(triggerRefresh()) })
+            if (!othersNow) dispatch(triggerLiveRefresh())
             if (kinds.includes('history')) dispatch(fetchHistory(false))
             break
           }
@@ -573,8 +580,11 @@ export function useWebSocket() {
             // next frame and resurrect discarded text into the just-cleared
             // pane. Keyed delete — other slots' in-flight buffers are theirs.
             buffers.dropSlotChunks(clearSlot)
-            if (clearSlot === store.getState().chat.activeSlot) dispatch(clearMessages())
-            else dispatch(clearSlotCache(clearSlot))
+            if (clearSlot === store.getState().chat.activeSlot) {
+              // An older page still loading would land the cleared rows back.
+              abortActiveOlderFetch()
+              dispatch(clearMessages())
+            } else dispatch(clearSlotCache(clearSlot))
             break
           }
           case 'slot_agent_switch': {

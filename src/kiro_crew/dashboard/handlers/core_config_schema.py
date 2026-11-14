@@ -153,6 +153,8 @@ _EDITABLE_CONFIG: dict[str, dict] = {
     # The remote-dispatch preview switch (Settings → Developer → Feature previews,
     # rfc-conductor-remote-dispatch.md). Read on every call, so no restart.
     "work_ledger.remote_dispatch": {"type": "bool"},
+    # Task Runner's switch (Settings > Display > View). Every start reads it, so no restart.
+    "taskrunner.enabled": {"type": "bool"},
     # Default model for new sessions. Membership can NOT be validated against a
     # fixed list: the real vocabulary is whatever the live kiro-cli advertises
     # (/api/models spawns it to find out), and it spans both canonical registry
@@ -312,6 +314,10 @@ _EDITABLE_CONFIG: dict[str, dict] = {
     # The sidebar's session sort key, written by the sort menu; the enum is the
     # loader's own list, spelled once.
     "dashboard.session_sort": {"type": "enum", "values": list(SESSION_SORT_MODES)},
+    # Whether the sidebar draws unfiled sessions above the folder list. A view
+    # preference the sort-and-filter menu writes. Nothing outside the dashboard
+    # reads it.
+    "dashboard.unfiled_sessions_above_folders": {"type": "bool"},
     # Per-version snooze/skip verdict for the proactive update popup, written
     # as ONE atomic record: the three fields only mean anything together, so
     # per-field writes would open both a crash window (old verdict paired
@@ -363,6 +369,10 @@ _EDITABLE_CONFIG: dict[str, dict] = {
     # The per-row unread dot on sidebar session cards (Settings → Display →
     # Sidebar). Default on; only a literal `false` hides it.
     "dashboard.show_unread_dot": {"type": "bool"},
+    # The quick-search shortcut opens the Command Bar launcher (Settings ->
+    # Display -> View). Default on; only a literal `false` opens the search
+    # palette instead.
+    "dashboard.command_bar_enabled": {"type": "bool"},
     # The terminal app "Open in external terminal" starts (Settings → Display →
     # Terminal). "" = unset, the default, which withholds the action. Limited
     # to the desktop shell's launch allowlist; the launch gate in
@@ -506,6 +516,9 @@ _EDITABLE_CONFIG: dict[str, dict] = {
     # path expansion, sensitive-path exclusion and existence, so a path it declines is
     # skipped there rather than refused here.
     "skills.extra_paths": {"type": "str_list", "max_items": 64, "max_item_len": 4096},
+    # Memory → Repeated failures: the opt-in weekly bell note
+    # (dashboard/repeated_failures_notice.py). Default OFF in MemoryConfig.
+    "memory.repeated_failures_notice": {"type": "bool"},
     # Knowledge Library ingestion. Chunk budget max mirrors the point past which
     # a single sweep stops being a trickle; dedup cadence max is ~a day of sweeps.
     "knowledge.auto_add_documents": {"type": "bool"},
@@ -741,7 +754,9 @@ _APP_MUTE_SESSIONS_SPEC: dict = {"type": "bool"}
 
 
 def _editable_config_spec(path_key: object) -> dict | None:
-    """The PATCH spec for *path_key*: a listed field, or a per-app setting path."""
+    """The PATCH spec for *path_key*: a listed field, a per-app setting path, or the
+    schema-derived rule ``config_all_settings.generic_spec`` gives a key with
+    no listed one."""
     if not isinstance(path_key, str):
         return None
     spec = _EDITABLE_CONFIG.get(path_key)
@@ -753,4 +768,8 @@ def _editable_config_spec(path_key: object) -> dict | None:
                 return _APP_MODEL_SPEC
             if parts[2] == "mute_sessions":
                 return _APP_MUTE_SESSIONS_SPEC
+        # The Advanced page's schema-derived rule, for a key with no curated one.
+        from kiro_crew.dashboard.handlers.config_all_settings import generic_spec
+
+        return generic_spec(path_key)
     return spec
