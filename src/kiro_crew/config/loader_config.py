@@ -106,6 +106,7 @@ from kiro_crew.config.sections import (
     PowerConfig,
     PublishConfig,
     ResourceLimitsConfig,
+    SaokhueConfig,
     SessionConfig,
     SessionEnvironmentsConfig,
     SessionSummaryConfig,
@@ -194,6 +195,13 @@ class KiroCrewConfig:
         metadata=_meta(
             "Network",
             "Company proxy the gateway and its agents go through. Off by default.",
+        ),
+    )
+    saokhue: SaokhueConfig = field(
+        default_factory=SaokhueConfig,
+        metadata=_meta(
+            "Sao Khuê CLI",
+            "Where the Sao Khuê CLI backend signs in, and the client (app id) it signs in as.",
         ),
     )
     stt: SttConfig = field(
@@ -758,6 +766,7 @@ class KiroCrewConfig:
             "session_environments": asdict(self.session_environments),
             "telemetry": asdict(self.telemetry),
             "network": asdict(self.network),
+            "saokhue": asdict(self.saokhue),
             "snapshot_dir": self.snapshot_dir,
             "timezone": self.timezone,
             "auto_update": self.auto_update,

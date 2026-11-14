@@ -17,6 +17,7 @@
  *   import { registerTheme }             from '@/hooks/useTheme'
  *   import { registerCapsuleSegment }    from '@/apps/capsuleSegments'
  *   import { registerOverviewStatCards } from '@/pages/overviewStatCards'
+ *   import { registerAboutSections }     from '@/pages/settings/aboutSections'
  *   import { registerOverviewPanel }     from '@/pages/overviewPanel'
  *   import { registerFeaturePreviewRows } from '@/pages/settings/featurePreviewRows'
  *   import { registerAutolinkRules }     from '@/utils/autolinkRules'

@@ -323,7 +323,6 @@ from kiro_crew.config.sections import (  # noqa: F401
     MemoryStoreConfig,
     MessagingConfig,
     MonitoringConfig,
-    NetworkConfig,
     PublishConfig,
     ResolvedBindings,
     ResourceLimitsConfig,

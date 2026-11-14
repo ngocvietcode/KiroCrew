@@ -90,6 +90,7 @@ _KNOWN_CONFIG_SECTIONS: frozenset = frozenset(
         "session_environments",
         "telemetry",
         "network",
+        "saokhue",
         "snapshot_dir",
         "timezone",
         "auto_update",

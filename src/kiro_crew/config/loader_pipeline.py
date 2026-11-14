@@ -140,9 +140,10 @@ from kiro_crew.config.sections import (
     _safe_float,
     _safe_int,
     _validate_activation,
+    build_network_config,
+    build_saokhue_config,
     coerce_effort,
 )
-from kiro_crew.config.sections_network import build_network_config
 from kiro_crew.config.superseded_defaults import SupersededDefault, auto_adoptable
 from kiro_crew.config.validation import _CONFIG_CACHE
 from kiro_crew.config.validation import validate_config_data as _validate_config_data
@@ -952,6 +953,7 @@ def build_config(
     messaging_data = _coerced_section(data, "messaging", _degraded)
     telemetry_data = _coerced_section(data, "telemetry", _degraded)
     network_data = _coerced_section(data, "network", _degraded)
+    saokhue_data = _coerced_section(data, "saokhue", _degraded)
     watchdog_data = _coerced_section(data, "watchdog", _degraded)
     work_ledger_data = _coerced_section(data, "work_ledger", _degraded)
     power_data = _coerced_section(data, "power", _degraded)
@@ -1189,6 +1191,7 @@ def build_config(
         resource_limits=ResourceLimitsConfig.from_raw(resource_limits_data),
         telemetry=_build_telemetry_config(telemetry_data),
         network=build_network_config(network_data),
+        saokhue=build_saokhue_config(saokhue_data),
         memory=_build_memory_config(memory_data),
         knowledge=_build_knowledge_config(knowledge_data),
         telegram=_build_telegram_config(telegram_data),

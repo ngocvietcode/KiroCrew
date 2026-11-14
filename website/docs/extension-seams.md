@@ -32,6 +32,7 @@ POSTs the file context to the app's endpoint — see the App Kit publishing guid
 | Top-bar widgets | `apps/topBarWidgets.tsx` | `registerTopBarWidgets()` to `getTopBarWidgets()` |
 | Readout-capsule segments | `apps/capsuleSegments.tsx` | `registerCapsuleSegment()` to `getCapsuleSegments()` |
 | Overview status cards | `pages/overviewStatCards.tsx` | `registerOverviewStatCards()` to `getOverviewStatCards()` |
+| Settings > About sections | `pages/settings/aboutSections.tsx` | `registerAboutSections()` to `getAboutSections()`, rendered by `AboutSections` under the version and licence chips (duplicate id refused through `reportSeamCollision`) |
 | Feature Preview rows | `pages/settings/featurePreviewRows.ts` | `registerFeaturePreviewRows()` to `getFeaturePreviewRows()` (duplicate id refused through `reportSeamCollision`) |
 | Overview lower panel (single owner) | `pages/overviewPanel.tsx` | `registerOverviewPanel()` to `getOverviewPanel()` |
 | Overview built-in suppression (subtractive) | `pages/overviewBuiltins.ts` | `suppressOverviewBuiltin()` to `isOverviewBuiltinSuppressed()` |
@@ -517,6 +518,14 @@ actions group clips from the leading edge.
 adds a self-contained `StatCard` (owning its own query and state, like the core
 `TunnelStatus`) to the Settings Overview grid, after the core cards, in ascending
 `order`. Each receives a `delay` prop for the grid's stagger animation.
+
+**About sections.** `registerAboutSections([{ id, order?, component }])` adds a
+self-contained block to the Settings > About identity card, directly under the
+version and licence chips, in ascending `order`. Each component renders its own
+markup and receives a `context` of what AboutPanel has already read: the shell and
+gateway versions, whether this is the desktop app, its platform, and whether (and
+by whom) its updates are managed externally. The core registers none, so the card
+is unchanged in the stock build.
 
 **Feature Preview rows.** `registerFeaturePreviewRows([{ id, component }])` adds a
 self-contained row to Settings > Developer > Feature Previews, after the core cards

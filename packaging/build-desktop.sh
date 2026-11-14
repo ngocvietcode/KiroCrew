@@ -1099,8 +1099,14 @@ if [ -n "${KIROCREW_MANAGED_INSTALL_MARKER:-}" ]; then
     // The reader honours one updatePrompts value and ignores any other, which
     // would ship the core update dialogs beside the edition widget meant to own them.
     if ("updatePrompts" in parsed && parsed.updatePrompts !== "edition") { console.error("marker field \"updatePrompts\" must be \"edition\", the only value the reader honours"); process.exit(1); }
-    if (!parsed.updateCommand) { console.error("marker has no updateCommand: it would disable updates without offering any"); process.exit(1); }
-    if (!parsed.checkCommand) { console.error("marker has updateCommand but no checkCommand: every managed-lane check will fail; no update will ever be offered"); process.exit(1); }
+    // A BARE marker (managedBy only, no command) turns the app updater off: it is
+    // never armed and the feed is never contacted. It is accepted only when it
+    // names its owner, so About can say who ships updates; a marker that names a
+    // command needs both, or the managed lane would check with nothing to run.
+    const bare = !parsed.updateCommand && !parsed.checkCommand;
+    if (bare && !parsed.managedBy) { console.error("marker has no updateCommand and no managedBy: it would disable updates without saying who owns them"); process.exit(1); }
+    if (!bare && !parsed.updateCommand) { console.error("marker has checkCommand but no updateCommand: it would disable updates without offering any"); process.exit(1); }
+    if (!bare && !parsed.checkCommand) { console.error("marker has updateCommand but no checkCommand: every managed-lane check will fail; no update will ever be offered"); process.exit(1); }
     // resolveRelaunchPath (auto-update.js) drops anything that is not absolute
     // or ~/-relative, and the lane would then quietly relaunch the old path.
     // The app may run on either platform family, so an absolute path in the

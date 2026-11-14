@@ -16,6 +16,7 @@ import { AppAutoDownloadSwitch, GatewayAutoUpdateSwitch } from './AboutPanelUpda
 import { AboutPanelUpcomingUpdate } from './AboutPanelUpcomingUpdate'
 import { api } from '../../api/client'
 import { useIsPolicyGoverned, useUpdateSwitchesShown } from '../../utils/updateSwitches'
+import { AboutSections } from './aboutSections'
 import { storeAnsweredUpdateInfo, updateInfoQuery } from '../../api/updateInfoQuery'
 import { fmtSpeed } from '../../api/helpers'
 import { failedWithNoData } from '../../api/queryState'
@@ -1028,9 +1029,18 @@ export function AboutPanel() {
             <Scale size={12} className="shrink-0" /> {i18nT('pages.settings.aboutPanel.apache_2_0')}
           </span>
         </div>
-        <div className="mt-3 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-[12px] text-muted leading-relaxed" data-testid="about-fork-attribution">
-          <strong className="font-semibold text-text">Sao Khuê (VPBank)</strong> là bản phát triển kế thừa (fork) từ dự án mã nguồn mở <strong className="font-semibold text-text">KiroCrew</strong>, được phân phối và cấp phép theo giấy phép bản quyền <strong className="font-semibold text-text">Apache License 2.0</strong>.
-        </div>
+        {/* What a downstream edition says about itself (who ships it, what it is
+            built on). Nothing in the stock build: the registry is empty. */}
+        <AboutSections
+          context={{
+            appVersion: info?.version ?? '',
+            gatewayVersion,
+            isDesktop,
+            platform: info?.platform ?? '',
+            updatesManagedBy: info?.managedBy ?? '',
+            updatesDisabled: !!updatesDisabled,
+          }}
+        />
 
         {isDesktop && channel && !isExternallyManaged && !isGatewayPolicyManaged && (
           info?.channelSwitchable && desktopApi?.setChannel ? (

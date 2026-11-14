@@ -190,6 +190,7 @@ provider.
 | `strands` | Strands | Runs the Strands CLI (`strands --agent <project> --acp-server`) on Kiro Crew's bundled Python project, or on yours from `agent.strands_project`; Kiro Crew adds a gate that asks before every tool call. Provider keys come from `agent.strands_env`. |
 | `claude` | Claude Code | Uses the public `claude-agent-acp` adapter. |
 | `codex` | Codex | Uses the Codex ACP adapter. |
+| `saokhue` | Sao Khuê CLI | Runs Kiro Crew's built-in `saokhue-cli` ACP server against the VPBank AI gateway. It signs in per user from Settings > Agent Harness (or `saokhue-cli login`); where it signs in, and as which client, is `saokhue.base_url` and `saokhue.client_id` below. |
 | `opencode` | OpenCode | Uses OpenCode's native ACP server. |
 | `pi` | Pi | Uses `pi-acp` and its Pi gate extension. |
 | `goose` | goose | Uses goose's native ACP server. |
@@ -964,6 +965,26 @@ To sign in with your Windows account instead of a password, set
 Not supported yet: signing in as a different Windows account, NTLM or Kerberos on
 macOS and Linux, PAC files, and CLI commands run in a separate terminal (they use
 your own `HTTPS_PROXY`).
+
+### Sao Khuê CLI (sign-in address and client)
+
+Where the `saokhue` harness signs in and what it signs in as. Both are empty by
+default, which means the built-in VPBank test portal and its test client. Set them to
+move to another portal or a registered client, then restart the gateway:
+
+```bash
+kirocrew config set saokhue.base_url https://portal.example.com/api/ai-llm
+kirocrew config set saokhue.client_id app:your-client
+```
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `saokhue.base_url` | The AI gateway Sao Khuê CLI signs in to and chats through, `https://host/api/ai-llm`. The sign-in addresses follow from it. A value that is not an `http(s)` address is ignored with a warning. Needs a restart | `""` |
+| `saokhue.client_id` | The OAuth2 / OIDC client (app id) presented to the identity provider, such as `app:name`. Needs a restart | `""` |
+
+The gateway turns these into `SAOKHUE_BASE_URL` and `SAOKHUE_CLIENT_ID` at start, for
+itself and for every Sao Khuê CLI process it spawns. A variable you already set in
+the environment wins over `config.json`.
 
 ### Top level
 

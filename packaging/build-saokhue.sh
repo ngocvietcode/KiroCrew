@@ -13,7 +13,11 @@
 #      (find-bin.js otherwise resolves the dev venv instead of the bundled launcher),
 #   5. puts this edition's icons and product name into the shell for the length
 #      of the build (editions/saokhue/desktop/brand.mjs) and takes them out again
-#      on exit, so the sources stay as upstream ships them.
+#      on exit, so the sources stay as upstream ships them,
+#   6. bakes editions/saokhue/desktop/externally-managed.json into the app as its
+#      EXTERNALLY-MANAGED marker: a bare marker turns the app's own updater off
+#      (no feed is contacted, no update is offered) and About says VPBank ships
+#      updates. Set KIROCREW_MANAGED_INSTALL_MARKER yourself to override it.
 #
 # Usage (every build-desktop.sh variable passes through):
 #   bash packaging/build-saokhue.sh
@@ -90,4 +94,5 @@ else
   log "SKIP_FRONTEND=1 — reusing website/dist (build it with this script so it carries the edition)"
 fi
 
+export KIROCREW_MANAGED_INSTALL_MARKER="${KIROCREW_MANAGED_INSTALL_MARKER:-$EDITION/desktop/externally-managed.json}"
 SKIP_FRONTEND=1 bash "$ROOT/packaging/build-desktop.sh"

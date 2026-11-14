@@ -10,6 +10,8 @@
  */
 import { suppressOverviewBuiltin } from '@/pages/overviewBuiltins'
 import { registerOverviewStatCards } from '@/pages/overviewStatCards'
+import { registerAboutSections } from '@/pages/settings/aboutSections'
+import { SaoKhueAboutCard } from './about/SaoKhueAboutCard'
 import { installBranding } from './branding'
 import { CompanyProxyCard } from './companyProxy/CompanyProxyCard'
 import './hiddenSurfaces.css'
@@ -17,6 +19,7 @@ import './hiddenSurfaces.css'
 // The product name and this edition's catalog wording (branding.ts).
 installBranding()
 
+registerAboutSections([{ id: 'saokhue-about', order: 100, component: SaoKhueAboutCard }])
 registerOverviewStatCards([{ id: 'saokhue-company-proxy', order: 100, component: CompanyProxyCard }])
 
 // Phone access is not offered: the Overview "Phone access" card through its seam,

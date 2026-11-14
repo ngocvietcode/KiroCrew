@@ -379,6 +379,9 @@ async def _gateway(
             from kiro_crew.config.sections_stt import default_stt_provider
 
             cfg.stt.provider = default_stt_provider()
+        from kiro_crew.saokhue_backend import declare_saokhue_harness, seed_saokhue_defaults
+
+        seed_saokhue_defaults(cfg)
         # _gateway is a coroutine, so this runs on the event loop: save() takes
         # the sidecar advisory flock and a contended wait (another
         # process writing config at boot) must block a worker thread, not the
@@ -386,9 +389,16 @@ async def _gateway(
         # config lock guards loop-side handler writers, none of which exist
         # before run_gateway starts serving.
         await asyncio.to_thread(cfg.save)
+        await asyncio.to_thread(declare_saokhue_harness, config_path())
         print(f"👻 Created default config: {config_path()}")
 
     cfg = KiroCrewConfig.load()
+
+    # saokhue.base_url / saokhue.client_id become the sign-in defaults of the gateway
+    # and of every Sao Khuê CLI child (an environment variable already set wins).
+    from kiro_crew.saokhue_backend import export_saokhue_settings
+
+    export_saokhue_settings(cfg)
 
     # Name the machine's CA certificates for every child spawned from here on,
     # proxy or not. Off the loop: it reads the certificate store and writes a file.

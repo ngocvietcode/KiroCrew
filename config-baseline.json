@@ -4725,6 +4725,53 @@
       "requiresRestart": true
     },
     {
+      "path": "saokhue",
+      "kind": "core",
+      "type": "object",
+      "required": false,
+      "deprecated": false,
+      "sensitive": false,
+      "tags": [],
+      "label": "Sao Khuê CLI",
+      "help": "Where the Sao Khuê CLI backend signs in, and the client (app id) it signs in as.",
+      "hasChildren": true,
+      "enumValues": null,
+      "defaultValue": {
+        "base_url": "",
+        "client_id": ""
+      }
+    },
+    {
+      "path": "saokhue.base_url",
+      "kind": "core",
+      "type": "string",
+      "required": false,
+      "deprecated": false,
+      "sensitive": false,
+      "tags": [],
+      "label": "Sao Khuê Server URL",
+      "help": "The AI gateway Sao Khuê CLI signs in to and sends its chats through, as https://host/api/ai-llm. Empty = the built-in VPBank portal. The sign-in addresses follow from it. Takes effect after a gateway restart.",
+      "hasChildren": false,
+      "enumValues": null,
+      "defaultValue": "",
+      "requiresRestart": true
+    },
+    {
+      "path": "saokhue.client_id",
+      "kind": "core",
+      "type": "string",
+      "required": false,
+      "deprecated": false,
+      "sensitive": false,
+      "tags": [],
+      "label": "Sao Khuê Client ID",
+      "help": "The OAuth2 / OIDC client (app id) Sao Khuê CLI presents to the identity provider, e.g. app:name. Empty = the built-in test client. Takes effect after a gateway restart.",
+      "hasChildren": false,
+      "enumValues": null,
+      "defaultValue": "",
+      "requiresRestart": true
+    },
+    {
       "path": "stt",
       "kind": "core",
       "type": "object",

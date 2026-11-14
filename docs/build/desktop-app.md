@@ -1908,9 +1908,12 @@ About shows the "managed by …" notice and the copyable command above the regul
 update controls. An empty or unparsable body still counts as managed — an
 operator who dropped the file gets the safe behavior even when the metadata is
 wrong. The build script (`KIROCREW_MANAGED_INSTALL_MARKER`) rejects a marker
-with `updateCommand` but no `checkCommand`: every managed-lane check would fail
-with "this managed install has no checkCommand" and no update would ever be
-offered or applied.
+with `updateCommand` but no `checkCommand` (or the reverse): every managed-lane
+check would fail with "this managed install has no checkCommand" and no update
+would ever be offered or applied. It accepts a BARE marker, one that names
+`managedBy` and no command, which is how an edition turns the app's own updater
+off: nothing is armed and no feed is contacted. A marker with neither a command
+nor `managedBy` is rejected, since About could not say who ships updates.
 
 The body is only read when the marker's **provenance** can be established:
 neither the marker nor its directory may be owned by the account the app runs

@@ -1657,6 +1657,20 @@ per-person limits at the Crew's. Every switch that changes behaviour is off by
 default. Defaults and meanings: [shared-crew.md](shared-crew.md) section 4, Defaults
 and API.
 
+## Sao Khuê CLI sign-in (`saokhue`)
+
+`config/sections_saokhue.py` owns the section (`base_url`, `client_id`, both
+`restart=True`); `saokhue_backend.export_saokhue_settings` carries it out.
+`cli_server._gateway()` calls it right after `KiroCrewConfig.load()`: each non-empty
+value becomes `SAOKHUE_BASE_URL` / `SAOKHUE_CLIENT_ID` in `os.environ` unless that
+variable is already set, so the dashboard sign-in handlers and every `saokhue_server`
+child (whose environment passes these names through,
+`acp/harness/saokhue.py::_SAOKHUE_ENV_KEYS`) read them where they already looked.
+Precedence is environment, then `config.json`, then the built-in default (the VPBank
+test portal and client `app:test-crew`, `saokhue_cli/base.py`). A `base_url` that is not
+an `http(s)` address with a host is dropped at load with a warning. The section holds
+no secret. A change needs a gateway restart: nothing re-reads it while running.
+
 ## Authenticating proxy (`network`)
 
 `config/sections_network.py` owns the section; `src/kiro_crew/auth_proxy/` owns the
