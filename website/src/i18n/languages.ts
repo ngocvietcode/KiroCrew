@@ -64,6 +64,7 @@ export const SUPPORTED_LANGUAGES: readonly LanguageEntry[] = [
   { code: 'ja', label: '日本語' },
   { code: 'ko', label: '한국어' },
   { code: 'it', label: 'Italiano' },
+  { code: 'vi', label: 'Tiếng Việt' },
   /**
    * Pseudolocale, not a language. Every string is accented, padded to the IBM/W3C
    * expansion budget and bracketed, so in an `en-XA` build any plain-Latin text on

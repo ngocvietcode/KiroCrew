@@ -96,7 +96,7 @@ Catalogs live in `src/i18n/locales/`:
 | `en-XA.json` | generated pseudolocale, dev-only. Not a language. |
 
 Shipped languages, ordered by global speaker count (which is also the picker
-order): `en`, `zh-CN`, `hi`, `es`, `fr`, `bn`, `pt`, `ru`, `de`, `ja`, `ko`, `it`.
+order): `en`, `zh-CN`, `hi`, `es`, `fr`, `bn`, `pt`, `ru`, `de`, `ja`, `ko`, `it`, `vi`.
 
 **Right-to-left languages (Arabic, Urdu) are intentionally not shipped.** The
 layout is built from physical-direction utilities (`pl-*`, `left-*`, `text-left`)

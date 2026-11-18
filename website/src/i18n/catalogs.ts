@@ -23,6 +23,7 @@ import de from './locales/de.json'
 import ja from './locales/ja.json'
 import ko from './locales/ko.json'
 import it from './locales/it.json'
+import vi from './locales/vi.json'
 import enXA from './locales/en-XA.json'
 import { EN_TRANSLATION } from './enCatalog'
 
@@ -59,6 +60,7 @@ const AUTHORED_CATALOGS: Record<string, { translation: Record<string, unknown> }
   ja: { translation: ja },
   ko: { translation: ko },
   it: { translation: it },
+  vi: { translation: vi },
 }
 
 /**

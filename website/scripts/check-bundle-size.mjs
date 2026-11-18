@@ -64,7 +64,7 @@ const CATALOG_CHUNK_BUDGET = 3 * 1024 * KB
 
 /** The non-English catalogs `src/i18n/lazy.ts` emits as their own chunks. */
 const CATALOG_CHUNK_BUDGETS = Object.fromEntries(
-  ['bn', 'de', 'es', 'fr', 'hi', 'it', 'ja', 'ko', 'pt', 'ru', 'zh-CN'].map((code) => [code, CATALOG_CHUNK_BUDGET])
+  ['bn', 'de', 'es', 'fr', 'hi', 'it', 'ja', 'ko', 'pt', 'ru', 'vi', 'zh-CN'].map((code) => [code, CATALOG_CHUNK_BUDGET])
 )
 
 export const CHUNK_BUDGETS = {

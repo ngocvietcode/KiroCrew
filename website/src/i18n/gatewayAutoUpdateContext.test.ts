@@ -52,10 +52,10 @@ describe('gateway auto-update desktop context note', () => {
       const value = lookup(JSON.parse(readFileSync(path.join(LOCALES_DIR, f), 'utf-8')))
       return typeof value === 'string'
     })
-    // en.manual.json plus the eleven translated catalogs and the pseudolocale.
+    // en.manual.json plus the twelve translated catalogs and the pseudolocale.
     expect(carriers.sort()).toEqual([
       'bn.json', 'de.json', 'en-XA.json', 'en.manual.json', 'es.json', 'fr.json', 'hi.json',
-      'it.json', 'ja.json', 'ko.json', 'pt.json', 'ru.json', 'zh-CN.json',
+      'it.json', 'ja.json', 'ko.json', 'pt.json', 'ru.json', 'vi.json', 'zh-CN.json',
     ])
     for (const file of carriers) {
       const value = lookup(JSON.parse(readFileSync(path.join(LOCALES_DIR, file), 'utf-8'))) as string

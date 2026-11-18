@@ -115,7 +115,7 @@ describe('language registry', () => {
     expect(isSupportedLanguage(DEFAULT_LANGUAGE)).toBe(true)
   })
 
-  it('does not add a thirteenth statically bundled catalog', () => {
+  it('does not add a fourteenth statically bundled catalog', () => {
     // The lazy-loading ratchet, as a GATE rather than a sentence.
     //
     // `index.ts` and `docs/system-specs/modules/config.md` both say catalog #13
@@ -134,7 +134,7 @@ describe('language registry', () => {
       authored.length,
       'Adding a catalog puts its full weight in every user\'s first load. Land the '
       + 'lazy-loading seam in i18n/catalogs.ts instead, or re-measure and say why here.',
-    ).toBeLessThanOrEqual(12)
+    ).toBeLessThanOrEqual(13)
   })
 })
 

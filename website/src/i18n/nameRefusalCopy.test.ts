@@ -108,6 +108,7 @@ const LOWERCASE_WORD: Record<string, string> = {
   ja: '小文字',
   ko: '소문자',
   'zh-CN': '小写',
+  vi: 'thường',
 }
 
 describe.each(AUTHORED)('lowercase in the name-refusal rule in %s', (code, { translation }) => {
