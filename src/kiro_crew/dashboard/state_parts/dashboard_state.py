@@ -417,6 +417,7 @@ class DashboardState:
         # Cloud provisioning launch jobs (lazy-init in handlers_cloud).
         self.cloud_launch_store: Any = None  # LaunchJobStore
         self.cloud_launch_cancels: Any = None  # dict[str, threading.Event]
+        self.cloud_launch_skips: Any = None  # dict[str, threading.Event]
         self.cloud_launch_engine: Any = (
             None  # test-injected LaunchEngine (None -> RealLaunchEngine)
         )
@@ -494,6 +495,9 @@ class DashboardState:
         # /api/slack/reconnect). Set by the gateway that owns the Slack socket;
         # None on a server with no socket owner.
         self.slack_reconnect: Callable[[], Awaitable[dict[str, Any]]] | None = None
+        # The Slack owner-claim window (``kiro_crew.slack.owner_claim.OwnerClaim``,
+        # /api/slack/owner-claim). Set beside ``slack_reconnect``; None otherwise.
+        self.slack_owner_claim: Any = None
         # True once the Discord channel's Gateway WebSocket transport started
         # this session (set by maybe_start_discord). Read by the Discord
         # settings status badge.
@@ -1339,6 +1343,7 @@ class DashboardState:
     running_session_keys = _slot_directory.running_session_keys
     spend_slot_by_session = _slot_directory.spend_slot_by_session
     native_subagent_snapshots = _slot_directory.native_subagent_snapshots
+    dismiss_native_subagent = _slot_directory.dismiss_native_subagent
     has_slot = _slot_directory.has_slot
     slot_exists = _slot_directory.slot_exists
     session_still_loading = _slot_directory.session_still_loading

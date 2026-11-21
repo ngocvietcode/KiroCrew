@@ -8,7 +8,7 @@ import { useBranding } from '../../hooks/useBranding'
 import { useAppSelector } from '../../store'
 import SegmentedControl from '../../components/SegmentedControl'
 import ReportProblemCard from './ReportProblemCard'
-import { ARM_POLL_FAILURE_THRESHOLD, AGENT_REQUEST_POLL_MS, AgentUpdateRequestCard, copyCommand } from './AboutPanelUpdateFlow'
+import { AGENT_REQUEST_POLL_MS, AgentUpdateRequestCard, copyCommand, useArmPollFailing } from './AboutPanelUpdateFlow'
 import { AboutPanelGatewayUpdates, AboutPanelUpdateConfirm, useAboutPanelGatewayUpdate } from './AboutPanelGatewayUpdate'
 import { DesktopGatewayRestartRow, useDesktopGatewayRestart } from './DesktopGatewayRestartRow'
 import { AppAutoDownloadSwitch, GatewayAutoUpdateSwitch } from './AboutPanelUpdateSwitches'
@@ -251,6 +251,7 @@ export function AboutPanel() {
     enabled: isDesktop,
     refetchInterval: AGENT_REQUEST_POLL_MS.value,
   })
+  const agentRequestPollFailing = useArmPollFailing(agentRequest)
   const pendingAgentRequest = agentRequest.data?.armed === true && agentRequest.data.managed_by === 'electron'
     ? agentRequest.data
     : null
@@ -299,7 +300,7 @@ export function AboutPanel() {
   // the click did nothing. The poll uses the same consecutive-failure threshold
   // InAppUpdateFlow uses for the same reason — one blip is left to the next
   // interval.
-  const agentRequestPanelError = agentRequest.failureCount >= ARM_POLL_FAILURE_THRESHOLD
+  const agentRequestPanelError = agentRequestPollFailing
     ? i18nT('pages.settings.aboutPanel.arm_status_poll_failing')
     : agentDownloadFailed
       ? i18nT('pages.settings.aboutPanel.download_failed_reason', { reason: updateState?.state === 'error' ? updateErrorText(updateState) : i18nT(UPDATE_ERROR_KEYS.unknown) })
@@ -1042,7 +1043,7 @@ export function AboutPanel() {
           // so it speaks in the app's own accent voice, and the anchor names
           // GitHub because the destination is a new-issue form — a surprise
           // worth spending four words to avoid.
-          <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-[var(--accent-subtle)] text-[12px]"
+          <div className="mt-3 flex items-start gap-2 p-2.5 rounded-lg border border-border bg-[var(--accent-subtle)] text-[12px]"
                data-testid="prerelease-report-note">
             <Bug size={13} className="lucide-inline shrink-0 mt-0.5 text-accent" />
             <span className="text-text leading-relaxed">

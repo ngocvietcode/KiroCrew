@@ -30,10 +30,12 @@ import {
   setTerminalFontSize,
   setTerminalCursorStyle,
   setTerminalCopyOnSelect,
+  setTerminalCtrlCopyPaste,
   DEFAULT_TERMINAL_FONT_SIZE,
   TERMINAL_CURSOR_STYLES,
 } from '../../hooks/useTerminalFont'
 import { FONT_FAMILY_OPTIONS, OPENDYSLEXIC_MONO_FAMILY_NAME } from '../../utils/fontFamilyOptions'
+import { isMac } from '../../utils/platform'
 import { useFontOptions } from '../../hooks/useFontOptions'
 import { isFontInstalled, monospaceFontStack, proportionalFontStack } from '../../utils/fontDetect'
 
@@ -54,6 +56,8 @@ import { useCloseAction } from '../../hooks/useCloseAction'
 import { useTrayIcon } from '../../hooks/useTrayIcon'
 import { useMinimizeToTray } from '../../hooks/useMinimizeToTray'
 import { usePersistedBool } from '../../hooks/usePersistedBool'
+import { STANDALONE_REOPEN_KEY, isStandaloneDisplay } from '../../lib/standaloneLastRoute'
+import { REVERSE_TRACKPAD_SWIPE_KEY, shellNaturalScrolling } from '../../lib/scrollTouch'
 import { TranslucentPanelsPreview } from './TranslucentPanelsPreview'
 import { canOpenExternalTerminal, detectExternalTerminals } from '../../lib/externalTerminal'
 import { RadioChipGroup, radioChip } from '../../components/RadioChipGroup'
@@ -162,6 +166,16 @@ export function DisplayPanel({ basePath }: { basePath?: string } = {}) {
   // "Show search in the top bar", on by default. useAppShell reads the same key
   // to draw the header, and usePersistedBool keeps the two readers in step.
   const [topbarSearch, setTopbarSearch] = usePersistedBool('mc-topbar-search', true)
+  // "Reopen where I left off", off by default and offered only in the installed
+  // app (#29497 decision). lib/standaloneLastRoute.ts reads the same key.
+  const [reopenLastPage, setReopenLastPage] = usePersistedBool(STANDALONE_REOPEN_KEY, false)
+  const standaloneApp = useMemo(() => isStandaloneDisplay(), [])
+  // "Reverse trackpad swipe", off by default. The side-panel
+  // swipe reads the same key through lib/scrollTouch `naturalScrolling`, only
+  // when neither the wheel nor the desktop shell says how Natural scrolling is
+  // set, so the row is hidden where the shell already knows.
+  const [reverseTrackpadSwipe, setReverseTrackpadSwipe] = usePersistedBool(REVERSE_TRACKPAD_SWIPE_KEY, false)
+  const shellKnowsNaturalScrolling = useMemo(() => shellNaturalScrolling() !== null, [])
   const { botName, directLocal } = useBranding()
   const termFont = useTerminalFont()
   // Probed families become picker rows previewed in their own family, so the
@@ -819,6 +833,29 @@ export function DisplayPanel({ basePath }: { basePath?: string } = {}) {
             checked={topbarSearch}
             onChange={setTopbarSearch}
           />
+          {/* Per device and off by default: an existing install keeps opening
+              at Sessions until its owner turns this on. A browser tab always
+              opens the URL typed, so the row shows only in the installed app. */}
+          {standaloneApp && (
+            <SettingsToggle
+              label={i18nT('pages.settings.displayPanel.reopen_last_page')}
+              hint={i18nT('pages.settings.displayPanel.reopen_last_page_desc')}
+              checked={reopenLastPage}
+              onChange={setReopenLastPage}
+            />
+          )}
+          {/* Per browser and off by default. Chrome and Firefox do not tell a
+              page how macOS Natural scrolling is set, so with it off the
+              side-panel swipe runs backwards there until this is on. Hidden in
+              the desktop app on macOS, whose shell reports the setting. */}
+          {!shellKnowsNaturalScrolling && (
+            <SettingsToggle
+              label={i18nT('pages.settings.displayPanel.reverse_trackpad_swipe')}
+              hint={i18nT('pages.settings.displayPanel.reverse_trackpad_swipe_desc')}
+              checked={reverseTrackpadSwipe}
+              onChange={setReverseTrackpadSwipe}
+            />
+          )}
           {/* Saved in config.json, unlike the switch above: it decides which surface
               the shortcut opens for this crew, on every browser. */}
           <SettingsToggle
@@ -1077,6 +1114,16 @@ export function DisplayPanel({ basePath }: { basePath?: string } = {}) {
             checked={termFont.copyOnSelect}
             onChange={setTerminalCopyOnSelect}
           />
+          {/* Not on macOS: Cmd+C and Cmd+V already copy and paste there, and
+              Ctrl+C stays the shell's interrupt. */}
+          {!isMac && (
+            <SettingsToggle
+              label={i18nT('pages.settings.displayPanel.terminal_ctrl_copy_paste')}
+              hint={i18nT('pages.settings.displayPanel.terminal_ctrl_copy_paste_desc')}
+              checked={termFont.ctrlCopyPaste}
+              onChange={setTerminalCtrlCopyPaste}
+            />
+          )}
           {/* Free text with commit-on-blur, mirroring the font field above: the
               gateway host's installed shells cannot be enumerated from the
               browser (reading /etc/shells is host-side and absent on some

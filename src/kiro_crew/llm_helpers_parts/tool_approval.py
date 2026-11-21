@@ -288,6 +288,7 @@ async def _resolve_permission(
     session_key: str = "",
     agent: str = "",
     app: str = "",
+    app_run: tuple[str, str] = ("", ""),
     on_decision: Callable[[str, str, str], None] | None = None,
     spec_floor: Callable[[LLMEvent], Awaitable[str | None]] | None = None,
 ) -> bool:
@@ -847,9 +848,11 @@ async def _resolve_permission(
     # no rung below approves a call it covers on its own; the caller's approver
     # is asked as a person's (``held_call``), and with none the call is refused.
     # A READ_ONLY turn has no approver, so a held read is refused there.
-    from kiro_crew import mate_held_rules
+    # An organisation's ``ask`` on a KAS web call (``web_ask_rule``) is held the same
+    # way under every policy: KAS asks so a person answers.
+    from kiro_crew import mate_held_rules, web_ask_rule
 
-    _held = (
+    _bot_held = (
         await asyncio.to_thread(
             mate_held_rules.held_for, event, session_key=session_key, agent=agent
         )
@@ -861,6 +864,8 @@ async def _resolve_permission(
         )
         else []
     )
+    _web_held = web_ask_rule.held_phrases(event)
+    _held = list(_bot_held) + _web_held
 
     if policy in (ToolApprovalPolicy.HOOK_BASED, ToolApprovalPolicy.READ_ONLY) and hooks:
         tool_result = await run_in_tool_gate_pool(
@@ -870,6 +875,7 @@ async def _resolve_permission(
             session_key=session_key,
             agent=agent,
             app=app,
+            app_run=app_run,
             **hook_gate_kwargs(event),
             # READ_ONLY asks for the classifier's verdict alone: the gate skips
             # its grant tiers (`auto_approve_tools`, app-own-server), which vouch
@@ -1012,15 +1018,20 @@ async def _resolve_permission(
             return False
 
     if _held and on_tool_approval is None:
-        _log("rejected", metadata={"reason": "bot_limit_held_headless"})
-        await _steer_host_deny(
-            provider,
-            event,
-            "this call falls under a Bot limit that could not be applied as written ("
-            + "; ".join(_held)
-            + "), so a person must approve it, and this surface has no approver",
-            cause=DENY_CAUSE_SURFACE_POLICY,
-        )
+        if _bot_held:
+            _log("rejected", metadata={"reason": "bot_limit_held_headless"})
+            _why = (
+                "this call falls under a Bot limit that could not be applied as written ("
+                + "; ".join(_bot_held)
+                + "), so a person must approve it, and this surface has no approver"
+            )
+        else:
+            _log("rejected", metadata={"reason": "web_ask_rule_headless"})
+            _why = (
+                "; ".join(_web_held)
+                + ", so a person must approve it, and this surface has no approver"
+            )
+        await _steer_host_deny(provider, event, _why, cause=DENY_CAUSE_SURFACE_POLICY)
         await provider.reject_tool(event.request_id)
         return False
 

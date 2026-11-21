@@ -1144,6 +1144,7 @@ _EXPECTED_CALL_SITE_LABELS: dict[str, list[tuple[str, str]]] = {
         ("steering_resources", "unknown"),
     ],
     "kiro_crew/cron_script_mcp.py": [("cron_resolve_mcp_server", "cron")],
+    "kiro_crew/knowledge/llm_pool.py": [("knowledge_spec_refusal", "unknown")],
     "kiro_crew/dashboard/agent_admin/agent_detail.py": [
         ("api_agent_detail", "dashboard"),
         ("api_agent_detail", "dashboard"),
@@ -1236,6 +1237,8 @@ _EXPECTED_CALL_SITE_LABELS: dict[str, list[tuple[str, str]]] = {
     # A manifest's `commands[].agent` is checked against the names its own source
     # specs declare; those live in the app root, which the app can rewrite.
     "kiro_crew/apps/manifest_containment.py": [("app_manifest_agent_names", "unknown")],
+    # The hook fingerprint a folder's project-hooks "on" is bound to.
+    "kiro_crew/project_hooks_consent.py": [("project_hooks_fingerprint", "unknown")],
 }
 
 
@@ -1282,6 +1285,8 @@ _EXPECTED_PROJECT_FILES_CALL_SITE_LABELS: dict[str, list[tuple[str, str]]] = {
         ("side_readonly_spec", "dashboard"),
     ],
     "kiro_crew/member_essential_context.py": [("member_essentials", "context")],
+    # The hook fingerprint a folder's project-hooks "on" is bound to.
+    "kiro_crew/project_hooks_consent.py": [("project_hooks_fingerprint", "unknown")],
     # Slack's shared discovery helper forwards the operation its two routes name
     # (the listing, the name resolution); the channel is fixed, so it is a literal.
     "kiro_crew/slack/handler_runtime/agent_names.py": [("forward:operation", "slack")],
@@ -1450,8 +1455,12 @@ _EXPECTED_STRICT_CALL_SITE_LABELS: dict[str, list[tuple[str, str]]] = {
     ],
     "kiro_crew/doctor_deadpath.py": [("doctor", "cli")],
     "kiro_crew/execution_context.py": [("repair_session_execution", "unknown")],
-    # The crewmate half of the same overlay pass reads each crewmate file.
-    "kiro_crew/mcp_gateway/mate_overlays.py": [("mcp_overlay_rewrite", "unknown")],
+    # The crewmate half of the same overlay pass reads each crewmate file, and the
+    # export-shadowing check re-reads an app's own export to confirm its name.
+    "kiro_crew/mcp_gateway/mate_overlays.py": [
+        ("mcp_overlay_rewrite", "unknown"),
+        ("mcp_overlay_rewrite", "unknown"),
+    ],
     "kiro_crew/mcp_gateway/rewriter.py": [("mcp_overlay_rewrite", "unknown")],
     "kiro_crew/slack/handler_runtime/agent_names.py": [("slack_resolve_agent", "slack")],
     # A spawn refused because the parent's allowlist is unknown names each spec

@@ -15,6 +15,7 @@ import dataclasses
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field, replace
@@ -23,6 +24,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from push_guard_helpers import _fixture_git_env
 from slack_sdk.errors import SlackApiError
 
 from kiro_crew.dashboard.handlers import worktree as wt
@@ -53,6 +55,11 @@ def _passthrough_spawn(argv, mode="standard", **kw):
 def _no_sandbox(_floor_monkeypatch):
     _floor_monkeypatch.setattr(wt, "sandboxed_spawn_argv", _passthrough_spawn)
     _floor_monkeypatch.setattr(git_ops, "sandboxed_spawn_argv", _passthrough_spawn)
+    # These tests prove the board, not hook handling: the hook scan starts three gits
+    # before every git read. Both names that bind it are stubbed (`wt` for `_run_git`,
+    # `git_ops` for the capped diff reader); test_git_config_hooks.py covers both.
+    _floor_monkeypatch.setattr(wt, "config_hook_disable_args_sandboxed", lambda *_a, **_kw: [])
+    _floor_monkeypatch.setattr(git_ops, "config_hook_disable_args_sandboxed", lambda *_a, **_kw: [])
 
 
 class _LiveConfig:
@@ -332,6 +339,10 @@ def test_read_board_projects_only_the_published_set_with_liveness():
         "pr_state",
         "pr_ci",
         "pr_checks",
+        # Who stopped the worker from the Workers tab, and when (model's
+        # published set; cleared by the worker's next turn).
+        "stopped_by",
+        "stopped_at",
     }
 
 
@@ -708,23 +719,42 @@ def test_publisher_respects_policy_archive_and_stop(slack, monkeypatch):
 # ── workspace integration: debounce, combined diff, bar, PRs ────────────────
 
 
-@pytest.fixture
-def repo(tmp_path) -> Path:
-    remote = tmp_path / "remote.git"
-    _git("init", "-q", "--bare", "-b", "main", str(remote), cwd=tmp_path)
-    root = tmp_path / "proj"
+@pytest.fixture(scope="module")
+def _repo_template(tmp_path_factory) -> Path:
+    """A bare ``remote.git`` and a clone ``proj`` on ``main``, built once per module.
+
+    It runs before the per-test git floor applies, so its git calls use the scrubbed
+    fixture env: no host config, templates, hooks or maintenance reach it.
+    """
+    base = tmp_path_factory.mktemp("board-repo")
+    env = _fixture_git_env()
+
+    def git(*args: str, cwd: Path) -> None:
+        subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True)
+
+    remote = base / "remote.git"
+    git("init", "-q", "--bare", "-b", "main", str(remote), cwd=base)
+    root = base / "proj"
     root.mkdir()
-    _git("init", "-q", "-b", "main", cwd=root)
+    git("init", "-q", "-b", "main", cwd=root)
     for key, value in (("user.email", "t@example.com"), ("user.name", "T"), ("gc.auto", "0")):
-        _git("config", key, value, cwd=root)
+        git("config", key, value, cwd=root)
     (root / "README.md").write_text("hello\n")
-    _git("add", ".", cwd=root)
-    _git("commit", "-q", "-m", "init", cwd=root)
-    _git("remote", "add", "origin", "https://github.com/acme/widgets.git", cwd=root)
-    _git("push", "-q", str(remote), "main:main", cwd=root)
-    _git("fetch", "-q", str(remote), "+refs/heads/*:refs/remotes/origin/*", cwd=root)
-    _git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main", cwd=root)
-    return root
+    git("add", ".", cwd=root)
+    git("commit", "-q", "-m", "init", cwd=root)
+    git("remote", "add", "origin", "https://github.com/acme/widgets.git", cwd=root)
+    git("push", "-q", str(remote), "main:main", cwd=root)
+    git("fetch", "-q", str(remote), "+refs/heads/*:refs/remotes/origin/*", cwd=root)
+    git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main", cwd=root)
+    return base
+
+
+@pytest.fixture
+def repo(tmp_path, _repo_template) -> Path:
+    """A private copy of :func:`_repo_template` under *tmp_path*; returns the clone."""
+    for name in ("remote.git", "proj"):
+        shutil.copytree(_repo_template / name, tmp_path / name, symlinks=True)
+    return tmp_path / "proj"
 
 
 @dataclass

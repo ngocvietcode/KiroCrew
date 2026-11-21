@@ -10,6 +10,10 @@ declare global {
     platform?: string
     isElectron?: boolean
     linuxFrameless?: boolean
+    /** This shell answers frameless-Linux application-menu IPC. Optional:
+     *  absent on a shell older than the feature, whose `menuItems` guard is
+     *  still Windows-only and returns `[]` for a Linux window. */
+    linuxAppMenu?: boolean
     getPathForFile?: (file: File) => string
     windowControl?: (action: string) => void
   }
@@ -95,6 +99,10 @@ declare global {
      *  Chromium's gesture-scroll events (macOS only). Optional: absent in a
      *  browser and on an older shell. See lib/scrollTouch. */
     onScrollTouch?: (cb: (phase: unknown) => void) => () => void
+    /** macOS Natural scrolling: `true` on, `false` off, `null` not known yet
+     *  (macOS only). Optional: absent in a browser and on an older shell. See
+     *  lib/scrollTouch `shellNaturalScrolling`. */
+    getNaturalScrolling?: () => unknown
     /** `menuBarOverlap` is false when macOS placed the fullscreen window below
      *  the menu bar (a notched display), so no band needs keeping clear. */
     onFullScreenChanged: (cb: (isFullScreen: boolean, menuBarOverlap: boolean) => void) => () => void
@@ -381,6 +389,9 @@ declare global {
     /** A plain quit and relaunch with no update command of its own; an armed
      *  update is applied by the quit it triggers. Absent on an older shell. */
     relaunch?: () => Promise<UpdateResult>
+    /** Whether `relaunch` would be accepted from this window: false where the
+     *  shell's local-dashboard gate refuses it. Absent on an older shell. */
+    canRelaunch?: () => Promise<boolean>
     getInfo?: () => Promise<(UpdateInfo & { lastState?: UpdateState | null }) | undefined>
     setChannel?: (channel: string) => Promise<UpdateResult>
     setAutoDownload?: (enabled: boolean) => Promise<UpdateResult>

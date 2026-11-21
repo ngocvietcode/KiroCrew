@@ -47,6 +47,7 @@ from kiro_crew.acp.client_timeouts import (
     _effective_prompt_timeout_async,
 )
 from kiro_crew.acp.command_refused import AcpCommandRefused
+from kiro_crew.acp.end_token import drop_end_token
 from kiro_crew.acp.stale_compaction import consume_stale_compaction_status
 from kiro_crew.acp.transport_errors import AcpError, AcpProcessDied, AcpTimeoutError
 from kiro_crew.acp.transport_framing import write_notification_best_effort
@@ -88,6 +89,7 @@ from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_LAUNCH,
     ACP_BACKEND_NODE_ADAPTER_PACKAGES,
 )
+from kiro_crew.agent_sdk.steer_origin import STEER_ORIGIN_USER, steer_params
 from kiro_crew.executors import subprocess_executor
 from kiro_crew.security import redact_credentials, redact_exfiltration_urls
 from kiro_crew.tracing import steps as trace_steps
@@ -459,7 +461,9 @@ async def stream_command(
             "command": {"command": cmd_name, "args": cmd_args},
         },
     )
-    async for event in self._dispatch_events(req_id, timeout, extract_agent_from_result=True):
+    async for event in drop_end_token(
+        self._dispatch_events(req_id, timeout, extract_agent_from_result=True)
+    ):
         yield event
 
 
@@ -591,7 +595,7 @@ async def _audit_cancelled_approvals(
         logger.warning("SEL audit of cancelled approvals failed", exc_info=True)
 
 
-async def steer(self: AcpClient, message: str) -> bool:
+async def steer(self: AcpClient, message: str, *, origin: str = STEER_ORIGIN_USER) -> bool:
     """Inject a mid-turn steer into the running turn via kiro-cli's
     ``_session/steer`` ext-method. Fire-and-forget: the request is written
     but the response is NOT awaited, because the in-flight turn's read loop
@@ -613,6 +617,9 @@ async def steer(self: AcpClient, message: str) -> bool:
 
     A steer that went out gets a point span in the turn it went into
     (``tracing/steps.py``): its mode, never its text.
+
+    *origin* says who wrote the text (``STEER_ORIGIN_*``); only kiro's
+    ``_session/steer`` carries it, and only when it is not the user's.
     """
     text = (message or "").strip()
     if not text or not self._session_id:
@@ -631,9 +638,7 @@ async def steer(self: AcpClient, message: str) -> bool:
         sent = await self._steer_via_concurrent_prompt(text)
     else:
         wrapped = wrap_user_message(text)
-        await self._send_request(
-            "_session/steer", {"sessionId": self._session_id, "message": wrapped}
-        )
+        await self._send_request("_session/steer", steer_params(self._session_id, wrapped, origin))
         batch_guard.note_prompt(getattr(self, "_batch_window", None), text)
         # See AcpSessionHandle.steer for why the stamp is taken at the write.
         self._last_steer_monotonic = time.monotonic()
@@ -1186,7 +1191,7 @@ async def _dispatch_prompt_events(
     self._steer_turn = turn
     pi_steer_turn.open_turn(self, req_id)
     try:
-        async with aclosing(self._dispatch_events(req_id, timeout)) as events:
+        async with aclosing(drop_end_token(self._dispatch_events(req_id, timeout))) as events:
             async for event in events:
                 if (
                     event.kind == EVENT_COMPLETE

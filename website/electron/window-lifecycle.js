@@ -3,13 +3,18 @@
 const fs = require("fs");
 const path = require("path");
 
-const { createTokenRetryHandler, dashboardRetryPath, loadDashboardWithToken } = require("./token-retry");
+const {
+  createTokenRetryHandler,
+  dashboardRetryPath,
+  dashboardUrlFor,
+  loadDashboardWithToken,
+} = require("./token-retry");
 const { createRendererRecovery, withSafeReload, hasSafeReload } = require("./renderer-recovery");
 const { createRendererExhaustedNotice } = require("./renderer-exhausted-notice");
 const { createHangRecovery, endHungRenderer } = require("./hang-recovery");
 const { armSplashHistoryClear, fileShellPageBasename } = require("./splash-history");
 const { armSwipeHistory, browserPanelUnderCursor } = require("./swipe-history");
-const { armScrollTouch } = require("./scroll-touch");
+const { armScrollTouch, readNaturalScrolling } = require("./scroll-touch");
 const { hideToTray, cancelPendingTrayHide, shouldKeepAppHidden } = require("./hide-to-tray");
 const {
   createCloseHandler,
@@ -29,6 +34,7 @@ const { sanitizeWindowState, captureWindowState } = require("./window-state");
 const { stepZoomFactor } = require("./zoom");
 const { registerCaptureSurface } = require("./capture-trust");
 const { isLoopbackUrl } = require("./browser-view");
+const { shownRelayPane } = require("./relay-crew-window");
 const { runAnnotateOp } = require("./browser-annotate");
 const { attachContextMenu } = require("./context-menu");
 const {
@@ -375,9 +381,12 @@ function createWindowLifecycle(options) {
     });
     // The trackpad's real finger-down / finger-up, so a two-finger drag in the
     // dashboard releases on the lift-off instead of a guessed gap (macOS only).
+    // It also tells the page the Natural scrolling setting, which decides
+    // which way the fingers moved for a given wheel sign.
     armScrollTouch(view.webContents, {
       platform,
       isAlive: () => !win.isDestroyed() && !view.webContents.isDestroyed(),
+      readNatural: () => readNaturalScrolling(systemPreferences),
     });
 
     // Teardown order is load-bearing: no embedded view may outlive the page it
@@ -1434,8 +1443,8 @@ function createWindowLifecycle(options) {
         ({ token: tokenValue } = await fetchRemoteToken(connectionPort));
       }
       if (tokenValue && !connWin.isDestroyed()) {
-        const target = new URL(retryTarget || "", connectionBackendUrl);
-        await loadDashboardWithToken(connWin.webContents, target.toString(), tokenValue);
+        const target = dashboardUrlFor(connectionBackendUrl, retryTarget);
+        await loadDashboardWithToken(connWin.webContents, target, tokenValue);
       }
     });
     connWin.webContents.on("did-navigate", (_event, url, httpCode) => {
@@ -1564,11 +1573,17 @@ function createWindowLifecycle(options) {
       appName: app.name,
       openSettings: () => openSettingsPage(),
       openAbout: () => openSettingsPage("about"),
+      // A relay Crew tab in front takes Reload, as its own window did,
+      // instead of the dashboard reloading and closing every tab.
       reload: () => {
+        const pane = shownRelayPane(BaseWindow.getFocusedWindow());
+        if (pane) { pane.menuReload({ ignoreCache: false }); return; }
         const wc = focusedDashboardWebContents();
         if (wc) wc.reload();
       },
       forceReload: () => {
+        const pane = shownRelayPane(BaseWindow.getFocusedWindow());
+        if (pane) { pane.menuReload({ ignoreCache: true }); return; }
         const wc = focusedDashboardWebContents();
         if (wc) wc.reloadIgnoringCache();
       },
@@ -1609,7 +1624,7 @@ function createWindowLifecycle(options) {
   // silently no-ops when clicked. Strict `=== true` matches the fail-closed
   // rule executeMenuItem uses.
   function menuItems(sender, id, senderIsLocal) {
-    if (!IS_WINDOWS || !WINDOWS_TITLEBAR_MENU_IDS.has(id)) return [];
+    if (!(IS_WINDOWS || LINUX_FRAMELESS) || !WINDOWS_TITLEBAR_MENU_IDS.has(id)) return [];
     const menu = appMenu || Menu.getApplicationMenu();
     const item = menu && menu.getMenuItemById(id);
     const win = windowForWebContents(sender);
@@ -1624,7 +1639,7 @@ function createWindowLifecycle(options) {
   // exit says so explicitly.
   function executeMenu(sender, id, index, senderIsLocal) {
     if (
-      !IS_WINDOWS
+      !(IS_WINDOWS || LINUX_FRAMELESS)
       || !WINDOWS_TITLEBAR_MENU_IDS.has(id)
       || !Number.isInteger(index)
     ) return false;

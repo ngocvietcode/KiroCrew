@@ -9,8 +9,8 @@ packaged fake model backend, then shells the in-tree Playwright suite at it. No
 model, no credentials, no network, no cost.
 
 The main browser job is Linux-only: it uses the CodeBuild fleet where eligible,
-otherwise the `kirocrew-runners` larger-runner group when the run executes in
-this repository, and `ubuntu-latest` in a fork running its own CI. It cannot
+otherwise the `kirocrew-linux-4-core` runner when the run executes in this
+repository, and `ubuntu-latest` in a fork running its own CI. It cannot
 rely on an unprivileged
 user namespace (CodeBuild refuses `unshare(CLONE_NEWUSER)`, and this job does not
 alter the hosted runner's namespace policy). Its disposable fake-backend gateway
@@ -119,7 +119,7 @@ Config facts worth knowing before you touch a spec:
 | `workers` | 1 under `CI` | The harness sets `CI=1`, so the browser leg is serial. |
 | `retries` | 2 under `CI` | A detector, not a fix. A spec that passes only on a retry is counted under `flaky` in the JSON report (the HTML report lists it too), and `MAX_FLAKY_SPECS` then fails the run: fix the spec, never raise `retries`. |
 | `timeout` | 30s per test | Assertion (`expect`/`poll`) timeout stays at Playwright's 5s default so a genuine slowdown surfaces instead of passing inside a wide window. |
-| `grepInvert` | excludes `@needs-agent` unless `PLAYWRIGHT_RUN_AGENT_SPECS` | The default run is the credential-less green set. The harness wires the fake backend, so it opts the agent specs back in. `@needs-live-agent` stays excluded either way and currently tags nothing. `@shared-crew` (two verified principals) is excluded unless `PLAYWRIGHT_RUN_SHARED_CREW`. |
+| `grepInvert` | excludes `@needs-agent` unless `PLAYWRIGHT_RUN_AGENT_SPECS` | The default run is the credential-less green set. The harness wires the fake backend, so it opts the agent specs back in. `@needs-live-agent` stays excluded either way and currently tags nothing. `@shared-crew` (two verified principals) is excluded unless `PLAYWRIGHT_RUN_SHARED_CREW`, and `@memory-evidence` unless `PLAYWRIGHT_RUN_MEMORY_EVIDENCE` ([below](#memory-embedding-states-one-dedicated-gateway-per-state)). |
 | browser | Playwright's own bundled Chromium | This fork vends no browser binary; CI installs it with `npx playwright install chromium`, restored from an `actions/cache` entry keyed on the exact `@playwright/test` version. `--with-deps` is deliberately NOT used — see [what CI does](#what-ci-does-around-the-command). |
 
 ### Auth flow
@@ -217,7 +217,7 @@ The head+base i18n render gate is its own `i18n-render` job rather than a third
 lane here, for the same reason: it needs no gateway, and on the hosted 4-vCPU
 runner a fork PR gets, its two DEV builds plus a two-tree Chromium render ran
 about 13 minutes alongside the suite and pushed `test_dashboard_playwright_suite`
-past its 1020 s ceiling on 27% of fork-PR runs (2.5% on the fleet's large
+past the 1020 s ceiling it then had on 27% of fork-PR runs (2.5% on the fleet's large
 instance, where the same overlap fit). The suite's ceiling is sized for this step
 to hold two browser lanes, not three. [i18n-gates.md](i18n-gates.md) describes
 that job.
@@ -360,14 +360,14 @@ background step writes every 5 s while the suite runs, with a UTC timestamp,
 `/proc/pressure/{cpu,io,memory}`, the `cpu ` line of `/proc/stat` (steal),
 `/proc/loadavg`, and the job cgroup's `cpu.stat` and `memory.events`. It exists
 to tell a runner that stopped scheduling the gateway from a stall inside it when
-the loop-stall watchdog ends the gateway with -14 (#22314). Inside the container
+the loop-stall watchdog ends the gateway with -14. Inside the container
 `/proc/pressure` and `/proc/stat` are host-wide, and a gap in the log's own
 timestamps means the sampler was frozen too.
 
 The job's log alone is not enough to triage a spec failure: it names
-`error-context.md` and prints nothing from it. #8526 (a ghost transcript from the
-previous session rendering for a few hundred ms after the first send) was
-narrowed for hours from that one line before a local run produced the snapshot.
+`error-context.md` and prints nothing from it. A failure such as a ghost
+transcript from the previous session rendering for a few hundred ms after the
+first send cannot be narrowed from that one line; the snapshot can.
 Download the artifact first; bisect second.
 
 `if-no-files-found: ignore`, deliberately: a run that fails before the specs
@@ -633,7 +633,7 @@ leg, and `nightly.yml`'s `pod-scenarios`, which boots a real service-managed pod
 Outside this job, no macOS or Windows job starts a gateway: the whole E2E
 surface is gated on `KIROCREW_E2E`, which only `setup.py test_e2e` sets, and
 only the Linux `e2e` job runs that. A unit test cannot close that gap.
-[#8117](https://github.com/kirodotdev/KiroCrew/pull/8117) is the defining case:
+The defining case:
 a settings-file probe in `sandbox.wrap_argv`'s Windows delegation branch made
 the Kiro ACP spawn on a fresh Windows host (where that file does not exist) fall
 through to the no-backend fail-closed path, so the gateway never became usable.
@@ -662,7 +662,7 @@ and Windows that tail is the only evidence a maintainer without that OS gets.
 | `test_prompt_returns_the_fake_backend_reply` | One session create plus one prompt returns the fake backend's reply. `/api/health` can answer while the ACP spawn is refused, so this is the load-bearing one. |
 | `test_tool_marker_prompt_completes_the_turn` | A `[[TOOL]]` prompt still completes its turn. |
 | `test_seeded_sandbox_mode_boots_and_runs_a_turn[minimal]` | `agent.sandbox: "off"` boots and serves. |
-| `test_seeded_sandbox_mode_boots_and_runs_a_turn[rich]` | The shipped `auto` default boots and serves. **This is the #8117 pin.** |
+| `test_seeded_sandbox_mode_boots_and_runs_a_turn[rich]` | The shipped `auto` default boots and serves. **This pins the Windows sandbox-delegation case above.** |
 | `test_shutdown_leaves_no_gateway_child_alive` | Teardown reaps the tree: the pid is gone (via `platform_compat.pid_exists`, never `os.kill(pid, 0)`) and the port refuses connections. |
 
 The tier is expressed as a SEED FIXTURE rather than a post-boot config write,
@@ -714,7 +714,7 @@ Linux user namespaces) must complete the turn; a host that genuinely has none
 must FAIL CLOSED with a named sandbox refusal and stay healthy. `ubuntu-latest`
 is that second host: its unprivileged user namespaces are AppArmor-restricted,
 which is why `backend-test-sandbox` has to clear a sysctl to get one. On Windows
-the expectation is unconditionally the first, so a #8117-style regression cannot
+the expectation is unconditionally the first, so a regression like the sandbox-delegation case above cannot
 hide in the fail-closed branch.
 
 ### `KIROCREW_E2E_REQUIRE=1` on the boot matrix
@@ -849,8 +849,7 @@ any run made under it.
   Windows. It lives in the job env, not the test, so a slow runner is retunable
   without a code change. Windows needs the widest window: subprocess spawn and
   filesystem latency there are measurably slower, the conditions
-  [#9172](https://github.com/kirodotdev/KiroCrew/pull/9172) addressed when a slow
-  disk killed the gateway.
+  under which a slow disk can kill the gateway.
 - **`-n0` with `--timeout=420`**: the module spawns a real process per test, and
   under xdist a block takes the worker with it, which on Windows aborts the run.
   The cap sits above the widest readiness window plus the per-turn reply ceiling,

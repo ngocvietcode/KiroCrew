@@ -16,6 +16,7 @@ from kiro_crew.agent_sdk.backends import ACP_BACKENDS_CREW_ENFORCES_SPEC_TOOLS_S
 from kiro_crew.agent_sdk.kas_engine import discards_mcp_oauth
 from kiro_crew.agent_sdk.spec_hooks import (
     _MAX_SPEC_HOOKS,
+    CRON_SESSION_KEY_PREFIX,
     OverlongHookCommand,
     crew_fired_spec_hooks,
     kas_hook_checkout,
@@ -439,14 +440,15 @@ async def _surface_kas_project_hooks(
     Only for a KAS session whose agent is project-only and sets ``hooks``
     (:func:`kas_project_hooks_state`). When they run because kiro-cli trusts the
     folder, the row shows once per folder (``project_hooks_consent``). The other
-    paths (sub-agent, task runner, channel) never show it: they only read the
-    stored choice. Best-effort: a failed check renders nothing.
+    paths (sub-agent, task runner, channel, a cron result tab) never show it: they
+    only read the stored choice. Best-effort: a failed check renders nothing.
     """
     from kiro_crew.project_hooks_consent import mark_kiro_cli_notice_shown
 
     checkout = kas_hook_checkout(client)
     agent = session_agent(client, agent)
-    if not checkout or not agent:
+    cron_tab = provider_session_key(client).startswith(CRON_SESSION_KEY_PREFIX)
+    if not checkout or not agent or cron_tab:
         return
     try:
         found = await asyncio.to_thread(kas_project_hooks_state, agent, checkout)
@@ -877,6 +879,7 @@ def _notice_steer_upgrade(state: "DashboardState", slot: "_ChatSlot", client: An
         "withheld_credentials_notice",
         "telemetry_unconfirmed_notice",
         "kiro_cli_model_notice",
+        "engine_fallback_notice",
         "mode_pinned_notice",
         "zero_tool_ban_notice",
     ):
@@ -1479,7 +1482,9 @@ async def _turn_stop_hook(turn: _ChatTurn) -> None:
                 for _failed in await _slack_upload(
                     state.slack_client, _mirror_chan, _mirror_post_ts or "", _mirror_files
                 ):
-                    _mirror_notes.append(f"⚠ Couldn't upload: {_local_file_name(_failed.dest)}")
+                    _mirror_notes.append(
+                        f"Warning: Couldn't upload: {_local_file_name(_failed.dest)}"
+                    )
             if _mirror_notes:
                 await _post_rendered("\n".join(_mirror_notes))
             if _mirror_options:

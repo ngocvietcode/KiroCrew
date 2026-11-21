@@ -45,7 +45,13 @@ from kiro_crew import crew_mode
 from kiro_crew.dashboard.conditional_get import conditional_json_response
 from kiro_crew.dashboard.handlers._shared import require_owner_dashboard_request
 from kiro_crew.dashboard.handlers.members import _deny_app_caller
+from kiro_crew.dashboard.session_activity import (
+    SessionActivity,
+    session_activity,
+    session_execution_active,
+)
 from kiro_crew.dashboard.slot_projection import summary_rows
+from kiro_crew.dashboard.slot_row_memo import is_posted_note_row
 
 logger = logging.getLogger(__name__)
 
@@ -75,8 +81,12 @@ async def _stamped_rows(state: Any) -> list[dict[str, Any]]:
 
     Yielding pass: with a few hundred open sessions a synchronous pass holds the
     loop past the stall budget, and the stall alarm restarts the gateway.
+
+    The bare audience: these routes are owner-only and send no source link, so
+    the pass decides no chip status for anyone. The dashboard-user audience would
+    write a public-status SEL row per link for a non-owner who never asked.
     """
-    return list(await state.serialize_slots_yielding(dashboard_user=True))
+    return list(await state.serialize_slots_yielding())
 
 
 #: The two kinds of root these routes answer: a Crew Mode conductor, and a crewmate
@@ -139,12 +149,12 @@ def _not_root() -> web.Response:
     )
 
 
-def _status(row: Mapping[str, Any]) -> str:
+def _status(row: Mapping[str, Any], activity: tuple[SessionActivity, ...] = ()) -> str:
     if row.get("pending_approval"):
         return STATUS_NEEDS_APPROVAL
     if row.get("needs_input"):
         return STATUS_ASKING
-    if row.get("running"):
+    if row.get("running") or row.get("subagents_running") or session_execution_active(activity):
         return STATUS_WORKING
     return STATUS_IDLE
 
@@ -187,8 +197,9 @@ NO_LEDGER = LedgerFacts()
 def _group(status: str, progress: str = "", looping: bool = False) -> str:
     """The side panel group from real signals only.
 
-    A tool approval is ``approval``; a running turn is ``working``; a closed tab, a
-    closed ledger item, or a worker that reported ``done`` is ``done``; a worker
+    A tool approval is ``approval``; a running turn or attached sub-agent is
+    ``working``; a closed tab, a closed ledger item, or a worker that reported
+    ``done`` is ``done``; a worker
     that reported ``blocked`` or ``question`` (whatever its ``reason``), or one with
     an open question card, waits on its conductor: ``with_conductor``. An idle
     worker whose own loop will wake it (*looping*, ``ledger_wake.worker_looping``:
@@ -707,15 +718,23 @@ def _is_seed(text: str) -> bool:
 def _last_reply(slot: Any) -> str:
     """The newest assistant line in *slot*'s transcript, ``""`` when it has none.
 
+    A system notice (``system_notices.is_system_notice``), such as the reload
+    notice, is not the worker's reply, so it is skipped.
+
     The live window holds raw content, so the line goes through the same display
     redaction as the sidebar preview: its first line, markdown stripped, then
     redacted.
     """
     # circular import: chat_utils_display imports dashboard.state.
     from kiro_crew.dashboard.chat_utils_display import _redacted_preview
+    from kiro_crew.dashboard.system_notices import is_system_notice
 
     for message in reversed(summary_rows(slot) if slot is not None else []):
-        if isinstance(message, Mapping) and message.get("role") == "assistant":
+        if (
+            isinstance(message, Mapping)
+            and message.get("role") == "assistant"
+            and not is_system_notice("assistant", message.get("meta"))
+        ):
             text = message.get("content")
             if isinstance(text, str) and text.strip():
                 # The whole first line: _redacted_preview strips markdown,
@@ -723,6 +742,25 @@ def _last_reply(slot: Any) -> str:
                 first = next(line for line in text.splitlines() if line.strip())
                 return _redacted_preview(first.strip(), WORKER_LINE_MAX)
     return ""
+
+
+def _newest_line_is_note(slot: Any) -> bool:
+    """Whether the row behind *slot*'s sidebar preview is a posted note.
+
+    The preview counts a note (``slot_row_memo.summarize_rows``), but a note is
+    not the worker's own line, so the card falls back to its last reply.
+    """
+    from kiro_crew.dashboard.system_notices import is_system_notice
+
+    for message in reversed(summary_rows(slot) if slot is not None else []):
+        if not isinstance(message, Mapping) or not message.get("content"):
+            continue
+        if is_posted_note_row(message):
+            return True
+        role = message.get("role")
+        if role in ("user", "assistant") and not is_system_notice(role, message.get("meta")):
+            return False
+    return False
 
 
 def _worker_line(row: Mapping[str, Any], ledger_line: str, slot: Any = None) -> str:
@@ -736,7 +774,7 @@ def _worker_line(row: Mapping[str, Any], ledger_line: str, slot: Any = None) -> 
     last = row.get("last_message")
     if not isinstance(last, str):
         return ""
-    if _is_seed(last):
+    if _is_seed(last) or _newest_line_is_note(slot):
         return _last_reply(slot)
     return _one_line(last)
 
@@ -813,7 +851,9 @@ async def api_crew_workers(request: web.Request) -> web.Response:
     get_slot = getattr(state, "get_slot", None)
     for row in live:
         key = str(row.get("key"))
-        status = _status(row)
+        live_slot = get_slot(key) if callable(get_slot) else None
+        activity = session_activity(state, live_slot) if live_slot is not None else ()
+        status = _status(row, activity)
         facts = items.get(key, NO_LEDGER)
         item, line = facts.item, facts.line
         workers.append(
@@ -825,7 +865,7 @@ async def api_crew_workers(request: web.Request) -> web.Response:
                 "group": _group(status, facts.progress, status == STATUS_IDLE and _looping(key)),
                 "last_activity": _last_activity(row),
                 "ledger_item": item,
-                "summary": _worker_line(row, line, get_slot(key) if callable(get_slot) else None),
+                "summary": _worker_line(row, line, live_slot),
                 "created_by": str(row.get("created_by") or ""),
                 "dispatched_by": _dispatcher_of(row),
                 "approval": _approval_of(row),

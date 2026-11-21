@@ -326,9 +326,11 @@ class AgentConfig:
             "installed the gateway installs the pinned engine at the first spawn. "
             "With false, KAS still takes this route when kiro-cli's relay cannot "
             "run on the host (no kiro-cli, or one that is not signed in). "
-            "When unset, a Nightly build turns it on and every other build leaves "
-            "it off (config.loader_document.kas_bundle_build_default(), read from "
-            "the build's own stamp, not the update channel). A saved value always "
+            "When unset, a packaged build (desktop app, wheel or image, not a "
+            "source checkout) prefers the built-in engine: KAS runs on it once Kiro "
+            "Crew's own sign-in is usable, and a host signed in only to kiro-cli "
+            "keeps kiro-cli until then (acp.kas_build_default). If that first move "
+            "to the engine fails, the chat runs on kiro-cli. A saved value always "
             "wins, and save() leaves the key off disk until it is set. This "
             "dataclass default stays false so the committed config-schema snapshot "
             "is the same for every build.",
@@ -758,6 +760,19 @@ class AgentConfig:
             "this host needs longer than the default allows.",
         ),
     )
+    apps_ui_protected_copy: bool = field(
+        default=False,
+        metadata=_meta(
+            "Serve App UI Scripts From the Protected Copy",
+            "When on, the /apps/{name}/ui/ route serves an app's .js and .mjs "
+            "files from the copy the gateway took when it installed, updated or "
+            "registered the app, kept where no sandboxed process can write, "
+            "instead of from the app's own folder. A script edited in the app's "
+            "folder then keeps serving as installed, and an app the gateway never "
+            "installed has its scripts not found. Off by default: scripts are "
+            "read from the app's folder.",
+        ),
+    )
     jail: str = field(
         default=JAIL_MODE_AUTO,
         metadata=_meta(
@@ -976,7 +991,11 @@ class AgentConfig:
             "Resource Critical Threshold (GB)",
             "Available memory (GB) at or below which the [RESOURCES] context line "
             "escalates to 'critically low' and advises against starting heavy work "
-            "at all. Should be <= resource_pressure_gb. 0 disables the critical tier.",
+            "at all. Should be <= resource_pressure_gb. It also arms the host memory guard, "
+            "which on Linux stops the largest Crew tool or test tree at critical memory, or "
+            "at tight memory with PSI full avg10 >= 10. 0 disables the critical tier and "
+            "turns the memory guard off. When the container's memory limit is at or under "
+            "it, the gateway logs one start-up warning naming the settings to lower.",
         ),
     )
     admission_gate: bool = field(
@@ -989,7 +1008,9 @@ class AgentConfig:
             "summaries, history consolidation) are skipped while it lasts. Subagent "
             "spawns are not gated on this posture; they wait on spawn_min_memory_gb instead. "
             "Manually triggered cron runs and direct chat turns are never gated; an unreadable "
-            "probe admits (fail-open). Set false to make the critical posture advisory-only.",
+            "probe admits (fail-open). Set false to make the critical posture advisory-only "
+            "for these deferrals; it does not stop the host memory guard (see "
+            "resource_critical_gb).",
         ),
     )
     task_queue_enabled: bool = field(

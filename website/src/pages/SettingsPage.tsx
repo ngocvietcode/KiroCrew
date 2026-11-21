@@ -8,7 +8,6 @@ import { useSettingHighlight } from '../hooks/useSettingHighlight'
 import { useRenderedLocationIsCurrent } from '../hooks/useRenderedLocationIsCurrent'
 import { RemoteControlCard } from './settings/RemoteControlCard'
 import { RemoteCrewPanel } from './settings/RemoteCrewPanel'
-import { PeoplePanel } from './settings/PeoplePanel'
 import { useSharedCrewCapabilities } from '../hooks/sharedCrew/useSharedCrew'
 import { sharedCrewPreviewOn } from '../api/sharedCrewUi'
 import { isEmbeddedPane } from '../lib/embedded'
@@ -34,7 +33,10 @@ import { DataHomeOwnerStatusNotice } from '../components/DataHomeOwnerNotice'
 import ErrorNotice from '../components/ErrorNotice'
 import ErrorBoundary from '../components/ErrorBoundary'
 import { AGENT_HARNESS_SETTINGS_TAB, isKiroSignInHighlight, KIRO_SIGN_IN_PATH } from './developer/kiroSignInLink'
+import { isKasEngineHighlight, KAS_ENGINE_PATH } from './developer/kasEngineLink'
 import { useKiroSignInOffered } from './developer/useKiroSignInOffered'
+import { KiroCreditsCard } from './developer/KiroCreditsCard'
+import { useKiroAccountReading } from '../hooks/useKiroAccountReading'
 
 const AgentBackendTab = lazy(() =>
   import('./developer/AgentBackendTab').then(m => ({ default: m.AgentBackendTab })),
@@ -53,6 +55,10 @@ const AgentRunSettings = lazy(() =>
 /** Lazy: the Connections gallery (cards, connect flow, OAuth app parts) is
  *  only needed when that tab opens, so it stays out of the Settings chunk. */
 const ConnectionsPage = lazy(() => import('./connections/ConnectionsPage'))
+/** Lazy for the same reason: the MCP sign-ins switch is drawn only on the Connections tab. */
+const McpSignInsSection = lazy(() =>
+  import('./settings/McpSignInsSection').then(m => ({ default: m.McpSignInsSection })),
+)
 /** Lazy: the list-detail Secrets panel draws only behind the Secrets vault
  *  redesign preview. The default panel stays in this chunk, as it is on main. */
 const SecretsPanel = lazy(() =>
@@ -68,6 +74,10 @@ const BrowserPanel = lazy(() =>
  */
 const SessionEnvironmentsCard = lazy(() =>
   import('./settings/SessionEnvironmentsCard').then(m => ({ default: m.SessionEnvironmentsCard })),
+)
+/** Lazy: the People tab (connection sources, invites, the people list) is only needed when that tab opens. */
+const PeoplePanel = lazy(() =>
+  import('./settings/PeoplePanel').then(m => ({ default: m.PeoplePanel })),
 )
 /** Lazy: the About tab (version, update flow, release notes) is only needed when that tab opens. */
 const AboutPanel = lazy(() =>
@@ -278,12 +288,14 @@ export default function SettingsPage() {
   // (`KIROCREW_SHARED_CREW_PREVIEW=1`); a browser setting cannot turn it on.
   const sharedCrew = useSharedCrewCapabilities()
   const sharedCrewPreview = sharedCrewPreviewOn(sharedCrew.capabilities)
-  // The Kiro account tab exists while the build offers Kiro sign-in; an
-  // unanswered schema hides nothing, so a deep link never lands on a missing tab.
+  // The Kiro account tab exists while the build offers Kiro sign-in or there is
+  // a credit reading to show (the phone's only place for it); an unanswered
+  // schema hides nothing, so a deep link never lands on a missing tab.
   const kiroSignInOffered = useKiroSignInOffered() !== false
+  const { kiroUsageState, kiroAccountEntry } = useKiroAccountReading()
   const allTabs = buildTabs().filter(t =>
     (t.key !== 'webhooks' || webhooksPreview)
-    && (t.key !== 'kiro-account' || kiroSignInOffered)
+    && (t.key !== 'kiro-account' || kiroSignInOffered || kiroAccountEntry)
     && (t.key !== 'session-environments' || sessionEnvironmentsPreview)
     && (t.key !== 'people' || sharedCrewPreview),
   )
@@ -326,10 +338,15 @@ export default function SettingsPage() {
   if (legacySignInTab === AGENT_HARNESS_SETTINGS_TAB && isKiroSignInHighlight(memorySelection.get('highlight'))) {
     return <Navigate replace to={KIRO_SIGN_IN_PATH} />
   }
+  // The engine switch used to sit in Developer > Feature previews; links to it
+  // there land on the KAS row's engine choice instead.
+  if (legacySignInTab === 'developer' && isKasEngineHighlight(memorySelection.get('highlight'))) {
+    return <Navigate replace to={KAS_ENGINE_PATH} />
+  }
 
   return (
     <SidePanelLayout
-      title={i18nT('pages.settingsPage.settings')}
+      title={i18nT('nav.account_and_settings')}
       tabs={tabs}
       paneOwnsHeader={memberMemoryView}
       basePath={SETTINGS_BASE_PATH}
@@ -359,16 +376,24 @@ export default function SettingsPage() {
           </div>
         )}
         {tab === 'overview' && <OverviewPanel />}
-        {tab === 'kiro-account' && (kiroSignInOffered && (
-          // Isolated so a throwing card cannot take the Settings page down with
-          // it. The default fallback, not `null`: the card is the whole tab, so
-          // a failure must show its error and Try Again rather than a blank pane.
-          <ErrorBoundary scope="settings-kiro-sign-in">
-            <Suspense fallback={<ContentSkeleton rows={6} />}>
-              <KiroSignInCard />
-            </Suspense>
-          </ErrorBoundary>
-        ))}
+        {tab === 'kiro-account' && (<>
+          {kiroAccountEntry && (
+            <ErrorBoundary scope="settings-kiro-credits">
+              {/* No hand-off beside the sign-in card, which can hold an unsaved draft. */}
+              <KiroCreditsCard usage={kiroUsageState} handoff={!kiroSignInOffered} />
+            </ErrorBoundary>
+          )}
+          {kiroSignInOffered && (
+            // Isolated so a throwing card cannot take the Settings page down with
+            // it. The default fallback, not `null`: a failure must show its error
+            // and Try Again rather than a blank pane.
+            <ErrorBoundary scope="settings-kiro-sign-in">
+              <Suspense fallback={<ContentSkeleton rows={6} />}>
+                <KiroSignInCard />
+              </Suspense>
+            </ErrorBoundary>
+          )}
+        </>)}
         {tab === 'imports' && <ImportPanel />}
         {tab === 'agent' && (
           <Suspense fallback={<ContentSkeleton rows={6} />}>
@@ -396,11 +421,16 @@ export default function SettingsPage() {
         {tab === 'webhooks' && <WebhooksPanel />}
         {tab === 'instances' && (
           <>
-            <RemoteControlCard />
             <RemoteCrewPanel key={crewAddLinkSeq} />
+            {/* Below the panel's Settings section: Settings -> Advanced is not routed. */}
+            <RemoteControlCard />
           </>
         )}
-        {tab === 'people' && sharedCrewPreview && <PeoplePanel />}
+        {tab === 'people' && sharedCrewPreview && (
+          <Suspense fallback={<ContentSkeleton rows={6} />}>
+            <PeoplePanel />
+          </Suspense>
+        )}
         {tab === 'privacy' && <PrivacyPanel />}
         {tab === 'security' && <GuideTrustRootRegion><SecurityPanel basePath={SETTINGS_BASE_PATH} /></GuideTrustRootRegion>}
         {tab === 'connections' && (
@@ -408,6 +438,7 @@ export default function SettingsPage() {
             {connectionsUiPending
               ? <ContentSkeleton rows={6} />
               : <ConnectionsPage servicesEnabled={connectionsUiEnabled} />}
+            <McpSignInsSection />
           </Suspense>
         )}
         {tab === 'secrets' && (

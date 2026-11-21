@@ -356,15 +356,26 @@ async def _record_owner_servers(entries: dict[str, dict]) -> None:
 
     Best effort: a failed write leaves the server added and working, just not
     offered an in-place sign-in, and is logged rather than failing the request.
+    A record that moves to another url or drops (a server turned local) takes
+    the grant Crew held under the old one with it.
     """
     from kiro_crew.config.loader import update_config_locked
-    from kiro_crew.connections.owner_servers import record
+    from kiro_crew.connections import crew_oauth
+    from kiro_crew.connections.owner_servers import record, replaced_urls
     from kiro_crew.dashboard.chat_utils import run_config_write
 
+    dropped: dict[str, str] = {}
+
+    def _record(cfg: dict) -> dict | None:
+        dropped.update(replaced_urls(cfg, entries))
+        return record(cfg, entries)
+
     try:
-        await run_config_write(update_config_locked, mutate=lambda cfg: record(cfg, entries))
+        await run_config_write(update_config_locked, mutate=_record)
     except Exception:  # noqa: BLE001 -- the add itself already landed
         logger.warning("could not record owner MCP servers %s", sorted(entries), exc_info=True)
+        return
+    await crew_oauth.forget_owner_grants(dropped)
 
 
 async def _rebuild_agent_config() -> bool:
@@ -456,6 +467,13 @@ async def api_mcp_custom_add(request: web.Request) -> web.Response:
         if err:
             return web.json_response({"error": f"server '{name}': {err}"}, status=400)
         cleaned[name] = _clean_spec(spec)
+    # A disabled entry under one of Kiro Crew's own names would mute that
+    # server through the store, which no route may do.
+    if not enable:
+        for name in cleaned:
+            builtin = await _mcp._builtin_server_refusal(name)
+            if builtin is not None:
+                return builtin
 
     async with _get_mcp_lock():
         # A commented store is the user's valid file: refused with the same
