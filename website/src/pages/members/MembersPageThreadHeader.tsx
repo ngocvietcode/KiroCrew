@@ -47,6 +47,7 @@ interface MembersPageThreadHeaderProps {
   profile: ProfileCardOpen | null
   openQuick: () => void
   createHeld: string | null
+  importHeld: boolean
   active: MemberRosterRow
 }
 
@@ -81,7 +82,7 @@ function PanelOpener({ inBar, pressed, onToggle }: { inBar: boolean; pressed: bo
 /** The thread header, portaled into the shell's top bar while the page has one there. */
 export function MembersPageThreadHeader({
   layout, profileCard, drawers, rosterView, thread, threadView, rosterSignals, profileFlight, navigation,
-  navigate, location, setSearchParams, profile, openQuick, createHeld, active,
+  navigate, location, setSearchParams, profile, openQuick, createHeld, importHeld, active,
 }: MembersPageThreadHeaderProps) {
   const { t } = useTranslation()
   const { rosterPinned, switcherSlotRef, setRosterPin, panelVisible, showOpener } = layout
@@ -102,7 +103,7 @@ export function MembersPageThreadHeader({
       // the chat page's single-bar hand-off), so it is a plain flex row
       // there, with no fade and nothing to pad the transcript for.
       className={headerInBar
-        ? 'grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-1.5 w-full min-w-0 h-full'
+        ? 'grid grid-cols-[minmax(max-content,1fr)_minmax(0,auto)_minmax(max-content,1fr)] items-center gap-1.5 w-full min-w-0 h-full'
         : 'absolute top-0 inset-x-0 z-20 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 px-3 py-2 pointer-events-none'}
       data-testid="member-thread-header"
       data-in-topbar={headerInBar ? '' : undefined}
@@ -143,6 +144,7 @@ export function MembersPageThreadHeader({
             if (m) void openMember(m)
           }}
           onCreate={createHeld ? undefined : openQuick}
+          canImport={!importHeld}
           onShowRoster={() => setRosterPin(true)}
           onToggleStar={toggleStar}
           starPending={starPending}

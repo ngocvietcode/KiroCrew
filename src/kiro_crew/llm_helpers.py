@@ -88,6 +88,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         acp_error_after_tool_activity,
         acp_error_is_connection_failure,
         acp_error_is_pipe_death,
+        acp_error_is_server_error,
         acp_error_is_session_not_found,
         acp_error_is_throttle,
         acp_error_is_transient,
@@ -156,10 +157,14 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
     )
     from kiro_crew.llm_helpers_parts.tool_approval import (  # noqa: F401
         ToolApprovalPolicy,
+        _approval_expired,
+        _body_field_link_origin,
         _orphan_reject_done,
         _orphan_rejects,
         _resolve_permission,
         _steer_host_deny,
+        approval_expiry_watch,
+        note_approval_expired,
     )
     from kiro_crew.llm_helpers_parts.tool_input_denials import (  # noqa: F401
         _DIFF_TRUNCATION_MARK,
@@ -247,6 +252,7 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
         KiroCrewConfig,
     )
     from kiro_crew.constants import (  # noqa: F401
+        DENY_CAUSE_APPROVAL_TIMEOUT,
         DENY_CAUSE_INVALID_NAME,
         DENY_CAUSE_POLICY,
         DENY_CAUSE_SURFACE_POLICY,
@@ -295,6 +301,7 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
     )
     from kiro_crew.security import (  # noqa: F401
         MAX_SCANNABLE_COMMAND_CHARS,
+        MAX_SCANNABLE_SOURCE_BODY_CHARS,
         is_denied,
         is_denied_synthesized_target,
         is_sensitive_bash_command,
@@ -304,10 +311,17 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
         sensitive_path_refusal,
         sensitive_write_path_refusal,
     )
+    from kiro_crew.security.mcp_body_fields import (  # noqa: F401
+        body_field_keys,
+        is_kirocrew_server,
+        named_size_refusal,
+        warn_body_field_matches,
+    )
     from kiro_crew.security.paths_resolver import bounded_judgment  # noqa: F401
     from kiro_crew.security.readonly_bash import (  # noqa: F401
         command_invokes_git,
         is_read_only_bash,
+        may_write_through_git_flag,
     )
     from kiro_crew.sel import sel as _sel  # noqa: F401
     from kiro_crew.start_priority import (  # noqa: F401

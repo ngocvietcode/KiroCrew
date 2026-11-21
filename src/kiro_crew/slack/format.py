@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 from functools import partial
 from typing import Any, Callable, NamedTuple, Sequence
 
+from kiro_crew import redaction_seams
 from kiro_crew.constants import OPTIONS_RE_LINE, relocate_glued_tail_marker
 from kiro_crew.messaging.display_safety import (
     DISPLAY_SETTLING_PASSES,
@@ -22,6 +23,7 @@ from kiro_crew.messaging.display_safety import (
     slack_mrkdwn_reading,
     strip_ansi,
 )
+from kiro_crew.messaging.graphemes import joins_previous
 from kiro_crew.messaging.markup import flatten_mermaid_body
 from kiro_crew.messaging.renderer import MIRROR_ECHO_LABEL, cap_choices, format_overflow
 from kiro_crew.messaging.split import rebalance_fenced_cuts
@@ -456,6 +458,7 @@ def extract_options(text: str) -> tuple[str, list[str]]:
     return cleaned, choices
 
 
+@redaction_seams.in_seam(redaction_seams.CHANNELS)
 def _redact_choices(
     choices: list[str],
     redactor: Callable[[str], str] | None,
@@ -823,7 +826,7 @@ def build_options_selected_blocks(
 def build_options_answered_blocks(user_id: str, chosen: list[str], when: float) -> list[dict]:
     """The context line an answered OPTIONS card shows in place of its buttons.
 
-    ``✅ <who> chose <choice>[, <choice>…] · <time>``. *chosen* is already
+    ``<who> chose <choice>[, <choice>…] · <time>``. *chosen* is already
     redacted by the caller; it is escaped here, at the mrkdwn sink, because it
     is LLM-authored text and Slack would otherwise interpret entity markup in it.
     The time is a Slack date token, so every reader sees it in their own zone.
@@ -844,7 +847,7 @@ def build_options_answered_blocks(user_id: str, chosen: list[str], when: float) 
             names += f", …{len(chosen) - i} more"
             break
         names = joined
-    text = f"✅ {who} chose {names}{stamp}"
+    text = f"{who} chose {names}{stamp}"
     return [{"type": "context", "elements": [{"type": "mrkdwn", "text": text}]}]
 
 
@@ -925,7 +928,7 @@ def build_cron_ack_block(job_id: str) -> list[dict]:
             "elements": [
                 {
                     "type": "button",
-                    "text": {"type": "plain_text", "text": "✅ Acknowledge"},
+                    "text": {"type": "plain_text", "text": "Acknowledge"},
                     "action_id": f"{CRON_ACK_ACTION_PREFIX}{job_id}",
                     "value": job_id,
                     "style": "primary",
@@ -1237,7 +1240,7 @@ def _convert_mermaid(text: str) -> str:
 
 # Slack message character limit (API rejects above ~4000)
 SLACK_MSG_LIMIT = 3900
-TRUNCATION_NOTICE = "\n\n⚠️ _Response truncated (Slack message limit)_"
+TRUNCATION_NOTICE = "\n\nWarning: _Response truncated (Slack message limit)_"
 CONTINUATION = "\n\n_(continued…)_"
 
 # Inline thinking tags that some models embed in text
@@ -1314,16 +1317,51 @@ def _fenced_cut(text: str, chunk_limit: int, limit: int) -> tuple[int, str, str]
         # ``limit`` still goes out whole after an early line break.
         early = text.rfind("\n", 0, chunk_limit)
         fits = early > 0 and len(text[early:].lstrip("\n")) <= limit
-        cut = early if fits else chunk_limit
+        cut = early if fits else _hard_cut(text, chunk_limit)
     sealed = _sealed_at(text, cut)
     if sealed is None and cut < chunk_limit:
         # The cut holds no more than the reopened opener, so the next line is too
         # long for one post: cut inside it, as a line with no break is cut.
-        cut = chunk_limit
+        cut = _hard_cut(text, chunk_limit, past=cut)
         sealed = _sealed_at(text, cut)
+        if sealed is None and cut < chunk_limit:
+            # Moving back to a token's ``<`` still left only the opener, so the
+            # token cannot be kept whole here: cut at the limit and seal it.
+            cut = chunk_limit
+            sealed = _sealed_at(text, cut)
     if sealed is None:
         return cut, "", text[cut:].lstrip("\n")
     return cut, *sealed
+
+
+def _hard_cut(text: str, chunk_limit: int, past: int = 0) -> int:
+    """Where a line too long for one post is cut: at the limit, never in a token.
+
+    A cut inside a Slack ``<...>`` token (a link, a mention, a channel) moves
+    back to its ``<``, because either half of a torn token posts as raw text: the
+    head's link is no link and the next post opens with ``label>``. A token
+    longer than a whole post cannot move whole, so it is cut where the limit
+    falls. The move never goes back to *past* or before it, so a cut already
+    ruled out stays ruled out. A cut that would split one visible character (a
+    flag, a ZWJ emoji, a mark on its base) moves left to that character's start,
+    by the rule the shared splitter uses (``messaging.graphemes``).
+    """
+    cut = chunk_limit
+    while cut > past + 1 and cut < len(text) and joins_previous(text, cut):
+        cut -= 1
+    if cut < len(text) and joins_previous(text, cut):
+        # The whole reach is one run of joining marks: no boundary to step back
+        # to, so cut at the limit rather than posting one mark at a time.
+        cut = chunk_limit
+    opened = text.rfind("<", 0, cut)
+    line_start = text.rfind("\n", 0, cut)
+    if opened > max(text.rfind(">", 0, cut), line_start, past, 0):
+        closed = text.find(">", cut)
+        newline = text.find("\n", cut)
+        fits = closed - opened < chunk_limit
+        if closed != -1 and (newline == -1 or closed < newline) and fits:
+            cut = opened
+    return cut
 
 
 def _sealed_at(text: str, cut: int) -> tuple[str, str] | None:
@@ -1512,6 +1550,7 @@ def _render_blocks(
     return out, changed
 
 
+@redaction_seams.in_seam(redaction_seams.CHANNELS)
 def render_for_slack(
     text: str,
     *,
@@ -1568,7 +1607,7 @@ def render_for_slack(
         prefix: Prepended to every returned part and charged against ``limit``,
             so a decorated part cannot overflow. Splitting first and decorating
             afterwards is what made the backfill's icon overflow the limit.
-        header: A caption for the FIRST part only -- ``"⏰ *Cron: name*"`` and
+        header: A caption for the FIRST part only -- ``"*Cron: name*"`` and
             friends. Redacted but NOT converted, because these captions are
             already Slack mrkdwn and ``to_slack_mrkdwn`` would re-interpret their
             ``*bold*``. Skipping conversion is exactly why a caption needs its own
@@ -1666,6 +1705,7 @@ class SlackRender(NamedTuple):
     redacted: bool
 
 
+@redaction_seams.in_seam(redaction_seams.CHANNELS)
 def render_one_for_slack(
     text: str,
     *,

@@ -786,6 +786,10 @@ shell that started it has exited and nothing restarts it, so the app treats it
 as a plain local Kiro Crew gateway, which the failure dialog's force-retry and
 wedge recovery may stop. A job list that cannot be read keeps the
 service-managed verdict.
+On macOS and Linux, a port check that force-retry or wedge recovery cannot run
+(lsof missing, not executable or timed out) is settled with a real bind before
+the gateway starts again, and a port still in use after the start wait shows the
+restart-required dialog.
 A port held by a process this app cannot attribute to itself, which is what a
 local SSH forward to a remote gateway looks like, is reused only when a remote
 crew is recorded for that port; otherwise the supervisor refuses it
@@ -1263,7 +1267,11 @@ control `kirocrew restart` names when it refuses a gateway the app supervises.
 
 When this launch ends with no usable gateway, the shell shows one dialog
 (`gateway-wait.js` renders it; the supervisor's start-failure record decides
-the state). It always offers **Retry**, plus the actions the state allows:
+the state). It always offers **Retry**, plus the actions the state allows. While
+the app waits for the gateway, the splash counts toward the deadline ("Waiting for gateway… 12s of
+120s"). A timeout on a gateway this app spawned and whose process is still
+running is titled "gateway is not answering" and points at the launch log;
+its Retry keeps that process and waits again. The actions:
 
 - **Add Remote Crew** / **Edit Remote Crew** opens the remote-crew form
   (`runtime/gateway/remote-crew-prompt.js`) to save or correct the crew this
@@ -1624,7 +1632,11 @@ it), and `user-restart.js` (Settings → About's Restart gateway).
   decided by [`close-action.js`](../../website/electron/close-action.js)), and
   creates or removes the tray icon to match `showTrayIcon` (decided by
   [`tray-icon.js`](../../website/electron/tray-icon.js), which keeps the icon on
-  Windows and Linux while the close button hides the window); the composition root delegates quit-time
+  Windows and Linux while the close button hides the window), and hides a
+  minimized main window to the tray when `minimizeToTray` is on (decided by
+  [`minimize-to-tray.js`](../../website/electron/minimize-to-tray.js): never on
+  macOS, on Linux only when the session bus has a StatusNotifier tray host, and
+  only while the tray icon shows); the composition root delegates quit-time
   gateway teardown to the supervisor, which performs the graceful shutdown and
   signal escalation contract. On POSIX,
   [`gateway-stop.js`](../../website/electron/gateway-stop.js) lists the child's

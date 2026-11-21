@@ -214,7 +214,8 @@ _MOVED: dict[str, tuple[str, ...]] = {
         tcc_protected_dirs_for_walk tcc_prune_walk_dirs fchmod_safe dup_fd_at_or_above
         chmod_safe
         claude_code_managed_settings_dir
-        _clear_readonly_and_retry rmtree_force _WIN_FILE_SHARE_READ_WRITE_DELETE
+        _clear_readonly_and_retry _retry_within_root _open_root rmtree_force
+        _WIN_FILE_SHARE_READ_WRITE_DELETE
         _SHARING_VIOLATION_WINERRORS _RMTREE_MAX_ATTEMPTS _RMTREE_BACKOFF_SECONDS
         remove_with_retry
         open_file_for_shared_read open_lock_file_for_sweep path_volume_is_remote
@@ -227,7 +228,7 @@ _MOVED: dict[str, tuple[str, ...]] = {
         _windows_system_dirs _FOLDERID_DOCUMENTS _POWERSHELL_USER_PROFILES windows_documents_dir
         windows_powershell_profile_paths _UNPINNED_TOOL_PROBED _log_tool_outside_trusted_dirs
         _WINDOWS_GIT_DIRS trusted_git_bin trusted_system_bin _trusted_bin_search
-        trusted_system_bin_quiet _LOCAL_SYSTEM_BIN_DIR _UNTRUSTED_AWS_BIN_LOGGED
+        trusted_system_bin_quiet _LOCAL_SYSTEM_BIN_DIR POSIX_DEFAULT_BIN_DIRS _UNTRUSTED_AWS_BIN_LOGGED
         _MAX_SYMLINK_HOPS _root_owned_entry traversed_components traversed_components_and_links
         _group_shared_with_another_account _ACL_XATTR_VERSION _ACL_USER _ACL_GROUP _ACL_MASK
         _ACL_WRITE _NO_ACL_ERRNOS _acl_admits_another_account group_write_admits_another_account
@@ -315,6 +316,7 @@ _MOVED: dict[str, tuple[str, ...]] = {
         _run_cleanup_shielded _isolated_group_of_live_child _discard_output_until_exit
         terminate_and_reap terminate_and_reap_sync
         _POST_KILL_DRAIN_SECS _STDLIB_RUN run_killing_tree_on_timeout
+        stdlib_run_killing_tree_on_timeout
         """.split()),
     "kiro_crew.platform_compat_metrics": tuple("""
         _MACH_TASK_BASIC_INFO _MachTimeValue _MachTaskBasicInfo _MACH_TASK_BASIC_INFO_COUNT
@@ -332,7 +334,7 @@ _MOVED: dict[str, tuple[str, ...]] = {
         proc_rss_tree_mb_for_pid proc_cpu_seconds _prev_win_sys_cpu system_memory
         system_cpu_percent _MIB_BYTES _NATURAL_T _HOST_VM_INFO64 _VMStatistics64
         _EXTERNAL_PAGE_COUNT_ELEMENTS macos_vm_statistics _macos_available_mib
-        _linux_available_mib host_total_mib host_available_mib MEMORY_PRESSURE_NORMAL
+        _linux_available_mib host_total_mib _darwin_memsize_bytes host_available_mib MEMORY_PRESSURE_NORMAL
         MEMORY_PRESSURE_WARN MEMORY_PRESSURE_CRITICAL _MEMORY_PRESSURE_NAMES
         _MEMORY_PRESSURE_SYSCTL memory_pressure_level memory_pressure_name
         POWER_AC POWER_BATTERY POWER_UNKNOWN _LINUX_POWER_SUPPLY_ROOT _WIN_AC_OFFLINE

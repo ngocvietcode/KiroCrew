@@ -99,7 +99,8 @@ an edited or shortened prefix refuses acknowledgement. Receipts are not pruned.
   Learned reads/writes, FTS and vectors run on that connection, split between the
   store and the `vector_memory_runtime/` modules it delegates to (see
   [Store composition](#store-composition-vector_memorypy-and-vector_memory_runtime));
-  `memory_record_metadata.py` maintains revisions, proposals and provenance.
+  `memory_record_metadata.py` maintains revisions, proposals and provenance;
+  `memory_reconcile_child.py` runs its full reconcile pass in a child process.
 - `memory.py` is the facade for manual documents and learned history. V2 learned
   operations delegate to its admitted SQLite handle; V1 keeps its file layout.
 - `history_consolidation_pass.py` (`HistoryConsolidator._consolidate`, bound
@@ -180,6 +181,137 @@ anchors remain files. Learned history, facts, episodes and lessons share one
 SQLite authority with no JSONL fallback. Global V1 and each configured named
 store are separate destinations selected by the owning execution context.
 See [Memory across surfaces and channels](#memory-across-surfaces-and-channels).
+
+### The engine's own memory store (`agent.orchestrator_memory`)
+
+Everything above is Kiro Crew's memory. The KAS engine keeps a SEPARATE local
+store of the host's own memories, which Kiro Crew neither writes nor reads: it
+is reached only by the engine, inside the session.
+
+`agent.orchestrator_memory` (default off, KAS only) controls whether Crew states
+a native memory policy for the sessions it starts. While it is off, Crew
+sends no native memory setting on `initialize`, `session/new` or `session/load`,
+and checks no memory acknowledgement, so those sessions run on the engine's own
+defaults. While it is on, Crew explicitly disables native memory on local KAS
+processes and on sessions without a recall grant, and grants read-only recall
+to one session shape; it then does not depend on the engine's or the device's
+defaults. Changing the setting does not rekey anything already running: a live
+session keeps the policy its SID stated, none included, and a reload of it or
+a fresh conversation on its provider re-sends exactly that, while a running KAS
+process keeps the `initialize` default it started with. Both follow the setting
+after their next restart.
+`acp/kas_memory.py` owns both halves of it.
+
+**Which sessions ask, and for what.** `memory_plan` returns a `MemoryPlan`
+whose `mode` is `read_only` only for a session that meets all of: the key's
+namespace is owner-minted (`constants.is_owner_minted_session_key`, so a
+channel thread, a sub-agent, a cron run and a task-runner step are refused by
+namespace); cold allocation also requires a template execution with no member
+identity or app attribution, no selected Crew member, and no registered Bot
+worker. Dashboard keys alone grant nothing: Bot workers, member child chats and
+member new tabs can use ordinary dashboard keys. The gateway's in-memory and
+protected durable member vouches withhold recall even if the transcript is
+rewritten to claim an owner execution. Transcript facts can withhold a grant;
+they cannot override those gateway facts. Bot DM keys remain excluded. The
+session has no channel dispatcher, Slack link (paused links included), outbound
+mirror or inbound-resume mirror. No app owns the session; the chat's privacy
+mode reads stored memory at all (`persistent` or `incognito`, never `temporary`); and nobody but the local
+operator can reach this Crew (`crew_reachable_by_others`, which fails closed —
+an unreadable sharing mode counts as shared, because the host's memories are
+one person's and a shared Crew answers every admitted person's turns from the
+same store). While the setting is on, every other local KAS session states
+`disabled` for itself; while it is off, no session states a mode. Other
+harnesses carry no native memory setting. Kiro Cloud Sessions are excluded: their relay does not forward this
+policy, so the toggle grants nothing and rotates no cloud SID, and the Kiro
+Cloud harness (`acp/harness/kas_cloud.py`) removes the memory setting from its
+own requests, so the runtime validates no acknowledgement for them. A remote
+workspace whose KAS engine still runs locally is distinct and remains eligible.
+Crew global memory, consolidation and Bot/V2 store selection are unchanged.
+
+**What reaches the wire.** While the setting is on, local KAS `initialize`
+carries
+`clientCapabilities._meta.kiro.settings.memory = {"mode": "disabled", "reflection": false}`,
+and every local `session/new` states its own pair in
+`_meta.kiro.settings.memory`. A session that requests no mode of its own, such
+as a worker that bypasses session allocation, is resolved to `disabled` by the
+runtime (`kas_memory.runtime_memory_mode`), which reads the setting when the
+process spawns and when the session starts (`orchestrator_memory_enabled`;
+unreadable config counts as off). This prevents device or native defaults from
+filling either field. A live reload, or a fresh conversation on the same
+provider, re-sends the mode the SID stated (recorded on its handle, `""` for
+none) and does not resolve it again. Other initialization settings are preserved. While the
+setting is off none of these requests carries a memory setting.
+Reflection is stated rather than omitted so the session's stored engine record
+names both halves of the request. `read_only` grants the engine's memory index
+in the session's first message and the memory tool's reads; it refuses every
+add, update and delete, and all background reflection, in the engine's own
+policy. Because a `customAgents` entry's `tools` is an allowlist and the shipped
+list does not name the engine's memory tool, a reading session also gets
+`memory` appended to each entry's `tools` (`mount_memory_tool`; `"*"` already
+covers it, and an entry that declares no `tools` gains none). It is NOT added to
+`allowedTools`. KAS's native context and permission policy owns whether an
+index or a retrieval asks approval; Crew does not change permission behavior.
+
+Before a recalling session receives any prompts, Crew requires the response's
+`_meta.memoryConfig` to confirm `read_only` and literal `reflection: false`, plus
+a supported `memoryReflection` select config option reporting `off`. The mode
+checked is the one the request carried after the host's last word on it
+(`kas_memory.sent_memory_mode`). Missing,
+malformed or mismatched acknowledgements refuse the session, including late
+startup adoption and reloads. A failed new session is torn down; a refused load
+is evicted without deleting its stored conversation. Disabled sessions reject
+any returned mismatched policy. An engine without native memory may omit its
+acknowledgement for a disabled request; omission never permits recall. A request
+that states no mode checks no acknowledgement, whatever policy the engine
+reports.
+
+**New chats only, and how the setting is withdrawn.** The engine honours a
+session's STORED memory record over whatever a `session/load` names once that
+record is explicit, so the setting cannot be applied or withdrawn by a reload.
+While the setting is on, Kiro Crew sends the saved SID's policy on
+`session/load` (`disabled` when the mapping recorded none) as well as
+re-sending its agent definitions and memory tool mount. The policy protects a load whose
+record is missing; it does not replace an explicit stored policy. The response
+must confirm the expected pair before the session can receive prompts. A chat
+that already has an engine session retains its saved mode. While the setting is on,
+KAS sessions bypass the warm pool because each pooled engine session was
+created before its eventual session key and memory mode were known.
+
+Withdrawal is a session rotation instead. `SessionMap` records the actual mode
+beside the SID (`KAS_MEMORY_FIELD`). A mapping write distinguishes an omitted
+mode, which preserves the mapped SID's mode in `seed_conversation`, from `""`,
+which records no addon policy for a non-KAS or cloud SID or for one created
+while the setting was off. Local excluded SIDs created while it was on record
+`disabled`. Clearing a SID clears its mode too. If
+a compaction restart cannot start its successor, restoring the kept SID also
+records the live provider's actual mode. On the next cold start,
+`memory_plan` returns a plan with `MemoryPlan.rotate` set when the recorded mode
+no longer matches the grant. Recorded `read_only`
+against anything else — the setting turned off, the chat switched to
+`temporary`, a second person now on the Crew, a member/worker identity or a
+channel link — drops the resumable session id
+(`clear_sid`) and takes the same fresh-session-plus-Kiro-Crew-replay path a
+provider switch takes (`session_allocation_parts/get_or_create.py`). The
+comparison is one-directional on purpose: turning the setting ON never rotates
+anything, so an existing chat is left alone; its resume states `disabled`, and
+a saved session whose engine record contradicts that is refused and replaced
+by a fresh session plus replay. With the setting off, a SID recorded
+`disabled` resumes without stating a policy and is re-saved with no mode; its
+engine record keeps whatever policy it was created with.
+
+A successful load uses and re-saves the recorded mode, because that is the
+policy the loaded SID actually has; its re-sent agent definitions mount the
+memory tool only for that mode. If load falls back to `session/new`, the new
+session uses and saves the current requested mode. A live MCP projection reload
+carries the provider's actual SID mode for the same reason. Edit & Resend also
+records that mode alongside its replacement SID before another turn can use it.
+
+Eligibility is checked at cold allocation, not on live turns or link actions.
+Linking an already-recalling session does not revoke its active policy or scrub
+recalled material from its context or transcript. Even a cold rotation replays
+Crew history; it prevents further native recall but does not sanitize earlier
+answers. Blocking or scrubbing active link actions would require a separate
+channel-lifecycle change and is outside this Preview's native-memory scope.
 
 ## Memory (`memory.py`)
 
@@ -360,6 +492,21 @@ keyed on `(days, today)` so the decay window shifting at midnight invalidates
 naturally; `append_history` and `prune_history` call `_invalidate_history_cache()`
 so a new or pruned entry is visible immediately.
 
+A new chat's pre-warm calls `warm_recent_history(days=14)` in the background
+(`dashboard/chat_turn/eager_spawn.py`). That read writes no TTL entry. It is kept
+with the history directory's `_history_signature()`, and the next
+`read_recent_history` for the same window reuses it once, within
+`_HISTORY_REUSE_MAX_SECS = 60.0`, only while the signature is unchanged; any
+other outcome reads every file again through the hardened reader. Reads nobody
+warmed keep the plain TTL. The signature is one `lstat` row per entry (name,
+mode, inode, size, mtime, ctime, link count) plus the directory's own inode,
+mtime and ctime, capped at `_HISTORY_SIGNATURE_MAX_ENTRIES = 2048` (past it:
+no signature, no reuse). The session memory prefetch
+(`context_assembly/store_admission._admitted_file_stats`) compares the same
+signature, behind the file seam's root guard. The reuse and the warm are
+POSIX-only (`HISTORY_REUSE_SUPPORTED`): on Windows `DirEntry.stat` reports no
+inode or link count, and the reuse path runs no root guard.
+
 ### History Pruning
 
 For V1, `prune_history(keep_days)` deletes daily files older than `keep_days` (default 365). It runs once per day via heartbeat (`_PRUNE_TICKS = 1440`), parses `YYYY-MM-DD.md` filenames and skips non-date files. For V2 it returns zero without deleting anything, regardless of the age setting.
@@ -466,9 +613,8 @@ Per-consolidation extraction caps (`vector_memory_constants.py`, also
 interpolated into the LLM prompt so the model is told the same numbers):
 `_MAX_SEMANTIC_PER_CONSOLIDATION = 20`, `_MAX_EPISODIC_PER_CONSOLIDATION = 10`,
 `_MAX_LESSONS_PER_CONSOLIDATION = 10`. The lessons cap exists because each
-`write_lesson()` can perform up to 6 blocking embeds (1 rule plus
-`_MAX_BACKFILLS_PER_CALL = 5` lazy backfills), so an uncapped LLM array could
-occupy a worker thread for minutes. An entry whose `rule` is not a non-blank
+`write_lesson()` embeds its own rule (one blocking embed; it embeds no stored
+lesson), so an uncapped LLM array could occupy a worker thread for minutes. An entry whose `rule` is not a non-blank
 string is skipped before either store sees it: both call string methods on the
 rule, so a list or number from the model would raise and drop every later lesson
 in the batch.
@@ -943,7 +1089,8 @@ nothing reads either. New code for a member goes to the module that owns it. In
 | `term_index` | The resident set's compact row-term index: every row's key and value terms as ids into one vocabulary, and one query's matched terms per text |
 | `semantic_scoring_patch` | Patching the resident `_SemanticScoringSet` (rows, per-width row vectors, term index) for one written key under the new generation, and checking keys patched inside an unfinished transaction against the table so a rollback leaves nothing behind |
 | `write_outcomes` | What a write reports: `SemanticRejectCode`, `LessonWriteOutcome`, `EpisodicWriteOutcome` and `LessonWriteResult`, which keep `kiro_crew.vector_memory` as their `__module__` |
-| `lesson_write` | `write_lesson` (refusal screens, the scope-local dedup scan and its authority pre-pass, deferred supersede, the lesson vector), `embed_lesson` and `update_lesson_applies` (one lesson's tier, changed in place) |
+| `lesson_candidates` | The resident index a lesson write reads instead of every lesson: per active lesson its lowercased rule text, keyword set and 256-bit vector sketch, and the candidate keys for one write (text containment, the 50% keyword rule, nearest sketches), kept current by `_invalidate_semantic_scoring` and dropped on a bulk change or another process's commit |
+| `lesson_write` | `write_lesson` (refusal screens, the scope-local dedup scan over the candidate rows and its authority pre-pass, deferred supersede, the lesson vector), `embed_lesson` and `update_lesson_applies` (one lesson's tier, changed in place) |
 | `episodic_write` | `write_episodic` and `write_episodic_outcome` (screens, dedup, capacity, the FAISS add; the facade's `_injection_audit_snippet` redacts the injection-refusal snippet), forget, restore, cap eviction and row reads |
 | `bulk_ingest` | The writer loops of `migrate_from_markdown`, `import_memory` and `promote_episodic_patterns` |
 | `store_bookkeeping` | Record revisions and eligibility (`_record_mutation`, `with_record_metadata`, `_eligible_rows`), the `memory_events` audit trail (`_log_event`, `get_events`, `rotate_events`, `get_rejection_stats`) and the `memory_meta` helpers |
@@ -1154,7 +1301,7 @@ What each `init()` leaves on disk:
 | `schema_version` | `{1, 2, 3}` | `{1001}` |
 | tables | `semantic_memory`, `episodic_memories`, `memory_events`, `memory_meta`, `schema_version` | `memory_items`, `memory_events`, `memory_meta`, `schema_version` |
 | views | none | `semantic_memory`, `episodic_memories` |
-| triggers | none | none |
+| triggers | the four `memory_reconcile_*` change-noting triggers (installed by the open-time metadata pass, not by the schema) | the same four, on `memory_items` |
 | `memory_meta` stamp rows | none | `schema_lineage`, `store_name` |
 
 **Schema setup is one transaction, and a migration step must not commit.**
@@ -1171,10 +1318,44 @@ the closing `COMMIT`.
 
 **The open-time metadata pass writes only when it has work.** After the schema step,
 `record_meta.reconcile` and (V1 algorithm only) `limit_v1_accepted_history` run in their
-own transaction. Reconcile skips rows whose content hash is unchanged, and the history
+own transaction. The incremental check (a trusted marker, see below) runs in the opener's
+transaction. A full pass (no trusted marker) runs in a spawned child process instead:
+`record_meta.full_pass_needed` decides this by reading only, and the parent holds no
+transaction while the child works. `memory_reconcile_child.py` starts the child with the
+`spawn` method, so it has its own GIL and does not wait behind busy threads of the
+gateway. The child opens its own connection, runs `reconcile(db, full=True)` in one
+transaction and writes the same rows and marker an in-process pass writes. The parent
+waits for the child's result on a pipe for at most 600 seconds (it reads before it joins,
+so a large result cannot block the child), then joins the child with a short grace. A child
+that is still running at the deadline, or still alive after it has sent its result, is
+terminated and, if it survives the grace, killed, and joined before anything else runs. If
+the child cannot start, exits non-zero, exits without a result or times out, the parent
+runs the full pass in process and logs one WARNING that names the reason. A busy write lock is not a failure: the child
+leaves no marker and exits 0, exactly as the in-process pass does, and the next start
+repeats the pass. Warnings the pass itself logs (rows skipped for lack of an id) are sent
+back over the pipe, the first 50 plus a count of the rest, and logged by the parent. `limit_v1_accepted_history` always runs in the
+parent, after the child has finished. `kirocrew doctor --reconcile-memory` runs its full
+pass in the doctor process. Reconcile skips rows whose content hash is unchanged, and the history
 bound selects only records over `V1_ACCEPTED_REVISION_LIMIT` before it deletes anything.
 Under implicit transactions any DML takes the write lock even when it matches no row, so
 a steady-state open issues none and does not wait on another writer (#21056).
+
+Reconcile does not re-hash every row on every start. A completed full pass installs four
+triggers (`memory_reconcile_<relation>_ins` / `_upd`, on the relation, or on `memory_items`
+narrowed by `kind` in the crew lineage) that note the primary key of each row whose hashed
+columns may have changed in `memory_reconcile_dirty`, and a per-relation row in
+`memory_reconcile_state` (binary version plus a hash of the trigger SQL). A store with no
+rows is marked by the schema step in the same one commit that builds it. While the marker
+and the exact trigger text match, a start re-checks only the noted rows; a missing or
+different marker, version or layout, a missing trigger or notes table, a restore (the
+staged copy's marker is deleted) or `kirocrew doctor --reconcile-memory` runs the full
+pass. Both passes scan without a write lock. The marker, or the clearing of the notes, is
+written only when no other connection committed since the scan began (`data_version`) and
+the write lock is free right now: it is taken with `busy_timeout=0`, so a busy store is
+left for the next start and an open never waits on a writer. Up to `_DIRTY_KEEP` (500)
+noted rows are re-checked on each start without clearing them, so ordinary use leaves the
+steady-state open write-free. A hard DELETE is not noted; the full pass never swept
+orphan metadata rows either.
 
 **Which lineage a file gets is decided once, structurally, inside `init()` — and the
 ordering there is the load-bearing part.** `memory_schema.detect_lineage(db)` reads
@@ -1965,7 +2146,11 @@ still required against one root. On Windows the essential reader takes the
 `file:///C:/...` drive form `Path.as_uri()` writes as the absolute `C:/...`, for
 a prompt and a resource alike: only the `/` before the drive is dropped, nothing
 is percent-decoded (an escape such as `%20` is read as written), and the
-out-of-root refusal is unchanged. Neither relative reader depends on the
+out-of-root refusal is unchanged. The Kiro CLI launch record
+(`kiro_launch_documents`) does not count a resource declared in that drive
+form: kiro-cli cuts only the scheme off, so on Windows it is left with the
+drive-less `/C:/...` and loads nothing, and Crew sends the guide itself
+(`file_uri.is_windows_drive_uri`). Neither relative reader depends on the
 gateway process's working directory. When the
 execution template is the owner's template, its custom persona appears only in
 the per-turn essential envelope, not again in the session-start prompt. A
@@ -2716,12 +2901,17 @@ alongside the owner shutdown event before arming cron, heartbeat,
 automatic memory work or channel transports. Persisted Crew work and restored
 legacy channel agents resume after that wait. Dashboard status and recovery
 routes remain available, while memory content routes return their existing
-fail-closed 503 during preparation. Every agent-backed dashboard turn waits up to
-30 seconds on the same task at the central pre-turn admission seam, before expiring controls,
+fail-closed 503 during preparation. Every agent-backed dashboard chat turn waits
+on the same task at the central pre-turn admission seam, before expiring controls,
 publishing the turn identity, resolving memory ownership, allocating a provider
-or writing metadata. A deadline returns a retryable `memory_unavailable` refusal
-without recording a session failure or consuming queued intent. The wait is
-shielded: a deadline or the user's Stop action cannot cancel shared preparation.
+or writing metadata. That wait has no 30-second grace: it ends when preparation
+succeeds (the turn then runs), within about a second of a recorded preparation
+failure or stopped startup, or at `MEMORY_PREPARATION_DEADLINE_SECONDS` plus a
+margin. The last two return a `memory_unavailable` refusal without recording a
+session failure or consuming queued intent. The other callers of the same wait
+(new conversation create, inbound webhooks, the crew pause hand-back check and the
+gateway boot supervisor) keep the bounded 30-second grace. The wait is shielded:
+a deadline or the user's Stop action cannot cancel shared preparation.
 While preparation runs, `_start_next_queued_turn` leaves a slot's queue untouched,
 posts one `MEMORY_PREPARATION_PARKED_TEXT` notice per slot ("Queued messages will run
 when it is ready"), and arms a one-shot done-callback that starts the next turn on
@@ -2930,8 +3120,8 @@ caller-supplied filename cannot walk out of it. Which store each surface may add
 [the shared `?store=` rule](#which-store-a-dashboard-route-reads-store) on the
 dashboard and `--store` on the CLI.
 
-**Every applier that rewrites this install takes a copy first.** (The gateway's
-unattended policy-provider apply does not yet: #21898.) `platform/wheel_apply.snapshot_memory_before_update`
+**Every applier that rewrites this install takes a copy first.**
+`platform/wheel_apply.snapshot_memory_before_update`
 calls `back_up_all_stores` with `force=True` (the retention interval is bypassed) and
 `memory.backup_keep`. On a managed venv it is the shadow engine's last step before
 promotion, for the gateway's automatic update, an approved in-app update and
@@ -3017,11 +3207,11 @@ By default embeddings run in-process via the vendored llama-cpp-python 0.3.34 ru
 - **The raw `memory` knobs follow the overlay**: the embedder reads its `memory.*` settings raw (`embeddings_settings._read_memory_config`), off the config dataclass graph, and reads `config.local.json` over `config.json` through `read_merged_config_files`, which merges the whole documents with the loader's nested merge, so a knob set only in the overlay is the one the embedder runs with, as Settings reports it. An absent or unreadable file contributes nothing.
 - **Background model load, bounded cold-load wait**: the GGUF load runs on a background daemon thread (`_kick_background_load()`, thread name `kc-embed-load`). On an event-loop thread, and for `PRIORITY_BULK` work anywhere, `embed()`/`embed_batch()` NEVER block on the load: when the model isn't in memory the call kicks the load and returns `None` immediately, and the caller degrades to keyword search. A normal or interactive embed off the event loop (`_caller_may_wait_for_load()`) waits for the load it kicked (`_wait_for_cold_load()`), bounded by `_COLD_LOAD_WAIT_SECS` (30 s) and by the caller's own `embedding_work` deadline, then returns `None` if the model is still not there; nothing waits when no load is running (missing file, failed load in cooldown). This covers every default-priority caller off the loop, including sync memory writes through `make_sync_embed_fn()`: such a caller already blocks for the inference itself, and waiting once for the load is what keeps an idle unload from silently storing a row without a vector. The gateway/dashboard event loop is never stalled by embedding work. `wait_ready(timeout)` exists for sync contexts (tests, one-shot CLI flows) that legitimately want to block — never call it from an event-loop thread
 - **Weight repacking is an opt-out (`memory.embedding_weight_repack`, default `true`)**: llama.cpp's CPU backend keeps a repacked, anonymous copy of the weights beside the mmap'd file (`CPU_REPACK model buffer size = 446.25 MiB` for the shipped model, against `CPU_Mapped 600.68 MiB`, which is clean and file-backed). `embedding_weight_repack()` reads the raw `memory` section once per load and only an explicit `false` passes `use_extra_bufts=False` to the vendored `Llama` (a `kiro_crew DIVERGENCE FROM UPSTREAM` listed in `_vendor/README.md`, inert at its `None` default), so the default constructor call is unchanged and stored vectors stay byte-identical. Measured on macos_arm64 with the shipped model and four threads, repack on against off: footprint after a long input 1.6 GB against 1.2 GB, a 534-token embed 0.89 s against 1.09 s, a 9-token query 21 ms against 28 ms; cosine against repacked vectors 0.999559 to 0.999853 over inputs of 9 to 561 tokens, on every platform because Linux's `libggml-cpu` repacks too. That vector movement and the slower bulk embed are why turning it off is the operator's choice, never the default. `test/test_embeddings_weight_repack.py` pins the reader, the call site and the vendored parameter.
-- **Idle unload**: once loaded, a daemon evictor (`kc-embed-evict`) unloads the model after `memory.embedding_idle_evict_secs` (default 3600; `0` never unloads) with no embed and nothing queued or running (`evict_if_idle()`), freeing ~1 GB (GGUF mapping ~600 MB plus context ~400 MB) and trimming the native heap; the next embed reloads it. It also refuses while any call is inside `embed_batch()` (`_inflight`: a build or recall waiting on its vector, or on a load it kicked) and while a background sweep is pausing between two texts (`_bulk_ready_at` ahead of now). A reload must map the same file the backend first published (`_published_stamp`: device, inode, size, mtime, ctime); a file changed in place is refused with one ERROR and the load is marked failed, because `model_id` was fixed when the backend was built. `can_load_on_demand()` reports a not-in-memory model as loadable (file present, not protected, no failed load since the last `close()`), which is what lets the knowledge availability check answer yes without starting a load. `InProcessEmbedder.model_resident_async()` is a pure `is_ready()` check: the knowledge watcher's bulk self-heal asks it every pass and must never bring an unloaded model back. Memory preparation calls `prefetch()` at startup so the first recall does not pay the load on its own path
+- **Idle unload**: once loaded, a daemon evictor (`kc-embed-evict`) unloads the model after `memory.embedding_idle_evict_secs` (default `"auto"`: 600 s on a `small_memory_host()`, physical memory of 16 GiB or less, read once per process through `platform_compat.host_total_mib`, and 3600 s elsewhere; any stored number of seconds is the operator's and is kept, 3600 included; `0` never unloads) with no embed and nothing queued or running (`evict_if_idle()`), freeing ~1 GB (GGUF mapping ~600 MB plus context ~400 MB) and trimming the native heap; the next embed reloads it. It also refuses while any call is inside `embed_batch()` (`_inflight`: a build or recall waiting on its vector, or on a load it kicked) and while a background sweep is pausing between two texts (`_bulk_ready_at` ahead of now). A reload must map the same file the backend first published (`_published_stamp`: device, inode, size, mtime, ctime); a file changed in place is refused with one ERROR and the load is marked failed, because `model_id` was fixed when the backend was built. `can_load_on_demand()` reports a not-in-memory model as loadable (file present, not protected, no failed load since the last `close()`), which is what lets the knowledge availability check answer yes without starting a load. `InProcessEmbedder.model_resident_async()` is a pure `is_ready()` check: the knowledge watcher's bulk self-heal asks it every pass and must never bring an unloaded model back. Memory preparation calls `prefetch()` at startup so the first recall does not pay the load on its own path. On a small machine `warm_embedder_for_person()` (`embeddings_shared`) calls the backend's `keep_warm()` (restart a loaded model's idle clock, or start the load; never blocks, never builds an embedder) from the dashboard focus frame (`ws._handle_slot_focused`), the dashboard chat send, and channel admission (`messaging.dispatch_admission`: a person's routed message, `human_input` with a route, never a monitor completion), so a new conversation's session-start build finds the model loaded; elsewhere it does nothing
 - **A person's embed stops a background text inside the model** (`embeddings_preempt.py`): a started native call cannot be stopped from Python, but llama.cpp's CPU backend calls an abort callback between the graph nodes of a decode and ends it with status 2. `install_preempt_flag()` installs one on every in-process vendored model at load (not on a child-process model or a fake): the C runtime's `strlen` (`platform_compat.c_strlen_address()`) over a two-byte buffer, so the callback never takes the interpreter lock. While a `PRIORITY_BULK` text is inside the model, `_infer_bulk_text()` records it as `_preemptible`; `_submit_infer()` arms the flag when it queues a `PRIORITY_INTERACTIVE` job (a prompt build, a recall, a search a person waits on), `promote_pending()` arms it when a person joins a queued bulk text, and so does the start of a bulk text when one is already queued. The decode stops at its next node, the binding raises, the worker runs the waiting jobs (`_serve_waiting()`), and the text starts over. llama.cpp removes the cache cells the stopped decode wrote and `Llama.embed` clears the cache before every input, so the new start returns the vector an uninterrupted call returns, byte for byte (checked on the shipped model over texts of 571 to 6,864 characters). A text that was stopped starts over on the interactive thread count (`_retry_class()`; the thread count does not change the vector); after `_MAX_BULK_PREEMPTS` (3) stops it runs to its end, so a steady stream of people's embeds cannot starve background work. `promote_pending()` disarms a text a person joined, and a `RuntimeError` that nobody asked for still fails the job. Normal-priority work never stops a bulk text. Measured on a 32-core Linux host: a prompt build that met a 500, 2,000 or 6,000-character background text took 1,509 to 1,628 ms, 5,064 to 5,073 ms (the 5 s deadline, vectors lost) and 5,064 to 5,072 ms before, and 141 to 150 ms after; the stop itself takes 0.4 to 12 ms, at most one graph node (182 ms once, a whole output matmul on one thread)
 - The underlying `Llama` object is NOT thread-safe — inference on a loaded model is serialized behind a lock (tens of ms per short text)
 - **A bulk batch yields between its texts** (`_run_bulk_yielding()`): a `PRIORITY_BULK` job of several texts runs one text at a time on `kc-embed-infer`, and before each later text it runs every queued interactive or normal job first (`_serve_waiting()`). Each text can also be stopped by a person's embed as above. Each text is embedded to completion once, the result keeps input order, and bulk pacing counts the batch's own model time, stopped attempts included. The lock is released between texts and between a stopped text and its new start, so each attempt re-checks the published model: a `close()` or idle unload in that gap fails the batch (`None`; its rows stay pending for the next sweep)
-- **The model can run in a child process** (`memory.embedding_child_process`, default `false`, which keeps the in-process model; `true` takes effect at the next load). The loader builds a `ChildLlama` (`embeddings_child.py`) instead of the vendored `Llama`: `python -m kiro_crew.embeddings_child` loads the same file with the same constructor arguments, applies the same KV-clear and bounded-decode installs, re-checks the file stamp, and answers `create_embedding` over its own stdin/stdout pipes as newline-delimited JSON (no socket, no port; the protocol uses a private copy of stdout and fd 1 is pointed at stderr, so native output cannot corrupt it). Floats cross as JSON `repr`, which round-trips exactly, so vectors are bit-identical to the in-process path. Everything else stays in the gateway: the priority queue, `kc-embed-infer` (which now waits on the pipe), bulk pacing, thread-class programming (forwarded as an `op: threads` line and re-applied on respawn) and idle eviction (which stops the child). The child runs at `_CHILD_NICE` (10) on POSIX and below-normal priority on Windows, for interactive and bulk work alike, and opens no console window. A caller's `EmbeddingWork` deadline ends its wait during inference too (the child's late answer is dropped); the request the child is running that goes unanswered for `_CHILD_CALL_BASE_SECS` (60 s) plus `_CHILD_CALL_SECS_PER_TEXT` (30 s) per text, counted from the child's last answer, kills the child, and every waiting caller checks it, including for a request whose own caller already gave up, so interactive-only traffic still recovers a wedged child. All writes to the child go through one writer thread per child, so neither a caller nor shutdown ever blocks on a full pipe. A dead child fails its waiters (`embed_batch` returns `None`, the keyword-search path) and is respawned in the background after 1, 2, 4 ... up to 300 s; the backoff resets only after a child has stayed up `_CHILD_STABLE_SECS` (60 s) and answered an embed. While it is down embeds fail at once. The child is started with `python -P`, so the gateway's working directory is never on its import path. A respawn must report the same width and see the same file stamp. The child exits on EOF from stdin, which the parent's death delivers, and when its parent is gone (a changed parent pid on POSIX, `pid_exists` false on Windows). Only the vendored class is moved: an injected class (a test fake, another backend) cannot be re-imported in another interpreter and runs in-process
+- **The model can run in a child process** (`memory.embedding_child_process`, default `false`, which keeps the in-process model; `true` takes effect at the next load). The default stays off because a `ChildLlama` has no abort callback (`install_preempt_flag` returns None for it), so a person's embed cannot stop a running bulk text. A child that cannot start or load is not a lost model: `_construct_llama` re-runs the protected-path and file-stamp checks, then logs a warning and builds the same model in the gateway; a path or file that fails them is refused, not opened here. The loader builds a `ChildLlama` (`embeddings_child.py`) instead of the vendored `Llama`: `python -m kiro_crew.embeddings_child` loads the same file with the same constructor arguments, applies the same KV-clear and bounded-decode installs, re-checks the file stamp, and answers `create_embedding` over its own stdin/stdout pipes as newline-delimited JSON (no socket, no port; the protocol uses a private copy of stdout and fd 1 is pointed at stderr, so native output cannot corrupt it). Floats cross as JSON `repr`, which round-trips exactly, so vectors are bit-identical to the in-process path. Everything else stays in the gateway: the priority queue, `kc-embed-infer` (which now waits on the pipe), bulk pacing, thread-class programming (forwarded as an `op: threads` line and re-applied on respawn) and idle eviction (which stops the child). The child runs at `_CHILD_NICE` (10) on POSIX and below-normal priority on Windows, for interactive and bulk work alike, and opens no console window. A caller's `EmbeddingWork` deadline ends its wait during inference too (the child's late answer is dropped); the request the child is running that goes unanswered for `_CHILD_CALL_BASE_SECS` (60 s) plus `_CHILD_CALL_SECS_PER_TEXT` (30 s) per text, counted from the child's last answer, kills the child, and every waiting caller checks it, including for a request whose own caller already gave up, so interactive-only traffic still recovers a wedged child. All writes to the child go through one writer thread per child, so neither a caller nor shutdown ever blocks on a full pipe. A dead child fails its waiters (`embed_batch` returns `None`, the keyword-search path) and is respawned in the background after 1, 2, 4 ... up to 300 s; the backoff resets only after a child has stayed up `_CHILD_STABLE_SECS` (60 s) and answered an embed. While it is down embeds fail at once. The child is started with `python -P`, so the gateway's working directory is never on its import path. A respawn must report the same width and see the same file stamp. The child exits on EOF from stdin, which the parent's death delivers, and when its parent is gone (a changed parent pid on POSIX, `pid_exists` false on Windows). Only the vendored class is moved: an injected class (a test fake, another backend) cannot be re-imported in another interpreter and runs in-process
 - **Consolidation's vector writes can run in a child process** (`memory.consolidation_write_child_process`, default `false`, which keeps them in the gateway; `true` takes effect at the next pass). `consolidation_write_offload.py` wraps `HistoryConsolidator._write_structured_memory` and the vector branch of `_save_lessons`: with the switch on and a V1 `VectorMemoryStore` over a database file, the job goes to `python -m kiro_crew.consolidation_write_child` (`consolidation_write_child.py`), a lower-priority interpreter that opens its own `VectorMemoryStore` on the same `memory.db` and its own `ConversationLog`, and runs those same methods. The child takes the same publication hold per write (transcript lock, lease token re-read under it, the persistence switches before the run's first commit) and reports the run's committed latch back. Embeddings stay in the gateway: the child sends each text over its pipe and the gateway answers from the store's own embedder with the embedding-space token. A child that cannot start, crashes, or runs past its 600 s deadline is killed and the gateway runs the job itself (1..300 s exponential backoff before the next spawn), so no write is lost; the child stops after 900 s idle. Only the vector writes move: the Markdown files, history entry, lease, marker, and the member-store `apply_consolidation` path stay in the gateway.
 - **Turn-context recall can run in child processes** (`memory.recall_pool_processes`, default `0`, which keeps the reads in the gateway; `1` to `8` takes effect within a second). `VectorMemoryStore.get_semantic_context`, `get_episodic_context` and `get_lessons_context` call `recall_pool.offload` first: with the switch on and a real V1 `VectorMemoryStore` over a database file, the read goes to one of that many `python -P -m kiro_crew.recall_pool` children (`recall_pool.py`), each of which opens its own `VectorMemoryStore` on the same `memory.db`, keeps its own resident scoring sets, and runs the same method on plain data (query text, the optional query vector, the caps), returning the rendered text. Nothing is re-implemented. The query embedding stays in the gateway (the child asks over its pipe and the gateway answers from its own embedder, with the embedding-space token); the `last_accessed_at` touch of an episodic hit is reported back, buffered, and written by the gateway through its debounce at most every 5 minutes (each write is a commit that makes every child rebuild its sets), so a child never commits; a kept child store re-applies `memory.*` only when it changed, since `reconfigure` drops the resident episodic set; the lessons read checks its query vector against the embedding space in the gateway first, so a stale vector is dropped there with the in-process outcome; the child runs each read under its own `context_omissions` and `injection_receipts` collectors and returns what they hold, which the gateway replays into the turn's collectors (a record the read made replaces the earlier one, one it cleared is cleared). A child's resident sets are valid for one in-process generation and one SQLite `data_version`, so a commit by any other connection makes each child rebuild on its next read (reads still see every committed write). A child that cannot start, has less than `memory.recall_pool_worker_max_mb` free on the host, crashes, runs past 120 s or reports an error is killed and the caller runs the same read in the gateway (1..300 s exponential backoff before the next spawn); a child whose resident memory passes `memory.recall_pool_worker_max_mb` after a read exits and the next read starts a fresh one; children stop after 900 s idle and exit with the gateway. A private member store (V2) and anything that is not a real `VectorMemoryStore` keep reading in the gateway. Episodic reads in a child use the numpy scoring tier, not a FAISS view.
 - `get_shared_embedder()` — process-wide singleton (~700MB RSS when loaded), shared by vector memory AND the knowledge library; `close()` unloads the model to free RSS
@@ -3351,7 +3541,7 @@ does not prove the provenance of vectors created before any weight digest.
 Signatures retain the original SHA-256 encoding of `model_id|dim`, truncated to
 16 hex characters, so unchanged bundled vectors need no rebuild. Custom-model
 tests derive expected
-identities with `_custom_model_id(path, configured_label)` and spaces with
+identities with `_custom_model_id(path, configured)` and spaces with
 `embedding_space_signature`, including an independent SHA-256 check of the
 weight bytes rather than a basename/size or label-only assertion.
 
@@ -3463,7 +3653,7 @@ Model: `Qwen/Qwen3-Embedding-0.6B` Q8_0 GGUF (610MB). Apache-2.0 licensed. Serve
 
 `HistoryConsolidator._consolidate()` extracts structured data alongside existing fields:
 - A `"semantic"` item whose key is `lesson.*` is moved to the `"lessons"` array first (`_reroute_lesson_semantic_keys`, once on the shared result before it branches to either write path), so a misfiled lesson gets the lessons path's dedup, volatile-fact screen and extraction-enabled gate instead of a plain `set_semantic`/`_write_semantic` write that stores a duplicate under each model-chosen key. Only a create is rerouted (a `delete` of a `lesson.*` key stays in `"semantic"`, where the delete site already tier-protects standing lessons); the rule is the item's `value`, so a non-text or empty value is not a lesson and is dropped rather than written as a plain semantic row.
-- **Kind routing** (`memory_kind_routing.py`, setting `memory.kind_routing`, default `off`; `shadow` and `enforce` are opt-in). Under `off` and `shadow` the consolidation prompt and every write are today's, word for word. Under `enforce` the prompt asks for a `kind` on every semantic item, and under `shadow` a separate label call does (below): `fact` (still true in a month and not looked up elsewhere), `event` (something that happened, worth a dated record) or `state` (the status of a PR, issue, CI run, branch, round or SHA that GitHub, git or the work ledger already holds). Shadow trials candidate rules (`SHADOW_KIND_RULES`, `RULES_VERSION` 3) that also tag as `state` a next step, a pending action, what something is blocked on, a count of tests, cycles or budgets, a local worktree or scratch path, and a value marked final or latest that will change again (`CANDIDATE_STATE_RULES`). `enforce` asks only the adopted rules (`ENFORCE_KIND_RULES`, unchanged), because it drops what is tagged `state`; a separate promotion change adopts a candidate once the shadow samples back it. Only under `enforce` does it also ask to name keys by topic, never by PR, issue or round number,, so the keys written in `shadow` stay the ones the log is measuring. A missing or unknown `kind` reads as `fact`, so an older answer routes as before. The class comes from the model rather than a key/value pattern because, on a 300-row hand-graded sample, a key-or-value regex that caught 79% of work state also flagged half the durable facts. `route_consolidation_by_kind` runs right after `_withhold_unseen_deletes` on BOTH write paths (`_write_structured_memory`, and the pass's member branch before `apply_consolidation`), on the first 20 items, and reads only `project.*` creates and updates under a well-formed key (`_KEY_PATTERN`, at most `_MAX_KEY_LEN` characters, so every key the log keeps is bounded; a malformed key is not routed and the writer refuses it as before): `pref.*`, `user.*`, `lesson.*`, deletes and `user_explicit` writes (which never come through consolidation) are not routed. `off` asks for no tag and ignores any tag sent. Under `shadow`, `route_consolidation_by_kind` hands back the answer with no decisions, so both write paths read, write and log exactly what `off` does. The pass itself reads the routed items of the fenced answer (`_withhold_unseen_deletes` without its log line, then `route_semantic_by_kind`) and their prior state before any write, and after its last memory write makes one label call (`label_shadow_kinds`): each routed item by its index, with its key and its own value (cut to 200 characters once JSON-encoded, so escapes cannot widen it; no transcript, no other memory), under `SHADOW_KIND_RULES`, answered as `{"kinds": {index: kind}}` so a key named twice is labelled per value, through the same `_call_llm` and store session as the pass, within `LABEL_INPUT_TOKENS` (3,000, estimated at three characters a token, which CJK text can exceed about threefold; twenty items at the key and value bounds fit, and a prompt over it is not sent) and `LABEL_TIMEOUT_SECS` (120). The mode is the one the prompt was built under. An item the answer gives no known kind is left out of the log. A call that fails, times out, is throttled or answers no usable JSON logs nothing for that pass; it never fails the pass or changes a write. Its answer only feeds the log of what `enforce` would do. `RULES_VERSION` 3 marks this: samples of version 2 and before were tagged inside the consolidation prompt, which changed what it extracted, so they are not a clean baseline. `enforce` drops a `state` item and records it as a `work_state` `memory_events` row (`SemanticRejectCode.WORK_STATE`, in `_AUDITABLE_REJECT_CODES` and `get_rejection_stats`). A `fact` and an `event` are both written as facts, as before; an `event` is still counted and sampled as one. Turning an `event` into a dated episode is deferred to a follow-up that reads the shadow samples first, because each attempt to convert it hit a store-side refusal (episodic capacity, dedup, the injection screen) that could lose or double the event. No stored row is changed or deleted by any mode. The consolidation value bound (`_refuse_oversized_semantic`) runs after routing on both paths, so routing counts and samples every item as it would without the bound, and an over-bound `state` item `enforce` drops is reported as `work_state`, not as `consolidation_value_size`.
+- **Kind routing** (`memory_kind_routing.py`, setting `memory.kind_routing`, default `off`; `shadow` and `enforce` are opt-in). Under `off` and `shadow` the consolidation prompt and every write are today's, word for word. Under `enforce` the prompt asks for a `kind` on every semantic item, and under `shadow` a separate label call does (below): `fact` (still true in a month and not looked up elsewhere), `event` (something that happened, worth a dated record) or `state` (the current status of a tracked work item that the system tracking it already holds: a code change under review by any name or number, its revisions, a ticket or task, a CI or build run, a branch or SHA, or which chat or session owns it). The rules name no single tracker, so a team whose reviews are "changes" or whose work is "tickets" gets the same routing as one on GitHub. An owner can add their own tracker's words through `memory.extraction_instructions`; that text reaches the consolidation prompt only, so it steers `enforce` and not the shadow label call. `state` also covers a next step, a pending action, what something is blocked on, a count of tests, cycles or budgets, a local worktree or scratch path, and a value marked final or latest that will change again (`WIDER_STATE_RULES`), and an item that mixes a lasting lesson with a status is `state` unless it still reads true with every work-item number removed (`MIXED_ITEM_RULE`), because the item is stored whole and a `fact` tag would keep the status with it. `enforce` and `shadow` ask the same rules (`ENFORCE_KIND_RULES`, `RULES_VERSION` 4), so without owner guidance the shadow log measures what `enforce` drops. Only under `enforce` does it also ask to name keys by topic, never by the number of a code change, ticket, issue or round, so the keys written in `shadow` stay the ones the log is measuring. A missing or unknown `kind` reads as `fact`, so an older answer routes as before. The class comes from the model rather than a key/value pattern because, on a 300-row hand-graded sample, a key-or-value regex that caught 79% of work state also flagged half the durable facts. `route_consolidation_by_kind` runs right after `_withhold_unseen_deletes` on BOTH write paths (`_write_structured_memory`, and the pass's member branch before `apply_consolidation`), on the first 20 items, and reads only `project.*` creates and updates under a well-formed key (`_KEY_PATTERN`, at most `_MAX_KEY_LEN` characters, so every key the log keeps is bounded; a malformed key is not routed and the writer refuses it as before): `pref.*`, `user.*`, `lesson.*`, deletes and `user_explicit` writes (which never come through consolidation) are not routed. `off` asks for no tag and ignores any tag sent. Under `shadow`, `route_consolidation_by_kind` hands back the answer with no decisions, so both write paths read, write and log exactly what `off` does. The pass itself reads the routed items of the fenced answer (`_withhold_unseen_deletes` without its log line, then `route_semantic_by_kind`) and their prior state before any write, and after its last memory write makes one label call (`label_shadow_kinds`): each routed item by its index, with its key and its own value (cut to 200 characters once JSON-encoded, so escapes cannot widen it; no transcript, no other memory), under `ENFORCE_KIND_RULES`, answered as `{"kinds": {index: kind}}` so a key named twice is labelled per value, through the same `_call_llm` and store session as the pass, within `LABEL_INPUT_TOKENS` (3,000, estimated at three characters a token, which CJK text can exceed about threefold; twenty items at the key and value bounds fit, and a prompt over it is not sent) and `LABEL_TIMEOUT_SECS` (120). The mode is the one the prompt was built under. An item the answer gives no known kind is left out of the log. A call that fails, times out, is throttled or answers no usable JSON logs nothing for that pass; it never fails the pass or changes a write. Its answer only feeds the log of what `enforce` would do. `RULES_VERSION` 3 moved the labelling into this separate call: samples of version 2 and before were tagged inside the consolidation prompt, which changed what it extracted, so they are not a clean baseline; version 4 is the tracker-neutral wording and the two added rules. `enforce` drops a `state` item and records it as a `work_state` `memory_events` row (`SemanticRejectCode.WORK_STATE`, in `_AUDITABLE_REJECT_CODES` and `get_rejection_stats`). A `fact` and an `event` are both written as facts, as before; an `event` is still counted and sampled as one. Turning an `event` into a dated episode is deferred to a follow-up that reads the shadow samples first, because each attempt to convert it hit a store-side refusal (episodic capacity, dedup, the injection screen) that could lose or double the event. No stored row is changed or deleted by any mode. The consolidation value bound (`_refuse_oversized_semantic`) runs after routing on both paths, so routing counts and samples every item as it would without the bound, and an over-bound `state` item `enforce` drops is reported as `work_state`, not as `consolidation_value_size`.
   - **The log is bounded by construction.** It lives in the store's own `memory_meta` table, which every lineage has, so it needs no schema change, no migration on the frozen V1 list or the no-upgrade member format, and no second file per store. One counter row per UTC day (`memory_kind_log:counts:<day>`, counts by mode and kind, plus `sibling_suffix: {mode: n}` on a day where a routed key ending in `_final`, `_latest`, `_new`, `_updated` or `_v2`..`_vN` had its unsuffixed key or another such sibling already active; that is a count only and changes no write), pruned past 400 days. Shadow samples (`memory_kind_log:samples:<day>`: key, kind, value cut to 200 characters, store name, timestamp, the `rules` version, `sk` (the pass's session tag, when it has one), and `existed` / `same_value` read from the store before the pass writes) are a reservoir sample of at most 150 over the whole UTC day (Algorithm R, so a late item is as likely to be kept as an early one; the stream is counted in one `memory_kind_log:reservoir` row (`{day, rules, seen}`, overwritten each day), so a window restarted mid-day numbers only its own items, and samples of other rules already in that day's row are kept and take their share of the 150), 2,000 in all, oldest dropped first, and never more than 1,000,000 bytes together. Readers accept a sample without the newer fields. `existed` and `same_value` come from one indexed read of the routed keys (plus one key-prefix read per sibling-suffix key) taken before the writes: by the V1 writer under the store lock, by the member store inside the span's transaction, both under the key the model named (a member-store identity match that files the value under another key does not change the sample). A failed read leaves the fields out; it never fails the pass. Samples stop 14 days after shadow first logged in that store (`memory_kind_log:shadow_started_at`); counters keep going. `memory_kind_log:rules_version` holds the `RULES_VERSION` of the prompt rules, and `memory_kind_log:rules_changed_at` when it last changed; when the code's version differs from the stored one on a shadow pass (an `enforce` pass never touches either, so it cannot spend a restarted window while nothing is sampled) the window restarts, so samples under the new rules are collected and told apart by their `rules` field. With the defaults the 14-day stop alone bounds samples at 2,100, so the ring (2,000) and the byte cap bound them. `memory_events` gets no per-item row in shadow mode. Under `enforce` the V1 writer logs in its own transaction after its semantic writes, inside `_publication_hold_checked` like every other write of the pass (a switch turned off or a lease lost before the first commit refuses the log too); the member store logs inside the span's transaction under a savepoint, so a replayed span logs nothing twice. Under `shadow` the pass logs the labelled routing in its own transaction under the same hold, after the label call; there `existed` and `same_value` come from the pass's read before the writes. A log that cannot be written is a warning, never a failed pass. The samples are kept so a small local classifier can be trained on them later; none is built.
 - **Lesson origin gate** (`memory_origin_gate.py`, setting `memory.lesson_origin_gate`, default `off`; `shadow` and `enforce` are opt-in). Runs once on the shared result after the stale-result check, before it branches to either write path, over the rows the model read (`_prompt_rows(chunk)`). `classify_turn` reads only gateway-written markers, and human is an allowlist (`history.HUMAN_TURN_META_KEY`): a `user` row stamped `meta.human` is `human` (a person's steer carries it; an app's steer does not); an unmarked `user` row with `meta.relay` or the `session_send` envelope prefix (`_RELAY_PREFIX`) is `agent`; every other input row (`nudge`, `inject`, `subagent`, `system`, or an unmarked `user` row) is `automatic`. A span with no human turn has its standing lessons (`always` or untagged, the first `_MAX_LESSONS_PER_CONSOLIDATION`) stored `on_topic` under `enforce`; none is dropped. A messaging-channel session (`messaging.link.is_channel_session_key`) is not gated or logged, because most channel transports write the person's row without `meta.human`. A span with a human turn keeps every tier (a mixed span is not traced to one turn). `off` reads nothing and hands back the answer object; `shadow` hands it back too and logs. The `/api/lessons` route applies `gate_learn_add` to an internal-auth (MCP `learn_add`) write: when the latest input row of any role in the caller's slot is not human (fail-closed, so no turn opener is walked past), `enforce` stores it `on_topic` under source `agent_learn_add`, never `user_explicit`, and without its NOT-clause; every consolidation lesson of a span with no human turn, a finding included, also loses its clause, so an exact-rule re-submit cannot enrich a standing row; a session with no live slot is left as submitted. `kirocrew learn add` (`cli_commands_learn._learn`) has no chat to read: run where `cloud.aws._in_agent_session` sees an agent session, it is gated as a `learn_add` with an automatic trigger and logged under path `cli_learn_add`; run from a person's own terminal (no agent marker) it is never gated or logged, and `off` reads no marker. The log mirrors kind routing in `memory_meta`: `memory_origin_log:counts:<day>` (`{mode: {path: {passes, no_human, lessons, standing, demoted}}}`, pruned past 400 days) and, in shadow only, `memory_origin_log:ids:<day>` (lesson keys, at most 150 a day, the kind-routing total and byte caps, 14-day window, restarted on a `RULES_VERSION` change). Each id entry also carries `at` (UTC time) and, when the pass has a session, `sk` (the first 12 hex characters of SHA-256 over the session key), and `memory_origin_log:control:<day>` keeps a control sample of the lessons the gate keeps (`{key, rules, sk, at}`, `memory_shadow_trace.add_control`: about 1 in 10 kept keys by hash, at most 20 a day, the same total and byte caps, stopped with the shadow window, never writing the window key). Readers accept entries without `sk` and `at`. No text is logged. Each log write is its own transaction under the pass's publication hold; it never fails a pass or a write.
 - **Lesson tier policy** (`memory_tier_policy.py`, setting `memory.lesson_tier_policy`, default `off`; `shadow` and `enforce` are opt-in). Runs right after the lesson origin gate, on the answer it returned, over the same rows (`_prompt_rows(chunk)`); the mode is read once per pass so the prompt and the policy agree. Under `enforce` a new consolidation lesson with no tier is stored `on_topic`, and an `always` lesson stays `always` only when its `user_quote` passes `quote_check`: after NFKC normalization, case folding and whitespace collapse it is a substring of one row `classify_turn` calls human that carries no relay marker, and it holds at least three tokens of the shared relevance tokenizer; every other lesson becomes `on_topic`, and every lesson but a quoted standing rule, a model-tagged finding included, is written without its NOT-clause (so an exact-rule match cannot enrich a stored standing row); none is dropped. The quote is not checked against the rule's wording, only against the person's turns. Only `enforce` adds `QUOTE_INSTRUCTION` to the lesson schema in the prompt; under `off` and `shadow` the prompt is today's byte for byte, so shadow counts every standing lesson as a would-be demotion (an upper bound) and counts only quotes the model offers unasked. A messaging-channel session is not gated or logged. `learn_add`, dashboard and CLI writes are not gated, and no stored row changes. The log mirrors the origin gate's in `memory_meta`: `memory_tier_log:counts:<day>` (`{mode: {consolidation: {passes, lessons, unstated, always, quote_present, quote_pass, quote_fail, demoted}, reteach: {checked, matched}}}`, pruned past 400 days) and, in shadow only, `memory_tier_log:ids:<day>` (lesson keys tagged `consolidation` or `reteach`, the same caps and window), with the same `sk` and `at` fields and a `memory_tier_log:control:<day>` sample of the lessons the policy keeps in their tier. Under shadow the `/api/lessons` route, before `write_lesson`, compares the new rule's vector with the stored vectors of the logged would-be demoted keys (`record_reteach`); a cosine above 0.85 counts as a re-teach. A dashboard or CLI write is checked; an internal-auth (agent) write only when `triggering_turn` of the caller's slot is human. No text is logged; a log write never fails a pass or a write.
@@ -3996,6 +4186,21 @@ why a caller that must never replace an existing lesson routes to
 `set_semantic_if_absent` instead (see `onboarding_import`, whose comment records that a
 foreign directive could otherwise delete a lesson already in the store).
 
+**What a write compares against.** Not every stored lesson. `lesson_candidates` keeps a
+resident index (per lesson: lowercased rule text, keyword set, a 256-bit random-hyperplane
+sketch of the stored vector) and nominates the in-scope keys that could trip a branch: rows
+whose text contains the rule or is contained in it, rows reaching the 50% keyword rule, and
+the 64 rows with the nearest sketch within 72 bits (a row at 0.85 cosine sits near 45 bits,
+sd 6), plus every row within that cut that outranks the write, so no row that can veto it
+falls outside the cap. `write_lesson` re-reads those rows from the table and runs the branches above on them,
+so a stale index entry can cost a missed candidate and never a wrong supersede. A row with no
+stored vector is never a cosine candidate: the write embeds only its own rule, and the backfill
+sweep embeds the rest. The index is built once (one full read), patched by each lesson write
+through `_invalidate_semantic_scoring(key)` and by each stored lesson vector (the write's
+vector tail and the backfill sweep), and dropped by the argument-less call or by another
+process's commit (`PRAGMA data_version`); without numpy `write_lesson` reads every lesson as
+before.
+
 **A call that stores nothing deletes nothing.** Every branch above QUEUES its
 supersedes; the queue drains only after the semantic write commits the submission. The
 ordering carries the whole guarantee, because the branches read rows newest-first and
@@ -4095,12 +4300,11 @@ is audited and, in a shared Crew, announced (see Shared Crew,
 4. **Dashboard/CLI** (manual): `POST /api/lessons` → `write_lesson()`
 
 **The lesson-create request spends no bulk inference.** `POST /api/lessons` embeds the
-submitted rule once and calls `write_lesson(..., defer_backfills=True)`, so a stored
-lesson that still lacks a vector is left to the standing repair sweep
-(`backfill_missing_embeddings`) instead of being embedded inside the request. That embed
-is `PRIORITY_BULK` work with no deadline, queued behind every other bulk job, so it could
-hold the request past the `learn_add` client's read timeout (the `mcp_core._post`
-default) while the write still landed. Until the sweep fills such a row, semantic dedup
+submitted rule once and calls `write_lesson()`, which embeds no stored lesson: one that
+still lacks a vector is left to the standing repair sweep (`backfill_missing_embeddings`).
+An embed inside the request would be `PRIORITY_BULK` work with no deadline, queued behind
+every other bulk job, so it could hold the request past the `learn_add` client's read
+timeout (the `mcp_core._post` default) while the write still landed. Until the sweep fills such a row, semantic dedup
 and the contradiction scan pass it over; the exact-rule, substring and keyword-overlap
 rules still apply. When the `learn_add` POST fails after the request may have reached
 the gateway (`transport_error`, typically a read timeout), the tool reports the outcome
@@ -4168,7 +4372,7 @@ Categories: `tool`, `preference`, `knowledge`. Startup injects lessons as TWO bl
 
 **Startup selection is not re-run per turn, and the withheld notice is what carries the gap.** A session that opens with a greeting and then states its real task on the next turn keeps the greeting turn's lesson selection: the warm path does not reselect. That predates the budgets, and no per-turn retrieval trigger is added here — one would need its own trigger condition, its own budget, and its own coverage across resume, fork and compaction, which is a second mechanism rather than a bound on this one. What the budgets add is that the gap is VISIBLE: the greeting turn renders the withheld notice naming the total and the tool, so the follow-up turn is looking at an explicit pointer instead of at filler that silently displaced the finding it needed. Closing it properly is deliberately left to a change that owns the retrieval trigger.
 
-Crossing a startup budget trims only complete lesson entries, never a partial rule, and an entry too large for the room that remains is SKIPPED rather than ending the selection: the kept set is then a superset of what stopping would give, since an oversized entry is dropped either way and continuing can only add later entries that do fit, never displacing one already accepted. Stopping wasted room a shorter, more relevant entry could have used — five in-budget rows rendered 1,408 of 1,650 characters while omitting a later 76-character line with 242 characters free. Preferences and safety rules are never sliced to make space; a preferences file that alone exceeds the ceiling is the one exception, kept from its head with an in-prompt notice naming the omitted character count and the file to read. Vector lessons keep the relevance order already computed for the request (hybrid when the build supplied the activity block's vector, lexical otherwise). With no query vector — a startup render whose first message was not embedded, and a recall whose embed is unavailable — `rank_lessons` scores a row by rarity-weighted overlap: each stemmed token it shares with the request weighs `log((N + 1) / (df + 0.5))`, where `N` is the number of rows being ranked and `df` the number of them carrying the token, and the sum is divided by the square root of the row's number of distinct words. The capped overlap count the semantic scan uses as its keyword half is not used in lesson ranking at all: it reaches 1.0 at ten shared tokens, which a long first message clears against most rules, so on the no-vector path it would tie them at the top and the stable sort would hand back newest-first, and on the vector path it leaves the keyword half a near-constant offset that ranks them on the cosine alone (measured on an 897-rule store, each rule's own text as the request: the median row with any overlap sat AT the cap of 1.0, and 64% of them did, while a six-word request put none there; the count is `min(overlap / 10, 1.0)` on an integer overlap, so its every value lies on a 0.1 grid). Each request word contributes only its stem, so an exact inflection does not count twice. A distinctive term counts for far more than a common one; a token carried by nearly every row weighs close to nothing (about `0.5 / N`), and the length factor discounts incidental overlap in a long row. Every weight is positive, so any overlap still outranks none and a zero-overlap request keeps the stored order. Document frequency is counted only for the request's tokens, over the row token sets `_row_stem_tokens_for_scan` already memoises, so no row is stemmed again. `_hybrid_score` is unchanged and a query that has a vector still ranks by it; every row takes the same keyword half, that rarity-weighted overlap times `_keyword_half_scale` (`0.1 * sqrt(m) / _rarity_weight(N, 1)`, where `m` is the median number of distinct words over the ranked rows) and capped at 1.0, so one maximally rare shared word in a row of median length adds 0.1 to the half in any store, a shorter row more and a longer one less. Measured against row length alone, one such word would fill `1 / sqrt(size)` of the half, so it would weigh more in a store of short rules, where a function word carried by one or two rules weighs as a rare word; on a real store's rules cut to their first sentence, 40 at a time, the right rule ranked first for 17.8% of requests sharing no word with it under that scale, 29.4% under the median scale, and 22.8% under the capped count. A row sharing several rare words still reaches the cap. The vector term is the cosine clamped at 0, so a row the vector says nothing about (no comparable stored vector, or a cosine at or below 0) scores `0.4 * keyword` and, within one ranking, a row whose cosine rises above 0 scores higher than it did at 0 because its keyword half does not depend on its own cosine (across the two branches only the ORDER is comparable: the no-vector branch ranks on the unscaled overlap, the vector branch on the 0.6/0.4 hybrid of its scaled form); one measure for both regimes also means the rows a vector cannot rank keep exactly the order they hold with no vector, including where two of them reach the cap, since the tie-break is that same score, so the first row an embedding backfill reaches does not reshuffle the rows behind it; when no row has a positive cosine the query vector says nothing about any row, and the ranking is the no-vector order, produced by the same code. The vector store's `rank_lessons` and findings admission (`any_lesson_overlap`) add the non-CJK pieces and two-character pairs of each word holding CJK text (`lesson_validation.cjk_parts`) to the request and to every lesson, and count them in a row's distinct words; the shared `text_scoring._row_stem_tokens` stays as it is, and a row with no CJK text keeps its memoised tokens. The JSONL fallback orders EVERY tier the same way (`order_by_request_relevance`, length>=3 whole-word tokens, with the two-character pairs of each unspaced CJK run added to them, no stemming and no embedding), and orders them PER TIER so authored rules keep their precedence over untagged rows: newest-first alone drops a row the task is actually about while newer irrelevant ones fit, measured on a 199-lesson store for the findings tier and on a 100-row all-untagged store for the RULE tier — every pre-field row lands in the rule tier, so leaving that tier unordered lost an exact-topic match the vector store kept, since the vector path ranks its whole eligible set before partitioning. Ordering is NOT admission: it decides only which rows survive a truncation that is going to happen anyway, so no row is dropped for being irrelevant that the budget would otherwise have kept. The residual is real and is why the omission notice exists — inside an OVERFLOWING rule tier a standing rule unrelated to this message sorts last and can be the omitted one, which the notice names and points at `learn_list` for; ordering cannot both favour the current task and ignore it. An empty query leaves the stored order untouched, and with no overlap anywhere a lexically ranked block renders byte-identically, while a startup vector still orders the vector store's rows by cosine (a zero-overlap row scores `0.6 * max(0.0, similarity(row))` there). Both tiers' findings header reads "relevant ones first", which is what each renders: the sort runs before the block is built and deliberately lets an OLDER relevant finding outrank newer irrelevant ones, so a header reading "newest first" would describe the pre-sort order and be false for exactly the crowded store the budget exists to serve. The sort is stable: with no startup vector, equal-overlap rows read newest-first underneath; under a startup vector, rows whose hybrid score ties exactly are ordered by the keyword rarity score and then newest-first. **An overflow is always reported and never silent**: each block's notice names its own shown/omitted counts, names the budget it hit, states that the limit is a budget rather than a judgement that the rules stopped applying, and points at `learn_list` (rules) or `memory_recall` (findings). A budget too small for even one entry still renders the labelled block with that notice, because an empty block is indistinguishable from "this user has no rules". Startup ranks both tiers of the V1 vector store with the hybrid score when the build has already embedded the first message: with `memory.inject_activity` on and a non-empty request, the activity block embeds it to rank facts and episodes, and the prompt builder, reading the same `MemoryStore.ranks_activity_against` gate the activity block does, then calls `startup_lesson_query` once, which the shared embed cache answers, so the build still runs one inference. The result is handed to every render of the lessons block, including the render that re-runs to fit the protected ceiling. With a vector, every row scores on the same 0.6/0.4 scale (`query_has_vector=True`, a negative cosine clamped to 0), as the semantic scan does, so a row the vector does not favour cannot keep its unweighted keyword score; the keyword half it mixes in is the rarity-weighted overlap, not the semantic scan's overlap count, so explicit recall on a fully embedded store orders rules by how distinctive the words they share with the request are. The vector orders past findings too, but their tier is admitted lexically (`_any_lesson_overlap`): when no finding shares a word with the request the tier stays withheld, since admitting on the vector would need an uncalibrated similarity floor. With `inject_activity` off, with the memory group excluded while lessons stay included (`include_memory=false, include_lessons=true`, whose build skips the activity block that would rank, so neither site asks for a vector), on a member session (which searches nothing at startup), or with no embedder, a missed deadline or a store read failure, ranking stays lexical and startup spends no inference. An embedding-space change between that embed and the lessons read ranks lexically too, because the space check and the read share one lock hold. The JSONL stores have no vectors and stay lexical. Below both budgets every eligible entry is kept, in the order ranked above, and a caller that names no budget (every reader predating them) is unchanged: for it the rule block keeps the two-stage contract — COMPLETE below the model-safe ceiling whatever `caps.lessons` says, which is the pinned retain-every-eligible-in-scope-rule invariant, and only an overflow, where that invariant is already unmet, trims to the ordinary lessons budget (`min(caps.lessons, ceiling)`, and the ceiling alone when no lessons budget is named). Naming a tier budget is what asks for a window-independent bound instead, so the two mechanisms never both decide one block, and the rule tier's overflow notice names `learn_list` and `memory_recall` because both reach the omitted rules. Explicit lesson readers can use hybrid relevance and fill the caller's character budget, reporting shown and omitted counts. The explicit renderer judges each entry against the rendered block, frame included, and skips the top-ranked entry too when it does not fit, so one long best match cannot crowd out the shorter lessons behind it; only when no entry fits does it keep the top one over budget. `memory_recall` gives lessons one third of its cap. When that lone top lesson still exceeds the share, `truncate_explicit_lessons` cuts its text to fit, appends a `… [truncated]` marker, so a long best match is not reported as "no lesson matched". That holds only while the share leaves room for the frame, the marker and at least one character of rule text: the frame is 147 characters (header, `]\n- ` and the closing line) when one lesson is in scope, and the `Showing 1 of N lessons, ...` counts line adds 56 more at two lessons and one per extra digit, so a share of at least 161 characters (a recall `cap` of 483 or more) is needed for a single in-scope lesson and at least 217 (`cap` 651 or more) once others are counted. A query with no recall terms renders the counts line with "most recent" instead of "most relevant", two characters shorter, so that floor is 215 (`cap` 645). Below that the block is omitted. The JSONL store retains `_MAX_LESSONS_TOTAL = 200`, and prunes **by tier**: findings first, then unstated rows, then authored rules, each oldest-first within its class. A tier-blind `[-200:]` deleted the user's oldest authored rules from disk as cheap findings accumulated, which is strictly worse than a prompt omission — an omission is announced and readable through `learn_list`, a pruned row is gone. Authored rules are evicted only when they alone exceed the cap. A submission the prune itself removes is reported as `refused`, never `inserted`: at the cap a new `on_topic` row is the first eviction candidate, and reporting success for a row that is not in the file is a silent false success the caller cannot recover from. That refusal carries its OWN reason, `store_at_capacity`, and not the content refusal's `volatile_session_fact`: the JSONL store answers both of its refusals with the same bare `refused` string, so `POST /api/lessons` re-derives the cause by re-running the volatile-text predicate — exact rather than a guess, since those are the store's only two refusal paths, and the same re-derivation the listing surface already performs for its withheld marker. Telling a user whose store is full to reword a rule is advice that cannot succeed, so `learn_add` renders a distinct message naming the row cap and `learn_remove` as the action that frees a row. Only the JSONL store raises it; the vector store has no row cap and names its own reasons. The vector store's dedup scan carries the matching guard on the other side: its three delete branches decide on text alone, so an `on_topic` write may retire ONLY another `on_topic` row (the reverse is allowed, since promoting guidance to a standing rule is the direction the user is asking for). Unstated rows are protected too, not just `always` ones: an unstated row is served AS a standing rule at injection, and on an install whose lessons predate the field every row is unstated, so a guard keyed on `always` alone would protect nothing on exactly the stores holding the user's real corrections. Read side and write side classify a row the same way. The `POST /api/lessons` route's model-judged contradiction sweep is a SECOND deletion path ending in `delete_semantic`, and it carries a STRICTER guard than the dedup scan: it retires a candidate ONLY when that candidate is itself a finding (`_candidate_applies(candidate) == on_topic`), regardless of the submission's tier. This is deliberately narrower than `tier_permissions`, and the two paths differ because their authority differs. The dedup scan decides on deterministic text (substring and embedding similarity), so it may honour the asymmetric rule and let a standing submission retire a finding. The sweep decides on a single-word LLM verdict, which is a guess, not authority to remove a standing rule the user filed — so the sweep protects EVERY standing and unstated candidate, even from a standing submission. That closes the reported case where a standing (`always`) submission retired a standing rule the model called contradictory. The filter reads the CANDIDATE's persisted tier via `_candidate_applies`, never the submission's tier (`result.applies`): the submission's tier is deliberately not consulted, because a model verdict is not authority to delete a standing rule whatever tier the submission carries. Keying on the submission (its old form, `if result.applies == on_topic`) fired only for a finding submission, so a standing or unstated submission skipped the guard and the sweep could retire a contradictory standing rule, with no recovery, since the sweep's self-heals-next-time note covers a MISSED sweep rather than a wrong deletion. `find_contradiction_candidates` therefore carries each candidate's authored tier on the row it returns: the filter can only apply the guard to a tier it can read, and `_candidate_applies` fails safe to unstated (the protected side) for a row it cannot classify — so a candidate without a stated tier is protected rather than deletable, and a store predating the field, whose every row is unstated, retires nothing on a model verdict at all. It carries each candidate's stored `value_json` too, and the sweep hands it back as `expect_value_json` so its delete is a COMPARE-AND-DELETE. Without it the tier filter is defeatable by timing rather than by tier: the candidates are a write-time snapshot, the delete runs after a per-candidate LLM verdict, and `_lesson_key` keys on rule text plus scope alone — so re-tiering that rule in between (a delete plus a re-add, the documented way to change a tier) puts a DIFFERENT row under the same key, and an unconditional delete tombstones the replacement, including when the replacement is the `always` row the filter exists to protect. A body that changed is reported as kept, not as an error: the row this decided to retire is gone, and a contradiction against whatever replaced it is re-nominated by the next write touching the topic. This is the same guard the inline dedup pass already applies to its own deferred supersedes. The guard gates deletion only, so an `on_topic` rule already contained in an `always` rule is still declined as `substring_covered`. History consolidation's `_write_structured_memory` is a THIRD model-judged deletion path — its extraction prompt renders each `lesson.*` row as rule prose and invites a `{"key": ..., "delete": true}` item — and it carries the SAME invariant as the sweep, enforced at that call site (`_lesson_delete_decision`) rather than inside `delete_semantic`, since an explicit forget must still remove a standing rule and only the inference site knows the delete is a guess. It refuses a delete whose `lesson.*` row is not `on_topic` (an `always`, unstated or non-mapping row is protected), and its three protected causes are counted and logged apart: a tier refusal and an absent row at info, an unreadable row at warning, so a store outage is not hidden among real tier refusals. An allowed delete carries the checked `value_json` into `delete_semantic` as `expect_value_json` — the same COMPARE-AND-DELETE the sweep uses — so a re-tier landing between the read and the delete tombstones nothing, and a lost compare is logged and counted (`stale-skipped`) rather than vanishing into `0 deleted`. An ABSENT `lesson.*` row is refused too, not deleted unconditionally: the absent state is the intermediate state of that same delete-plus-re-add re-tier, so an unconditional delete there would race a concurrent re-add that recreated the key as a standing rule. The DECLINE carries the MIRROR of the same rule, because tiering is what makes "already covered" conditional: a submission is covered only while the covering row arrives at least as often as the submission would, and a covering `on_topic` row arrives only when the request is about it. So a STANDING submission (`always`, or unstated) contained in an `on_topic` row is NOT declined — declining it would drop the rule from every unrelated turn while reporting `substring_covered` for a row that does not cover it there, and a re-submit is declined identically so nothing recovers it. In that one direction the submission is stored instead, which can leave a standing rule beside the longer finding containing it; that duplicate is the price of not silently refusing to create the rule. `migrate_from_markdown` carries the authored tier across for the same reason the adjacent lines carry `repo_scope`, and in the same direction: an omitted `applies` reads as unstated, which every read path serves AS a standing rule, so dropping it would promote a row the user filed as a past finding into one injected in every session. It normalizes READ-safely (`authored_lesson_applies`, not the write path's raising form) because that loop reads `lessons.jsonl` directly, so a hand-edited or future-schema value migrates the row as unstated rather than aborting the migration. The listing surface is bounded too — `GET /api/lessons` returns one `limit`/`offset` window and carries `total` and `truncated` so `learn_list` can say `Showing N of M`; `VectorMemoryStore.get_lessons(limit, offset)` honours the offset only on the bounded read, and the unbounded read the scorers use ignores it. That route also reports each row's tier, and `learn_list` marks a finding as `(applies: on_topic)` beside the rule: every overflow notice sends the reader to these surfaces, so a row filed as a finding has to be legible there or a rule the model misfiled stops arriving with nothing to show why, and re-tiering (a delete plus a re-add) cannot even be diagnosed. Only `on_topic` is marked and only an AUTHORED tier is reported — a standing rule and an unstated row are both injected every session, so marking one and not the other would name a difference the injection path does not make. Contract: [learn-cron-dashboard](learn-cron-dashboard.md).
+Crossing a startup budget trims only complete lesson entries, never a partial rule, and an entry too large for the room that remains is SKIPPED rather than ending the selection: the kept set is then a superset of what stopping would give, since an oversized entry is dropped either way and continuing can only add later entries that do fit, never displacing one already accepted. Stopping wasted room a shorter, more relevant entry could have used — five in-budget rows rendered 1,408 of 1,650 characters while omitting a later 76-character line with 242 characters free. Preferences and safety rules are never sliced to make space; a preferences file that alone exceeds the ceiling is the one exception, kept from its head with an in-prompt notice naming the omitted character count and the file to read. Vector lessons keep the relevance order already computed for the request (hybrid when the build supplied the activity block's vector, lexical otherwise). With no query vector — a startup render whose first message was not embedded, and a recall whose embed is unavailable — `rank_lessons` scores a row by rarity-weighted overlap: each stemmed token it shares with the request weighs `log((N + 1) / (df + 0.5))`, where `N` is the number of rows being ranked and `df` the number of them carrying the token, and the sum is divided by the square root of the row's number of distinct words. The capped overlap count the semantic scan uses as its keyword half is not used in lesson ranking at all: it reaches 1.0 at ten shared tokens, which a long first message clears against most rules, so on the no-vector path it would tie them at the top and the stable sort would hand back newest-first, and on the vector path it leaves the keyword half a near-constant offset that ranks them on the cosine alone (measured on an 897-rule store, each rule's own text as the request: the median row with any overlap sat AT the cap of 1.0, and 64% of them did, while a six-word request put none there; the count is `min(overlap / 10, 1.0)` on an integer overlap, so its every value lies on a 0.1 grid). Each request word contributes only its stem, so an exact inflection does not count twice. A distinctive term counts for far more than a common one; a token carried by nearly every row weighs close to nothing (about `0.5 / N`), and the length factor discounts incidental overlap in a long row. Every weight is positive, so any overlap still outranks none and a zero-overlap request keeps the stored order. Document frequency is counted only for the request's tokens, over the row token sets `_row_stem_tokens_for_scan` already memoises, so no row is stemmed again. `_hybrid_score` is unchanged and a query that has a vector still ranks by it; every row takes the same keyword half, that rarity-weighted overlap times `_keyword_half_scale` (`0.1 * sqrt(m) / _rarity_weight(N, 1)`, where `m` is the median number of distinct words over the ranked rows) and capped at 1.0, so one maximally rare shared word in a row of median length adds 0.1 to the half in any store, a shorter row more and a longer one less. Measured against row length alone, one such word would fill `1 / sqrt(size)` of the half, so it would weigh more in a store of short rules, where a function word carried by one or two rules weighs as a rare word; on a real store's rules cut to their first sentence, 40 at a time, the right rule ranked first for 17.8% of requests sharing no word with it under that scale, 29.4% under the median scale, and 22.8% under the capped count. A row sharing several rare words still reaches the cap. The vector term is the cosine clamped at 0, so a row the vector says nothing about (no comparable stored vector, or a cosine at or below 0) scores `0.4 * keyword` and, within one ranking, a row whose cosine rises above 0 scores higher than it did at 0 because its keyword half does not depend on its own cosine (across the two branches only the ORDER is comparable: the no-vector branch ranks on the unscaled overlap, the vector branch on the 0.6/0.4 hybrid of its scaled form); one measure for both regimes also means the rows a vector cannot rank keep exactly the order they hold with no vector, including where two of them reach the cap, since the tie-break is that same score, so the first row an embedding backfill reaches does not reshuffle the rows behind it; when no row has a positive cosine the query vector says nothing about any row, and the ranking is the no-vector order, produced by the same code. The vector store's `rank_lessons` and findings admission (`any_lesson_overlap`) add the non-CJK pieces and two-character pairs of each word holding CJK text (`lesson_validation.cjk_parts`) to the request and to every lesson, and count them in a row's distinct words; the shared `text_scoring._row_stem_tokens` stays as it is, and a row with no CJK text keeps its memoised tokens. The JSONL fallback orders EVERY tier the same way (`order_by_request_relevance`, length>=3 whole-word tokens, with the two-character pairs of each unspaced CJK run added to them, no stemming and no embedding), and orders them PER TIER so authored rules keep their precedence over untagged rows: newest-first alone drops a row the task is actually about while newer irrelevant ones fit, measured on a 199-lesson store for the findings tier and on a 100-row all-untagged store for the RULE tier — every pre-field row lands in the rule tier, so leaving that tier unordered lost an exact-topic match the vector store kept, since the vector path ranks its whole eligible set before partitioning. Ordering is NOT admission: it decides only which rows survive a truncation that is going to happen anyway, so no row is dropped for being irrelevant that the budget would otherwise have kept. The residual is real and is why the omission notice exists — inside an OVERFLOWING rule tier a standing rule unrelated to this message sorts last and can be the omitted one, which the notice names and points at `learn_list` for; ordering cannot both favour the current task and ignore it. An empty query leaves the stored order untouched, and with no overlap anywhere a lexically ranked block renders byte-identically, while a startup vector still orders the vector store's rows by cosine (a zero-overlap row scores `0.6 * max(0.0, similarity(row))` there). Both tiers' findings header reads "relevant ones first", which is what each renders: the sort runs before the block is built and deliberately lets an OLDER relevant finding outrank newer irrelevant ones, so a header reading "newest first" would describe the pre-sort order and be false for exactly the crowded store the budget exists to serve. The sort is stable: with no startup vector, equal-overlap rows read newest-first underneath; under a startup vector, rows whose hybrid score ties exactly are ordered by the keyword rarity score and then newest-first. **An overflow is always reported and never silent**: each block's notice names its own shown/omitted counts, names the budget it hit, states that the limit is a budget rather than a judgement that the rules stopped applying, and points at `learn_list` (rules) or `memory_recall` (findings). A budget too small for even one entry still renders the labelled block with that notice, because an empty block is indistinguishable from "this user has no rules". Startup ranks both tiers of the V1 vector store with the hybrid score when the build has already embedded the first message: with `memory.inject_activity` on and a non-empty request, the activity block embeds it to rank facts and episodes, and the prompt builder, reading the same `MemoryStore.ranks_activity_against` gate the activity block does, then calls `startup_lesson_query` once, which the shared embed cache answers, so the build still runs one inference. The result is handed to every render of the lessons block, including the render that re-runs to fit the protected ceiling. With a vector, every row scores on the same 0.6/0.4 scale (`query_has_vector=True`, a negative cosine clamped to 0), as the semantic scan does, so a row the vector does not favour cannot keep its unweighted keyword score; the keyword half it mixes in is the rarity-weighted overlap, not the semantic scan's overlap count, so explicit recall on a fully embedded store orders rules by how distinctive the words they share with the request are. The vector orders past findings too, but their tier is admitted lexically (`_any_lesson_overlap`): when no finding shares a word with the request the tier stays withheld, since admitting on the vector would need an uncalibrated similarity floor. With `inject_activity` off, with the memory group excluded while lessons stay included (`include_memory=false, include_lessons=true`, whose build skips the activity block that would rank, so neither site asks for a vector), on a member session (which searches nothing at startup), or with no embedder, a missed deadline or a store read failure, ranking stays lexical and startup spends no inference. An embedding-space change between that embed and the lessons read ranks lexically too, because the space check and the read share one lock hold. The JSONL stores have no vectors and stay lexical. Below both budgets every eligible entry is kept, in the order ranked above, and a caller that names no budget (every reader predating them) is unchanged: for it the rule block keeps the two-stage contract — COMPLETE below the model-safe ceiling whatever `caps.lessons` says, which is the pinned retain-every-eligible-in-scope-rule invariant, and only an overflow, where that invariant is already unmet, trims to the ordinary lessons budget (`min(caps.lessons, ceiling)`, and the ceiling alone when no lessons budget is named). Naming a tier budget is what asks for a window-independent bound instead, so the two mechanisms never both decide one block, and the rule tier's overflow notice names `learn_list` and `memory_recall` because both reach the omitted rules. Explicit lesson readers can use hybrid relevance and fill the caller's character budget, reporting shown and omitted counts. The explicit renderer judges each entry against the rendered block, frame included, and skips the top-ranked entry too when it does not fit, so one long best match cannot crowd out the shorter lessons behind it; only when no entry fits does it keep the top one over budget. `memory_recall` gives lessons one third of its cap. When that lone top lesson still exceeds the share, `truncate_explicit_lessons` cuts its text to fit, appends a `… [truncated]` marker, so a long best match is not reported as "no lesson matched". That holds only while the share leaves room for the frame, the marker and at least one character of rule text: the frame is 145 characters (header, `]\n- ` and the closing line) when one lesson is in scope, and the `Showing 1 of N lessons, ...` counts line adds 56 more at two lessons and one per extra digit, so a share of at least 159 characters (a recall `cap` of 477 or more) is needed for a single in-scope lesson and at least 215 (`cap` 645 or more) once others are counted. A query with no recall terms renders the counts line with "most recent" instead of "most relevant", two characters shorter, so that floor is 213 (`cap` 639). Below that the block is omitted. The JSONL store retains `_MAX_LESSONS_TOTAL = 200`, and prunes **by tier**: findings first, then unstated rows, then authored rules, each oldest-first within its class. A tier-blind `[-200:]` deleted the user's oldest authored rules from disk as cheap findings accumulated, which is strictly worse than a prompt omission — an omission is announced and readable through `learn_list`, a pruned row is gone. Authored rules are evicted only when they alone exceed the cap. A submission the prune itself removes is reported as `refused`, never `inserted`: at the cap a new `on_topic` row is the first eviction candidate, and reporting success for a row that is not in the file is a silent false success the caller cannot recover from. That refusal carries its OWN reason, `store_at_capacity`, and not the content refusal's `volatile_session_fact`: the JSONL store answers both of its refusals with the same bare `refused` string, so `POST /api/lessons` re-derives the cause by re-running the volatile-text predicate — exact rather than a guess, since those are the store's only two refusal paths, and the same re-derivation the listing surface already performs for its withheld marker. Telling a user whose store is full to reword a rule is advice that cannot succeed, so `learn_add` renders a distinct message naming the row cap and `learn_remove` as the action that frees a row. Only the JSONL store raises it; the vector store has no row cap and names its own reasons. The vector store's dedup scan carries the matching guard on the other side: its three delete branches decide on text alone, so an `on_topic` write may retire ONLY another `on_topic` row (the reverse is allowed, since promoting guidance to a standing rule is the direction the user is asking for). Unstated rows are protected too, not just `always` ones: an unstated row is served AS a standing rule at injection, and on an install whose lessons predate the field every row is unstated, so a guard keyed on `always` alone would protect nothing on exactly the stores holding the user's real corrections. Read side and write side classify a row the same way. The `POST /api/lessons` route's model-judged contradiction sweep is a SECOND deletion path ending in `delete_semantic`, and it carries a STRICTER guard than the dedup scan: it retires a candidate ONLY when that candidate is itself a finding (`_candidate_applies(candidate) == on_topic`), regardless of the submission's tier. This is deliberately narrower than `tier_permissions`, and the two paths differ because their authority differs. The dedup scan decides on deterministic text (substring and embedding similarity), so it may honour the asymmetric rule and let a standing submission retire a finding. The sweep decides on a single-word LLM verdict, which is a guess, not authority to remove a standing rule the user filed — so the sweep protects EVERY standing and unstated candidate, even from a standing submission. That closes the reported case where a standing (`always`) submission retired a standing rule the model called contradictory. The filter reads the CANDIDATE's persisted tier via `_candidate_applies`, never the submission's tier (`result.applies`): the submission's tier is deliberately not consulted, because a model verdict is not authority to delete a standing rule whatever tier the submission carries. Keying on the submission (its old form, `if result.applies == on_topic`) fired only for a finding submission, so a standing or unstated submission skipped the guard and the sweep could retire a contradictory standing rule, with no recovery, since the sweep's self-heals-next-time note covers a MISSED sweep rather than a wrong deletion. `find_contradiction_candidates` therefore carries each candidate's authored tier on the row it returns: the filter can only apply the guard to a tier it can read, and `_candidate_applies` fails safe to unstated (the protected side) for a row it cannot classify — so a candidate without a stated tier is protected rather than deletable, and a store predating the field, whose every row is unstated, retires nothing on a model verdict at all. It carries each candidate's stored `value_json` too, and the sweep hands it back as `expect_value_json` so its delete is a COMPARE-AND-DELETE. Without it the tier filter is defeatable by timing rather than by tier: the candidates are a write-time snapshot, the delete runs after a per-candidate LLM verdict, and `_lesson_key` keys on rule text plus scope alone — so re-tiering that rule in between (a delete plus a re-add, the documented way to change a tier) puts a DIFFERENT row under the same key, and an unconditional delete tombstones the replacement, including when the replacement is the `always` row the filter exists to protect. A body that changed is reported as kept, not as an error: the row this decided to retire is gone, and a contradiction against whatever replaced it is re-nominated by the next write touching the topic. This is the same guard the inline dedup pass already applies to its own deferred supersedes. The guard gates deletion only, so an `on_topic` rule already contained in an `always` rule is still declined as `substring_covered`. History consolidation's `_write_structured_memory` is a THIRD model-judged deletion path — its extraction prompt renders each `lesson.*` row as rule prose and invites a `{"key": ..., "delete": true}` item — and it carries the SAME invariant as the sweep, enforced at that call site (`_lesson_delete_decision`) rather than inside `delete_semantic`, since an explicit forget must still remove a standing rule and only the inference site knows the delete is a guess. It refuses a delete whose `lesson.*` row is not `on_topic` (an `always`, unstated or non-mapping row is protected), and its three protected causes are counted and logged apart: a tier refusal and an absent row at info, an unreadable row at warning, so a store outage is not hidden among real tier refusals. An allowed delete carries the checked `value_json` into `delete_semantic` as `expect_value_json` — the same COMPARE-AND-DELETE the sweep uses — so a re-tier landing between the read and the delete tombstones nothing, and a lost compare is logged and counted (`stale-skipped`) rather than vanishing into `0 deleted`. An ABSENT `lesson.*` row is refused too, not deleted unconditionally: the absent state is the intermediate state of that same delete-plus-re-add re-tier, so an unconditional delete there would race a concurrent re-add that recreated the key as a standing rule. The DECLINE carries the MIRROR of the same rule, because tiering is what makes "already covered" conditional: a submission is covered only while the covering row arrives at least as often as the submission would, and a covering `on_topic` row arrives only when the request is about it. So a STANDING submission (`always`, or unstated) contained in an `on_topic` row is NOT declined — declining it would drop the rule from every unrelated turn while reporting `substring_covered` for a row that does not cover it there, and a re-submit is declined identically so nothing recovers it. In that one direction the submission is stored instead, which can leave a standing rule beside the longer finding containing it; that duplicate is the price of not silently refusing to create the rule. `migrate_from_markdown` carries the authored tier across for the same reason the adjacent lines carry `repo_scope`, and in the same direction: an omitted `applies` reads as unstated, which every read path serves AS a standing rule, so dropping it would promote a row the user filed as a past finding into one injected in every session. It normalizes READ-safely (`authored_lesson_applies`, not the write path's raising form) because that loop reads `lessons.jsonl` directly, so a hand-edited or future-schema value migrates the row as unstated rather than aborting the migration. The listing surface is bounded too — `GET /api/lessons` returns one `limit`/`offset` window and carries `total` and `truncated` so `learn_list` can say `Showing N of M`; `VectorMemoryStore.get_lessons(limit, offset)` honours the offset only on the bounded read, and the unbounded read the scorers use ignores it. That route also reports each row's tier, and `learn_list` marks a finding as `(applies: on_topic)` beside the rule: every overflow notice sends the reader to these surfaces, so a row filed as a finding has to be legible there or a rule the model misfiled stops arriving with nothing to show why, and re-tiering (a delete plus a re-add) cannot even be diagnosed. Only `on_topic` is marked and only an AUTHORED tier is reported — a standing rule and an unstated row are both injected every session, so marking one and not the other would name a difference the injection path does not make. Contract: [learn-cron-dashboard](learn-cron-dashboard.md).
 
 **Lesson ranking has a labelled recall set.** `kirocrew bench lesson-recall` writes a frozen golden set (`src/kiro_crew/eval/bench/data/lesson_golden_v1.json`: 40 hand-authored rules, 30 requests, each labelled with the rules it needs) into a throwaway `VectorMemoryStore` through `write_lesson`, ranks every rule for each request with `rank_lessons` (the query vector from `startup_lesson_query`, which embeds the request as explicit recall does), and reports recall@k, MRR@k and nDCG@k per query class: `distinctive_term`, `paraphrase` (no word shared with the rule), `common_word_trap` (the request's common words favour other rules), `long_request` (a first message of a few sentences, two gold rules each) and `short_request`. A rule the store's dedup merges or supersedes is refused by name rather than scored as a miss, and a vector run refuses a rule stored without a vector or a request that was not embedded, so a hybrid number never carries keyword-only rows. The default toy embedder and `--no-embeddings` are plumbing checks; `--real-embedder` is the semantic run. Measured with `qwen3-embedding:0.6b`: recall_any@3 is 0.967 with a vector and 0.800 on words alone, and the gap is the paraphrase class (0.833 against 0.167).
 
@@ -4249,9 +4453,10 @@ Priority, highest first. A lower layer never overrides a higher one:
 5. **Episodic memory** (relevance-scored fragments)
 6. **Recent history** (time-decayed summaries)
 
-Lessons top the ladder by wording, not by ordering: the block header reads
-"ALWAYS follow these. They override default behavior.", which is what makes a
-lesson beat a contradicting preference in the same prompt.
+Lessons top the memory ladder, and rank under the CRITICAL RULES ask policy: the
+block header says each lesson binds under CRITICAL RULES but adds no ask case.
+The `[Learned corrections]` framing is what makes a lesson beat a contradicting
+preference in the same prompt.
 
 | Conflict | Resolution | Code path |
 |----------|------------|-----------|
@@ -4304,6 +4509,268 @@ preferences/projects remain manual documents. Consolidation, record edits and
 learned-rule operations address the exact prepared SQLite service. V1 retains
 workspace Markdown, JSONL fallback and separate FTS; its startup context is the
 bounded admission described above, with earlier activity behind `memory_recall`.
+
+## Memory providers (`memory_provider/`)
+
+Crew's memory has one seam with two implementations: Crew's own memory (everything
+above) and a provider an installed App Kit app serves. `memory.provider` picks one of
+three modes:
+
+| Mode | Reads | Writes | Crew's own memory |
+|---|---|---|---|
+| `builtin` (default) | Crew | Crew | in use, byte for byte as without the seam |
+| `replace` | the provider | the provider | on disk, untouched; comes back on a switch back |
+| `augment` | Crew, then the provider's read-only block and recall hits | Crew | in use |
+
+**One selection point.** `resolver.route_for(store_id, session_key=...)` is the only
+place a provider is chosen; no caller branches on a provider id. A caller asks
+`route.builtin_answers` (run today's code), `route.replaces` or `route.augments`. With
+mode `builtin` and no id, `route_for` answers the shared `BUILTIN_ROUTE` without
+reading anything but the loaded config, so an install that never chose a provider
+takes exactly the path it took before.
+
+**Frozen per session.** The first `route_for` for a session writes
+`memory_provider_snapshot` (mode, id, app version, API version, and the named stores
+pinned to `provider_mode: builtin` at that moment) into its metadata
+record, and that session keeps it: a switch applies to new chats and never mixes two
+providers in one conversation, including a switch that pins a store. A provider choice
+is used only once it is saved: if the metadata write fails, nothing is cached, the route
+is unavailable for that call (`SnapshotNotRecorded`) and the next call tries again. A session record that exists but cannot be read (`get_metadata_status` answers unreadable) is never frozen from config, since it may hold another provider's pin: the route is unavailable for that call, neither Crew's memory nor a provider answers, and the next call reads it again (`SnapshotUnreadable`). A session created before `memory.provider.switched_at`
+freezes to `builtin`. Child work inherits its parent's choice before its first context
+build (`resolver.inherit_snapshot`, called from the subagent run; best effort, so an
+unreadable parent record leaves the child to freeze from config).
+`memory.provider.id` is kept when the owner switches back to `builtin`, so frozen chats
+stay on their provider.
+
+**No silent fallback.** A provider whose app is disabled or missing, whose backend the
+health watch does not report healthy, that sends memory off the machine without the owner's consent, that cannot isolate a
+Bot's store (`multi_store: false` for a store other than `default`), or that is asked
+for in a Shared Crew, gives a route with `unavailable` set. Prompts then carry
+`[Memory unavailable] <name> did not answer (...)`, recall carries a notice, and
+`learn_add` answers `refused` / `provider_unavailable`. Crew's own memory never stands
+in. A resolver fault for a configured provider reads the same way
+(`chokepoints.session_route`).
+
+**Contract.** `contract.py` (contract v1; it has not shipped, so it changes in place):
+`ProviderScope` (built by Crew from the execution record: `store_id`, `member_id`,
+`memory_mode` persistent or incognito, `session_id`, `project`, `principal`),
+`MemoryItem` / `NewItem`, `WriteResult` (the lesson vocabulary: `inserted`, `enriched`,
+`unchanged`, `deduped`, `refused`; `delete` answers `deleted` or `unchanged`),
+`Capabilities`, `Changes`, `Revision`, and the errors `ProviderUnavailable`,
+`ProviderRefused`, `ProviderReadOnly`, `ProviderNotSupported`, `ProviderConflict`,
+`ProviderInvalidResponse` (each may carry `retry_after_secs`). Every answer is
+validated; an answer over 200 items or 512 KB is invalid.
+
+- **`connect`** is the first call. Crew sends `crew.api_versions`, `crew.want_mode`
+  and the kinds it speaks; the provider answers its name and version, `egress`,
+  `read_only`, `ops`, `kinds`, `search` (lexical, semantic, filters), `writes`
+  (`verbatim`, `preserves_timestamps`, `keeps_origin`, `idempotent`, `dry_run_put`,
+  `max_batch`, `max_text`), `history` (`revisions`, `retired`, `changes`), `ingest`
+  (`none` / `raw` / `items`), `isolation` (`multi_store`, `principal_auth`),
+  `documents` (`none` / `read` / `readwrite`), `steering` (only `none` in v1) and
+  `max_page`. A read-only answer drops its write ops; `changes` and `revisions` count
+  only with their `history` flag. `AppMemoryProvider` keeps the answer for ten
+  minutes and asks again on a switch and on `GET /?probe=1`.
+- **Ops.** Required: `connect`, `health`, `context`. Then `search`, `get`, `list`
+  (cursor, kinds, `status` `active`/`draft`/`retired`/`all`, `updated_after`), `put`
+  (`idempotency_key`, `item_id`, `expected_revision`, `dry_run`), `delete`; optional
+  `put_batch` (per-entry results, at most `max_batch`), `changes` (upserts and deletes
+  since a cursor), `revisions`, `ingest`. Deadlines: `context`
+  `memory.provider.timeout_secs` (default 3, 0.5 to 10); `connect`, `health`, `search`,
+  `get`, `list`, `revisions` 5 s; `put`, `delete`, `changes` 10 s; `put_batch` 30 s;
+  `ingest` 60 s. Each deadline bounds the whole exchange: every read gets only the time
+  left, and a timer shuts the socket at the deadline, so reads inside `http.client`
+  (repeated `100 Continue` heads, chunk framing) cannot outlast it.
+- **Envelope.** Kinds `preference`, `fact`, `episode`, `summary`, `rule`, `finding`,
+  `index`, `note` and `document` (one whole Markdown document, `meta["crew.doc"]`
+  `preferences` or `projects`). Items carry `created_at` / `updated_at` on writes too,
+  `origin` (`provider`, `store`, `id` it was first written under), an optional
+  `revision`, `status` (`active`, `draft`, `retired`; Crew's superseded, expired and
+  forgotten become `retired` plus `meta["crew.retired_reason"]`) and reserved meta keys
+  `crew.source`, `crew.confidence`, `crew.importance`, `crew.written_by`,
+  `crew.session_key`, `crew.derived_from`, `crew.category`, `crew.retired_reason`,
+  `crew.doc`, `crew.value_json` (a fact whose text is its JSON value), `crew.tags` (an
+  episode's tags as a JSON list; tags and `crew.importance` are written back on import) and `negative`,
+  which a provider returns as written (at most 50 pairs). A fact Crew deleted is refused
+  by an import (`deleted_in_crew`), never restored behind the owner.
+  Timestamps are Unix seconds up to the end of year 9999 (a millisecond value is an invalid answer). Text caps: 8,000 characters, 64,000 for a `document`; longer text is cut and marked on
+  read and refused on write. Embeddings never cross the wire: a provider ranks with its
+  own index.
+- **Mode gaps.** `Capabilities.mode_gaps(mode)` names what a mode lacks. `augment`
+  needs `context` or `search`. `replace` needs a writable provider with `get`, `list`,
+  `put`, `delete` and `search`, the kinds `rule`, `finding`, `preference`, `fact`,
+  `writes.verbatim` and `writes.idempotent`; `ingest: none` is allowed once the owner
+  acknowledges that automatic learning stops. A Bot store needs `isolation.multi_store`;
+  a Shared Crew needs `isolation.principal_auth`. Global V1's Markdown documents move
+  only to `documents: readwrite`; otherwise they stay in Crew and the plan says so.
+
+**What stays Crew's.** Identity and routing (the provider gets `store_id` and
+`member_id` and never picks them), memory modes (`temporary` never reaches a provider:
+`scope_for` returns `None`; `incognito` never reaches `put`/`delete`/`ingest`),
+governance, the write switches, route auth, budgets and block framing, content screens
+(the volatile-fact refusal and injection scan run before `put`; what a model wrote, a
+consolidation item or raw transcript span, an agent's or a task's lesson, a recall query and the
+user's message sent as the context query or the per-message lesson search, has credentials
+and exfiltration URLs redacted from every field (text, title, scopes, meta) before it is sent (`migration.redact_model_written`), while an
+owner's own move or import is sent as written; every item's text and the
+provider's display name go through `markers._scrub_turn_lesson` and the fence
+neutralizer before a block), the sandbox, egress consent, steering, and manual member
+documents (persona, rules, briefing, guides).
+
+**Harness memory pin.** `harness_pin.harness_memory_settings` answers
+`{"userMemoryOptIn": {"enabled": false}}` while `memory.provider.mode` is `replace`, and
+nothing otherwise. The spawn handshake (`runtime_spawn_launch._handshake_client_capabilities`)
+merges it into `_meta.kiro.settings` only inside its `client_meta_settings` branch, a
+positive capability of the harness, so a harness without that channel is sent nothing,
+and in `builtin` and `augment` mode the harness keeps deciding as before. The pin is
+judged once per spawn from config, because `initialize` is per process: a process
+spawned before a switch keeps what it was sent until it restarts.
+
+**Each path in `replace` mode.**
+
+| Path | Replace |
+|---|---|
+| Member essentials | Crew (Bot configuration) |
+| Preferences, facts, activity index, `[Memory activity]` | provider `context`, rendered by `render.session_parts` into the same budgets. Global V1's `preferences.md` and `projects.md` stay in Crew for a provider without `documents: readwrite` and are still read (`chokepoints._crew_documents_parts`); Crew's facts and lessons never stand in |
+| `[Learned corrections]` / `[Learned experience]` | `rule` / `finding` items, the rule and findings allowances |
+| `[Memory tools]` | Crew, naming the provider |
+| Per-message lessons | provider `search(kinds={rule})`, max 3, 2,000 characters |
+| Post-compaction lessons | the session's cached rules block, no new call; one context call when this process has none cached (a chat resumed after a restart, `render.rebuilt_rules_block`) |
+| Early reads (`prefetch_session_memory`, `embed_startup_query`) | skipped; the build asks the provider itself |
+| `memory_recall` | provider `search`, active items only, narrowed by the call's `kind`, `since`, `until` and `as_of` (an undated item does not answer a timed query); the recall decision point's keep hook still narrows episodes |
+| `learn_add` / `learn_list` / `learn_remove` / `learn_update` | `put` / `list` / `delete` / `put(item_id)` (`lesson_routes.py`), same names and answers. Each call sends its own idempotency key, so a lesson removed and added again is stored again; `learn_update` changes only the tier and keeps the rest of the item, written against the item's `revision` (`expected_revision`; a provider that gives no revision answers `unsupported`, a stale one `conflict`). `learn_remove` and `learn_update` change nothing when the lesson scan stops at its bound (`too_many_lessons`) |
+| Consolidation | triggers, lease, snapshot, retry gate and marker stay Crew's; publication goes to `consolidation.publish`: `ingest: raw` gets the span, `ingest: items` gets Crew's own extraction (without Crew's stored memory in the prompt) through `put`, each keyed by the session, span and the item's own kind and text, so a retried span extracted in another order replays no item's write for another; `ingest: none` takes nothing. The preference-only pass is done without a call, so its window moves on |
+| Dashboard editors, records, bulk, promote, retired restore, seed | 409 `memory_provider_active` (Crew's memory stays readable) |
+| Change-card history line, built-in app episode import | skipped with a log line (`resolver.note_skip`) |
+| Task-runner lessons, onboarding import | provider `put` |
+| CLI `learn` | through the gateway's `/api/lessons`, after the same lesson origin gate the builtin path runs for a call from an agent's shell; gateway down is exit 2. `memory migrate`/`carve`/`dream`/`import`/`forget`/`restore` and `memory retired --restore` refuse when a provider replaces the store the verb names (`--store`, else the global store) |
+| Embedding repair, Dreaming, migration and backfill, V1 history prune | paused (`builtin_background_allowed`); embedding repair and Dreaming ask per store, so a store pinned to `provider_mode: builtin` keeps both |
+| Backups, snapshot, portability | Crew's own data only; the UI says the provider backs up its own |
+
+`augment` changes two rows: session start adds `[Memory from <name> (read-only)]` after
+Crew's blocks, at most a quarter of the discretionary pool, and `memory_recall` appends
+the provider's hits after Crew's. Every writer stays Crew's.
+
+`test_memory_provider_writer_coverage.py` names every chokepoint and secondary writer by
+module and function and fails when one stops reaching the resolver.
+
+**Crew's own memory through the contract.** `builtin.BuiltinMemoryProvider` maps the
+contract onto today's functions (lessons via `write_lesson` / `delete_lesson`, facts via
+`set_semantic` / `delete_semantic`, episodes via `write_episodic` / `delete_episodic`),
+with ids `lesson:<key>`, `lesson:jsonl.<n>` (Global V1's lessons file), `fact:<key>`,
+`episode:<id>`, `doc:preferences` / `doc:projects` (one `document` item per Global V1
+file) and `doc:history.<date>` (one `summary` per history day, `created_at` that day).
+`list` returns timestamps and provenance in reserved meta; `revisions` reads
+`memory_revisions`. A move writes a document into an empty file and refuses a different
+one with `document_differs`; an explicit edit replaces it. A Memory V2 store lists no
+documents (its anchors are member documents). It does not keep timestamps or origins on
+write (`preserves_timestamps` and `keeps_origin` are false), and it refuses an item that
+is not `active` (`status_<status>_not_kept`), since its writers keep no draft or retired
+state. Every `inserted` answer names the new id. The prompt builders and the
+recall route do not use it; the host item routes, moves and the conformance kit do.
+
+**Moves.** `migration.py` runs a move between any two providers as a persisted job:
+
+| Phase | What happens | Writes |
+|---|---|---|
+| Plan (`dry_run`) | refused like the run when the target takes no writes or does not replay keys; lists the source page by page; an item read already cut (past its kind's cap) is `refused:too_long`, never moved short; counts per kind and planned outcome (`would_write`, `refused:content_screen`, `refused:too_long`, `skipped:kind`, `skipped:from_target`, `skipped:documents_stay`, `skipped:retired`); keeps 20 samples per kind (300 characters, in memory only); asks a `dry_run_put` target for its dedup answer on them | none |
+| Run | only into a target that replays a repeated key (`writes.idempotent`); `put_batch` (or `put`) in the target's `max_batch`, keyed `crew-move:<job>:<hash of origin and source id>` (two source records can share a kept first origin); each batch appends one ledger line per item (`origin_id`, `target_id`, `outcome`, `text_sha256`) as it lands (the wire refuses an `inserted` answer without an id, so the batch stays pending), and each page saves the checkpoint. While a page is in flight the job also saves the counts at the committed cursor (`page_start`), and a resume after a restart restores them before it reads that page again, so the page is counted once. A resume settles a pending batch before it pages again. Only a missing ledger reads as empty; a damaged or unreadable one fails verify and undo. A batch retried after a lost reply, or a page a resumed job sends again, replays its keys; the contract has a replay answer the key's first outcome and id with `replayed: true`, so an item this job inserted stays on the rollback list and one that already existed (`deduped`) never joins it. An item over its kind's text cap is refused by name (`refused:too_long`), never shortened; an import refuses such a line the same way. A provider that asks to wait more than 5 times on one batch pauses the job, and a cancel is honoured between attempts. A page is counted whole: a page that pauses or fails gives back its counts, so a resume counts it once. A finished plan keeps its samples in the gateway's memory (the last 20 plans), never on disk. Plans and moves are kept 20 each, apart, so a plan never evicts a move's ledger | target only |
+| Verify | reads back 2% of the inserted ids (20 to 200) and compares text hashes; a mismatch or an id that cannot be read leaves the job `failed` (resume or undo), never `done` | none |
+| Rollback | deletes from the target every id the ledger marks `inserted` by this job, nothing else. Each batch's source ids are saved in the checkpoint (`pending_ids`, ids only) before the send and cleared once it is ledgered. A rollback first settles a batch whose reply was lost: it reads those items again (from the source, or for an import from the same file sent with the undo, else 409 `unacknowledged_writes`) and replays their keys, which answer the first application's outcome and id, so a cancelled move is settled too. A pending item no longer in the source keeps the undo open (`rollback_failed`) rather than be dropped. A refused delete leaves the item there and the job `rollback_failed`. A cancel during an undo stops it before the next delete (`rollback_failed`, ledger kept, so undoing again finishes it). A cancel while a resume or undo is still being prepared reaches the runner that starts (`_cancel_requested`), so it never runs over the cancel. A rollback that fails or is interrupted is `rollback_failed` and continues only as a rollback, never as a resume, so undoing a move cannot run it again | target only |
+
+Every written item carries its first `origin`, so a switch back skips what came from the
+target, unless it was changed while away (kind, text, scopes, status, title, negative
+clause, category, value type, an episode's tags or importance differ from the target's own item): that is `conflict:changed_since_copy`, reported and
+never written over the original. A failed read of the original fails the job (it pauses or fails), never reads as "gone". Crew's content screens run on every item before it is written. A provider error
+with `retry_after_secs` waits that long (at most 300 s); three `unavailable` answers in a
+row pause the job. Job state and ledger file IO runs off the gateway loop. State lives in `memory_provider_migrations/` (`<job>.json`,
+`<job>.ledger.jsonl`; counts, ids and hashes, never text), the last 20 jobs kept; a job
+found running at start reads as `paused` and resumes from its checkpoint. The directory
+is READONLY in the sandbox and withheld from a foreign harness: a writable ledger would
+let an agent choose what a rollback deletes. A move never switches memory, and no job
+deletes from Crew's own memory; moving into it is refused while a provider replaces it.
+
+**Export, import.** Export is JSONL `kirocrew-memory/1`: a header (`provider`, `store`,
+`member_id`, `exported_at`, `crew_version`, `include`), one wire item per line
+(`?include=retired,revisions` adds retired items and history), and a trailer with the
+item count, the count per kind, the count of `cut` lines and the SHA-256 of the item
+lines. A line whose item was read past its kind's cap carries `cut: true`, and an import
+refuses it by name rather than restore it short. An import whose trailer does not match
+is refused as cut off or changed; one without a trailer imports with a warning. Import (32 MB at most) runs as a move job from `file:<hash>`.
+
+**Conformance kit.** `conformance.run(provider, write=...)` checks connect, health,
+context, search, list and get, paging to the end and `status=all` for a provider that
+keeps retired items; with `write`, put, idempotent put, the verbatim round-trip, kept
+timestamps and kept origin (each when the provider claims it) and delete (a read-only
+provider must refuse `put`). Write checks run only on a provider that can `delete`, use
+a kind it advertises (`Capabilities.kind_for`), and remove every probe they inserted
+whichever check fails. `python -m kiro_crew.memory_provider.conformance --app
+<app>[/<provider>]` runs the read-only checks through the gateway. The route refuses
+Crew's own memory (400 `not_an_app_provider`): the kit's fixed `conformance` store is
+not one Crew declares. With `write` and a
+`bench` section it also checks that `reset` refuses a live scope, empties a bench store,
+that two bench stores do not see each other, that `as_of` hides a later item when
+claimed, and that `settle` answers.
+
+**Provider benchmarks (`eval/bench/`).** The contract carries a benchmark through
+five additions: a `bench` section in `connect` (`BenchCapabilities`: `scratch`,
+`reset`, `settle`, `as_of`, `usage`, `deterministic`, `max_scratch_stores`,
+`max_concurrency`; absent means every flag false), `ProviderScope.purpose`
+(`bench` only through `bench_scope(run, unit)`, store id `bench/<run>/<unit>`;
+`is_bench` needs both), the `reset` and `settle` ops, `as_of` on `search` and `context`
+(`search_as_of`, `context_as_of`), `at` and `session_at` on `TranscriptSpan`, and an
+optional top-level `usage` block on any answer (`Usage`; absent is unknown, values
+capped). `reset` is refused client side for any scope that is not a bench scope, before
+a byte is sent. A bench scope never reaches `resolver.route_for`: the runner calls the
+provider object directly through `ProviderTarget`, on a client of the run's own
+(`AppMemoryProvider.run_copy`), so live chats' `usage` never counts toward a run. A remote
+provider is benchmarked without the live-memory egress grant: a public suite sends no Crew
+memory, and a copy of own memory needs the run's own acknowledgement at plan and at resume. Crew's own memory is never
+benchmarked through `BuiltinMemoryProvider` (it maps a store id to the person's store);
+`ScratchBuiltinTarget` opens one temporary `VectorMemoryStore` per unit and reuses the
+retrieval ruler's `ingest_instance` and `retrieve_for_query`. Baselines `none` and
+`recency` give the floor and the long-context reference.
+
+Suites (`eval/bench/suites/`): LoCoMo and LongMemEval through the existing adapters,
+BEAM (100K and 500K), MemoryAgentBench FactConsolidation and EventQA (Parquet, read
+only when `pyarrow` is installed; otherwise a refusal naming it), PersonaMem v2 (32K,
+multiple choice), PrecisionMemBench (must-include and must-exclude assertions, no LLM),
+Crew's forget suite (built at run time; removed, leaked and collateral rates) and
+isolation probe (two stores held at once; a hit with the other store's origin or its
+marker text is a leak, and the count must be 0), and HaluMem (off by
+default; CC BY-NC-ND, converted in memory only). Data is fetched on demand from pinned
+revisions (`datasets.SUITE_SPECS`, `beam_spec`, `personamem_history_spec`); nothing is
+vendored, and suites whose license is not stated upstream are left out. Each unit is
+one store: prepare (reset), write in time order or replay sessions, settle (polled up
+to 600 s), query at the largest `k` with `as_of`, optionally read and judge, optionally
+forget and probe again, read back for extraction, reset. The ledger records each
+scratch store and whether its reset read back empty; `stores_to_reset` ignores any line
+outside the run's own `bench/<run>/` prefix. Results (`<run>.results.jsonl`) hold ids
+and scores only, and are read once per provider, unit and query, so a unit a restart
+ran again is counted once. A unit still indexing when the 600 s settle wait ends is
+not scored and the run says so in its warnings. A cleanup reads a store as empty only at the end of its listing (an empty page with a cursor is not empty). A resume refuses (409 `provider_changed`) when a provider's version, app version or capability fingerprint differs from the run's plan, so a report never pools two configurations. One runner per run and per move job: a second resume or rollback of the same id while one runs or is being prepared is refused with 409 (`run_busy`, `job_busy`). A restart resumes at the next unit; `max_llm_calls` stops a run, for good (it does not resume),
+`budget_exhausted`. The report (`kirocrew-bench-report/1`) gives each provider M1 to
+M12 with a bootstrap 95% interval, `n/a` with a reason where a dimension cannot be
+measured (never zero), a text-overlap proxy labelled `proxy` for a provider that keeps
+no origin, and paired sign tests on the same per-dimension metric as the provider's own section.
+Every hit keeps its rank: an unattributed or repeated hit is a non-gold place, never
+dropped. Answer mode renders hits through the provider render
+path's own framing and neutralizer and runs a reader and judge on the `background` role
+model (`agent.resolve_model("background")`, `"auto"` by default); prompt hashes and the
+resolved models go into the report, and `compare` refuses runs that differ in suite,
+variant (for own memory, the eval set), seed, instance limit, cut-offs, budget, models or prompts. The newest 20 runs are kept.
+
+The own-memory builder (`own_memory.py`) copies each chosen store through a read-only
+SQLite connection into `evalsets/<id>/source/` (a private V2 store through its member
+admission), reads it with Crew's own item converters and then deletes the copy (a
+build that fails deletes the whole `evalsets/<id>/`), drops (never masks) every item
+either redactor would change, and builds
+probes: P1 rare key terms, P3 knowledge update from `memory_revisions` (the old value timed by its own snapshot, the current one by its last update), P4 date windows
+with `as_of`, P5 lesson triggers from the lesson's session, P6 abstention, P7 forget,
+P8 precision, and P2 paraphrases only with `llm_probes`. The set is
+`kirocrew-evalset/1`, owner-only. Runs and eval sets live in
+`memory_provider_bench/` (READONLY crew-home leaf); routes are in
+`dashboard/handlers/memory_provider_bench.py` (see `security.md`).
 
 ## Skills (`skills.py`)
 
@@ -4805,6 +5272,26 @@ command the skill cites with the `doctor` registrar in `cli_parser_gateway.py`,
 abbreviations off. Wording outside the security route, the other routes' prose,
 the repository link and the plain and prefilled new-issue links are not checked.
 
+For a feature request, both copies dig to the real need before drafting: they
+tell the agent to reason from first principles and ask "why?" one question at a
+time, each question built from the user's last answer, stopping once an answer
+names who hits it, what they are trying to get done and what it costs them
+(five at most), and finishing the chain before the duplicate search and the
+draft. The drafted "Why does this matter? (5 Whys)" section carries that
+question-and-answer chain.
+`.github/ISSUE_TEMPLATE/feature_request.yml` asks for the same chain in a
+required "Why does this matter? (5 Whys)" field, whose description names first
+principles so an agent filing through the form questions the request rather than
+restating it (#33078). Bug reports skip the chain.
+
+Both copies draft the issue body in the shape GitHub gives a form issue: one
+`###` heading per field of `feature_request.yml` or `bug_report.yml`, spelt as
+the field's label and in the form's order, because `gh issue create --body-file`
+skips the form and triage reads the answers by those headings. The same test
+file holds the skill's two draft blocks to the forms' field labels, and the
+fallback's two field lists to the same labels in order. `kirocrew-prepare-pr`
+sends its issue-first step through this skill's draft step.
+
 **`GET /api/skills` coalesces concurrent readers onto one scan, and stores nothing.**
 The catalog assembly is filesystem-heavy (`os.walk` plus per-file frontmatter reads, package
 path globs, per-skill resolve/read, agent annotation), and the defect this addresses is that
@@ -5033,7 +5520,7 @@ scope.
 successful `$skillname` selection as one `system` row with
 `meta.kind=skill_load`. `meta.skills` keeps the ordered `{name, body}` list that
 entered that turn. `resolve_dollar_skills` has already removed frontmatter, and
-the runner applies credential and outbound-URL redaction before it writes either
+the runner applies credential redaction, inside URLs too, before it writes either
 the model block or the snapshot. The snapshot therefore remains accurate if a
 skill changes or disappears later and adds no second filesystem read. Existing
 dollar-skill count and file-read caps bound the row. The dashboard renders the
@@ -5080,7 +5567,9 @@ line, `limit` the most lines, and the answer holds as many whole lines as fit th
 capacity with the next offset in its header, ahead of the body, where tail
 truncation cannot reach it. The tool sizes the page for the WRAPPED response: it
 renders its own framing (header, page line, reference-data markers, the key
-repeated) with an empty body and the widest numbers a page can carry, takes
+repeated, the widest description it prints: 300 characters plus an ellipsis,
+the same clamp a search row uses) with an empty body and the widest numbers a
+page can carry, takes
 that length off the ceiling, and passes the remainder as the read's `capacity`;
 the gateway accepts a smaller capacity and never a larger one. Without that, a
 page sized to the bare ceiling would lose its last lines to the response cut
@@ -5226,7 +5715,11 @@ Installed exact reads also accept POST `/api/skills/-/discover` JSON with
 gave them, and an optional `capacity` the gateway clamps to the ceiling (a
 caller shrinks the page to its own framing; it cannot widen it). A page answer
 carries a `page` block (`line_offset`, `line_count`,
-`total_lines`, `total_bytes`, `next_offset`) beside the content; a
+`total_lines`, `total_bytes`, `next_offset`) beside the content; every read
+match, whole or paged, carries the skill's frontmatter `description` (else the
+key), parsed from the whole body so a page past the frontmatter still has it --
+the value a search row shows for the same key, and the unsigned local read fills
+it the same way; a
 refused read answers HTTP 200 with an empty match list and a `refusal` block
 naming the reason and the bound. MCP uses this transport so URL
 escaping and HTTP request-line limits do not truncate nested keys. GET remains
@@ -5428,8 +5921,8 @@ in-context copy is not sufficient rather than trying and failing.
 
 **Both tools label their output untrusted**, because a registry publisher's text
 reaches the model verbatim: `skill_fetch` prefixes the body, and `skill_discover`
-leads with the label. The gateway's `_redact_external` scrubs credential shapes
-and exfiltration URLs but cannot tell imperative prose from a description, so the
+leads with the label. The gateway's `_redact_external` scrubs credential shapes,
+inside URLs too, but cannot tell imperative prose from a description, so the
 label is the only signal — and it must **lead**, not trail. `sanitize_response`
 drops the TAIL at `MAX_RESPONSE_LEN` (100k) and `SkillSearchResult` puts no bound
 on `id` / `name` / `author`, so a trailing label could be padded off the end by
@@ -6307,8 +6800,8 @@ bundled names from `.bundled_manifest` and hub-installed names/install paths
 from `.hub/lock.json`; `.archive`, `.hub`, dependency, and cache trees are
 pruned before the file budget, leaving only active local packages selectable.
 Accepted packages retain their ordinary assets. Every regular UTF-8 text asset
-in a complete, package-bounded traversal is screened in full for credentials
-and exfiltration URLs; clean assets are copied byte-for-byte, including leading
+in a complete, package-bounded traversal is screened in full for credentials,
+inside URLs too; clean assets are copied byte-for-byte, including leading
 and trailing whitespace. No per-asset preview truncation is used for either the
 security decision or the copied content.
 
@@ -6512,7 +7005,7 @@ reuse_count: 0                          # omitted when zero
 ### Safety rails (non-negotiable per `security.md`)
 
 1. **Sensitive-session skip** — `_session_touched_sensitive()` scans all tool names across the session; any match in `_SENSITIVE_TOOL_PATTERNS` (AWS/SSH/GPG/netrc/.env/IMDS) skips extraction entirely. Complements the runtime hook-layer block; if the LLM *tried* to read credentials, we still don't synthesize a skill from the session.
-2. **Output redaction** — `redact_credentials()` + `redact_exfiltration_urls()` applied to `description`, `triggers`, and `procedure_md` before the SKILL.md is written. `AKIA*`, `ASIA*`, private key headers, Slack tokens, base64-encoded credentials all get scrubbed. Defense even against a prompt-injected LLM that tries to embed credentials in the procedure.
+2. **Output redaction** — `redact_credentials()` + `redact_exfiltration_urls()` applied to `description`, `triggers`, and `procedure_md` before the SKILL.md is written. AWS secret keys, private-key blocks, Slack tokens and base64-encoded credentials all get scrubbed, inside URLs too. Defense even against a prompt-injected LLM that tries to embed credentials in the procedure.
 3. **Size cap** — `AUTO_SKILL_MAX_PROCEDURE_CHARS = 10_240`; oversized outputs are rejected entirely (indicates the aux LLM went off-task).
 4. **Similarity dedup** — `find_similar()` rejects near-duplicates above `skills.auto_similarity_threshold` (default 0.85) Jaccard overlap on description words.
 5. **Namespace lock** — `update_auto_skill()` refuses to touch any skill whose name doesn't start with `auto/`, preventing the refine path from ever clobbering hand-authored skills.
@@ -6571,6 +7064,7 @@ No new command. Users interact via the existing skill management surface:
 
 Config-driven from `config.json` → `hooks` section:
 - **auto_approve_tools** / **auto_deny_tools** — tool patterns (exact, `prefix*`, `*suffix`, `*contains*`). An approve pattern is matched against the display title, except for an MCP-served call whose canonical identity is verified (`mcp_server_name`/`mcp_tool_name` from `_meta.kiro` AND the event's `mcp_identity_trusted` provenance flag, which every permission-path caller threads through — non-emptiness alone is not provenance): there it is matched against that identity as `Running: @server/tool` and `@server/tool` (`mcp_identity_ref`), in place of the title — never the lossy wire form `mcp__server__tool`, under which two identities whose server or tool name contains `__` collide — so a model-authored `description` in the title cannot approve a different tool than the one that executes. An identity that is present but unproven falls back to the title match. Deny patterns keep matching the title, the raw command and the wire `mcp__server__tool` name, and also the `@server/tool` / `Running: @server/tool` spelling whenever the server name is present (a deny target can only deny), so both lists can be written in one spelling and deny still beats approve on the identity plane. **Migration note:** for an MCP-served call with a verified identity the approve pattern is no longer compared to the title, so an approve pattern written against a title that does not spell the identity (for example one keyed on a tool's `description` text) stops auto-approving and the call shows an approval card; rewrite it as `@server/tool` (or `Running: @server/tool`, kiro-cli's own title for MCP calls). Deny patterns keep matching the title, the raw command, and the canonical `mcp__server__tool` name together.
+- **auto_approve_tool_identities** — exact `@server/tool` grants, written only by the approval card's "Always allow this tool" and the MCP tool list's Always allow toggle (`dashboard/always_allow_tool.py`; those surfaces never write `auto_approve_tools`). The `operator-grants` tier matches an entry only against a verified identity (`mcp_identity_ref` of a call whose `identity_trusted` flag is set), with case-insensitive literal equality (no glob matching or path normalization), and never against a title or the normalized name, so a shell call whose model-written description reads `@server/tool` gets nothing from it. `confirm_tools` (and an unknown confirm list) outranks it exactly as it outranks `auto_approve_tools`. Heartbeat-scoped hooks drop it with `auto_approve_tools`; a reload that changes it is SEL-audited by count like `auto_approve_tools`; it never reaches a generated agent spec. Empty by default.
 - **confirm_tools** — tool patterns, in the `auto_approve_tools` spelling, that always ask. `may_skip_gate_now` withholds every static grant (`allowedTools`, `autoApprove`) on an MCP server a pattern names, so its calls reach the gate, and a match outranks an `auto_approve_tools` grant in the `operator-grants` tier. It never denies; the read-only classifier does not settle a confirm-listed MCP call, since its kind and title are agent-influenced and an MCP-served frame kiro-cli labels as shell runs outside the agent sandbox, so the bash classifier's read of its command proves nothing. `*` covers every server the agent's spec grants, Crew's own `@kirocrew-*` included, but not a builtin app agent's calls to its own app-scoped server, which the `app-own-server` tier approves first. When the load could not read the settings (an unparseable `config.json`, a degraded or non-object `hooks` section), the files decide: while a file does not read as written and some file names the key (or a file cannot be read at all), the list is unknown, so no static MCP grant is written and the gate, told through `HooksConfig.confirm_tools_unknown`, withholds every `auto_approve_tools` grant whatever list the load kept; a present `confirm_tools` that is not a list, or a non-object `hooks` section (validation keeps both and the loader records the section as degraded), is unknown too; a file that never names the key changes nothing, and a degradation flag left after the files read cleanly again is ignored. The key is declared in the schema with `restart=True`: the gate follows a change at once, but a grant already in the agent spec is withdrawn at the next restart. While any pattern is set, a wildcard grant ref (`*`, `@*`, `@ser*`) is withheld too, since the servers it covers are not known. Empty by default. See `docs/architecture/mcp.md`, "Servers the operator asked to confirm".
 - **auto_replies** — pattern → direct reply (skip ACP entirely)
 - **transforms** — pattern → prefix prepended to message
@@ -6622,7 +7116,8 @@ modules import it, and the tests rebind its names. The rules live in the modules
 on `hooks.py`'s globals, so a patch of `hooks.<name>` reaches the moved code wherever
 it sits. Nothing but `hooks.py` imports an owner.
 A new owner module is appended to the `compose(...)` tuple and to `_BASE_OWNERS` in
-`test/test_hooks_composition_contract.py`, which `test_the_owner_set_is_the_package`
+`test/test_hooks_composition_contract.py` (`_LATER_MOVES` when it takes definitions a
+later split moved, with the shape each had), which `test_the_owner_set_is_the_package`
 enforces. `stall_attribution._GATE_FILES` includes `/kiro_crew/hook_runtime/`, so a
 wedged owner frame still reads as a gate stall.
 
@@ -6630,7 +7125,7 @@ wedged owner frame still reads as a gate stall.
 |---|---|
 | `denied_commands` | The keystone opt-out read (`load_denied_commands_state`), the boot parse and both live-reload splices, the governance force-pin lookup, and the effective regex set and operator notes the gate hands `PolicyAuthority.is_denied` |
 | `governance_gate` | The ceiling ∩ profile tool decision (`_governance_denial`), the `capabilities.spawn` decision, the `capabilities.script_hooks` gate, and their SEL audit rows |
-| `tool_identity` | What a call IS: the gate's typed input (`ToolCall`, whose `from_event` is the one event-field extraction; `hook_gate_kwargs` is its keyword form), the `spawn_run` identity test, the first-party-app and builtin-agent registry readers and writers, the host-known read-only built-in test and the short-stamp alias it and the deny tiers resolve through, the first-party read-only MCP tool test the `read-only` row accepts under a surface's Reads mode, the canonical `@server/tool` reference, title normalization and the pattern matchers |
+| `tool_identity` | What a call IS: the gate's typed input (`ToolCall`, whose `from_event` is the one event-field extraction; `hook_gate_kwargs` is its keyword form), the `spawn_run` identity test, the first-party-app and builtin-agent registry readers and writers, the host-known read-only built-in test, the computer-use observation test (`_cu_read_only_auto_approve`) and the short-stamp alias it and the deny tiers resolve through, the first-party read-only MCP tool test the `read-only` row accepts under a surface's Reads mode, the canonical `@server/tool` reference, title normalization and the pattern matchers |
 | `gate_tiers` | What each row of the tool gate checks: one tier body per `GATE_TIERS` row (the three per-target rules included), `GateFacts` (the call, the asking surface, and what the tiers derive from them — the one platform-context snapshot and every value built from it derived on first use and kept; the effective deny set is resolved once from that one snapshot, and the enabled rule ids and the deny-rules tier both read that one result), and the table's projection and soundness checks (`shell_rules`, `gate_tier_problems`) |
 | `search_targets` | The file-search deny target: the scope-only grammar, its percent encoding, the home-variable substitution and the lexical root normalization |
 | `windows_paths` | UNC shape, the extended-length fold, the trusted-root probe gate, OS-layer representability and one link target's normalization |
@@ -6643,6 +7138,7 @@ wedged owner frame still reads as a gate stall.
 | `hook_dispatch` | The global store accessors, the strict on-disk read a store-less process uses (a snapshot, so its fires never write their status back over a newer save), the informational tool-call fire, and the PreToolUse block gate with the names a matcher meets |
 | `hook_types` | The pipeline's value types: `HookResult`, the tool gate's verdict `ToolHookResult` (its constructors emit the approval-decision counter, which `test/metrics/test_business_counters.py` reads in this file), the rule dataclasses, `UserDeniedPattern`, and `HooksConfig` with its defensive parse of the `hooks` section |
 | `script_hooks` | Running script hooks: a hook process's environment (`_hook_subprocess_env`, the one reader of `_HOOK_BASE_ENV_KEYS`), one hook's sandboxed run (`run_script_hook`) and its `ScriptHookResult`, and `ScriptHookStore`, which persists the Hooks page's hooks, validates every edit and fires the hooks an event matches; it parses `hooks.json` from its bytes (as do the strict read in `hook_dispatch` and the import sanitizer), so UTF-8 with or without a byte-order mark, UTF-16 (Windows PowerShell 5.1's default) and UTF-32 all load, and bytes none of those decode are a failed load; a store whose load could not read or represent `hooks.json` reloads from disk at its next edit and, while the file still cannot be loaded, refuses every save with `WebhookStoreUnreadable` (503 at the hooks routes) rather than writing its empty in-memory list over the file; `fire` sits beside `run_script_hook`, and `test_hook_events_kas_triggers` reads its source through the object |
+| `hook_manager` | `HookManager`: the message hooks, the tool gate's two entry points (`judge`, which walks `GATE_TIERS`, and `on_tool_call`, its keyword form) under `_fail_closed_on_gate_crash`, the `hooks` config subscription and its SEL-audited approval-set diff, and the effective deny set for callers outside the gate |
 
 The guarded readers take their bytes through `kiro_crew.bounded_read.bounded_read`,
 bound on this module for the `safe_reads` and `internal_reads` owners. Each still
@@ -6679,20 +7175,17 @@ What stays in `hooks.py`, and why, because a guard or a contract reads it there:
   tier function (a row built before it would keep the owner's original, which a patch
   of `hooks.<name>` never reaches). `SHELL_DENY_TIERS` is a literal because
   `scripts/deny_diff.py` reads it as text (see the table below);
-- `HookManager` with every method, and `_fail_closed_on_gate_crash`. `judge(call, *,
-  session_key, agent, app, classifier_only)` walks `GATE_TIERS` under
-  `_fail_closed_on_gate_crash`; `on_tool_call` is its keyword form for the dispatchers
-  that hold a call as keywords (`**hook_gate_kwargs(event)`), keeps its signature, and
-  is what every production surface calls — the tests patch it at class and instance
-  level. Both are wrapped when the class body runs, and `compose` rebinds no function
-  held in a closure, so in an owner the wrapped bodies would read the owner's globals;
-  moving the manager is a decomposition (collaborators behind the class), not a move;
+- the second wrapping of `HookManager.judge` and `HookManager.on_tool_call`. Both are
+  wrapped by `_fail_closed_on_gate_crash` when the class body in `hook_manager` runs,
+  and `compose` rebinds no function held in a closure, so the wrapped bodies would keep
+  reading the owner's globals. Right after `compose`, this module wraps each again
+  around its body rebound onto this module's globals, as it rebinds
+  `ScriptHookStore._atomic_mutation`; `on_tool_call` keeps its signature, and the tests
+  still patch it at class and instance level;
 - `ScriptHook.from_dict`, a redaction call site `security_posture.NON_EGRESS_REDACTION_MODULES`
   classifies by this file's name (`run_script_hook`, the other one, has the
   `hook_runtime/script_hooks.py` row);
 - `_screen_windows_links`, which `test/link_screen_sites.py` keys by this path;
-- `_cu_read_only_auto_approve`, which `governance.md` names here (the Plane A gate
-  threading it names beside it is the `governance` tier in `gate_tiers`);
 - the two UNC root memos and their import-time priming: this module's body runs before
   `compose`, so priming an owner function would write its memo into the owner's
   namespace instead.
@@ -6719,11 +7212,13 @@ deny blocked:
 | `spec-shell-allowlist` | deny_policy | a KAS agent spec's `toolsSettings.shell.denyByDefault`: its own shell call whose command no usable `allowedCommands` entry matches whole (`ToolCall.spec_shell_allowlist`) |
 | `spec-write-allowlist` | deny_policy | a KAS agent spec's `toolsSettings.fs_write.fallbackAction: "deny"`: its own file write with a target no usable `allowedPaths` entry covers, as written or symlink-resolved (`ToolCall.spec_write_allowlist`) |
 | `spec-denies` | deny_policy | a KAS agent spec's `deniedCommands` / write `deniedPaths` that Crew reads itself: its own shell call a deny matches (whole or any leading piece; a chain `allowed_commands.chain_commands` splits, one command at a time, unless it holds `#` or `[[`), or write whose target, as written or symlink-resolved, a deny covers (`ToolCall.spec_denied_grant`) |
+| `spec-unjudged-denies` | deny_policy | a Bot worker's structured deny entries (`ToolCall.spec_unjudged_denies`, recorded for `kirocrew-mate-worker` only): non-read-only calls are refused for an unconditional entry, or a conditional entry without a definite no-match from the shared `spec_denied_gate.shell_denies_match` judge; raw rule text carries no flags. The Add-abilities pane names unconditional entries as `unenforced_denies` and conditional ones as `conditional_denies`, and the worker's session-start notice says it refuses such commands unless read-only |
 | `app-own-server` | grant | a first-party app agent (a builtin, or a former builtin adopted from its pin, `apps/builtin_adoption_gate.py`) calling its own declared MCP server |
-| `operator-grants` | grant | the operator's `auto_approve_tools` patterns, unless a `confirm_tools` pattern names the call or the list is unknown |
+| `app-browser-sites` | grant | an app's OWN dashboard slot (`facts.app` on a `dashboard:` session key; a subagent or channel session keeps its card) calling `@kirocrew-core/browser` by verified identity while the app is enabled, trusted and holds owner-approved `permissions.browserSites`, and, for a call that names a URL (`navigate`, `tabs` `new`), only one of those pages; a `confirm_tools` pattern still asks (`hooks._tier_app_browser_sites`, `apps/browser_sites.gate_grants`). The op route holds the session to the pages ([browser](browser.md#security)) |
+| `operator-grants` | grant | the operator's `auto_approve_tools` patterns, then the `auto_approve_tool_identities` grants against a verified identity only, unless a `confirm_tools` pattern names the call or the list is unknown |
 | `read-only` | classify | the read-only classifier, except for an MCP call `confirm_tools` names (or any MCP call while the list is unknown) and a shell command that runs `git` at any command position (`readonly_bash.command_invokes_git`), which falls through to the surface's own approval; the only auto-approve under `classifier_only` |
 
-`classifier_only` skips both grant rows (each grant body steps aside, after resolving the owner app as before). `gate_tier_problems` checks the table when
+`classifier_only` skips every grant row (each grant body steps aside, after resolving the owner app as before). `gate_tier_problems` checks the table when
 the module loads; an unsound table is not raised at import (that would fail every
 test at collection, the one naming the problem included) — `judge` refuses every call
 with `GATE_TABLE_UNSOUND_REASON` instead. `SHELL_DENY_TIERS` is the table's shell
@@ -6736,9 +7231,9 @@ grant, and pins `SHELL_DENY_TIERS` to the projection.
 
 New work goes to the owner of its responsibility. A new gate check is a tier body in
 `gate_tiers` plus its row in `GATE_TIERS`, placed by kind; a new fact about a call is a
-`ToolCall` field filled by `from_event`. A new module-level value and a new
-`HookManager` method go here; a new store method goes to `script_hooks`, and a new
-result or config type to `hook_types`.
+`ToolCall` field filled by `from_event`. A new module-level value goes here; a new
+`HookManager` method goes to `hook_manager`, a new store method to `script_hooks`, and
+a new result or config type to `hook_types`.
 
 ### Script hooks (`ScriptHook`, `run_script_hook`) — the shell per platform
 
@@ -7307,6 +7802,12 @@ Merge rules (implemented in `_merge_kiro_hooks()` in `agent_materialization/kiro
   runs the same sweep once at every start (see [cli.md](cli.md), "Interactive
   Mode"), so the shipped command stays byte-identical and a user-authored hook is
   untouched
+- On Windows, where spec hooks run under `cmd /c`, the spec build swaps that
+  POSIX audit hook for a form that runs the gateway's Python directly and appends
+  the same record (`shell_audit_log.platform_spec_hooks`); POSIX specs keep the
+  shipped command byte for byte. `GET /api/kiro-hooks` applies the same swap
+  to the shipped hooks before tagging rows, so the Hooks page labels the
+  Windows form "bundled"
 - User hooks are appended per event type after bundled hooks
 - Deduped by `(command, matcher)` tuple — same hook won't fire twice
 - Malformed entries (missing `command`, non-dict, non-list) are skipped with warning
@@ -7659,11 +8160,11 @@ A spawning parent decides which of three groups its sub-agent inherits, via `inc
 | conduct | `_CRITICAL_RULES`, date, agent/runtime, UI language, workspace identity, bounded skill discovery | no |
 | `memory` | complete preferences, activity index, budgeted `[Memory activity]` block (projects, daily history (14 full days, then decayed summaries and counts to day 180), task facts, relevant episodes; `memory.inject_activity`), memory tool guidance, `Recent Session Context` source snippets; V2 essential anchors | yes |
 | `lessons` | `[Learned corrections]` (global + workspace), `[USER PROFILE]` | yes |
-| `project` | `[DOCUMENTATION]` pointer, steering resources (CC and Codex backends only), `[PROJECT]` directory line | yes |
+| `project` | `[DOCUMENTATION]` pointer, steering resources (CC, Codex, OpenCode and Pi backends only), `[PROJECT]` directory line | yes |
 
-The steering row carries a backend caveat: the steering block is injected only on the Claude Code and Codex backends (`ACP_BACKENDS_CREW_LOADS_SPEC_STEERING`, asked by provider label through `crew_loads_spec_steering`), because on the ACP/kiro backend `kiro-cli --agent` loads the agent's own `resources` natively. `include_project=false` therefore suppresses steering on CC and Codex only. An ACP sub-agent still receives it, and nothing in Kiro Crew can prevent that from this call site.
+The steering row carries a backend caveat: the steering block is injected only on the Claude Code, Codex, OpenCode and Pi backends (`ACP_BACKENDS_CREW_LOADS_SPEC_STEERING`, asked by provider label through `crew_loads_spec_steering`), because on the ACP/kiro backend `kiro-cli --agent` loads the agent's own `resources` natively. `include_project=false` therefore suppresses steering on CC, Codex, OpenCode and Pi only. An ACP sub-agent still receives it, and nothing in Kiro Crew can prevent that from this call site.
 
-On CC and Codex the block mirrors what kiro-cli would load for the same project: `_load_steering_resources(project)` anchors each `file://` entry as kiro-cli does (relative at the project, else `$HOME`; `~/` at `$HOME`; absolute at its glob-free prefix), adds kiro-cli's inherited defaults (global steering under the host `~/.kiro`, the same root `_double_load_roots` skips as delivered, so a relocated `KIRO_HOME` cannot leave a folder-selected global document on neither path; the project's steering and `AGENTS.md` when a project is bound), admits each hit against its own entry's anchor, reads a document two entries match once, and skips only an entry it cannot glob. On Codex the load leaves out `<project>/AGENTS.md`, also when the spec lists it, because Codex reads that file from its working directory (`ACP_BACKENDS_NATIVE_PROJECT_AGENTS_MD`). That is what keeps the `crew_loads_spec_steering` disjunct of `_project_steering_delivered` true for the project root the folder dedup skips.
+On CC, Codex, OpenCode and Pi the block mirrors what kiro-cli would load for the same project: `_load_steering_resources(project)` anchors each `file://` entry as kiro-cli does (relative at the project, else `$HOME`; `~/` at `$HOME`; absolute at its glob-free prefix), adds kiro-cli's inherited defaults (global steering under the host `~/.kiro`, the same root `_double_load_roots` skips as delivered, so a relocated `KIRO_HOME` cannot leave a folder-selected global document on neither path; the project's steering and `AGENTS.md` when a project is bound), admits each hit against its own entry's anchor, reads a document two entries match once, and skips only an entry it cannot glob. On Codex, OpenCode and Pi the load leaves out `<project>/AGENTS.md`, also when the spec lists it, because each reads that file from its working directory (`ACP_BACKENDS_NATIVE_PROJECT_AGENTS_MD`). That is what keeps the `crew_loads_spec_steering` disjunct of `_project_steering_delivered` true for the project root the folder dedup skips.
 
 conduct is not switchable because it supplies the output contract and capability
 entry points. Default skill discovery is a small name/purpose list plus
@@ -7695,7 +8196,7 @@ it is not the public turn's slim-resume path.
 
 Post-compaction reinjection separately refreshes bounded skill discovery,
 protected skill bodies, memory navigation, reply preferences and member identity,
-and on the Claude Code and Codex backends the steering resources, under the session-start gate
+and on the Claude Code, Codex, OpenCode and Pi backends the steering resources, under the session-start gate
 (`context_assembly/inclusion.py` → `steering_resources_part`).
 A minimal-context turn refreshes only what its minimal session start carried, the
 agent contract and reply preferences; memory navigation, skills, steering

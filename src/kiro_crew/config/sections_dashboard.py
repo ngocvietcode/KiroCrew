@@ -55,19 +55,19 @@ FEATURE_PREVIEW_FLAGS: tuple[str, ...] = (
     "artifact_deploy",
     "bridge_approvals",
     "chat_runtime_sharing",
-    "crew_mode",
+    # Has server behavior: kiro_crew.connected_computers.flag gates enrollment,
+    # the connector socket, the chat choice and every start on it.
+    "connected_computers",
     "crew_oauth",
     "dashboard_stale_fields",
     "dashboard_stale_wake",
     "explore",
     "folder_conductor",
-    "layout_harness",
-    "mate_sessions",
     "remote_crew_chat",
-    "secrets_vault",
     "session_environments",
     "session_harness",
     "webhooks",
+    "worker_grill",
 )
 
 
@@ -255,6 +255,18 @@ class DashboardConfig:
             "Use the background model to update session-owned HTML cards after activity. "
             "Off by default. One call at a time, at most one per session every two minutes "
             "and 60 per gateway hour. Live status and native decisions work without it.",
+        ),
+    )
+    audit_secret_reads: bool = field(
+        default=False,
+        metadata=_meta(
+            "Audit secret reads",
+            "Write a security log row when the gateway reads a vault secret: the secret's "
+            "name, the module that read it and the function that asked (unknown when the "
+            "read runs on a worker thread with no calling code of its own), never the value. "
+            "Repeat reads of one secret by one caller share a row per 10 minutes, which "
+            "counts them. Off by default. Takes effect on the next read; no restart (within "
+            "30 seconds in the MCP gateway process).",
         ),
     )
     crewmate_threads: bool = field(
@@ -521,8 +533,7 @@ class DashboardConfig:
             "Start new chats in conductor mode",
             "Open each new dashboard chat with conductor mode already on. It can "
             "still be turned off before the first message. Applies only where "
-            "conductor mode is offered: a Persistent chat on the default agent, "
-            "with the conductor mode preview on.",
+            "conductor mode is offered: a Persistent chat on the default agent.",
         ),
     )
     widget_density: str = field(
@@ -944,9 +955,29 @@ class DashboardConfig:
         default="",
         metadata=_meta(
             "Theme Mode",
-            "Dashboard color mode preference: 'dark', 'light', or 'system'. "
-            "Empty = unset (frontend falls back to localStorage or 'system').",
-            enum=["", "dark", "light", "system"],
+            "Dashboard color mode preference: 'dark', 'light', 'system', or "
+            "'schedule' (light from theme_schedule_light, dark from "
+            "theme_schedule_dark). Empty = unset (frontend falls back to "
+            "localStorage or 'system').",
+            enum=["", "dark", "light", "system", "schedule"],
+        ),
+    )
+    theme_schedule_light: str = field(
+        default="",
+        metadata=_meta(
+            "Theme Schedule Light",
+            "24-hour HH:MM at which the 'schedule' theme mode turns light, read in "
+            "the time zone of the device showing the dashboard. Empty = never set "
+            "(07:00).",
+        ),
+    )
+    theme_schedule_dark: str = field(
+        default="",
+        metadata=_meta(
+            "Theme Schedule Dark",
+            "24-hour HH:MM at which the 'schedule' theme mode turns dark, read in "
+            "the time zone of the device showing the dashboard. Empty = never set "
+            "(19:00).",
         ),
     )
     sso_login_flags: str = field(
@@ -966,6 +997,16 @@ class DashboardConfig:
             "Theme Color",
             "Dashboard color theme slug (e.g. 'kiro', 'emerald', 'monokai'). "
             "Empty = unset (frontend falls back to localStorage or 'kiro').",
+        ),
+    )
+    instance_label: str = field(
+        default="",
+        metadata=_meta(
+            "Instance Label",
+            "A short name for this gateway (e.g. 'pod-a', 'Lab box'), shown in the "
+            "browser tab title and favicon and sent as the origin of a session "
+            "transferred to another instance. Empty = unset (the tab title and "
+            "icon stay as they are and a transfer names the host).",
         ),
     )
     language: str = field(
@@ -1002,6 +1043,16 @@ class DashboardConfig:
             "Open the Command Bar launcher on the quick-search shortcut (Cmd+K or "
             "Ctrl+K). Off opens the search palette instead, which also searches "
             "knowledge, skills and prompts.",
+        ),
+    )
+    channels_enabled: bool = field(
+        default=False,
+        metadata=_meta(
+            "Channels Enabled",
+            "Show Channels, where several agents work a problem together in one shared "
+            "room, in the sidebar and in Search Everywhere. Off by default; off only "
+            "hides the sidebar row and the search result, so the channels you made "
+            "and the Channels page itself are kept.",
         ),
     )
     # Literal enum rather than FOLDER_SORT_MODES: that constant lives in
@@ -1126,6 +1177,18 @@ class DashboardConfig:
             "Written by the Privacy chapter and by kirocrew telemetry enable.",
         ),
     )
+    kiro_telemetry_ack_version: int = field(
+        default=0,
+        metadata=_meta(
+            "Kiro Telemetry Notice Version Acknowledged",
+            "The privacy notice version the user acknowledged while its text named "
+            "the built-in Kiro telemetry destination (0 = none). Product usage "
+            "metrics go to that destination only once this is at least the version "
+            "that names it, or a start with no dashboard printed the line naming it "
+            "on a terminal. Written by the Privacy chapter and by kirocrew telemetry "
+            "enable.",
+        ),
+    )
     crewmates_onboarded: bool = field(
         default=False,
         metadata=_meta(
@@ -1204,6 +1267,15 @@ class DashboardConfig:
         metadata=_meta(
             "Folder Suggestions Enabled",
             "Offer to file a newly-titled, unfiled chat session into a matching folder.",
+        ),
+    )
+    folder_suggestions_auto_apply: bool = field(
+        default=False,
+        metadata=_meta(
+            "Folder Suggestions Auto Apply",
+            "While folder suggestions are on, file the session into the suggested "
+            "folder instead of asking first; the card then says where it went, with "
+            "an undo. Ignored while folder suggestions are off.",
         ),
     )
     project_tags_enabled: bool = field(

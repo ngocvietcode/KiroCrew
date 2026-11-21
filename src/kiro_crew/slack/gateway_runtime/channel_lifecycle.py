@@ -273,7 +273,7 @@ async def _connect_slack(self: GatewayOrchestrator) -> bool:
         return False
     try:
         await self._socket_client.connect()
-        print("👻 Kiro Crew gateway connected to Slack")
+        print("Kiro Crew gateway connected to Slack")
         return True
     except Exception as exc:
         # Keep a short reason for status surfaces (settings badge). Slack
@@ -295,7 +295,7 @@ async def _connect_slack(self: GatewayOrchestrator) -> bool:
             exc_info=True,
         )
         print(
-            "⚠️  Slack connect failed — running dashboard-only "
+            "Warning: Slack connect failed — running dashboard-only "
             "(check network/proxy; details in gateway.log)"
         )
         return False
@@ -604,7 +604,7 @@ async def _on_slack_config_change(self: GatewayOrchestrator, change: ConfigChang
       so the Slack-native modal (which edits the same set objects) and a CLI
       write converge on one set.
     * ``slack.channels`` / ``slack.dm_activation`` / ``messaging.*`` /
-      ``trusted_bot_*`` / ``home_tab_sessions_per_kind`` /
+      ``trusted_bot_*`` / ``home_tab_builtin`` / ``home_tab_sessions_per_kind`` /
       ``forward_to_agent_callback`` -> the shared config object every Slack
       read goes through (``handler.slack_cfg()``), updated section-by-section
       in place so ``orch._cfg`` and ``handler._orch_cfg`` cannot diverge.

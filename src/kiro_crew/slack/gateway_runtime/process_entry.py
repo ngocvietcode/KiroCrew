@@ -202,7 +202,7 @@ def signing_key_preflight() -> None:
         " ".join(steps),
     )
     print(
-        f"❌ Truncated token signing key at {key_path}. Repair it by hand:",
+        f"Error: Truncated token signing key at {key_path}. Repair it by hand:",
         *(f"   {step}" for step in steps),
         sep="\n",
         file=sys.stderr,
@@ -642,6 +642,16 @@ async def run_gateway(
                     await asyncio.to_thread(staging.sweep_staging)
                 except Exception:
                     logging.getLogger(__name__).debug("staging sweep failed", exc_info=True)
+                # The dashboard import extracts under its own sandbox-hidden leaf;
+                # the same idle sweep reclaims a tree that a killed import left there.
+                try:
+                    from kiro_crew import staging
+
+                    await asyncio.to_thread(
+                        staging.sweep_staging, leaf=staging.IMPORT_STAGING_DIRNAME
+                    )
+                except Exception:
+                    logging.getLogger(__name__).debug("import staging sweep failed", exc_info=True)
                 # The per-run work directories of subagent and stateless cron
                 # sessions ride the same wake. The ordinary end of a run reclaims
                 # its own (AcpProvider.shutdown); the boot sweep took what a dead

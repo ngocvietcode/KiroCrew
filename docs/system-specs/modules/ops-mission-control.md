@@ -5,12 +5,32 @@ An autonomous ops first responder shipped as a **builtin app** (`origin: builtin
 investigates it in a chat session mirrored to Slack, matches it against a
 compounding knowledge ledger, and proposes an action. Read-only by default.
 
+**Adopted onto its own repository.** The wheel pins the app (`apps/adoption-pins.json`,
+[app-kit-platform.md § 33](app-kit-platform.md#33-former-built-in-adoption)) at
+`KiroCrewCaptain/kirocrew-app-ops-mission-control` with `minAppSdkLevel` 10, the level at
+which the agent's file tools fence an installed app's `credentialMasks`
+([app-kit-platform.md § 37](app-kit-platform.md#37-an-apps-credential-files-are-masked-by-its-own-manifest-seam-level-3)),
+so a host whose record is builtin-owned swaps it in place onto that tree at a restart,
+keeping `data/` (the ledger, the incident index and the settings), `.app_secret`, the
+approved grants, the app's crons and `enabled`; the rail keeps `/ops-mission-control` and
+the `Radio` glyph, and the wheel copy's `version` is the pinned one (D12). The adopted tree
+keeps the provider tokens in `<data dir>/secrets/secrets.json` behind its
+`"credentialMasks": ["secrets/"]` directory entry, which the OS sandbox and the agent's
+file tools both mask. On its first read with no store there it copies the data-home root
+`ops_mission_control_secrets.json` in and keeps that root file, rewritten on every save or
+revoke, as the copy a wheel copy reads after a downgrade, so the root file's rows below
+stay while the wheel copy ships. Its `app.json` declares the same `permissions` and the
+same `agentTools` as the wheel copy, plus that mask, which only narrows what an agent
+reaches, so E9 holds nothing back; its crons keep their names, schedules and enabled
+flags, and their prompts name the SOPs at the adopted skill's path. A fix to the app lands in that repository
+first; a change to the wheel copy needs its `App repo:` line.
+
 ## Repository boundary
 
 The whole app is meant to leave this repository intact: the package under
 `apps/builtins/ops_mission_control/` and the UI under `website/src/apps/ops-mission-control/`.
 Kiro Crew core does not import either. What the app needs from the core it imports from
-the core: the `webhooks` governance gate (`webhook_sources.source_refusal`), the
+the core: the `webhooks` governance gate (`webhook_sources.app_source_refusal`), the
 notification bus, the redactor, the grapheme-safe cut and the hidden-leaf staging. The
 app's tests of those pins live in its own `tests/` (`test_webhook_governance.py`,
 `test_notify_clip.py`, `test_github_issues_stderr_excerpts.py`,
@@ -30,11 +50,12 @@ shrink. Each row is deleted in the change that removes what it names:
   title row in `data/mcp_tool_titles.json` stays until the app leaves, because the chat's
   tool label and a remote session's whole-server grant read that table by name.
   The core's hand-written `apps` MCP domain, whose `TOOL_APPS`
-  `apps.builtin_adoption_checks.core_named_apps` read, was deleted with this tool, its last;
-  the webhook source id below still names the app, so adoption from the app's own
-  repository is still refused there.
-* **The `ops-mission-control` webhook source id** in `webhook_sources.py`: the core's
-  governance vocabulary, which a policy names and an app may not choose for itself.
+  `apps.builtin_adoption_checks.core_named_apps` read, was deleted with this tool, its last.
+* **The webhook source is the app's own.** `app.json` declares
+  `permissions.webhookSource` (`app-kit-platform.md`, section 42), so the `webhooks`
+  scope governs the ingress under the app's name, `ops-mission-control`, the id existing
+  policies already name. No core constant names it, and adoption's E10 no longer
+  refuses the app on it.
 * **The sandbox leaf tables** (`sandbox_leaves.py`, `sandbox_aliases.py`,
   `security/paths_lists.py`) that hide the secret store, hold the autonomy ceiling
   read-only and write-protect the rotation schedule and the incident index. The
@@ -43,7 +64,9 @@ shrink. Each row is deleted in the change that removes what it names:
   store is `<data home>/ops_mission_control_secrets.json`, at the data-home root. The
   rows leave when the store lives under `apps/ops-mission-control/data/` and the
   manifest declares it there (#32681); the root name then stays masked as a retired leaf, as
-  `browser-cookies.txt` does, because a restored backup can bring it back.
+  `browser-cookies.txt` does, because a restored backup can bring it back. An adopted
+  record already keeps its store under `data/secrets/` (above), but it rewrites the root
+  file as the wheel copy's downgrade copy, so the rows stay until the wheel copy leaves.
 * **The `security_posture*.py` rows** that classify the app's files: the core's audit of
   the app's code.
 * **The packaged skill** `builtin_skills/ops-mission-control/` and its row in the closed
@@ -1964,7 +1987,7 @@ callers.
 the app's `secrets.redact_tokens` (provider-token shapes). Both are needed and it is
 worth naming why, because picking one looks sufficient: core alone leaves a bare-hex
 Datadog key and a prefix-less `Bearer` token in place, and the app pass alone leaves
-an AWS access key id. `registry.gather_evidence` composes them the same way, so the
+an AWS secret key. `registry.gather_evidence` composes them the same way, so the
 two paths provider text leaves this app sanitize to one standard.
 
 **The pre-push ledger scan follows the same rule.** `ledger_sync._credential_bearing_lines` is
@@ -1985,7 +2008,7 @@ scanners over those is a verified no-op.
 
 **What this does and does not promise.** It masks credential *shapes*: recognized
 vendor key formats, the carrier forms (`Bearer …`, `token=…`, `DD-APPLICATION-KEY:
-…`), and exfiltration URLs. It does **not** understand meaning, so it will not remove
+…`), inside URLs too. It does **not** understand meaning, so it will not remove
 an internal hostname, a customer identifier, a stack trace naming private code paths,
 or a secret with no recognizable shape. The artifact is safe to share in the sense
 that a credential is very unlikely to ride out inside it; it is **not** a
@@ -2643,13 +2666,13 @@ uses them.
 
 `slack_out._safe()` is the single chokepoint for everything outbound and applies
 `security.redact` **and** `secrets.redact_tokens`. Neither is a superset of the other:
-`redact` knows AWS keys and exfiltration URLs, `redact_tokens` knows the PROVIDER-specific
+`redact` knows AWS secret keys and credentials inside URLs, `redact_tokens` knows the PROVIDER-specific
 token shapes this app handles.
 
 A Datadog app-key shape and a PagerDuty `u+` token both pass through `redact` **completely
 unchanged** and are masked only by `redact_tokens`, so a single pass would republish a
 provider-authored alarm title carrying a key into the channel verbatim. A test using only an
-`AKIA` key, which `redact` *does* catch, would stay green either way.
+AWS secret key beside its key ID, which `redact` *does* catch, would stay green either way.
 
 One function rather than three call sites: three sites each remembering two passes is three
 chances to forget the second. A test asserts the only

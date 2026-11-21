@@ -355,12 +355,23 @@ def format_permissions_summary(manifest: AppManifest) -> str:
         lines.append("  Storage:   app-scoped data directory")
     if perms.network:
         lines.append("  Network:   outbound HTTP access")
-    if perms.memory:
+    # A JSON ``false`` or ``null`` is stored as the text "False" / "None" (the stored
+    # form is signed, so it stays): neither requests memory, the same rule as the
+    # store page's ``memoryRequested``.
+    if perms.memory.strip().lower() not in ("", "false", "none"):
         lines.append(f"  Memory:    {perms.memory}")
     if perms.cron:
         lines.append("  Cron:      scheduled agent jobs")
     if perms.chatSlots:
         lines.append("  Chat:      runs its own chat sessions, listed under the app")
+    if perms.hiddenSessions:
+        lines.append("  Chat list: keeps its own chats out of your session list")
+    if perms.chatLaunch is not None:
+        launch = perms.chatLaunch
+        where = f" in the {launch.folder!r} folder" if launch.folder else ""
+        lines.append(f"  Chats:     may open chats for you with {', '.join(launch.agents)}{where}")
+        modes = ", ".join(launch.memory_modes)
+        lines.append(f"             chat keys start with {launch.key_prefix!r}; memory: {modes}")
     if perms.workerAutoApprove:
         lines.append("  Auto-approve: tool calls in its own background sessions (bounded)")
     if perms.reachableByUserSessions:
@@ -369,6 +380,11 @@ def format_permissions_summary(manifest: AppManifest) -> str:
     if perms.desktopCapabilities:
         words = ", ".join(_DESKTOP_CAPABILITY_WORDS[c] for c in perms.desktopCapabilities)
         lines.append(f"  Desktop:   may {words}")
+    if perms.webhookSource:
+        lines.append(
+            f"  Webhooks:  accepts requests from outside services, which can start work"
+            f" (security-policy name {manifest.name!r})"
+        )
 
     if not lines:
         return "  No special permissions required"

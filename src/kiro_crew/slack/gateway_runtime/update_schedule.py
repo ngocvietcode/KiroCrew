@@ -313,8 +313,9 @@ _UPDATE_BUSY_RETRY_SECS = 300.0
 #: How long the pre-restart drain waits for callbacks and refusal writes to
 #: become durable before deferring the restart. Named so a test about the
 #: fetch/reset/venv SEQUENCE can shorten it (the drain polls at 10ms to the
-#: deadline, 30s of sleeping per test otherwise); the value itself stays pinned
-#: by the test that IS about it (``test_restart_fences_then_closes_and_final_drains``).
+#: deadline, 30s of sleeping per test otherwise); the value itself is pinned by
+#: ``test_a_restart_gives_an_unsettled_callback_thirty_seconds_then_defers``
+#: (test_update_restart_respects_work.py).
 _UPDATE_DRAIN_TIMEOUT_SECS = 30.0
 
 
@@ -549,7 +550,7 @@ async def _check_for_updates_via_provider(self: GatewayOrchestrator, provider: o
         if self.dashboard_state:
             self.dashboard_state.push_refresh("update_available")
     else:
-        print("👻 Already on latest version")
+        print("Already on latest version")
 
 
 async def _check_for_updates_legacy(self: GatewayOrchestrator) -> None:
@@ -870,7 +871,7 @@ async def _check_for_updates_legacy(self: GatewayOrchestrator) -> None:
             # `handlers/updates_check.py` exists to prevent.
             logger.info("Update check did not complete (%s)", info.get("error_code"))
         elif info.get("check_status") == CHECK_SUCCEEDED:
-            print("👻 Already on latest version")
+            print("Already on latest version")
         else:
             # DEFERRED (a desktop bundle whose own updater owns this), or a
             # check that never ran. Neither carries an `error_code`, so keying

@@ -248,6 +248,13 @@ _REVIEWED_EDITABLE = frozenset(
         # How many chat sessions one shared agent process serves before another
         # starts: a pooling size, not sharing with another person.
         "agent.chat_runtime_sharing_max_sessions",
+        # Whether one harness's chats may pool into one agent process: the same
+        # pooling, per harness, still under the preview. Not sharing with a person.
+        "agent.chat_runtime_sharing_harnesses.kas",
+        "agent.chat_runtime_sharing_harnesses.codex",
+        "agent.chat_runtime_sharing_harnesses.claude",
+        "agent.chat_runtime_sharing_harnesses.goose",
+        "agent.chat_runtime_sharing_harnesses.deepseek",
         # Local trace and metric sizes and ages: how much a cron run's trace field
         # keeps, how long and how large the on-disk shards grow. They send nothing.
         "cron_history.cron_trace_cap_kb",
@@ -259,6 +266,9 @@ _REVIEWED_EDITABLE = frozenset(
         # Whether a conductor-mode round is one trace or one per turn: the shape of
         # spans that Traces Enabled (read only here) already exports, never a switch.
         "telemetry.traces_conductor_mode",
+        # Whether an authenticated caller's traceparent header parents the turn it
+        # starts. It adds no listener, route or credential and needs Traces Enabled.
+        "telemetry.accept_traceparent",
     }
 )
 
@@ -507,6 +517,36 @@ async def test_patch_stores_a_loadable_timezone(tmp_config, value) -> None:
     assert _stored(tmp_config)["timezone"] == value
 
 
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        ("agent.kas_sso_start_url", "http://example-org.awsapps.com/start"),
+        ("agent.kas_sso_start_url", "https://example-org.awsapps.com/start?x=1"),
+        ("agent.kas_sso_region", "evil.com/"),
+    ],
+)
+async def test_patch_refuses_a_company_sign_in_value_sign_in_would_refuse(
+    tmp_config, path, value
+) -> None:
+    status, body = await _send({"path": path, "value": value})
+    assert status == 400, body
+    assert path.split(".")[1] not in _stored(tmp_config).get("agent", {})
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        ("agent.kas_sso_start_url", "https://example-org.awsapps.com/start"),
+        ("agent.kas_sso_start_url", ""),
+        ("agent.kas_sso_region", "us-east-1"),
+    ],
+)
+async def test_patch_stores_a_company_sign_in_value(tmp_config, path, value) -> None:
+    status, body = await _send({"path": path, "value": value})
+    assert status == 200, body
+    assert _stored(tmp_config)["agent"][path.split(".")[1]] == value
+
+
 def test_a_key_another_action_owns_is_read_only() -> None:
     """A field whose help says a plain config write must not set it stays read-only."""
     owned = [
@@ -581,6 +621,7 @@ def test_a_dashboard_route_key_links_to_its_control() -> None:
         "dashboard.language",
         "dashboard.theme_color",
         "dashboard.privacy_ack_version",
+        "dashboard.kiro_telemetry_ack_version",
     ],
 )
 def test_a_key_the_theme_route_writes_is_never_edited_here(path: str) -> None:
@@ -698,3 +739,51 @@ async def test_patch_refuses_a_key_another_route_writes(tmp_config, path, value)
     status, body = await _send({"path": path, "value": value})
     assert status == 400, body
     assert key not in _stored(tmp_config).get(section, {})
+
+
+#: The MCP safety switches: written only by the owner-gated
+#: ``/api/security/safety-switches`` route, from Settings -> Security -> Safety switches.
+_SAFETY_SWITCH_LINKS = {
+    "mcp.protect_kiro_permission_rules": "security.stop-the-agent-from-editing-its-own-permission-rules",
+    "mcp.honour_auto_approve": "security.ask-me-before-running-tools-an-mcp-server-pre-approves",
+}
+
+
+@pytest.mark.parametrize("path", sorted(_SAFETY_SWITCH_LINKS))
+def test_a_safety_switch_links_to_its_security_control(path: str) -> None:
+    assert all_settings.descriptor(_BY_PATH[path]) == {
+        "mode": "control",
+        "settingId": _SAFETY_SWITCH_LINKS[path],
+    }
+    # Still a safety key: no generic write rule, and no change-card rule either.
+    assert all_settings.READONLY_REASONS[path] == all_settings.WHY_SAFETY
+    assert all_settings.generic_spec(path) is None
+    assert _editable_config_spec(path) is None
+
+
+@pytest.mark.parametrize("path", sorted(_SAFETY_SWITCH_LINKS))
+@pytest.mark.parametrize("value", [True, False])
+async def test_patch_refuses_a_safety_switch(tmp_config, path: str, value: bool) -> None:
+    section, key = path.split(".")
+    status, body = await _send({"path": path, "value": value})
+    assert status == 400, body
+    assert key not in _stored(tmp_config).get(section, {})
+
+
+async def test_the_idle_unload_row_takes_a_number_or_auto(tmp_config) -> None:
+    """The field is ``int | str``; the row stays an editable number box that also takes "auto"."""
+    record = all_settings.descriptor(_BY_PATH["memory.embedding_idle_evict_secs"])
+    assert record is not None and record["mode"] == "edit" and record["control"] == "int"
+
+    status, body = await _send({"path": "memory.embedding_idle_evict_secs", "value": 900})
+    assert status == 200, body
+    assert _stored(tmp_config)["memory"]["embedding_idle_evict_secs"] == 900
+
+    status, body = await _send({"path": "memory.embedding_idle_evict_secs", "value": "auto"})
+    assert status == 200, body
+    assert _stored(tmp_config)["memory"]["embedding_idle_evict_secs"] == "auto"
+
+    for bad in ("soon", -1, 365 * 24 * 3600 + 1):
+        status, body = await _send({"path": "memory.embedding_idle_evict_secs", "value": bad})
+        assert status == 400, (bad, body)
+    assert _stored(tmp_config)["memory"]["embedding_idle_evict_secs"] == "auto"

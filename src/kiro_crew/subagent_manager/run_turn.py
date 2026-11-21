@@ -21,8 +21,8 @@ no other.
 The manager fields this module uses. Writes: ``_agents``, ``_conversations``. Reads:
 ``_clear_tool_dispatch``, ``_completion_keep``, ``_completion_keep_chars``, ``_ctx_builder``,
 ``_effective_turn_limit``, ``_fire_event``, ``_leave_startup``, ``_note_tool_dispatch``,
-``_note_tool_result``, ``_provider_label_of``, ``_sessions``, ``_sharing_plan``,
-``_shutting_down``, ``_start_result_file``, ``_stop_error_text``,
+``_note_tool_result``, ``_note_tool_update``, ``_provider_label_of``, ``_sessions``,
+``_sharing_plan``, ``_shutting_down``, ``_start_result_file``, ``_stop_error_text``,
 ``_stop_recovery_wanted``, ``_touch_activity``, ``_write_finished_result_off_loop``,
 ``_write_state_off_loop``, ``_write_tombstone``, ``_yield_for_dependency``,
 ``_yield_for_infra_retry``, ``_yield_for_stop_recovery``, ``arm_report_in_flight``,
@@ -271,19 +271,15 @@ async def _run_inner_impl(
         # The worker's spec lives in the crewmate folder, which the agent roster
         # does not list, so it is not looked up by name; what it needs is a
         # backend that carries its per-session kit (the hand-off's own check).
-        from kiro_crew.acp_backends import resolve_selected_backend
         from kiro_crew.config.loader import KiroCrewConfig as _Config
         from kiro_crew.crewmate_harness import CrewmateHarnessUnavailable, crew_for_member_id
-        from kiro_crew.mate_worker import crewmate_worker_backend, worker_kit_backend_refusal
+        from kiro_crew.mate_worker import subagent_start_backend, worker_kit_backend_refusal
 
         _cfg = await asyncio.to_thread(_Config.load)
         _crew = crew_for_member_id(_cfg, str(execution.member_id or ""))
         try:
-            worker_backend = (
-                resolve_selected_backend(info.backend)
-                if info.backend is not None
-                else crewmate_worker_backend(_cfg, _crew)
-            )
+            # The one resolver admission also reads (``api_spawn``'s light tier).
+            worker_backend = subagent_start_backend(_cfg, execution, info.backend)
         except CrewmateHarnessUnavailable as exc:
             # The crewmate's pinned harness cannot start, so neither can its
             # worker; it never runs on another harness in its place. The
@@ -325,10 +321,12 @@ async def _run_inner_impl(
     # An explicit per-spawn model wins; otherwise fall back to the
     # configured sub-agent role model (agent.role_models['subagent']). When
     # that role is unpinned the helper returns "" so we omit the kwarg and
-    # keep deferring to the provider's configured default, exactly as before.
+    # defer to the provider's configured default.
+    #
     # The one sharing decision (``_sharing_plan``), which admission also read
     # to price this start: template execution, not ``keep``, the eligibility
     # predicate, and no model / reasoning-effort pin.
+    #
     # An UNPINNED start may take a model from ``model.route``'s derived tiers
     # (``decisions.model_route_derive``, off by default). Decided before the
     # sharing plan, which reads the routed model as a pin: a routed model
@@ -414,6 +412,11 @@ async def _run_inner_impl(
         await inherit_environment_for_subagent(info.parent_session_key, session_key)
     )
     info._remote_workspace = inherits_remote
+    if info.parent_session_key:
+        # The child reads and writes the memory its parent's chat is frozen to.
+        from kiro_crew.memory_provider.resolver import inherit_snapshot
+
+        await asyncio.to_thread(inherit_snapshot, session_key, info.parent_session_key)
     if info.keep:
         self._manager._sessions.mark_continuable(session_key)
         self._manager._conversations[session_key] = time.monotonic()
@@ -469,6 +472,11 @@ async def _run_inner_impl(
     # run never spends a turn discovering the absence for itself. Empty for a
     # healthy session, which leaves this prompt exactly as it was.
     message = self._spawn_mcp_notice(mcp_problems) + message
+    # A spec field the claude session does not apply is named the same way.
+    notice = await _session.spec_builtin_tools_notice(
+        client, info, session_key, fresh=is_new and not _resumed
+    )
+    message = notice + message
     # Scale the injected-context budget to this subagent's model window (a
     # subagent can be pinned to a smaller model). Resolved from the live
     # client; None ⇒ 1M reference.
@@ -552,13 +560,17 @@ async def _run_inner_impl(
     _result_file_started = False
     # Cache tool names by tool_call_id so PostToolUse can recover the tool name
     # when EVENT_TOOL_RESULT arrives (which only carries tool_call_id and output).
-    # Mirrors kiro_crew.dashboard.chat_runner._pending_tools.
+    # Mirrors the chat turn's ``turn._pending_tools`` (dashboard/chat_turn).
     _pending_tools: dict[str, str] = {}
     # tool_call_id -> the tool id the call's PostToolUse spec hooks match on.
+    from kiro_crew.agent_sdk.drivers.acp_vocab import EVENT_TOOL_CALL_UPDATE
     from kiro_crew.agent_sdk.spec_hooks import PostToolIdentity, post_tool_identity
     from kiro_crew.hooks import pre_tool_match_names
+    from kiro_crew.subagent_manager.card_tool_titles import CardToolTitles
 
     _pending_tool_ids: dict[str, PostToolIdentity] = {}
+    # The card rows a call's ``tool_call_update`` renames.
+    _card_titles = CardToolTitles(client)
     # The subagent's OWN spec hooks, when its OWN backend never receives them:
     # keyed on this run's agent and provider, never the parent's, so a
     # kiro-cli subagent (whose harness runs the field) gets none from Crew.
@@ -631,10 +643,16 @@ async def _run_inner_impl(
 
     # The host's refusal in the current prompt attempt, as (title, reason,
     # cause), set by the permission branch below and read by the stream when
-    # the turn then ends cancelled; and how many such turns this run resumed.
+    # the turn then ends on it; and how many such turns this run resumed.
     _refused_call: list[tuple[str, str, str]] = []
     _person_rejected = [False]
     _refusal_resumes = [0]
+    # Whether the model wrote or called anything after the latest refusal.
+    # opencode answers ``reject_once`` by ending a clean turn ``end_turn`` on
+    # the refusal itself, which leaves it unanswered; other harnesses go on
+    # after a reject, so only opencode's clean ending is read as one.
+    _refusal_answered = [False]
+    _reject_ends_turn = getattr(client, "is_opencode_backend", False) is True
     # Set when the stream ends on a generate failure after real output.
     _kept_after_generate_failure = False
     # One run owns one immutable manager deadline. Capture a transport
@@ -755,6 +773,7 @@ async def _run_inner_impl(
             self._manager._clear_tool_dispatch(info)
             _refused_call.clear()
             _person_rejected[0] = False
+            _refusal_answered[0] = False
             try:
                 if not use_session_sharing:
                     # Publish the live dedicated PID before every prompt,
@@ -782,10 +801,12 @@ async def _run_inner_impl(
                 # by a continuation on the same session.
                 _withheld: LLMEvent | None = None
                 _infra: Any = None
-                # A completion CANCELLED right after the host refused a call:
-                # codex's only reject option for a shell command aborts the
-                # whole turn. It is withheld, and the turn resumes on the same
-                # session with the refusal as the next prompt.
+                # A completion that ends the turn ON the host's refusal: codex's
+                # only reject option for a shell command aborts the whole turn
+                # (``cancelled``), and opencode ends a clean turn on a reject
+                # with nothing after it. Where no steer carried the reason in,
+                # it is withheld, and the turn resumes on the same session with
+                # the refusal as the next prompt.
                 _refused_turn: LLMEvent | None = None
                 # The completion that ends this prompt, if the stream sent one.
                 _ended: LLMEvent | None = None
@@ -827,7 +848,14 @@ async def _run_inner_impl(
                             _withheld = _ev
                             continue
                         if (
-                            _stop_c.name == STOP_CLASS_CANCELLED
+                            (
+                                _stop_c.name == STOP_CLASS_CANCELLED
+                                or (
+                                    _stop_c.is_success
+                                    and _reject_ends_turn
+                                    and not _refusal_answered[0]
+                                )
+                            )
                             and _refused_call
                             and not _person_rejected[0]
                             and _refusal_resumes[0] < REFUSED_TURN_RESUME_MAX
@@ -857,6 +885,8 @@ async def _run_inner_impl(
                         # continuation prompt starts.
                         _ended = _ev
                         continue
+                    if _refused_call and _ev.kind in (EVENT_TEXT_CHUNK, EVENT_TOOL_CALL):
+                        _refusal_answered[0] = True
                     yield _ev
                 if _refused_turn is not None:
                     # Every prompt end fires Stop, a resumed one included.
@@ -869,7 +899,7 @@ async def _run_inner_impl(
                     usage.settle(_refused_turn)
                     _refusal_resumes[0] += 1
                     logger.info(
-                        "Subagent %s: turn cancelled after a host refusal; resuming (%d/%d)",
+                        "Subagent %s: turn ended on a host refusal; resuming (%d/%d)",
                         info.id,
                         _refusal_resumes[0],
                         REFUSED_TURN_RESUME_MAX,
@@ -1000,6 +1030,8 @@ async def _run_inner_impl(
                                 try:
                                     setattr(exc, FALLBACK_STORY_ATTR, _story)
                                 except Exception:
+                                    # An exception type that refuses attributes cannot carry the
+                                    # story.
                                     pass
                             raise
                     _fb_delay = transient_retry_delay(1)
@@ -1071,6 +1103,21 @@ async def _run_inner_impl(
     _turn_t0 = time.monotonic()
     _row_t0[0] = _turn_t0
     from kiro_crew.agent_sdk.drivers.acp_vocab import EVENT_MODEL_FALLBACK, engine_served_model
+
+    # The harness the run is on: opencode names a Crew tool only in its title.
+    _harness = getattr(getattr(client, "client", None), "backend", None)
+    _harness = _harness if isinstance(_harness, str) else None
+    from kiro_crew.acp_backends import ACP_BACKEND_CLAUDE, ACP_BACKEND_PI
+
+    def _harness_servers() -> tuple[str, ...]:
+        # pi and claude name a Crew tool only by a fused name, read as Crew's only
+        # for a server the session handed the harness; read at each dispatch, since
+        # a respawn hands the servers again.
+        names = getattr(getattr(client, "client", None), "_harness_mcp_server_names", None)
+        if _harness not in (ACP_BACKEND_PI, ACP_BACKEND_CLAUDE) or not callable(names):
+            return ()
+        found = names()
+        return tuple(found) if isinstance(found, (tuple, list)) else ()
 
     async for event in _stream_with_transient_retry():
         # Refresh the activity clock for every event kind that BELONGS to
@@ -1242,7 +1289,8 @@ async def _run_inner_impl(
             # increment is parent-scoped.
             info.last_tool = event.title or ""
             info.last_tool_call_id = event.tool_call_id or ""
-            self._manager._note_tool_dispatch(info, event)
+            self._manager._note_tool_dispatch(info, event, _harness, _harness_servers())
+            _card_titles.note_call(event)
             # Persist turn state for orphan recovery diagnostics. Off-loop
             # and drained on cancellation via _write_state_off_loop — the
             # highest-frequency of the three off-loop state
@@ -1253,6 +1301,7 @@ async def _run_inner_impl(
                     info, "diagnostics", turns=turns, last_tool=event.title or ""
                 )
             except Exception:
+                # Diagnostics only: a failed write must not stop the tool event.
                 pass
             await self._manager._fire_event(
                 "subagent_tool",
@@ -1295,6 +1344,7 @@ async def _run_inner_impl(
                 _person_rejected[0] = True
             elif settled.outcome == "refused" and settled.cause is not None:
                 _refused_call.append((event.title or "", settled.reason, settled.cause))
+                _refusal_answered[0] = False
             if settled.rung == "stopped":
                 # The ladder bailed this request for a stop that landed
                 # while it was being settled: the run ends here, as at the
@@ -1335,7 +1385,8 @@ async def _run_inner_impl(
             info.last_tool = event.title or info.last_tool
             if event.title:
                 info.last_tool_call_id = event.tool_call_id or ""
-            self._manager._note_tool_dispatch(info, event)
+            self._manager._note_tool_dispatch(info, event, _harness, _harness_servers())
+            _card_titles.note_call(event)
             await self._manager._fire_event(
                 "subagent_tool",
                 info,
@@ -1384,6 +1435,9 @@ async def _run_inner_impl(
                     parent_session_key=info.parent_session_key or None,
                     agent_role=info.agent or None,
                 )
+        elif event.kind == EVENT_TOOL_CALL_UPDATE:
+            self._manager._note_tool_update(info, event)
+            await _card_titles.refine(self._manager, info, event)
         elif event.kind == EVENT_TOOL_RESULT:
             # A FINAL result means the tool is done: drop the attribution
             # snapshot so a later idle stretch is not judged against a

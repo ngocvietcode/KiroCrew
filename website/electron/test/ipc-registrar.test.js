@@ -62,15 +62,18 @@ test("registerShell owns the exact shell channel set and is idempotent", () => {
   assert.strictEqual(h.registrar.registerShell(), h.registrar.summonDashboard);
   assert.doesNotThrow(() => h.registrar.registerShell());
 
+  // The exact sorted channel lists above decide the inventory, one channel per
+  // line; a hand-kept total beside them added no check and was the one line two
+  // changes adding different channels both rewrote to the same number
+  // (testing-conventions.md § Merge-safe ratchets and counts).
   assert.deepEqual([...h.handlers.keys()].sort(), SHELL_HANDLES);
   assert.deepEqual([...h.listeners.keys()].sort(), SHELL_LISTENERS);
-  assert.equal(h.handlers.size + h.listeners.size, 47);
+  assert.ok(h.handlers.size > 0 && h.listeners.size > 0);
 
   // boot-complete is a further non-update host channel, but it is deliberately
   // gateway-owned and scoped to a single connecting WebContents. Registering it
   // globally here would weaken its sender check and leak listeners.
   assert.match(GATEWAY_SOURCE, /ipcMain\.on\("boot-complete", onComplete\)/);
-  assert.equal(h.handlers.size + h.listeners.size + 1, 48);
   assert.equal(h.handlers.has("boot-complete"), false);
   assert.equal(h.listeners.has("boot-complete"), false);
 
@@ -147,11 +150,10 @@ test("shell handlers preserve sender, argument, and return shapes", async () => 
   assert.deepEqual(lastCall(h.windowCalls, "menu.setDevMode").slice(1), [true]);
 
   const chromeCases = [
-    ["theme-accent-changed", "chrome.setThemeAccent", ["#8E48FF"]],
     ["focus-mode-chrome", "chrome.focusMode", [sender, false]],
     ["focus-mode-watch-cursor", "chrome.watchFocusCursor", [sender, true]],
     ["window-control", "chrome.windowControl", [sender, "maximize", senderFrame]],
-    ["theme-mode-changed", "chrome.setThemeMode", ["dark"]],
+    ["theme-mode-changed", "chrome.setThemeMode", ["dark", sender]],
     ["titlebar-overlay-theme", "chrome.setTitlebarMode", ["light"]],
   ];
   for (const [channel, owner, args] of chromeCases) {
@@ -1417,7 +1419,7 @@ test("pane:clear-http-cache is gated to the local dashboard sender", async () =>
   assert.equal(purges.length, 0);
 });
 
-// ── close-action:* (#12204) and tray-icon:* (#21924) ────────────────────────
+// ── close-action:* (#12204), tray-icon:* and minimize-to-tray:* (#21924) ────
 //
 // The settings sit in the MAIN window's Settings, beside its close button, so
 // every channel answers only that window's own top frame on its dashboard
@@ -1429,6 +1431,8 @@ const MAIN_WINDOW_SETTING_CHANNELS = [
   ["close-action:set", ["quit"]],
   ["tray-icon:get", []],
   ["tray-icon:set", [false]],
+  ["minimize-to-tray:get", []],
+  ["minimize-to-tray:set", [true]],
 ];
 const MAIN_WINDOW_ONLY = (channel) => ({
   message: `${channel} is restricted to the main window's dashboard`,

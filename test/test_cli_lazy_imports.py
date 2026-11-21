@@ -52,6 +52,7 @@ _BANNED_AFTER_CLI_IMPORT = (
     "kiro_crew.cli_commands_eval",
     "kiro_crew.cli_commands_learn",
     "kiro_crew.cli_commands_secrets",
+    "kiro_crew.cli_commands_usage",
     "kiro_crew.cli_server",
     "kiro_crew.slack.gateway",
     "kiro_crew.dashboard.state",
@@ -89,7 +90,7 @@ def test_cli_import_does_not_load_heavy_modules(tmp_path: Path) -> None:
     assert present == [], (
         f"module-scope import of kiro_crew.cli loaded deferred modules: {present}. "
         "A new (or moved-back) module-scope import reaches them — defer it into "
-        "the main() dispatch branch that uses it (see issue #3504)."
+        "the main() dispatch branch that uses it."
     )
 
 
@@ -273,7 +274,7 @@ def test_platform_composition_error_still_aborts_mcp_core(monkeypatch, capsys) -
     assert exited.value.code == 1
     assert dispatched == [], "mcp-core dispatched despite a failed platform composition"
     err = capsys.readouterr().err
-    assert "❌ companion missing" in err
+    assert "Error: companion missing" in err
     assert "Traceback" not in err
 
 
@@ -295,6 +296,6 @@ def test_a_policy_error_reaches_policy_validate_as_one_line(monkeypatch, capsys)
     assert exited.value.code == 1
     assert ran == []
     err = capsys.readouterr().err
-    assert "❌ unknown governed key 'sandbox.enabeld' (fail-closed)" in err
+    assert "Error: unknown governed key 'sandbox.enabeld' (fail-closed)" in err
     assert "kirocrew doctor" in err
     assert "Traceback" not in err

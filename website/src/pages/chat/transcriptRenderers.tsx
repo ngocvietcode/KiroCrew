@@ -36,7 +36,7 @@ import ElicitationCard from './ElicitationCard'
 import ThinkingBlock from './ThinkingBlock'
 import ToolCallLine from './ToolCallLine'
 import NudgeCard, { nudgeMatchesLoop } from './NudgeCard'
-import ConversationCard, { CARD_ROLE } from '../../cards/ConversationCard'
+import ConversationCard, { CARD_ROLE, changeCardShownAgainBelow } from '../../cards/ConversationCard'
 import RecoveryCard, { opensTurn, resolveInjectCard } from './RecoveryCard'
 import { SystemNoticeRow, isSystemNoticeRow } from './CompactionCard'
 import SkillLoadCard, { isSkillLoadRow } from './SkillLoadCard'
@@ -640,7 +640,8 @@ export function createTranscriptRenderers(
       // the run of the reply that explains it, in the same column and exactly
       // as wide as a reply.
       render: (m, ctx) => {
-        if (!crewmate) return ctx.row(<ConversationCard message={m} slot={o.slot} />)
+        const shownAgainBelow = changeCardShownAgainBelow(m, ctx.messages, ctx.index)
+        if (!crewmate) return ctx.row(<ConversationCard message={m} slot={o.slot} shownAgainBelow={shownAgainBelow} />)
         const pos = crewmateRunPosition(ctx.messages, ctx.index, crewmateTranscriptOf())
         return ctx.row(
           <CrewmateMessage pos={pos}>
@@ -648,7 +649,7 @@ export function createTranscriptRenderers(
             <div className="max-w-[72ch]" style={{ fontSize: 'var(--mc-message-font-size, 14px)' }}>
               <CardCornersContext.Provider value={crewmateCornerClass(pos)}>
                 <CardAuthorContext.Provider value={crewmate.label || crewmate.name}>
-                  <ConversationCard message={m} slot={o.slot} />
+                  <ConversationCard message={m} slot={o.slot} shownAgainBelow={shownAgainBelow} />
                 </CardAuthorContext.Provider>
               </CardCornersContext.Provider>
             </div>
@@ -867,6 +868,11 @@ export function createTranscriptRenderers(
             onOpenSignIn={authRequired ? o.onOpenSignIn : undefined}
             unentitledElsewhere={pickModelFix}
             featureRequestFormUrl={featureRequestFormUrl}
+            // The newest row only, where the gateway's wait lives (it ends once the
+            // chat no longer ends on that row). The card offers a new wait only
+            // where Resume itself could run, so never on a relay archive
+            // (`continuable` is false there), and keeps Cancel while one is held.
+            limitContinueSlot={isUsageLimit(m) && newest ? o.slot : undefined}
             kiroCliMissing={featureRequestFormUrl ? isKiroCliMissing(m) : undefined}
             onOpenCapabilities={openCapabilities}
             onOpenTurnLimit={isTurnTimeout(m) ? o.onOpenTurnLimit : undefined}
@@ -916,6 +922,7 @@ export function createTranscriptRenderers(
                   meta: mt,
                   onFileOpen: ctx.onFileOpen,
                   onFolderOpen: ctx.onFolderOpen,
+                  onArtifactOpen: ctx.onArtifactOpen,
                   onSessionOpen: o.onSessionOpen,
                   sessions: o.sessions,
                   activeSession: o.activeSession,

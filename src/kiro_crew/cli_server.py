@@ -180,8 +180,14 @@ def _status(args: argparse.Namespace) -> None:
     except Exception:
         print("Kiro Crew gateway is running but returned an unexpected response.")
         return
+    if not isinstance(data, dict):
+        # Valid JSON that is not an object (``[]``, ``null``, a string) parses
+        # without raising, so the handler above never sees it; the reads below
+        # would then raise on it. The owner fallback can return one too.
+        print("Kiro Crew gateway is running but returned an unexpected response.")
+        return
 
-    print(f"Kiro Crew v{__version__} 👻\n")
+    print(f"Kiro Crew v{__version__}\n")
     print(f"  Uptime:      {data.get('uptime', '—')}")
     print(f"  Sessions:    {data.get('sessions', 0)}")
     if data.get("session_map_writes_refused"):
@@ -390,7 +396,7 @@ async def _gateway(
         # before run_gateway starts serving.
         await asyncio.to_thread(cfg.save)
         await asyncio.to_thread(declare_saokhue_harness, config_path())
-        print(f"👻 Created default config: {config_path()}")
+        print(f"Created default config: {config_path()}")
 
     cfg = KiroCrewConfig.load()
 
@@ -419,7 +425,7 @@ async def _gateway(
     # is a frozen facade inventory.
     from kiro_crew.metrics import notice as usage_notice
 
-    usage_notice.print_notice_in_background(cfg)
+    usage_notice.print_notice_in_background(cfg, headless=no_dashboard)
     await run_gateway(
         cfg,
         no_dashboard=no_dashboard,
@@ -438,7 +444,7 @@ async def _run_task(args: argparse.Namespace) -> None:
 
     spec_path = Path(args.spec).resolve()
     if not spec_path.exists():
-        print(f"❌ Spec file not found: {spec_path}", file=sys.stderr)
+        print(f"Error: Spec file not found: {spec_path}", file=sys.stderr)
         sys.exit(1)
 
     # A stored Kiro CLI pick runs on KAS where kiro-cli offers v3; this process
@@ -450,7 +456,7 @@ async def _run_task(args: argparse.Namespace) -> None:
     cfg = KiroCrewConfig.load()
     from kiro_crew.metrics import notice as usage_notice
 
-    usage_notice.print_notice_in_background(cfg)
+    usage_notice.print_notice_in_background(cfg, headless=True)
     factory = build_provider_factory(cfg)
     sessions = SessionManager(cfg, provider_factory=factory)  # type: ignore[arg-type]
 
@@ -567,9 +573,9 @@ async def _run_task(args: argparse.Namespace) -> None:
     await sessions.start_pool()
 
     if fresh:
-        print(f"👻 Running spec (fresh): {spec_path}")
+        print(f"Running spec (fresh): {spec_path}")
     else:
-        print(f"👻 Running spec: {spec_path}")
+        print(f"Running spec: {spec_path}")
     task_name = getattr(args, "name", "")
     # Local: this module's top-level imports are a frozen facade inventory.
     from kiro_crew.hooks import FileTooLargeError
@@ -582,17 +588,17 @@ async def _run_task(args: argparse.Namespace) -> None:
             # refuses, one that is not UTF-8 or too large) and its workspace
             # writes. Reported like the missing-spec case above, not as a
             # traceback; the reason names which.
-            print(f"❌ Could not run {spec_path}: {exc}", file=sys.stderr)
+            print(f"Error: Could not run {spec_path}: {exc}", file=sys.stderr)
             sys.exit(1)
 
         label = result.name or result.task_id
         if result.status == "completed":
-            print(f"\n✅ Task completed — {label} ({len(result.tasks)} steps)")
+            print(f"\nDone: Task completed — {label} ({len(result.tasks)} steps)")
         elif result.status == "failed":
-            print(f"\n❌ Task failed ({label}): {result.error}", file=sys.stderr)
+            print(f"\nError: Task failed ({label}): {result.error}", file=sys.stderr)
             sys.exit(1)
         elif result.status == "cancelled":
-            print("\n⚠️  Task cancelled")
+            print("\nWarning: Task cancelled")
             sys.exit(1)
     finally:
         await sessions.close_all()
@@ -759,7 +765,7 @@ def _logs_cmd(args: argparse.Namespace) -> None:
         # password prompt would block forever with no way to cancel.
         if not sys.stdin.isatty():
             print(
-                "👻 Insufficient permissions to read the journal without sudo, "
+                "Error: Insufficient permissions to read the journal without sudo, "
                 "and stdin is not a TTY so sudo can't prompt.\n"
                 "   Add your user to the `systemd-journal` or `adm` group, or run:\n"
                 f"   sudo journalctl -u {unit} -f",
@@ -798,7 +804,7 @@ def _logs_cmd(args: argparse.Namespace) -> None:
     fallback = config_dir() / "gateway.log"
     if not fallback.exists():
         print(
-            "👻 No gateway logs found. Either install the service "
+            "Error: No gateway logs found. Either install the service "
             "(`kirocrew service install`) or start the gateway "
             "(`kirocrew gateway`).",
             file=sys.stderr,
@@ -996,4 +1002,5 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
     from kiro_crew.dashboard.tailnet import POLICY_OFF_DETAIL, policy_off  # noqa: F401
     from kiro_crew.env import node_augmented_path, node_bin_dirs  # noqa: F401
     from kiro_crew.gateway_lock import LockHolder  # noqa: F401
+    from kiro_crew.git_tmp_packs import UPDATE_FETCH_TIMEOUT_S, reap_stale_tmp_packs  # noqa: F401
     from kiro_crew.platform import release_apply  # noqa: F401

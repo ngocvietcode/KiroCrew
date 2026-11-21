@@ -38,15 +38,15 @@ class TestHandleCronListNextRun:
         with patch("kiro_crew.messaging.commands.compute_next_run_ts", return_value=now + 7200):
             result = asyncio.run(_handle_cron_command("cron list", cron_service, "C123", "t123"))
         assert result is not None
-        assert "⏭ in" in result
-        assert re.search(r"⏭ in \d+h", result)
+        assert "next in" in result
+        assert re.search(r"next in \d+h", result)
 
     def test_no_next_run_for_disabled(self, cron_service: CronService) -> None:
         cron_service._jobs = [_make_job(enabled=False)]
         with patch("kiro_crew.messaging.commands.compute_next_run_ts", return_value=None):
             result = asyncio.run(_handle_cron_command("cron list", cron_service, "C123", "t123"))
         assert result is not None
-        assert "⏭" not in result
+        assert "| next " not in result
 
     def test_next_run_days(self, cron_service: CronService) -> None:
         cron_service._jobs = [_make_job()]
@@ -54,7 +54,7 @@ class TestHandleCronListNextRun:
         with patch("kiro_crew.messaging.commands.compute_next_run_ts", return_value=now + 3 * 86400 + 7200):
             result = asyncio.run(_handle_cron_command("cron list", cron_service, "C123", "t123"))
         assert result is not None
-        assert "⏭ in 3d" in result
+        assert "next in 3d" in result
 
     def test_next_run_minutes(self, cron_service: CronService) -> None:
         cron_service._jobs = [_make_job()]
@@ -62,8 +62,8 @@ class TestHandleCronListNextRun:
         with patch("kiro_crew.messaging.commands.compute_next_run_ts", return_value=now + 1800):
             result = asyncio.run(_handle_cron_command("cron list", cron_service, "C123", "t123"))
         assert result is not None
-        assert "⏭ in" in result
-        assert re.search(r"⏭ in \d+m", result)
+        assert "next in" in result
+        assert re.search(r"next in \d+m", result)
 
     def test_next_run_less_than_one_minute(self, cron_service: CronService) -> None:
         cron_service._jobs = [_make_job()]
@@ -71,7 +71,7 @@ class TestHandleCronListNextRun:
         with patch("kiro_crew.messaging.commands.compute_next_run_ts", return_value=now + 30):
             result = asyncio.run(_handle_cron_command("cron list", cron_service, "C123", "t123"))
         assert result is not None
-        assert "⏭ in <1m" in result
+        assert "next in <1m" in result
 
     def test_next_run_past_due(self, cron_service: CronService) -> None:
         cron_service._jobs = [_make_job()]
@@ -79,7 +79,7 @@ class TestHandleCronListNextRun:
         with patch("kiro_crew.messaging.commands.compute_next_run_ts", return_value=now - 5):
             result = asyncio.run(_handle_cron_command("cron list", cron_service, "C123", "t123"))
         assert result is not None
-        assert "⏭ now" in result
+        assert "next now" in result
 
     def test_message_is_redacted(self, cron_service: CronService) -> None:
         job = _make_job()
@@ -89,10 +89,17 @@ class TestHandleCronListNextRun:
         # credential scanners internally and returns a plain str), so the assertion
         # is that the message went THROUGH it and the secret is gone — not the order
         # of two inner calls the module does not make.
-        with patch("kiro_crew.messaging.commands.compute_next_run_ts", return_value=None), \
-             patch("kiro_crew.messaging.commands.redact",
-                   return_value="[REDACTED]") as mock_redact:
-            result = asyncio.run(_handle_cron_command("cron list", cron_service, "C123", "t123"))
+        with (
+            patch(
+                "kiro_crew.messaging.commands.compute_next_run_ts", return_value=None
+            ),
+            patch(
+                "kiro_crew.messaging.commands.redact", return_value="[REDACTED]"
+            ) as mock_redact,
+        ):
+            result = asyncio.run(
+                _handle_cron_command("cron list", cron_service, "C123", "t123")
+            )
         mock_redact.assert_any_call(job.message)
         assert result is not None
         assert "[REDACTED]" in result
@@ -105,7 +112,7 @@ class TestHandleCronListNextRun:
         # returns whatever the test wanted.
         job = _make_job()
         secret = "Qh4Tm2Vx9KpRc/Z8Nw3Hd/" + "Jf1Lb5Gs0Ye9Ua2WkE"
-        job.message = "secret=" + secret
+        job.message = "aws_secret_access_key=" + secret
         cron_service._jobs = [job]
         result = asyncio.run(_handle_cron_command("cron list", cron_service, "C123", "t123"))
         assert result is not None

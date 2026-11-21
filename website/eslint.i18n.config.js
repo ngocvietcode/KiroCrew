@@ -404,6 +404,12 @@ export default [
       // Same false-negative class as the ghost: copy added to THIS path is not
       // reported, so keep it parser-facing and DOM-free.
       'src/lib/avatarPoses.ts',
+      // The labelled-instance favicon (`dashboard.instance_label`): one SVG tile,
+      // markup handed to the SVG parser, whose only text is the label's first
+      // character from config. DOM-free; its consumer `shell/branding.ts` stays
+      // fully gated. Same false-negative class: copy added to THIS path is not
+      // reported.
+      'src/lib/instanceFavicon.ts',
       // Same rationale, different convention: this app keeps its seed prompts in a
       // dedicated `lib/prompts.ts` rather than a `*Prompt.ts` file. Also prompt
       // payload sent over the wire, never rendered.
@@ -1651,6 +1657,16 @@ export default [
   // submission rather than localize it. See the module's own header.
   {
     files: ['src/components/sessionPulseWireValues.ts'],
+    rules: {
+      'i18next/no-literal-string': 'off',
+    },
+  },
+
+  // GRILL MARKER WIRE VALUE ONLY: the `[GRILL:]` opener the conductor writes,
+  // matched by value, so a translated one stops the card from drawing. See the
+  // module's own header.
+  {
+    files: ['src/app-sdk/protocol/grillWireValues.ts'],
     rules: {
       'i18next/no-literal-string': 'off',
     },

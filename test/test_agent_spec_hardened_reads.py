@@ -1154,8 +1154,7 @@ _EXPECTED_CALL_SITE_LABELS: dict[str, list[tuple[str, str]]] = {
     ],
     "kiro_crew/dashboard/agent_admin/fork_publish.py": [
         # Fork/publish create closures re-read the SOURCE inside the lock too —
-        # the pre-lock snapshot can miss a concurrent refresh's writes (GPT
-        # round-10 stale-copy finding).
+        # the pre-lock snapshot can miss a concurrent refresh's writes.
         ("api_agent_fork", "dashboard"),
         ("api_agent_publish", "dashboard"),
     ],
@@ -1429,6 +1428,8 @@ _EXPECTED_STRICT_CALL_SITE_LABELS: dict[str, list[tuple[str, str]]] = {
     "kiro_crew/acp/kas_agents.py": [("kas_agent_projection", "unknown")],
     # The one-time list of agent files that keep KAS's own mcp.json behaviour.
     "kiro_crew/acp/kas_mcp_json_legacy.py": [("kas_mcp_json_legacy", "unknown")],
+    # The KAS session-start notice reads each agent the backend may skip.
+    "kiro_crew/acp/kas_subagent_targets.py": [("kas_subagent_notice", "unknown")],
     "kiro_crew/acp/managed_agent_shadow.py": [("managed_agent_shadow", "unknown")],
     "kiro_crew/agent_materialization/conductor_agents.py": [
         ("conductor_spec_regeneration", "unknown"),
@@ -1516,6 +1517,9 @@ _EXPECTED_DECLARED_CLAIM_CALL_SITE_LABELS: dict[str, list[tuple[str, str]]] = {
     # The file a path reader and the pooled overlay follow for a pinned name.
     "kiro_crew/agent_parts/spec_lookup.py": [("session_agent_spec_path", "unknown")],
     "kiro_crew/mcp_gateway/session_servers.py": [("mcp_overlay_pin", "unknown")],
+    # The start refusal for a contested name on the hosts that read their servers
+    # from the session MCP read (R-SPEC-13).
+    "kiro_crew/acp/session_mcp.py": [("session_start_spec_check", "acp")],
 }
 _RATCHET_INVENTORY: dict[str, dict[str, list[tuple[str, str]]]] = {
     "declared_spec_claim": _EXPECTED_DECLARED_CLAIM_CALL_SITE_LABELS,

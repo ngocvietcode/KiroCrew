@@ -84,8 +84,9 @@ async def api_chat_slots(request: web.Request) -> web.Response:
     # principal) sees ONLY the sessions it owns or created -- the same set the
     # folder tree read shows it -- so admitting the session list for its folder
     # tools to resolve its own slot does not turn the list into an enumeration
-    # of the person's and other agents' sessions. The person and app callers get
-    # the full, unchanged response (an app row is already app-scoped downstream).
+    # of the person's and other agents' sessions. An app token's list is the
+    # slots its ``/api/ws`` snapshot shows it (below); the person and an
+    # internal-secret caller get the full, unchanged response.
     from kiro_crew.dashboard.token_auth import MEMBER_CHAT_PRINCIPAL_KEY
 
     if folder_principal(state, request):
@@ -104,6 +105,25 @@ async def api_chat_slots(request: web.Request) -> web.Response:
             for p in payloads
             if member_owns_slot(state, state._slots.get(str(p.get("key") or "")), caller_key)
         ]
+    request_app = str(request.get("app") or "")
+    if request_app and not is_dashboard_user and request.get("internal_auth") is not True:
+        # A ``permissions.api`` grant on ``/api/chat`` is a prefix, so it admits
+        # this list too. Without this an app token would read every session's
+        # title, path and last message, which its own socket and the per-slot
+        # routes (``slot_ownership``) both withhold. Same filter, same declared
+        # ``slots:*`` scopes, as the WebSocket connect snapshot: a disabled app
+        # sees no slot, and an unreadable manifest grants no declared scope.
+        from kiro_crew.dashboard.ws_event_scope import (
+            filter_slots_for_app,
+            load_declared_events_for_connect,
+        )
+
+        try:
+            enabled, events = await asyncio.to_thread(load_declared_events_for_connect, request_app)
+        except Exception:
+            logger.debug("slot list: no scope for app %r", request_app, exc_info=True)
+            enabled, events = True, frozenset()
+        payloads = filter_slots_for_app(payloads, request_app, events, state) if enabled else []
     # A person's list leaves Crew Mode workers out; an agent's read keeps them
     # (``crew_mode.list_view``). Imported here: this body is re-bound into the
     # ``chat_handlers`` facade's namespace, so it may name only what it imports.
@@ -1262,7 +1282,15 @@ async def api_chat_slot_detail(request: web.Request) -> web.Response:
     # Shallow copies, so the off-loop render below reads a frozen entry while
     # the loop keeps editing the live one; the view helper does the redaction.
     # The two origin stamps ride along because the view reads them to decide
-    # whether an entry is shown as typed (`queue_entry_is_user_origin`).
+    # whether an entry is shown as typed (`queue_entry_is_user_origin`), and the
+    # three restore marks because it reads them for `restored` and `held`
+    # (`is_held_queue_entry`).
+    from kiro_crew.dashboard.slot_queue_repository import (
+        RESTORED_BOOT_ACCEPTED_KEY,
+        RESTORED_QUEUE_KEY,
+        RESTORED_SEND_CHOSEN_KEY,
+    )
+
     queue_snapshot = [
         {
             "id": q["id"],
@@ -1271,6 +1299,9 @@ async def api_chat_slot_detail(request: web.Request) -> web.Response:
             "meta": dict(q.get("meta") or {}),
             "_directive_user_origin": q.get("_directive_user_origin", False),
             "_directive_channel_origin": q.get("_directive_channel_origin", False),
+            RESTORED_QUEUE_KEY: q.get(RESTORED_QUEUE_KEY, False),
+            RESTORED_SEND_CHOSEN_KEY: q.get(RESTORED_SEND_CHOSEN_KEY, False),
+            RESTORED_BOOT_ACCEPTED_KEY: q.get(RESTORED_BOOT_ACCEPTED_KEY, False),
             **({"edit_rev": q["edit_rev"]} if isinstance(q.get("edit_rev"), int) else {}),
         }
         for q in slot._queue
@@ -1405,7 +1436,18 @@ async def api_chat_slot_detail(request: web.Request) -> web.Response:
         # event loop on purpose — the session pool is loop-owned and the probe
         # is two dict lookups plus a returncode read.
         live_child = _live_child_instance(state, slot)
-        body = await asyncio.to_thread(_render, live_child)
+        # The render and its UTF-8 encode fail closed like every read stage
+        # above. Unguarded, a raise here escapes as aiohttp's bare text/plain 500
+        # ("Internal Server Error"), which the client shows as a blank
+        # transcript. Log the traceback under this handler's logger, naming the
+        # slot, and answer the retryable 503 (``history_corpus_unreadable()``)
+        # the read stages answer.
+        try:
+            body = await asyncio.to_thread(_render, live_child)
+            encoded = body.encode()
+        except Exception:
+            logger.warning("slot-detail render/encode failed for %s", slot.key, exc_info=True)
+            return history_corpus_unreadable()
     if fill:
         wire_render.schedule_fill(
             memo_scope, messages, running, live_child=live_child, workspace=workspace
@@ -1413,4 +1455,4 @@ async def api_chat_slot_detail(request: web.Request) -> web.Response:
     # Access was decided above, so a 304 here is never an access shortcut.
     from kiro_crew.dashboard.conditional_get import conditional_json_response
 
-    return await conditional_json_response(request, body.encode())
+    return await conditional_json_response(request, encoded)

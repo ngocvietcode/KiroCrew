@@ -121,13 +121,36 @@ export const SETTINGS_MANUAL: ManualSettingEntry[] = [
     // Same shape as the third-party-apps override above: the toggle lives in
     // the `redaction` rail section, so without `section=redaction` the deep
     // link lands on the security rail with the card unmounted.
-    id: 'security.redact-credentials-in-files-the-dashboard-opens-for-you',
+    id: 'security.redact-credentials',
     labelKey: 'pages.settings.securityPanel.credential_redaction_toggle',
     descriptionKey: 'pages.settings.securityPanel.credential_redaction_toggle_help',
     tab: 'security',
     type: 'toggle',
     occurrence: 1,
     params: { section: 'redaction' },
+  },
+  // The two MCP safety switches (SecurityPanelSafetySwitches.tsx): same shape,
+  // they live in the `safety` rail section. `configKey` keeps the Advanced
+  // page's read-only rows for both keys linked to these controls.
+  {
+    id: 'security.stop-the-agent-from-editing-its-own-permission-rules',
+    labelKey: 'pages.settings.securityPanel.safetySwitches.protect_label',
+    descriptionKey: 'pages.settings.securityPanel.safetySwitches.protect_desc',
+    tab: 'security',
+    type: 'toggle',
+    occurrence: 1,
+    params: { section: 'safety' },
+    configKey: 'mcp.protect_kiro_permission_rules',
+  },
+  {
+    id: 'security.ask-me-before-running-tools-an-mcp-server-pre-approves',
+    labelKey: 'pages.settings.securityPanel.safetySwitches.ask_label',
+    descriptionKey: 'pages.settings.securityPanel.safetySwitches.ask_desc',
+    tab: 'security',
+    type: 'toggle',
+    occurrence: 1,
+    params: { section: 'safety' },
+    configKey: 'mcp.honour_auto_approve',
   },
   // The review cards for settings files edited outside the dashboard
   // (SecurityPanelConfigPending.tsx). They render in the Security sub-nav's banner,
@@ -413,23 +436,13 @@ export const SETTINGS_MANUAL: ManualSettingEntry[] = [
     // Managed credential slots are server-provided, so the shared SecretField
     // label is dynamic at extraction time. These entries index the two fixed
     // integration labels and highlight the matching runtime SecretField.
-    // With the Secrets vault redesign preview on, SecretsPanel opens the slot's
+    // SecretsPanel opens the slot's
     // pane for these ids itself (SEARCH_PANE_KINDS): the vault's names are not
     // a fixed sub-page list the UI index could carry.
     id: 'secrets.wakatime-api-key',
     labelKey: 'settings.secrets.wakatime_api_key_label',
     descriptionKey: 'settings.secrets.wakatime_api_key_description',
     tab: 'secrets',
-    type: 'input',
-    occurrence: 1,
-  },
-  {
-    // Settings > Advanced lists every config key from the gateway's schema at
-    // run time, so no row has a literal label to extract; one entry finds the page.
-    id: 'advanced.all-settings',
-    labelKey: 'settings.advanced.title',
-    descriptionKey: 'settings.advanced.intro',
-    tab: 'advanced',
     type: 'input',
     occurrence: 1,
   },
@@ -461,16 +474,15 @@ export const SETTINGS_MANUAL: ManualSettingEntry[] = [
     occurrence: 1,
     params: { channel: 'feishu' },
   },
-  // The Kiro sign-in card on Agent Harness, where Sign out and Switch account
-  // live. It is built from raw markup inside the KAS row's detail, so the
-  // extractor never sees it. `settingId` is the card's `data-setting-id`: the
-  // highlight waits for it while AgentBackendTab opens the KAS row for this id
-  // (`KIRO_SIGN_IN_SETTING_ID` in pages/developer/kiroSignInLink.ts).
+  // The Kiro sign-in card on Kiro account, where Sign out and Switch account
+  // live. It is built from raw markup the extractor never sees. `settingId` is
+  // the card's `data-setting-id`: the highlight waits for it while the card's
+  // lazy chunk loads (`KIRO_SIGN_IN_SETTING_ID` in pages/developer/kiroSignInLink.ts).
   {
-    id: 'agent.kiro-sign-in',
+    id: 'kiro-account.kiro-sign-in',
     labelKey: 'pages.developer.kiroSignInCard.search_label',
     descriptionKey: 'pages.developer.kiroSignInCard.search_description',
-    tab: 'agent',
+    tab: 'kiro-account',
     type: 'buttonGroup',
     occurrence: 1,
     settingId: 'kiro-sign-in',

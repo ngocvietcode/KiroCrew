@@ -1,10 +1,10 @@
 ---
 title: ErrorNotice looks as serious as the failure is, through an impact level and a nested form
-status: draft
+status: accepted
 author: kirocrew agent session, directed by buluoray
 created: 2026-11-14
 last-audited: 2026-11-14
-audited-at: 8a1b4d3855
+audited-at: 2cbf235c10
 doc-pr: 37124
 implementation-prs: []
 tracking-issues: [37118]
@@ -14,7 +14,7 @@ superseded-by: []
 
 # RFC: ErrorNotice looks as serious as the failure is, through an impact level and a nested form
 
-Status: draft. Acceptance requested from a maintainer of the dashboard. Asked for 2026-11-14 by the repository owner, who chose the layout, the blocking tone and the button styling shown here from earlier design rounds. Code references were read on main at `8a1b4d3855`; the call-site survey ran at `a67cbbb4d3`, and neither `ErrorNotice.tsx` nor `AUTOSDE.yaml` changed between the two. Tracking issue: [#37118](https://github.com/kirodotdev/KiroCrew/issues/37118). This document changes no code.
+Status: accepted. Accepted 2026-11-14 when this document merged as [#37124](https://github.com/kirodotdev/KiroCrew/pull/37124) after its review approval; the repository owner then asked for the implementation, tracked in [#37262](https://github.com/kirodotdev/KiroCrew/issues/37262). Nothing is built yet. Asked for 2026-11-14 by the repository owner, who chose the layout, the blocking tone and the button styling shown here from earlier design rounds. Code references were read on main at `8a1b4d3855`; the call-site survey ran at `a67cbbb4d3`, and neither `ErrorNotice.tsx` nor `AUTOSDE.yaml` changed between the two. Tracking issue: [#37118](https://github.com/kirodotdev/KiroCrew/issues/37118). This document changes no code.
 
 ## Summary
 
@@ -274,6 +274,41 @@ Exit criteria:
 - No block-variant call site passes `messagePlacement` or `actionPlacement`.
 - The unit tests above pass, and the contrast numbers above are re-measured on the built component and match.
 - A notice with no `impact` renders `role="alert"` and the blocking look.
+
+### Amendment 2026-11-14: Phase 1 lands in parts
+
+The repository owner split Phase 1 so each pull request fits one review round. A notice with no `impact` keeps today's meaning, so the component can land before the call sites move.
+
+- **Phase 1a**: `ErrorNotice.tsx` (`impact`, `nested`, `actions`, layout 2, the role per level), the tokens, the rule and doc-comment changes, the tests, the capture entry `website/capture/error-notice-impact.tsx`, and six example call sites: `forecast_unavailable` (minor), `sign_in_status_unavailable` and `credit_usage_unavailable` (partial) in `KiroAccountModal.tsx`, `effort_options_unavailable` and `mode_unknown` (partial, inline) in `CrewChatWindow.tsx`, and `use-kiro-instead-error` (blocking, nested) in `KiroPrerequisiteGate.tsx`.
+- **Phase 1b**: the other call sites, checked by hand as above, one pull request per area (settings, chat, Bots, MCP and the rest). Each removes `messagePlacement` and `actionPlacement` from the block-variant sites it touches. The Phase 1 exit criteria apply once the last of them merges.
+
+Measuring every built-in palette, not only the default pair, changed some mixes. Several dark packs paint the danger and warn tints so that a mix toward `--text` cannot reach 4.5:1 (solarized-dark's own `--text` is 3.81:1 on its warn tint). The tokens in `design-tokens.css` are therefore:
+
+| Token | Mix | Was in this document |
+|---|---|---|
+| `--danger-ink` | `--danger-text` 84% with `--text` | same |
+| `--danger-body` | `--danger-text` 72% with `--text` | same |
+| `--danger-ink-nested` | `--danger-text` 55% with `--text` | 65% |
+| `--danger-body-nested` | `--danger-text` 45% with `--text` | 55% |
+| partial body | `--text-strong` | `--text` |
+| `--minor-link` | `--accent` 40% with `--text-strong` | `--accent` 65% with `--text` |
+| `--notice-btn-border` | `--text-strong` 80% with `--card` | `--text` 65% with `--card` |
+| `--notice-btn-border-hover` | `--text-strong` | `--text` 85% with `--card` |
+| `--notice-ring` | `--ring` 60% with `--text-strong` | `--ring` 75% with `--text` |
+
+`errorNoticeImpactContrast.test.ts` reads each mix from the stylesheet. It holds every light palette and the default dark palette to WCAG AA (4.5:1 text, 3:1 border and ring) over `--bg`, `--bg-elevated` and `--card`. Every other dark palette must never fall below today's colour for the same part. In the default palettes (`kiro-dark` / `kiro-light`, over `--card`):
+
+| Part | Dark | Light |
+|---|---|---|
+| Blocking title, icon, link | 4.56 | 9.50 |
+| Blocking body | 5.01 | 9.49 |
+| Nested blocking title / body on the warn host | 5.23 / 5.78 | 9.80 / 9.63 |
+| Partial title / body | 6.93 / 11.53 | 8.57 / 16.10 |
+| Minor body / link | 5.24 / 8.59 | 6.78 / 11.21 |
+| Button border on warn / danger / card | 7.69 / 8.62 / 9.83 | 8.56 / 8.15 / 9.51 |
+| Focus ring on warn / danger / card | 5.01 / 5.61 / 6.40 | 7.50 / 7.14 / 8.33 |
+
+A nested minor notice reads its message in `--text-strong`, because `--muted` falls below 4.5:1 on the warn tint in some light palettes.
 
 ### Phase 2: none planned
 

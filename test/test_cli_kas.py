@@ -172,7 +172,7 @@ class TestInstallFromDir:
         assert cli_kas.kas_cmd(self._args(local_source, force=True)) == 0
         assert seen == {"version": _PIN, "source": str(local_source.resolve()), "force": True}
         out = capsys.readouterr().out
-        assert f"✅ KAS {_PIN} installed" in out
+        assert f"Done: KAS {_PIN} installed" in out
         assert out.count("engine:") >= 1
         assert "  engine:   0%" in out and "  engine:  55%" in out and "  engine: 100%" in out
         assert "  engine:  56%" not in out
@@ -205,6 +205,18 @@ class TestInstallFromDir:
         assert "The bundle route is off" not in out
         assert "config set agent.kas_bundle true" not in out
         assert "Kiro Crew will use this engine" in out
+
+    def test_the_sharing_preview_route_does_not_claim_the_setting_is_on(
+        self, cfg, host, local_source, tmp_path, monkeypatch, capsys
+    ):
+        cfg.kas_bundle = False
+        _set_route(monkeypatch, bundle=True, reason="chat_runtime_sharing")
+        monkeypatch.setattr(kas_bundle, "install_bundle", lambda m, **k: _installed(tmp_path))
+        assert cli_kas.kas_cmd(self._args(local_source)) == 0
+        out = capsys.readouterr().out
+        assert "agent.kas_bundle is on" not in out
+        assert "relay cannot run here" not in out
+        assert "the ACP runtime sharing preview picks it" in out
 
     def test_a_version_the_harness_does_not_run_names_the_override_env(
         self, cfg, host, local_source, tmp_path, monkeypatch, capsys
@@ -269,7 +281,7 @@ class TestInstallFromDir:
         monkeypatch.setattr(kas_bundle, "install_bundle", boom)
         assert cli_kas.kas_cmd(self._args(local_source)) == 1
         err = capsys.readouterr().err
-        assert "❌ node did not run: exit 127" in err
+        assert "Error: node did not run: exit 127" in err
         assert "Traceback" not in err
 
     def test_a_host_that_cannot_run_the_engine_exits_the_unsupported_code(
@@ -286,7 +298,7 @@ class TestInstallFromDir:
         assert cli_kas.HOST_UNSUPPORTED_EXIT == 3
         assert cli_kas.kas_cmd(self._args(local_source)) == cli_kas.HOST_UNSUPPORTED_EXIT
         err = capsys.readouterr().err
-        assert "❌ this host's glibc (2.17)" in err
+        assert "Error: this host's glibc (2.17)" in err
         assert "Traceback" not in err
 
 
@@ -382,7 +394,7 @@ class TestOldGlibcRefusedFirst:
         assert cli_kas.kas_cmd(args) == cli_kas.HOST_UNSUPPORTED_EXIT
         out, err = capsys.readouterr()
         assert "Fetching" not in out and "Installing" not in out
-        assert "❌ this host's glibc (2.26) is older than KAS requires" in err
+        assert "Error: this host's glibc (2.26) is older than KAS requires" in err
 
 
 class TestInstallWhenAlreadyInstalled:
@@ -416,7 +428,7 @@ class TestInstallWhenAlreadyInstalled:
         # Only the data home's own root is asked, never the app's staged copy.
         assert present == [(tmp_path / "engines", _PIN)]
         out = capsys.readouterr().out
-        assert f"✅ KAS {_PIN} is already installed at {tmp_path / 'engines' / _PIN}" in out
+        assert f"Done: KAS {_PIN} is already installed at {tmp_path / 'engines' / _PIN}" in out
         assert "kirocrew config set agent.kas_bundle true" in out
 
     def test_the_pinned_engine_on_disk_still_sweeps_a_stale_staging_tree(

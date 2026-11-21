@@ -37,6 +37,7 @@ from kiro_crew.slack.handler import (
     is_yolo_mode,
     slack_cfg,
 )
+from kiro_crew.slack.linked_thread_images import set_inbound_files as set_linked_thread_files
 from kiro_crew.slack.transport_dispatch import handle_message_transport
 from kiro_crew.start_priority import person_priority
 
@@ -588,6 +589,7 @@ async def _dispatch_queued(
         try:
             await client.remove_reaction(channel, msg_ts, "hourglass_flowing_sand")
         except Exception:
+            # The ⏳ reaction is cosmetic; the message is dispatched either way.
             pass
     # Route the queued follow-up through the SAME gate as the initial message so
     # behavior is consistent mid-conversation: a thread that took the transport
@@ -599,6 +601,8 @@ async def _dispatch_queued(
         getattr(getattr(slack_cfg(orch), "messaging", None), "use_transport", False) is True
         and _activation != ACTIVATION_REVIEW
     )
+    # This entry's own files, never the ones of the message whose task queued it.
+    set_linked_thread_files(kwargs.get("image_temp_paths") or [])
     try:
         if _use_transport:
             await handle_message_transport(

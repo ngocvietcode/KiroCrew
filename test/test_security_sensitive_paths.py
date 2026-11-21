@@ -1060,7 +1060,7 @@ class TestAdaptiveHomeTargetsExpiry:
                 expected.add(os.path.join(roots.kiro_home, "agents"))
             if roots.kiro_home and gate._KIRO_MATE_AGENTS_DIR in tier:
                 expected.add(os.path.join(roots.kiro_home, "mates", "agents"))
-            for mate_leaf in gate._KIRO_MATE_STATE_LEAVES:
+            for mate_leaf in (*gate._KIRO_MATE_STATE_LEAVES, *gate._KIRO_PERMISSION_RULE_LEAVES):
                 if roots.kiro_home and mate_leaf in tier:
                     expected.add(os.path.join(roots.kiro_home, *gate._leaf_segments(mate_leaf)[1:]))
             # The registry leaf shares that class: one root, one guard shape. Derived
@@ -1305,8 +1305,8 @@ class TestAdaptiveHomeTargetsExpiry:
             return None
 
         # Where the list sits in each signature: first for the builder, second for
-        # the matcher that forwards to it.
-        positions = {"_home_dir_targets": 0, "_path_in_home_dirs": 1}
+        # the matchers that forward to it.
+        positions = {"_home_dir_targets": 0, "_path_in_home_dirs": 1, "_matches_gate_rows": 1}
         named: list[str] = []
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):

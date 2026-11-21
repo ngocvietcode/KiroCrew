@@ -131,7 +131,7 @@ async def _auto_open_dashboard(
         logger.debug("webbrowser.open timed out — skipping")
         shown_url = dashboard_url if print_link else dashboard_url.partition("?")[0]
         print(
-            "👻 Browser was slow to open — skipping auto-open.\n"
+            "Browser was slow to open — skipping auto-open.\n"
             "   Dashboard is running. Open this URL manually:\n"
             f"   {shown_url}\n"
             "   Or run: kirocrew token"
@@ -695,7 +695,7 @@ def _init_task_runner(self: GatewayOrchestrator) -> None:
 
     # An app turn (``AgentTurnSDK.run``: a meeting's agents) passes this prompt as
     # its approver, as a cron job does. Without it a call the hook gate neither
-    # denies nor grants is approved with nobody asked.
+    # denies nor grants is refused, since nobody can be asked.
     from kiro_crew.apps import agent_turn_sdk
 
     agent_turn_sdk.set_turn_approver(
@@ -708,6 +708,12 @@ async def _init_dashboard(self: GatewayOrchestrator) -> None:
     assert self.sessions is not None
     assert self.cron_svc is not None
 
+    # Publish the owner's redaction setting to this process before the server takes a
+    # request, in every mode (the offline test mode included): the output seams read the
+    # process value, never the file.
+    from kiro_crew.dashboard.handlers import credential_redaction as _redaction
+
+    await asyncio.to_thread(_redaction.seed_pushed_switch)
     configured_host, dashboard_port = parse_dashboard_url(self._cfg.dashboard.url)
     # --port override (literal int or "auto" for ephemeral)
     if self._port_override == "auto":
@@ -793,6 +799,12 @@ async def _init_api_server(self: GatewayOrchestrator) -> None:
 
     assert self.sessions is not None
     assert self.cron_svc is not None
+    # Publish the owner's redaction setting to this process before the server takes a
+    # request, in every mode (the offline test mode included): the output seams read the
+    # process value, never the file.
+    from kiro_crew.dashboard.handlers import credential_redaction as _redaction
+
+    await asyncio.to_thread(_redaction.seed_pushed_switch)
     configured_host, dashboard_port = parse_dashboard_url(self._cfg.dashboard.url)
     # --port override (literal int or "auto" for ephemeral)
     if self._port_override == "auto":
@@ -876,7 +888,7 @@ async def run(self: GatewayOrchestrator) -> None:
             _SIGNING_KEY_PREFLIGHT_TIMEOUT_SECS,
         )
         print(
-            f"❌ The signing key preflight did not finish within "
+            f"Error: The signing key preflight did not finish within "
             f"{_SIGNING_KEY_PREFLIGHT_TIMEOUT_SECS:.0f}s. Check that the data "
             f"home is reachable, then restart: {BOOT_RESTART_HINT}",
             file=sys.stderr,
@@ -892,7 +904,7 @@ async def run(self: GatewayOrchestrator) -> None:
             "event loop: %s",
             exc,
         )
-        print(f"❌ Cannot run the signing key preflight: {exc}", file=sys.stderr)
+        print(f"Error: Cannot run the signing key preflight: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
 
     # An update a person armed applies HERE, at the start, before the listeners bind
@@ -1247,7 +1259,8 @@ async def run(self: GatewayOrchestrator) -> None:
     # runner lane now that both consumers exist (the WorkflowService is
     # built by the dashboard server). AFTER the READY print, not before it:
     # the coordinator's first build runs `rebuild()` over every waiting row,
-    # and `test_memory_startup` pins that no such work precedes readiness.
+    # and `test_memory_startup` pins that nothing is awaited between
+    # `_init_api_server` and the READY print.
     # Nothing dispatches in between -- the subagent pump is held closed
     # (``defer_queue_dispatch``) and the dashboard workers and cron start
     # further down, after the memory barrier.
@@ -1394,7 +1407,6 @@ async def run(self: GatewayOrchestrator) -> None:
                 # A policy that withdraws the redaction opt-in must purge open dashboards.
                 from kiro_crew.dashboard.handlers import credential_redaction as _redaction
 
-                await asyncio.to_thread(_redaction.seed_pushed_switch)
                 register_post_install_hook(
                     lambda: _redaction.push_switch_moved_by_policy(_app, _loop)
                 )
@@ -1504,7 +1516,7 @@ async def run(self: GatewayOrchestrator) -> None:
     # Update coordinator — fire-and-forget, NOT awaited. The first cycle runs
     # immediately; later cycles own both checking and automatic application.
     # Registered so shutdown can cancel a stalled network or installer child.
-    print("👻 Checking for updates…")
+    print("Checking for updates…")
     self._update_check_task = asyncio.create_task(self._run_update_checks())
     # Named so the shutdown's did-not-stop warning can say which update task it was.
     self._update_check_task.set_name("update-coordinator")
@@ -1566,7 +1578,7 @@ async def run(self: GatewayOrchestrator) -> None:
             if self._no_open or not self._cfg.dashboard.auto_open_browser:
                 pass  # suppressed via --no-open flag or config
             elif _skip_open:
-                print("👻 Headless remote session — skipping browser auto-open")
+                print("Headless remote session — skipping browser auto-open")
             else:
                 # Runs as a task so a slow browser launch overlaps the MCP
                 # probe instead of delaying it. Tracked so it is not GC'd
@@ -1590,14 +1602,14 @@ async def run(self: GatewayOrchestrator) -> None:
     # start AFTER the probe has synced all servers to mcp.json.
     from kiro_crew.dashboard.handlers import _bg_mcp_probe
 
-    print("👻 Probing MCP servers…")
+    print("Probing MCP servers…")
     # self._cfg is the config this boot already loaded — re-reading it here
     # would pay a deepcopy plus a full nested-dataclass rebuild for one scalar.
     _probe_t = self._cfg.dashboard.mcp_probe_timeout_secs + 15
     try:
         await asyncio.wait_for(_bg_mcp_probe(self.sessions), timeout=_probe_t)
     except asyncio.TimeoutError:
-        print("👻 MCP probe timed out — continuing without full probe")
+        print("MCP probe timed out — continuing without full probe")
 
     # ── Start background session (this IS gated on the probe) ──
     async def _start_bg_session() -> None:
@@ -1712,7 +1724,7 @@ async def run(self: GatewayOrchestrator) -> None:
     # Boot is finished here: the dashboard is bound and the process serves until
     # it is stopped. This is the last line a foreground gateway prints, so it
     # must not read as a step still in progress.
-    print("👻 Kiro Crew gateway running — press Ctrl+C to stop")
+    print("Kiro Crew gateway running — press Ctrl+C to stop")
     await shutdown_event.wait()
     await self._shutdown_and_exit(_watchdog)
 

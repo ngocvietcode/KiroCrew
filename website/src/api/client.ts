@@ -23,6 +23,7 @@ import {
   noteStaleOwnerResponse,
 } from './staleOwnerSignal'
 import { edgeChallengeMessage, noteEdgeAuthChallenge } from './edgeAuthChallenge'
+import { flattenCrewApiError } from './crewApiError'
 import { AUTH_BANNER_BUTTON_CSS, AUTH_BANNER_CSS } from './authBannerStyles'
 import { isCameraPermissionDenied, qrScanSupported, scanQrCode } from './qrScan'
 import { beginArtifactWrite, endArtifactWrite } from '../lib/artifactWrites'
@@ -31,6 +32,10 @@ import { installApiTransport } from './apiTransport'
 import { isDeadlineError, queryClient, invalidateAcrossQueryClients } from './queryClient'
 import { recordError, recordTransportRejection, attachReport, parseErrorCode, requestPath } from '../utils/errorReport'
 import { i18nT } from '../i18n/t'
+import { createElement } from 'react'
+import { flushSync } from 'react-dom'
+import { createRoot } from 'react-dom/client'
+import { X } from 'lucide-react'
 import type { ClientTransport } from './client/transport'
 import { gatedRead } from './readGate'
 import { createSystemEndpoints } from './client/system'
@@ -102,6 +107,8 @@ export type {
   KiroPrerequisiteStatus,
   KasBundleStatus,
   KasLoginStatus,
+  KasLoginSourceAccount,
+  KasLoginSources,
   KasLoginDeviceSession,
   KasLoginPollResult,
   KasLoginLoopbackSession,
@@ -123,6 +130,10 @@ export type {
   ConfigPendingData,
   ConfigPendingLeaf,
   CredentialRedactionState,
+  McpBodyFieldRow,
+  McpBodyFieldsData,
+  SafetySwitchKey,
+  SafetySwitchesState,
   DeniedCommandsData,
   GovernanceScopeDetail,
   GovernanceScope,
@@ -168,6 +179,7 @@ export type {
   InstanceView,
   AddInstanceBody,
   RelayCrewEntry,
+  RelayViewerAccount,
 } from './client/instances'
 export { filenameFromDisposition } from './client/instances'
 export type {
@@ -740,7 +752,9 @@ function showSessionExpiredBanner(lead?: string): void {
     input.after(scan)
   })
   const dismiss = document.createElement('button')
-  dismiss.textContent = '✕'
+  dismiss.setAttribute('aria-label', i18nT('app.dismiss'))
+  // flushSync so the icon is in the DOM when this returns, like the rest of the banner.
+  flushSync(() => createRoot(dismiss).render(createElement(X, { className: 'lucide-inline' })))
   dismiss.style.cssText =
     'margin-left:12px;background:none;border:none;color:#fca5a5;cursor:pointer;font-size:18px;vertical-align:middle;'
   dismiss.addEventListener('click', () => {
@@ -792,8 +806,16 @@ function showEdgeChallengeBanner(): void {
   document.body.prepend(el)
 }
 
+/**
+ * The gateway's own "sign in again" answer: 403 on `/api/*`, 401 on the Crew API
+ * (`/v1/crew/*`), both carrying `X-Auth-Required`.
+ */
+function isAuthRequiredResponse(r: Response): boolean {
+  return (r.status === 403 || r.status === 401) && r.headers.get('X-Auth-Required') === 'true'
+}
+
 export function checkSessionExpired(r: Response): Response {
-  if (r.status === 403 && r.headers.get('X-Auth-Required') === 'true' && !_sessionExpiredShown) {
+  if (isAuthRequiredResponse(r) && !_sessionExpiredShown) {
     // When this dashboard is running embedded in the Instances pane stack
     // (an <iframe> inside the hub), don't show the paste-token banner here —
     // the user can't easily fetch the remote token from inside the pane, and
@@ -924,7 +946,7 @@ const apiFailure = (r: Response, errText: string, benign?: BenignDenial): ApiErr
   // it hides the fact that one re-auth clears all of them at once. Substitute
   // the recovery instruction for display; the raw reason still travels in
   // `body` and in the error report's `detail` for diagnostics.
-  const authRequired = r.status === 403 && r.headers.get('X-Auth-Required') === 'true'
+  const authRequired = isAuthRequiredResponse(r)
   // The stale-owner signal is matched on status AND the backend's code — a
   // generic 401 (or any 403) keeps its current handling untouched. Detection
   // lives HERE rather than in checkSessionExpired because the code travels in
@@ -1158,7 +1180,7 @@ const parseJson = async (r: Response, benign?: BenignDenial, nullOn204 = false) 
     // rejection, which the acceptance-receipt wires have to treat as
     // indeterminate and would show as "delivery unconfirmed" instead of an
     // error. The app-sdk's `jsonFetch` keeps the same guard.
-    const errText = await r.text().catch(() => r.statusText)
+    const errText = flattenCrewApiError(await r.text().catch(() => r.statusText))
     throw apiFailure(r, errText, benign)
   }
   return r.json()
@@ -1430,7 +1452,7 @@ async function keepIfRefused(input: string, r: Response, generation: number): Pr
   if (r.status !== 403 || typeof r.clone !== 'function') return r
   if (r.headers?.get?.('X-Auth-Required') === 'true') return r
   const kept = r.clone()
-  const body = await kept.clone().text().catch(() => '')
+  const body = flattenCrewApiError(await kept.clone().text().catch(() => ''))
   if (generation === callerGeneration && isPermissionRefusal({ status: 403, body })) {
     refusedReads.set(input, { response: kept, at: Date.now() })
   }

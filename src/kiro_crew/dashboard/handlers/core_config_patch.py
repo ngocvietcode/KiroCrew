@@ -43,7 +43,7 @@ from kiro_crew.dashboard.handlers.core_config_view import (
     _kas_in_use,
 )
 from kiro_crew.dashboard.handlers.core_security import _sel
-from kiro_crew.metrics import provider as _metrics_provider
+from kiro_crew.metrics import kiro_export as _kiro_export
 from kiro_crew.update_deferral import SkipListFull, merge_update_nudge_record
 
 logger = logging.getLogger("kiro_crew.dashboard.handlers.core")
@@ -316,6 +316,24 @@ async def api_kirocrew_config_patch(request: web.Request) -> web.Response:
 
     path_key: str = body.get("path", "")
     value: Any = body.get("value")
+    from kiro_crew.dashboard.handlers.source_providers import is_host_owner_dashboard_request
+    from kiro_crew.shared_crew.teammate_access import is_admission_config_key
+
+    if is_admission_config_key(path_key) and not is_host_owner_dashboard_request(request):
+        # A Shared Crew teammate passes the owner gate above, but which listeners run,
+        # which tunnels this machine opens to other crews and who an allow-list lets
+        # in stay the machine owner's to decide.
+        message = (
+            "only the Crew owner can manage remote crews"
+            if path_key == "instances" or path_key.startswith("instances.")
+            else "only the Crew owner can change who may reach this Crew"
+        )
+        return _deny(
+            message,
+            f"admission key {path_key}",
+            status=403,
+            code="owner_only",
+        )
     if_unset = body.get("if_unset", False)
     if not isinstance(if_unset, bool):
         return _deny("if_unset must be a boolean")
@@ -377,6 +395,8 @@ async def api_kirocrew_config_patch(request: web.Request) -> web.Response:
         # Store the member that matched, not the value sent: ``15.0`` equals the
         # choice ``15``, but the loader reads only the int and would run the default.
         value = allowed[allowed.index(value)]
+    elif spec["type"] == "int" and spec.get("allow_auto") and value == "auto":
+        pass  # the one word an ``int | str`` field takes besides a number
     elif spec["type"] == "int":
         raw = value
         try:
@@ -615,7 +635,11 @@ async def api_kirocrew_config_patch(request: web.Request) -> web.Response:
             # established, which the handler below turns into a refusal: reading a
             # transient provider error as "no egress" would permit an enable that
             # the recovered provider then turns into egress.
-            egress = await asyncio.to_thread(_metrics_provider.otlp_egress_active, cfg.telemetry)
+            # The built-in Kiro destination does not count: the privacy notice
+            # names it, and it exports only once that notice was shown.
+            egress = await asyncio.to_thread(
+                _kiro_export.egress_needs_written_opt_in, cfg.telemetry
+            )
         except Exception:
             # Unreadable config, or egress posture that could not be resolved:
             # fail closed rather than enabling collection whose egress posture

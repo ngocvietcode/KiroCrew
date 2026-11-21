@@ -37,6 +37,7 @@ from kiro_crew.agent_sdk.spec_hooks import (
     unmet_post_tool_matchers_sentence,
     withheld_project_spec_hooks,
 )
+from kiro_crew.constants import HOOK_DENY_REASON_MAX_CHARS
 from kiro_crew.dashboard.agent_welcome import AGENT_WELCOME_KIND
 from kiro_crew.dashboard.chat_utils import (
     SPEC_HOOKS_NOTICE_KIND,
@@ -89,6 +90,7 @@ if TYPE_CHECKING:
         redact_credentials,
         redact_exfiltration_urls,
     )
+    from kiro_crew.dashboard.chat_turn.builtin_tools_notice import _notice_unapplied_builtin_tools
     from kiro_crew.dashboard.chat_turn.deny_chokepoints import _redact_display_text
     from kiro_crew.dashboard.chat_turn.mcp_oauth_notice import _notice_dropped_mcp_oauth
     from kiro_crew.dashboard.chat_turn.recipient import (
@@ -116,6 +118,7 @@ if TYPE_CHECKING:
         _turn_full_reply_text,
         _turn_reply_segments,
     )
+    from kiro_crew.security.redaction_switch import always_scan
 
 
 async def _surface_agent_welcome(
@@ -217,12 +220,14 @@ async def _prepare_spec_hooks(
     entries, and one where nothing applies the spec's ``toolsSettings``
     (``spec_tools_settings_applied_nowhere``) gets one naming what of it goes
     unapplied, and one that drops a remote MCP server's ``oauth`` block gets one
-    naming those servers. None of them runs silently.
+    naming those servers, and a claude one that leaves the spec's `tools` or `model`
+    unapplied gets one naming them. None of them runs silently.
     """
     if is_new and spec_steering_read_nowhere(client):
         await _notice_unread_steering(state, slot, client, agent)
     if is_new:
         await _notice_dropped_mcp_oauth(state, slot, client, agent)
+        await _notice_unapplied_builtin_tools(state, slot, client, agent)
     if not capabilities_of(client).crew_fires_spec_hooks:
         if is_new and spec_hooks_run_nowhere(client):
             await _notice_spec_hooks_run_nowhere(state, slot, client, agent)
@@ -826,7 +831,7 @@ async def _notice_unread_steering(
     """One notice row naming the custom agent's ``file://`` steering *client* never loads.
 
     Only a custom agent: Crew's steering load serves the default agent alone. On
-    Claude Code and Codex it sends the default agent's entries and steering trees
+    Claude Code, Codex, OpenCode and Pi it sends the default agent's entries and steering trees
     itself, and elsewhere folder steering or member essentials can carry them, so
     a row there could claim a loss that did not happen. Best-effort: a spec that
     cannot be read renders no row rather than failing the turn.
@@ -853,8 +858,8 @@ async def _notice_unread_steering(
 
 def _notice_steer_upgrade(state: "DashboardState", slot: "_ChatSlot", client: Any) -> None:
     """One notice row on a new session whose adapter is too old to take a mid-turn
-    message, one whose KAS drops its agent's prompt, and one whose goose, codex, claude or
-    pi adapter is outside its tested range: the chat runs, and each row names the installed version, the
+    message, one whose KAS drops its agent's prompt, and one whose goose, codex, claude,
+    pi or deepseek adapter is outside its tested range: the chat runs, and each row names the installed version, the
     tested one and the command that installs it. One more on a session whose MCP
     servers start without part of their env or headers, naming each server and the
     key names it lost, never a value. One more on a KAS session told to turn telemetry
@@ -1119,12 +1124,12 @@ async def _fire(
                 )
             elif r.exit_code == 2:
                 injected.append(
-                    f"BLOCKED:{r.hook_name}:{r.stderr[:200] if r.stderr else 'hook denied'}"
+                    f"BLOCKED:{r.hook_name}:{r.stderr[:HOOK_DENY_REASON_MAX_CHARS] if r.stderr else 'hook denied'}"
                 )
                 logger.warning(
                     "Hook %s blocked tool: %s",
                     r.hook_name,
-                    r.stderr[:200] if r.stderr else "exit 2",
+                    r.stderr[:HOOK_DENY_REASON_MAX_CHARS] if r.stderr else "exit 2",
                 )
                 state.broadcast_ws(
                     "activity_event",
@@ -1212,7 +1217,10 @@ async def _turn_stop_hook(turn: _ChatTurn) -> None:
     # env var (ARG_MAX safety). The full segment is passed (not sliced to
     # [:500]) so the tail — e.g. the harness [OPTIONS:] line — reaches both
     # the matcher and the hook body.
-    _final = redact_credentials(redact_exfiltration_urls(turn.assistant_text)[0])[0]
+    # A hook is a sink no output seam lists: it reads the text redacted in full,
+    # inside the turn's chat seam with the owner's redaction off too.
+    with always_scan():
+        _final = redact_credentials(redact_exfiltration_urls(turn.assistant_text)[0])[0]
     # Report how deep this hook-continuation run is so a gate hook can
     # diagnose or apply a stricter limit than the configurable backstop.
     _stop_hook_out = await _fire(

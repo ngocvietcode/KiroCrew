@@ -1047,6 +1047,12 @@ Notifications with a run are prefixed with `[run.name]`, falling back to the spe
 | Token budget | 💰 Token budget exceeded | Usage vs budget |
 | Branch ready | 🌿 Branch: `name` | Shown in completion summary |
 
+The completion summary's step list and `TASK_PROGRESS.md` mark each step from one
+map, `task_reporter.TASK_STATUS_ICONS`: ✅ passed, ❌ failed, 🔄 in progress,
+🔍 reviewing, ⬜ pending, ⏭️ skipped, 🚫 cancelled. So a step a replan skipped
+shows ⏭️ in the summary, not ❌. The summary uses ❌ for a status the map does
+not have. Pinned by `test/test_taskrunner_verification.py`.
+
 ### Where a notification lands: the originating conversation
 
 `start_background(..., session_key=)` records the conversation the run was
@@ -1244,6 +1250,18 @@ when a mode switch changes whose spec hooks gate the turn). In order:
 A mid-step agent switch (`EVENT_AGENT_SWITCHED`) rebuilds the ladder for the new agent's spec hooks and calls `spec_hooks.refuse_stale_switch`: when the switched-to agent auto-approves a capability a PreToolUse hook covers, those calls would never reach the permission request, so the turn is cancelled (`StaleProjectionError`) and the next claim resets the stale session.
 
 The SEL row is written before any wire I/O for a refusal, and a refusal row that cannot be written is raised before the wire rather than delivered unaudited, as is an exception from the interactive handler; an approval is audited after the wire answered (`approved`, or `rejected_transport_floor` when the transport floor turned it into a rejection). A HOST refusal steers the in-band deny notice before the reject; the interactive handler's no and the compaction reject stay bare. The ladder's stages, the shared adapters and this surface's SEL rows (`TaskrunnerRows`) live in `tool_permission.py`; what reads or moves the run's own state (its trust grant `_RunTrust`, its log lines, the watchdog's activity stamp) stays in `task_executor.py`.
+
+**Person-only directives are refused out loud.** A task runner turn is not a
+person's, and no session applier reads its stream (#34756), so each turn observes
+it with `person_only_directive_refuser` (`dashboard/session_directive_apply.py`,
+the observer the cron turn, workflow steps, app turns and completion turns use) on
+that turn's own key: each completed call to a directive in
+`USER_ORIGIN_DIRECTIVES` (`directive_origin.py`) is refused with
+`refuse_user_origin_directive` (its wording, and a SEL `denied` row). On the step
+turn (`execute_task`) the refusals of every attempt lead `task.result`. The
+self-review, decomposition and lesson turns are JSON turns, so their text is left
+for the parse and the refusal lives only in its SEL row, as on a workflow
+`schema=` step. Nothing is applied.
 
 ### Per-run auto-approve (trust) toggle
 

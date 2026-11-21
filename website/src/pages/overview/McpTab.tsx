@@ -28,8 +28,11 @@ function isToday(epochSecs: number): boolean {
   return new Date(epochSecs * 1000).toDateString() === new Date().toDateString()
 }
 import SortableHeader from '../../components/SortableHeader'
-import { connectionProviderForServer } from '../connections/registry'
+import { connectionProviderForServer, providerOwningRow, vendorPendingProviderForServer } from '../connections/registry'
+import { settingsPath } from '../../components/settingsPath'
+import { connectionsOAuthClientEntryId } from '../../components/commandPalette/settingsManual'
 import McpRowSignIn, { type McpSignInTarget } from './McpRowSignIn'
+import McpToolAlwaysAllow, { McpToolGrantsNote } from './McpToolAlwaysAllow'
 import { useConnectionsUiEnabled } from '../../hooks/useConnectionsUi'
 
 import { i18nT } from '../../i18n/t'
@@ -397,10 +400,17 @@ function mcpAuthState(s: McpServer): McpAuthState {
  */
 function signInTargetFor(
   s: McpServer,
-  managedProvider: { slug: string } | undefined,
+  managedProvider: { slug: string; mcp_url: string } | undefined,
   connectionsUi: boolean,
 ): McpSignInTarget | undefined {
-  if (!connectionsUi) return undefined
+  if (!connectionsUi || s.connectionNeedsCrewSignIn === true) return undefined
+  // Slack's vault-only client needs the card to normalize the URL before minting.
+  // A row with headers of its own signs in by itself (as the retry below reads
+  // `s.headers`), and the mint refuses it with 409 `crew_sign_in_required`.
+  // shortcut: any header counts, not only a credential one; a harmless header
+  // gets the card link instead of Sign in. Upgrade if such rows turn up.
+  if (managedProvider?.slug === 'slack'
+    && (s.url !== managedProvider.mcp_url || Object.keys(s.headers ?? {}).length > 0)) return undefined
   if (managedProvider) return { slug: managedProvider.slug }
   if (s.ownerSignIn !== true) return undefined
   return { server: s.name }
@@ -411,23 +421,29 @@ function signInTargetFor(
  * server's own `oauth` block to the engine, except a block that names a client
  * secret or keeps nothing Crew sends (`oauthWithheld`, from
  * `mcp_oauth_projection.oauth_withheld`), so neither the chat guidance nor Sign in
- * could finish for that one. A Connections provider is left to its card, and a
- * sign-in Crew holds is Crew's, not the harness's.
+ * could finish for that one. The same holds at the url of a provider whose vendor
+ * has not admitted Kiro yet (`vendorPending`), unless the entry brings its own
+ * `clientId`: the vendor refuses the engine's client, so no chat sign-in can
+ * finish. A Connections provider is left to its card, and a sign-in Crew holds is
+ * Crew's, not the harness's.
  * shortcut: an engine older than 0.66.104 drops every block, and this row cannot
  * see the engine version; the chat notice covers that case. Read the version
  * here if the gateway ever reports it per row.
  */
-function kasCannotSignIn(s: McpServer, managedProvider: unknown, onKas: boolean): boolean {
-  return onKas && !managedProvider && !!s.oauthWithheld && !s.authCrewHeld
+function kasCannotSignIn(s: McpServer, managedProvider: unknown, onKas: boolean, vendorPending: unknown): boolean {
+  return onKas && !managedProvider && (!!s.oauthWithheld || !!vendorPending) && !s.authCrewHeld
 }
 
-/** The row's sentence for a sign-in KAS cannot do. It offers no harness switch:
- *  a Kiro CLI pick runs on KAS wherever kiro-cli offers its v3 engine
- *  (`kiro_cli_pick_backend`), so the switch would not reach the sign-in either. */
-function KasSignInUnsupported() {
+/** The row's sentence for a sign-in KAS cannot do, naming the vendor when it is
+ *  the vendor that refuses. It offers no harness switch: a Kiro CLI pick runs on
+ *  KAS wherever kiro-cli offers its v3 engine (`kiro_cli_pick_backend`), so the
+ *  switch would not reach the sign-in either. */
+function KasSignInUnsupported({ vendor }: { vendor?: string }) {
   return (
     <span className="text-warn text-[12px]" data-testid="mcp-sign-in-unsupported">
-      {i18nT('pages.overview.mcpTab.sign_in_unsupported_on_kas')}
+      {vendor
+        ? i18nT('pages.overview.mcpTab.sign_in_unsupported_vendor_pending', { provider: vendor })
+        : i18nT('pages.overview.mcpTab.sign_in_unsupported_on_kas')}
     </span>
   )
 }
@@ -927,8 +943,34 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
             const base = s.presence || DEFAULT_PRESENCE
             const hasToolOverrides = pendingTools[s.name] && Object.keys(pendingTools[s.name]).length > 0
             const managedProvider = connectionProviderForServer(s)
-            const signInUnsupported = kasCannotSignIn(s, managedProvider, onKas)
+            const vendorPending = s.clientId ? undefined : vendorPendingProviderForServer(s)?.name
+            const signInUnsupported = kasCannotSignIn(s, managedProvider, onKas, vendorPending)
             const signInTarget = signInUnsupported ? undefined : signInTargetFor(s, managedProvider, connectionsUi)
+            // A configured card whose Crew sign-in is off: its setup line stands in
+            // for the sign-in controls only, never for the probe error or the tools.
+            const crewSignInProvider = s.connectionNeedsCrewSignIn === true ? providerOwningRow(s) : undefined
+            const signInNotice = crewSignInProvider ? (
+              <span className="text-warn text-[12px]">
+                <Trans
+                  i18nKey="pages.connectionsPage.needs_crew_sign_in_help"
+                  values={{ provider: crewSignInProvider.name }}
+                  components={{ settingsLink: <Link to={settingsPath({ tab: 'agent' })} className="underline hover:text-accent transition-colors" /> }}
+                />{' '}
+                <Link
+                  to={settingsPath({ tab: 'developer', sub: 'feature-previews', highlight: 'developer.mcp-sign-in-by-kiro-crew' })}
+                  className="underline hover:text-accent transition-colors"
+                >
+                  {i18nT('pages.connectionsPage.open_crew_sign_in_setting')}
+                </Link>
+              </span>
+            ) : connectionsUi && managedProvider && !signInTarget ? (
+              <Link
+                to={settingsPath({ tab: 'connections', highlight: connectionsOAuthClientEntryId(managedProvider.slug) })}
+                className="text-[12px] underline hover:text-accent transition-colors"
+              >
+                {i18nT('pages.connectionsPage.open_managed_connection', { provider: managedProvider.name })}
+              </Link>
+            ) : null
             // Greyed like a pending uninstall, but not AS a pending uninstall: the
             // row is inert because its config lives elsewhere. The reason is SAID
             // on the row -- one line in the Tools cell naming the file to edit --
@@ -1226,7 +1268,10 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
                           that stopped working (expired, revoked, or minted for other
                           scopes). Signing in again is the remedy the row can offer. */}
                       {!!s.authChallenge && !s.headers && signInUnsupported && (
-                        <span className="block mt-0.5"><KasSignInUnsupported /></span>
+                        <span className="block mt-0.5"><KasSignInUnsupported vendor={vendorPending} /></span>
+                      )}
+                      {!!s.authChallenge && !s.headers && !signInUnsupported && signInNotice && (
+                        <span className="block mt-1">{signInNotice}</span>
                       )}
                       {!!s.authChallenge && !s.headers && signInTarget && (
                         <span className="flex flex-col items-start gap-1 mt-1">
@@ -1251,10 +1296,26 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
                        IS something the panel can do) and names the probe step that
                        repaints the row. */
                     signInUnsupported ? (
-                      <KasSignInUnsupported />
+                      <KasSignInUnsupported vendor={vendorPending} />
                     ) : signInTarget ? (
                       <McpRowSignIn target={signInTarget} serverName={s.name} kasChatNote={s.kasChatSignIn} />
 
+                    ) : signInNotice ? (
+                      signInNotice
+                    ) : s.connectionNeedsApp === true && providerOwningRow(s) ? (
+                      /* No chat can start this sign-in: the entry names no client of
+                         its own, or Crew signs in for it and has no OAuth app yet. The
+                         row says what is missing and links to the provider's card under
+                         Settings → Connections, where the OAuth app is entered. */
+                      <span className="text-warn text-[12px]" data-testid="mcp-sign-in-needs-app">
+                        {i18nT('pages.overview.mcpTab.sign_in_needs_oauth_app', { provider: providerOwningRow(s)!.name })}{' '}
+                        <Link
+                          to={settingsPath({ tab: 'connections', highlight: connectionsOAuthClientEntryId(providerOwningRow(s)!.slug) })}
+                          className="underline hover:text-accent transition-colors"
+                        >
+                          {i18nT('pages.connectionsPage.set_up_provider', { provider: providerOwningRow(s)!.name })}
+                        </Link>
+                      </span>
                     ) : (
                       <span className="text-warn text-[12px]">
                         <Trans
@@ -1266,7 +1327,11 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
                   ) : mcpAuthState(s) === 'signed_in' && signInUnsupported ? (
                     /* A held grant is Kiro CLI's, which a KAS chat does not use, so
                        the row says the same as one nobody signed in to. */
-                    <KasSignInUnsupported />
+                    <KasSignInUnsupported vendor={vendorPending} />
+                  ) : mcpAuthState(s) === 'signed_in' && signInNotice && !s.tools?.length && !s.authCrewHeld ? (
+                    /* Where Sign in again would be: setup or URL normalization
+                       must go through Settings before this row can sign in. */
+                    signInNotice
                   ) : mcpAuthState(s) === 'signed_in' && signInTarget && !s.tools?.length && !s.authCrewHeld ? (
                     /* A held grant the probe cannot verify. The probe never uses the
                        session's grant, so it cannot list this server's tools; the
@@ -1299,14 +1364,14 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
                         Worded for THIS server: a server the reach spares shows
                         only that fact. */}
                     <McpDenyReach reach={mcpServerDeny(denyProbe, s.name)} />
+                    <McpToolGrantsNote server={s.name} />
                     <div className="space-y-0.5">{s.tools.map(t => {
                       const currentlyDisabled = (s.disabledTools || []).includes(t)
                       const toolOverride = pendingTools[s.name]?.[t]
                       const effectivelyEnabled = toolOverride !== undefined ? toolOverride : !currentlyDisabled
                       const hasPending = toolOverride !== undefined
-                      return <button
+                      return <div key={t} className="flex items-center gap-2"><button
                         type="button"
-                        key={t}
                         className={`flex items-center gap-1.5 text-[12px] font-mono cursor-pointer transition-colors bg-transparent border-none p-0 text-left ${effectivelyEnabled ? 'text-text hover:text-accent' : 'text-muted line-through opacity-60 hover:opacity-100'} ${hasPending ? 'ring-1 ring-[var(--warn)] rounded px-1' : ''}`}
                         disabled={pendingUninstall || s.enabled === false}
                         onClick={() => toggleToolPending(s.name, t, !effectivelyEnabled)}
@@ -1314,6 +1379,8 @@ export default function McpTab({ onManagedProviderClick }: McpTabProps = {}) {
                           ? (effectivelyEnabled ? i18nT('pages.overview.mcpTab.pending_enable_click_to_revert') : i18nT('pages.overview.mcpTab.pending_disable_click_to_revert'))
                           : effectivelyEnabled ? i18nT('pages.overview.mcpTab.click_to_disable_pending_until_apply') : i18nT('pages.overview.mcpTab.click_to_enable_pending_until_apply')}
                       ><span className={`w-1.5 h-1.5 rounded-full shrink-0 ${effectivelyEnabled ? 'bg-ok' : 'bg-muted'}`} />{t}</button>
+                      {/* Beside Disable: stop asking for this one tool (the approval card's grant). */}
+                      {effectivelyEnabled && s.enabled !== false && <McpToolAlwaysAllow server={s.name} tool={t} />}</div>
                     })}</div></motion.div>}</AnimatePresence>
                   </div>) : disabledInConfig || notProbedReason ? null : '—'}
                 </td>

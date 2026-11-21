@@ -32,6 +32,7 @@ The conductor's route is not touched, so nothing reading it today can break.
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import logging
 from collections.abc import Callable, Mapping
 from datetime import datetime
@@ -59,7 +60,7 @@ from kiro_crew.dashboard.handlers.work_ledger import (
 )
 from kiro_crew.dashboard.state import DashboardState
 from kiro_crew.platform.context import redact_via_context
-from kiro_crew.work_vocab import WORK_BLOCKED_REASONS
+from kiro_crew.work_vocab import waits_on_person
 
 logger = logging.getLogger(__name__)
 
@@ -382,11 +383,8 @@ def awaits_person(
     A running turn means the worker moved on: the conductor messaged it or a loop
     woke it, and neither writes a ledger answer. A tool approval it waits on mid-turn
     has its own approval card, so it is not lost here."""
-    return (
-        not running
-        and item.status in work_ledger.WAITING_STATUSES
-        and item.reason in WORK_BLOCKED_REASONS
-        and not answered_since_report(item, events)
+    return waits_on_person(
+        item.status, item.reason, answered=answered_since_report(item, events), running=running
     )
 
 
@@ -508,6 +506,71 @@ def pr_facts(slot: str, items: list[work_ledger.WorkItem]) -> dict[str, dict[str
                 "reads": reads,
             }
     return out
+
+
+async def own_worker_records(
+    slot_key: str,
+) -> tuple[work_ledger.ConductorRecord | None, list[work_ledger.WorkItem]]:
+    """*slot_key*'s conductor and items, each worker key kept only when it binds BACK.
+
+    The gateway-owned reader behind a code channel's work board, which publishes a
+    conductor's own workers into its channel. The slot comes from the channel's
+    stored binding, never from a request. The read is one snapshot under the
+    board's own lock, like this module's page read, and a board whose cache is
+    flagged dirty reads as no board: what it holds may be a mutation the record
+    rolled back, and the board's alerts cannot be taken back once posted.
+
+    An item's ``worker_session_key`` is a conductor-written field, so it alone does
+    not make a session that conductor's worker: the worker's own binding file must
+    name this conductor and this item too. Where it does not, the key is blanked
+    and the row reads as not dispatched, so no other session's liveness or deep
+    link can reach the board.
+    """
+    async with _board_lock(slot_key):
+        return await asyncio.to_thread(_own_worker_records_locked, slot_key)
+
+
+def _own_worker_records_locked(
+    slot_key: str,
+) -> tuple[work_ledger.ConductorRecord | None, list[work_ledger.WorkItem]]:
+    if work_ledger.cache_dirty(slot_key) is not None:
+        return None, []
+    record = work_ledger.read_conductor(slot_key)
+    if record is None:
+        return None, []
+    items = work_ledger.list_work_items(slot_key)
+    for item in items:
+        worker = item.worker_session_key or ""
+        if not worker:
+            continue
+        bound = False
+        for candidate in dict.fromkeys((worker, session_ledger.ledger_key(worker))):
+            if work_ledger.read_binding(candidate) == (slot_key, item.item_id):
+                bound = True
+                break
+        if not bound:
+            item.worker_session_key = None
+    for item in items:
+        # A person's steer answers a worker's question as a decide does
+        # (:func:`answered_since_report`, the Crew page's rule): the board's row
+        # reads it from the same snapshot, so the two never disagree on who must
+        # act. A read-only mark on this snapshot's copy; the ledger is untouched.
+        # It is computed for EVERY asking item and is authoritative, False
+        # included: a decide in the same second as a newer question has a stamp
+        # equal to the report's, and only the event tail's order tells them apart.
+        answered = False
+        if item.status in {"blocked", "question"}:
+            events = [
+                dataclasses.asdict(e)
+                for e in work_ledger.read_events(slot_key, item.item_id, limit=_BOARD_EVENT_TAIL)
+            ]
+            answered = answered_since_report(item, events)
+        setattr(item, "answered_by_event", answered)  # noqa: B010 - a snapshot mark, not a field
+    return record, items
+
+
+#: Events per item the work board reads to see whether a report was answered.
+_BOARD_EVENT_TAIL = 20
 
 
 def closed_items(slot_key: str) -> list[dict[str, Any]]:
@@ -714,11 +777,13 @@ async def _build_board(state: DashboardState, requested: str, key: str, caller: 
             if dirty is not None:
                 return _answer_of(dirty)
             items = await asyncio.to_thread(work_ledger.list_work_items, key)
-            event_tails: dict[str, list[work_ledger.WorkEvent]] = {}
-            for item in items:
-                event_tails[item.item_id] = await asyncio.to_thread(
-                    _tail_events, key, item.item_id, _MAX_EVENT_TAIL
-                )
+            # Every item's tail in one executor hop: each hop queues behind the
+            # shared pool, so the hop count must not grow with the board.
+            event_tails = await asyncio.to_thread(
+                lambda: {
+                    item.item_id: _tail_events(key, item.item_id, _MAX_EVENT_TAIL) for item in items
+                }
+            )
     except work_ledger.WorkLedgerError as exc:
         if exc.code != work_ledger.CODE_INVALID_VALUE:
             raise
@@ -787,6 +852,26 @@ async def _build_board(state: DashboardState, requested: str, key: str, caller: 
     )
     # What the warm welcome last read about each item's pull request, with its read time.
     facts_by_item = await asyncio.to_thread(pr_facts, requested, items)
+    # Done or stopped: the item states and whether the conductor's patrol is still on.
+    from kiro_crew import conductor_patrol
+    from kiro_crew.autonudge import get_instance
+    from kiro_crew.dashboard import conductor_mode_run
+
+    open_items, accepted, not_done = conductor_mode_run.item_counts(item.state for item in items)
+    run = conductor_mode_run.run_facts(
+        open_items=open_items,
+        accepted=accepted,
+        not_done=not_done,
+        # The current goal's own creates; a header from before that count says nothing.
+        goal_items=(
+            None
+            if record.goal_items_base == work_ledger.LEGACY_GOAL_BASE
+            else record.goal_items_used
+        ),
+        patrol=conductor_mode_run.patrol_of(
+            get_instance(), (conductor_patrol.nudge_slot_for(state, key) or "", key)
+        ),
+    )
 
     payload = {
         "conductor": record.to_dict(),
@@ -794,6 +879,7 @@ async def _build_board(state: DashboardState, requested: str, key: str, caller: 
         "items": rows,
         "asks": asks,
         "pr_facts": facts_by_item,
+        "run": run,
         # The ONE capability the page actually reads, because it changes what the
         # page renders: no take-over button is rendered while this is false.
         #

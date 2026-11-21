@@ -11,7 +11,7 @@ import pytest
 
 from kiro_crew.slack import events as events_mod
 from kiro_crew.slack.events import _publish_home_tab
-from kiro_crew.testing.synthetic_credentials import SAMPLE_AWS_SECRET
+from kiro_crew.testing.synthetic_credentials import github_classic
 from kiro_crew.testing.wait import finished
 
 # Helpers
@@ -123,7 +123,7 @@ class TestPublishHomeTabHappyPath:
         await _publish_home_tab(orch, "U123")
 
         view = orch.slack.views_publish.call_args[1]["view"]
-        assert "🟢 ON" in str(view["blocks"])
+        assert "*YOLO mode:* ON" in str(view["blocks"])
 
 
 class TestPublishHomeTabEmptyState:
@@ -409,7 +409,7 @@ def _write_session_jsonl(path, *, title="", agent="", messages=None):
 
 
 class TestPublishHomeTabSessions:
-    """Tests for the 🧵 Sessions section of the Home Tab."""
+    """Tests for the Sessions section of the Home Tab."""
 
     @pytest.fixture(autouse=True)
     def _grant_home_tab_auth(self, monkeypatch):
@@ -439,7 +439,7 @@ class TestPublishHomeTabSessions:
         await _publish_home_tab(orch, "U123")
 
         text = str(orch.slack.views_publish.call_args[1]["view"]["blocks"])
-        assert "🧵 Sessions" in text
+        assert "Sessions" in text
         assert "No recent sessions" in text
 
     @pytest.mark.asyncio
@@ -467,7 +467,7 @@ class TestPublishHomeTabSessions:
 
         blocks = orch.slack.views_publish.call_args[1]["view"]["blocks"]
         text = str(blocks)
-        assert "🧵 Sessions" in text
+        assert "Sessions" in text
         assert "Main chat" in text
         assert "Pipeline triage" in text
         # Resume button wiring uses the canonical action_id
@@ -598,7 +598,7 @@ class TestPublishHomeTabSessions:
 
         text = str(orch.slack.views_publish.call_args[1]["view"]["blocks"])
         # Section header still present, but content shows the unavailable message
-        assert "🧵 Sessions" in text
+        assert "Sessions" in text
         assert "Sessions unavailable" in text
         # And the rest of the home tab still renders (no full-page fallback)
         assert "Recent Lessons" in text
@@ -663,7 +663,7 @@ class TestPublishHomeTabSessions:
         ordering across all three surfaces.
         """
         orch = _make_orch()
-        leaked_key = SAMPLE_AWS_SECRET
+        leaked_key = github_classic(seed=93)
         with (
             patch(
                 "kiro_crew.slack.sessions_view._collect_recent_sessions",
@@ -740,7 +740,7 @@ class TestPublishHomeTabSessions:
         assert "secret data" not in rendered
         # Section header still rendered (so the user sees "Sessions unavailable"
         # rather than no section at all — visible signal that a section exists)
-        assert "🧵 Sessions" in rendered
+        assert "Sessions" in rendered
         assert "Sessions unavailable" in rendered
 
 

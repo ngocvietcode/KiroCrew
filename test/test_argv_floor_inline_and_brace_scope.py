@@ -325,6 +325,11 @@ class TestInlinePayloadNamesTheMintSurface:
             "python -c 'import kiro_crew.dashboard.token_secret as s; print(s._get_secret())'",
             "python -c 'from kiro_crew.dashboard import token_auth'",
             "python -c 'from kiro_crew.instances.token_mint import build_remote_token_command'",
+            # The connector credential is signed with the same signer; its module path
+            # names ``token``, so the producer-path rule covers every import spelling.
+            "python -c 'from kiro_crew.connected_computers.connector_token import mint'",
+            "python -c 'import kiro_crew.connected_computers.connector_token as c; c.mint(r, g)'",
+            "python -c 'from kiro_crew.connected_computers import connector_token; connector_token.mint'",
             # The SECOND credential: the internal secret ``/api/token/local`` accepts, read
             # through product code past the sensitive-path floor that fences the file.
             "python -c 'from kiro_crew.config.loader import read_local_secret; "
@@ -464,18 +469,17 @@ class TestInlinePayloadNamesTheMintSurface:
         )
 
     def test_the_bounds_bound_the_walk_and_not_the_verdict(self):
-        # A payload is attacker-shaped text on the synchronous gate path, so the walk stops
-        # at ``_LOADER_NESTING_CAP`` / ``_LOADER_ARG_SCAN_CAP`` instead of following the
-        # input. What must NOT follow is a shorter verdict: past either bound the call has
-        # not been seen to close, so it is judged on everything left. Truncating the slice
-        # to the bound is how a name sitting past it would read as "handed something else".
+        # A payload is attacker-shaped text on the synchronous gate path. Whether the
+        # call nests deep or its argument runs long, what must NOT follow is a shorter
+        # verdict: a call not seen to close is judged on everything left. Truncating the
+        # slice is how a name sitting past the cut would read as "handed something else".
         past_nesting = "exec(" + "f(" * 200 + "'kirocrew'"
         past_scan = "exec(" + "x" * 20000 + "'kirocrew'"
         for payload in (past_nesting, past_scan):
             assert inline_payload._inline_payload_reaches_cli(payload), payload[:40]
-            # The name is past the bound and still inside the judged argument.
+            # The name sits at the end of the long input and is still inside the judged argument.
             assert "'kirocrew'" in inline_payload._code_loader_arguments(payload)[0]
-        # A call that DOES close inside the bounds is judged on its own argument only.
+        # A call that DOES close is judged on its own argument only.
         assert inline_payload._code_loader_arguments("exec(open('p.py').read()); 'kirocrew'") == (
             "open('p.py').read()",
         )
@@ -1117,9 +1121,8 @@ class TestBraceExpansionMirrorsBash:
                     # A host-stamped filename -- literal text, then a substitution, then a glob --
                     # under a program that is NOT a data consumer, with a product-named path later
                     # in the same argv.  The word expands to something starting with its literal
-                    # prefix, so it cannot be the verb; the body (``hostname``) is harmless.  Every
-                    # row was confirmed newly-refused by the scope review of the revision that read
-                    # the whole word as ``.*``.
+                    # prefix, so it cannot be the verb; the body (``hostname``) is harmless.
+                    # Reading the whole word as ``.*`` would refuse every row here.
                     "tar czf logs_$(hostname)_*.tar.gz -C /w/kirocrew-scratch/logs .",
                     "zip -q /tmp/bench.zip bench_`hostname`_*.json /w/kirocrew-scratch/notes.md",
                     "gh run download 12345678 --pattern coverage_$(hostname)_* --repo kirodotdev/KiroCrew",
@@ -1236,6 +1239,9 @@ class TestAGlobArgumentIsNotAKillProgram:
             # read as if the next command's words were its arguments.  Safe direction.
             ("kirocrew; echo token", _MINT),
             ("pkill; echo kirocrew", _KILL),
+            # A glob glued to the boundary under a program that is not a data consumer
+            # is read the same way.
+            ("git grep x -- '*'; ls /w/kirocrew", _KILL),
             # The glued-operator PROGRAM spelling: the target follows it.
             ("x;pkill -f kirocrew", _KILL),
             ("x;kirocrew token", _MINT),
@@ -1300,14 +1306,13 @@ class TestAGlobArgumentIsNotAKillProgram:
             "cp $(git rev-parse --show-toplevel)/src/kiro_crew/x.py /tmp/",
             # A substitution INSIDE a filename glob: the word reads as ``.*`` (so it
             # "could be" the verb), but it is a filename under a mover, and the body
-            # (``hostname``) is harmless.  Confirmed newly-refused by the scope review
-            # of an earlier revision, which refused every substitution-carrying word.
+            # (``hostname``) is harmless.  Refusing every substitution-carrying word
+            # would refuse these.
             "cp report_$(hostname)_*.log /w/kirocrew-scratch/archive/",
             "mv $(date +%F)_*.log /w/kirocrew-scratch/",
             "ls report_`hostname`_* /w/kirocrew/",
             # A substitution as the first alternative of a BRACE GROUP: the word is two
-            # filenames, the body (``date``) is walked on its own.  Confirmed newly-refused
-            # by the scope review of an earlier revision.
+            # filenames, the body (``date``) is walked on its own.
             "mv {$(date +%F),current}.log /w/kirocrew-scratch/archive/",
             "rsync -a {$(date +%F),default}.conf /w/kirocrew-scratch/etc/",
             "cp {$(hostname),local}.log /w/kirocrew-scratch/",

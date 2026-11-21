@@ -25,7 +25,11 @@ from kiro_crew.config import migration as _migration
 from kiro_crew.config import sections as _sections
 from kiro_crew.config import windows_exec_adoption
 from kiro_crew.config.fields import _coerce_bool, _safe_str
-from kiro_crew.config.integration_sections import AppSettingsConfig, AwsConfig
+from kiro_crew.config.integration_sections import (
+    AppSettingsConfig,
+    AwsConfig,
+    TemplateSettingsConfig,
+)
 from kiro_crew.config.loader_agents import _crew_autocompact_pct
 from kiro_crew.config.loader_builders import (
     _build_agent_config,
@@ -120,6 +124,8 @@ from kiro_crew.config.section_builders import (
     _build_work_ledger_config,
 )
 from kiro_crew.config.sections import (
+    BOT_MAX_WORKERS_MAX,
+    BOT_MAX_WORKERS_MIN,
     STAR_ORDER_MAX,
     AgentConfig,
     BrowserConfig,
@@ -797,6 +803,28 @@ def _parse_app_settings(raw: Any) -> dict[str, AppSettingsConfig]:
     return apps
 
 
+def _parse_template_settings(raw: Any) -> dict[str, TemplateSettingsConfig]:
+    """The ``templates`` table: one :class:`TemplateSettingsConfig` per template name.
+
+    Total: a table that is not an object, or an entry that is not one, reads as
+    absent, so every template keeps its own pin. A name no installed template
+    carries simply matches nothing.
+    """
+    if not isinstance(raw, dict):
+        logger.warning(
+            "Config 'templates' is not a JSON object (got %s); every template keeps its pin",
+            type(raw).__name__,
+        )
+        return {}
+    templates: dict[str, TemplateSettingsConfig] = {}
+    for name, entry in raw.items():
+        if not isinstance(name, str) or not name or not isinstance(entry, dict):
+            continue
+        model = _sections.SectionReader(TemplateSettingsConfig, entry).get("model")
+        templates[name] = TemplateSettingsConfig(model=model if isinstance(model, str) else "")
+    return templates
+
+
 def build_config(
     doc: ConfigDocument, config_cls: type[KiroCrewConfig] = KiroCrewConfig
 ) -> KiroCrewConfig:
@@ -899,8 +927,8 @@ def build_config(
     # dict iterates as its keys, a string as its characters). A list with
     # non-string/empty ENTRIES: the parse filter drops them, so an
     # all-invalid narrowing like [1, 2] parses to [] — indistinguishable
-    # from "no restriction configured", the exact silent widening this fix
-    # exists to stop. Both shapes record the degradation so the publish
+    # from "no restriction configured", a silent widening. Both shapes
+    # record the degradation so the publish
     # gate denies, and parse from what safely remains. Validation cannot
     # repair these values (publish.allowed_destinations is fail-closed
     # there — repairing an OPEN default silently widens), so the loader
@@ -1048,6 +1076,9 @@ def build_config(
                         else crew.default("worker_model")
                     ),
                     worker_reasoning_effort=coerce_effort(crew.get("worker_reasoning_effort")),
+                    max_workers=crew.read(
+                        "max_workers", _safe_int, lo=BOT_MAX_WORKERS_MIN, hi=BOT_MAX_WORKERS_MAX
+                    ),
                     # Kept as written, never coerced to a selectable value: the
                     # selection gate refuses a pin this build cannot start, and a
                     # coerced one would run the crewmate on another harness.
@@ -1152,11 +1183,17 @@ def build_config(
                 embedding_provider=store.get("embedding_provider"),
                 owner_member=store.get("owner_member"),
                 memory_version=store.get("memory_version"),
+                provider_mode=(
+                    mode
+                    if (mode := entry.get("provider_mode")) in ("inherit", "builtin")
+                    else "inherit"
+                ),
             )
     if not memory_stores:
         memory_stores[DEFAULT_MEMORY_STORE] = MemoryStoreConfig()
 
     apps = _parse_app_settings(data.get("apps", {}))
+    templates = _parse_template_settings(data.get("templates", {}))
 
     # The top-level keys read against KiroCrewConfig's own fields, and the slack
     # keys that land on top-level fields under the same names. Against the base
@@ -1243,6 +1280,7 @@ def build_config(
         memory_stores=memory_stores,
         default_memory_store=default_memory_store_val,
         apps=apps,
+        templates=templates,
         stt=_build_stt_config(stt_data),
         # Every numeric knob is clamped to the same ceiling the MCP tool
         # schemas enforce, so a hand-edited config.json cannot ask for an
@@ -1439,8 +1477,8 @@ def persist_write_back(cfg: KiroCrewConfig, doc: ConfigDocument) -> None:
         #
         # In memory still matters as much as the file, which is why it happens at
         # all: the gateway reads these budgets once at startup, so a disk-only
-        # fix would leave the very run that performed it still on the old value,
-        # and "upgraded, restarted, nothing changed" is the complaint.
+        # write would leave the run that performed it on the old value until
+        # the next restart.
         adopt_keys = {e.dotted_key for e in adoptable}
         if adopt_keys:
             pending.add(MIGRATE_SUPERSEDED_DEFAULTS)

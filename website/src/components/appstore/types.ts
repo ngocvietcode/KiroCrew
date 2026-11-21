@@ -112,7 +112,7 @@ export type RegistryApp = {
     // global shortcuts, tray). A UX gate only — the marker is client-side.
     requiresDesktopApp?: boolean }
   manifest?: {
-    permissions?: { sessionApproval?: boolean; memberThreads?: boolean; workerAutoApprove?: boolean; chatSlots?: boolean; reachableByUserSessions?: string[]; desktopCapabilities?: string[] }
+    permissions?: { api?: string[]; sessionApproval?: boolean; memberThreads?: boolean; workerAutoApprove?: boolean; chatSlots?: boolean; hiddenSessions?: boolean; chatLaunch?: unknown; reachableByUserSessions?: string[]; desktopCapabilities?: string[]; webhookSource?: boolean }
     mcpServers?: Record<string, McpServerView>
     platform?: { requiresDesktopApp?: boolean }
   }
@@ -157,7 +157,7 @@ export type InstalledApp = {
   enabled: boolean
   sessionApprovalConsentPending?: boolean
   /** Approved api/events entries, present only while an update's new ones await approval. */
-  approvedGrants?: { api?: string[]; events?: string[] }
+  approvedGrants?: { api?: string[]; events?: string[]; bots?: string[] }
   /** Approved link-preview hosts and text patterns, and the ones an update holds back. */
   linkPreviewGrant?: LinkPreviewGrantRow
   /** Approved message actions, and the entries an update holds back. */
@@ -173,6 +173,10 @@ export type InstalledApp = {
   userSessionReachGrant?: { approved: string[]; staged: string[] }
   /** `permissions.desktopCapabilities` the owner approved, and the ones an update holds back; absent when undeclared. */
   desktopCapabilitiesGrant?: { approved: string[]; staged: string[] }
+  /** `ui.frameSources` origins the owner approved, and the ones an update or edit holds back; absent when undeclared. */
+  frameSourcesGrant?: { approved: string[]; staged: string[] }
+  /** `permissions.browserSites` pages the owner approved, and the ones waiting; absent when undeclared. */
+  browserSitesGrant?: { approved: string[]; staged: string[] }
   installedAt: string
   source?: string
   origin?: string     // "builtin" | "registry" | "local" | "external"
@@ -255,8 +259,13 @@ export type InstalledApp = {
       memberThreads?: boolean
       workerAutoApprove?: boolean
       chatSlots?: boolean
+      hiddenSessions?: boolean
+      chatLaunch?: unknown
       reachableByUserSessions?: string[]
       desktopCapabilities?: string[]
+      webhookSource?: boolean
+      /** Bot scopes, `"read"` and `"wake"` (apps/bot_grants.py). */
+      bots?: string[]
     }
     setup?: { onInstall?: string; onUpdate?: string; onUninstall?: string; onEnable?: string; onDisable?: string }
     minKiroCrewVersion?: string

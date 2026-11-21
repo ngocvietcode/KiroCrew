@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from kiro_crew._facade_bindings import own_methods
 from kiro_crew.approval_mode_policy import session_mode_permitted
+from kiro_crew.dashboard import run_clock as _run_clock
 from kiro_crew.dashboard.recovery_replays import RecoveryReplays
 from kiro_crew.dashboard.side_state import SideState
 from kiro_crew.dashboard.slot_buffers import SlotBufferCoordinator
@@ -97,6 +98,9 @@ class _ChatSlot:
         "_task",
         "_turn_admission_reserved",
         "_turn_generation",
+        "_run_started_at",
+        "_run_started_turns",
+        "_task_started_at",
         "_turn_lineage",
         "_turns_started",
         "_unstarted_generation",
@@ -104,6 +108,7 @@ class _ChatSlot:
         "_handoff_mark",
         "_unsent_resends",
         "_wake_starting_task",
+        "_turn_project_pin",
         "_chunk_seq",
         "event",
         "_pending",
@@ -149,6 +154,7 @@ class _ChatSlot:
         "_saved_created_by",
         "_lineage_minted",
         "_reports_to_creator",
+        "_work_aggregate",
         "_revived_by",
         "_artifact",
         "_channel_folder_filed",
@@ -239,6 +245,7 @@ class _ChatSlot:
         "_fallback_candidate_idx",
         "_fallback_walked",
         "_fallback_walk_refused",
+        "_fallback_walk_server_error",
         "_active_fallback_model",
         "_fallback_primary_model",
         "_fallback_slot_model",
@@ -479,6 +486,7 @@ class _ChatSlot:
     _saved_created_by: str
     _lineage_minted: bool
     _reports_to_creator: bool
+    _work_aggregate: dict[str, Any] | None
     _revived_by: str
     _mcp_report: dict[str, Any] | None
     _mcp_report_session_id: str
@@ -548,6 +556,14 @@ class _ChatSlot:
     _task: asyncio.Task[Any] | None
     _turn_admission_reserved: bool
     _turn_generation: int
+    # ``run_clock.now()`` when the first turn of the running run started, or
+    # None between runs; the run's final ``chat_done`` reads and clears it.
+    _run_started_at: float | None
+    # ``_turns_started`` when ``_run_started_at`` was stamped. While the two are
+    # equal no turn of the run has passed the dispatch gates yet.
+    _run_started_turns: int
+    # ``run_clock.now()`` when the task holding the slot was set, or None.
+    _task_started_at: float | None
     # ``(generation, first generation)`` of a dispatch that retried the turn
     # before it (``queue_drain``); read through :meth:`_turn_lineage_generation`.
     _turn_lineage: tuple[int, int]
@@ -557,6 +573,7 @@ class _ChatSlot:
     _handoff_mark: asyncio.Future[None] | None
     _unsent_resends: tuple[dict[str, Any], str, dict[str, Any]] | None
     _wake_starting_task: asyncio.Task[Any] | None
+    _turn_project_pin: tuple[int, str, str] | None
     _chunk_seq: int
     event: asyncio.Event
     _pending: list[dict[str, str]]
@@ -670,6 +687,7 @@ class _ChatSlot:
     _fallback_candidate_idx: int
     _fallback_walked: list[str]
     _fallback_walk_refused: bool
+    _fallback_walk_server_error: bool
     _active_fallback_model: str
     _fallback_primary_model: str
     _fallback_slot_model: str
@@ -849,6 +867,19 @@ class _ChatSlot:
         from kiro_crew.dashboard.transcript_binding import write_project
 
         write_project(self._binding, value)
+
+    @property
+    def _project_picked(self) -> bool:
+        """Whether a person picked the project, held in the binding beside it.
+
+        A Bot worker keeps a picked project instead of moving to the Bot's worktree
+        (``crewmate_worktree_scope``). Any write that changes the project clears it.
+        """
+        return self._binding.picked
+
+    @_project_picked.setter
+    def _project_picked(self, value: bool) -> None:
+        self._binding.picked = value
 
     @property
     def autocompact_pct(self) -> float | None:
@@ -1037,8 +1068,25 @@ class _ChatSlot:
 
     @task.setter
     def task(self, value: asyncio.Task[Any] | None) -> None:
-        if value is not None and value is not self._task:
-            self._turn_generation += 1
+        if value is not self._task:
+            # A stamp is the run's once one of its turns passed the dispatch
+            # gates. Before that it belongs to the task holding the slot, so an
+            # app reservation or a drain that leaves with no such turn takes it
+            # along, and the next run is not measured from it.
+            if self._run_started_turns == self._turns_started:
+                self._run_started_at = None
+            self._task_started_at = None
+            if value is not None:
+                self._turn_generation += 1
+                # Every turn starts here, so the earliest turn of a run stamps it
+                # and the run's final ``chat_done`` (``queue_cycle._send_chat_done``)
+                # reports the whole run, whichever window is watching. A person's
+                # message restamps from ``_task_started_at`` at the dispatch gates.
+                now = _run_clock.now()
+                self._task_started_at = now
+                if self._run_started_at is None:
+                    self._run_started_at = now
+                    self._run_started_turns = self._turns_started
         self._task = value
 
     def _turn_lineage_generation(self) -> int:

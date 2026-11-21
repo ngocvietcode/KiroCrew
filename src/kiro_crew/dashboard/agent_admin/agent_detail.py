@@ -40,6 +40,7 @@ if TYPE_CHECKING:
         clear_list_agents_cache,
         clear_model_pin,
         control_plane_declarations,
+        dashboard_author_ownership_digest,
         discovery_executor,
         enumerate_skill_catalog,
         is_markdown_spec,
@@ -249,6 +250,27 @@ async def api_agent_detail(request: web.Request) -> web.Response:
                     status=409,
                 )
             if request.method == "PATCH" and patch_body is not None:
+                from kiro_crew.config.paths import mate_agents_dir
+
+                in_mates = await asyncio.to_thread(
+                    lambda: f.parent.resolve() == mate_agents_dir().resolve()
+                )
+                if in_mates:
+                    # A crewmate file has one writer, the crewmate editor: it
+                    # records approval revocations, and the crewmate's model
+                    # lives on its binding, not in this file. A generic write
+                    # here would skip both, so refuse before reading further.
+                    return web.json_response(
+                        {
+                            "error": (
+                                f"'{name}' belongs to a Bot, and the template "
+                                "editor does not change Bots; change it on "
+                                "the Bots page"
+                            ),
+                            "code": "crewmate_editor_required",
+                        },
+                        status=409,
+                    )
                 try:
                     # Either lookup spelling can resolve this same file; a
                     # hand-edited name cannot hide its enrolled stem.
@@ -306,9 +328,10 @@ async def api_agent_detail(request: web.Request) -> web.Response:
                     # the lock and a concurrent PATCH may have superseded it.
                     # The branch writes this data back, so bind the same
                     # agents directory and apply the stricter no-symlink /
-                    # no-escape fence before the hardened read.  Keep the
-                    # filesystem work off the event loop while the shared
-                    # config lock is held.
+                    # no-escape fence before the hardened read.  Crewmate
+                    # files were refused above, so only the user-level
+                    # folder reaches here.  Keep the filesystem work off the
+                    # event loop while the shared config lock is held.
                     agents_dir = kiro_agents_dir_path()
 
                     def _reread_under_lock(
@@ -498,8 +521,8 @@ async def api_agent_detail(request: web.Request) -> web.Response:
                             ):
                                 agent_state.begin_managed_write(
                                     f.stem,
-                                    agent_state.spec_digest(fresh),
-                                    current=agent_state.spec_digest(pre_write),
+                                    dashboard_author_ownership_digest(fresh),
+                                    current=dashboard_author_ownership_digest(pre_write),
                                 )
                                 _atomic_json_write(f, fresh)
                                 agent_state.finalize_managed_write(f.stem)
@@ -592,8 +615,18 @@ async def api_agent_detail(request: web.Request) -> web.Response:
             # The spec is otherwise passed through verbatim, so mask the one
             # value in it that is a credential (a pre-registered Connections
             # client's projected secret); this read is not owner-gated.
+            from kiro_crew.acp_backends import ACP_BACKEND_KAS
+            from kiro_crew.config import KiroCrewConfig
+            from kiro_crew.dashboard.agent_no_tools_notice import (
+                session_spec_lists_tools,
+                spec_lists_tools,
+            )
             from kiro_crew.mcp_utils import redact_oauth_client_secrets
 
+            cfg = await asyncio.to_thread(KiroCrewConfig.load)
+            session_lists_tools = spec_lists_tools(data)
+            if cfg.agent.acp_backend == ACP_BACKEND_KAS:
+                session_lists_tools = await asyncio.to_thread(session_spec_lists_tools, name, data)
             return web.json_response(
                 {
                     **redact_oauth_client_secrets(data),
@@ -607,6 +640,7 @@ async def api_agent_detail(request: web.Request) -> web.Response:
                     "model": spec_model(data),
                     "skills": keys,
                     "unmanaged_skills": unmanaged_uris,
+                    "session_lists_tools": session_lists_tools,
                 }
             )
         except (json.JSONDecodeError, OSError):

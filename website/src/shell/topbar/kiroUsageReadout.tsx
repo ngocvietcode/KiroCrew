@@ -1,13 +1,16 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Coins, Info, Loader2 } from 'lucide-react'
-import { api } from '../../api/client'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Coins, Info, KeyRound, Loader2 } from 'lucide-react'
+import { api, type KasLoginStatus } from '../../api/client'
+import { useOpenKiroSignIn } from '../../pages/developer/useOpenKiroSignIn'
+import { useKiroSignInOffered } from '../../pages/developer/useKiroSignInOffered'
 import { isAccountOnly, parseKiroUsagePayload, kiroUsageRefetchInterval, type KiroUsageState } from '../../api/kiroUsage'
 import { isKiroHarness, type AcpBackendConfig } from '../../api/acpBackend'
 import type { KiroAccountUsage } from '../../components/KiroAccountModal'
 import { fmtCompact } from '../../i18n/format'
 import { i18nT } from '../../i18n/t'
 import { failedWithNoData } from '../../api/queryState'
+import { noteKiroAccount } from '../../providers/adapters/acp'
 
 /**
  * The Kiro credit reading one derivation serves: the capsule's credits segment,
@@ -27,11 +30,18 @@ export function useKiroUsageReadout() {
   // backend cache has not warmed yet" (null) apart from "the request failed"
   // (undefined) — both are falsy. Without it a failing endpoint renders as a
   // spinner that never resolves, since the 30s refetch keeps retrying forever.
+  const queryClient = useQueryClient()
   const { data: kiroUsage, isError: kiroUsageFailed } = useQuery<KiroUsageState>({
     queryKey: ['kiro-usage'],
     // The parser is shared with the account modal's Refresh button, which
     // writes its POST result into this same query: one normalization for both.
-    queryFn: () => api.sessionsUsage().then(parseKiroUsagePayload),
+    // This poll is also how the browser learns of a `kiro-cli login` to another
+    // account: the model list cached for the previous one is dropped and re-read.
+    queryFn: () =>
+      api.sessionsUsage().then(d => {
+        if (noteKiroAccount(d?.account)) void queryClient.resetQueries({ queryKey: ['available-models'] })
+        return parseKiroUsagePayload(d)
+      }),
     // The GET warms the gateway's cache in the background, so a reopen hits an
     // empty cache (`null`) and, before kiro-cli readiness is verified, a 503 the
     // query surfaces as an error. Poll fast while the state is unsettled so the
@@ -123,7 +133,36 @@ export function useKiroUsageReadout() {
   // `null` -- the desktop paints a spinner there and takes it back if the cache
   // settles on `none`, which for a nav row would be a row blinking in and out.
   const kiroAccountEntry = kiroCreditSurface || (kiroUsageState !== null && !pillHidden)
-  return { kiroUsageOpen, setKiroUsageOpen, kiroUsageState, usageSegmentHidden, kiroAccountEntry }
+  // On a harness with no balance here (settled: `pillHidden`), the Kiro sign-in
+  // still serves what runs as the Kiro account, so a build that offers it says
+  // when none is stored, quietly, in the balance's place. Read from Crew's own
+  // sign-in status, never from the usage read: off KAS that read goes through
+  // kiro-cli and says nothing about Crew's sign-in. A stored sign-in shows
+  // nothing here (no balance is read for it off KAS); a lapsed one is the
+  // app-level sign-in notice's to report.
+  const signInOffered = useKiroSignInOffered() === true
+  const { data: kasLogin } = useQuery<KasLoginStatus>({
+    queryKey: ['kas-login'],
+    queryFn: api.kasLoginStatus,
+    enabled: pillHidden && signInOffered,
+  })
+  const kiroSignInPrompt = pillHidden && signInOffered && kasLogin?.authenticated === false
+  const openSignIn = useOpenKiroSignIn()
+  const openKiroSignIn = useCallback(() => openSignIn(), [openSignIn])
+  return { kiroUsageOpen, setKiroUsageOpen, kiroUsageState, usageSegmentHidden, kiroAccountEntry, kiroSignInPrompt, openKiroSignIn }
+}
+
+/** The capsule's quiet "Sign in to Kiro" segment, shown in the balance's place
+ *  while `kiroSignInPrompt` holds. It moves to the Kiro account tab; it signs
+ *  nothing in by itself. */
+export function kiroSignInSegment(openKiroSignIn: () => void, seg: string, isMobile: boolean): ReactNode {
+  const label = i18nT('components.kasLogin.sign_in_to_kiro')
+  return (
+    <button key="usage" data-testid="kiro-sign-in-segment" className={`${seg} text-muted`} onClick={openKiroSignIn} title={label} aria-label={label}>
+      <KeyRound size={12} aria-hidden="true" />
+      {!isMobile && <span className="tb-drop-usage text-[11px] whitespace-nowrap">{label}</span>}
+    </button>
+  )
 }
 
 /** The capsule's credits segment for the current reading, or nothing on a harness with no balance. */

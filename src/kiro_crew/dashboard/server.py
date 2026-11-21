@@ -29,6 +29,7 @@ from kiro_crew.apps.backend import (  # noqa: F401
     revive_lost_app_backends,
     start_enabled_app_backends,
 )
+from kiro_crew.apps.frame_sources import frame_src_extra as _app_frame_src_extra  # noqa: F401
 from kiro_crew.apps.hook_reconcile import init_hook_reconciler, stop_hook_reconciler  # noqa: F401
 from kiro_crew.apps.hooks_integration import (  # noqa: F401
     _stop_spawned_backends,
@@ -395,8 +396,7 @@ from kiro_crew.dashboard.server_runtime.security_middleware import (  # noqa: F4
 )
 from kiro_crew.dashboard.server_runtime.service_hooks import (  # noqa: F401
     _register_kiro_service_shutdown,
-    _start_remote_puller,
-    _stop_remote_puller,
+    _sweep_remote_closes,
     _wire_status_delta_sink,
 )
 from kiro_crew.dashboard.server_runtime.session_restore import (  # noqa: F401
@@ -619,6 +619,8 @@ _BASE_CSP = (
     # The panel isolates the preview host from the dashboard host
     # (isolatePreviewHost) so host-scoped dashboard cookies are never sent to
     # the framed server. The *.localhost tunnel wildcard stays instances-gated.
+    # Also appended: the exact https origins enabled, trusted apps declare in
+    # ui.frameSources (apps/frame_sources.py), for iframes their pages draw.
     "frame-src 'self' blob: https://*.cloudfront.net{frame_src_extra}; "
     # form-action does not fall back to default-src, so without it an injected
     # <form> could post to any host. Every dashboard form posts to its own origin.
@@ -720,8 +722,8 @@ _CREWMATE_PRUNE_GATE_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 #: and never lists a row the pass is removing. ``GET /api/members`` is not a
 #: pure read either: it calls ``MemberEventLogService.ensure`` for every row
 #: and ``reconcile_member_config`` appends to the member log. Every
-#: ``/api/members`` route reaches the same rows, so the whole prefix waits.
-_CREWMATE_PRUNE_GATE_HELD_PREFIXES = ("/api/members",)
+#: ``/api/members`` route (and its Crew API twin) reaches the same rows, so both wait.
+_CREWMATE_PRUNE_GATE_HELD_PREFIXES = ("/api/members", "/v1/crew/owner/bots")
 
 
 # Strong references to in-flight warm tasks, so the loop cannot collect one
@@ -1252,10 +1254,6 @@ async def start_dashboard(
         # Register the opt-in instances startup/cleanup hooks HERE, before
         # ``runner.setup()`` freezes the app's signal lists. See
         # ``_register_instances_hooks`` for why ordering matters.
-        # Remote dispatch (preview): stop the hub's background report puller on
-        # cleanup, before the instance tunnels and the crew-log drain it uses.
-        # Imports nothing here; the puller is started after bind, below.
-        app.on_cleanup.append(_stop_remote_puller)
         _register_instances_hooks(app, state, _dashboard_sock.getsockname()[1])
         _register_browser_harness_lifecycle(app, state)
         _register_connections_warm_lifecycle(app, state)
@@ -1514,12 +1512,6 @@ async def start_dashboard(
     _stamp_task = asyncio.create_task(_refresh_meta_stamp())
     state._background_tasks.add(_stamp_task)
     _stamp_task.add_done_callback(state._background_tasks.discard)
-
-    # Remote dispatch (preview): the hub's background report puller. Post-bind and
-    # fire-and-forget; with work_ledger.remote_dispatch off it starts nothing.
-    _puller_task = asyncio.create_task(_start_remote_puller(state))
-    state._background_tasks.add(_puller_task)
-    _puller_task.add_done_callback(state._background_tasks.discard)
 
     # Start terminal orphan reaper (kills PTYs with no WS past the reaper window)
     _reaper = asyncio.create_task(handlers.reap_orphaned_terminals(app))

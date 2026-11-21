@@ -518,23 +518,16 @@ def _doctor_crash_dumps(issues: list[str]) -> None:
         if _latest is not None:
             _age_s = cli_doctor.dump_age_seconds(_latest)
             # Every gateway start pre-creates its own dump file, so a dump WITH
-            # stacks that a later local session's header file sits after was
-            # written by a session another one has already replaced without
-            # wedging. That is a past incident: counting it as something to fix
-            # makes `doctor` report a fault for a week after one stall, on a
-            # gateway that has been healthy the whole time — and the real
-            # finding in that run gets read as one more line of the same noise.
+            # stacks followed by a later session's header file came from a
+            # session since replaced without wedging: a past stall. Counting it
+            # would make `doctor` report a fault for a week after one stall and
+            # bury the real finding in noise.
             #
-            # Ordering alone is not enough to conclude it, though. Under the
-            # shipped `Restart=always` unit a wedged gateway is replaced within
-            # seconds, so the successor supersedes the stall almost at once and
-            # a gateway wedging hourly would downgrade every stall forever —
-            # under-reporting exactly the chronic case an operator needs. Two
-            # further terms keep that case visible: a stall inside
-            # `_STALL_CURRENT_SECS` is still current news whatever restarted
-            # since, and two or more stalls on record is a gateway wedging
-            # repeatedly, which no amount of successful restarting makes
-            # historical.
+            # Ordering alone is not enough. Under the shipped `Restart=always`
+            # unit a wedged gateway is replaced in seconds, so an hourly wedge
+            # would always look past. Two terms keep that chronic case visible:
+            # a stall inside `_STALL_CURRENT_SECS` is still current, and two or
+            # more stalls on record mean a gateway that keeps wedging.
             #
             # The stacks are printed either way, because they are what anyone
             # investigating that stall needs; only the issue verdict changes.
@@ -614,3 +607,32 @@ def _doctor_crash_dumps(issues: list[str]) -> None:
         print(f"  dump dir:    {dumps_dir}")
     except Exception as exc:
         print(f"  crash dumps: ⚠️  check failed ({exc})")
+
+
+def _doctor_session_tree_checkpoint(issues: list[str]) -> None:
+    """Render the ``Session Tree Checkpoint`` section: whether the last save of the
+    checkpoint was refused or failed, which leaves the next start replaying the crew log
+    from an older one. Reads the marker the projection leaves beside the checkpoint, so
+    it needs no running gateway."""
+    from kiro_crew.crew_log.session_tree_projection import checkpoint_refusal
+
+    print("\nSession Tree Checkpoint")
+    try:
+        refusal = checkpoint_refusal()
+        if refusal is None:
+            print("  checkpoint:  ✅ the last save landed, or none has been refused")
+            return
+        reason = refusal.get("reason")
+        if reason == "over_ceiling":
+            what = (
+                f"the tree is {refusal.get('bytes')} bytes, "
+                f"past the {refusal.get('ceiling')}-byte ceiling"
+            )
+        else:
+            what = "the write failed; the gateway log has the error"
+        print(f"  checkpoint:  ⚠  not being saved: {render._safe_display(what)}")
+        print("               The next start replays the crew log from the last checkpoint that")
+        print("               was written, or rebuilds the session tree from scratch.")
+        issues.append("session tree checkpoint is not being saved")
+    except Exception as exc:
+        print(f"  checkpoint:  ⚠  check failed ({exc})")

@@ -33,6 +33,7 @@ agent turn ──MCP browser(op, args)──▶ ops ──▶ supervisor.call(<h
 | Driver install, environment fence, browser discovery, relay, supervisor, helper worker, status and install routes | the `browser_harness` package: `env.py`, `install.py`, `build_deps.py`, `chromium.py`, `discover.py`, `relay.py`, `supervisor.py`, `helper_worker.py`; `dashboard/handlers/browser_harness_status.py` |
 | Screencast, adaptive ladder, takeover input, the live hub, the card's routes and the `browser_live` event | `screencast.py`, `takeover.py`, `live_hub.py` in that package; `dashboard/handlers/browser_live.py` |
 | The `browser` MCP tool's ops, the snapshot walker and the op route that also drives the card | `mcp_tools/browser.py`, `ops.py`, `snapshot_walker.js` in that package; `dashboard/handlers/browser_ops.py` |
+| An app page's media buttons on its own agent's tab | `media.py` in that package; `dashboard/handlers/browser_media.py` |
 | The live card in the transcript | `BrowserLiveCard*.tsx` under the chat page, the `useBrowserLive*` hooks, and the binary-frame branch of `useWebSocket.ts` |
 | Settings → Browser and the Preview tab | `website/src/pages/settings/Browser*.tsx`, `config/sections_browser.py`, `website/src/components/WebPreviewPanel*.tsx` |
 | What goes into Kiro's Chromium before the first op: the edition credential seam | `credentials.py` and `credential_files.py` in that package; the `browser_credentials` platform slot |
@@ -62,8 +63,10 @@ another version, another minor version, a venv filled from a runtime copy, below
 still a `--clear` rebuild.
 On Linux with a glibc older than 2.27 (Amazon Linux 2: 2.26) the locked
 `pillow==12.3.0`, which `browser-harness` itself pins, has no wheel and pip has to
-build its sdist. `build_deps.py` checks first, from the filesystem alone, for a C
-compiler (`$CC`, the interpreter's own `CC`, or `cc`/`gcc` on `PATH`), the gateway
+build its sdist. `build_deps.py` checks first, from the filesystem alone, for the C
+compiler and archiver the build will run (`$CC` and `$AR`, else the interpreter's
+own `CC` and `AR`; `cc`/`gcc` on `PATH` only when neither names a compiler, and no
+archiver check when neither names one), the gateway
 interpreter's `Python.h`, and `zlib.h` and `jpeglib.h` wherever pillow 12.3.0's
 `setup.py` looks: the system include directories, `C_INCLUDE_PATH`, `CPATH`,
 `INCLUDE`, a glued `-I<dir>` in `CFLAGS`/`CPPFLAGS`/`LDFLAGS`, and
@@ -474,8 +477,13 @@ the card for 2 windows in a row; it climbs one step after 5 windows in a row in
 which the sharper picture's frame would land in time with 30% to spare. Frames are
 acked one at a time, so a high round trip alone only slows the frame rate: on
 2 Mbit/s with a 150 ms round trip the stream runs at about 2.5 fps and keeps the
-1280-wide picture. A window with no frame (a still page, the agent thinking) is no
-evidence and changes nothing. The hub's `rung` is `picture * 7 + fps step`.
+1280-wide picture. The link is read from the faster frames of a window (its upper
+quarter of per-frame rates): a busy card delays some acks, a slow link delays all,
+and while that link carries 30 fps late acks never take the rate below 30 fps. A
+window with no frame (a still page, the agent thinking) counts as calm against the
+link last measured, so a rate stepped down climbs back while nothing moves; the
+first frame after 0.3 s of stillness, and any input, puts the stream on its fastest
+step at once. The hub's `rung` is `picture * 7 + fps step`.
 
 **Link memory.** A stream starts where the last stream of the same card on the
 same relay stood when it ticked or stopped, within 10 minutes, so a new turn or a
@@ -496,7 +504,7 @@ emit two more frames at the ladder's picture, which would cover the sharp still.
 An off-screen or collapsed card stops the screencast (the card reports
 visibility), unless the turn replay records: then the cast keeps running for
 the recorder only (see Turn replay). Input sent with no frame for 3 s restarts it. While the person holds
-the browser the frame rate is capped at 15 fps; the picture stays. `browser.live.*` holds the knobs: `enabled`, `quality`
+the browser the frame rate may reach 60 fps (a slow link still steps it down); the picture stays. `browser.live.*` holds the knobs: `enabled`, `quality`
 (`auto|high|medium|low`), `max_fps` (15|30|60), `mask_passwords`; `max_fps` caps the
 fps axis and a fixed `quality` caps the picture axis. They are read per stream start from the
 live config snapshot, so a Settings change applies to the next turn, never to a
@@ -505,7 +513,12 @@ asked, at most every 250 ms, for the boxes of visible `input[type=password]`
 (a read-only `querySelectorAll` + `getBoundingClientRect` on the relay's own
 session, walking open shadow roots to the same depth the snapshot walker does),
 scaled from CSS to frame pixels; a failed query keeps the last boxes rather than
-unmasking. The query runs in an isolated world made on the frame it reads
+unmasking. While the person's input is under 1 s old the card's frame goes with the
+boxes the last query read and the next query runs beside it, so a frame never waits
+for the page; a secret field that appears mid-gesture can show unmasked in the card
+until that query answers (the recorder never takes such a frame, see Turn replay). A
+query run that way voids the recorder's proof that the fields stood still, so the
+first held frame after a drive needs two fresh matching queries. The query runs in an isolated world made on the frame it reads
 (`screencast.MASK_WORLD`), so a page script cannot replace those functions to
 report no secret field; no world means a failed query. The world is made when
 the stream starts; a query that has to make it again (a navigation destroyed it,
@@ -824,16 +837,15 @@ person holds the reopened tab is held for the hand-back like any other. The done
 line keeps two actions: Open live and Replay when the tab is open (Open in Chrome
 moves into the live view's menu), else Replay and Open in Chrome.
 
-**Sign-in from the Secrets vault** (`browser_harness/vault_fill.py`, behind the
-feature preview `dashboard.feature_previews.secrets_vault`, which the gateway and
-the card both read; off, the card is as above). The agent's side does not change:
+**Sign-in from the Secrets vault** (`browser_harness/vault_fill.py`). The agent's
+side does not change:
 the same `ask` op, the same outcome words, and `type` into a password field stays
 refused. For a `credentials` ask (targeted or the sign-in walk), `run_ask` reads
 the vault in the gateway and puts each matching login item's entry name and
 username on the card (`ask.vault = {items: [{name, username}], more?}`, never a
 password; a name and a username at most 120 plain characters, else not offered;
 at most `MAX_OFFERED` = 50 items, and `more` counts any past that, which the card
-says once all are shown); `vault` is absent when the preview is off or the vault cannot be
+says once all are shown); `vault` is absent when the vault cannot be
 read. A login matches by base domain, as 1Password's and Bitwarden's defaults do:
 its stored URL's host and the ask's host have the same registrable domain (eTLD+1)
 by the Public Suffix List with its private section (the `publicsuffixlist` wheel's
@@ -883,8 +895,8 @@ card can play a finished turn back: what the page looked like, and what the agen
 (`bind_live_hub`). `turn_started` opens the turn's recording (a reopened view
 reopens the same turn), `_fold` ends it. Frames come from the stream through the
 sink's recorder seam (`_StreamSink.records` / `wants_frame` / `record`). When the
-recorder's 5 fps gate is open (`wants_frame`), the stream runs a box query FOR
-THAT FRAME, bypassing the card's 250 ms cache and even with
+recorder's 5 fps gate is open (`wants_frame`) and the person's input is over 1 s
+old (`RECORD_INPUT_QUIET_S`), the stream runs a box query FOR THAT FRAME, bypassing the card's 250 ms cache and even with
 `browser.live.mask_passwords` off (the card's header then still carries no mask),
 and hands the recorder the JPEG with those boxes and `mask_ok`. `mask_ok` is true
 only when the query ran for the frame, answered `{boxes, frames, partial}` (or a
@@ -902,8 +914,11 @@ exception is unknown. A secret field is `input[type=password]`, an input whose
 document it cannot read or place exactly (cross-origin, a scaled or transformed
 iframe, any `object`/`embed`/`fencedframe`/`portal`) is reported in `frames`,
 which the recorder paints over and the card ignores. A frame that arrives while
-the gate is shut is held; the stream's once-a-second tick offers it (`flush_held`)
-only when no newer frame replaced it, it is under 1.5 s old, its size matches, and
+the person's input is under 1 s old is never recorded: no query brackets it, so
+it drops any held frame and the proof that the fields stood still, and recording
+resumes once two fresh queries agree. A frame that arrives while the gate is shut
+is held; the stream's once-a-second tick offers it (`flush_held`) once input is
+quiet, only when no newer frame replaced it, it is under 1.5 s old, its size matches, and
 a fresh query finds exactly the boxes the query before it found, so the password
 fields provably stood still across its window; otherwise it is dropped. A held
 frame from before the turn began is dropped by the recorder. The stream also keeps casting while the card is hidden, sending nothing to
@@ -1067,7 +1082,7 @@ the last navigate or snapshot.
 | `snapshot` | the accessibility walker, run in the page; refs are per snapshot |
 | `click` | a ref or `x`,`y`; `clicks: 2` is a double click. A ref is scrolled into view once, then re-measured without scrolling every 0.1 s until two reads in a row agree within 1 px (at most 6 re-reads), so a page that moves its layout on scroll is clicked where the target settled; a ref that measures empty to the end is refused `ref_stale` |
 | `drag`, `hover`, `scroll` | ref or coordinates (`mouse_move` / `drag` helpers); a ref settles as for `click` |
-| `type` | refuses a password field twice: by the ref's type and by whatever holds focus when the text would land |
+| `type` | refuses a password field twice: by the ref's type and by whatever holds focus when the text would land. `type {ref?, steps: [{text} | {key, modifiers?}]}` (`browser_harness/type_steps.py`, reached from `ops.py` by a call-time import) runs its steps in order in one op: `ref` is focused once, each text step runs the focused-field checks above and each key step `press_key`'s guards, and the first refusal, a `dialog_open` included, ends it with the step's 0-based index as `step` and at the front of its `error`. A malformed list (not 1 to `STEPS_CAP` (50) steps, a step that is neither shape, a key step whose key `press_key` would refuse as unknown, `text` or a truthy `submit` beside `steps`) is refused `bad_steps` before anything runs; `TEXT_CAP` bounds the text of all steps together. A `\t` in `text` inserts a tab character, not the Tab key |
 | `press_key`, `select_option`, `wait_for` (text / textGone / time / load), `console` | as named |
 | `screenshot` | writes a PNG under the screenshot directory below and returns its absolute path |
 | `tabs` | lists and switches `relay.agent_targets()` only |
@@ -1111,6 +1126,19 @@ action answers `redirect_refused` through the existing blank-tab refusal path.
 The quick ask's hit test at a field in a
 frame passes when the browser's topmost node there is the frame's `<iframe>`, or,
 for a same-process frame, a node of that same frame.
+
+**What a step changed.** With `browser.report_changes` on (off by default), a
+`click`, `type` or `select_option` result also carries `changes`
+(`browser_harness/change_report.py`, reached from `ops.py`): the walker's `glance`
+reads the page's own document before and after the step, and `diff` names a new address or
+title, dialogs that opened or closed, new alert or status text, fields that failed
+validation, and controls that appeared or went away; a JavaScript dialog the step
+opened reads `js_dialog`, and `{"no_change_seen": true}` means none moved. Frames are
+not compared. The reads around the step are bounded by `budgets.CHANGE_BEFORE_S`
+(4 s) and `CHANGE_AFTER_S` (8 s), and while the setting is on the route adds their sum
+(`CHANGE_REPORT_S`) to those ops' budget, so a slow read costs the report and never the
+step's own answer. The user-facing rules (redaction, length caps, what counts as a
+field) are in `src/kiro_crew/docs/browser-control.md`.
 
 ### Decision-model help (`browser.step`)
 
@@ -1302,6 +1330,17 @@ and refused rather than being operated through a link.
 
 Passwords never pass the model: `type` refuses a password field, the frame masks
 one, and logins happen during takeover.
+
+**An app's own sites.** A session an app owns whose app holds owner-approved
+`permissions.browserSites` ([app-kit-platform §45](app-kit-platform.md)) gets its
+`browser` calls approved by the gate's `app-browser-sites` row instead of a card, and
+the op route narrows its page gate to those pages (`browser_ops.session_sites`, read
+fresh per op): a `navigate` or `tabs new` off them answers `site_not_allowed` before the
+browser is touched, and a page that lands off them is moved to `about:blank` by the same
+landing checks above. The owner's media buttons on that app's page reach the tab through
+`POST /api/browser/media` (`handlers/browser_media.py`; the state read is a `GET`), which runs the walker's `media`
+method (play, pause, seek, volume, state of the main `<video>`/`<audio>`) in the
+isolated world after the same page check (`browser_harness/media.py`).
 
 ### Screenshot directory
 
@@ -1497,6 +1536,8 @@ modifies it, and the row is silent when the directory is absent.
 | A typed password is kept | only when the person ticked "Save to Secrets store" (off by default) while typing, and only after the fill landed; the save is a new item (never an overwrite) for the bound origin |
 | A saved login is offered on the wrong site | base-domain match by the bundled Public Suffix List (private section included); exact host and port where there is no registrable domain; never an https login on an http page. **Accepted residual:** every host under one registrable domain is treated as one site, as in 1Password's and Bitwarden's defaults |
 | Preview tab | native view, deny-all partition, no agent channel, local origins only |
+| An app's own agent browses without a card per step | only for a session an app owns, while the app is enabled, trusted and holds owner-approved `permissions.browserSites` (the tool gate's `app-browser-sites` row); the op route holds that session to those pages: a request off them is `site_not_allowed`, a landing off them is blanked (`redirect_refused`). **Accepted residual:** the agent types and clicks unasked in a browser holding the owner's logins on those pages; a stronger sandbox is a follow-up |
+| An app page's media buttons | `POST /api/browser/media` refuses the internal secret, non-owners and app tokens, asks `capabilities.browse`, acts only on the tab of a session an app with approved sites owns, never starts the browser, leaves a taken-over tab alone (`user_in_control`, under the takeover fence), and reads only the media element's playback state |
 
 ### What this stack replaced
 

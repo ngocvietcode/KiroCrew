@@ -178,7 +178,7 @@ def _serve_sign_in_first(args: argparse.Namespace, exc: BaseException) -> None:
             config_dir(), port=port or None, bind_address=signin.BIND_HOST, signed_out=True
         ).acquire()
     except GatewayLockError as lock_err:
-        print(f"👻 {lock_err}", file=sys.stderr)
+        print(f"Error: {lock_err}", file=sys.stderr)
         sys.exit(LIVE_HOLDER_EXIT_CODE if lock_err.live_holder else 1)
     try:
         _start_gateway_log_after_lock()
@@ -319,7 +319,7 @@ def _exit_on_pending_save(entry: Callable[[], None]) -> Callable[[], None]:
         try:
             entry()
         except PendingEditBlocksSave as exc:
-            print(f"❌ {exc}", file=sys.stderr)
+            print(f"Error: {exc}", file=sys.stderr)
             raise SystemExit(1) from None
 
     return run
@@ -366,14 +366,14 @@ def main() -> None:
             _port_val = int(_raw_port)
         except ValueError:
             print(
-                f"❌ KIROCREW_PORT={_raw_port!r} is not a valid integer.\n"
+                f"Error: KIROCREW_PORT={_raw_port!r} is not a valid integer.\n"
                 f"   Unset it or provide a numeric port (e.g. KIROCREW_PORT=6777).",
                 file=sys.stderr,
             )
             sys.exit(1)
         if not 1 <= _port_val <= 65535:
             print(
-                f"❌ KIROCREW_PORT={_raw_port!r} is outside the valid port range 1-65535.\n"
+                f"Error: KIROCREW_PORT={_raw_port!r} is outside the valid port range 1-65535.\n"
                 f"   Unset it or provide a bindable port (e.g. KIROCREW_PORT=6777).",
                 file=sys.stderr,
             )
@@ -579,6 +579,7 @@ def main() -> None:
     cli_parser_gateway.register_open_parser(sub)
     cli_parser_gateway.register_logout_parser(sub)
     cli_parser_gateway.register_status_parser(sub)
+    cli_parser_gateway.register_usage_parser(sub)
 
     # mcp-cron (MCP server — spawned by the agent backend, not user-facing)
     sub.add_parser("mcp-cron")
@@ -633,6 +634,7 @@ def main() -> None:
             sub.add_parser(f"mcp-{_bname}")
 
     cli_parser_agent.register_computer_parser(sub)
+    cli_parser_agent.register_trace_parser(sub)
     cli_parser_agent.register_learn_parser(sub)
     cli_parser_agent.register_artifact_parser(sub)
     cli_parser_agent.register_memory_parser(sub)
@@ -813,7 +815,7 @@ def main() -> None:
                 # 'sandbox.enabeld' (fail-closed)"), so print it on one line
                 # and exit 1 instead of a traceback; doctor shows the detail.
                 logging.getLogger("kiro_crew").debug("platform composition failed", exc_info=True)
-                print(f"❌ {exc}", file=sys.stderr)
+                print(f"Error: {exc}", file=sys.stderr)
                 print("   Run `kirocrew doctor` for details.", file=sys.stderr)
                 raise SystemExit(1) from None
         else:
@@ -850,6 +852,18 @@ def main() -> None:
         _jail_reexec_gate(args.command, getattr(args, "no_jail", False))
 
     if args.command == "chat":
+        from kiro_crew.cli_chat_headless import EXIT_USAGE as _headless_usage
+        from kiro_crew.cli_chat_headless import main as _headless_main
+        from kiro_crew.cli_chat_headless import (
+            refuse_headless_flags_without_headless as _headless_stray,
+        )
+
+        if getattr(args, "headless", False):
+            sys.exit(_headless_main(args))
+        stray = _headless_stray(args)
+        if stray:
+            print(f"Error: {stray} needs --headless", file=sys.stderr)
+            sys.exit(_headless_usage)
         _run_chat(args.message, args.model, agent=getattr(args, "agent", None))
     elif args.command == "gateway":
         # The gateway's status lines are plain print() calls. Off a terminal
@@ -928,7 +942,7 @@ def main() -> None:
                 bind_address=_diagnostic_bind_address(),
             ).acquire()
         except GatewayLockError as exc:
-            print(f"👻 {exc}", file=sys.stderr)
+            print(f"Error: {exc}", file=sys.stderr)
             # A live holder is a sibling gateway already serving this home, so
             # retrying can only meet the same refusal: exit the code the systemd
             # unit's RestartPreventExitStatus= names (service/linux_unit.py) and let
@@ -955,6 +969,7 @@ def main() -> None:
         _doctor(
             platform_boot_error=_platform_boot_error,
             bundle=getattr(args, "bundle", False),
+            reconcile_memory=getattr(args, "reconcile_memory", False),
         )
     elif args.command == "ledger-sweep":
         # Lazy on purpose, through ``importlib`` like ``secrets`` above: the
@@ -994,6 +1009,10 @@ def main() -> None:
         from kiro_crew.cli_commands import _learn
 
         _learn(args)
+    elif args.command == "trace":
+        from kiro_crew.tracing.render import trace_show
+
+        trace_show(args)
     elif args.command == "artifact":
         from kiro_crew.cli_commands import _artifact
 
@@ -1062,8 +1081,14 @@ def main() -> None:
 
         run_computer(getattr(args, "computer_args", []))
     elif args.command == "eval":
-        from kiro_crew.cli_commands import _run_eval
+        from kiro_crew.cli_commands import _eval_run_flag_refusal, _run_eval, _run_eval_tasks
 
+        _eval_refusal = _eval_run_flag_refusal(args)
+        if _eval_refusal:
+            print(f"Error: {_eval_refusal}", file=sys.stderr)
+            sys.exit(2)
+        if args.scenarios[:1] == ["run"]:
+            sys.exit(_run_eval_tasks(args))
         asyncio.run(_run_eval(args))
     elif args.command == "security":
         from kiro_crew.cli_commands import _security
@@ -1121,7 +1146,7 @@ def main() -> None:
         _stop(args.port, expect_pid=args.expect_pid)
     elif args.command == "restart":
         if args.max_wait is not None and not args.when_idle:
-            print("❌ --max-wait applies only with --when-idle.", file=sys.stderr)
+            print("Error: --max-wait applies only with --when-idle.", file=sys.stderr)
             sys.exit(2)
         if args.when_idle:
             from kiro_crew.cli_restart_idle import _restart_when_idle
@@ -1169,6 +1194,10 @@ def main() -> None:
         from kiro_crew.cli_server import _status
 
         _status(args)
+    elif args.command == "usage":
+        from kiro_crew.cli_commands import _usage_report
+
+        _usage_report(args)
     elif args.command == "consolidate":
         _consolidate_cmd(args)
     elif args.command == "config":
@@ -1295,6 +1324,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _LOG_FATAL_ERRNOS,
         _LOG_QUEUE_LISTENER,
         _LONG_LIVED_COMMANDS,
+        _OWN_STREAM_ATTR,
         _chat_console_filter,
         _CliLogQueueHandler,
         _ConsoleQueueHandler,
@@ -1302,9 +1332,12 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _fd_is_regular_file,
         _fd_targets_file,
         _FdTrackingRotatingFileHandler,
+        _forget_at_shutdown,
         _move_console_echo_off_loop,
+        _own_stream,
         _prune_older_boot_logs,
         _redirect_fds_to,
+        _release_own_streams,
         _rotate_boot_logs,
         _stop_console_queue_listener,
         _stop_file_log_listener,

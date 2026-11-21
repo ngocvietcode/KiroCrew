@@ -409,6 +409,16 @@ def _register_mcp_routes(app: web.Application) -> None:
         "/api/members/{slug}/dashboard/page-offer",
         _deferred("member_page_offer", "api_member_page_offer"),
     )
+    # A ``crewmate.import`` card's dashboard step adopts a shipped page on the new Bot,
+    # and its Undo takes back that same version; card steps only, owner only.
+    app.router.add_post(
+        "/api/members/{slug}/dashboard/template",
+        _deferred("member_import_dashboard", "api_member_import_dashboard"),
+    )
+    app.router.add_delete(
+        "/api/members/{slug}/dashboard/template",
+        _deferred("member_import_dashboard", "api_member_import_dashboard_undo"),
+    )
     # Change cards. Same split as the guide: the agent half is MCP-only under the
     # strict "/api/cards/agent" prefix, the browser half is owner-only cookie auth.
     # The paths are duplicated from ``change_cards.register_change_card_routes``,
@@ -480,6 +490,12 @@ def _register_mcp_routes(app: web.Application) -> None:
     app.router.add_post(
         "/api/chat/slots/{slot}/crew-workers/resume", _deferred("crew_pause", "api_crew_resume")
     )
+    # What became of a Run in terminal: tells the owning crewmate thread, under the
+    # same owner-only, no-app gate as the side-panel routes above.
+    app.router.add_post(
+        "/api/chat/slots/{slot}/terminal-run",
+        _deferred("mate_terminal_run", "api_slot_terminal_run"),
+    )
     app.router.add_get("/api/crons", handlers.api_crons)
     app.router.add_post("/api/crons", handlers.api_crons_create)
     app.router.add_delete("/api/crons", handlers.api_cron_batch_delete)
@@ -518,8 +534,8 @@ def _register_mcp_routes(app: web.Application) -> None:
     # prefix covers it.
     app.router.add_post("/api/notifications/agent/dismiss", handlers.api_notification_agent_dismiss)
     # Session control. Registered here so the headless --slack-only server
-    # serves the same MCP surface as the dashboard; all three are on
-    # _STRICT_INTERNAL_API_PATHS, which test_session_control_routes_are_strict
+    # serves the same MCP surface as the dashboard; every one is on
+    # _STRICT_INTERNAL_API_PATHS, which test_session_control_routes_are_strict_internal
     # pins by deriving the route set from the router rather than a hand-copied list.
     app.router.add_post(
         "/api/session-control/create", _deferred("session_control", "api_session_control_create")
@@ -616,6 +632,15 @@ def _register_mcp_routes(app: web.Application) -> None:
     app.router.add_get("/api/crew-sessions/read", _deferred_instances("api_crew_sessions_read"))
     app.router.add_post(
         "/api/session-control/queue", _deferred("session_control", "api_session_control_queue")
+    )
+    # crew_list: the remote-dispatch crew roster (handlers/remote_crew_list.py).
+    app.router.add_get(
+        "/api/session-control/crews",
+        _deferred("remote_crew_list", "api_session_control_crews"),
+    )
+    app.router.add_post(
+        "/api/session-control/run-queued",
+        _deferred("session_control", "api_session_control_run_queued"),
     )
     # Settings -> Browser on Browser Harness (handlers/browser_harness_status.py):
     # the engine's install state and connection, the install job, a bounded

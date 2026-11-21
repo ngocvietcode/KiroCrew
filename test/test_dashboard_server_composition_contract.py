@@ -385,14 +385,14 @@ _LAZY_IMPORTS = {
     "kiro_crew.apps.builtin_adoption": (
         "apply_builtin_adoptions released_builtin_packages stage_builtin_adoptions"
     ),
+    "kiro_crew.apps.app_web_origin": "APP_WEB_ORIGIN_CSP_SOURCE build_app_web_origin_middleware",
     "kiro_crew.apps.builtins": "BUILTIN_NAMES",
     "kiro_crew.apps.manager": "sweep_interrupted_updates",
-    "kiro_crew.apps.builtin_adoption_gate": "adopted_app_own_mcp_servers",
+    "kiro_crew.apps.builtin_adoption_gate": "publish_gate_app_trust",
     "kiro_crew.apps.builtin_adoption_pins": "adoption_pin_names",
     "kiro_crew.apps.default_installs": "reconcile_default_installs",
     "kiro_crew.apps.dev_mode": "init_dev_mode_watcher stop_dev_mode_watcher",
     "kiro_crew.apps.event_bus": "build_broadcast_fn",
-    "kiro_crew.apps.execution": "builtin_app_agents builtin_app_mcp_servers builtin_app_names",
     "kiro_crew.apps.spawn_sdk": "build_spawn_impl",
     "kiro_crew.browser_harness.supervisor": "get_supervisor",
     "kiro_crew.config": "live",
@@ -400,6 +400,10 @@ _LAZY_IMPORTS = {
     "kiro_crew.config.live": "ConfigChange",
     "kiro_crew.config.loader": "KiroCrewAgentConfig",
     "kiro_crew.config.resolution": "DEGRADED_WHOLE_CONFIG",
+    # The connected-computers preview: its switch-off and shutdown (``disable``,
+    # bound as ``connected_computers`` in the config-change hook).
+    "kiro_crew.connected_computers": "connected_computers",
+    "kiro_crew.connected_computers.disable": "connected_shutdown",
     "kiro_crew.connections.endpoint_migration": "migrate_retired_endpoints",
     "kiro_crew.connections.warm": "scavenge_warm_mint_artifacts shutdown_warm_mint",
     "kiro_crew.crew_log": "crew_log_emit _read_budget",
@@ -412,6 +416,7 @@ _LAZY_IMPORTS = {
     "kiro_crew.dashboard.chat": "_run_chat",
     "kiro_crew.dashboard.chat_utils_injected_rows": "WORKFLOW_FOLLOWUP_KIND",
     "kiro_crew.dashboard.kiro_relay.ingress": "RELAY_INGRESS_APP_KEY",
+    "kiro_crew.dashboard.redaction_audience": "redaction_audience_middleware",
     "kiro_crew.relay_client.provider": "publish_gateway_ingress",
     "kiro_crew.remote_control.guard": "_uninstall_guard install_for_relay",
     "kiro_crew.dashboard.lts_gate_middleware": (
@@ -461,7 +466,6 @@ _LAZY_IMPORTS = {
     "kiro_crew.history_index_worker": "SessionIndexWorkerSupervisor",
     "kiro_crew.kiro_prerequisite": "KiroPrerequisiteService register_turn_auth_service",
     "kiro_crew.knowledge.entity_resolution": "merge_split_entities",
-    "kiro_crew.hooks": "set_builtin_app_agents set_builtin_app_mcp_servers set_builtin_app_names",
     "kiro_crew.memory": "MemoryStore",
     "kiro_crew.messaging.session_trust": "clear_trusted_sessions",
     "kiro_crew.metrics": "_gauges",
@@ -485,6 +489,13 @@ _LAZY_IMPORTS = {
 
 
 def test_the_lazy_imports_stay_inside_the_functions_that_need_them() -> None:
+    """The scan must equal ``_LAZY_IMPORTS`` exactly. No total is pinned beside it: the
+    table is the record, one line per module, so two changes that each add an import
+    edit different lines. A hand-kept total is one line both would edit to the same
+    number, which merges cleanly and is wrong (testing-conventions § Merge-safe
+    ratchets)."""
+    listed = [name for names in _LAZY_IMPORTS.values() for name in names.split()]
+    assert sorted(name for name in set(listed) if listed.count(name) > 1) == []
     expected = {name: module for module, names in _LAZY_IMPORTS.items() for name in names.split()}
     local: dict[str, set[str]] = {}
     for source in _owner_sources().values():
@@ -499,8 +510,8 @@ def test_the_lazy_imports_stay_inside_the_functions_that_need_them() -> None:
                 elif isinstance(node, ast.Import):
                     for alias in node.names:
                         local.setdefault(alias.asname or alias.name, set()).add(alias.name)
+    assert expected, "the lazy-import table is empty -- the scan has nothing to match"
     assert local == {name: {module} for name, module in expected.items()}
-    assert len(expected) == 154
 
 
 def test_a_star_import_carries_the_moved_public_names(tmp_path: Path) -> None:

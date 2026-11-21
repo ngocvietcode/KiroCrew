@@ -153,8 +153,12 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _EXPLICIT_ONLY_FAMILIES,
         _GRANT_AND_SCOPE_WIDENING,
         _GRANT_WIDENING,
+        _MISSING_RECORD_ERRNOS,
+        _OWNER_APPROVED_FAMILIES,
         _RECORD_READ_CAP,
+        _RECORDED_NAMES_SETTLE_NS,
         _SCOPE_WIDENING,
+        _STALE_SIGNATURE,
         _TREE_SWAP_LAST_CAP,
         _VALID_LIFECYCLE,
         _VALID_ORIGIN,
@@ -176,6 +180,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _approved_grants_stored,
         _approved_grants_text,
         _config_keys_refresh_lock,
+        _consented_grant_entries,
         _credential_free_source_metadata,
         _declared_grant_entries,
         _disabled_before_upgrade,
@@ -198,6 +203,8 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _read_schema_version,
         _record_lock_path,
         _record_lock_state,
+        _recorded_app_names,
+        _recorded_names_cache,
         _restore_approved_grants,
         _scan_installed_app_config_keys,
         _session_approval_consent_unrecorded,
@@ -264,6 +271,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
 if TYPE_CHECKING:  # names it serves from outside the family, from their homes
     import asyncio  # noqa: F401
     import contextlib  # noqa: F401
+    import errno  # noqa: F401
     import functools  # noqa: F401
     import ipaddress  # noqa: F401
     import json  # noqa: F401
@@ -355,6 +363,9 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
         contain_command_agents,
         cron_permission_error,
         is_reserved_app_name,
+    )
+    from kiro_crew.apps.manifest_sections import (  # noqa: F401
+        BOT_GRANT_FAMILY,
     )
     from kiro_crew.apps.message_action_grants import (  # noqa: F401
         message_action_grant_row,

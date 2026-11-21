@@ -24,6 +24,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import DefaultDestinationCrewPicker from '../../components/DefaultDestinationCrewPicker'
+import SharedCrewsCards from '../../components/SharedCrewsCards'
 import {
   Server,
   Rocket,
@@ -57,6 +58,8 @@ import {
 import { Card, Btn } from '../../components/ui'
 import { SettingsToggle } from '../../components/settings'
 import ErrorNotice from '../../components/ErrorNotice'
+import StatusNotice from '../../components/StatusNotice'
+import { useViewerIsNotOwner } from '../../hooks/sharedCrew/useSharedCrew'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import { RadioChipGroup, radioChip } from '../../components/RadioChipGroup'
 import {
@@ -89,14 +92,14 @@ import { Trans } from 'react-i18next'
 import { AddInstanceForm } from './InstancesPanel'
 import { RemoteCrewRestartBanner } from './RemoteCrewPanelRestartBanner'
 import { CrewVersionsReadError } from './CrewVersionStatus'
-import { awsCliRefusalCopy, awsCliRefusalReport, credentialHelperMissingSentence, pluginRefusalCopy, pluginRefusalReport } from './remoteCrewPluginRefusal'
+import { awsCliRefusalCopy, awsCliRefusalReport, credentialHelperMissingSentence, envCredentialsSentence, pluginRefusalCopy, pluginRefusalReport } from './remoteCrewPluginRefusal'
 import {
   instanceFormFromView,
 } from './InstanceFormFields'
 import {
   isInProgress, CLOUD_PROFILE_KEY, CLOUD_REGION_KEY, CLOUD_SIZE_KEY, CLOUD_PROVISIONER_KEY,
   DEFAULT_REGION, launchGuardKey, isTerminal, isRegistered, needsSignin, type SizeTier, SIZE_TIERS, X86_TIERS,
-  PRICING_CALCULATOR_URL, type SigninNotice,
+  PRICING_CALCULATOR_URL, PRICE_REGION, type SigninNotice,
 } from './remoteCrewPanelModel'
 import {
   SizeCard, ProvisionerCard, SettingUpRow, PrereqRow, LaunchProgressCard,
@@ -342,6 +345,8 @@ export function RemoteCrewPanel() {
   // Keyed on the gateway's `instances_disabled` code, not the message text, so
   // an owner-only or Slack-origin 403 shows as a load error, not as "turned off".
   const disabled = isInstancesDisabledError(instancesQuery.error)
+  // The relay answers every remote caller `instances_disabled`, and the switch is the host's own config.
+  const { notOwner } = useViewerIsNotOwner()
   // Any OTHER failure is a load error, not "you have no crews": rendering the
   // empty state over it would tell the user their crews are gone.
   // Both queries gate the crew list: a row's cloud-vs-manual identity comes from the
@@ -1012,24 +1017,37 @@ export function RemoteCrewPanel() {
   }
 
   // ── Disabled feature gate (mirrors InstancesPanel) ──
+  // Shared Crews open over the relay, not an SSH/SSM tunnel, so their card does
+  // not wait on this switch; it keeps its own hidden rule.
+  if (disabled && notOwner) {
+    return (
+      <div className="space-y-4">
+        <StatusNotice tone="info" testId="remote-crews-owner-only" message={i18nT('pages.settings.instancesPanel.owner_only')} />
+        <SharedCrewsCards />
+      </div>
+    )
+  }
   if (disabled) {
     return (
-      <Card>
-        <div className="flex items-center gap-2 text-text font-medium mb-1" data-setting-label={i18nT('pages.settings.instancesPanel.enable_remote_crew_management')}>
-          <Server className="lucide-inline" /> {i18nT('pages.settings.instancesPanel.multi_instance_management_is_off')}
-        </div>
-        <p className="text-[13px] text-muted mb-3">{i18nT('pages.settings.instancesPanel.enable_it_to_let_this_gateway_open_ssh_tunnels_t')}</p>
-        {restartPending && (
-          <div role="status" className="flex items-start gap-2 px-3 py-2 mb-3 text-[13px] rounded-md bg-warn/10 text-warn-text border border-warn/30">
-            <AlertTriangle size={14} className="lucide-inline mt-0.5 shrink-0" />
-            <span><Trans i18nKey="pages.settings.instancesPanel.disabled_restart_to_tear_down_tunnels" components={{ cmd: <code className="text-text">{i18nT('pages.settings.instancesPanel.kirocrew_restart')}</code> }} /></span>
+      <div className="space-y-4">
+        <Card>
+          <div className="flex items-center gap-2 text-text font-medium mb-1" data-setting-label={i18nT('pages.settings.instancesPanel.enable_remote_crew_management')}>
+            <Server className="lucide-inline" /> {i18nT('pages.settings.instancesPanel.multi_instance_management_is_off')}
           </div>
-        )}
-        <Btn primary onClick={() => enableMutation.mutate()} disabled={enableMutation.isPending}>
-          <Power className="lucide-inline" /> {enableMutation.isPending ? i18nT('pages.settings.instancesPanel.enabling') : i18nT('pages.settings.instancesPanel.enable_remote_crew_management')}
-        </Btn>
-        <ErrorNotice message={actionErr} askAgent className="mt-2" />
-      </Card>
+          <p className="text-[13px] text-muted mb-3">{i18nT('pages.settings.instancesPanel.enable_it_to_let_this_gateway_open_ssh_tunnels_t')}</p>
+          {restartPending && (
+            <div role="status" className="flex items-start gap-2 px-3 py-2 mb-3 text-[13px] rounded-md bg-warn/10 text-warn-text border border-warn/30">
+              <AlertTriangle size={14} className="lucide-inline mt-0.5 shrink-0" />
+              <span><Trans i18nKey="pages.settings.instancesPanel.disabled_restart_to_tear_down_tunnels" components={{ cmd: <code className="text-text">{i18nT('pages.settings.instancesPanel.kirocrew_restart')}</code> }} /></span>
+            </div>
+          )}
+          <Btn primary onClick={() => enableMutation.mutate()} disabled={enableMutation.isPending}>
+            <Power className="lucide-inline" /> {enableMutation.isPending ? i18nT('pages.settings.instancesPanel.enabling') : i18nT('pages.settings.instancesPanel.enable_remote_crew_management')}
+          </Btn>
+          <ErrorNotice message={actionErr} askAgent className="mt-2" />
+        </Card>
+        <SharedCrewsCards />
+      </div>
     )
   }
 
@@ -1296,6 +1314,8 @@ export function RemoteCrewPanel() {
           </Card>
 
           <AddInstanceForm onAdded={reloadInstances} />
+
+          <SharedCrewsCards />
         </div>
       ) : (
         <div className="space-y-4">
@@ -1446,12 +1466,14 @@ export function RemoteCrewPanel() {
                       // leads; the CLI's own error sits under it (failureDetail)
                       // for anything the sentence misses.
                       ? credentialHelperMissingSentence(preflight.credential_helper_missing)
+                    : preflight.env_credentials
+                      ? envCredentialsSentence()
                       : (preflight.detail || i18nT('pages.settings.remoteCrewPanel.credentials_bad'))}
                   failureDetail={preflight.reachable && preflight.account
                     ? undefined
                     : cliRefusal
                       ? cliRefusal.failureDetail
-                      : (preflight.credential_helper_missing && preflight.detail) || undefined}
+                      : ((preflight.credential_helper_missing || preflight.env_credentials) && preflight.detail) || undefined}
                   failureReport={cliRefusal ? awsCliRefusalReport(preflight, cliRefusal) : undefined}
                   steps={cliRefusal?.steps}
                   onRecheck={runCheck}
@@ -1507,6 +1529,9 @@ export function RemoteCrewPanel() {
 
             <div>
               <div className="text-[13px] text-muted mb-2">{i18nT('pages.settings.remoteCrewPanel.size')}</div>
+              {region.trim() !== PRICE_REGION && (
+                <p className="text-[12px] text-muted mb-2">{i18nT('pages.settings.remoteCrewPanel.price_region_note', { priceRegion: PRICE_REGION })}</p>
+              )}
               <div className="space-y-2.5">
                 {SIZE_TIERS.map(tier => (
                   <SizeCard key={tier.key} tier={tier} on={sizeKey === tier.key} onPick={setSizeKey} />
@@ -1669,10 +1694,11 @@ export function RemoteCrewPanel() {
             <div className="mt-4 flex items-start gap-2 rounded-md border border-border bg-bg-elevated px-3 py-2.5">
               <AlertTriangle size={15} className="mt-0.5 shrink-0 text-warn" />
               <div className="text-[12px] text-text">
-                {i18nT('pages.settings.remoteCrewPanel.billing')}{' '}
-                <a className="text-accent font-medium hover:underline inline-flex items-center gap-1" href={PRICING_CALCULATOR_URL} target="_blank" rel="noreferrer">
-                  {i18nT('pages.settings.remoteCrewPanel.pricing_calculator')} <ExternalLink size={12} />
-                </a>
+                <Trans i18nKey="pages.settings.remoteCrewPanel.billing_pricing_calculator" components={{ link: (
+                  <a className="text-accent font-medium hover:underline inline-flex items-center gap-1" href={PRICING_CALCULATOR_URL} target="_blank" rel="noreferrer">
+                    {i18nT('pages.settings.remoteCrewPanel.pricing_calculator')} <ExternalLink size={12} />
+                  </a>
+                ) }} />
               </div>
             </div>
 

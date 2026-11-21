@@ -26,7 +26,8 @@ const { safeFilename } = require("./download-handler");
 const { saveThemeSplash } = require("./theme-splash");
 const { createRelayCrewOpener, isEndpointId } = require("./relay-crew-open");
 const { requestRelayCrewToken } = require("./relay-crew-client");
-const { openRelayCrewWindow, createTokenHolder } = require("./relay-crew-window");
+const { openRelayCrewWindow, openRelayCrewPane, createTokenHolder } = require("./relay-crew-window");
+const { normalizeBounds, deriveScale, scaleRect } = require("./browser-view");
 const { createRelayCrewRenewal } = require("./relay-crew-renewal");
 
 /**
@@ -290,6 +291,7 @@ function createIpcRegistrar({
           backendUrl, endpointId, signInMarker, getSecret: readInternalSecret, fetchFn,
         }),
         openWindow: (opts) => openRelayCrewWindow(opts, windowDeps),
+        openPane: (opts) => openRelayCrewPane(opts, windowDeps),
         createRenewal: createRelayCrewRenewal,
         createTokenHolder,
         log,
@@ -882,10 +884,30 @@ function createIpcRegistrar({
       default: DEFAULT_GLOBAL_HOTKEY,
     }));
 
-    ipcMain.on("theme-accent-changed", (_event, hex) =>
-      windows.chrome.setThemeAccent(hex));
-    ipcMain.on("theme-splash-changed", (_event, image) =>
-      saveThemeSplash(app.getPath("userData"), image));
+    // The theme accent and splash art are written under userData for the next
+    // launch's first paint, so only the main window's dashboard reports them
+    // (assertMainWindowDashboard, below; called only after registration ends).
+    // A listener's throw would surface in main, so a refusal is logged and dropped.
+    const fromMainWindowDashboard = (event, channel) => {
+      try {
+        assertMainWindowDashboard(event, channel);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    ipcMain.on("theme-accent-changed", (event, hex) => {
+      if (fromMainWindowDashboard(event, "theme-accent-changed")) windows.chrome.setThemeAccent(hex);
+    });
+    ipcMain.on("theme-splash-changed", (event, image) => {
+      if (!fromMainWindowDashboard(event, "theme-splash-changed")) return;
+      // null (no splash) clears it; anything but { type, bytes } is dropped.
+      if (image !== null && (typeof image !== "object" || !(image.bytes instanceof Uint8Array)
+        || typeof image.type !== "string")) {
+        return;
+      }
+      saveThemeSplash(app.getPath("userData"), image);
+    });
     ipcMain.on("focus-mode-chrome", (event, visible) =>
       windows.chrome.focusMode(event.sender, visible));
     // Arm/disarm the off-window cursor poll that dismisses a focus-mode reveal.
@@ -929,8 +951,8 @@ function createIpcRegistrar({
       restoreClipboardIfEmpty(saved);
       return false;
     });
-    ipcMain.on("theme-mode-changed", (_event, pref) =>
-      windows.chrome.setThemeMode(pref));
+    ipcMain.on("theme-mode-changed", (event, pref) =>
+      windows.chrome.setThemeMode(pref, event.sender));
     ipcMain.on("titlebar-overlay-theme", (_event, mode) =>
       windows.chrome.setTitlebarMode(mode));
 
@@ -1096,16 +1118,17 @@ function createIpcRegistrar({
       return detectWsl();
     });
 
-    // What the main window's close button does, and whether the tray icon
-    // shows. Deliberately narrower than `assertLocalDashboard`, which would
-    // hide the rows from a main window on a configured remote host and leave
-    // that user no way to change them. The sender must be the main window's
+    // What the main window's close button does, whether the tray icon shows,
+    // and whether minimizing hides the window to it. Deliberately narrower
+    // than `assertLocalDashboard`, which would hide the rows from a main
+    // window on a configured remote host and leave that user no way to change
+    // them. The sender must be the main window's
     // top frame, still on its assigned dashboard origin. That trusts the main
     // window's dashboard, local or remote, with visible, reversible two-valued
     // preferences.
     const assertMainWindowDashboard = (event, channel) => {
       const refuse = (why) => {
-        log(`${channel} rejected: ${why}`);
+        logGateRejection(event.sender, `${channel} rejected: ${why}`);
         throw new Error(`${channel} is restricted to the main window's dashboard`);
       };
       const main = windows.getMainWindow();
@@ -1142,6 +1165,14 @@ function createIpcRegistrar({
     ipcMain.handle("tray-icon:set", async (event, show) => {
       assertMainWindowDashboard(event, "tray-icon:set");
       return windows.trayIcon.set(show);
+    });
+    ipcMain.handle("minimize-to-tray:get", async (event) => {
+      assertMainWindowDashboard(event, "minimize-to-tray:get");
+      return windows.minimizeToTray.get();
+    });
+    ipcMain.handle("minimize-to-tray:set", async (event, on) => {
+      assertMainWindowDashboard(event, "minimize-to-tray:set");
+      return windows.minimizeToTray.set(on);
     });
 
     // Open a file the chat referenced in the user's own editor, by handing its
@@ -1388,6 +1419,85 @@ function createIpcRegistrar({
         return { ok: false, error: "UNAVAILABLE" };
       }
       return relayCrewOpener().open(endpointId);
+    });
+
+    // Close every relay Crew window now: the dashboard calls this once its own
+    // Sign out or Switch account has landed. Takes nothing from the renderer and
+    // can only close. Gated like `relay-crew:open`. Reads the opener without
+    // building it, so a shell that never opened a relay Crew does nothing.
+    ipcMain.handle("relay-crew:close-all", async (event) => {
+      try {
+        await assertLocalDashboard(event, "relay-crew:close-all");
+      } catch {
+        return;
+      }
+      if (relayOpener) relayOpener.closeAll("SIGNED_OUT");
+    });
+
+    // A relay Crew as a pane in the main window, below the dashboard's own top
+    // bar, instead of in a window of its own. Nothing in the dashboard calls
+    // these yet. The renderer sends the endpoint ID and the pane's rect in CSS
+    // px with its own viewport size (as `browser:set-bounds` does); main picks
+    // the window and the dashboard view itself. The pane's page gets no preload,
+    // so it can send none of these. Never rejects.
+    const paneRect = (parent, rect, viewport) => {
+      const content = parent.getContentBounds();
+      return normalizeBounds(scaleRect(rect, deriveScale(viewport, content)), content);
+    };
+    ipcMain.handle("relay-crew:open-pane", async (event, endpointId, rect, viewport) => {
+      if (!isEndpointId(endpointId)) return { ok: false, error: "INVALID_ENDPOINT" };
+      try {
+        await assertLocalDashboard(event, "relay-crew:open-pane");
+        assertMainWindowDashboard(event, "relay-crew:open-pane");
+      } catch {
+        return { ok: false, error: "UNAVAILABLE" };
+      }
+      const parent = windows.getMainWindow();
+      const bounds = paneRect(parent, rect, viewport);
+      // Before any mint, like a bad ID.
+      if (!bounds) return { ok: false, error: "INVALID_BOUNDS" };
+      return relayCrewOpener().open(endpointId, { parent, dashboard: parent._mcView, bounds });
+    });
+
+    // The calls that steer an open pane take it only from the dashboard view
+    // that opened it. Synchronous, since bounds arrive on every resize. Answers
+    // the pane's handle, or null and nothing changes.
+    const paneForSender = (event, channel, endpointId) => {
+      if (!isEndpointId(endpointId) || !relayOpener) return null;
+      try {
+        assertMainWindowDashboard(event, channel);
+      } catch {
+        return null;
+      }
+      const pane = relayOpener.paneFor(endpointId);
+      if (!pane) return null;
+      if (pane.dashboard.webContents !== event.sender) {
+        logGateRejection(event.sender, `${channel} rejected: sender did not open this pane`);
+        return null;
+      }
+      return pane.handle;
+    };
+    ipcMain.handle("relay-crew:pane-bounds", (event, endpointId, rect, viewport) => {
+      const pane = paneForSender(event, "relay-crew:pane-bounds", endpointId);
+      if (pane) pane.setBounds(paneRect(windows.getMainWindow(), rect, viewport));
+    });
+    // A local menu or dialog over the pane: the native view would paint above
+    // it, so the pane hides while it is up (browser-view.js header note 2).
+    ipcMain.handle("relay-crew:pane-overlay", (event, endpointId, active) => {
+      if (typeof active !== "boolean") return;
+      const pane = paneForSender(event, "relay-crew:pane-overlay", endpointId);
+      if (pane) pane.setOverlay(active);
+    });
+    // Another tab is in front of a warm pane: it stays loaded but hidden, and
+    // shows only once both this and the overlay are off.
+    ipcMain.handle("relay-crew:pane-inactive", (event, endpointId, inactive) => {
+      if (typeof inactive !== "boolean") return;
+      const pane = paneForSender(event, "relay-crew:pane-inactive", endpointId);
+      if (pane) pane.setInactive(inactive);
+    });
+    ipcMain.handle("relay-crew:pane-close", (event, endpointId) => {
+      const pane = paneForSender(event, "relay-crew:pane-close", endpointId);
+      if (pane) pane.close();
     });
 
     ipcMain.handle("zoom:get", (event) =>

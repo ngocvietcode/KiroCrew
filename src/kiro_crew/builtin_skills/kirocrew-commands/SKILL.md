@@ -55,6 +55,7 @@ which would over-grant.
 | `kirocrew stop --port 9999` | Stop gateway on specific port |
 | `kirocrew restart` | Restart gateway (service-aware) |
 | `kirocrew status` | Show runtime stats (uptime, sessions, crons, lessons) |
+| `kirocrew usage` | Recent credit spend per day; `--by model\|agent\|channel\|session`, `--days N` / `--since YYYY-MM-DD`, `--json` |
 
 The token in a `--json-ready` line grants dashboard access for up to 20 hours, so
 captured stdout from a test harness is a credential: keep it out of logs and
@@ -419,7 +420,7 @@ resolved by the `aws` CLI and never stored by Kiro Crew. All verbs accept
 | `kirocrew cloud start` | Start a stopped instance |
 | `kirocrew cloud destroy` | Remove the instance and ALL its AWS resources |
 | `kirocrew cloud destroy --dry-run` | Show the delete command without running it |
-| `kirocrew cloud iam-policy` | Print the least-privilege IAM policy to apply |
+| `kirocrew cloud iam-policy` | Print the least-privilege IAM policy to apply. Too big for an inline user policy: create it as a customer-managed policy and attach it to the user, group or role (or Identity Center permission set) behind the launch profile |
 | `kirocrew cloud iam-boundary` | Pre-create the immutable EC2 + Fargate permissions boundaries (admin, one-time) |
 
 ## Tailnet (Tailscale)
@@ -469,11 +470,9 @@ rather than reporting a silent success. These are human debug/diagnostic twins o
 | `kirocrew snapshot --keep 7` | Keep N most recent snapshots (default: 7) |
 | `kirocrew snapshot --strict` | Exit 3 instead of 0 when the bundle omits entries it was asked to carry |
 | `kirocrew snapshot --list` | List existing snapshots |
-| `kirocrew restore` | Restore from most recent snapshot |
-| `kirocrew restore /path/to/snap.tar.gz` | Restore from specific snapshot |
-| `kirocrew restore --mode replace` | Replace mode (overwrite existing state) |
-| `kirocrew restore --mode merge` | Merge mode (keep existing state, add). Without `--mode`: merge when `memory.db` exists, else replace |
-| `kirocrew restore --dry-run` | Preview without applying |
+| `kirocrew restore /path/to/snap.tar.gz --mode merge` | Restore a snapshot, keeping existing state and adding to it. There is no default mode: without `--mode` a terminal is asked and a non-terminal is refused |
+| `kirocrew restore /path/to/snap.tar.gz --mode replace` | Replace mode (overwrite existing state) |
+| `kirocrew restore /path/to/snap.tar.gz --mode merge --dry-run` | Preview without applying |
 | `kirocrew restore --components memory,crons` | Restore specific components only |
 | `kirocrew restore --list-components` | List restorable components |
 | `kirocrew restore --force` | Restore even if gateway is running |

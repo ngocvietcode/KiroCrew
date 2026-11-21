@@ -137,6 +137,17 @@ from kiro_crew.apps.manifest_contributes import (  # noqa: F401
     _normalize_status_path,
     _strict_int,
 )
+from kiro_crew.apps.manifest_memory_providers import (  # noqa: F401
+    _MEMORY_PROVIDER_KEYS,
+    MAX_MEMORY_PROVIDERS_PER_APP,
+    MEMORY_PROVIDER_DESCRIPTION_MAX,
+    MEMORY_PROVIDER_ID_RE,
+    MEMORY_PROVIDER_NAME_MAX,
+    MEMORY_PROVIDER_PAGE_RE,
+    MEMORY_PROVIDER_ROUTE_RE,
+    MemoryProviderDecl,
+    MemoryProvidersConfig,
+)
 from kiro_crew.apps.manifest_names import (  # noqa: F401
     APP_NAME_MAX_LENGTH,
     KEBAB_RE,
@@ -154,6 +165,9 @@ from kiro_crew.apps.manifest_sections import (  # noqa: F401
     _L10N_QUOTED_CHARS,
     _L10N_QUOTED_KEYS,
     _OVERLAY_SLUG_RE,
+    BOT_GRANT_FAMILIES,
+    BOT_GRANT_FAMILY,
+    BOT_SCOPE_NAMES,
     L10N_LOCALE_RE,
     L10N_TEXT_CAPS,
     LIFECYCLE_SCRIPT_TIMEOUT_DEFAULT,
@@ -181,9 +195,11 @@ from kiro_crew.apps.manifest_sections import (  # noqa: F401
     UIOverlay,
     UIPage,
     UISidebar,
+    _bot_scopes,
     _granted_list,
     _l10n_quoted,
     _sidebar_order,
+    bot_grant_entries,
     clamp_lifecycle_timeout,
     lifecycle_timeout_error,
     lifecycle_timeout_seconds,
@@ -256,7 +272,8 @@ def cron_permission_error(manifest: AppManifest) -> str:
 #:
 #: * ``apps/routes.py`` ``setup_routes`` -- ``manifest``, ``config``, and the lifecycle
 #:   verbs ``uninstall`` (whose ``uninstall/preview`` child is covered by the segment),
-#:   ``update``, ``enable``, ``disable``, ``open``, ``dev``, ``migrate-cleanup``
+#:   ``update``, ``enable``, ``disable``, ``open``, ``dev``, ``migrate-cleanup``,
+#:   ``bot-grants``
 #: * ``dashboard/routes/system.py`` -- ``token``
 #: * ``apps/job_routes.py`` -- ``_jobs``
 #:
@@ -268,6 +285,7 @@ def cron_permission_error(manifest: AppManifest) -> str:
 CORE_APP_ROUTE_SEGMENTS = frozenset(
     {
         "_jobs",
+        "bot-grants",
         "config",
         "dev",
         "disable",
@@ -372,7 +390,8 @@ def app_endpoint_allowed(
     # at install, so those apps could not contribute a row at all.
     #
     # It is a per-caller flag rather than a blanket widening because this is the ONE
-    # shared endpoint check (see ``test_app_endpoint_allowed_is_the_one_shared_check``)
+    # shared endpoint check (its edges are pinned by
+    # ``test_app_endpoint_allowed_is_the_one_shared_check``)
     # and its other caller, the publish-provider registry in ``routes_listing.py``, states
     # ``/api/apps/<app>/`` as its contract in its own refusal message. Widening the
     # helper for everyone would have broadened that surface silently.
@@ -576,6 +595,9 @@ class AppManifest:
             name_error = app_name_error(self.name)
             if name_error:
                 errors.append(name_error)
+            elif self.backend.webOrigin and len(self.name) > 63:
+                # The name becomes a DNS label in its web origin's host name.
+                errors.append("backend.webOrigin needs an app name of at most 63 characters")
 
         if not self.version:
             errors.append("missing required field: version")
@@ -670,6 +692,15 @@ class AppManifest:
                 report_path(refusal, f"ui page entryPoint {refusal}: {page.entryPoint!r}")
 
         # UI overlay validation
+        errors.extend(self.ui.frame_source_errors())
+        # Deferred: browser_sites stays off an MCP server's pre-list import budget.
+        from kiro_crew.apps.browser_sites import browser_site_errors  # noqa: PLC0415
+
+        errors.extend(
+            ["permissions.browserSites must be an array of strings"]
+            if self.permissions.bad_browser_sites
+            else browser_site_errors(self.permissions.browserSites)
+        )
         seen_overlay_ids: set[str] = set()
         for overlay in self.ui.overlays:
             if not overlay.id:
@@ -817,6 +848,7 @@ class AppManifest:
         from kiro_crew.apps.app_frame import process_backed
 
         errors.extend(self.agentTools.validate(self.name, process_backed(self)))
+        errors.extend(self.contributes.memoryProviders.validate(process_backed(self)))
 
         # A contributed command's `agent` is contained to the agents THIS app ships.
         # The prompt is app-authored, so letting it name any host agent would let an

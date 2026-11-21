@@ -52,6 +52,7 @@ from kiro_crew.dashboard.session_directive_apply import (
 from kiro_crew.dashboard.slot_queue_repository import (
     RESTORED_QUEUE_KEY,
     RESTORED_SEND_CHOSEN_KEY,
+    run_now_chosen_id,
     source_channels_of,
 )
 from kiro_crew.dashboard.state import CRON_NOTIFY_RE, SUBAGENT_COMPLETION_PREFIXES
@@ -758,6 +759,15 @@ async def _start_next_queued_turn(
     if auto_priority:
         required_queue_id = priority_id
         allow_user_during_subagents = True
+    elif (
+        not required_queue_id
+        and not teardown_held
+        and not edit_held
+        and (chosen := run_now_chosen_id(slot))
+    ):
+        # A ``session_run_queued`` choice runs next, as its idle path would run it.
+        # Held like the promotion above: the mark stays and runs once the hold lifts.
+        required_queue_id, allow_user_during_subagents = chosen, True
 
     # A completion counts as a child until it has run: while it is still being
     # handed to this tab, or waits in the queue behind another system entry, a
@@ -1574,17 +1584,19 @@ async def _start_next_queued_turn(
     # this turn's own call, so it ends with this dispatch (``turn_entry`` adopts
     # it only for a user-sent opener).
     _run_kwargs["_directive_owner_origin"] = directive_owner_origin
+    from kiro_crew.tracing import steps as trace_steps
     from kiro_crew.tracing import subagents as trace_subagents
     from kiro_crew.tracing import workflows as trace_workflows
 
     # The sub-agent results, or the workflow run, these entries deliver: the
-    # turn's trace joins that run's.
+    # turn's trace joins that run's. Their queue wait and senders ride its turn span.
     with (
         independent_turn(),
         initiated_by(queued_initiator(consumed)),
         queued_work(consumed),
         trace_subagents.delivered(item.get("id") for item in consumed),
         trace_workflows.delivering(trace_workflows.run_of(consumed)),
+        trace_steps.drained(consumed),
     ):
         task = spawn_guarded_turn(
             state,

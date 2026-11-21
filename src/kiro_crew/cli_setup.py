@@ -20,6 +20,7 @@ from kiro_crew import platform_compat, slack_manifest
 from kiro_crew.acp.client import KIRO_CLI_BIN
 from kiro_crew.agent_sdk import kas_bundle
 from kiro_crew.cli_chat import _ensure_default_agent_in_config
+from kiro_crew.cli_setup_progress import SetupProgress, abort_message, rerun_command
 from kiro_crew.config import KiroCrewConfig
 from kiro_crew.config.loader import (
     _WORKSPACE_DIR_NAME,
@@ -70,7 +71,7 @@ def _get_alias() -> str:
         alias = input("  Your username (e.g. johndoe): ").strip()
     if not alias:
         print(
-            "❌ Cannot determine username. Set $USER or re-run with "
+            "Error: Cannot determine username. Set $USER or re-run with "
             "`kirocrew manifest --alias <alias>`.",
             file=sys.stderr,
         )
@@ -98,7 +99,7 @@ def _manifest(alias: str | None = None, output: str | None = None, url: bool = F
     alias = alias or _get_alias()
     if not slack_manifest.valid_alias(alias):
         print(
-            "❌ Invalid alias — must be alphanumeric, hyphens, or underscores only, "
+            "Error: Invalid alias — must be alphanumeric, hyphens, or underscores only, "
             f"at most {slack_manifest.ALIAS_MAX} characters.",
             file=sys.stderr,
         )
@@ -107,7 +108,7 @@ def _manifest(alias: str | None = None, output: str | None = None, url: bool = F
     try:
         rendered = slack_manifest.render(alias, features=features)
     except FileNotFoundError:
-        print("❌ Cannot find slack-manifest.yaml", file=sys.stderr)
+        print("Error: Cannot find slack-manifest.yaml", file=sys.stderr)
         sys.exit(1)
     command = slack_manifest.slash_command(alias)
     switches = ", ".join(f"slack.{f}" for f in slack_manifest.FEATURES if f in features)
@@ -117,7 +118,7 @@ def _manifest(alias: str | None = None, output: str | None = None, url: bool = F
         f"   Slack Code switches rendered: {switches or 'none'}\n"
     )
     if url:
-        print("\n🔗 Click to create your Slack app:\n")
+        print("\nClick to create your Slack app:\n")
         print(f"{slack_manifest.deep_link(alias, features)}\n")
         print(hint)
     elif output:
@@ -130,9 +131,9 @@ def _manifest(alias: str | None = None, output: str | None = None, url: bool = F
             # read-only target: one line, not a traceback.
             shown = safe_terminal_line(str(output))
             reason = safe_terminal_line(str(exc.strerror or exc))
-            print(f"❌ Could not write {shown}: {reason}", file=sys.stderr)
+            print(f"Error: Could not write {shown}: {reason}", file=sys.stderr)
             sys.exit(1)
-        print(f"✅ Manifest written to {output} (name: KiroCrew-{alias})")
+        print(f"Done: Manifest written to {output} (name: KiroCrew-{alias})")  # brand-ok
         print(hint)
     else:
         print(rendered)
@@ -166,13 +167,13 @@ def _fix_shell_profiles() -> None:
                 cleaned.append(line)
             if removed:
                 profile.write_text("".join(cleaned), encoding="utf-8")
-                print(f"  🔧 Cleaned stale Kiro Crew PATH from {profile.name}")
+                print(f"  Cleaned stale Kiro Crew PATH from {profile.name}")
                 cleaned_profiles.append(profile.name)
         except OSError:
             pass
     if cleaned_profiles:
         sources = " or ".join(f"`source ~/{p}`" for p in cleaned_profiles)
-        print(f"  ⚠️  Run {sources} or open a new terminal for PATH changes to take effect.")
+        print(f"  Warning: Run {sources} or open a new terminal for PATH changes to take effect.")
 
 
 def _ensure_prerequisites() -> bool:
@@ -199,17 +200,19 @@ def _ensure_prerequisites() -> bool:
         if kas_bundle.kas_bundle_route():
             engine = kas_bundle.installed_bundle()
             own = f"Node {engine.node_version}" if engine and engine.node_version else "Node"
-            print(f"  ⏭  node not on PATH; not needed (KAS runs its engine bundle's own {own})\n")
+            print(
+                f"  Skipped: node not on PATH; not needed (KAS runs its engine bundle's own {own})\n"
+            )
         else:
             print(
-                f"  ⚠️  node not found on PATH — install Node.js >= v{format_node_version(MIN_NODE_VERSION)} from https://nodejs.org\n"
+                f"  Warning: node not found on PATH — install Node.js >= v{format_node_version(MIN_NODE_VERSION)} from https://nodejs.org\n"
             )
 
     # kiro-cli is the agent backend. Note its absence so the user can install it.
     if not shutil.which(KIRO_CLI_BIN):
         _header()
         print(
-            "  ℹ️  kiro-cli not found on PATH — install it (the agent backend) "
+            "  Note: kiro-cli not found on PATH — install it (the agent backend) "
             "and run 'kiro-cli login'.\n"
         )
 
@@ -242,7 +245,7 @@ def _find_electron_dir() -> Path | None:
 
 
 def _print_no_desktop_sources() -> None:
-    print("  ⚠️  Desktop app sources not found, so there is nothing to build.")
+    print("  Warning: Desktop app sources not found, so there is nothing to build.")
     print("     If you are running the packaged desktop app, you already have it.")
     print(
         "     To build it from source, run setup from a source checkout "
@@ -263,16 +266,16 @@ def _run_desktop_build_step(label: str, cmd: list[str], cwd: Path, timeout: int)
             timeout=timeout,
         )
     except subprocess.TimeoutExpired:
-        print(f"  ❌ {label} timed out after {timeout}s.")
+        print(f"  Error: {label} timed out after {timeout}s.")
         print("     Check your network and re-run: kirocrew setup --electron-only")
         return False
     except OSError as exc:
-        print(f"  ❌ {label} could not start: {exc}")
+        print(f"  Error: {label} could not start: {exc}")
         return False
     if result.returncode != 0:
         # npm / electron-builder print the failing error LAST: redact the whole
         # stream (it can echo registry URLs with tokens), then keep the tail.
-        print(f"  ❌ {label} failed: {redact(result.stderr.strip())[-200:]}")
+        print(f"  Error: {label} failed: {redact(result.stderr.strip())[-200:]}")
         return False
     return True
 
@@ -285,7 +288,7 @@ def _setup_electron() -> bool:
     a packaged install with no sources to build are not failures.
     """
     if platform.system() != "Darwin":
-        print("  ⚠️  Kiro Crew desktop app is only available on macOS.")
+        print("  Warning: Kiro Crew desktop app is only available on macOS.")
         return True
 
     electron_dir = _find_electron_dir()
@@ -294,11 +297,11 @@ def _setup_electron() -> bool:
         return True
 
     if not shutil.which("node"):
-        print("  ❌ Node.js not found — required to build the desktop app.")
+        print("  Error: Node.js not found — required to build the desktop app.")
         print("     Install Node.js and re-run: kirocrew setup --electron-only")
         return False
 
-    print("  🔨 Building Kiro Crew desktop app…")
+    print("  Building Kiro Crew desktop app…")
     if not _run_desktop_build_step(
         "npm install",
         ["npm", "install", "--no-audit", "--no-fund", "--loglevel=error"],
@@ -322,7 +325,7 @@ def _setup_electron() -> bool:
             if app_src.is_dir():
                 break
     if not app_src.is_dir():
-        print("  ❌ Build succeeded but KiroCrew.app not found in dist/")
+        print("  Error: Build succeeded but KiroCrew.app not found in dist/")
         return False
 
     app_dest = Path.home() / "Applications" / "KiroCrew.app"
@@ -330,7 +333,7 @@ def _setup_electron() -> bool:
     if app_dest.is_dir():
         shutil.rmtree(app_dest)
     shutil.copytree(str(app_src), str(app_dest))
-    print("  ✅ KiroCrew.app installed to ~/Applications")
+    print("  Done: KiroCrew.app installed to ~/Applications")
     print("     Launch via Spotlight (⌘+Space → KiroCrew) or Finder → ~/Applications")
     return True
 
@@ -343,6 +346,7 @@ def _setup(
     whatsapp: bool = False,
 ) -> None:
     """Install agent config and optionally configure credentials."""
+    progress = SetupProgress()
     try:
         _setup_impl(
             agent_only=agent_only,
@@ -350,14 +354,17 @@ def _setup(
             clean=clean,
             slack=slack,
             whatsapp=whatsapp,
+            _progress=progress,
         )
     except _SetupAborted as exc:
-        # A closed/piped stdin mid-wizard. One clean line instead of a stack
+        # A closed/piped stdin mid-wizard. A clean message instead of a stack
         # trace at whichever prompt hit it first — every guarded prompt raises,
-        # so the exit point is deterministic. Bare `input()` calls still exist
-        # in some steps and traceback the old way; converting them all is a
-        # sweep for its own change.
-        print(f"\n⏭  Setup aborted: {exc}. Re-run interactively to finish.")
+        # so the exit point is deterministic — naming the steps it did not
+        # finish and the command that finishes them. Bare `input()` calls still
+        # exist in some steps and traceback the old way; converting them all is
+        # a sweep for its own change.
+        command = rerun_command(agent_only=agent_only, clean=clean, slack=slack, whatsapp=whatsapp)
+        print(abort_message(str(exc), progress, command))
 
 
 def _setup_impl(
@@ -366,6 +373,7 @@ def _setup_impl(
     clean: bool = False,
     slack: bool = False,
     whatsapp: bool = False,
+    _progress: SetupProgress | None = None,
 ) -> None:
     from kiro_crew.agent import install_agent  # circular import: agent imports cli
     from kiro_crew.cli import _project_dir_file  # circular import: cli -> cli_setup -> cli
@@ -377,7 +385,23 @@ def _setup_impl(
             sys.exit(1)
         return
 
-    print("Kiro Crew Setup 👻\n")
+    print("Kiro Crew Setup\n")
+
+    # The steps below, in the order they run, so an abort can name the ones it
+    # did not reach. The names are what the user reads in that message.
+    progress = _progress if _progress is not None else SetupProgress()
+    steps = [] if agent_only else ["workspace folder"]
+    steps += ["agent config", "sandbox check"]
+    if not agent_only:
+        if slack:
+            steps += ["Slack tokens", "slash command"]
+        if whatsapp:
+            steps.append("WhatsApp")
+        steps += ["timezone", "dashboard URL"]
+        if platform.system() == "Darwin":
+            steps.append("desktop app")
+        steps.append("AWS launch offer")
+    progress.plan(steps)
 
     # Report on optional prerequisites.
     _ensure_prerequisites()
@@ -387,13 +411,15 @@ def _setup_impl(
     if proj:
         _project_dir_file().parent.mkdir(parents=True, exist_ok=True)
         _project_dir_file().write_text(proj + "\n", encoding="utf-8")
-        print(f"  ✅ Project dir saved: {proj}")
+        print(f"  Done: Project dir saved: {proj}")
 
     # 1. Choose workspace directory (skip for agent-only — not relevant)
     if not agent_only:
+        progress.begin("workspace folder")
         _setup_workspace_dir()
 
     # 2. Install the agent config
+    progress.begin("agent config")
     print("Installing agent config...")
     wrote_out: list[bool] = []
     agent_path = install_agent(clean=clean, _wrote_out=wrote_out)
@@ -402,11 +428,11 @@ def _setup_impl(
         # shared agent home, or the existing spec could not be read. The log
         # names which; reporting it installed would claim a write that did not land.
         print(
-            f"  ⚠️  Agent config left unchanged: {agent_path} "
+            f"  Warning: Agent config left unchanged: {agent_path} "
             "(see the log for why it was not rewritten)"
         )
     else:
-        print(f"  ✅ Agent installed: {agent_path}")
+        print(f"  Done: Agent installed: {agent_path}")
 
     # 2a. Ensure `kirocrew` is reachable on PATH (the packaged Electron app
     #     doesn't run install.sh) and purge stale predecessor MCP entries left
@@ -421,10 +447,10 @@ def _setup_impl(
     # from a working install (see ensure_kirocrew_on_path).
     shim = ensure_kirocrew_on_path(claim_existing=True)
     if shim:
-        print(f"  ✅ Linked kirocrew on PATH: {shim}")
+        print(f"  Done: Linked kirocrew on PATH: {shim}")
     removed_mcp = clean_stale_managed_mcp()
     if removed_mcp:
-        print(f"  ✅ Removed stale MCP entries: {', '.join(removed_mcp)}")
+        print(f"  Done: Removed stale MCP entries: {', '.join(removed_mcp)}")
 
     # 2b. Ensure config.json has default KiroCrew agent for fresh installs
     _ensure_default_agent_in_config()
@@ -437,6 +463,7 @@ def _setup_impl(
     # 2d. Offer the unconfined-exec opt-in on a host with no sandbox backend.
     #     Runs BEFORE the agent-only early return: the servers this unblocks are
     #     the ones install_agent() just wrote, so `--agent-only` needs it too.
+    progress.begin("sandbox check")
     _setup_sandbox_consent()
 
     if agent_only:
@@ -446,10 +473,10 @@ def _setup_impl(
         requested = (("--slack", slack), ("--whatsapp", whatsapp))
         for flag in [name for name, on in requested if on]:
             print(
-                f"\n  ⚠️  {flag} is ignored with --agent-only. Run "
+                f"\n  Warning: {flag} is ignored with --agent-only. Run "
                 f"'kirocrew setup {flag}' for its guided setup."
             )
-        print("\n👻 Done! Try: kirocrew gateway")
+        print("\nDone! Try: kirocrew gateway")
         return
 
     # 3. Messaging channels (optional, configured after setup by default).
@@ -460,11 +487,14 @@ def _setup_impl(
     #    dashboard or its setup guide.
     if slack or whatsapp:
         if slack:
+            progress.begin("Slack tokens")
             _setup_slack_tokens()
 
             # 3b. Slash command name (Slack-only concept)
+            progress.begin("slash command")
             _setup_slash_command()
         if whatsapp:
+            progress.begin("WhatsApp")
             _setup_whatsapp()
     else:
         print("── Messaging Channels ──\n")
@@ -476,49 +506,54 @@ def _setup_impl(
         print("  guided setup.\n")
 
     # 4. Timezone
+    progress.begin("timezone")
     _setup_timezone()
 
     # 5. Dashboard URL (remote access)
+    progress.begin("dashboard URL")
     _maybe_setup_dashboard_url()
 
     _maybe_setup_custom_domain()
 
     # 6. Desktop app (macOS only)
     if platform.system() == "Darwin":
+        progress.begin("desktop app")
         print("── Desktop App ──\n")
         if _find_electron_dir() is None:
             _print_no_desktop_sources()
             print()
         else:
             answer = (
-                input("  Install Kiro Crew desktop app to ~/Applications? [Y/n]: ").strip().lower()
-            )
+                _input_or_skip("  Install Kiro Crew desktop app to ~/Applications? [Y/n]: ") or ""
+            ).lower()
             if answer in ("", "y", "yes"):
                 _setup_electron()
             else:
-                print("  ⏭  Skipped. Install later: kirocrew setup --electron-only\n")
+                print("  Skipped. Install later: kirocrew setup --electron-only\n")
 
     # 7. Cloud (run KiroCrew on the user's own AWS EC2) — optional, delegated.
+    progress.begin("AWS launch offer")
     _maybe_setup_cloud()
 
     # No `&&`: Windows PowerShell 5.1 cannot parse it. The words keep its condition.
-    print("\n👻 Done! Run `kirocrew doctor`; when it reports no issues, run `kirocrew gateway`.")
+    print("\nDone! Run `kirocrew doctor`; when it reports no issues, run `kirocrew gateway`.")
 
 
 def _builtin_cloud_lane_offered() -> bool:
     """Whether the composed platform offers the built-in ``aws_ec2`` lane.
 
-    Reads the list through ``dashboard/handlers_cloud.py::_provisioners`` itself,
-    the same read and degraded-seam fallback the Set-up tab is drawn from, so the
-    wizard and the tab cannot disagree about whether this deployment offers EC2.
+    Reads the list through ``platform.provisioner_listing``, the same read and
+    degraded-seam fallback the Set-up tab is drawn from, so the wizard and the
+    tab cannot disagree about whether this deployment offers EC2. Not through
+    ``dashboard/handlers_cloud.py``: importing that graph cold kept the terminal
+    silent for seconds before this prompt, and an Enter typed into the silence
+    answered the prompt before it was ever seen.
     ``PlatformCompositionError`` still propagates, per ``safe_context_call``.
     """
-    # Deferred: the dashboard handler module pulls in the cloud/dashboard graph,
-    # which only this last, optional wizard step needs.
-    from kiro_crew.dashboard.handlers_cloud import _provisioners
     from kiro_crew.platform.interfaces import BUILTIN_PROVISIONER_ID
+    from kiro_crew.platform.provisioner_listing import offered_provisioners
 
-    return any(r.id == BUILTIN_PROVISIONER_ID for r in _provisioners())
+    return any(r.id == BUILTIN_PROVISIONER_ID for r in offered_provisioners())
 
 
 def _maybe_setup_cloud() -> None:
@@ -549,7 +584,7 @@ def _maybe_setup_cloud() -> None:
         # string. Treat it like EOF: no usable answer, so take the default.
         answer = ""
     if answer not in ("y", "yes"):
-        print("  ⏭  Skipped. Launch later: kirocrew cloud launch\n")
+        print("  Skipped. Launch later: kirocrew cloud launch\n")
         return
     try:
         import argparse
@@ -581,7 +616,12 @@ def _maybe_setup_cloud() -> None:
 
 
 def _setup_workspace_dir() -> None:
-    """Prompt user for workspace directory, falling back to platform default."""
+    """Prompt for the workspace directory; a refused typed answer keeps the folder shown.
+
+    At a terminal a refused typed answer is asked again. Off one it is not, for
+    the reason :func:`_prompt_verified_slack_value` gives: a re-ask would read the
+    next line of a piped answer file.
+    """
     platform_default = _default_workspace_base() / _WORKSPACE_DIR_NAME
     default = platform_default
     label = "Default"
@@ -592,21 +632,28 @@ def _setup_workspace_dir() -> None:
     print("── Workspace Directory ──\n")
     print("  LLM sessions and task output are stored in a workspace directory.")
     print(f"  {label}: {default}\n")
-    # EOF (piped / closed stdin) keeps the default rather than raising a
-    # traceback out of the wizard — this step runs FIRST, so a bare input() here
-    # made `kirocrew setup < /dev/null` fail before any later guard could help.
-    answer = _input_or_skip(f"  Workspace path [{default}]: ") or ""
-    chosen = default if answer.lower() in ("", "y", "yes") else normalize_workspace_path(answer)
-    try:
-        if not chosen.is_absolute():
-            raise OSError("not an absolute path")
-        chosen.mkdir(parents=True, exist_ok=True)
-        _workspace_dir_file().parent.mkdir(parents=True, exist_ok=True)
-        _workspace_dir_file().write_text(str(chosen) + "\n", encoding="utf-8")
-        print(f"  ✅ Workspace: {chosen}\n")
-    except OSError as e:
-        print(f"  ❌ Cannot create {chosen}: {e}")
-        print(f"  Falling back to platform default: {platform_default}\n")
+    while True:
+        # EOF raises _SetupAborted, which _setup reports as a message, not a traceback.
+        answer = _input_or_skip(f"  Workspace path [{default}]: ") or ""
+        chosen = default if answer.lower() in ("", "y", "yes") else normalize_workspace_path(answer)
+        try:
+            if not chosen.is_absolute():
+                raise OSError("not an absolute path")
+            chosen.mkdir(parents=True, exist_ok=True)
+            _workspace_dir_file().parent.mkdir(parents=True, exist_ok=True)
+            _workspace_dir_file().write_text(str(chosen) + "\n", encoding="utf-8")
+            print(f"  Done: Workspace: {chosen}\n")
+            return
+        except OSError as e:
+            print(f"  Error: Cannot create {chosen}: {e}")
+        if chosen == default:
+            # The folder shown is unusable, so the runtime falls back from a configured one.
+            print(f"  Falling back to platform default: {platform_default}\n")
+            return
+        if not _stdio_is_interactive():
+            print(f"  Keeping the {label.lower()} folder: {default}\n")
+            return
+        print("  Enter an absolute path, or press Enter to keep the folder shown.")
 
 
 #: Per-call timeout, in seconds, for the Slack API round-trips that check a
@@ -811,7 +858,7 @@ def _read_env_pairs(cred_path: Path) -> dict[str, str]:
 
 def _print_wide_env_remedy(cred_path: Path, exc: EnvFileWideEncodingError) -> None:
     print(
-        f"  ❌ {cred_path} is saved as {exc.wide_encoding}, which Kiro Crew cannot read. "
+        f"  Error: {cred_path} is saved as {exc.wide_encoding}, which Kiro Crew cannot read. "
         "Re-save it as UTF-8 and run 'kirocrew setup --slack' again. "
         "Nothing was changed.\n",
         file=sys.stderr,
@@ -835,7 +882,7 @@ def _setup_slack_tokens() -> None:
 
     answer = input("  Configure Slack tokens? [Y/n]: ").strip().lower()
     if answer in ("n", "no"):
-        print("  ⏭  Skipped. Slack integration will be disabled.\n")
+        print("  Skipped. Slack integration will be disabled.\n")
         return
 
     def _mask(val: str) -> str:
@@ -851,7 +898,7 @@ def _setup_slack_tokens() -> None:
 
     def _abort_rejected(noun: str) -> None:
         print(
-            f"  ⚠️  Slack rejected the {noun} {_SLACK_VERIFY_ATTEMPTS} times — nothing "
+            f"  Warning: Slack rejected the {noun} {_SLACK_VERIFY_ATTEMPTS} times — nothing "
             f"was saved. Re-run 'kirocrew setup --slack' once you have a working value.\n"
         )
 
@@ -898,7 +945,7 @@ def _setup_slack_tokens() -> None:
         # verify-as-you-type flow promises not to do. The full abort stays for a
         # rejected REQUIRED token.
         print(
-            f"  ⚠️  Slack rejected the member ID {_SLACK_VERIFY_ATTEMPTS} times — saving "
+            f"  Warning: Slack rejected the member ID {_SLACK_VERIFY_ATTEMPTS} times — saving "
             "the verified tokens without it. Set it later with "
             "'kirocrew setup --slack'.\n"
         )
@@ -908,7 +955,7 @@ def _setup_slack_tokens() -> None:
         print(f"  ✅ Owner verified: {owner_name} ({owner_id})")
 
     if not app_token or not bot_token:
-        print("  ⚠️  Missing tokens — Slack integration will be disabled.\n")
+        print("  Warning: Missing tokens — Slack integration will be disabled.\n")
         return
 
     # Serialize the read-modify-write against every OTHER .env writer (the
@@ -927,7 +974,7 @@ def _setup_slack_tokens() -> None:
     if not platform_compat.try_acquire_lock(lock_fd, exclusive=True):
         os.close(lock_fd)
         print(
-            "  ⚠️  .env is locked by another process (a secrets import or "
+            "  Warning: .env is locked by another process (a secrets import or "
             "credential save is in progress); tokens not saved. Retry once the "
             "other operation finishes.\n",
             file=sys.stderr,
@@ -967,12 +1014,12 @@ def _setup_slack_tokens() -> None:
             if stale_ok is False:
                 updates[CRED_OWNER_ID] = None
                 print(
-                    f"  ⚠️  Also dropped the saved member ID {stale_owner} — it is not "
+                    f"  Warning: Also dropped the saved member ID {stale_owner} — it is not "
                     f"valid for these tokens ({stale_detail}). Set it with "
                     "'kirocrew setup --slack'.\n"
                 )
             else:
-                print(f"  ℹ️  Keeping the saved member ID {stale_owner}.\n")
+                print(f"  Note: Keeping the saved member ID {stale_owner}.\n")
         if CRED_OWNER_ID not in updates and CRED_OWNER_ID in merged:
             # A kept member ID is written back under its one folded spelling.
             updates[CRED_OWNER_ID] = merged[CRED_OWNER_ID]
@@ -998,12 +1045,12 @@ def _setup_slack_tokens() -> None:
         try:
             _write_env_updates_locked(cred_path, updates)
         except EnvStagingRefused as exc:
-            print(f"  ⚠  Nothing was saved. {exc}\n")
+            print(f"  Warning: Nothing was saved. {exc}\n")
             return
     finally:
         platform_compat.release_lock(lock_fd)
         os.close(lock_fd)
-    print(f"  ✅ Credentials saved to {cred_path}\n")
+    print(f"  Done: Credentials saved to {cred_path}\n")
     # Slack credentials are read once, at gateway startup, so tokens written by
     # this step stay inert until it restarts -- and the bug the operator then
     # reports is "I fixed the token and Slack is still silent". Naming the command
@@ -1039,9 +1086,11 @@ def _setup_whatsapp() -> None:
     print("  volumes personal-scale.\n")
 
     if neonize_available():
-        print("  ✅ The 'whatsapp' dependency extra is installed")
+        print("  Done: The 'whatsapp' dependency extra is installed")
     else:
-        print("  ⚠️  The 'whatsapp' extra (neonize) is NOT installed, so the channel cannot start")
+        print(
+            "  Warning: The 'whatsapp' extra (neonize) is NOT installed, so the channel cannot start"
+        )
         # Same rule as the doctor's rows: name THIS interpreter, and only where
         # pip can install into it (never on the desktop app's bundled Python).
         if extras.pip_install_channel_available():
@@ -1052,15 +1101,15 @@ def _setup_whatsapp() -> None:
 
     store = default_db_path(data_home())
     if store.exists():
-        print(f"  ✅ A paired session store already exists: {store}")
+        print(f"  Done: A paired session store already exists: {store}")
     else:
-        print("  ℹ️  Not paired yet. Pairing is a QR scan from the dashboard:")
+        print("  Note: Not paired yet. Pairing is a QR scan from the dashboard:")
         print("     Settings → Messaging Channels → WhatsApp, with the gateway running.")
     print()
 
     answer = _input_or_skip("  Enable the WhatsApp channel? [y/N]: ")
     if not answer or answer.lower() not in ("y", "yes"):
-        print("  ⏭  Left disabled. Enable it later from Settings → Messaging Channels.\n")
+        print("  Skipped: Left disabled. Enable it later from Settings → Messaging Channels.\n")
         return
 
     cfg_file = config_path()
@@ -1069,17 +1118,17 @@ def _setup_whatsapp() -> None:
         try:
             loaded = json.loads(read_config_text(cfg_file))
         except Exception as exc:
-            print(f"  ⚠️  Could not read {cfg_file}: {exc}\n")
+            print(f"  Warning: Could not read {cfg_file}: {exc}\n")
             return
         # A top-level non-object is not something this step may repair: writing our
         # own object over it would destroy whatever the operator meant. Mirrors
         # _setup_sandbox_consent.
         if not isinstance(loaded, dict):
-            print(f"  ⚠️  {cfg_file} does not contain a JSON object; skipping.\n")
+            print(f"  Warning: {cfg_file} does not contain a JSON object; skipping.\n")
             return
         cfg = loaded
     if not isinstance(cfg.get("whatsapp"), dict) and "whatsapp" in cfg:
-        print("  ⚠️  'whatsapp' section is not an object; leaving config untouched.\n")
+        print("  Warning: 'whatsapp' section is not an object; leaving config untouched.\n")
         return
 
     # The read above answered "may this step run"; it is NOT the read the write
@@ -1106,16 +1155,16 @@ def _setup_whatsapp() -> None:
         update_config_locked(cfg_file, mutate=_enable, stamp_meta=False)
     except ConfigReadError as exc:
         # Does not inherit OSError, so it needs naming next to the write failure.
-        print(f"  ⚠️  Could not read {cfg_file}: {exc}\n")
+        print(f"  Warning: Could not read {cfg_file}: {exc}\n")
         return
     except OSError as exc:
-        print(f"  ⚠️  Could not write {cfg_file}: {exc}")
+        print(f"  Warning: Could not write {cfg_file}: {exc}")
         print("     Nothing was enabled. Enable it from Settings → Messaging Channels instead.\n")
         return
     if section_clash:
-        print("  ⚠️  'whatsapp' section is not an object; leaving config untouched.\n")
+        print("  Warning: 'whatsapp' section is not an object; leaving config untouched.\n")
         return
-    print("  ✅ Recorded: whatsapp.enabled = true")
+    print("  Done: Recorded: whatsapp.enabled = true")
     print("     Next: start the gateway, then scan the QR from")
     print("     Settings → Messaging Channels → WhatsApp.\n")
 
@@ -1124,10 +1173,13 @@ _CUSTOM_DOMAIN = "kirocrew.localhost"
 
 
 def _configured_port() -> int:
-    """Return the dashboard port using the same resolution as other CLI commands."""
-    from kiro_crew.cli_server import (
-        resolve_client_port,  # local import keeps cli_server (heavy import graph) out of cli_setup's import time
-    )
+    """Return the dashboard port using the same resolution as other CLI commands.
+
+    Read from ``port_resolution``, the chain's own light module, not from
+    ``cli_server``: importing that graph cold stalled the wizard's output for
+    seconds between the timezone answer and the next prompt.
+    """
+    from kiro_crew.port_resolution import resolve_client_port
 
     return resolve_client_port(None)
 
@@ -1180,10 +1232,10 @@ def _setup_slash_command() -> None:
         try:
             cfg = json.loads(read_config_text(cfg_file))
         except Exception as exc:
-            print(f"  ⚠️  Could not read {cfg_file}: {exc}")
+            print(f"  Warning: Could not read {cfg_file}: {exc}")
             return
         if not isinstance(cfg, dict):
-            print(f"  ⚠️  {cfg_file} is not a JSON object; leaving config untouched.")
+            print(f"  Warning: {cfg_file} is not a JSON object; leaving config untouched.")
             return
 
     print("── Slash Command ──\n")
@@ -1194,7 +1246,7 @@ def _setup_slash_command() -> None:
     # answer the whatsapp and sandbox steps give for their own sections.
     slack_section = cfg.get("slack")
     if slack_section is not None and not isinstance(slack_section, dict):
-        print("  ⚠️  'slack' section is not an object; leaving config untouched.\n")
+        print("  Warning: 'slack' section is not an object; leaving config untouched.\n")
         return
     # A wrong-typed ``command`` (an operator typo in config.json) must not take
     # the wizard down: it is assigned into ``raw`` below and then fed to a char
@@ -1211,10 +1263,12 @@ def _setup_slash_command() -> None:
     if not raw:
         raw = current
     if not all(c.isalnum() or c in "-_" for c in raw):
-        print("  ⚠️  Command name should only contain letters, numbers, hyphens, or underscores.")
+        print(
+            "  Warning: Command name should only contain letters, numbers, hyphens, or underscores."
+        )
         raw = current
     if len(raw) > 32:
-        print("  ⚠️  Command name too long (max 32 chars).")
+        print("  Warning: Command name too long (max 32 chars).")
         raw = current
 
     # Re-checked under the lock, and it must ABORT rather than replace: a
@@ -1238,21 +1292,21 @@ def _setup_slash_command() -> None:
     try:
         update_config_locked(cfg_file, mutate=_apply, stamp_meta=False)
     except ConfigReadError as exc:
-        print(f"  ⚠️  Could not read {cfg_file}: {exc}")
+        print(f"  Warning: Could not read {cfg_file}: {exc}")
         return
     if section_clash:
-        print("  ⚠️  'slack' section is not an object; leaving config untouched.\n")
+        print("  Warning: 'slack' section is not an object; leaving config untouched.\n")
         return
-    print(f"  ✅ Slash command: /{raw}\n")
+    print(f"  Done: Slash command: /{raw}\n")
 
 
 def _remove_retired_conductor_skill() -> None:
     """Run retired conductor skill cleanup without interrupting setup."""
     try:
         if remove_retired_conductor_skill():
-            print("  ✅ Removed retired conductor skill")
+            print("  Done: Removed retired conductor skill")
     except Exception as exc:
-        print(f"  ⚠️  Retired conductor skill cleanup failed: {exc}")
+        print(f"  Warning: Retired conductor skill cleanup failed: {exc}")
 
 
 def _setup_sandbox_consent() -> None:
@@ -1315,7 +1369,7 @@ def _setup_sandbox_consent() -> None:
     try:
         kind = unavailable_kind()
     except Exception as exc:  # pragma: no cover — defensive
-        print(f"  ⚠️  Could not probe for a sandbox backend: {exc}")
+        print(f"  Warning: Could not probe for a sandbox backend: {exc}")
         return
     if kind == "transient":
         # A momentary fork/resource failure is NOT grounds for a permanent
@@ -1356,13 +1410,13 @@ def _setup_sandbox_consent() -> None:
             # install gets that its agent subprocesses run unconfined, and the
             # whole point of a platform default is that nobody had to consent to
             # it. Saying nothing here is what would make the change silent.
-            print("  ⚠️  This platform offers no OS-level sandbox backend, so agent")
+            print("  Warning: This platform offers no OS-level sandbox backend, so agent")
             print("     subprocesses run WITHOUT credential isolation by default.")
             print("     Run `kirocrew setup` from a terminal to review that, or set")
             print("     agent.sandbox_allow_unsandboxed_exec=false by hand to refuse")
             print("     them instead.\n")
         else:
-            print("  ⚠️  No sandbox backend on this host, so agent subprocesses are")
+            print("  Warning: No sandbox backend on this host, so agent subprocesses are")
             print("     refused. Run `kirocrew setup` from a terminal to decide, or set")
             print("     agent.sandbox_allow_unsandboxed_exec=true by hand to opt in.\n")
         return
@@ -1373,14 +1427,14 @@ def _setup_sandbox_consent() -> None:
         try:
             loaded = json.loads(read_config_text(cfg_file))
         except Exception as exc:
-            print(f"  ⚠️  Could not read {cfg_file}: {exc}")
+            print(f"  Warning: Could not read {cfg_file}: {exc}")
             return
         # A top-level non-object (`[]`, `"x"`, `null`) is not something this step
         # may repair: writing our own object over it would destroy whatever the
         # operator meant, and `.get()` on it raises. Report and leave it alone —
         # the effective default stays fail-closed either way.
         if not isinstance(loaded, dict):
-            print(f"  ⚠️  {cfg_file} does not contain a JSON object; skipping.\n")
+            print(f"  Warning: {cfg_file} does not contain a JSON object; skipping.\n")
             return
         cfg = loaded
 
@@ -1426,18 +1480,18 @@ def _setup_sandbox_consent() -> None:
         # later change to that default still reaches this host. Writing the
         # current default on a decline would freeze it silently.
         if unconfined_by_default:
-            print("  ⏭  Left as-is — agent subprocesses keep running unconfined here.")
+            print("  Skipped: Left as-is — agent subprocesses keep running unconfined here.")
             print("     To refuse them later, set")
             print("     agent.sandbox_allow_unsandboxed_exec=false")
             print(f"     in {cfg_file}\n")
         else:
-            print("  ⏭  Left fail-closed — MCP tooling stays disabled on this host.")
+            print("  Skipped: Left fail-closed — MCP tooling stays disabled on this host.")
             print("     To opt in later, set agent.sandbox_allow_unsandboxed_exec=true")
             print(f"     in {cfg_file}\n")
         return
 
     if not isinstance(cfg.get("agent"), dict) and "agent" in cfg:
-        print("  ⚠️  'agent' section is not an object; leaving config untouched.\n")
+        print("  Warning: 'agent' section is not an object; leaving config untouched.\n")
         return
 
     # Audit BEFORE the write: this persists an execution permission, so it belongs
@@ -1474,7 +1528,7 @@ def _setup_sandbox_consent() -> None:
             critical=granting,
         )
     except Exception as exc:
-        print(f"  ⚠️  Could not record the security audit event: {exc}")
+        print(f"  Warning: Could not record the security audit event: {exc}")
         if granting:
             print("     Refusing to grant unsandboxed execution unaudited —")
             print("     left fail-closed. Fix the audit log, then re-run setup.\n")
@@ -1516,7 +1570,7 @@ def _setup_sandbox_consent() -> None:
     try:
         update_config_locked(cfg_file, mutate=_grant, stamp_meta=False)
     except ConfigReadError as exc:
-        print(f"  ⚠️  Could not read {cfg_file}: {exc}")
+        print(f"  Warning: Could not read {cfg_file}: {exc}")
         print(f"     Nothing was recorded — {unchanged}.\n")
         return
     except OSError as exc:
@@ -1524,14 +1578,14 @@ def _setup_sandbox_consent() -> None:
         # holds it) must not abort the whole wizard after the user has already
         # answered. Report it and continue: nothing was written, so the host keeps
         # whatever this platform's default is.
-        print(f"  ⚠️  Could not write {cfg_file}: {exc}")
+        print(f"  Warning: Could not write {cfg_file}: {exc}")
         print(f"     Nothing was recorded — {unchanged}. Set")
         print(f"     agent.sandbox_allow_unsandboxed_exec={byhand} by hand instead.\n")
         return
     if section_clash:
-        print("  ⚠️  'agent' section is not an object; leaving config untouched.\n")
+        print("  Warning: 'agent' section is not an object; leaving config untouched.\n")
         return
-    print(f"  ✅ Recorded: agent.sandbox_allow_unsandboxed_exec = {str(granting).lower()}\n")
+    print(f"  Done: Recorded: agent.sandbox_allow_unsandboxed_exec = {str(granting).lower()}\n")
 
 
 def _setup_timezone() -> None:
@@ -1544,10 +1598,10 @@ def _setup_timezone() -> None:
         try:
             data = json.loads(read_config_text(cfg_file))
         except Exception as exc:
-            print(f"  ⚠️  Could not read {cfg_file}: {exc}")
+            print(f"  Warning: Could not read {cfg_file}: {exc}")
             return
         if not isinstance(data, dict):
-            print(f"  ⚠️  {cfg_file} is not a JSON object; leaving config untouched.")
+            print(f"  Warning: {cfg_file} is not a JSON object; leaving config untouched.")
             return
     current = data.get("timezone", "")
 
@@ -1559,7 +1613,7 @@ def _setup_timezone() -> None:
         print(f"  Current: {current}")
         answer = _input_or_skip(f"  Timezone [{current}]: ")
         if not answer:
-            print(f"  ✅ Keeping: {current}\n")
+            print(f"  Done: Keeping: {current}\n")
             return
         tz_val = answer
     elif detected:
@@ -1579,7 +1633,7 @@ def _setup_timezone() -> None:
         raw = _input_or_skip(f"  IANA timezone (e.g. America/Los_Angeles), or '{LOCAL_TIMEZONE}': ")
         if not raw:
             print(
-                "  ⏭  Skipped. Cron schedules run in UTC until this computer's "
+                "  Skipped. Cron schedules run in UTC until this computer's "
                 "time zone can be detected.\n"
             )
             return
@@ -1617,19 +1671,19 @@ def _setup_timezone() -> None:
         except (KeyError, Exception):
             suggestion = abbrev_to_iana.get(tz_val.upper())
             if suggestion:
-                print(f"  ❌ '{tz_val}' is an abbreviation, not an IANA timezone.")
+                print(f"  Error: '{tz_val}' is an abbreviation, not an IANA timezone.")
                 print(f"     Did you mean: {suggestion}?")
             else:
-                print(f"  ❌ Unknown timezone '{tz_val}'.")
+                print(f"  Error: Unknown timezone '{tz_val}'.")
                 print("     Use IANA format, e.g. America/Los_Angeles, Europe/London")
             if attempt < max_retries - 1:
                 retry = _input_or_skip("  Timezone: ")
                 if not retry:
-                    print("  ⏭  Skipped.\n")
+                    print("  Skipped.\n")
                     return
                 tz_val = retry
             else:
-                print("  ⏭  Skipped after too many attempts.\n")
+                print("  Skipped after too many attempts.\n")
                 return
 
     def _apply(existing: dict) -> dict:
@@ -1642,9 +1696,9 @@ def _setup_timezone() -> None:
         # The pre-prompt read already refuses a corrupt config; this covers a
         # file that went bad while the operator was answering, and refuses the
         # same way rather than surfacing a traceback out of the wizard.
-        print(f"  ⚠️  Could not read {cfg_file}: {exc}")
+        print(f"  Warning: Could not read {cfg_file}: {exc}")
         return
-    print(f"  ✅ Timezone saved: {tz_val}\n")
+    print(f"  Done: Timezone saved: {tz_val}\n")
 
 
 def _maybe_setup_dashboard_url() -> None:
@@ -1685,13 +1739,16 @@ def _maybe_setup_dashboard_url() -> None:
         print("  Leave blank for localhost-only.\n")
 
     hint = f" [{current}]" if current else ""
-    answer = input(f"  Dashboard URL (e.g. http://{hostname}:{_configured_port()}){hint}: ").strip()
+    answer = (
+        _input_or_skip(f"  Dashboard URL (e.g. http://{hostname}:{_configured_port()}){hint}: ")
+        or ""
+    )
 
     if answer == "" and current:
-        print(f"  ✅ Keeping: {current}\n")
+        print(f"  Done: Keeping: {current}\n")
         return
     if answer == "" and not current:
-        print("  ⏭  Skipped. Dashboard will bind to localhost only.\n")
+        print("  Skipped. Dashboard will bind to localhost only.\n")
         return
 
     # Persist to config.json. The read is inside the lock hold, so the URL
@@ -1714,10 +1771,10 @@ def _maybe_setup_dashboard_url() -> None:
 
     try:
         update_config_locked(cfg_file, mutate=_apply, stamp_meta=False)
-        print(f"  ✅ Dashboard URL saved: {answer}")
+        print(f"  Done: Dashboard URL saved: {answer}")
         print("  Token auth will be required for all requests.\n")
     except Exception as e:
-        print(f"  ❌ Failed to save: {e}\n")
+        print(f"  Failed to save: {e}\n")
 
 
 def _maybe_setup_custom_domain() -> None:
@@ -1735,10 +1792,11 @@ def _maybe_setup_custom_domain() -> None:
     # Advise removal of legacy "mesh.claw" entry from /etc/hosts if present
     try:
         if "mesh.claw" in Path("/etc/hosts").read_text(encoding="utf-8"):
-            print("  ⚠  Legacy mesh.claw entry found in /etc/hosts.")
+            print("  Warning: Legacy mesh.claw entry found in /etc/hosts.")
             print(
                 "  To remove it: sudo grep -v 'mesh\\.claw' /etc/hosts > /tmp/hosts.clean"
                 " && sudo mv /tmp/hosts.clean /etc/hosts\n"
             )
     except Exception:
+        # An unreadable /etc/hosts only skips this hint.
         pass

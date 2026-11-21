@@ -79,7 +79,7 @@ from kiro_crew.agent_switch_command import (
 )
 from kiro_crew.config import live
 from kiro_crew.config.sections import _normalize_threshold_pair
-from kiro_crew.history import mint_row_mid, transcript_stem
+from kiro_crew.history import _redact_at_write_boundary, mint_row_mid, transcript_stem
 from kiro_crew.messaging.approval import PendingApprovals, SessionApprovalDecider
 from kiro_crew.messaging.attachments import append_attachment_context
 from kiro_crew.messaging.attachments import cleanup as cleanup_attachments
@@ -178,12 +178,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# How many queued messages collapse into one drained turn. A burst answered as
-# one turn keeps the conversation coherent; past this the surplus is deferred in
-# order rather than dropped, so the combined prompt stays bounded. Same value as
-# the Telegram and Discord drains for the same reason — a single human will not
-# realistically burst past it mid-turn — rather than a third number for one
-# concept.
+# How many queued messages collapse into one drained turn, so a burst gets one
+# coherent answer. The surplus waits in order (never dropped), keeping the
+# combined prompt bounded. Same value as the Telegram and Discord drains: one
+# person will not burst past it mid-turn.
 _MAX_COLLAPSE = 50
 
 # Bound on an in-place compaction so a backend that streams text without ever
@@ -442,7 +440,7 @@ class WebexDispatcher:
             if is_bare_mid_turn_override(text):
                 await self._reply(
                     inbound,
-                    "ℹ️ `/queue` and `/steer` need a message after them — "
+                    "Note: `/queue` and `/steer` need a message after them — "
                     "e.g. `/queue also check the logs`.",
                 )
                 return
@@ -453,9 +451,9 @@ class WebexDispatcher:
                     self._session_key(route),
                     channel_type="Webex",
                 )
-                message = "✅ Started a fresh conversation."
+                message = "Started a fresh conversation."
                 if not saved:
-                    message += "\n⚠️ The new conversation could not be saved for restart."
+                    message += "\nWarning: The new conversation could not be saved for restart."
                 await self._reply(inbound, message)
                 return
             if cmd == "compact":
@@ -504,7 +502,7 @@ class WebexDispatcher:
             if is_unknown_command(text):
                 # Answer with the card rather than spending a whole turn having
                 # the model explain that it does not know what "/nwe" means.
-                await self._reply(inbound, f"❓ Unknown command.\n\n{build_help_text()}")
+                await self._reply(inbound, f"Unknown command.\n\n{build_help_text()}")
                 return
 
         # ``resolve_pre_turn`` owns busy check, rotation and key re-derivation. The
@@ -710,7 +708,7 @@ class WebexDispatcher:
                 and await steer(text)
             )
             if steered:
-                await self._reply(inbound, "⏳ Folded into the reply in progress.")
+                await self._reply(inbound, "Folded into the reply in progress.")
                 return
         # Queue mode, a /queue override, or steer was unavailable. The enqueue and
         # its receipt happen atomically under the queue lock so the end-of-turn
@@ -1131,7 +1129,7 @@ class WebexDispatcher:
             )
         await self._reply(
             inbound,
-            "🛑 Stopped." if cancelled_turn else "🛑 Nothing was running — queue cleared.",
+            "Stopped." if cancelled_turn else "Nothing was running — queue cleared.",
         )
 
     def _origin_mirror_link(self, room_id: str) -> ChannelLink:
@@ -1179,7 +1177,7 @@ class WebexDispatcher:
         await asyncio.to_thread(_rebind)
         await self._reply(
             inbound,
-            "✅ Linked. Replies from the dashboard for this conversation will "
+            "Linked. Replies from the dashboard for this conversation will "
             "also show up here. Send `/unlink` to stop.",
         )
 
@@ -1297,7 +1295,10 @@ class WebexDispatcher:
                 session_key, "assistant", reply_text, agent=agent, mid=mint_row_mid()
             )
         if is_new:
-            title = (user_text or "").strip().replace("\n", " ")[:40] or "Webex"
+            title = (
+                _redact_at_write_boundary("user", user_text or "").strip().replace("\n", " ")[:40]
+            )
+            title = title or "Webex"
             self.conv_log.set_title(session_key, title)
 
     async def _maybe_notice(self, inbound: "WebexInbound", session_key: str, provider: Any) -> None:
@@ -1331,9 +1332,9 @@ class WebexDispatcher:
             await self._reply(
                 inbound,
                 (
-                    "🗜️ Context was near its limit, so it was compacted automatically."
+                    "Context was near its limit, so it was compacted automatically."
                     if ok
-                    else f"⚠️ Context is near its limit and automatic compaction {detail}. "
+                    else f"Warning: Context is near its limit and automatic compaction {detail}. "
                     "Reply `/new` to start fresh."
                 ),
             )
@@ -1341,7 +1342,7 @@ class WebexDispatcher:
             self._conv.set_awaiting(route)
             await self._reply(
                 inbound,
-                "⚠️ This conversation's context is getting long — reply `/compact` "
+                "Warning: This conversation's context is getting long — reply `/compact` "
                 "to compress it, or `/new` to start fresh.",
             )
 
@@ -1385,19 +1386,19 @@ class WebexDispatcher:
         # to compact), and always release what we acquired.
         if not await self.sessions.try_acquire(session_key):
             if self.sessions.is_retiring(session_key):
-                await self._reply(inbound, f"ℹ️ {COMPACT_ACCOUNT_CHANGED_TEXT}")
+                await self._reply(inbound, f"Note: {COMPACT_ACCOUNT_CHANGED_TEXT}")
             elif self.sessions.has_session(session_key):
                 await self._reply(
                     inbound,
-                    "⏳ Still working on the previous message — try `/compact` again shortly.",
+                    "Still working on the previous message — try `/compact` again shortly.",
                 )
             else:
-                await self._reply(inbound, "ℹ️ There's no conversation to compact yet.")
+                await self._reply(inbound, "Note: There's no conversation to compact yet.")
             return
         try:
             provider = self.sessions.get_provider(session_key)
             if provider is None:
-                await self._reply(inbound, "ℹ️ There's no conversation to compact yet.")
+                await self._reply(inbound, "Note: There's no conversation to compact yet.")
                 return
             # Capability gate (mirroring the dashboard's gate): a
             # backend that cannot serve a manual /compact treats the prompt as
@@ -1411,9 +1412,9 @@ class WebexDispatcher:
             await self._reply(
                 inbound,
                 (
-                    "🗜️ Context compacted."
+                    "Context compacted."
                     if ok
-                    else f"⚠️ Compaction {detail} — reply `/new` to start fresh instead."
+                    else f"Warning: Compaction {detail} — reply `/new` to start fresh instead."
                 ),
             )
         finally:

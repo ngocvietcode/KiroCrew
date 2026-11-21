@@ -242,6 +242,11 @@ class TestRuleTwoReadsTheSessionsPin:
         monkeypatch.setattr(kas_route, "_stored_as_kiro_pick", lambda: False)
         assert _REAL_SWITCH_ALLOWED() is True
 
+    def test_the_route_resolver_judges_the_pin_it_is_given(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(kas_route, "automatic_switch_allowed", _REAL_SWITCH_ALLOWED)
+        monkeypatch.setattr(kas_route, "_stored_as_kiro_pick", lambda: False)
+        assert kas_route.resolve_kas_route(environ={}, home=tmp_path, pin="kiro") == kas_route.RELAY
+
     @pytest.mark.asyncio
     async def test_a_kiro_cli_pin_stays_on_kiro_cli_under_a_global_kas(self, tmp_path, monkeypatch):
         monkeypatch.setattr(kas_route, "automatic_switch_allowed", _REAL_SWITCH_ALLOWED)
@@ -413,6 +418,15 @@ class TestRouteText:
         route = kas_route.KasRoute(bundle=True, reason=kas_route.REASON_CONFIGURED)
         assert route.automatic is False
         assert "agent.kas_bundle is on" in route.describe()
+
+    def test_the_sharing_preview_route_is_automatic(self):
+        """The preview picks the bundle with agent.kas_bundle off: not the setting."""
+        route = kas_route.KasRoute(bundle=True, reason=kas_route.REASON_SHARING_PREVIEW)
+        assert route.automatic is True
+        assert route.as_dict()["automatic"] is True
+        assert route.describe() == (
+            "KAS runs on Kiro Crew's own engine because the ACP runtime sharing preview is on"
+        )
 
     def test_the_relay(self):
         assert kas_route.RELAY.name == "relay"

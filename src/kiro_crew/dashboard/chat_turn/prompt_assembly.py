@@ -180,8 +180,8 @@ async def _session_replay_history(
                 window_for_provider_client,
             )
 
-            # The cold start a conductor context-cap trim began (context_cap)
-            # replays a longer tail, behind the trim note and the ledger snapshot.
+            # The cold start a context-cap trim began (context_cap) replays a longer
+            # tail, behind the trim note, the ledger snapshot and the tool pointers.
             _trim_seed = _take_context_cap_seed(session_key)
             _budget = {"budget_chars": _context_cap_tail_chars(session_key)} if _trim_seed else {}
             # Merge the disk transcript and a frozen live-window tail
@@ -203,7 +203,10 @@ async def _session_replay_history(
             )
             if _trim_seed and compressed:
                 _note_context_cap_tail(session_key, len(compressed))
-                compressed = await _context_cap_seed_head(session_key) + compressed
+                compressed = (
+                    await _context_cap_seed_head(session_key, context_builder.conversation_log)
+                    + compressed
+                )
             logger.info(
                 "Session replay: key=%s result=%s",
                 session_key,
@@ -259,6 +262,7 @@ async def _checklist_resync(
     _provider_has_history: bool,
     _todo_sync_rendered: tuple[tuple[str, str, bool], ...],
     _todo_recovery_carried: bool,
+    client: Any,
 ) -> tuple[str, tuple[tuple[str, str, bool], ...], bool]:
     """Prefix the checklist the agent must re-learn, and what the turn now owes.
 
@@ -266,7 +270,17 @@ async def _checklist_resync(
     turn gets only the rows the person ticked since the agent's last snapshot.
     Returns the prompt and the turn's ``(sync_rendered, recovery_carried)`` debt,
     settled on the provider's first event.
+
+    A turn whose harness keeps its checklist itself
+    (``SessionCapabilities.keeps_own_checklist`` of *client*, the turn's provider)
+    gets neither block: that harness sends its list as an ACP ``plan``, and both
+    blocks tell the agent to call kiro-cli's ``todo_list`` tool, which it does not
+    have. The debts are returned unchanged.
     """
+    from kiro_crew.agent_sdk.capabilities import capabilities_of
+
+    if capabilities_of(client).keeps_own_checklist:
+        return full_message, _todo_sync_rendered, _todo_recovery_carried
     # The cold-start `is_new` observation is a one-shot the session claim
     # consumes, so a turn that builds the recovery block but dies before
     # the provider's first event (a pre-dispatch Stop, an expired

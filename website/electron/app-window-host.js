@@ -8,7 +8,9 @@
  * for every app at once and naming none: a reconcile tick reads `/api/apps`, opens
  * the windows an enabled app declares `openOnEnable`, registers the shortcuts it
  * declares, and closes and releases everything for an app that is disabled, gone
- * or no longer declares it.
+ * or no longer declares it. An app switched off on this computer's gateway is still
+ * served from a crew the operator chose for it while the app is on there
+ * (`servedDeclarations`), the rule built-in shell code follows for its own app.
  *
  * NO APP CODE RUNS HERE. Every window is created by this module with fixed web
  * preferences (context isolation, sandbox, no Node), loads the host's own
@@ -39,6 +41,11 @@
  * window whose app's approved set changes is closed, so a withdrawn capability
  * leaves no window that was opened with it.
  *
+ * Per machine (app-window-prefs.js). A shortcut binds at the user's chord for it,
+ * else at its declared default for this platform; a page of the app lists them and,
+ * while the user is acting in it, rebinds one. A chord an app's own shell code
+ * reserves is handed over to the host serving that app.
+ *
  * Fail closed on the page: a window is revealed only when its page says `ready`,
  * and a main-frame load that ends on an error document or a transport failure is
  * latched hidden (app-window-error-latch.js) until a later tick whose probe the
@@ -54,7 +61,14 @@ const {
   createGatewayResolver,
   memoryStore,
 } = require("./app-window-gateways");
-const { desktopDeclarations, isAppListBody } = require("./app-window-host-rules");
+const {
+  canonicalAccelerator,
+  desktopDeclarations,
+  isAppListBody,
+  keyPressChords,
+  pressedChord,
+} = require("./app-window-host-rules");
+const { boundShortcuts, createMachinePrefs } = require("./app-window-prefs");
 const { WORK_AREA_MARGIN, placeBesideAnchor } = require("./app-window-placement");
 const { SPAN_CHANNELS, createDisplayMemory, createSpans, spanKey } = require("./app-window-span");
 const { shellShortcutReservations } = require("./shell-shortcut-reservations");
@@ -62,7 +76,7 @@ const { shellShortcutReservations } = require("./shell-shortcut-reservations");
 /** Document-path prefix of a hosted window. Keep in sync with website/src/desktopWindow/. */
 const DESKTOP_WINDOW_PREFIX = "/popout/desktop";
 /** The bridge level the preload advertises; raised when the bridge gains a call. */
-const APP_WINDOW_BRIDGE_LEVEL = 2;
+const APP_WINDOW_BRIDGE_LEVEL = 3;
 const TICK_MS = 5_000;
 const HIT_POLL_MS = 16;
 const PROBE_TIMEOUT_MS = 5_000;
@@ -111,6 +125,8 @@ const CHANNELS = Object.freeze({
   openImage: "app-window:open-image",
   listGateways: "app-window:list-gateways",
   chooseGateway: "app-window:choose-gateway",
+  shortcuts: "app-window:shortcuts",
+  setShortcut: "app-window:set-shortcut",
 });
 
 /** The page path a hosted window loads; the only document its navigation may hold. */
@@ -179,6 +195,7 @@ function pointInRegions(regions, x, y) {
  *   registerCaptureSurface?: (wc: object, url: string) => boolean,
  *   localFiles?: {fs: object, path: object, shell: object, openPathHardened: Function},
  *   gatewayStore?: {get: (key: string) => unknown, set: (key: string, value: unknown) => void},
+ *   prefsStore?: {get: (key: string) => unknown, set: (key: string, value: unknown) => void},
  * }} deps
  */
 function createAppWindowHost(deps) {
@@ -194,6 +211,7 @@ function createAppWindowHost(deps) {
   const registerCaptureSurface = deps.registerCaptureSurface
     || ((wc, url) => require("./capture-trust").registerCaptureSurface(wc, url));
   const gatewayChoices = createGatewayChoices(deps.gatewayStore || memoryStore());
+  const machinePrefs = createMachinePrefs(deps.prefsStore || memoryStore());
   const gateways = createGatewayResolver({ fetchHost: (p, init) => fetchHost(p, init), fetchImpl, now });
   let stopWatchingReservations = null;
   const backendOrigin = (() => {
@@ -226,6 +244,11 @@ function createAppWindowHost(deps) {
   const respawnedAt = new Map();
   /** "<app>/<id>" of background pages that died again too soon, reopened by the next tick. */
   const respawnDue = new Set();
+  /**
+   * Apps whose windows this tick only keeps: switched off here, and their crew could
+   * not be told. None of their windows is created until a tick tells (createWindow).
+   */
+  let keepOnly = new Set();
   let declarations = new Map();
   let pageToken = "";
   let cookieAuth = false;
@@ -590,6 +613,7 @@ function createAppWindowHost(deps) {
   }
 
   function createWindow(app, decl, { bounds, focus, displayId = null, placement = null }) {
+    if (keepOnly.has(app)) return null;
     const key = displayId === null ? `${app}/${decl.id}` : `${app}/${decl.id}@${displayId}`;
     const target = targetOf(app);
     const caps = servedCapabilities(declarations.get(app)?.capabilities || [], target);
@@ -682,6 +706,11 @@ function createAppWindowHost(deps) {
       wc.on("input-event", (_e, input) => {
         if (input && USER_INPUT_TYPES.has(input.type) && !input.isAutoRepeat) rec.lastInput = now();
       });
+      // The chord a key press spells, the only one a rebind may move a shortcut to.
+      wc.on("before-input-event", (_e, input) => {
+        const chords = keyPressChords(input, platform);
+        if (chords.length) rec.pressedChords = { chords, at: now() };
+      });
     } catch {
       /* no native input feed: the window never counts as acted in */
     }
@@ -714,9 +743,10 @@ function createAppWindowHost(deps) {
     const key = `${rec.app}/${rec.id}`;
     const last = respawnedAt.get(key);
     // A page that dies again at once is left to the tick, so a crash loop runs
-    // at tick cadence rather than as fast as the page can die. The tick reopens
-    // it whether or not it is declared `openOnEnable`.
-    if (last !== undefined && now() - last < BACKGROUND_RESPAWN_MS) {
+    // at tick cadence rather than as fast as the page can die; so is one whose app
+    // is kept only, for the tick that can tell. The tick reopens it whether or not
+    // it is declared `openOnEnable`.
+    if (keepOnly.has(rec.app) || (last !== undefined && now() - last < BACKGROUND_RESPAWN_MS)) {
       respawnDue.add(key);
       return;
     }
@@ -940,8 +970,9 @@ function createAppWindowHost(deps) {
     }
   }
 
+  /** One binding, whatever its spelling: two spellings of a chord are one chord. */
   function sameBinding(a, b) {
-    return a.id === b.id && a.window === b.window && a.accelerator === b.accelerator;
+    return a.id === b.id && a.window === b.window && a.chord === b.chord;
   }
 
   function syncShortcuts() {
@@ -951,14 +982,15 @@ function createAppWindowHost(deps) {
       // so an app enabled later that declares the same chord never takes it.
       for (const [chord, live] of liveShortcuts) {
         const declaredBinding = declarations.get(live.app)?.shortcuts.some((s) => sameBinding(s, live.shortcut));
-        if (declaredBinding && !reservations.isReserved(live.shortcut.accelerator)) desired.set(chord, live);
+        if (declaredBinding && !reservations.isReserved(live.shortcut.accelerator, live.app)) desired.set(chord, live);
       }
       for (const [app, decl] of declarations) {
         for (const shortcut of decl.shortcuts) {
           if (desired.has(shortcut.chord)) continue;
           // A chord a shell owner is configured to hold stays theirs even while
-          // they do not hold it (disabled, or mid-rebind).
-          if (reservations.isReserved(shortcut.accelerator)) {
+          // they do not hold it (disabled, or mid-rebind), unless that owner is
+          // this app's own shell code.
+          if (reservations.isReserved(shortcut.accelerator, app)) {
             reportTaken(app, shortcut);
             continue;
           }
@@ -1000,9 +1032,93 @@ function createAppWindowHost(deps) {
     for (const chord of [...liveShortcuts.keys()]) releaseShortcut(chord);
   }
 
+  /** Point *entry*'s shortcuts at the user's bindings; its declared defaults stay beside them. */
+  function bindDeclared(app, entry) {
+    if (!entry.declaredShortcuts) entry.declaredShortcuts = entry.shortcuts;
+    entry.shortcuts = boundShortcuts(entry.declaredShortcuts, machinePrefs.bindingsOf(app));
+  }
+
+  /** What a page of *app* is shown for each shortcut its app declares. */
+  function shortcutList(app) {
+    const entry = declarations.get(app);
+    if (!entry) return [];
+    const bindings = machinePrefs.bindingsOf(app);
+    return entry.declaredShortcuts.map((s) => {
+      const bound = entry.shortcuts.find((b) => b.id === s.id);
+      const live = bound ? liveShortcuts.get(bound.chord) : null;
+      return {
+        id: s.id,
+        window: s.window,
+        defaultAccelerator: s.accelerator,
+        accelerator: bound ? bound.accelerator : "",
+        custom: Object.prototype.hasOwnProperty.call(bindings, s.id),
+        registered: !!live && live.app === app && live.shortcut.id === s.id,
+      };
+    });
+  }
+
+  /**
+   * Register *shortcut*'s chord for *app* now, before any binding moves, so a refused
+   * rebind has released nothing the app held. True when the app holds the chord for
+   * that shortcut afterwards; a chord a shell owner reserves, another app holds or
+   * another program holds is false.
+   */
+  function claimChord(app, shortcut) {
+    const live = liveShortcuts.get(shortcut.chord);
+    if (live) return live.app === app && live.shortcut.id === shortcut.id;
+    if (reservations.isReserved(shortcut.accelerator, app)) return false;
+    let ok = false;
+    try {
+      ok = !globalShortcut.isRegistered(shortcut.accelerator)
+        && globalShortcut.register(shortcut.accelerator, () => deliverShortcut(app, shortcut));
+    } catch {
+      ok = false;
+    }
+    if (ok) {
+      liveShortcuts.set(shortcut.chord, { app, shortcut });
+      reportedTaken.delete(shortcut.chord);
+    }
+    return ok;
+  }
+
+  /**
+   * Rebind one of *app*'s declared shortcuts: to *accelerator*, "" to unbind it, null
+   * for its default. The same chord rules as the manifest's apply, and no chord
+   * another of the app's shortcuts is on. A chord other than the shortcut's declared
+   * default must be one of *pressed*, the chords the user's own key press spelled, so
+   * the page records the user's choice rather than picking one. The new chord is
+   * registered before the binding moves and the old chord is released: a chord a
+   * shell owner, another app or another program holds leaves the previous binding,
+   * and the chord it holds, in place.
+   */
+  function rebindShortcut(app, id, accelerator, pressed) {
+    const entry = declarations.get(app);
+    const declaredShortcut = entry && entry.declaredShortcuts.find((s) => s.id === id);
+    if (!declaredShortcut) return { ok: false, reason: "undeclared" };
+    const chord = typeof accelerator === "string" && accelerator ? canonicalAccelerator(accelerator) : "";
+    if (accelerator !== null && accelerator !== "" && !chord) return { ok: false, reason: "refused", shortcuts: shortcutList(app) };
+    if (chord && chord !== declaredShortcut.chord && !pressed.includes(pressedChord(accelerator, platform))) {
+      return { ok: false, reason: "not-pressed", shortcuts: shortcutList(app) };
+    }
+    // What the shortcut is bound to afterwards: its default for null, nothing for "".
+    let target = null;
+    if (accelerator === null) target = declaredShortcut;
+    else if (chord) target = { ...declaredShortcut, accelerator, chord };
+    if (target && entry.shortcuts.some((s) => s.id !== id && s.chord === target.chord)) {
+      return { ok: false, reason: "in-use", shortcuts: shortcutList(app) };
+    }
+    if (target && !claimChord(app, target)) return { ok: false, reason: "unavailable", shortcuts: shortcutList(app) };
+    machinePrefs.setBinding(app, id, accelerator);
+    bindDeclared(app, entry);
+    syncShortcuts();
+    return { ok: true, shortcuts: shortcutList(app) };
+  }
+
   // ── Reconcile ──────────────────────────────────────────────────────────────
 
-  function apply(next) {
+  /** Serve *next*; the windows of an app in *holding* are kept, and none is created. */
+  function apply(next, holding = new Set()) {
+    keepOnly = holding;
     /** Window keys whose declaration or served capabilities changed: closed. */
     const stale = new Set();
     /** Windows closed only because their app now loads from another gateway: reopened there. */
@@ -1027,14 +1143,16 @@ function createAppWindowHost(deps) {
       const rec = [...records.values()].find((r) => `${r.app}/${r.id}` === key);
       if (rec) closeWindow(rec.app, rec.id);
     }
+    for (const [app, entry] of next) bindDeclared(app, entry);
     declarations = next;
     syncShortcuts();
     for (const [app, decl] of next) {
       for (const win of decl.windows) if (win.openOnEnable) openWindow(app, win);
     }
     for (const key of [...respawnDue]) {
-      respawnDue.delete(key);
       const [app, id] = key.split("/");
+      if (keepOnly.has(app)) continue;
+      respawnDue.delete(key);
       const decl = declared(app, id);
       if (decl && decl.kind === "background" && windowRecords(app, id).length === 0) openWindow(app, decl);
     }
@@ -1059,8 +1177,11 @@ function createAppWindowHost(deps) {
    * withdrawn on the crew closes the windows served it within that time. A non-answer
    * changes nothing: the app keeps the target it already has, this
    * computer's gateway until a crew answers.
+   *
+   * @returns {Promise<Set<string>>} the apps whose target this tick could not tell.
    */
   async function resolveTargets(next) {
+    const untold = new Set();
     for (const app of [...targets.keys()]) if (!next.has(app)) targets.delete(app);
     await Promise.all([...next].map(async ([app, decl]) => {
       const choice = decl.capabilities.includes("gatewayChoice") ? gatewayChoices.get(app) : SELF_GATEWAY;
@@ -1074,13 +1195,55 @@ function createAppWindowHost(deps) {
       if (held && held.choice === choice && held.windowKey === windowKey && now() - held.at < TARGET_REUSE_MS) {
         if (!held.baseUrl) return;
         const check = await gateways.confirm(held);
+        if (!check.known) untold.add(app);
         if (!check.known || check.ok) return;
       }
       const resolved = await gateways.resolve(app, choice, windowIds);
-      if (resolved.keep) return;
+      if (resolved.keep) {
+        untold.add(app);
+        return;
+      }
       // A fall-back to self is reused too, so a crew with the app off is not asked every tick.
       targets.set(app, { ...resolved, choice, windowKey, at: now() });
     }));
+    return untold;
+  }
+
+  /**
+   * What the host serves of *listed* this tick: every app enabled here, and an app
+   * switched off here only while a crew the operator chose for it serves its windows.
+   *
+   * Off here, this computer's gateway serves the app nothing, so its windows exist
+   * only on a crew: one that answered this tick that the app is on there, or, when
+   * the tick could not tell (*untold*), the crew it was already on, and then only
+   * while one of its windows is still open or its background page waits to be
+   * reopened (a page that died is reopened by the tick that answers yes, and
+   * dropped by one that answers no). A non-answer keeps what is on screen
+   * and never creates a window for an app that is off here: such an app is in
+   * `holding`, whose windows apply() keeps and opens none of (no `openOnEnable`
+   * window, shortcut press, `open()` or background reopen). A definite no (the
+   * choice is this computer, the crew went, the app is off there) closes them.
+   *
+   * @returns {{served: Map<string, object>, holding: Set<string>}}
+   */
+  function servedDeclarations(listed, untold) {
+    const served = new Map();
+    const holding = new Set();
+    for (const [app, decl] of listed) {
+      const held = targets.get(app);
+      if (decl.enabledHere) {
+        served.set(app, decl);
+      } else if (held && held.baseUrl && !untold.has(app)) {
+        served.set(app, decl);
+      } else if (held && held.baseUrl && (
+        [...records.values()].some((r) => r.app === app && isLive(r))
+        || [...respawnDue].some((key) => key.startsWith(`${app}/`))
+      )) {
+        served.set(app, decl);
+        holding.add(app);
+      }
+    }
+    return { served, holding };
   }
 
   /** One tick; a call while one runs joins it rather than starting a second. */
@@ -1110,10 +1273,11 @@ function createAppWindowHost(deps) {
       // Re-checked after the awaits: a suspend that landed mid-probe wins.
       if (suspended || !started || result.state !== "ok") return;
       target(auth);
-      const next = desktopDeclarations(result.body, log);
-      await resolveTargets(next);
+      const listed = desktopDeclarations(result.body, log, { platform, disabledToo: true });
+      const untold = await resolveTargets(listed);
       if (suspended || !started) return;
-      apply(next);
+      const { served, holding } = servedDeclarations(listed, untold);
+      apply(served, holding);
       await Promise.all([...pendingLoads]);
     } catch (err) {
       log(`app-window-host: reconcile failed: ${err && err.message}`);
@@ -1150,6 +1314,13 @@ function createAppWindowHost(deps) {
     if (!rec || rec.decl.kind === "background" || !userActed(rec)) return null;
     rec.lastInput = 0;
     return rec;
+  }
+
+  /** The chords the latest key press in *rec*'s window spelled, within USER_ACTION_MS; spent once read. */
+  function takePressedChords(rec) {
+    const pressed = rec.pressedChords;
+    rec.pressedChords = null;
+    return pressed && now() - pressed.at <= USER_ACTION_MS ? pressed.chords : [];
   }
 
   const handlers = {
@@ -1290,6 +1461,19 @@ function createAppWindowHost(deps) {
       const showing = targetOf(app).instanceId;
       return { ok: showing === chosen, chosen, showing };
     },
+    [CHANNELS.shortcuts]: (event) => {
+      const rec = senderRecord(event);
+      return rec ? shortcutList(rec.app) : null;
+    },
+    // Moves which chord this computer gives the app, so only from a window the user
+    // is acting in (a Settings page recording the keys), never from a timer, and
+    // only onto the chord the user pressed there.
+    [CHANNELS.setShortcut]: (event, id, accelerator) => {
+      const rec = actingSender(event);
+      if (!rec || suspended || typeof id !== "string") return { ok: false };
+      if (accelerator !== null && typeof accelerator !== "string") return { ok: false };
+      return rebindShortcut(rec.app, id, accelerator, takePressedChords(rec));
+    },
   };
 
   /**
@@ -1364,6 +1548,7 @@ function createAppWindowHost(deps) {
     releaseAllShortcuts();
     closeAll();
     declarations = new Map();
+    keepOnly = new Set();
     respawnDue.clear();
     targets.clear();
     cachedAuth = { value: "", viaCookie: false };

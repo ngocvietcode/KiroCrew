@@ -715,6 +715,63 @@ test("forceStopPort: a failed Windows verification never claims recovery", async
   });
 });
 
+// A probe that cannot run names no owner, the same unproven answer as an empty
+// list, so a caller that passes a bind check lets that bind decide.
+test("forceStopPort: a failed probe on a bindable port is free, with no kill", async () => {
+  const checks = [];
+  let kills = 0;
+  const r = await forceStopPort(7788, {
+    getListenPids: async () => { throw new Error("netstat timed out"); },
+    getCommand: async () => "",
+    kill: async () => { kills += 1; },
+    sleep: async () => {},
+    failClosedOnProbeError: true,
+    confirmFree: async (port) => { checks.push(port); return true; },
+  });
+  assert.deepStrictEqual(checks, [7788]);
+  assert.strictEqual(kills, 0);
+  assert.deepStrictEqual(r, {
+    killed: 0, freed: true, survivors: [], foreignHolder: false, serviceHolder: false,
+  });
+});
+
+test("forceStopPort: a failed probe on a port that stays refused still fails closed", async () => {
+  const sleeps = [];
+  const r = await forceStopPort(7788, {
+    getListenPids: async () => { throw new Error("netstat timed out"); },
+    getCommand: async () => "",
+    kill: async () => {},
+    sleep: async (ms) => { sleeps.push(ms); },
+    failClosedOnProbeError: true,
+    confirmFree: async () => false,
+    confirmFreeWaitMs: 3000,
+  });
+  assert.strictEqual(sleeps.reduce((a, b) => a + b, 0), 3000, "the refusal is waited out first");
+  assert.deepStrictEqual(r, {
+    killed: 0, freed: false, survivors: [], foreignHolder: false,
+    serviceHolder: false, probeFailed: true,
+  });
+});
+
+test("forceStopPort: a failed verification after a kill lets a bindable port read as free", async () => {
+  let probes = 0;
+  const r = await forceStopPort(7788, {
+    getListenPids: async () => {
+      if (probes++ === 0) return [4242];
+      throw new Error("netstat verify timed out");
+    },
+    getCommand: async () => "C:\\bundle\\kirocrew.exe gateway",
+    kill: async () => {},
+    sleep: async () => {},
+    isKirocrew: (command) => command.includes("kirocrew.exe"),
+    failClosedOnProbeError: true,
+    confirmFree: async () => true,
+  });
+  assert.deepStrictEqual(r, {
+    killed: 1, freed: true, survivors: [], foreignHolder: false, serviceHolder: false,
+  });
+});
+
 // ── classifyPortOwner ───────────────────────────────────────────────────────
 // Ground truth for "is the thing on our port local, or a tunnel?". Every
 // outcome except a positively identified local KiroCrew process must be
@@ -922,6 +979,40 @@ test("classifyPortOwner: an unreadable command is reported unread, not as someon
     logs.some((line) => line.includes("whose command line could not be read")),
     "the log says the command could not be read",
   );
+});
+
+test("classifyPortOwner: this app's own live child is ours without a command read", async () => {
+  // A Windows command read that times out (PowerShell past its budget, no WMIC
+  // behind it) answers "". For the child this app spawned that must not decide
+  // anything: the app holds that ChildProcess.
+  const reads = [];
+  const logs = [];
+  const owner = await classifyPortOwner(5476, {
+    getListenPids: async () => [29292],
+    getCommand: async (pid) => { reads.push(pid); return ""; },
+    isOwnChild: (pid) => pid === 29292,
+    log: (line) => logs.push(line),
+  });
+  assert.strictEqual(owner, "kirocrew");
+  assert.deepStrictEqual(reads, [], "the command line is not read for our own child");
+  assert.ok(logs.some((line) => line.includes("own gateway child pid=29292")));
+});
+
+test("classifyPortOwner: a holder that is not our child is still judged by its command", async () => {
+  const holders = [];
+  const isOwnChild = (pid) => pid === 29292;
+  assert.strictEqual(await classifyPortOwner(5476, {
+    getListenPids: async () => [909],
+    getCommand: async () => "",
+    isOwnChild,
+    holders,
+  }), "unidentified");
+  assert.deepStrictEqual(holders, [{ pid: 909, command: null }]);
+  assert.strictEqual(await classifyPortOwner(5476, {
+    getListenPids: async () => [909],
+    getCommand: async () => "ssh -NL 5476:localhost:5476 build-host",
+    isOwnChild,
+  }), "foreign");
 });
 
 test("classifyPortOwner: holders are reported only with a foreign verdict", async () => {

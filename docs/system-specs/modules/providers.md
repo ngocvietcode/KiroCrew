@@ -30,6 +30,13 @@ exit codes and the authentication-failure signal remain available. Provider
 engines can still write their own files during a live process; teardown cleanup
 cannot guarantee removal after a crash or for undocumented engine storage.
 
+Each harness's own record of a restricted session goes at teardown too. An
+OpenCode session's rows (its session, messages, parts, event log and child
+sessions) are deleted from OpenCode's `opencode.db` after the process ends
+(`agent_sdk/opencode_transcripts.py`). A pi session is deleted by pi itself: the
+provider sends pi-acp's advertised `session/delete` before the process ends, which
+removes pi's session file and pi-acp's map entry. Persistent sessions keep both.
+
 The ordinary host sandbox and backend capability checks apply independently.
 Member memory requires no extra OS filesystem view, HMAC capability or platform
 isolation admission. See [the memory contract](memory-skills-hooks.md).
@@ -370,6 +377,365 @@ as a transient systemd user service or under `setsid`/`nohup`, and gives each
 worker its own id (`<binding>-<8 hex>`) carrying `_GATEWAY_EPOCH`, so runtimes
 sharing a binding cannot overwrite each other and the first start in a new
 process (`reap_stale_workers`) stops workers a previous gateway left running.
+
+#### Connected computers transport
+
+A connected computer (the user's own local machine, behind a feature flag that
+is off by default) reuses `WorkspaceRelay` and the bridge unchanged; only the
+link differs. The local machine dials OUT one WebSocket per grant through the
+Remote Crew SSH local forward (its connector), and the
+gateway multiplexes tool servers over it as channels
+(`connected_computers/protocol.py`: JSON text frames, `MAX_FRAME_BYTES` 64 KiB,
+data pieces of at most 32 KiB, a 1 MiB credit window per channel and direction,
+`MAX_CHANNELS = MAX_EXPOSED_MCP + 1`: all 16 exposed servers plus one workspace
+channel per chat, counted by session key, so one chat's servers never use up
+another chat's room on the same computer; and `MAX_CONNECTION_CHANNELS = 4 *
+MAX_CHANNELS` per connection across its chats, a memory bound since each
+channel may hold up to its 1 MiB window unread). The native dialog offers at most `MAX_EXPOSED_MCP`
+servers too; its cross-language contract test pins that equality. The gateway names only a channel kind
+(`workspace` or `mcp:<exposed name>`), never a path, argv or environment, and
+any unknown op or field is refused. Unlike `wire`, there is no resend and no
+resume: a channel lives on exactly one connection generation
+(`broker.DeviceConnection.generation`), and when that connection ends, is
+replaced by a same-or-newer credential, is revoked or the flag turns off, every
+channel on it ends as interrupted. A replaced socket's late frames and its late
+`detach` reach only itself, never its replacement.
+
+`launch.ChannelLink` relays bytes unchanged in both directions. It does not
+parse JSON-RPC, retain call ids or wait for a newline before sending bytes.
+Replies of any length, including ones larger than 8 MiB, stream through bounded
+pieces without accumulating a whole reply. On link loss the bridge closes and
+the tool server stops. Nothing is retried, resent or fabricated: there is no
+replacement reply or added newline, even after a partial reply. The link never
+redials or moves work to another connection or computer. A clean channel EOF
+ends the stream after bytes already received have drained.
+
+The per-link retained-state budgets are explicit in `launch`:
+
+| Retained field or work | Budget and enforcement |
+|---|---|
+| `error`, `label` | Error text at most `_MAX_ERROR_TEXT_CHARS` (1,024); label uses identity's `LABEL_MAX` (64 characters) |
+| Writer and reader locals | `_MAX_WRITE_BYTES` (8 MiB plus one byte) caps the borrowed write argument before any await; the relay normally supplies only its 64 KiB `_CHUNK`. Each write piece and output read is at most `_LINK_IO_BYTES` (32 KiB). An oversized batch is not sent and ends the link |
+| Tasks and waiters | One producer and one consumer; overlapping calls are refused, not accumulated on locks. One connect task; EOF is idempotent. The reader awaits the channel directly, whose failure wakes an in-flight read |
+| Channel buffers | The protocol's 1 MiB credit window bounds unread bytes in each direction; the link has no request or reply queue |
+
+A slow reader stops granting receive credit. A writer waits for send credit
+before sending the next bounded piece, retaining at most its capped input batch
+and that piece. Loss wakes channel readers and credit waiters; the bridge ends
+rather than waiting for another reply. Channel caps, frame bounds and credit
+budgets apply independently of the number or shape of JSON-RPC messages.
+
+A channel open that is cancelled or fails before it is handed out
+(`Channel.abandon`) sends `close` for it, so a tool server the computer already
+started is stopped; a late `opened` for it is dropped. A channel this side
+closes (`Channel.aclose`, `abandon`, an `open` the computer did not answer in
+`OPEN_TIMEOUT_SECS`) leaves the channel table before anything is awaited, so a
+frame the computer sent before it read the `close` is dropped instead of
+failing the connection and every other chat's channels with it.
+`DeviceConnection.send_close` keeps the number out of use until the `close` is
+on the wire, so a new channel's `open` never goes ahead of it. Since the
+computer answers an `open` with `opened` or `refused` first, a `data`, `eof`,
+`credit` or `closed` frame for a channel still opening belongs to an earlier
+holder of the number and is dropped, never applied to the newer channel. On the computer, the
+connector handles frames in order, so a `close` always follows its `open`. A
+tool server is stopped (`connector._LocalChannel.stop`) by ending its stdin,
+then `platform_compat.terminate_and_reap`: SIGTERM to its process group,
+`STOP_GRACE_SECS` (3 s) for the group to empty, then SIGKILL, signalled only
+while the leader is unreaped; Windows and an already-exited child get the
+platform tree kill. Under the Linux plan the tool server's bubblewrap has its
+own pid namespace and `--die-with-parent`, so nothing in it outlives it.
+Scratch creation, the plan's `wrap` (its file probes and the seccomp pipe
+write) and scratch removal after a stop or a
+failed confined start all run in worker threads (`confinement.run_owned`,
+`confinement.wrap_off_loop`), as does the self-test probe's `wrap` and the
+controller's plan lookup, so slow or stalled storage never blocks the loop that
+enforces revocation and bounded shutdown. A wrap or scratch that a worker
+finishes after its caller was cancelled is released there: the `Confined` fds
+closed, the folder removed.
+`workspace_tools` starts each command in a session of its own, which the group
+stop does not reach. It runs unchanged from every other remote workspace: its
+SIGTERM retirement unwinds a running command (`_unwind`, coreutils `timeout`
+signalling the command's group), and whatever is left in the sandbox ends with
+the tool server's own PID namespace. Pinned by
+`test_connected_computers_broker.py`.
+
+A connected-computer workspace attachment that fails or is cancelled closes all
+workspace and local-MCP relays opened by that attempt before re-raising. This
+covers partial MCP setup and workspace installation before the runtime's close
+callback or end-watcher owns the relays, freeing the shared relay capacity without
+waiting for idle expiry. Both the initial start and a resume respawn use this
+cleanup; other workspace providers keep their existing attachment behavior.
+
+#### Connected computers handshake and confinement
+
+The connector credential is a bearer and never travels on the socket, even
+after a valid gateway hello. Enrollment returns a **peer key**
+(`connector_token.peer_key_from_secret`: HMAC under the gateway's token signing key of gateway
+id, device id, fingerprint and `cgen`; derived, never stored, new with every
+fresh enrollment or revocation), kept in the local grant beside the credential.
+The upgrade request carries only `X-Connector-Device`, a fresh 64-hex
+`X-Connector-Nonce` and `X-Connector-Generation`, the `cgen` claim of the
+credential the computer holds (`connector_token.credential_generation`). It grants
+nothing: it only says which enrollment's peer key the gateway proves, so a
+computer whose record was revoked or removed still gets an authenticated answer.
+`Authorization` is refused 400 `credential_too_early`. An unknown device, a
+generation newer than the record's, or (without the header) an inactive record
+is refused 401 before upgrade; the connector only retries that with back-off,
+since a relay can forge it. With the preview off the path is not served at all
+(see Flag-off parity below): the dashboard gate refuses the connector 403, which it
+retries the same way; with the preview on but Session Environments unreachable the
+socket answers 503 (`protocol.REMOTE_OFF_STATUS`). The gateway's `hello` adds its fresh nonce and
+`gateway_proof` over both nonces and both ids. The connector checks it in
+constant time before sending anything.
+
+`auth` carries only the unsigned credential payload and an HMAC-SHA256 proof
+keyed by the complete credential, over a client-proof domain label, both ids and
+both nonces. `connector_token.verify_auth` reconstructs the credential signature
+locally with the existing token primitive, compares the proof in constant time,
+then calls `connector_token.verify`: signature, audience, gateway, device record,
+fingerprint, owner, record status, `cgen`, and expiry last. The record must
+match the hello's enrollment. The reconstructed token stays inside the gateway
+for periodic rechecks, never in a response or log.
+
+Revocation lives on the device record, written when it happens: Disconnect
+(`DeviceRegistry.revoke`, also run by a local Off's or Stop sharing's queued
+`forget`) marks the record `revoked` and bumps `cgen`; Remove marks it
+`removed`. The dashboard's revocation generation and logged-out nonce list are
+not consulted for a connector credential, and every dashboard sink refuses one
+(`token_auth_tokens.validate_token` refuses `aud` = `CONNECTOR_AUDIENCE`, so the
+cookie and link paths, app tokens and `POST /api/auth/logout` can neither accept
+nor revoke it). A dashboard logout therefore does not end sharing.
+
+The gateway builds the session frames (below) as soon as it sends `hello`, so
+`auth`, `ready` and its own answer are all authenticated. Its first frame is
+`admitted` (auth and ready verified, the computer attached to the broker) or
+`refusal` with the `CredentialRejected` code, sent before it closes. After
+`ready`, the final admission (`ws_route._admit`) re-reads the record with
+`connector_token.verify_standing`, attaches and sends `admitted` inside the
+device's admission fence (`ConnectionBroker.admission`, a per-device lock).
+Immediately before attaching, it also checks the live preview snapshot, with no
+await between that check and the attach; an off or absent snapshot refuses with
+`connected_computers_disabled`. A disable sweep that finished during `ready` or
+the standing lookup therefore cannot miss a subsequently admitted connection.
+Disconnect and Remove from the dashboard (`remote_routes.end_device`) write the
+record and call `broker.disconnect` inside the same fence. So an end made
+between `auth` and `ready` refuses the admission, and one made later finds the
+attached connection and ends it; the `admitted` send is bounded (5 s) so a
+stalled relay cannot hold a Disconnect. A `revoke`/`remove` from the CLI runs
+in another process and is caught by the 15 s re-check. The record
+is checked before expiry, so an expired credential of a revoked or removed
+computer is refused `revoked` / `removed`, never `expired`. While a socket is
+open, `connector_token.verify_standing` re-checks the record every 15 s (expiry is
+not checked there: an admitted socket stays open past it); Disconnect and Remove
+also end a live socket at once with an authenticated `refusal`
+(`broker.disconnect(refusal=)`), and the switch turning off sends `stop`.
+`DeviceConnection.stop` bounds the send lock acquisition and the final send
+together to 5 s, then always attempts the socket close under a separate 5 s
+bound, including after a stalled send or caller cancellation. Thus a blocked
+credit send cannot hold Disconnect, Remove, feature-disable cleanup or shutdown.
+A frame that fails its MAC or sequence is never answered with a refusal (a relay
+could have sent it): the socket just closes. Close codes (4401, 4400, 4503) are
+still set, as diagnostics only.
+
+Close codes, close reasons, upgrade statuses (401, 403, 503) and unwrapped
+frames are not authenticated: a relay on the forwarded port can forge every one
+of them, so the connector reads none of them (`Connector.admitted` is set only
+by the authenticated `admitted`). Only an authenticated `refusal` raises
+`connector.AuthenticatedRefusal`. Sharing renews automatically for as long as it
+is on; the controller's model (`controller.py`):
+
+- Before each dial the credential is renewed over SSH when it has under
+  `RENEW_BEFORE_SECS` (1 h) left by the local clock, already expired included
+  (`LocalController._renewal_due`), and also after the gateway's authenticated
+  `expired`. There is no allowance or once-only rule.
+- An authenticated `refusal` in `protocol.TERMINAL_REFUSALS` (`revoked`,
+  `removed`, `superseded`, `unknown_device`, `wrong_device`, `wrong_owner`) ends
+  the grant (below); so does the same code in the remote's SSH answer to a
+  renewal, or an answer naming another gateway or device.
+- Everything else is a failed attempt: a run without admission, a MAC, sequence
+  or schema failure (`Connector.protocol_failed`), lost liveness, any close, any
+  upgrade status, any other refusal code, SSH not reaching the remote, and a
+  local read of the grant or the switch that failed (a `VaultDocError` is
+  retried in the same grant task, never restarting it). Back-off
+  doubles from 5 s to its 300 s cap, with the reason in the grant's state, and
+  resets only after an authenticated admission without a protocol failure.
+- Switch reads that may load config files run through `asyncio.to_thread`: a
+  stalled read must not hold the liveness watchdog, a channel stop or a connector
+  stop. The final gateway admission check uses only its live config snapshot,
+  without yielding or falling back to disk, so it is atomic with attachment.
+
+Renewal (`enroll.renew`) sends the credential it replaces on the SSH command's
+stdin; the remote (`connected-computer enroll --stdin`) runs
+`connector_token.verify_for_renewal`, which checks the signature, audience,
+gateway, device record (active), fingerprint, `cgen` and owner (the SSH user)
+and skips only expiry. `DeviceRegistry.enroll(renew_cgen=)` requires the record
+still to carry that `cgen` in the same locked write, and keeps it: a renewal
+does not move `cgen`, so a renewal whose answer was lost can be repeated with
+the same credential. A refusal answers a `code` (`EnrollmentFailed.code`). So a
+renewal is accepted iff the record is active at the credential's generation,
+whether the credential expired or not, and never after a Disconnect, a Remove or
+a local Off's forget, connected, offline or expired.
+
+`authenticated.SessionFrames` derives a session key with HMAC-SHA256 under the
+peer key over a session domain label and canonical JSON of both identities and
+nonces, then derives separate client-to-gateway and gateway-to-client keys.
+Every frame after `hello`, including `auth`, `ready`, `admitted`, `refusal`,
+`open`, data, credit, close and `stop`, is `{seq, frame, mac}`. The MAC covers canonical ASCII JSON of `seq` and
+`frame`; each direction starts at zero and accepts only the next sequence,
+through 2^64-1. Send locks cover encoding and sending together. A missing,
+tampered, reflected, out-of-order or replayed frame ends the socket before
+handling its payload. The outer envelope shares the existing 64 KiB limit;
+32 KiB data pieces and credit windows are unchanged. A relay can forward, read,
+delay or drop bytes, but cannot steal the bearer, impersonate either endpoint
+on another connection, or inject authenticated tool frames. SSH supplies
+confidentiality; MACs do not encrypt content.
+
+Dropping is caught by authenticated liveness (`authenticated.Liveness`). Once
+admitted, each side sends a MACed, sequenced `ping` every
+`protocol.HEARTBEAT_SECS` (15 s), and drops the connection when no frame passed
+its MAC and sequence check for `protocol.LIVENESS_DEADLINE_SECS` (45 s). The
+deadline is a watchdog task of its own, scheduled from the last authenticated
+frame: it never sends and never takes a send lock, so a relay that stops reading
+(stalling sends and the send lock) does not hold it. Each heartbeat send is
+bounded by the deadline; a send that fails or overruns drops the connection
+too. The WebSocket's own pings and pongs never count, so a relay that drops the
+tail of the traffic (the last data, `close`, `stop` or `refusal`) while keeping
+the transport alive cannot hold the connection open. The connector's deadline
+runs from `ready`, so a missing `admitted` ends it too. On the computer each
+frame's work (`Connector._guarded`: an `open` preparing a confined process, a
+`close` stopping one, the per-`data` switch check) is raced against the
+deadline; when it passes first the work is cancelled without being awaited, the
+run returns and `stop_all` stops every running channel, including one whose
+own stop was cancelled midway (`Connector._stopping`). An `open` checks again
+before it spawns and after, and starts no channel once the run is ending. A lost
+deadline is an interrupted connection, never a refusal: the controller redials
+with back-off; on the gateway the computer is detached and its channels end as
+interrupted. The clock and the heartbeat wait are injected
+(`Connector(clock=, sleep=)`, `ws_route._new_liveness`), so tests move time
+without sleeping.
+
+Compatibility: the local connector shipped in the desktop app and standalone
+local gateway must be updated with the remote gateway. The preview's bearer
+`auth` and unwrapped frames are refused, with no downgrade path; stored grants
+and enrollment payloads are unchanged. No third-party connector is supported.
+A rollback must roll back both ends together and restores the bearer-relay risk.
+
+Every connector child runs under an OS allow-list (`confinement.py`), with two
+policies kept apart. **Network access**: IP networking (out, in and bind) is the
+user's own shell's; no network namespace is added. **Credential protection**:
+only the root, a private scratch (also `HOME`) and the named runtime paths are
+visible; the environment is built from nothing; and no local IPC endpoint of
+the user's session is reachable. Linux (bubblewrap, user/pid/ipc/uts
+namespaces) shares the user's network namespace and so its ABSTRACT unix
+sockets (an X11 display, a session bus), which no mount hides; the plan hands
+bubblewrap a seccomp program (`seccomp.py`, on `--seccomp FD` through an
+inherited pipe) that answers `EPERM` to `socket(AF_UNIX, ...)`, to the io_uring
+calls, to `keyctl`/`add_key`/`request_key` (bubblewrap gives the child no session
+keyring of its own, so it would inherit the user's, which can hold Kerberos
+tickets; `seccomp.DENIED_CALLS`) and to the x32 number space, and kills any other
+architecture.
+`socketpair` stays allowed. A filesystem unix socket inside the root is refused
+too, since seccomp cannot read the address. A processor with no table
+(`seccomp.TABLES`: x86_64, aarch64) has no plan. Sharing is Linux-only for now:
+macOS and Windows have no plan and refuse with that reason
+(`confinement.plan_for_this_machine`).
+
+`self_test` runs once per grant per controller, before its first connector
+start, and refuses the computer unless a fixed probe, run once unconfined (the control) and once confined, answers as a
+fence does against witnesses created for that check: a file, a folder and a
+unix socket outside the root (an abstract one), a symlink in the root pointing
+out, a loopback TCP listener, and the session keyring (a read-only `keyctl(KEYCTL_GET_KEYRING_ID)`, number from `confinement.keyctl_number`).
+The control must reach every witness, except the keyring, which a host whose own
+seccomp refuses `keyctl` (a container's) cannot reach and so has none to protect;
+the confined run must read and write the root, write a file in its own scratch
+through `TMPDIR` (`scratch_write`), reach the TCP listener, and reach no other
+witness (`judge_self_test`). The reason names the probe that failed. The
+self-test goes through the same `wrap` as every connector child. A self-test
+cancelled midway (a revoke, a shutdown) leaves nothing behind: the
+witnesses are prepared through `run_owned`, so ones a worker finishes after the
+cancel are released, and a probe still running is killed and reaped before the
+witnesses go. Pinned by `test_connected_computers_confinement.py`.
+
+#### Connected computers behaviors
+
+The picker reserves every configured provider profile id before offering connected
+computers. `session_environments.routing._provider_ids_of` enumerates the applied
+configuration, including Coder profiles whose URL is cleared and ids shared by
+multiple provider lists. A computer with any such id is omitted, just as for a
+collision with a visible profile. The connected-computer exclusion runs only
+while its preview is enabled. Both the picker GET and the choice PUT use that
+same filtered list, so a hidden profile cannot make a computer pick look like
+reselecting the stored provider's bare id. No device is renamed or rebound.
+
+Where each scenario is decided, so a change to one seam names the scenario it can break.
+Tests: `test/test_connected_computers_session.py` (B10, B12, a crafted start while off),
+`test/test_connected_computers_broker.py` (B07, B08, B10, B11, the per-chat and
+per-connection channel bounds and bounded stop I/O),
+`test/test_connected_computers_admission.py` (disable sweeps during admission),
+`test/test_connected_computers_flag.py` (flag-off parity) and
+`test/test_connected_computers_routes.py` (route registration loads no connector code).
+
+| Scenario | Decided by |
+|---|---|
+| B03 work runs only on the chat's computer | `coder.session_launch.prepare_for_session` sends a `connected_computer` choice to `provider.prepare_connected_session` before any profile or config is read; `ConnectedComputerLaunch.dial` opens channels on that one device id; `start_worker` takes a channel kind only (`workspace`, `mcp:<name>`), never an argv or path; built-in file and shell tools are replaced by `@workspace` (`_remote_workspace_agents`); the agent loop and the gateway's own servers stay on the gateway |
+| B04 declined approval, no effect | `may_skip_gate` never keeps `@workspace` or `@connected-computer-*` (governance.md); a declined call is never written to the link; recording a worker starts nothing on the computer |
+| B05 out of scope | the root is resolved and refused at consent (`root_policy`); the tool server resolves every path through symlinks and refuses one outside the root (`remote_session/workspace_tools.Workspace.resolve`: reads, writes and `cwd`); every child, the workspace tools and each exposed MCP server, is spawned through the plan on the granted root (`Connector._open`), whose sandbox makes only the root and a scratch folder writable and keeps descendants inside it (bwrap `--unshare-pid --die-with-parent --new-session`) |
+| B08 loss | a lost or ended link closes the bridge and stops the tool server, refuses later writes and never redials (`ChannelLink`); nothing is retried, resent or fabricated. The chat stays bound, so a start on an offline computer is refused, never moved. A runtime's close and end-watcher end only the relays it attached (`ConnectedComputerLaunch.own_relays`, captured at attach and at registration, closed by `close_relays`), so a runtime that dies after a respawn attached new relays to the same launch never closes the respawn's |
+| Files, Git, health and terminal panels | the dashboard has no channel of its own to the computer: `session_browse._resolve` refuses a row recorded `connected_computer` with `ConnectedComputerOnly` before any config or Coder lookup, answered 409 `connected_computer` (the terminal parks as on the wrong machine), and `RemoteFilesPanel` shows a neutral notice for such a placement instead of browsing |
+| B14 exposed MCP | mcp.md § Servers a connected computer exposes: ticked stdio servers only, the agent's own grants decide, every call meets the gate; a tool turned off in the computer's own MCP config (`disabledTools`) is snapshotted into the grant and kept off by the connector on the computer (`mcp_filter.ToolFilter`: the call gets a tool error and never reaches the server, the tool is trimmed from `tools/list`; an entry matches exactly or, with `*`/`?`, as a glob, as kiro-cli reads it, mcp.md), so the server is shared with its other tools rather than refused. Each start re-reads the local MCP config (`local_mcp.live_limits`), which only narrows: a tool turned off since joins the list, and a server removed, turned off or no longer exposable does not start |
+| Flag off | config.md § Connected computers: enrollment, connector access and new computer choices remain unavailable; a chat already placed on a connected computer runs on this server when Session Environments or the preview is off. The picker offers no computer, so a crafted choice is an unknown profile; narrowing (revoke, remove, Off) still works |
+
+Old providers are unchanged except where named: Coder and VM sessions send the same
+`mcpServers`, wording and one relay token (`extra_servers` and `notice` are absent for
+them); `CHOICE_PROVIDERS` only gains `connected_computer`; while the preview is on, a
+person's own MCP server whose name starts `connected-computer-` loses auto-approve on every session
+(mcp.md), and with it off that server keeps the answer it had before. In the chat's trust
+mode a connected computer's tools run without asking, as every tool does in that mode; the
+sensitive-path and denied-command floors still judge `@workspace` calls as the built-ins
+they replace (governance.md § Path matcher). Sharing is Linux-only for now: native
+confinement is authored for Linux; macOS and Windows refuse with a plain reason (B06).
+
+With Session Environments or the connected-computers preview off, a chat placed
+on a connected computer runs on this server as before. The developer-flag early
+returns in runtime startup, placement GET, eager prewarm, and the local file and
+terminal guards match the ordinary Session Environments behavior. With developer
+mode off, no choice store is read. With developer mode on but the preview off,
+`SessionEnvironmentChoices.resolve_choice` treats a computer row or its typed
+marker as local; inheritance returns no remote placement without rewriting the
+stored computer binding. Re-enabling both switches restores that saved choice.
+
+Alongside the empty legacy marker under `bound/`, each computer binding writes an
+empty `<session-hash>.connected_computer` marker atomically before its row. With
+both switches on, this marker preserves a computer's placement when its row is
+missing or unreadable, including a continuing child's lost row during inheritance.
+With the preview off it identifies the computer without reading a damaged store,
+so that chat can still run locally without changing other providers' handling of
+unreadable choices. It does not authorize a remote start or prove an attachment.
+Clearing and pruning remove both markers only after the row write succeeds;
+rebinding to another provider removes the typed marker after the new row is durable.
+No marker migration runs at boot.
+
+With both switches on, a computer-bound chat bypasses local warm pools and eager
+prewarm, and its start uses the computer's tool servers. Files/Git/health/save and
+remote terminal panels retain `ConnectedComputerOnly` only for that active remote
+placement. With either switch off, local prewarm, runtime startup, local files and
+local terminals follow the server-local placement. A remote-only panel can still
+report that the chat is local, just as for any local chat.
+
+The config watcher's hook
+returns before scheduling anything, gateway shutdown finds nothing to close, the
+environment picker reads only the switch, the device list refuses (403), and the
+shared remote-workspace start builds the same `mcpServers`, wording and close as
+before. The connector socket path answers exactly as a path no route serves, for
+an unauthenticated and an authenticated caller alike: its token-auth exemption
+(`token_auth_paths._exact_method_bypass`) holds only while the preview is on in the
+live configuration, so off it meets the dashboard gate (403 `Token required` without
+a credential), and its route, registered for every method, raises the router's own
+404 (`remote_routes.api_connector_connect`). aiohttp routes are frozen at boot, so
+the route itself stays registered. The routes are registered on every gateway, but registering them
+(`remote_routes.register_all`) imports only the switch: the socket handler
+(`ws_route`), broker, registry, vault and credential code load on the first request
+that needs them (`test/test_connected_computers_routes.py`).
 
 ### Binding a session
 
@@ -1081,6 +1447,13 @@ walk error records no launch documents and does not stop the spawn.
 SOUL is native-owned only when explicitly declared.
 The mirrored steering reference records engine/version differences for conditional
 modes, so Kiro uses the fallback selector instead of claiming full native support.
+A KAS member session records the `file://` resources its activated wire definition
+declares and, beside them, the operator's global always-steering
+(`global_always_steering_documents`, the same scan `kiro_launch_documents` runs):
+the KAS engine that registered the agent loads that tree itself whatever the
+inheritance setting says, so the snapshot a fresh session starts with blanks those
+bodies instead of sending them a second time. A Kiro Cloud sandbox registers no
+agent and never reads this machine's files, so it records neither.
 
 Folder steering is deliberately NOT part of that launch contract. A chat filed
 into a folder that declares `steering_dirs` (see [config](config.md)) has those
@@ -1093,12 +1466,13 @@ identical `SpawnPlan` for a folder chat and a non-folder chat; delivery cannot b
 lost by adding a provider. A file whose realpath lies under the chat project's
 `.kiro/steering` or under `~/.kiro/steering` is skipped ONLY where the active provider
 already delivers those trees -- kiro-cli loads them natively while the workspace
-inherits kiro-cli's default resources, the Claude Code seam and Codex receive the
-explicit steering load, KAS reports `native_steering` -- so they are not sent twice; on a
-harness with no such path (OpenCode, Pi, Goose, DeepSeek) the folder
+inherits kiro-cli's default resources, the Claude Code seam, Codex, OpenCode and Pi
+receive the explicit steering load, KAS reports `native_steering` -- so they are not sent twice; on a
+harness with no such path (Goose, DeepSeek and the rest) the folder
 delivers them like any other document rather than skipping rules nothing else
 would carry. The explicit load serves only the Kiro Crew default agent, so on
-Claude Code and Codex the folder still delivers the trees in a custom agent's chat.
+Claude Code, Codex, OpenCode and Pi the folder still delivers the trees in a custom
+agent's chat.
 The context builder's entry points (`build_message`,
 `build_session_context`) pass a harness to the member essentials builder only
 when the caller or its context provider names one, so an unnamed harness keeps a
@@ -1447,6 +1821,7 @@ in [agent-host-contract.md](agent-host-contract.md).
 - `cancel()` → sends `session/cancel` notification
 - `supports_effort()` / `change_effort(level)` / `clear_effort()` → reasoning-effort control (see below)
 - `ultracode_enabled()` / `set_ultracode(enabled)` → the claude harness's per-session ultracode switch; `None` on every other session (see [claude-code-provider](claude-code-provider.md#the-ultracode-switch))
+- `fast_mode_enabled()` / `set_fast_mode(enabled)` → the claude harness's per-session Fast mode switch, the same way; `None` on every other session (see [claude-code-provider](claude-code-provider.md#the-fast-mode-switch))
 - `is_alive()` → `AcpClient.is_responsive()` (600s stale threshold)
 - `is_process_alive()` → OS-level process check
 
@@ -1457,7 +1832,7 @@ in [agent-host-contract.md](agent-host-contract.md).
 - **Why the thresholds are not forced to 0:** deferral costs a round-trip — a deferred tool's spec is absent from the model's tool list, so the first direct call fails with `A tool with the name '<name>' does not exist` and has to be recovered with `tool_search`. That only pays once the specs are genuinely large, which is what the thresholds express (kiro-cli defers when EITHER is exceeded). Setting both to `0` restores unconditional deferral for operators who want it. The thresholds are always written **explicitly** rather than omitted, so a value already in the file is replaced rather than silently kept.
 - Writing both `true` and `false` makes the Kiro Crew toggle authoritative over any value in the user's global `~/.kiro/settings/cli.json`. The write is merge-safe with the effort `chat.modelDefaults` keys in the same file.
 - kiro-cli reads workspace settings only from `<cwd>/.kiro/settings/cli.json`, so the overlay cannot move out of the work dir. When the work dir is a git work-tree top, the shared overlay lock adds the overlay and its lock to the repository's local `info/exclude`, keeping the user's `git status` clean (see [acp-client](acp-client.md)); an already-tracked `cli.json` is not hidden.
-- **KAS:** never opens `cli.json`; it reads the setting from the ACP `initialize` request, `clientCapabilities._meta.kiro.settings.toolSearch` — a process-wide channel filled by `AcpRuntime._handshake_client_capabilities`, entered from the spawn path only when the harness answers `client_meta_settings` (the harnesses in `ACP_BACKENDS_CLIENT_META_SETTINGS`; every other host reads its constant with no new step), from the same `agent.tool_search*` values (`agent_sdk/tool_search.py`). KAS 2.34's deferral path reads none of `enabled`, `minPct` or `minTokens`: it defers **every** MCP tool whose `<server>::<tool>` id is not on `toolSearch.neverDefer` (and whose server is not an operator mandatory server), and injects its own `tool_load` / `tool_call` to reach them. So the client keeps the invariant: for a spawn agent whose spec grants no `tool_search`, `neverDefer` lists every MCP tool that spec can call (`agent_sdk/tool_search.kas_never_defer_ids`) — `@server/tool` as `server::tool`, a tool glob and a whole-server `@server` grant expanded from the names Crew already holds for that server (`acp/runtime_spawn_launch._known_server_tool_names`: the last probe's `tools/list`, read from the probe cache; it never imports a Crew server's declaration module into the gateway, because that package is writable by the agent's uid), `"*"` as every server in the spec's `mcpServers`; KAS has no server-level or wildcard `neverDefer` form, so a server Crew holds no list for stays deferred and reachable through KAS's `tool_load`, which is the host's behaviour without the list. On a custom agent (`acp/default_crew_servers.is_custom_agent`) the Crew servers Crew itself added are the exception: `crew_added_servers` names each whose entry is exactly the managed launch, and `agent_sdk/tool_search.custom_agent_never_defer_ids` leaves their whole-server and `"*"` share off the list, adds `CUSTOM_AGENT_JOB_TOOLS` (`mcp_server_wait`), and keeps every tool the author named one by one, so Crew's own tools are deferred there as on the default agent while the author's stay direct. A spec that grants the loader is sent the spawn agent's declared job tools on `neverDefer` (`agent_sdk/tool_search.job_tool_ids`, reading the one `JOB_TOOLS` table; [mcp.md](../../architecture/mcp.md#what-belongs-in-kirocrew-core-and-what-does-not) states its rules and budgets), so the calls that agent's prompt makes its procedure (and, for the default agent, its most used small tools) cost no load round trip, and no `neverDefer` at all when it declares none or when the operator set `ASBX_KIRO_MANDATORY_MCPS`. `enabled` is still sent, as `true` only when the spawn agent's spec grants `tool_search` — named in `tools`, or via `"*"` / `@builtin` — and does not take it back in `excludedTools`; it is sent as an explicit `false` otherwise — never omitted, so a host default cannot flip a session into "deferred, unreachable". The spec judged is the one the KAS projection puts on the wire (`AcpRuntime._projected_spawn_spec`: the freshness gate's snapshot for a derived agent, else `acp/harness/kas.resolve_projected_spec`, the call the projection itself makes, after the same `ensure_agent_materialized` self-heal the projection runs) — so a project checkout's `.kiro/agents` spec is judged exactly when it is the one projected; an unreadable spec grants nothing. The setting is process-wide, so every later `create_session` on a deferral-enabled process judges the payload it is about to send: a projection that grants no loader — another agent, or the same agent whose spec has since lost the grant — is refused with `AcpToolSurfaceBindingError` (an `AcpWorkspaceBindingError`), which the run-runtime caller already answers by giving that session a runtime of its own. The check lives in `AcpRuntime._kas_custom_agents`, the projection seam both `create_session` and `load_session` go through, so a resumed session is judged the same way. It is deliberately one-directional: a process whose handshake sent `enabled: false` may serve a later session whose agent does grant the loader — that session simply runs with full tool specs, today's behaviour and never a loss of tools — whereas the reverse pairing loses every MCP tool, which is the only shape worth a refusal. Every KAS-capable runtime constructor threads the same resolved settings — the foreground provider, its resume-respawn fallback, the companion-runtime kwargs mirror (`session_allocation._collect_parent_runtime_kwargs`, reading the parent's `LLMProvider.tool_search_settings` capability — default `None`, answered by `AcpProvider`; harness-parity H14) and the background runtime (`session_background`) — so no KAS process is left to the host's default. KAS does not honour the toggle or the two thresholds — deferral there is all-or-nothing, with `toolSearch.neverDefer` as its keep-list, so an operator who turns `agent.tool_search` off still gets deferral on KAS for a spec that grants the loader — but they are forwarded verbatim so the setting means one thing.
+- **KAS:** never opens `cli.json`; it reads the setting from the ACP `initialize` request, `clientCapabilities._meta.kiro.settings.toolSearch` — a process-wide channel filled by `AcpRuntime._handshake_client_capabilities`, entered from the spawn path only when the harness answers `client_meta_settings` (the harnesses in `ACP_BACKENDS_CLIENT_META_SETTINGS`; every other host reads its constant with no new step), from the same `agent.tool_search*` values (`agent_sdk/tool_search.py`). KAS 2.34's deferral path reads none of `enabled`, `minPct` or `minTokens`: it defers **every** MCP tool whose `<server>::<tool>` id is not on `toolSearch.neverDefer` (and whose server is not an operator mandatory server), and injects its own `tool_load` / `tool_call` to reach them. So the client keeps the invariant: for a spawn agent whose spec grants no `tool_search`, `neverDefer` lists every MCP tool that spec can call (`agent_sdk/tool_search.kas_never_defer_ids`) — `@server/tool` as `server::tool`, a tool glob and a whole-server `@server` grant expanded from the names Crew already holds for that server (`acp/runtime_spawn_launch._known_server_tool_names`: the last probe's `tools/list`, read from the probe cache; it never imports a Crew server's declaration module into the gateway, because that package is writable by the agent's uid), `"*"` as every server in the spec's `mcpServers`; KAS has no server-level or wildcard `neverDefer` form, so a server Crew holds no list for stays deferred and reachable through KAS's `tool_load`, which is the host's behaviour without the list. On a custom agent (`acp/default_crew_servers.is_custom_agent`) the Crew servers Crew itself added are the exception: `crew_added_servers` names each whose entry is exactly the managed launch, and `agent_sdk/tool_search.custom_agent_never_defer_ids` leaves their whole-server and `"*"` share off the list, adds `CUSTOM_AGENT_JOB_TOOLS` (`mcp_server_wait`), and keeps every tool the author named one by one, so Crew's own tools are deferred there as on the default agent while the author's stay direct. The handshake reads the spec and asks `crew_added_servers` inside one `build_reuse.one_build` block, so a spawn for a custom agent reads each installed app once to learn that no app owns the agent (`manager_lookup._declared_agents`), and nothing is kept past the block. A spec that grants the loader is sent the spawn agent's declared job tools on `neverDefer` (`agent_sdk/tool_search.job_tool_ids`, reading the one `JOB_TOOLS` table; [mcp.md](../../architecture/mcp.md#what-belongs-in-kirocrew-core-and-what-does-not) states its rules and budgets), so the calls that agent's prompt makes its procedure (and, for the default agent, its most used small tools) cost no load round trip, and no `neverDefer` at all when it declares none or when the operator set `ASBX_KIRO_MANDATORY_MCPS`. `enabled` is still sent, as `true` only when the spawn agent's spec grants `tool_search` — named in `tools`, or via `"*"` / `@builtin` — and does not take it back in `excludedTools`; it is sent as an explicit `false` otherwise — never omitted, so a host default cannot flip a session into "deferred, unreachable". The spec judged is the one the KAS projection puts on the wire (`AcpRuntime._projected_spawn_spec`: the freshness gate's snapshot for a derived agent, else `acp/harness/kas.resolve_projected_spec`, the call the projection itself makes, after the same `ensure_agent_materialized` self-heal the projection runs) — so a project checkout's `.kiro/agents` spec is judged exactly when it is the one projected; an unreadable spec grants nothing. The setting is process-wide, so every later `create_session` on a deferral-enabled process judges the payload it is about to send: a projection that grants no loader — another agent, or the same agent whose spec has since lost the grant — is refused with `AcpToolSurfaceBindingError` (an `AcpWorkspaceBindingError`), which the run-runtime caller already answers by giving that session a runtime of its own. The check lives in `AcpRuntime._kas_custom_agents`, the projection seam both `create_session` and `load_session` go through, so a resumed session is judged the same way. It is deliberately one-directional: a process whose handshake sent `enabled: false` may serve a later session whose agent does grant the loader — that session simply runs with full tool specs, today's behaviour and never a loss of tools — whereas the reverse pairing loses every MCP tool, which is the only shape worth a refusal. Every KAS-capable runtime constructor threads the same resolved settings — the foreground provider, its resume-respawn fallback, the companion-runtime kwargs mirror (`session_allocation._collect_parent_runtime_kwargs`, reading the parent's `LLMProvider.tool_search_settings` capability — default `None`, answered by `AcpProvider`; harness-parity H14) and the background runtime (`session_background`) — so no KAS process is left to the host's default. KAS does not honour the toggle or the two thresholds — deferral there is all-or-nothing, with `toolSearch.neverDefer` as its keep-list, so an operator who turns `agent.tool_search` off still gets deferral on KAS for a spec that grants the loader — but they are forwarded verbatim so the setting means one thing.
 - **Non-kiro-family backends** — no-op on both channels. `_apply_tool_search_overlay` returns early when the backend does not read the overlay, the handshake channel is filled only for members of `ACP_BACKENDS_CLIENT_META_SETTINGS`, and both are silent when no toggle value was threaded in (`tool_search is None`).
 - **Native-resume compatibility:** for a direct dashboard turn with Tool Search enabled (dashboard session identity and no resumable linked-channel identity), the kiro backend does not use `session/load`. Before provider acquisition, dashboard chat resolves the slot's dedicated Slack field unconditionally and uses the channel-neutral `SessionMap.mirror` link only when `mirror_accepts_inbound` is true. Thus inbound-capable Telegram/Discord links remain distinguishable when they reuse a `dashboard:*` key after restart, while outbound-only iMessage/WhatsApp mirrors still take the direct-dashboard recovery path. A loaded transcript can return without Tool Search's activated schemas: `tool_search` reports a match, but the next inference still cannot invoke that tool. The provider instead creates a fresh native session and sets `_history_replay_needed`, so `SessionManager` marks conversation replay pending against the rebuilt tool registry. That decision is the pure module-level `resume_takes_tool_search_replay` in `agent_sdk/tool_search.py` — below both callers, because the dashboard may not import the ACP layer (`scripts/check_agent_sdk_boundary.py`) — (Tool Search on, `ACP_BACKEND_KIRO`, no channel identity, a key `telemetry_channel_of` classifies as `dashboard`) — the ONE definition, read by `_start_kiro_runtime_impl` once a resume sid is in hand and by the dashboard's resume prefetch (`chat_turn.eager_spawn._eager_spawn`) BEFORE any runtime exists: a speculative load the provider replaces this way can only come back `resumed=False` and be refused after a full spawn and teardown, so the prefetch logs `left to first turn (tool-search replay)` and spawns nothing, and the first real turn takes the fresh-session path described here. On that turn the replay lease also outranks a `resumed` observation: `chat_runner._run_chat` treats the provider as holding no history whenever the lease is armed and its replay not yet delivered (`_replay_pending`), so the turn builds the full first-turn context with the replay and never takes the slim-resume path that tells the model its history was restored. Only this direct-dashboard compatibility branch also makes `defer_replay_sid_promotion` true; `SessionMap` keeps the prior full-history SID durable while that lease is pending, allocation does not publish the fresh SID yet, and `close_all()` refuses to overwrite the retained mapping while `provider_switch_replay` remains armed. Generic `session/load` recovery still requests history replay but publishes its fresh SID immediately because non-dashboard dispatchers do not own the dashboard settlement contract; a later channel restart therefore resumes the recovered native transcript rather than the stale pre-recovery SID. Replay settlement runs from the dashboard turn's `finally`, so exceptions, task cancellation, early returns, and synthetic terminals cannot bypass it. A landed, non-synthetic replay-bearing `end_turn` promotes the fresh SID, as does confirmed `/clear` after native history deletion. Cancellation, incomplete streams, and every other non-committed terminal leave the prior SID in place and re-arm replay, so a second gateway restart cannot strand a slash-only or discarded transcript. A non-committed terminal that still kept its prompt on the live session (`_kiro_cli_kept_the_prompt`, the first-turn history rule) notes the replay delivered to the provider's current `context_incarnation`: the lease keeps the prior SID, but later prompts on that native conversation do not rebuild the replay (a respawned process is a new incarnation: a turn admitted before the respawn commits and notes nothing, and the next turn sends the replay again), and the next landed non-slash `end_turn` promotes the fresh SID. That lease drives every replayable dashboard session-start prompt block (history, ContextBuilder, member context, folder, persona, and context telemetry). `AgentSpawn` hooks remain keyed to the actual provider spawn so script side effects execute once; a slash-first turn does not re-fire them during replay. Non-destructive native slash commands bypass `ContextBuilder` and leave the lease intact; a confirmed `/clear` consumes it at `EVENT_CLEAR_STATUS` so later replay cannot restore deleted history. Authorization, shutdown, or pre-dispatch Stop aborts preserve it. Async stream creation is not acceptance: a replay-bearing non-slash turn records acceptance in runner-local state only when its stream yields the first provider event, while the shared lease remains armed throughout the in-flight turn. A turn admitted on a lease whose replay an earlier turn delivered records acceptance at admission instead, so its settlement can promote the fresh SID; a slash command's answer never promotes it. Empty streams and pre-output failures therefore retain replay without settlement, and a concurrent shutdown can observe only the still-pending old SID. Final settlement synchronously promotes the fresh SID and consumes the lease only for a landed, non-synthetic, non-empty `end_turn`; every empty-response verdict is unlanded for replay durability, including the terminal give-up rung when retry budget is exhausted or auto-continue is disabled. If an accepted turn ends cancelled, the still-armed lease carries forward because kiro-cli discards that turn; the next prompt receives the full older replay plus its cancelled-turn preamble, unless an earlier turn already delivered the replay. This trades the native resume latency win, and the model's native history, for a usable dashboard tool surface: the replay keeps the newest messages within its budget and never undoes an explicit clear, but it carries no tool calls, no tool results and no reasoning, and its `[CONVERSATION HISTORY …]` header tells the model so ([context-management](../../architecture/context-management.md), block 21). Setting `agent.tool_search=false` keeps dashboard-native `session/load`; a dashboard-keyed resumable channel turn and every channel dispatcher remain on native resume regardless of Tool Search.
 
@@ -1637,8 +2012,10 @@ adapted runtime harness neither bypasses the bound nor changes the Kiro path.
   the server as the unrestricted one of the two. `session_key` and `channel_id`
   ride the elements because a codex stdio server starts from `env_clear()` plus an
   allowlist and can learn its session no other way. `permission_surface_owned` is
-  False: this runtime authors no native permission file, so a mirror in claude's
-  class fails closed here rather than delivering tools Crew's gate cannot see. The
+  the harness's answer for this session: False wherever the runtime authors no
+  native permission file, so a mirror in claude's class fails closed there rather
+  than delivering tools Crew's gate cannot see; `ClaudeHarness` answers True only
+  for a session whose own settings seed governs its permission surface. The
   harness still narrows transports afterwards (`session_mcp_servers`), which is
   the last word on what this session's handshake advertised.
 

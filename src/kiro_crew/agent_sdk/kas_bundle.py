@@ -104,6 +104,7 @@ __all__ = [
     "bundle_spawn_argv",
     "engine_install_snapshot",
     "engine_spec_permissions_supported",
+    "host_unsupported_reason",
     "install_pinned_engine",
     "installed_engine_label",
     "kas_bundle_route",
@@ -184,6 +185,22 @@ def require_loadable_host() -> None:
     owner.host_node_key()
 
 
+def host_unsupported_reason() -> str:
+    """Why the engine cannot run on this host, as the install would refuse; ``''`` when it can.
+
+    The same text a refused install reports, so the dashboard can say it before
+    anyone presses Install, and offer no Install or Retry on a host where every
+    attempt is refused.
+    """
+    from kiro_crew.acp.kas_engine_install import host_unsupported_message
+
+    try:
+        require_loadable_host()
+    except _owner("KasHostUnsupported").KasHostUnsupported as exc:
+        return host_unsupported_message(str(exc))
+    return ""
+
+
 def sha256_bytes(data: bytes) -> str:
     """Hex sha256 of bytes already read, so a caller verifies the buffer it parses."""
     import hashlib
@@ -238,18 +255,24 @@ def kas_bundle_route() -> bool:
         return False
 
 
-def kas_spawn_takes_bundle(agent: Any) -> bool:
+def kas_spawn_takes_bundle(agent: Any, pin: str = "") -> bool:
     """The route half of :func:`kas_bundle_route`, over a loaded ``agent`` section.
 
     ``agent.kas_bundle`` on, or the automatic switch (:func:`kas_route`). No backend
     half, for readers that ask about KAS whatever ``agent.acp_backend`` is. The flag
     is read off the caller's section first, so a switch that is on answers without
-    resolving kiro-cli. Blocking, as :func:`kas_route` is.
+    resolving kiro-cli. *pin* is the session's own Bot pin, as :func:`kas_route`
+    takes it. Blocking, as :func:`kas_route` is.
     """
-    return bool(getattr(agent, "kas_bundle", False)) or bool(kas_route().bundle)
+    return bool(getattr(agent, "kas_bundle", False)) or bool(kas_route(pin).bundle)
 
 
-def kas_route(*, environ: Mapping[str, str] | None = None, home: Path | None = None) -> Any:
+def kas_route(
+    pin: str = "",
+    *,
+    environ: Mapping[str, str] | None = None,
+    home: Path | None = None,
+) -> Any:
     """The route the next KAS spawn takes, computed fresh (``acp.kas_route.KasRoute``).
 
     The bundle route is taken when ``agent.kas_bundle`` is on, or automatically
@@ -259,7 +282,17 @@ def kas_route(*, environ: Mapping[str, str] | None = None, home: Path | None = N
     """
     from kiro_crew.acp.kas_route import resolve_kas_route
 
-    return resolve_kas_route(environ=environ, home=home)
+    return resolve_kas_route(environ=environ, home=home, pin=pin)
+
+
+def route_chosen_by_sharing_preview(route: Any) -> bool:
+    """Whether *route* (a :func:`kas_route` answer) is the ACP runtime sharing
+    preview's pick of the bundle, with ``agent.kas_bundle`` off. No IO."""
+    from kiro_crew.acp.kas_route import REASON_SHARING_PREVIEW
+
+    return bool(getattr(route, "bundle", False)) and (
+        getattr(route, "reason", "") == REASON_SHARING_PREVIEW
+    )
 
 
 def crew_sign_in_starts_spawn() -> bool:
@@ -271,6 +304,20 @@ def crew_sign_in_starts_spawn() -> bool:
     from kiro_crew.acp.kas_route import crew_sign_in_starts_spawn as starts
 
     return starts()
+
+
+def relay_runs_on_kiro_cli_sign_in() -> bool:
+    """Whether a KAS session with no Kiro Crew sign-in would run on kiro-cli's own.
+
+    ``acp.kas_route.relay_runs_on_kiro_cli_sign_in`` on this process's environment,
+    for the dashboard. Blocking (config and kiro-cli reads); never raises.
+    """
+    import os
+    from pathlib import Path
+
+    from kiro_crew.acp.kas_route import relay_runs_on_kiro_cli_sign_in as runs
+
+    return runs(environ=os.environ, home=Path.home())
 
 
 def last_kas_route() -> dict[str, Any] | None:

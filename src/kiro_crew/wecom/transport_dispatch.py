@@ -6,7 +6,7 @@ hands the ``WeComInbound`` (carrying the WS routing keys ``req_id`` /
 Slack/Telegram transport dispatch:
 
     command intercept (/new, /compact)
-    -> construct WeComRenderer + on_turn_start (immediate "🤔 …" placeholder)
+    -> construct WeComRenderer + on_turn_start (immediate "…" placeholder)
     -> session acquire -> context build
     -> TurnDriver.run(provider, renderer)   # shared redaction + approval ladder
     -> post-turn (record_success, persist, soft/hard threshold notice)  # guarded
@@ -34,7 +34,7 @@ from typing import TYPE_CHECKING, Any
 from kiro_crew.agent_switch_command import LiveDefaultAgent
 from kiro_crew.config import live
 from kiro_crew.config.sections import _normalize_threshold_pair
-from kiro_crew.history import mint_row_mid
+from kiro_crew.history import _redact_at_write_boundary, mint_row_mid
 from kiro_crew.messaging.attachments import append_attachment_context
 from kiro_crew.messaging.attachments import cleanup as cleanup_attachments
 from kiro_crew.messaging.commands import (
@@ -227,9 +227,9 @@ class WeComDispatcher:
                 self._session_key(userid),
                 channel_type="WeCom",
             )
-            message = "✅ 已开始新对话"
+            message = "已开始新对话"
             if not saved:
-                message += "\n⚠️ 新对话无法保存，重启后可能恢复到上一段对话。"
+                message += "\n警告：新对话无法保存，重启后可能恢复到上一段对话。"
             await self.client.say(inbound, message)
             return
         if cmd == "compact":
@@ -270,9 +270,7 @@ class WeComDispatcher:
             # Cleared and refused explicitly, so the user knows to resend it.
             if inbound.attachments:
                 inbound.attachments = []
-                await self.client.say(
-                    inbound, "⏳ 正在处理上一条消息，附件无法并入，请稍后重新发送。"
-                )
+                await self.client.say(inbound, "正在处理上一条消息，附件无法并入，请稍后重新发送。")
                 if not (text or "").strip():
                     return
             await self._handle_busy(inbound, session_key, override=override, payload=payload)
@@ -430,7 +428,9 @@ class WeComDispatcher:
         # that has since been answered. Say so instead of silently steering it,
         # which would merge text the user explicitly asked to keep separate.
         if override == "queue":
-            await self.client.say(inbound, "ℹ️ 本渠道暂不支持排队，回复结束后请重新发送这条消息。")
+            await self.client.say(
+                inbound, "提示：本渠道暂不支持排队，回复结束后请重新发送这条消息。"
+            )
             return
         steer_text = payload if override == "steer" and payload else inbound.text
         provider = self.sessions.get_provider(session_key)
@@ -450,9 +450,9 @@ class WeComDispatcher:
             and await steer(steer_text)
         )
         if steered:
-            await self.client.say(inbound, "⏳ 已合并到当前回复")
+            await self.client.say(inbound, "已合并到当前回复")
         else:
-            await self.client.say(inbound, "⏳ 正在处理上一条，请稍后重发")
+            await self.client.say(inbound, "正在处理上一条，请稍后重发")
 
     # ── Helpers ────────────────────────────────────────────────────────────
 
@@ -535,7 +535,10 @@ class WeComDispatcher:
                 session_key, "assistant", reply_text, agent=agent, mid=mint_row_mid()
             )
         if is_new:
-            title = (user_text or "").strip().replace("\n", " ")[:40] or "WeCom"
+            title = (
+                _redact_at_write_boundary("user", user_text or "").strip().replace("\n", " ")[:40]
+            )
+            title = title or "WeCom"
             self.conv_log.set_title(session_key, title)
 
     async def _notice_bubble(self, inbound: "WeComInbound", text: str) -> None:
@@ -591,7 +594,7 @@ class WeComDispatcher:
                     timeout=self.sessions.compact_wait_budget_secs()
                 )
                 if cr["type"] == "completed":
-                    await self._notice_bubble(inbound, "🗜️ 上下文接近上限，已自动压缩。")
+                    await self._notice_bubble(inbound, "上下文接近上限，已自动压缩。")
                 else:
                     logger.warning("WeCom hard-threshold compaction reported %s", cr["type"])
             except Exception:
@@ -600,7 +603,7 @@ class WeComDispatcher:
             self._conv.set_awaiting(userid)
             await self._notice_bubble(
                 inbound,
-                "⚠️ 对话上下文已较长，回复 /compact 压缩，或 /new 开始新对话。",
+                "警告：对话上下文已较长，回复 /compact 压缩，或 /new 开始新对话。",
             )
 
     async def _ingest_media(
@@ -623,7 +626,7 @@ class WeComDispatcher:
         assert self.client is not None
         if self.sessions.is_busy(self._session_key(userid)):
             inbound.attachments = []
-            await self.client.say(inbound, "⏳ 正在处理上一条消息，请稍后重新发送附件。")
+            await self.client.say(inbound, "正在处理上一条消息，请稍后重新发送附件。")
             return (text if (text or "").strip() else None), []
         try:
             result = await process_wecom_attachments(pairs, proxy=self.client.proxy)
@@ -640,7 +643,7 @@ class WeComDispatcher:
         if self.sessions.is_busy(self._session_key(userid)):
             if temp_paths:
                 await asyncio.to_thread(cleanup_attachments, temp_paths)
-            await self.client.say(inbound, "⏳ 正在处理上一条消息，请稍后重新发送附件。")
+            await self.client.say(inbound, "正在处理上一条消息，请稍后重新发送附件。")
             return (text if (text or "").strip() else None), []
         for rejection in result.rejections:
             logger.info("WeCom: attachment refused for %s: %s", userid, rejection)
@@ -723,7 +726,7 @@ class WeComDispatcher:
             legacy_dashboard_mirror_key(key), reason=UNBIND_REASON_ORIGIN_REBIND
         )
         await self.client.say(
-            inbound, "✅ 已连接。dashboard 上这个会话的回复也会同步到这里。发送 /unlink 可停止。"
+            inbound, "已连接。dashboard 上这个会话的回复也会同步到这里。发送 /unlink 可停止。"
         )
 
     async def _handle_unlink(self, inbound: "WeComInbound") -> None:
@@ -799,12 +802,12 @@ class WeComDispatcher:
         # ``note_user_stop``).
         note_user_stop(self.sessions, session_key)
         if not self.sessions.is_busy(session_key):
-            await self.client.say(inbound, "ℹ️ 当前没有正在生成的回复。")
+            await self.client.say(inbound, "提示：当前没有正在生成的回复。")
             return
         provider = self.sessions.get_provider(session_key)
         cancel = getattr(provider, "cancel", None)
         if cancel is None:
-            await self.client.say(inbound, "⚠️ 当前会话不支持停止，请稍后重试。")
+            await self.client.say(inbound, "警告：当前会话不支持停止，请稍后重试。")
             return
         try:
             outcome = await cancel(wait_ack_timeout=0)
@@ -827,14 +830,14 @@ class WeComDispatcher:
             if self.sessions.is_retiring(session_key):
                 await self.client.say(inbound, COMPACT_ACCOUNT_CHANGED_REPLY_ZH)
             elif self.sessions.has_session(session_key):
-                await self.client.say(inbound, "⏳ 正在处理上一条消息，请稍后再试 /compact。")
+                await self.client.say(inbound, "正在处理上一条消息，请稍后再试 /compact。")
             else:
-                await self.client.say(inbound, "ℹ️ 当前没有可压缩的对话。")
+                await self.client.say(inbound, "提示：当前没有可压缩的对话。")
             return
         try:
             provider = self.sessions.get_provider(session_key)
             if provider is None:
-                await self.client.say(inbound, "ℹ️ 当前没有可压缩的对话。")
+                await self.client.say(inbound, "提示：当前没有可压缩的对话。")
                 return
             # Capability gate, mirroring the dashboard's compact gate: a
             # backend that cannot serve a manual /compact treats the prompt as
@@ -857,13 +860,13 @@ class WeComDispatcher:
                 timeout=self.sessions.compact_wait_budget_secs()
             )
             if cr["type"] == "completed":
-                await self.client.say(inbound, "🗜️ 已压缩上下文。")
+                await self.client.say(inbound, "已压缩上下文。")
             elif cr["type"] == "failed":
-                await self.client.say(inbound, "⚠️ 压缩失败，请重试。")
+                await self.client.say(inbound, "警告：压缩失败，请重试。")
             else:
                 await self.client.say(inbound, COMPACT_TIMED_OUT_REPLY_ZH)
         except Exception:
             logger.exception("WeCom /compact failed for %s", session_key)
-            await self.client.say(inbound, "⚠️ 压缩失败，请重试。")
+            await self.client.say(inbound, "警告：压缩失败，请重试。")
         finally:
             self.sessions.release(session_key)

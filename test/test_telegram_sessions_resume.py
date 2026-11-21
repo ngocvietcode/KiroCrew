@@ -52,6 +52,7 @@ from kiro_crew.telegram.renderer import TelegramApprovalDecider
 from kiro_crew.telegram.session_resume import TelegramSessionResume
 from kiro_crew.telegram.transport import TELEGRAM_CAPABILITIES, TelegramInboundMessage
 from kiro_crew.telegram.transport_dispatch import TelegramDispatcher
+from kiro_crew.testing.synthetic_credentials import github_classic
 from kiro_crew.testing.wait import await_until
 
 
@@ -140,9 +141,9 @@ class TestTelegramInboundResumeRouting:
     @pytest.mark.parametrize(
         ("command", "native_reply"),
         [
-            pytest.param("/help", "🦞 Kiro Crew — Telegram\n", id="/help"),
+            pytest.param("/help", "Kiro Crew — Telegram\n", id="/help"),
             pytest.param("/status", "uptime ", id="/status"),
-            pytest.param("/new", "✅ New conversation started.", id="/new"),
+            pytest.param("/new", "New conversation started.", id="/new"),
             pytest.param("/unlink", "This conversation wasn't linked.", id="/unlink"),
         ],
     )
@@ -675,6 +676,39 @@ class TestTelegramColdResume:
 
         assert broadcasts == [True]
 
+    @pytest.mark.asyncio
+    async def test_the_live_projection_receives_scrubbed_text_not_raw(
+        self, tmp_path: Any, monkeypatch: Any
+    ) -> None:
+        """GPT 5.6 (BLOCKING): Telegram redacted AFTER the live dashboard egress.
+
+        The scrub sat inside ``_persist_turn``, but ``project_channel_turn_live`` runs
+        first, broadcasts the row and marks the slot dirty -- so a credential in a
+        Telegram message reached a connected, non-restricted dashboard raw, and the
+        dirty-slot flush persisted it. Discord already fed both sinks the scrubbed body.
+        """
+        secret = github_classic(seed=41)
+        dispatcher, _, _, _ = _dispatcher(tmp_path)
+        from kiro_crew.dashboard import channel_slots
+
+        dispatcher._session_resume.route = AsyncMock(
+            return_value=RoutingDecision(resumed_key="dashboard:chat-1")
+        )
+        projected: list[str] = []
+
+        def _project(*args: Any, **kwargs: Any) -> None:
+            projected.append(str(args[2]) if len(args) > 2 else "")
+
+        monkeypatch.setattr(channel_slots, "project_channel_turn_live", _project)
+
+        await dispatcher.handle_message(_dm(f"my key is {secret} ok"))
+
+        assert projected, "the projection never ran, so this test proved nothing"
+        assert secret not in projected[0], (
+            "the live projection received the RAW body, so a credential reached the "
+            f"dashboard before the persist-side scrub: {projected[0]!r}"
+        )
+
 
 class TestTelegramResumeIntegration:
     def test_dashboard_state_injection_reaches_the_resume_controller(self, tmp_path: Any) -> None:
@@ -1024,15 +1058,15 @@ class TestResumedRefusalsCharacterization:
     """
 
     _BUSY = (
-        "⏳ That session is busy with a turn started elsewhere. Send your message again "
+        "That session is busy with a turn started elsewhere. Send your message again "
         "once it finishes, or /unlink to return to your Telegram conversation."
     )
     _PRIVACY = (
-        "🔒 Privacy mode can't be changed while a dashboard session is resumed. Your "
+        "Privacy mode can't be changed while a dashboard session is resumed. Your "
         "message was NOT processed. Use /unlink or /new first."
     )
     _BUSY_OPTION = (
-        "🔘 That conversation is busy with another turn, so your choice was NOT "
+        "That conversation is busy with another turn, so your choice was NOT "
         "applied. Type it as a message once the turn finishes."
     )
 

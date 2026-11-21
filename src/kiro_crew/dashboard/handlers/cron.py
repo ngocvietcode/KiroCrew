@@ -65,6 +65,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
     from kiro_crew.dashboard.handlers.cron_jobs import (  # noqa: F401
         _APP_AUTO_RESETTING_FIELDS,
         _COERCED_BOOL_FLAGS,
+        _ENABLED_IGNORED_WARNING,
         _MAX_BATCH_DELETE,
         _MAX_CRON_BODY_BYTES,
         _T,
@@ -205,6 +206,7 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
         move_cron_job_tab,
         prefetch_cron_dismissed,
         restore_cron_turn_timeout,
+        stored_cron_folder,
     )
     from kiro_crew.dashboard.cron_note_ack import (  # noqa: F401
         cron_item_already_recorded,
@@ -289,6 +291,7 @@ if TYPE_CHECKING:  # names it serves from outside the family, from their homes
     from kiro_crew.security import (  # noqa: F401
         redact_credentials,
         redact_exfiltration_urls,
+        refuses,
     )
     from kiro_crew.validation import (  # noqa: F401
         _MODEL_NAME_RE,

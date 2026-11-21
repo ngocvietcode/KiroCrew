@@ -12,7 +12,7 @@ import { bumpLastTsOverlay, dropCaughtUpLastTs, pruneLastTsOverlay, slotLastTsOf
 import type { SessionColorMode, PaletteName, DefaultColorSetting, IntensityName } from '../utils/sessionColors'
 import { isChatPageSurface } from '../utils/channelOrigin'
 import { slotListHoldTest } from '../utils/slotListHold'
-import { crewModeEnabled, mateSessionsHidden } from '../lib/crewMode'
+import { crewModeEnabled } from '../lib/crewMode'
 import { closeWatchReducer, isCloseWatchAction } from './dashboard/closeWatch'
 import { MANUAL_UNREAD, _relayUnreadToParent, clearSharedUnreadIfCovered, crewMemberKeys, drainUnreadKeys, dropQueuedSharedUnreadCoveredBy, hasUnreadRelayHold, heldOrphanTest, persistManualSentinels, persistSharedUnread, queueSharedUnread, readCovers, relayUnreadCount, relayUnreadIfHolding, relayedUnreadKeys, restoreUnreadBadges, restoreUnreadSince, retireSharedUnreadIfUnchanged, sharedUnreadWatermark } from './dashboard/unread'
 import type { DashboardState } from './dashboard/state'
@@ -20,8 +20,8 @@ import type { DashboardState } from './dashboard/state'
 /** A dashboard socket that the Kiro relay ended for a reason a reconnect cannot
  *  fix on its own: its token could not be renewed (`session_ended`), or the
  *  relay refused it with a code from its own block (`refused`). */
-export type OfflineCause = 'session_ended' | 'refused'
-export { selectLiveMateThreads, selectPersonSlots } from './personSlots'
+export type OfflineCause = 'session_ended' | 'refused' | 'remote_off'
+export { selectMateThreadsHidingSessions, selectPersonSlots } from './personSlots'
 
 /** The two user-owned mute flags on a slot. */
 export type MuteFlag = 'mutes_opened' | 'muted'
@@ -63,6 +63,7 @@ const initialState: DashboardState = {
   channelTrusted: false,
   refreshTrigger: 0,
   liveRefreshTrigger: 0,
+  catalogRefreshTrigger: 0,
   cronRefreshTrigger: 0,
   ...(() => { const since = restoreUnreadSince(); return { unreadSlots: restoreUnreadBadges(since), unreadSince: since } })(),
   unreadDrainHeld: true,
@@ -813,8 +814,8 @@ const applySlots = (state: DashboardState, rawRows: ChatSlot[]): void => {
   })
   if (changed) {
     state.slots = merged
-    // A listed slot can turn a held orphan back into a counted session.
-    relayUnreadIfHolding(state)
+    // Slot visibility changes and returning held orphans can change the hub count.
+    relayUnreadCount(state)
   }
   dropCaughtUpLastTs(state, merged)
 }
@@ -1315,7 +1316,11 @@ const dashboardSlice = createSlice({
     },
     setPendingManualOrder(state, action: PayloadAction<string[] | null>) { state.pendingManualOrder = action.payload },
     setManualOrderError(state, action: PayloadAction<string>) { state.manualOrderError = action.payload },
-    triggerRefresh(state) { state.refreshTrigger += 1; state.liveRefreshTrigger += 1 },
+    triggerRefresh(state) { state.refreshTrigger += 1; state.liveRefreshTrigger += 1; state.catalogRefreshTrigger += 1 },
+    /** `triggerRefresh` for a frame that cannot have changed an agent or a crewmate
+     *  (a cron run, a saved lesson, an update notice): every reader of the counter
+     *  re-reads except the agent catalog. */
+    triggerRefreshExceptCatalog(state) { state.refreshTrigger += 1; state.liveRefreshTrigger += 1 },
     triggerLiveRefresh(state) { state.liveRefreshTrigger += 1 },
     triggerCronRefresh(state) { state.cronRefreshTrigger += 1 },
     /** DUAL PAYLOAD SHAPE — the form IS the semantics. String payload =
@@ -1717,7 +1722,7 @@ const dashboardSlice = createSlice({
   },
 })
 
-export const { sseStatus, sseYolo, setYoloDuration, sseConnected, sseDisconnected, sseSlots, sseSlotsPartial, sseSlotListHolds, setSidebarOrder, sseTodoUpdate, sseMcpReportUpdate, touchSlotActivity, setChannelTrusted, sseSlotTitle, sseSlotPatch, addSlotOptimistic, removeSlotOptimistic, releaseCloseHold, awaitCloseOutcome, expireCloseHold, confirmCloseHold, armConfirmedCloseHold, updateSlot, updateSlotFolder, updateSlotPin, updateSlotMuteFlag, setSlotMuteFlagError, triggerRefresh, triggerLiveRefresh, triggerCronRefresh, markSlotUnread, markSlotRead, remoteSlotRead, setUpdateProgress,
+export const { triggerRefreshExceptCatalog, sseStatus, sseYolo, setYoloDuration, sseConnected, sseDisconnected, sseSlots, sseSlotsPartial, sseSlotListHolds, setSidebarOrder, sseTodoUpdate, sseMcpReportUpdate, touchSlotActivity, setChannelTrusted, sseSlotTitle, sseSlotPatch, addSlotOptimistic, removeSlotOptimistic, releaseCloseHold, awaitCloseOutcome, expireCloseHold, confirmCloseHold, armConfirmedCloseHold, updateSlot, updateSlotFolder, updateSlotPin, updateSlotMuteFlag, setSlotMuteFlagError, triggerRefresh, triggerLiveRefresh, triggerCronRefresh, markSlotUnread, markSlotRead, remoteSlotRead, setUpdateProgress,
   setDesktopUpdateAvailable, sseSlotColor, setSessionDefaultColor, setSessionColorsMode, setSessionColorsPalette, setSessionColorsIntensity, setEnabledAppIds, patchSlotSourceLinks, patchSlotLink, dropSlotLinks, setPinRanks, setPendingPinOrder, setPinOrderError, setManualRanks, setPendingManualOrder, setManualOrderError } = dashboardSlice.actions
 
 export { slotSurfaceKey, slotIsRemoteBound } from './slotIdentity'
@@ -1778,8 +1783,7 @@ const _unreadByModeCache = new Map<string, UnreadByModeSelector>()
 export function selectUnreadByMode(mode: string): UnreadByModeSelector {
   let sel = _unreadByModeCache.get(mode)
   if (!sel) {
-    // The Crew Mode and mate sessions previews decide whether crew members and a
-    // mate's sessions count (`crewMemberKeys`).
+    // Conductor mode (off in LTS) decides whether crew members count (`crewMemberKeys`).
     // It is passed as an argument, not read inside an input selector: the
     // selector memoizes on its arguments, so a flip with the same state would
     // otherwise answer from the cache.
@@ -1790,11 +1794,10 @@ export function selectUnreadByMode(mode: string): UnreadByModeSelector {
       (state: { dashboard: DashboardState }) => state.dashboard.slotsHoldChannels,
       (state: { dashboard: DashboardState }) => state.dashboard.slotsListPartial,
       (_state: { dashboard: DashboardState }, crewMode: boolean) => crewMode,
-      (_state: { dashboard: DashboardState }, _crewMode: boolean, mateSessions: boolean) => mateSessions,
       (slots, unread, heldKeys, holdChannels, listPartial) =>
         countUnreadByMode(slots, unread, mode, heldKeys ?? [], holdChannels === true, listPartial === true),
     )
-    sel = state => count(state, crewModeEnabled(), mateSessionsHidden())
+    sel = state => count(state, crewModeEnabled())
     _unreadByModeCache.set(mode, sel)
   }
   return sel

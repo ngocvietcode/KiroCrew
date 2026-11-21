@@ -3,8 +3,8 @@ import { LayoutGroup, AnimatePresence } from 'framer-motion'
 import { X, Tag as TagIcon } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { useCrewMode, useMateSessionsHidden, usePreviewFlag } from '../hooks/usePreviewFlag'
-import { selectLiveMateThreads } from '../store/dashboardSlice'
+import { useCrewMode, usePreviewFlag } from '../hooks/usePreviewFlag'
+import { selectMateThreadsHidingSessions } from '../store/dashboardSlice'
 import { selectCloseNotice } from '../store/dashboard/closeWatch'
 import { PREVIEW_FOLDER_CONDUCTOR } from '../utils/previewFlags'
 import { useStore } from 'react-redux'
@@ -152,12 +152,11 @@ function ChatSidebar({
   // other reader of this collection. The server keeps them in the slot frame
   // (`?crew=all`), so the one filter is here, at the sidebar's door.
   const crewMode = useCrewMode()
-  // A live mate thread's sessions leave it too with the mate sessions preview on;
-  // the mate threads are read off the full store, which this prop no longer holds.
-  const mateHidden = useMateSessionsHidden()
-  const mateThreads = useAppSelector(selectLiveMateThreads)
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- crewMode and mateHidden stand for the previews crewModeView reads
-  const localSlots = useMemo(() => crewModeView(slotsProp, false, mateThreads), [slotsProp, crewMode, mateHidden, mateThreads])
+  // A live mate thread's sessions leave it too, unless its Bot shows them in this
+  // list; the mate threads are read off the full store, which this prop no longer holds.
+  const mateThreads = useAppSelector(selectMateThreadsHidingSessions)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- crewMode stands for the read crewModeView makes
+  const localSlots = useMemo(() => crewModeView(slotsProp, false, mateThreads, activeSlot), [slotsProp, crewMode, mateThreads, activeSlot])
   const dispatch = useAppDispatch()
   const queryClient = useQueryClient()
   // Read-only store handle for point-in-time reads inside async callbacks (the
@@ -401,7 +400,7 @@ function ChatSidebar({
   const modelFilterInverted = filterModelsExcluded && activeModelKeys.size > 0
   const {
     rawColumns, tagColumnsSettled, columnsFailed, columnsError, refetchColumns, tagColumnsEnabled,
-    hideEmptyFolderBody, countSubfolderContents, orderedColumns,
+    hideEmptyFolderBody, countSubfolderContents, hideEmptyFolders, orderedColumns,
   } = useBoardColumns()
   // After the columns: only board view may widen the sidebar past SIDEBAR_MAX.
   const {
@@ -436,9 +435,15 @@ function ChatSidebar({
     columnMatches,
   } = useColumnMatches({ subagentStartedCounts, subagentApprovalCounts, workflowActiveSet, automationRunningSet, crewBusySet, crewOpenSet, crewStalledSet, crewPersonSet, crewApprovalSet })
 
+  // Tracks the item currently being dragged, for the DragOverlay preview.
+  const [activeDrag, setActiveDrag] = useState<{ type: string; id: string } | null>(null)
   const {
     slotFolders, foldersWithActiveSubtree, setRevealForcedVisible, isFolderHidden, filterHiddenSubtree, effectiveHiddenFolders, pinnedFolderSubtree, pinnedFolderAncestors,
-  } = useFolderVisibility({ folders, localSlots, filterHiddenFolders })
+  } = useFolderVisibility({
+    folders, localSlots, filterHiddenFolders,
+    // A dragged session needs every folder as a drop target, the empty ones too.
+    hideEmptyFolders: hideEmptyFolders && activeDrag?.type !== 'session',
+  })
 
   useStaleMoveWatcher({ foldersLoaded, localSlots, slotFolders, setStaleRecentlyMoved })
 
@@ -740,8 +745,6 @@ function ChatSidebar({
   // lower than the Apps nav rail's. `keyboard` is on because this IS a sortable
   // ring, so the sortable coordinate getter has somewhere to move.
   const dndSensors = useDndSensors({ distance: 5, keyboard: true })
-  // Tracks the item currently being dragged, for the DragOverlay preview.
-  const [activeDrag, setActiveDrag] = useState<{ type: string; id: string } | null>(null)
   // The derived lane a session card hovers right now. Such a lane refuses the
   // drop, and its header's hover title is out of sight mid-drag, so the lane
   // says why in a visible line instead. It shows only while `nativeSessionDrag`
@@ -758,7 +761,7 @@ function ChatSidebar({
 
   const {
     revealFlash,
-  } = useSidebarReveal({ sidebarRootRef, dispatch, localSlots, revealBlockingFilters, staleCollapseMs, sortKey, isStaleExempt, slotFolders, setStaleExpanded, expandFolderAncestors, expandConductorAncestors: expandRevealAncestors, folders, foldersSettled, setSlotFilter, setFilterHiddenFolders, setRevealForcedVisible, setFlatView })
+  } = useSidebarReveal({ sidebarRootRef, dispatch, localSlots, revealBlockingFilters, staleCollapseMs, sortKey, isStaleExempt, slotFolders, setStaleExpanded, expandFolderAncestors, expandConductorAncestors: expandRevealAncestors, folders, foldersSettled, setSlotFilter, setFilterHiddenFolders, setRevealForcedVisible, setFlatView, hideEmptyFolders })
   const renameCommit = useCallback((id: string, name: string): boolean => {
     // Re-checked here, not only where the editor opens: the gateway can drop
     // while an editor is open. Keep the editor and its draft, and say why,
@@ -915,7 +918,7 @@ function ChatSidebar({
   // What this render shows rows with. The row model reads the local-only members
   // for a local row alone.
   // A worker in the pane is not listed, so its root's row is marked as its parent.
-  // Through the preview-gated read (`crewMode` above re-renders on a flip).
+  // Through the conductor mode read (`crewMode` above re-renders on the edition lock).
   const crewParent = (crewMode && activeSlot && crewRootOf(slotsProp.find(s => s.key === activeSlot))) || null
   const rowScene: RowScene = {
     activeSlot, crewWindow, crewParent, shell: rowShell,
@@ -1020,7 +1023,7 @@ function ChatSidebar({
     folderRowsDrawn, folders, foldersError, foldersFailed, folderSortMode, folderSortMut, folderSortRead,
     foldersShelved, foldersUnreadFirst, groupByKind, kindSections, toggleGroupByKind, folderSubtrees, foldersWithActiveSubtree, pinnedFolderSubtree, pinnedFolderAncestors, handleSidebarDragCancel, handleSidebarDragEnd,
     handleSidebarDragOver, handleSidebarDragStart, hasRemoteExecutedRow, heldDisplacedRef, heldLane,
-    hiddenByContainer, hiddenFilters, hiddenFolderCount, hideEmptyFolderBody, history, historyDragging,
+    hiddenByContainer, hiddenFilters, hiddenFolderCount, hideEmptyFolderBody, hideEmptyFolders, history, historyDragging,
     historyFilter, historyHasMore, historyHeight, historyOpen, historyResize, historySearchFailed, historySearchResults,
     historySearchScan, hoverPinRef, ime, installedAgents, instanceSessions, instantCloseId, isActiveRow, isFolderFilteredOut,
     isFolderHidden, isMobile, isStaleExempt, lane, laneRowWindow, laneScrollMemory, laneSlots,

@@ -304,6 +304,26 @@ class AppSettingsConfig:
 
 
 @dataclass
+class TemplateSettingsConfig:
+    """The user's own settings for one agent template, ``templates.<name>``."""
+
+    model: str = field(
+        default="",
+        metadata=_meta(
+            "Model",
+            "Model every session on this agent template starts on, in place of the "
+            "model the template's own file pins. Empty inherits that pin, so the "
+            "template runs exactly as it would without this setting. A model picked "
+            "for the session and a model pinned on a crew that uses the template "
+            "win over it; it wins over the app and global defaults. Only the model "
+            "is read: a crew sharing the template's name lends a template session "
+            "nothing. A model this account cannot run is withheld like any other "
+            "pin.",
+        ),
+    )
+
+
+@dataclass
 class ExternalRegistryConfig:
     """An external app registry source (org-owned repo with app.json files)."""
 
@@ -872,6 +892,20 @@ class McpConfig:
             restart=True,
         ),
     )
+    protect_kiro_permission_rules: bool = field(
+        default=False,
+        metadata=_meta(
+            "Protect kiro-cli permission rules",
+            "Refuse the agent's file-edit tools when they write kiro-cli's tool "
+            "permission rules: ``permissions.yaml`` and ``permissions.json`` in "
+            "``~/.kiro/settings``, and the ``~/.kiro/workspace-roots`` folder. A rule "
+            "with ``effect: allow`` there runs its tool with no approval card, so "
+            "Kiro Crew's own tool gate never sees the call. Off by default, so the "
+            "agent can edit these files as before. Reads stay allowed either way, and "
+            "kiro-cli saving a rule you chose, or your own editor, is never stopped. "
+            "Applies to the next file edit, no restart needed.",
+        ),
+    )
 
 
 @dataclass
@@ -1151,10 +1185,13 @@ class TunnelConfig:
         metadata=_meta(
             "Kiro Relay",
             "Let this Crew dial the Kiro relay and serve the requests it delivers, with "
-            "the caller named by the relay. Off by default. It connects only when "
-            "Relay Lease Service URL and Relay Lease Credential are set, so the Crew "
-            "can hold a lease. Without them no relay client starts and the tunnel "
-            "status names the missing setting. While it is off, "
+            "the caller named by the relay. Off by default. It holds a lease (from Relay "
+            "Lease Service URL, or the built-in one when that is empty) on Relay Lease "
+            "Credential, or on a personal Crew's own Kiro sign-in when that is empty. A "
+            "team Crew (Relay Lease Token Type API_KEY) or a host with a workload identity "
+            "connects only when Relay Lease Credential names its credential: without it no "
+            "relay client starts and the tunnel status names the missing setting. While "
+            "it is off, "
             "Crew starts no "
             "relay client, strips every x-kiro-relay-* header from every request and "
             "trusts none of them. To reach the relay and the lease service through a "
@@ -1169,8 +1206,9 @@ class TunnelConfig:
         metadata=_meta(
             "Relay Lease Service URL",
             "The base URL of the lease service this Crew calls RenewCrewLease on, to "
-            "hold its lease and get host tokens. Empty (the default) means no host "
-            "token source, so the relay client cannot connect. Must be https:// "
+            "hold its lease and get host tokens. Empty (the default) uses the built-in "
+            "Kiro control plane URL: the one for the sign-in profile's region on the Kiro "
+            "sign-in, and us-east-1 otherwise. Must be https:// "
             "(http:// only for a loopback port-forward).",
             restart=True,
         ),
@@ -1183,6 +1221,9 @@ class TunnelConfig:
             "for a secret stored under Settings > Secrets, the absolute path of a file "
             "holding it, or kiro-sign-in to use the Crew's own Kiro sign-in (IAM Identity "
             "Center or your organization's identity provider), refreshed automatically. "
+            "Empty (the default) uses that sign-in too, on a personal Crew: one with no "
+            "Relay Lease Token Type, on a host with no agent workload identity. "
+            "A team Crew must name its crew API key here. "
             "Never the credential itself; it is read for each call and never logged.",
             restart=True,
             # Masked like a secret, in case the credential itself is pasted in.
@@ -1227,9 +1268,11 @@ class TunnelConfig:
         metadata=_meta(
             "Relay Viewer Control Plane URL",
             "The base URL of the control plane the viewer lists remote Crews from and "
-            "gets access tokens from. Empty (the default) means not set up. Must be "
+            "gets access tokens from. Empty (the default) uses the built-in Kiro control "
+            "plane for your sign-in's region. Must be "
             "https:// (http:// only for a loopback port-forward). A value that breaks "
-            "that rule is ignored with a warning.",
+            "that rule is ignored with a warning, and the viewer says it is not set up. "
+            "A test setup that uses tunnel.relay_viewer_credential must also set this.",
         ),
     )
     relay_viewer_credential: str = field(
@@ -1264,9 +1307,9 @@ class TunnelConfig:
             "The relay's domain, for example us-east-1.relay.example.invalid. When set, the "
             "viewer lists a remote Crew, and sends its access token, only when the Crew's "
             "address is exactly https://<endpoint ID>.<this domain> with no port. Empty (the "
-            "default) keeps the check without a domain: the address's host must start with "
-            "the Crew's endpoint ID. Any other value matches no Crew address, so no Crew "
-            "is listed.",
+            "default) lists a Crew whose address is https://<endpoint ID>.<any domain> with no "
+            "port, and the desktop app opens it at exactly that address. Any other value matches "
+            "no Crew address, so no Crew is listed.",
         ),
     )
 

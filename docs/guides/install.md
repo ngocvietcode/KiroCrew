@@ -524,7 +524,7 @@ prints the exact command, already pointed at the right interpreter.
 |-------|------|-----|
 | `voice-aws` | `boto3`, `amazon-transcribe` | AWS Transcribe provider without the local recognizer |
 | `voice` | `voice-aws`, `pywhispercpp` | Full speech-to-text transcription |
-| `otlp` | `opentelemetry-exporter-otlp-proto-http` | OTLP/HTTP metrics export. Installing it does not enable egress; that still needs an explicit `telemetry.otlp_endpoint` |
+| `otlp` | `opentelemetry-exporter-otlp-proto-http` | Kept for compatibility: the OTLP/HTTP exporter is now a base dependency at the same pin. Installing it enables no egress of its own; the built-in Kiro telemetry destination and your own collectors follow the rules in [the OTLP export guide](telemetry-otlp-export.md) |
 | `perf` | `py-spy` | Out-of-process profiling (`kirocrew perf sample --pid`). The in-process sampler needs nothing extra |
 | `teams` | `PyJWT[crypto]` | Microsoft Teams channel (validates the inbound Bot Framework RS256 JWT) |
 | `whatsapp` | `neonize` | QR-linked WhatsApp channel |
@@ -706,7 +706,7 @@ install` yourself. The desktop app ships that engine inside the app
 (`BUNDLE_KAS=1` at build time), so there is nothing to download. To try the
 route, turn on **Run KAS on Kiro Crew's own engine** under Settings → Developer →
 Feature Previews (or `kirocrew config set agent.kas_bundle true`) and restart; you
-then sign in from the **Kiro sign-in** card on Settings → Agent Harness → KAS, and
+then sign in from the **Kiro sign-in** card on Settings → Kiro account, and
 `kiro-cli login` is not used.
 
 Then start Kiro Crew:
@@ -1065,8 +1065,8 @@ deliberately leaves `~/.aws`, `~/.ssh` and `~/.kube` visible so the `aws` CLI,
 `sso/cache` grant store remote-MCP OAuth uses), `~/.ssh` (except
 `known_hosts`), `~/.kube`, `~/.config/gh` and the credential files `~/.npmrc`,
 `~/.pypirc`, `~/.netrc` and `~/.git-credentials`, and the tools that read them
-stop working inside the agent as a result; it applies to sessions started after
-the change. See the
+stop working inside the agent as a result; a session already running restarts
+under it at its next turn. See the
 [Sandbox section of the configuration guide](../../src/kiro_crew/docs/configuration.md#sandbox).
 If the sandbox cannot be built,
 Kiro Crew **refuses to run the agent** rather than run it unisolated: spawns fail

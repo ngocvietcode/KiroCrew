@@ -43,7 +43,7 @@ from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from kiro_crew import agent_scratch, agent_scratch_trees
+from kiro_crew import agent_scratch, agent_scratch_trees, model_scope
 from kiro_crew.agent_sdk.backends import (
     ACP_BACKENDS_CWD_BOUND_SESSIONS,
     ACP_BACKENDS_MODEL_AT_LAUNCH,
@@ -54,6 +54,7 @@ from kiro_crew.aws_project_profiles import (
     bound_profile_env,
     configured_project_profiles,
 )
+from kiro_crew.config.loader import template_model_pin
 from kiro_crew.dashboard.chat_utils_awaits import run_to_completion
 from kiro_crew.kiro_prerequisite import pre_spawn_identity, spawn_pid, stamp_spawn_identity
 from kiro_crew.metrics.sessions import (
@@ -67,13 +68,15 @@ from kiro_crew.runtime_ownership import (
     is_shared_chat_runtime,
     release_session_lease,
 )
+from kiro_crew.session_allocation_parts import memory_policy as _memory_policy
 from kiro_crew.session_allocation_parts.errors import (
     SessionBusyError,
     SessionClosingError,
     SessionEndingError,
     SpeculativeResumeRefused,
 )
-from kiro_crew.session_lifecycle import adopt_parked_queue
+from kiro_crew.session_allocation_parts.eviction import _drain_despite_cancellation
+from kiro_crew.session_lifecycle import adopt_parked_queue, allocation_identity
 from kiro_crew.start_priority import (
     START_QUEUE_COLD_START,
     START_QUEUE_LOG_MIN_MS,
@@ -113,6 +116,22 @@ async def _end_started_provider(owner: Any, provider: Any) -> None:
         ending.result()
     except Exception:
         owner._dispatch_hard_kill(provider)
+
+
+def _pool_template_pick(cfg: Any, pool_agent: str, provider: Any, deps: Any) -> str:
+    """The pool template's ``templates.<name>.model`` scoped to *provider*'s harness.
+
+    ``""`` when the pool runs the built-in template, when no pick is set, and when
+    the harness cannot claim the pick: the factory's fallback then launched the
+    warm process on the spec pin.
+    """
+    if not pool_agent or pool_agent == "kirocrew":
+        return ""
+    pick = template_model_pin(cfg, pool_agent)
+    if not pick:
+        return ""
+    namespace = deps.provider_model_namespace(provider)
+    return model_scope.scoped_pin(pick, namespace, source=f"templates.{pool_agent}.model")
 
 
 def _model_is_a_launch_argument(provider: Any) -> bool:
@@ -207,6 +226,7 @@ async def _reacquire_and_validate(
     *,
     wait_if_busy: bool = True,
     reservation: object | None = None,
+    refuse_looser_tier: bool = True,
 ) -> bool:
     """Acquire with the global lock released, then validate exact identity -- and meet the key's ending fence again.
 
@@ -220,7 +240,9 @@ async def _reacquire_and_validate(
     (which invalidates the token) refuses too; the refusal releases the
     semaphore and ``get_or_create`` turns it into a wait for the lift and a
     fresh allocation. ``open_task_session`` passes no token and is refused
-    while the fence is up, as at its entry.
+    while the fence is up, as at its entry. A session spawned under a looser
+    ``agent.sandbox`` than is now configured is refused too, unless the caller
+    recycles it itself (``refuse_looser_tier=False``).
     """
     if not wait_if_busy and session.semaphore.locked():
         raise SessionBusyError(key)
@@ -238,6 +260,8 @@ async def _reacquire_and_validate(
                 self._sessions.get(key) is session
                 and not session.retire_on_identity_change
                 and self._deps.provider_effectively_alive(session.provider)
+                # After the permit is held, so a running turn finishes first.
+                and not (refuse_looser_tier and self._sandbox_tightened(session.provider))
             )
     except BaseException:
         # The held-semaphore contract was never returned to the caller
@@ -267,31 +291,6 @@ def _release_reacquired(self: SessionAllocationService, key: str, session: Any) 
     if self._sessions.get(key) is not session and self._owner.absorb_orphaned_release(key):
         return
     session.semaphore.release()
-
-
-async def _evict_stale_session(self: SessionAllocationService, key: str, session: Any) -> None:
-    """Pop only the observed stale object and close it outside the lock."""
-    dead: LLMProvider | None = None
-    async with self._lock:
-        if self._sessions.get(key) is session:
-            del self._sessions[key]
-            self.advance_ownership_generation(key)
-            dead = session.provider
-            # Same lock hold as the removal, before any await: a turn still
-            # holding this permit is recorded and its parked claimants woken,
-            # exactly as every lifecycle teardown verb does.
-            self._owner.retire_turn_permit(key, session)
-            # Same tick as the removal. Left unrecorded, the start crumb
-            # survives and the next boot calls this a crash.
-            await record_session_ended(key, end_reason=END_REASON_EVICTED)
-    if dead is not None:
-        await asyncio.to_thread(self._deps.unlink_session_queue, session)
-        try:
-            await dead.shutdown()
-        except Exception:
-            self._deps.logger.warning(
-                "Failed to shut down stale provider for %s", key, exc_info=True
-            )
 
 
 def _is_member_key(key: str) -> bool:
@@ -413,16 +412,7 @@ async def _remove_reservation_cancellation_drained(
         async with self._lock:
             self._remove_reservation_now(key, token)
 
-    cleanup = asyncio.create_task(remove())
-    cancellation: asyncio.CancelledError | None = None
-    while not cleanup.done():
-        try:
-            await asyncio.shield(cleanup)
-        except asyncio.CancelledError as exc:
-            cancellation = exc
-    await cleanup
-    if cancellation is not None:
-        raise cancellation
+    await _drain_despite_cancellation(remove())
 
 
 @contextlib.asynccontextmanager
@@ -709,6 +699,7 @@ async def _get_or_create_impl(
                             session.provider.session_id,
                             provider=constants.provider_label_claude,
                             cwd="" if session.cwd_retracted else session.provider.cwd,
+                            kas_memory="",
                         )
                     # The semaphore may be held for a full turn; claim it
                     # only after releasing the global registry lock.
@@ -801,6 +792,17 @@ async def _get_or_create_impl(
             if adopt_parked_queue(session, key):
                 session.adopted_parked = True
             return session.provider, first_turn.is_new, first_turn.resumed
+        # A tier recycle ends a live session, so its successor keeps that session's
+        # identity, never the defaults of an agentless claim (a subagent completion).
+        identity = (
+            {
+                name: value
+                for name, value in allocation_identity(owner, key, session).items()
+                if value not in (None, "")
+            }
+            if self._sandbox_tightened(session.provider)
+            else {}
+        )
         await owner._evict_stale_session(key, session)
         # Re-enter the claim rather than cold-start in place. The session
         # this claimant waited on was replaced or retired under it -- a reset
@@ -815,14 +817,21 @@ async def _get_or_create_impl(
                 f"get_or_create({key!r}) exceeded {maximum} won-race retries — "
                 "session kept going stale between acquire and re-validate"
             )
+        claim: dict[str, Any] = {
+            "agent": agent,
+            "channel_id": channel_id,
+            "approval_policy": approval_policy,
+            "model": model,
+            "cwd": cwd,
+            "extra_env": extra_env,
+            "app_launch_agent": app_launch_agent,
+            "owning_app": owning_app,
+            **extra_factory_kwargs,
+        }
+        # The claim's own arguments win; the identity fills only what it left unset.
+        claim.update({k: v for k, v in identity.items() if claim.get(k) in (None, "")})
         return await owner.get_or_create(
             key,
-            agent=agent,
-            channel_id=channel_id,
-            approval_policy=approval_policy,
-            model=model,
-            cwd=cwd,
-            extra_env=extra_env,
             speculative=speculative,
             speculative_resume=speculative_resume,
             wait_if_busy=wait_if_busy,
@@ -830,10 +839,8 @@ async def _get_or_create_impl(
             start_priority=start_priority,
             focus_resume=focus_resume,
             app_name=app_name,
-            app_launch_agent=app_launch_agent,
-            owning_app=owning_app,
             fallback_hidden_cwd=fallback_hidden_cwd,
-            **extra_factory_kwargs,
+            **claim,
         )
 
     resume_sid: str | None = None
@@ -991,6 +998,8 @@ async def _get_or_create_impl(
         owner._pool_cwd,
     )
     provider_switched = False
+    plan = None
+    memory_withdrawn = False
     cwd_blocks_pool = bool(cwd and cwd != owner._pool_cwd)
     if not owner._pool_size:
         pool_decision = "disabled"
@@ -1039,6 +1048,8 @@ async def _get_or_create_impl(
         # ``""`` is a Kiro request, and under a non-Kiro default the pooled
         # child is on the wrong backend for it too.
         pool_decision = "bypass_backend_override"
+    elif _memory_policy.warm_pool_requires_cold_start(owner):
+        pool_decision = "bypass_restricted_context"
     elif await _session_runs_remotely(key):
         # A pooled child is a LOCAL engine: claiming it would run a remote session here.
         pool_decision = "bypass_remote_environment"
@@ -1062,6 +1073,11 @@ async def _get_or_create_impl(
         pool_decision = ""
 
     pooled = None if pool_decision else await owner._drain_and_claim(agent)
+    # A queued provider was built by the factory of the config in force now (a
+    # config apply drains the queue when it swaps both), so this is the config
+    # the claimed process launched under. Read before any later await, where an
+    # apply could replace it.
+    claim_cfg, claim_pool_agent = owner._cfg, owner._pool_agent
     if not pool_decision:
         pool_decision = "hit" if pooled is not None else "miss_empty"
     if pooled is None:
@@ -1110,14 +1126,21 @@ async def _get_or_create_impl(
                     watchdog=claim_watchdog,
                 )
                 if model:
+                    # The warm process launched on the pool template's
+                    # templates.<name>.model when this harness claims it (the
+                    # factory's acp_effective_model), else on the spec pin.
+                    pool_model: str | None = _pool_template_pick(
+                        claim_cfg, claim_pool_agent, provider, self._deps
+                    )
                     # A cache miss walks the agents directory and reads specs
                     # until the pool agent matches: filesystem work, off the
                     # loop like the config load above.
-                    pool_model = (
-                        await asyncio.to_thread(owner._resolve_agent_model, owner._pool_agent)
-                        if owner._pool_agent
-                        else None
-                    )
+                    if not pool_model:
+                        pool_model = (
+                            await asyncio.to_thread(owner._resolve_agent_model, claim_pool_agent)
+                            if claim_pool_agent
+                            else None
+                        )
                     if pool_model:
                         try:
                             advertised = self._deps.advertised_model_ids(
@@ -1268,9 +1291,22 @@ async def _get_or_create_impl(
                 cast(Any, candidate).app_launch_agent = app_launch_agent
                 # Trusted: the caller's slot app, never transcript metadata.
                 cast(Any, candidate).owning_app = owning_app
+                # A rebuilt provider states the memory plan its first build chose.
+                if plan is not None:
+                    cast(Any, candidate).kas_memory_mode = plan.mode
+                    cast(Any, candidate).kas_memory_new_mode = plan.mode
             return candidate
 
         provider = build_provider()
+        if self._deps.is_acp_provider(provider):
+            plan = await _memory_policy.configure_provider_memory(
+                provider,
+                owner=owner,
+                session_key=key,
+                execution=execution,
+                channel_id=channel_id,
+                crew_agent=str(extra_factory_kwargs.get("crew_agent") or ""),
+            )
         # Bound here so the helper below can clear it; set from resume_sid below.
         restores_history = False
 
@@ -1313,6 +1349,15 @@ async def _get_or_create_impl(
                 owner._session_map.clear_sid(key)
         _drop_a_resume_that_would_move()
 
+        memory_withdrawn = bool(resume_sid) and plan is not None and plan.rotate
+        if memory_withdrawn:
+            resume_sid = None
+            owner._session_map.clear_sid(key)
+            self._deps.logger.info(
+                "Native memory withdrawn from %s; replaying into a fresh session",
+                key,
+            )
+
         # Whether this start asks its process to restore a saved session.
         restores_history = bool(resume_sid)
         recorded_scratch: Path | None = None
@@ -1334,6 +1379,9 @@ async def _get_or_create_impl(
         def configure_resume() -> None:
             if resume_sid:
                 if self._deps.is_acp_provider(provider):
+                    if plan is not None:
+                        # A loaded session keeps the memory mode it was created with.
+                        cast(Any, provider).kas_memory_mode = plan.resume_mode
                     cast(Any, provider).client.set_resume_session_id(resume_sid)
                     self._deps.logger.info(
                         "Attempting session/load for %s (sid=%s)", key, resume_sid
@@ -1635,7 +1683,7 @@ async def _get_or_create_impl(
                     and provider.defer_replay_sid_promotion is True
                     and provider_label == constants.provider_label_default
                 )
-                if provider_switched or replay_needed:
+                if provider_switched or memory_withdrawn or replay_needed:
                     session.provider_switch_replay = True
                 if replay_needed and provider_label != constants.provider_label_default:
                     owner._session_map.clear_sid(key)
@@ -1723,6 +1771,7 @@ async def _get_or_create_impl(
                             sid,
                             provider=provider_label,
                             cwd=provider_cwd,
+                            kas_memory=cast(Any, provider).kas_memory_mode,
                         )
                     elif sid:
                         self._deps.logger.info(
@@ -1738,6 +1787,7 @@ async def _get_or_create_impl(
                             sid,
                             provider=constants.provider_label_claude,
                             cwd=provider_cwd,
+                            kas_memory="",
                         )
 
                 # Cleanup owns its task slot; allocation only asks the

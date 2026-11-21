@@ -347,13 +347,22 @@ never builds the link itself. `standup` is not the default page, so a tab still
 showing the live page fails. The spec guards against a person being asked to approve
 a page they could not open.
 
-When the job fails, a final `if: failure()` step uploads
+When the job fails, an `if: failure()` step uploads
 `website/test-results/` and `website/playwright-report/` as the
 `e2e-playwright-failures` artifact (7-day retention). `test-results/` holds one
 directory per failed attempt: `error-context.md` (the ARIA snapshot of the page
 at the failing assertion — the thing that says whether a locator matched the
 wrong row or no row), the `on-first-retry` trace, and any screenshot. The html
 report next to it is the one `--reporter=html` writes.
+
+A failed job also uploads `e2e-host-pressure` (7-day retention): a log a
+background step writes every 5 s while the suite runs, with a UTC timestamp,
+`/proc/pressure/{cpu,io,memory}`, the `cpu ` line of `/proc/stat` (steal),
+`/proc/loadavg`, and the job cgroup's `cpu.stat` and `memory.events`. It exists
+to tell a runner that stopped scheduling the gateway from a stall inside it when
+the loop-stall watchdog ends the gateway with -14 (#22314). Inside the container
+`/proc/pressure` and `/proc/stat` are host-wide, and a gap in the log's own
+timestamps means the sampler was frozen too.
 
 The job's log alone is not enough to triage a spec failure: it names
 `error-context.md` and prints nothing from it. #8526 (a ghost transcript from the
@@ -529,8 +538,10 @@ so the file on disk still says `KiroCrew` while the artifact says otherwise.
 
 There is no `PATH` edit to assert. The `nsis` block in
 `website/electron/package.json` declares no PATH handling and
-`website/electron/build/installer.nsh` touches only shortcuts and the
-electron-updater cache, so a desktop install puts no `kirocrew` on `PATH`. The
+`website/electron/build/installer.nsh` touches only shortcuts, the
+electron-updater cache and installed files too deep for the previous
+uninstaller to move (`KiroClearUnmovableFiles`), so a desktop install puts no
+`kirocrew` on `PATH`. The
 bundled CLI is exercised at its packaged path
 (`resources\backend-dist\kirocrew-backend\bin\kirocrew.cmd`) as its own new
 process instead, which is the path
@@ -548,6 +559,10 @@ installs it silently, and runs
 The script starts the just-installed bundled interpreter against an isolated data
 home and requires `/api/ready` within 50 seconds, so an artifact that installs
 but cannot boot fails at review time.
+It also plants an over-budget bytecode cache and an over-budget ordinary file in
+the installed tree and re-runs the installer over each: the cache must be deleted
+and the update go through, and the other file must stop the installer with exit
+code 2 before any file is moved.
 
 Its backend payload is a real python-build-standalone runtime carrying the wheel
 `build-wheel` produced (the job `needs` it, so the bundled bytes are the ones

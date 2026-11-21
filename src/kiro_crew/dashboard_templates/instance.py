@@ -44,6 +44,7 @@ to see, not a shape this module will write.
 from __future__ import annotations
 
 import contextvars
+import errno
 import hashlib
 import json
 import logging
@@ -74,7 +75,7 @@ from kiro_crew.crew_log.entry_types import (
     DASHBOARD_INSTANCE_ENTRY_TYPE,
 )
 from kiro_crew.crew_log.store import log_exception_text
-from kiro_crew.dashboard_templates import catalog
+from kiro_crew.dashboard_templates import catalog, instance_read
 from kiro_crew.dashboard_templates.manifest import (
     ManifestError,
     check_parity,
@@ -200,6 +201,10 @@ class InstanceError(Exception):
 
 class InstanceRefused(InstanceError):
     """A write was refused, with the reason a user can be told."""
+
+
+class PinUnsupported(InstanceRefused):
+    """This platform cannot walk a directory chain without following links."""
 
 
 class NothingStaged(InstanceRefused):
@@ -602,14 +607,58 @@ def _read_once(fd: int, names: tuple[str, ...]) -> bytes:
             os.close(descriptor)
 
 
-def _read_file(slug: str, *names: str) -> bytes:
-    """Read ``names`` under *slug*'s page folder, through the pinned descriptor when held.
+#: Whether the current context holds a page lock. A read with neither a lock nor a pinned
+#: descriptor is a reader of its own (:func:`_reads_unlocked`).
+_LOCK_HELD: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "dashboard_instance_lock_held", default=False
+)
 
-    Reads inside the lock come from the folder the writes go to, so a level replaced
-    after the open cannot hand the next version number a record from somewhere else. The
-    descriptor read runs inside the same sharing-violation retry as a by-name read.
+
+def _reads_unlocked(slug: str) -> bool:
+    """Whether a read of *slug* is a member page reader outside :func:`_locked`."""
+    return _PINNED_DIR.get() is None and not _LOCK_HELD.get() and not is_session_key(slug)
+
+
+def _can_pin() -> bool:
+    return pinned_fs.supports_pinned_walk() and pinned_parent_replace_supported()
+
+
+def _open_page_dir(slug: str) -> int:
+    """The page folder of *slug* for a reader, opened without creating or following anything."""
+    return instance_read.open_page_dir(
+        data_home(), instance_dir(slug).relative_to(data_home()).parts, InstanceError
+    )
+
+
+def _read_file(slug: str, *names: str) -> bytes:
+    """Read ``names`` under *slug*'s page folder, through a pinned descriptor.
+
+    Inside the lock that is the descriptor the lock holds, so a level replaced after the
+    open cannot hand the next version number a record from somewhere else. A reader with
+    no lock opens the folder itself, creating nothing, and answers "not set" for a link
+    at any level. The descriptor read runs inside the same sharing-violation retry as a
+    by-name read.
     """
     path = instance_dir(slug).joinpath(*names)
+    if _reads_unlocked(slug):
+        if not _can_pin():
+            instance_read.refuse_linked_for_read(path.parent, _LOCK_FILE, names[-1])
+            return read_bytes_with_retry(path)
+        opened = _open_page_dir(slug)
+        try:
+            return retry_read_sharing_window(lambda: _read_once(opened, names), path)
+        except OSError as exc:
+            # A link at the file itself fails the ``O_NOFOLLOW`` open with ELOOP, and
+            # answers "not set" like a link at any folder level. A link at ``versions``
+            # fails the folder open (``O_DIRECTORY``) with ENOTDIR instead; no reader
+            # without the lock reaches that open through here, so it is not caught. Any
+            # other error (a folder where the file should be, a denied read) is raised
+            # as before.
+            if exc.errno == errno.ELOOP:
+                raise instance_read.LinkedLevel("no dashboard page here") from None
+            raise
+        finally:
+            os.close(opened)
     fd = _PINNED_DIR.get()
     if fd is None:
         return read_bytes_with_retry(path)
@@ -618,6 +667,20 @@ def _read_file(slug: str, *names: str) -> bytes:
 
 def _list_versions(slug: str) -> list[str]:
     """The names in *slug*'s ``versions`` folder, through the pinned descriptor when held."""
+    if _reads_unlocked(slug):
+        versions_dir = instance_dir(slug) / _VERSIONS_SUBDIR
+        if not _can_pin():
+            instance_read.refuse_linked_for_read(versions_dir, _LOCK_FILE)
+            return instance_read.without_links(versions_dir, os.listdir(versions_dir))
+        opened = _open_page_dir(slug)
+        try:
+            versions_fd = os.open(_VERSIONS_SUBDIR, pinned_fs.dir_flags(), dir_fd=opened)
+            try:
+                return instance_read.without_links(versions_fd, os.listdir(versions_fd))
+            finally:
+                os.close(versions_fd)
+        finally:
+            os.close(opened)
     fd = _PINNED_DIR.get()
     if fd is None:
         return os.listdir(instance_dir(slug) / _VERSIONS_SUBDIR)
@@ -638,7 +701,9 @@ def _write(directory: Path, name: str, body: str) -> None:
 
 
 @contextmanager
-def _locked(directory: Path, *, lock_file: str = _LOCK_FILE) -> Iterator[None]:
+def _locked(
+    directory: Path, *, lock_file: str = _LOCK_FILE, pinned_dir: int | None = None
+) -> Iterator[None]:
     """Exclusive lock over one instance directory, bounded against a live holder.
 
     The same shape the session ledger's lock has, and for the same reasons: a dedicated
@@ -647,10 +712,13 @@ def _locked(directory: Path, *, lock_file: str = _LOCK_FILE) -> Iterator[None]:
     must not interleave -- each reads the current version to compute the next, so an
     interleaving produces two writes claiming the same ``instance_version`` and one of
     the two pages is lost with nothing recorded.
+
+    *pinned_dir* is a descriptor of *directory* the caller already opened with no link
+    followed; the lock file is then made relative to it and nothing is created by name.
     """
-    pinned: int | None = None
+    pinned: int | None = os.dup(pinned_dir) if pinned_dir is not None else None
     page = _is_page_dir(directory)
-    if page:
+    if page and pinned is None:
         if directory.parent == data_home() / _SESSION_DASHBOARDS_DIR:
             _refuse_linked_session_dir(directory)
         else:
@@ -671,6 +739,7 @@ def _locked(directory: Path, *, lock_file: str = _LOCK_FILE) -> Iterator[None]:
             os.close(pinned)
         raise
     token = _PINNED_DIR.set(pinned)
+    held = _LOCK_HELD.set(True)
     try:
         deadline = time.monotonic() + _LOCK_TIMEOUT_SECS
         while not try_acquire_lock(fd, exclusive=True):
@@ -684,6 +753,7 @@ def _locked(directory: Path, *, lock_file: str = _LOCK_FILE) -> Iterator[None]:
         finally:
             release_lock(fd)
     finally:
+        _LOCK_HELD.reset(held)
         _PINNED_DIR.reset(token)
         os.close(fd)
         if pinned is not None:
@@ -1552,10 +1622,9 @@ def rollback(slug: str, to_version: int, *, session_id: str = "") -> Instance:
         if not isinstance(html, str) or not isinstance(manifest, dict):
             raise InstanceError(f"instance version {to_version} holds no page to restore")
         checked = _check(manifest, html)
-        # THE VERSION'S OWN PAGE IN FORCE comes back with it: a package version
-        # restores its pinned package, and a template version -- including one written
-        # before packages could be applied -- restores the template, releasing any
-        # package. That is what makes one rollback the way back from either page.
+        # The version's own page comes back with it: a package version restores its
+        # pinned package; a template version (an old one included) restores the
+        # template and releases any package. So one rollback undoes either kind of page.
         slug_v, version_v, digest_v, _released = _package_field(payload)
         return _commit(
             slug,
@@ -1575,20 +1644,17 @@ def rollback(slug: str, to_version: int, *, session_id: str = "") -> Instance:
 
 #: The staged page, beside the record and never inside it.
 #:
-#: A preview is a page somebody is being SHOWN before anything is recorded, so it
-#: cannot be a version: a version is what a rollback can reach, and staging one would
-#: put a page the person then declined into their history as a change they made. It
-#: also means a preview never moves ``instance_version``, so a client that caches by
-#: version is not invalidated by a page that was only looked at.
+#: A preview is SHOWN before anything is recorded, so it is not a version: a version is
+#: what a rollback can reach, and a page the person then declined must not enter their
+#: history as a change they made. So a preview never moves ``instance_version``, and a
+#: client caching by version is not invalidated by a page that was only looked at.
 _PREVIEW_FILE: Final[str] = "preview.json"
 
 #: How long a staged preview stays applicable.
 #:
 #: Staging and applying are two agent cycles with a PERSON between them, so the window
-#: is minutes rather than seconds. Past it the preview is dropped rather than applied:
-#: "yes" to a page somebody looked at an hour ago is a yes to a page whose fold values
-#: have since moved, and applying it would install what they saw rather than what they
-#: agreed to.
+#: is minutes, not seconds. Past it the preview is dropped, not applied: a "yes" to a page
+#: seen an hour ago answers for fold values that have moved since.
 MAX_PREVIEW_AGE_MS: Final[int] = 30 * 60 * 1000
 
 

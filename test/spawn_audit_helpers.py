@@ -23,6 +23,31 @@ BENIGN_PACKAGE_SPAWNS: frozenset[str] = frozenset(
         # Embedding child: this interpreter, -P, a fixed module; requests travel
         # on its pipes as data, never as argv. No agent input reaches the spawn.
         "embeddings_child.py::spawn",
+        # `kirocrew eval run --suite tasks` (rfc-builtin-eval.md §3-§5). Every argv
+        # below is built by the runner from fixed strings, the suite's case files
+        # and paths the runner created; none comes from the agent or the model.
+        # The case's `build.sh`, run on a fresh empty directory before any agent.
+        "eval/tasks.py::build_repo",
+        # `git add/commit/push` in a repo `build_repo` just made, for the
+        # no-model `--check` gate only; no agent has touched that repo.
+        "eval/tasks.py::apply_reference",
+        # This package's own gateway (`python -P -m kiro_crew gateway --port auto
+        # --no-open --no-tunnel`) in the run's fresh data home; it sandboxes the
+        # agents it spawns itself.
+        "eval/tasks.py::start_gateway",
+        # The harness under test: `kirocrew chat --headless` (this package) or
+        # the operator's `claude` binary, with flags fixed in eval/arms.py and the
+        # case's seed as data. The agent runs INSIDE that harness: Crew confines
+        # it with its own strict sandbox; Claude Code's containment is the
+        # dedicated eval OS user the preflight requires (RFC §4.1, §4.2, §11).
+        "eval/tasks.py::drive_arm",
+        # The case's hidden check (`python <suite>/hidden/check.py <origin>`).
+        # Not routed on purpose: the check's child process imports the code the
+        # agent pushed, by design, so a strict-sandbox route is a recorded
+        # follow-up (RFC §14.1). Containment today is the dedicated eval OS user
+        # with no credentials that preflight enforces, a scrubbed env (PATH and
+        # locale only), a time limit, and deletion of the run directory after.
+        "eval/tasks.py::_run_check",
         # Consolidation write child: this interpreter, -P, a fixed module; jobs travel
         # on its pipes as data, never as argv. No agent input reaches the spawn.
         "consolidation_write_child.py::_spawn",
@@ -419,6 +444,13 @@ BENIGN_PACKAGE_SPAWNS: frozenset[str] = frozenset(
         # scrubbed that capability would break the feature it is guarding. Gated
         # behind KIROCREW_DEBUG and reachable only from the CLI.
         "cli_perf.py::_sample_out_of_process",
+        # `kirocrew config edit`: the operator's own editor on a copy of config.json.
+        # List argv (no shell): `$EDITOR` (default `vi`) from the operator's shell
+        # environment, plus the path of a file this command just created in a fresh
+        # `mkdtemp` folder. Reached only from that CLI verb. NOT sandbox-routed: the
+        # editor is the operator's terminal tool, and the copy it saves sits in the
+        # sealed config-provenance folder, which no sandboxed process can write.
+        "cli_config.py::_run_editor",
         # `kirocrew app install <git-url>`: the operator's own `git clone` of the
         # URL they typed, and a `git rev-parse HEAD --abbrev-ref HEAD` in the folder
         # it made. Reached only from that CLI verb, never from a tool dispatch
@@ -491,9 +523,9 @@ BENIGN_PACKAGE_SPAWNS: frozenset[str] = frozenset(
         # fixed-argv helper, _probe_interpreter, which is where their single
         # spawn now lives: `<target python> -I -X utf8 -c <fixed probe>` with a
         # neutral cwd, so the answer describes the venv instead of the caller.
-        # The doctor's venv deps check (cli_doctor._venv_deps_ok) and the STT
-        # scripts-dir probe (transcribe._python3_bin_dir) route through the
-        # same helper for the same reason: their argv is equally fixed, and an
+        # The doctor's venv deps check (cli_doctor._venv_deps_ok) routes
+        # through the same helper for the same reason: its argv is equally
+        # fixed, and an
         # unisolated `python -c` would let a decoy on the caller's
         # PYTHONPATH/CWD answer for the interpreter under test.
         "dep_sync.py::_probe_interpreter",
@@ -884,13 +916,6 @@ BENIGN_PACKAGE_SPAWNS: frozenset[str] = frozenset(
         # timeout, no shell, no cwd, no agent-influenced arguments.
         "dashboard/handlers_system.py::_scan_mcp_processes",
         "dashboard/handlers_system.py::_get_static_system_info",
-        # The Windows half of _scan_mcp_processes: PowerShell pinned via
-        # trusted_system_bin, list argv with no shell and no cwd. The query's
-        # only inputs are signature strings, which the function itself refuses
-        # unless they are [A-Za-z0-9_.-]+ (no quote, $, backtick or WQL
-        # wildcard), and its one caller passes two hard-coded literals. Reads
-        # the same Win32_Process data as process_command_line.
-        "dashboard/system_windows_probes.py::windows_process_command_lines",
         "dashboard/port_reclaim.py::_listeners_on_port",
         # Bundle-freshness startup probe: fixed `git rev-parse HEAD:website`
         # list-argv (no shell=True) with git PINNED via trusted_git_bin (fixed
@@ -1091,6 +1116,7 @@ BENIGN_PACKAGE_SPAWNS: frozenset[str] = frozenset(
         # cannot route on its own behalf; _SPAWN_NAMES keeps each caller visible
         # here under its own row. It cannot import the sandbox, which imports it.
         "platform_compat_kill.py::run_killing_tree_on_timeout",
+        "platform_compat_kill.py::stdlib_run_killing_tree_on_timeout",
         "platform_compat_trust.py::reveal_in_file_manager",
         "platform_compat_identity.py::process_command_line",
         # Same class as process_command_line: a read-only process-attribute query

@@ -130,10 +130,14 @@ asks. What a hosted page may ask beyond its own windows is the app's approved
 windows share: `capture-trust.js` (screen capture), `app-local-files.js` (reveal a
 file, open an image) and `app-window-gateways.js` (which crew an app's windows show). A shell owner of a global shortcut (the summon hotkey,
 `mochi/shortcuts.js`) records the chords it is configured for in
-`shell-shortcut-reservations.js`, and the host never gives an app one of them. It names no app and runs no app code, and a new app never
+`shell-shortcut-reservations.js`, and the host never gives an app one of them, except an owner
+that is an app's own shell code (`{ app: true }`) hands its chords to the host serving that app.
+What the host keeps per app on this computer (the user's shortcut bindings) is `app-window-prefs.js`,
+in its own `app-window-prefs.json` store. It names no app and runs no app code, and a new app never
 gets a directory of its own here. `mochi/` and `crew-companion/` predate it and
-shrink as each moves onto it; `test/app-window-host-independence.test.js` holds
-both rules. Contract: `docs/system-specs/modules/app-kit-platform.md` §35.
+shrink as each moves onto it, and each stands down whenever its app's record is
+one the host serves (`hostOwnsAppWindows`); `test/app-window-host-independence.test.js`
+holds all three rules. Contract: `docs/system-specs/modules/app-kit-platform.md` §35.
 
 ## Install as macOS App
 
@@ -425,6 +429,14 @@ left as the user set it.
   `showTrayIcon` key in this app's config file; only `false` hides the icon
   (`tray-icon.js`), and the icon appears or disappears as soon as either
   setting changes.
+- **Minimize to tray** (off by default, Windows and Linux) makes minimizing
+  hide the window to the tray instead of the taskbar; click the tray icon to
+  bring it back. It is offered on Windows, and on Linux only when the desktop
+  has a tray (a StatusNotifier host on the session bus, asked with the
+  `dbus-send` in a fixed system directory, never one found on `PATH`; GNOME
+  has none without an extension). It stays off while
+  **Show tray icon** is off. The choice is the `minimizeToTray` key; only
+  `true` turns it on (`minimize-to-tray.js`).
 - **GPU rendering.** Hardware acceleration is on by default, except in a
   Windows RDP session (`SESSIONNAME` starting with `RDP-`), where it starts
   off. The decision, first match wins (`disable-gpu.js`):

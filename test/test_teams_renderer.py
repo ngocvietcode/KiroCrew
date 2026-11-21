@@ -15,6 +15,7 @@ from kiro_crew.teams.client import TeamsSendError
 from kiro_crew.teams.commands import HELP_TEXT, parse_command
 from kiro_crew.teams.renderer import TeamsRenderer, _strip_options
 from kiro_crew.teams.transport import TEAMS_CAPABILITIES
+from kiro_crew.testing.synthetic_credentials import SAMPLE_SLACK_BOT_TOKEN
 
 
 class _FakeClient:
@@ -210,10 +211,10 @@ class TestProgressiveOutput:
         await r.on_text_chunk("the answer")
         await r.on_done()
 
-        assert client.sent == ["🔧 fs_read…"], "exactly one message is posted"
+        assert client.sent == ["Running fs_read…"], "exactly one message is posted"
         assert (
             client.updates[-1][1] == "the answer"
-        ), "the answer must EDIT the progress bubble, not leave '🔧 …' stranded above it"
+        ), "the answer must EDIT the progress bubble, not leave 'Running …' stranded above it"
 
     @pytest.mark.asyncio
     async def test_a_chips_only_answer_settles_the_progress_message(self) -> None:
@@ -233,11 +234,11 @@ class TestProgressiveOutput:
         await r.on_text_chunk("[OPTIONS: yes | no]")
         await r.on_done()
 
-        assert client.sent == ["🔧 fs_read…"]
+        assert client.sent == ["Running fs_read…"]
         assert len(client.cards) == 1, "the chips still go out as their own card"
         assert client.updates == [
-            ("mid-1", "✅ Done")
-        ], "with no text to take it over, the '🔧 …' bubble must still be settled"
+            ("mid-1", "Done")
+        ], "with no text to take it over, the 'Running …' bubble must still be settled"
 
     @pytest.mark.asyncio
     async def test_an_answer_after_an_approval_card_lands_below_the_card(self) -> None:
@@ -276,9 +277,9 @@ class TestProgressiveOutput:
             decider.discard_reservations()
 
         assert log == [
-            ("post", "🔧 execute_bash…"),
+            ("post", "Running execute_bash…"),
             ("post", "card"),
-            ("edit mid-1", "✅ Done"),
+            ("edit mid-1", "Done"),
             ("post", "Here is the result."),
         ], "the answer must arrive below the card, not inside the bubble above it"
 
@@ -364,7 +365,8 @@ class TestDisplayRedaction:
         """Teams renders markup away, reassembling a key the raw scan saw as broken."""
         client = _EditingClient()
         r = TeamsRenderer(client, "conv-1", "https://smba.trafficmanager.net/", TEAMS_CAPABILITIES)
-        secret = "Qh4Tm2Vx9KpRc" + "Z8Nw3HdJf1Lb5Gs0Ye9Ua2WkEQR"
+        # A Slack bot token: no ``_`` in it, which the display form drops as markup.
+        secret = SAMPLE_SLACK_BOT_TOKEN
         await r.on_text_chunk(f"key {secret[:13]}**{secret[13:]}** here")
         await r.on_done()
 

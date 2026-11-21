@@ -83,7 +83,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Report the user's dark/light mode PREFERENCE ("system" | "dark" | "light")
   // so main.js can set `nativeTheme.themeSource` to match. Must be the
   // preference, not the resolved mode: pinning themeSource to dark/light also
-  // pins `prefers-color-scheme`, which is what Auto resolves through.
+  // pins `prefers-color-scheme`, which is what Auto resolves through. Scheduled
+  // has no themeSource, so it sends the resolved mode (themes.md, *Mode preference*).
   setThemeMode: (pref) => ipcRenderer.send("theme-mode-changed", String(pref || "")),
   // Report the RESOLVED dark/light mode ("dark" | "light") so main.js can sync
   // the Windows titleBarOverlay colors. Separate from setThemeMode because that
@@ -334,6 +335,14 @@ contextBridge.exposeInMainWorld("trayIconAPI", {
   set: (show) => ipcRenderer.invoke("tray-icon:set", !!show),
 });
 
+// Whether minimizing the main window hides it to the tray, as
+// {on, offered, canEnable}. Answered only to the main window's own dashboard,
+// like closeActionAPI.
+contextBridge.exposeInMainWorld("minimizeToTrayAPI", {
+  get: () => ipcRenderer.invoke("minimize-to-tray:get"),
+  set: (on) => ipcRenderer.invoke("minimize-to-tray:set", on === true),
+});
+
 // File-open bridge for the chat path chip's "Open in editor" affordance. Hands
 // a filesystem PATH — never a URL scheme — to the main process, which validates
 // it and calls shell.openPath so the file opens in the OS default handler on the
@@ -349,9 +358,31 @@ if (!REMOTE_GATEWAY) contextBridge.exposeInMainWorld("fileOpenAPI", {
 // access token and the Crew URL, so neither crosses this bridge, and no token
 // is ever returned. Resolves { ok: true } or { ok: false, error: "<code>" }.
 // Absent in plain browsers and in the PWA; the dashboard hides the relay list
-// when the bridge is missing.
+// when the bridge is missing. `closeAll()` takes nothing and can only close
+// every relay Crew window, after this dashboard's Sign out or Switch account.
+// The pane calls show a Crew in this window instead, below the local top bar:
+// they carry the endpoint ID, the pane's rect with this page's viewport size,
+// or whether a local overlay covers the pane or another tab is in front of it.
+// `onPaneEvent(cb)` hears a pane's switch chord or its close, as `{ type,
+// endpointId, index }` and nothing more, and returns its unsubscribe. Nothing
+// calls them yet.
 if (!REMOTE_GATEWAY) contextBridge.exposeInMainWorld("relayCrewAPI", {
   open: (endpointId) => ipcRenderer.invoke("relay-crew:open", String(endpointId || "")),
+  closeAll: () => ipcRenderer.invoke("relay-crew:close-all"),
+  openPane: (endpointId, rect, viewport) => ipcRenderer.invoke("relay-crew:open-pane", String(endpointId || ""), rect, viewport),
+  setPaneBounds: (endpointId, rect, viewport) => ipcRenderer.invoke("relay-crew:pane-bounds", String(endpointId || ""), rect, viewport),
+  setPaneOverlay: (endpointId, active) => ipcRenderer.invoke("relay-crew:pane-overlay", String(endpointId || ""), !!active),
+  setPaneInactive: (endpointId, inactive) => ipcRenderer.invoke("relay-crew:pane-inactive", String(endpointId || ""), !!inactive),
+  closePane: (endpointId) => ipcRenderer.invoke("relay-crew:pane-close", String(endpointId || "")),
+  onPaneEvent: (cb) => {
+    const handler = (_e, m) => cb({
+      type: String(m?.type || ""),
+      endpointId: String(m?.endpointId || ""),
+      index: Number.isInteger(m?.index) ? m.index : -1,
+    });
+    ipcRenderer.on("relay-crew:pane-event", handler);
+    return () => ipcRenderer.removeListener("relay-crew:pane-event", handler);
+  },
 });
 
 // Native folder chooser for the project picker's "Open system folder picker"

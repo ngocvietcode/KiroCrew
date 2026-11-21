@@ -13,9 +13,9 @@ Instance fields written: ``_active_run_id``, ``_cancel_grace_secs``, ``_cancel_t
 ``_permission_options``, ``_steer_answers``, ``_steer_turn``, ``_steering_waiter_map``,
 ``_steers_awaiting_echo``, ``_turn_permission_denied``.
 
-Instance fields read: ``_active_tool_calls``, ``_agent``, ``_agent_version``, ``_background_launches``, ``_batch_window``,
-``_last_stop_reason``, ``_permission_gate_events``, ``_process``, ``_session_id``,
-``_session_key``, ``_stdin_stalled``, ``_turn_done``, ``_turn_lock``.
+Instance fields read: ``_active_tool_calls``, ``_agent``, ``_background_launches``,
+``_batch_window``, ``_last_stop_reason``, ``_permission_gate_events``, ``_process``,
+``_session_id``, ``_session_key``, ``_stdin_stalled``, ``_turn_done``, ``_turn_lock``.
 """
 
 from __future__ import annotations
@@ -52,6 +52,7 @@ from kiro_crew.acp.transport_errors import AcpError, AcpProcessDied, AcpTimeoutE
 from kiro_crew.acp.transport_framing import write_notification_best_effort
 from kiro_crew.acp.types import (
     ACP_BACKEND_GOOSE,
+    ACP_BACKEND_KIRO,
     ACP_BACKEND_PI,
     ACP_BACKENDS_STEER_CONCURRENT_PROMPT,
     ACP_BACKENDS_STEERING_REQUEST,
@@ -61,19 +62,21 @@ from kiro_crew.acp.types import (
     MAX_STEERING_TEXT_CHARS,
     METHOD_CANCEL,
     METHOD_COMMANDS_EXECUTE,
+    METHOD_GOOSE_SESSION_STEER,
     METHOD_PROMPT,
     METHOD_REQUEST_PERMISSION,
     METHOD_SESSION_STEERING,
     METHOD_SESSION_UPDATE,
     OUTCOME_CANCELLED,
+    OWN_STEERING_REQUEST_METHODS,
     STEERING_ANSWER_WAIT_SECS,
     STEERING_INJECTED,
     STOP_REASON_COMPACTION_FAILED,
     STOP_REASON_END_TURN,
-    UPDATE_SESSION_INFO,
-    UPDATE_USER_MESSAGE_CHUNK,
     AcpEvent,
     JsonRpcMessage,
+    goose_announced_run,
+    goose_steer_echo_id,
     steering_outcome,
     wrap_user_message,
 )
@@ -81,6 +84,7 @@ from kiro_crew.agent_sdk.backend_cards import LINE_MID_TURN_STEER, card_for
 from kiro_crew.agent_sdk.backends import (
     ACP_BACKEND_CLAUDE,
     ACP_BACKEND_CODEX,
+    ACP_BACKEND_DEEPSEEK,
     ACP_BACKEND_LAUNCH,
     ACP_BACKEND_NODE_ADAPTER_PACKAGES,
 )
@@ -184,6 +188,24 @@ CLAUDE_ACP_TESTED_RANGE = ((0, 94, 0), (0, 95, 0))
 PI_ACP_TESTED_VERSION = "0.0.34"
 PI_ACP_TESTED_RANGE = ((0, 0, 34), (0, 0, 35))
 
+#: The kiro-cli releases Crew's kiro-cli and KAS relay contract was recorded on. No
+#: lane runs a live kiro-cli (it needs a sign-in), so the range is held to what the
+#: captures under ``test/fixtures/acp_frames/kiro`` and ``kas`` were taken on:
+#: ``test/test_real_adapter_fixture_pins.py`` holds every live capture's kiro-cli
+#: inside it, and the Docker pin (``packaging/kiro-cli-version``) too. The floor is
+#: the captures' floor, the highest of the gates that test names; the top is the major after
+#: the newest capture (3.1.0), as codex-acp's range is its major. A capture on 4.x
+#: reds that test until this moves with it.
+KIRO_CLI_TESTED_RANGE = ((2, 27, 0), (4, 0, 0))
+
+#: The dsh release the same lane pins (``@deepseek-ai/dsh``), which the install command
+#: (``agent_sdk/backends_launch.py``) installs. Its releases are 0.x, where each minor
+#: line can break, so the range is 0.2.x. Read from dsh's own npm manifest at spawn
+#: (:data:`TESTED_VERSION_READ_AT_SPAWN`), because dsh-acp's handshake reports
+#: ``agentInfo.version`` 0.0.1 on every release.
+DEEPSEEK_DSH_TESTED_VERSION = "0.2.0-rc.2"
+DEEPSEEK_DSH_TESTED_RANGE = ((0, 2, 0), (0, 3, 0))
+
 #: Per backend: the tested range and the command that installs the tested release.
 #: Opt-in by membership, as :data:`_STEER_MIN_VERSIONS`.
 _TESTED_VERSION_RANGES: dict[str, tuple[tuple[tuple[int, int, int], tuple[int, int, int]], str]] = {
@@ -207,15 +229,40 @@ _TESTED_VERSION_RANGES: dict[str, tuple[tuple[tuple[int, int, int], tuple[int, i
         PI_ACP_TESTED_RANGE,
         f"npm i -g {ACP_BACKEND_NODE_ADAPTER_PACKAGES[ACP_BACKEND_PI]}@{PI_ACP_TESTED_VERSION}",
     ),
+    # kiro-cli installs no chosen release, so an older one is told to update.
+    ACP_BACKEND_KIRO: (KIRO_CLI_TESTED_RANGE, "kiro-cli update"),
+    ACP_BACKEND_DEEPSEEK: (
+        DEEPSEEK_DSH_TESTED_RANGE,
+        ACP_BACKEND_LAUNCH[ACP_BACKEND_DEEPSEEK].install_command,
+    ),
 }
+
+#: Backends whose handshake version names no release, so the tested range is read
+#: against the version their spawn read off disk (``harness_installed_version``).
+#: shortcut: only the per-session client records it, so a deepseek chat on the shared
+#: runtime (the chat runtime sharing preview, off by default) gets no notice; carry it
+#: on the session handle if that preview turns on by default.
+TESTED_VERSION_READ_AT_SPAWN: frozenset[str] = frozenset({ACP_BACKEND_DEEPSEEK})
+
+#: What a release above the range is told instead of the install command, for a
+#: harness whose installer cannot go back to a tested release.
+_NEWER_THAN_TESTED_ADVICE: dict[str, str] = {
+    ACP_BACKEND_KIRO: "A Kiro Crew update moves the tested range.",
+}
+
+#: The name a notice gives a backend whose id is not its name.
+_NOTICE_NAMES: dict[str, str] = {ACP_BACKEND_KIRO: "kiro-cli"}
 
 
 def _tested_range_label(low: tuple[int, int, int], high: tuple[int, int, int]) -> str:
-    """``2.x`` for a whole major, ``0.0.34`` for one release, else ``1.50.x`` for a minor line."""
+    """``2.x`` for a whole major, ``0.0.34`` for one release, ``2.27.0 to 3.x`` from a
+    release up to a major's end, else ``1.50.x`` for a minor line."""
     if low[1:] == (0, 0) and high == (low[0] + 1, 0, 0):
         return f"{low[0]}.x"
     if high == (low[0], low[1], low[2] + 1):
         return ".".join(str(part) for part in low)
+    if high[1:] == (0, 0) and high[0] > low[0]:
+        return f"{'.'.join(str(part) for part in low)} to {high[0] - 1}.x"
     return f"{low[0]}.{low[1]}.x"
 
 
@@ -230,15 +277,16 @@ def untested_version_issue(backend: str, agent_version: str) -> str:
     if range_and_fix is None or not _adapter_version_at_least(agent_version, (0, 0, 0)):
         return ""
     (low, high), fix = range_and_fix
-    if _adapter_version_at_least(agent_version, low) and not _adapter_version_at_least(
-        agent_version, high
-    ):
+    newer = _adapter_version_at_least(agent_version, high)
+    if _adapter_version_at_least(agent_version, low) and not newer:
         return ""
     tested = _tested_range_label(low, high)
+    advice = (newer and _NEWER_THAN_TESTED_ADVICE.get(backend)) or (
+        f"To install the tested release, run '{fix}', then start a new chat."
+    )
     return (
-        f"{backend} {agent_version} is outside the tested range {tested}, so parts of "
-        f"it may behave in ways Crew has not checked. To install the tested release, "
-        f"run '{fix}', then start a new chat."
+        f"{_NOTICE_NAMES.get(backend, backend)} {agent_version} is outside the tested "
+        f"range {tested}, so parts of it may behave in ways Crew has not checked. {advice}"
     )
 
 
@@ -321,8 +369,8 @@ def parse_slash_command(command: str) -> tuple[str, dict]:
 # neither is not offered a steer on this client. The wait for the answer and the
 # bounds on steers held for one turn are the shared ``STEERING_ANSWER_WAIT_SECS``,
 # ``MAX_STEERING_TEXT_CHARS`` and ``MAX_STEERING_ANSWERS``.
-_GOOSE_SESSION_STEER = "_goose/unstable/session/steer"
-_CLIENT_STEERING_REQUEST_METHODS: dict[str, str] = {ACP_BACKEND_GOOSE: _GOOSE_SESSION_STEER}
+_GOOSE_SESSION_STEER = METHOD_GOOSE_SESSION_STEER
+_CLIENT_STEERING_REQUEST_METHODS: dict[str, str] = OWN_STEERING_REQUEST_METHODS
 
 
 async def command_result(
@@ -597,18 +645,17 @@ async def steer(self: AcpClient, message: str) -> bool:
 
 def _steering_request_ready(self: AcpClient) -> bool:
     """Whether this session's adapter takes ``_session/steering`` as this client
-    sends it: advertised at the handshake, and claude-agent-acp at or above
-    :data:`CLAUDE_ACP_STEERING_MIN_VERSION`. The floor is that adapter's own
+    sends it: advertised at the handshake, and the adapter at or above the release
+    that takes it (``_steering_adapter_floor_met``; on claude-agent-acp
+    :data:`CLAUDE_ACP_STEERING_MIN_VERSION`). The floor is that adapter's own
     release history, and claude is the only member this client sends
     ``_session/steering`` to, so any other member fails closed here -- except pi,
     which is sent no request: it is ready once its launch minted the steer channel
     to Crew's gate extension (:mod:`kiro_crew.acp.pi_steer_turn`)."""
     if self.backend == ACP_BACKEND_PI:
         return pi_steer_turn.ready(self)
-    if self._is_claude and getattr(self, "_steering_advertised", False) is True:
-        return _adapter_version_at_least(
-            getattr(self, "_agent_version", ""), CLAUDE_ACP_STEERING_MIN_VERSION
-        )
+    if getattr(self, "_steering_advertised", False) is True:
+        return self._steering_adapter_floor_met()
     return False
 
 
@@ -1057,20 +1104,12 @@ async def _steer_via_concurrent_prompt(self: AcpClient, text: str) -> bool:
 
 
 def _note_active_run(self: AcpClient, msg: JsonRpcMessage) -> None:
-    """Track the run id goose announces for the running prompt.
-
-    goose sends ``session_info_update`` with ``_meta.goose.activeRunId`` set
-    when a prompt starts and null when it ends; a steer must name it.
-    """
+    """Track the run id goose announces for the running prompt (``goose_announced_run``)."""
     if self.backend not in _CLIENT_STEERING_REQUEST_METHODS:
         return
-    update = (msg.params or {}).get("update")
-    if not isinstance(update, dict) or update.get("sessionUpdate") != UPDATE_SESSION_INFO:
-        return
-    goose = (update.get("_meta") or {}).get("goose")
-    if isinstance(goose, dict) and "activeRunId" in goose:
-        run_id = goose.get("activeRunId")
-        self._active_run_id = run_id if isinstance(run_id, str) and run_id else None
+    announced, run_id = goose_announced_run(msg.params)
+    if announced:
+        self._active_run_id = run_id
 
 
 def _settle_steer_answer(self: AcpClient, msg: JsonRpcMessage) -> bool:
@@ -1115,13 +1154,10 @@ def _steer_echo_event(self: AcpClient, msg: JsonRpcMessage) -> AcpEvent | None:
     held = getattr(self, "_steers_awaiting_echo", None)
     if not held:
         return None
-    update = (msg.params or {}).get("update")
-    if not isinstance(update, dict) or update.get("sessionUpdate") != UPDATE_USER_MESSAGE_CHUNK:
+    echoed = goose_steer_echo_id(msg.params)
+    if not echoed:
         return None
-    goose = (update.get("_meta") or {}).get("goose")
-    if not isinstance(goose, dict) or goose.get("steer") is not True:
-        return None
-    wrapped = held.pop(str(goose.get("messageId") or ""), None)
+    wrapped = held.pop(echoed, None)
     if wrapped is None:
         return None
     return AcpEvent(kind=EVENT_STEER_CONSUMED, text=wrapped)

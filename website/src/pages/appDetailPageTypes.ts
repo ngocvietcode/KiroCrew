@@ -70,7 +70,7 @@ type AppInfo = Pick<RegistryApp, '_registry' | 'provenance'> & {
   installedVersion?: string
   enabled?: boolean
   sessionApprovalConsentPending?: boolean
-  approvedGrants?: { api?: string[]; events?: string[] }
+  approvedGrants?: { api?: string[]; events?: string[]; bots?: string[] }
   linkPreviewGrant?: LinkPreviewGrantRow
   messageActionGrant?: MessageActionGrantRow
   linkOpenGrant?: LinkOpenGrantRow
@@ -82,6 +82,10 @@ type AppInfo = Pick<RegistryApp, '_registry' | 'provenance'> & {
   userSessionReachGrant?: { approved: string[]; staged: string[] }
   /** `permissions.desktopCapabilities` the owner approved, and the ones an update holds back; absent when undeclared. */
   desktopCapabilitiesGrant?: { approved: string[]; staged: string[] }
+  /** `ui.frameSources` origins the owner approved, and the ones an update or edit holds back; absent when undeclared. */
+  frameSourcesGrant?: { approved: string[]; staged: string[] }
+  /** `permissions.browserSites` pages the owner approved, and the ones waiting; absent when undeclared. */
+  browserSitesGrant?: { approved: string[]; staged: string[] }
   managed?: string
   source?: string
   installedAt?: string
@@ -122,8 +126,13 @@ interface AppPermissions {
   memberThreads?: boolean
   workerAutoApprove?: boolean
   chatSlots?: boolean
+  hiddenSessions?: boolean
+  chatLaunch?: unknown
   reachableByUserSessions?: string[]
   desktopCapabilities?: string[]
+  webhookSource?: boolean
+  /** Bot scopes, `"read"` and `"wake"`. */
+  bots?: string[]
   [key: string]: unknown
 }
 
@@ -181,4 +190,4 @@ interface AppManifest {
 }
 
 // `AppDetailPage.tsx` builds and renders these.
-export type { AppInfo, NormalizedRegistryEntry, RegistryEntry }
+export type { AppInfo, McpServerConfig, NormalizedRegistryEntry, RegistryEntry }

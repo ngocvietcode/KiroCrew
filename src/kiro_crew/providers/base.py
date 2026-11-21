@@ -113,6 +113,11 @@ class SessionMcpReport(Protocol):
     #: read it.
     def not_ready(self) -> dict[str, tuple[str, ...]]: ...
 
+    #: Record servers a config write changed that this running session will not
+    #: load, so its ``restart_to_load`` names them until the next session. Returns
+    #: the names not already recorded.
+    def mark_restart_to_load(self, names: list[str]) -> tuple[str, ...]: ...
+
     #: Called, with no argument, each time a frame changed the report. Set
     #: through ``LLMProvider.set_mcp_report_changed_hook``.
     on_change: Callable[[], None] | None
@@ -902,6 +907,15 @@ class LLMProvider(ABC):
         return None
 
     @property
+    def sandbox_mode(self) -> str | None:
+        """The ``agent.sandbox`` tier the process this session runs on was spawned under.
+
+        Session allocation recycles a session once the configured tier is stricter.
+        ``None`` (the H14 safe default) is never recycled for its tier.
+        """
+        return None
+
+    @property
     def manual_compact_unsupported_backend(self) -> str | None:
         """Backend id when this provider cannot serve a manual ``/compact``,
         ``None`` when the command is fine to dispatch.
@@ -1169,6 +1183,22 @@ class LLMProvider(ABC):
 
     async def set_ultracode(self, enabled: bool) -> bool | None:
         """Turn the session's ultracode switch on or off and return the value read
+        back. Default ``None``: no switch, nothing sent."""
+        return None
+
+    def fast_mode_enabled(self) -> bool | None:
+        """Whether the session's Fast mode switch is on; ``None`` (the default) when
+        the session offers no such switch."""
+        return None
+
+    def fast_mode_unavailable(self) -> str | None:
+        """Why the session's Fast mode switch cannot be turned on, in the harness's
+        words (``""`` when it gives none); ``None`` (the default) when nothing blocks
+        it or the session offers no such switch."""
+        return None
+
+    async def set_fast_mode(self, enabled: bool) -> bool | None:
+        """Turn the session's Fast mode switch on or off and return the value read
         back. Default ``None``: no switch, nothing sent."""
         return None
 

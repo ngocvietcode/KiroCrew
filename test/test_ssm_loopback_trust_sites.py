@@ -21,6 +21,7 @@ from types import SimpleNamespace
 
 import pytest
 from aiohttp.test_utils import make_mocked_request
+from source_corpus import untraced
 
 from kiro_crew.dashboard.origin import is_direct_local_request, is_ssm_request
 from kiro_crew.shared_crew.contracts import SSM_GUEST_REQUEST_KEY, SSM_REQUEST_KEY
@@ -86,8 +87,12 @@ def test_an_ssm_request_mints_no_bearer_link() -> None:
 # ── every site that trusts a peer address ──
 
 #: ``is_direct_local_request(...)`` call sites per file. Each is covered by the
-#: predicate's SSM refusal above.
+#: predicate's SSM refusal above, except where its comment says otherwise.
 PREDICATE_SITES = {
+    # The app web origin router runs ahead of token auth, so the SSM gate has not
+    # set its mark yet and the predicate alone would pass an SSM request. The
+    # router refuses by listener first (``SsmGate.owns``, the socket's local port).
+    "apps/app_web_origin.py": 1,
     "dashboard/file_api/desktop.py": 1,
     "dashboard/handlers/core.py": 2,
     "dashboard/handlers/external_terminal.py": 1,
@@ -137,21 +142,24 @@ RAW_LOOPBACK_SITES = {
 def _call_sites() -> tuple[dict[str, int], dict[str, int]]:
     direct: collections.Counter[str] = collections.Counter()
     raw: collections.Counter[str] = collections.Counter()
-    for path in SRC.rglob("*.py"):
-        rel = path.relative_to(SRC).as_posix()
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if not isinstance(node, ast.Call):
-                continue
-            func = node.func
-            name = func.id if isinstance(func, ast.Name) else getattr(func, "attr", "")
-            if name == "is_direct_local_request":
-                direct[rel] += 1
-            elif (
-                name == "is_loopback"
-                and node.args
-                and "request.remote" in ast.unparse(node.args[0])
-            ):
-                raw[rel] += 1
+    # The walk only parses source text and runs no package code, so pausing the
+    # coverage tracer loses no measured line.
+    with untraced():
+        for path in SRC.rglob("*.py"):
+            rel = path.relative_to(SRC).as_posix()
+            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+                if not isinstance(node, ast.Call):
+                    continue
+                func = node.func
+                name = func.id if isinstance(func, ast.Name) else getattr(func, "attr", "")
+                if name == "is_direct_local_request":
+                    direct[rel] += 1
+                elif (
+                    name == "is_loopback"
+                    and node.args
+                    and "request.remote" in ast.unparse(node.args[0])
+                ):
+                    raw[rel] += 1
     return dict(direct), dict(raw)
 
 

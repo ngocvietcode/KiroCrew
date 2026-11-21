@@ -32,17 +32,6 @@ from kiro_crew.messaging.display_safety import canonicalize_display, severs_a_cr
 from kiro_crew.messaging.split import split_markdown_safe
 from kiro_crew.testing.wait import async_wait_until, await_until, finished
 
-
-@pytest.fixture
-def _structured_detectors_off():
-    from kiro_crew.security.redaction_structured import compat
-
-    before = compat.use_rule_table()
-    compat.publish_use_rule_table(False)
-    yield
-    compat.publish_use_rule_table(before)
-
-
 #: A synthetic GitHub token with a valid checksum: the plan redacts it whole, and
 #: neither half alone reads as a credential.
 _GH = github_classic(seed=64)
@@ -104,7 +93,7 @@ class TestRenderer:
         on_screen = [final[m] for m in mids]
         assert sum(t.count("The answer is Foo.") for t in on_screen) == 1
         # The reasoning note is its own delivered message.
-        assert any("💭" in t for t in on_screen)
+        assert any("Thinking:" in t for t in on_screen)
         # The later text is delivered, and does not re-prepend the shown answer.
         assert any("And here is more." in t and "The answer is Foo." not in t for t in on_screen)
 
@@ -139,7 +128,7 @@ class TestRenderer:
         # No spurious placeholder-only message.
         assert not any(t.strip().startswith("…") for t in on_screen)
         # The reasoning note is still delivered.
-        assert any("💭" in t for t in on_screen)
+        assert any("Thinking:" in t for t in on_screen)
 
     @pytest.mark.asyncio
     async def test_a_trailing_note_is_not_the_predecessor_of_the_bubble_above_it(self) -> None:
@@ -159,7 +148,7 @@ class TestRenderer:
         # At this point a live bubble is still open above the just-posted note.
         assert r._stream_mid is not None
         # The note did NOT displace the answer bubble as the graded predecessor.
-        assert "💭" not in r._sent_tail
+        assert "Thinking:" not in r._sent_tail
         await r.on_done()
         # And the finalized answer is intact (not corrupted by a note-seam grade).
         mids: list[str] = []
@@ -325,8 +314,8 @@ class TestRenderer:
         monkeypatch.setattr(r, "_limit", lambda: 60)
         await r.on_turn_start()
         # Blank code lines straddling the rotation cut, with more code AFTER
-        # them. The all-newline-tail case is already pinned above; this is the
-        # one the round-2 remainder deleted -- the cut lands on the run, the
+        # them. The all-newline-tail case is already pinned above; here the
+        # cut lands on the run, the
         # sealed side keeps the code, and the blank lines belong to the tail.
         await r.on_text_chunk("```py\n" + "x = 1\n" * 6 + "\n\n" + "y = 2\n" * 6)
         sealed = cli.sent[0][0]
@@ -445,7 +434,7 @@ class TestRenderer:
         r, cli = self._renderer()
         await r.on_turn_start()
         await r.on_done(stop_reason="error")
-        assert "⚠️" in cli.final_text()
+        assert "Error:" in cli.final_text()
 
     @pytest.mark.asyncio
     async def test_prompt_choice_sends_separate_approval_message(self) -> None:
@@ -1130,43 +1119,6 @@ class TestRotationSeamCredentialSafety:
             assert _redact_all(reading) == reading, f"key readable across frames: {frames}"
 
     @pytest.mark.asyncio
-    @pytest.mark.usefixtures("_structured_detectors_off")
-    async def test_a_held_image_ref_cannot_be_re_delivered_as_the_rejected_pair(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """The offset search grades the source; the rotation delivers source PLUS held.
-
-        A held image ref leaves the source under budget, so the search returns the whole
-        string and the frames rebuild the pair the gate just rejected. The delivered pair
-        is graded again, and the rotation sends nothing.
-
-        Covers the plan with the structured detectors off: the canonical form keeps
-        the image's ``!`` after ``SecretAccessKey=``, and the structured label reader
-        takes no value that starts with it, so with the detectors on the pair is
-        not a straddle at all.
-        """
-        limit = 100
-        head = "prose " * 10 + "SecretAccessKey="
-        held = "![my-secret-value](/tmp/kc-13494-missing.png)"
-        src = head + held
-        assert len(src) > limit, "fixture does not rotate"
-        assert len(head) <= limit, "fixture does not reach the search's early return"
-        assert _redact_all(head) == head and _redact_all(held) == held, "fixture leaks alone"
-        assert severs_a_credential(
-            [head, held], _redact_all, _delivered_form
-        ), "fixture is not a straddle, so the rotation never consults the search"
-
-        r, cli = self._renderer(monkeypatch, limit)
-        r._buf = [src]
-        await r._rotate_on_length()
-
-        assert cli.sent == [], "the rotation delivered the pair the gate rejected"
-        assert "".join(r._buf) == src, "withheld text must ride the next rotation intact"
-
-        await r._seal_current(extract_uploads=False)
-        self._assert_no_key_on_screen([_delivered_form(t) for t, _ in cli.sent])
-
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(("head", "tail"), CREDENTIAL_STRADDLE_SHAPES)
     async def test_a_straddled_credential_never_reaches_two_frames(
         self, monkeypatch: pytest.MonkeyPatch, head: str, tail: str
@@ -1329,8 +1281,9 @@ class TestRotationSeamCredentialSafety:
         cut lands inside the credential.
         """
         # Narrow the screen to the plain reading. The key hides in the link target,
-        # broken by a run of ``*``, so neither whole-text reading sees it; only the
-        # seal's split grading catches it.
+        # broken by line breaks and a run of blanks, so neither whole-text reading
+        # sees it; a cut there leaves two frames Discord shows trimmed and flush,
+        # so only the seal's split grading catches it.
         from kiro_crew.messaging import display_safety
         from kiro_crew.messaging import split as messaging_split
 
@@ -1344,7 +1297,8 @@ class TestRotationSeamCredentialSafety:
         src = (
             "a" * (DISCORD_MAX_TEXT - 100)
             + f"[l](https://x/{_GH[:4]}"
-            + "*" * 300
+            + "\n" * 3
+            + " " * 300
             + f"{_GH[4:]})"
             + "b" * 400
         )
@@ -1427,7 +1381,7 @@ class TestTheLiveBubbleSeamSurvivesItsEditLifecycle:
         await r.on_done()
 
         frames = self._screen(cli)
-        assert any("💭" in f for f in frames), "the reasoning note must be delivered"
+        assert any("Thinking:" in f for f in frames), "the reasoning note must be delivered"
         assert len(frames) >= 2, f"fixture delivered {len(frames)} frame(s); it grades no seam"
         self._assert_no_key_on_screen([_delivered_form(f) for f in frames])
 

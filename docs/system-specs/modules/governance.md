@@ -589,7 +589,21 @@ in an oss build). One fetch is the Kiro control plane's
   `agents` list), and the on/off `messaging`, `cron`, `memory_writes`, `theme_persona`,
   `tailnet_origin`, `browser_use` and `theme_install` to `capabilities.messaging`,
   `.cron`, `.memory_writes`, `.theme_persona`, `.tailnet_origin`, `.browse` and
-  `.theme_install`. A rule on a meta-capability
+  `.theme_install`. `harness_use` lands in `agent_backend` over the closed list `kas` /
+  `kiro` / `claude` with `kas` as the floor, so no rule shape reaches another
+  registered harness and a deny of `kas` has no effect. `app_use` (`<app>@<version>`)
+  lands in `app_versions` as written and in `apps` by app name; only a deny of every
+  version (`<app>@*`, or a bare name) takes the app away. `script_hook` lands in
+  `capabilities.script_hooks` (its `events` list). `skill`, `mcp` and `subagent` also
+  land in the one `capabilities.extension_install` gate, by kind (`skill:`, `mcp:`,
+  `agent:`): a scope-less allow, or an `allow all` / `allow builtin` copied onto them,
+  grants install of that kind (D13); an `mcp` grant installs a whole server only
+  (`server` or `server/*`); a `skill` rule lands by skill name, and the install seam
+  checks every skill a package holds (see "Extensions" below), but a named deny on
+  `skill` inside an allowed glob (no one-mode form), or any named deny on `subagent`
+  (an agent install id is a package), turns that kind's install off; plugin sync stays off. A row may
+  land in more than one key (`Managed.also`). Not read yet: `embedding_model_use`
+  (D13). A rule on a meta-capability
   (`all`, `builtin`, `filesystem`) reaches the managed capabilities beneath it in
   `acp/kas_permissions.py` `META_CAPABILITY_EXPANSION`; a deny on `all` reaches
   every managed capability, the stricter reading. An
@@ -1496,6 +1510,19 @@ ahead of the seed and `start_refresher`, so a failure in either does not take it
 `_shutdown` cancels it beside the refresher, so no re-projection starts into a closing
 gateway.
 
+Two MCP server names are never kept by `may_skip_gate`, with or without a ceiling, as a
+whole server, one tool or a wildcard: `@workspace` (`session_environment.WORKSPACE_SERVER_NAME`,
+a remote workspace's tools, which stand in for the floor-gated built-ins) and every
+`@connected-computer-<name>` (`session_environment.CONNECTED_MCP_SERVER_PREFIX`), a local MCP server a
+connected computer exposed (providers.md § Connected computers behaviors). Each call on one
+acts on a person's own computer, so it always reaches the PreToolUse gate and its approval;
+a declined approval means the bridge never writes the call. Any other server name keeps its
+answer, including `@computer-use` and any other name that does not start with the whole
+prefix. The `@connected-computer-` rule holds only while the `connected_computers` preview
+is on, read from the live config snapshot (`_connected_computers_may_run`; no snapshot
+keeps the rule): with the preview off no such server is mounted, and a person's own `connected-computer-*` server keeps its
+earlier answer.
+
 A builtin can also be governed by a **capability** rather than by its name:
 `BUILTIN_TOOL_CAPABILITIES` maps `use_subagent` to `capabilities.spawn`. A capability is not
 a `tools` rule, so the name check cannot see it, and an auto-approved spawn raises no
@@ -2021,6 +2048,12 @@ documented design choice — so the shell route rests on the OS sandbox, which s
 the agents dir. The registry leaf gets no seal, by maintainer decision (#14837): an
 `autoApprove` written there is honoured whoever wrote it, until the owner turns
 `mcp.honour_auto_approve` off ([security](security.md), "kiro-cli's MCP registry").
+kiro-cli's permission rule files (`permissions.yaml` / `permissions.json` under
+`~/.kiro/settings` and `~/.kiro/workspace-roots`) join the same tier only when the owner
+turns `mcp.protect_kiro_permission_rules` on; it is off by default ([security](security.md),
+"kiro-cli's tool auto-approve rules"). The owner changes both keys in Settings → Security →
+Safety switches, whose owner-gated route audits each change before it is written
+([security](security.md), "Owner's MCP safety switches").
 
 **The Bot folder `~/.kiro/mates/agents` and its state files beside it** (`owners.json`, `revoked-approvals.json`, `tool-access.json`, `migrated.json`) sit on the same write-only tier, also under `KIRO_HOME`. Only gateway handlers write them, directly rather than through the tool gate, so the agent's file-edit tools are refused and reads are unchanged.
 
@@ -2613,9 +2646,11 @@ read-your-writes should add it deliberately, with its own tests.
   blocks the tool, and a listed hook still meets the shell deny list and the
   sandbox; `hook_event_governance.hook_refusal`); inbound
   webhook sources in `webhook_sources.source_refusal` (the `webhooks` scope,
-  members `agent` for `POST /api/hooks/agent` and `ops-mission-control` for that
-  app's signal webhook; policy layer only, asked before the token or signature is
-  checked; with no policy each source keeps its own switch);
+  members `agent` for `POST /api/hooks/agent` and, through
+  `webhook_sources.app_source_refusal`, the name of each app whose manifest
+  declares `permissions.webhookSource` for that app's own route
+  (`app-kit-platform.md` section 42); policy layer only, asked before the token or
+  signature is checked; with no policy each source keeps its own switch);
   app activation in `apps.manager._app_activation_denied` (at `enable_app`).
 
 Plane A carries **no live ordinal clamp**. The computer-use governance model —
@@ -3244,16 +3279,29 @@ denial of this capability refuses even on an otherwise ungoverned host, and
 an unreadable ceiling or profile fails closed. Every grant, denial and evaluation
 error is emitted through `sel().log_governance_decision`, including the session,
 agent, capability and reason; audit failures never change the permission result),
-and `capabilities.credential_redaction_off` (opt-in, `capability_default=False`:
-on a host whose policy governs any scope, only a policy that names this row
-`enabled: true` lets the owner turn credential redaction off in the Files view.
+and `capabilities.credential_redaction_off` (opt-in, `capability_default=False`; it is the one
+credential-redaction row, whatever path the setting reaches: on a host whose policy governs any
+scope, credential redaction is ON, whatever the owner stored and whatever the default, unless the
+TOP policy tier names this row `enabled: true`.
 `security.redaction_switch.owner_may_disable` reads it at the policy layer only
-(`policy_level_control`, so an LTS build reads the baseline's off; a
-profile does not take part), and an unreadable ceiling keeps redaction on. A
-folded ceiling (`lower_tier_folded`) also keeps it on, even when the top tier
-named the row itself, because the fold does not say which tier did. What
-the switch then does is in [security](security.md), "Owner's credential-redaction
-switch").
+(`policy_level_control`, so an LTS build reads the baseline's off; a profile does not take
+part), an unreadable ceiling keeps redaction on, and a folded ceiling (`lower_tier_folded`)
+also keeps it on, even when the top tier named the row itself, because the fold does not say
+which tier named it. Every reader and writer returns the state in force under this rule; the
+PUT refuses OFF with 403 `credential_redaction_locked_by_policy` and a `governance_decision`
+row naming the row. What the setting then does is in [security](security.md), "Owner's
+credential-redaction setting"). The row governs the one setting on every path: it once let the
+owner read only the Files view raw, and the maintainer widened it on purpose, so a policy that
+already grants it now lets the owner turn all credential redaction off.
+`capabilities.credential_redaction_seams_off`, the row of the output-seams switch that setting
+absorbed, is retired (`governance_parts.catalog.RETIRED_SCOPES`): a policy or profile that still
+names it, nested under `capabilities` or as one flat dotted key, loads with a warning; a grant of it grants nothing, and any other value of it is read as
+a deny of `capabilities.credential_redaction_off`, so retiring the row never loosens a ceiling.
+An administrator's explicit deny of the retired row is never dropped: it denies the setting even
+beside a grant of `capabilities.credential_redaction_off`, in either order (tightest wins). The
+widening applies to grants only. A policy that names only retired rows still governs the host
+(`GovernanceCeiling.retired_rows`): their grant grants nothing, so the setting reads as ON until
+the policy grants `capabilities.credential_redaction_off`.
 Only the live `approval_mode` clamp remains reserved.
 
 The `commands` scope now **doubles as the enterprise force-pin** for built-in
@@ -3834,7 +3882,7 @@ seam. A policy pins the seam off MACHINE-WIDE with one object -- every surface, 
 {"version": 1, "capabilities": {"decisions": {"scopes": {"models": {"mode": "allow", "allow": ["jev-latest"]}, "points": {"mode": "deny", "deny": ["tool.risk"]}}}}}
 ```
 
-**Which decision models: the `providers` list.** A fourth inner ruleset, `providers` (`identifier`), is the per-model allow list: every decision model the picker offers has its own entry, by its picker id (`decisions/capability.py::provider_id`: `jev` for the hosted provider, each local preset id (`plumb-4b`, `strands-decider-2b`, `laya`), `sagemaker`; "No model" is never asked). Each is an exact check, never a host parse: `jev` is the configured address equal to the hosted default endpoint, a preset is the address the provider route builds for it, `sagemaker` is the `sagemaker://` scheme. The ids are stable policy ids: they are the ids the picker stores, a policy names them, and renaming one would silently turn an allow or deny into a no-op, so `test_decisions_provider_allowlist.py` pins the list. An endpoint the owner wrote by hand has no id and is not governed by the list (the row's `enabled` off switch and the `endpoints` list still apply to it). Every check that reads the row for the CONFIGURED provider asks that provider's entry too, inside the same policy-generation bracket (`capability.is_decisions_denied(provider=...)`): the send path (`gate._consented_for`), the consent and provider writes (`403 decisions_capability_denied`), the consent carry, the SageMaker connection test and the local runtime's resume. So a model the list refuses is neither selectable nor used, whichever writer named it in `config.json`, and the recorded consent stays in place but inert. `GET /api/decisions/provider` reports the per-model answer as `provider_permitted`, and the picker draws a refused model greyed with the administrator's wording. Like `models` and `endpoints` it binds the decision provider only, not the judge's LLM lane. A ceiling without the list permits every model. The row's `enabled` stays the full off switch, for which the card draws a plain notice, about this dashboard only, in place of its controls. Detail: [decisions](decisions.md) section 7.2.
+**Which decision models: the `providers` list.** A fourth inner ruleset, `providers` (`identifier`), is the per-model allow list: every decision model the picker offers has its own entry, by its picker id (`decisions/capability.py::provider_id`: `jev` for the hosted provider, each local preset id (`plumb-4b`, `strands-decider-2b`, `laya`), `sagemaker`; "No model" is never asked). Each is an exact check, never a host parse: `jev` is the configured address equal to the hosted default endpoint, a preset is the address the provider route builds for it, `sagemaker` is the `sagemaker://` scheme. The ids are stable policy ids: they are the ids the picker stores, a policy names them, and renaming one would silently turn an allow or deny into a no-op, so `test_decisions_provider_allowlist.py` pins the list. An endpoint the owner wrote by hand has no id and is not governed by the list (the row's `enabled` off switch and the `endpoints` list still apply to it); an LTS build refuses it outright (below). Every check that reads the row for the CONFIGURED provider asks that provider's entry too, inside the same policy-generation bracket (`capability.is_decisions_denied(provider=...)`): the send path (`gate._consented_for`), the consent and provider writes (`403 decisions_capability_denied`), the consent carry, the SageMaker connection test and the local runtime's resume. So a model the list refuses is neither selectable nor used, whichever writer named it in `config.json`, and the recorded consent stays in place but inert. `GET /api/decisions/provider` reports the per-model answer as `provider_permitted`, and the picker draws a refused model greyed with the administrator's wording. Like `models` and `endpoints` it binds the decision provider only, not the judge's LLM lane. A ceiling without the list permits every model. The row's `enabled` stays the full off switch, for which the card draws a plain notice, about this dashboard only, in place of its controls. Detail: [decisions](decisions.md) section 7.2.
 
 Only the exact hosted default endpoint counts as `jev`, so a fleet that wants the hosted host refused however it is spelled names it in the `endpoints` host list as well; the edition snippet carries both:
 
@@ -3842,19 +3890,25 @@ Only the exact hosted default endpoint counts as `jev`, so a fleet that wants th
 {"version": 1, "capabilities": {"decisions": {"scopes": {"providers": {"mode": "deny", "deny": ["jev"]}, "endpoints": {"mode": "deny", "deny": ["api.typesafe.ai"]}}}}}
 ```
 
+In an LTS build (RFC D13) hosted Jev is locked off whatever any tier says, and so are endpoints written by hand: `provider_id` answers `custom` for one, `clef` for Clef's exact documented address and model, and `capability.edition_refuses` refuses `jev` and `custom` before any row is read. `capability.targets_denied` also refuses any endpoint host under Jev's domain. The LTS baseline turns `capabilities.decisions` on with a `providers` allow list of the local presets, `sagemaker` and `clef` (`BASELINE_INNER_LISTS`, so a central policy that names the row but not the list keeps it). The wake judge's endpoint lane is never armed for a refused endpoint, so `auto` falls to the LLM lane and an explicit `jev` sends nothing.
+
 ### Extensions, app versions and developer mode — `capabilities.extension_install`, `app_versions`, `capabilities.app_dev_mode`
 
 Three keys from the RFC [crew-lts-edition](../../request-for-change/rfc-crew-lts-edition.md) appendix ("Extension install", "Extension uninstall", "Plugin sync", "App versions", "App developer mode"). `kiro_crew/extension_governance.py` is the one reader: each check asks `governance_permits` on the host key, fail-closed, and writes a SEL `governance_decision` row for a denial or a governed permit, so an ungoverned host records nothing new. In an LTS build an unnamed key answers the baseline, where all three are off; in the `oss` edition an unnamed key permits, as before.
 
 | Key | What it governs | Item asked | Where |
 |---|---|---|---|
-| `capabilities.extension_install` | Installing MCP servers, skills and agent packages, uninstalling them, and plugin sync, through the edition's `CapabilityManager` | install: `extensions:<kind>:<id>` (`mcp`, `skill`, `agent`, `plugin`); uninstall: the gate only | `platform/capability_bound.py::BoundedCapabilityManager`, the seam every caller of `current_context().capability_manager` goes through |
+| `capabilities.extension_install` | Installing MCP servers, skills and agent packages, uninstalling them, and plugin sync, through the edition's `CapabilityManager` | install: `extensions:<kind>:<id>` (`mcp`, `skill`, `agent`, `plugin`); uninstall: the gate only | `platform/capability_bound.py::BoundedCapabilityManager`, the seam every caller of `current_context().capability_manager` goes through; in an LTS build also the Discover installs, `dashboard/handlers/discover.py::api_skills_discover_install` and `mcp_discover.py::official_install_plan` |
 | `app_versions` (ruleset, `identifier`) | Which third-party app versions may be installed and loaded | `<app>@<version>` from the manifest, or the registration's own version when no manifest is sent, or, for an activation (boot, enable, restart) whose manifest names no version, the installed record's version (an install or update never falls back); with no readable (semver) version, such as none or a JSON `null`, any policy that governs the key refuses. The registry install's pre-clone admission skips the version (its manifest can be a stale local checkout); the clone-time admission asks it on the fetched manifest before the build or `onInstall` | `apps/admission.py::app_admission_denied`, run at install, update, boot, restart and enable; builtins stay exempt as for every admission rule |
 | `capabilities.app_dev_mode` | App developer mode: the toggle and every dev-mode read | the gate | `apps/dev_mode.py` (`set_dev_mode`, `is_dev_mode`, `is_dev_mode_cached`, `_load_dev_apps`) through `extension_governance.developer_mode_permitted`, which any other developer-mode switch reads too |
 
 The seam runs each check on `governance_executor`, off the event loop, because the profile store stats the profiles directory. The async registry install paths (`registry_pipeline/install.py`, `install_clone.py`) run `app_admission_denied` in a thread for the same reason; the self-managed registration, which stays on the loop, asks `admission.app_version_refusal` off the loop first and passes `version_checked=True` to `register_external_app`. `is_dev_mode_cached` (the UI hot path) reads only the in-memory set: `_load_dev_apps` and the off-loop cache writers filter it by the key, and the watcher re-reads it on the tick after the key's answer changes. A denial and a governed permit are audited; a permit nothing governs is not. In an LTS build with no ceiling and no profile, where `governance_permits` answers "ungoverned" (left to the LTS gate, see above), `extension_governance` asks `resolve` instead, so these three keys answer the baseline and stay off; other scopes are unchanged.
 
 Plugin sync asks `extensions:plugin:<package>` for each package `plugins_out_of_sync` reports, and refuses the whole sync if any is denied. A package that drifts between that read and the sync is not asked (a known gap). A refused dev-mode toggle answers `locked_by_policy` (409 over HTTP), audited as a denied `app_dev_mode` SEL row, as before.
+
+A skill install in an LTS build is judged by the skills the package holds, not by its package id (RFC D13): the policy's `skill` term names skills, and the install id is a package (`owner/repo`). With install on, the seam asks the edition's optional `skill_names(package)` op before anything is installed, then asks `extensions:skill:<name>` for each name (`extension_governance.skill_package_denied`). One denied name refuses the whole package, and the error names that skill. A package that cannot be listed (no `skill_names` op, an error, a timeout, an empty list or a name that is not a non-empty string) is refused, fail-closed. The `oss` edition still asks `extensions:skill:<package>` and never lists the package.
+
+In an LTS build the Discover installs ask the same key. `/api/skills/-/discover/install` (skills.sh, GitHub and edition providers) refuses with install off before it fetches anything. Otherwise it reads the skill names from the bundle's staged copy, the dot-prefixed folder the loader skips, and asks each one before the publish; a refusal removes the stage, so nothing is installed. The staged copy is read, not the bundle's own paths, so the names are the ones the publish would install (`./AGENTS.md` or `SKILL.md/` land as plain files, and an `AGENTS.md` is copied to `SKILL.md`). Each file named `SKILL.md`, in any case and at any depth, is one skill, named as the loader reads it (byte-order mark stripped): its frontmatter `name`, or else its catalog key (`<provider>/<slug>`, with any nested folders after it). A single-file install is judged on its one file before it is written. A bundle with no skill file is refused. The refusal answers 403 `blocked_by_policy`, its text redacted like other provider text. The official MCP registry plan (`official_install_plan`, read by `/api/mcp/discover/install` and by `resolve_server` for `request_capabilities` and `request_server`) asks `extensions:mcp:<registry id>` before it fetches the entry. The `oss` edition asks neither. A custom MCP server the user writes by hand (`/api/mcp/custom`) is not an install and stays with the `mcp` use row.
 
 ```json
 {"version": 1, "app_versions": {"mode": "allow", "allow": ["file-explorer@1.*"]}, "capabilities": {"extension_install": {"scopes": {"extensions": {"mode": "allow", "allow": ["mcp:github", "skill:*"]}}}, "app_dev_mode": {"enabled": false}}}
@@ -4255,7 +4309,11 @@ rule alone, in memory with no file read: a governance profile does not narrow th
 two modes, and one (or a policy `fallback`) that denies either is refused at load
 (`ScopeSpec.profile_always_permitted`), as before this scope governed them. While a ceiling is being installed and when the rule
 cannot be read, both are denied only if the installed ceiling
-has a rule refusing one of them; with no such rule they stay permitted. Set sites
+has a rule refusing one of them; with no such rule they stay permitted. Before any
+ceiling is installed, a read whose context cannot be composed
+(`PlatformCompositionError` on a non-standalone profile, or any other error) denies
+both, since the rule cannot be read; the failure is not cached, so the next read
+tries again. Set sites
 refuse a denied mode before any mutation: `api_chat_mode` and `apply_approval_mode`
 (every dashboard, cron `set_session_mode`, crewmate Profile and workflow write), the
 approval card's Trust and Trust-reads actions (`api_chat_slot_approve`), the crewmate
@@ -4443,13 +4501,18 @@ operation / item / reason are ALSO redacted via `redact_via_context` **before**
 `kirocrew policy {show | validate | explain <scope> <item> [--json] | explain --batch FILE | profile <name> | source | fetch [--force]}` —
 operator diagnostics; `source` and `fetch` are the central-distribution verbs. `show` reports the ceiling's **proven** provenance
 (`signed and verified` / `signed but UNVERIFIED` / `unsigned`) rather than a bare
-issuer string. `explain` traces the rule/layer/reason of `resolve(ceiling, profile, scope, item)` —
+issuer string. `validate` reads the profile store's unrecoverable set before it walks the
+profiles directory: a directory it could not list (a file at that path, or `EACCES`, recorded as a
+`<dir:...>` entry) prints INVALID and exits 1 under a policy ceiling, as the boot gate
+(`assert_profiles_within_ceiling`) would refuse it, and only warns on a standalone host; a missing
+directory still prints `(no profiles directory)`. `explain` traces the rule/layer/reason of `resolve(ceiling, profile, scope, item)` —
 the question `gate_decision`'s main loop asks of each pair, though its alias groups, deny-only
 aliases and `own_scopes` off-scope pairs refuse on an allow-mode miss less often (an explicit deny
 binds in all of them) — and, as `gate verdict`, `gate_decision` over the item read as a display
 title with no arguments, which ignores the scope. `--json` prints that answer as one object (the
 inputs plus `verdict`, `profile`, `rule`, `layer`, `reason`, `explicit_deny`, `gate_verdict`,
-`gate_reason`); `--batch FILE` (`-` = stdin; a path is read through `safe_read_file`) answers one
+`gate_reason`); `--batch FILE` (`-` = stdin, read as bytes and decoded as UTF-8 like a file, not in the console code
+page; a path is read through `safe_read_file`) answers one
 JSON Lines request per line (`scope`, `item`, optional `session_key`/`agent`/`app` defaulting to the
 flags; other keys ignored) in one boot, each record carrying its `line`, writes an error record
 `{"line", "error"}` for an unreadable line or unknown scope, and exits 1 at the end if any line
@@ -4552,9 +4615,10 @@ carve-out stay as code. It expects `CONTRACT_VERSION == 1` (pinned pre-launch).
   `apply_selectable_denials`.
 - `dashboard/handlers/acp_backend_status.py` — `GET /api/acp-backends`
   (selectability ∩ install state, owner-only).
-- `hooks.py` — the computer-use read-only auto-approve (`_cu_read_only_auto_approve`,
-  which reads the action-class table rather than a governance row); the Plane A gate
-  threading is the tool gate's `governance` tier in `hook_runtime/gate_tiers.py`.
+- `hook_runtime/tool_identity.py` — the computer-use read-only auto-approve
+  (`_cu_read_only_auto_approve`, which reads the action-class table rather than a
+  governance row); the Plane A gate threading is the tool gate's `governance` tier in
+  `hook_runtime/gate_tiers.py`.
 - `sel.py` — `log_governance_decision`.
 - `messaging/identity.py` — `channel_inbound_permitted` (the per-message inbound
   `channels` gate) + its SEL audit disposition.

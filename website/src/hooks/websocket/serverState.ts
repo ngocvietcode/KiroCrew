@@ -9,7 +9,7 @@ import type { AppDispatch } from '../../store'
 import { patchSlotSourceLinks } from '../../store/dashboardSlice'
 import { purgeDocumentBodiesForRedactionChange } from '../usePanelTabs'
 import { isArtifactEditing } from '../../utils/artifactEditGuard'
-import { api } from '../../api/client'
+import { api, type CredentialRedactionState } from '../../api/client'
 // From the leaf module, not `api/client`: the many tests that mock the client
 // do not export ApiError, and an `instanceof` against a missing mock export
 // throws inside the reconnect heal's own catch.
@@ -59,11 +59,10 @@ export async function healRedactionSwitchAfterReconnect(qc: QueryClient): Promis
   }
   if (!after) return
   const moved = before !== undefined && after.enabled !== before.enabled
-  // Unknown position and ON: purge only if the switch has EVER been flipped
-  // (`changed_at` set). In the shipped default -- ON, never flipped, Settings
-  // never opened -- no raw body can exist, and a transient drop must not close
-  // every diff tab and empty every clean file body for nothing.
-  const unknownAndNowOn = before === undefined && after.enabled && !!after.changed_at
+  // Unknown position and ON: purge. The shipped default is OFF, so a file opened raw may be
+  // on screen even though the setting was never flipped; the gateway only reports ON here
+  // when the owner or a policy made it so.
+  const unknownAndNowOn = before === undefined && after.enabled
   if (moved || unknownAndNowOn) purgeDocumentBodiesForRedactionChange(qc)
 }
 
@@ -116,6 +115,10 @@ const ALL_TARGETS: readonly RefreshTarget[] = [
   TEMPLATES_TARGET,
   { queryKey: ['workspaces'] },
   { queryKey: ['kirocrewConfig'] },
+  // The Security panel's safety switches live in config.json; a save from
+  // another tab reaches this one only through the config refresh frame.
+  { queryKey: ['safety-switches'] },
+  { queryKey: ['mcp-tool-grants'] },
   // These answers derive from the config AND, for an `auto` default, the
   // installed agent spec rebuilt by the server's config applier. A refresh
   // frame is emitted only after that applier completes, so invalidate the
@@ -140,6 +143,18 @@ const ALL_TARGETS: readonly RefreshTarget[] = [
 const NARROW_KINDS: Readonly<Record<string, readonly RefreshTarget[]>> = {
   crons: [...CRON_TARGETS, TEMPLATES_TARGET],
   cron_history: CRON_TARGETS,
+}
+
+/** Invalidate one cache a frame made stale. The crew registry (and the roster under
+ *  it) is marked stale but not read while the tab is hidden: nobody sees it, and the
+ *  focus manager re-reads a stale query the moment the tab is shown again. Every other
+ *  cache re-reads at once, as before. */
+function invalidateTarget(qc: QueryClient, target: RefreshTarget): void {
+  if (target === CREW_TARGET && typeof document !== 'undefined' && document.hidden) {
+    qc.invalidateQueries({ ...target, refetchType: 'none' })
+  } else {
+    qc.invalidateQueries(target)
+  }
 }
 
 const sameTarget = (a: RefreshTarget, b: RefreshTarget) =>
@@ -199,9 +214,25 @@ function scheduleTurnEndCronRefresh(qc: QueryClient, onCronsStale?: () => void):
     turnEndOthersPending = false
     turnEndOthersNotify = undefined
     turnEndOthersAt = Date.now()
-    if (client) for (const target of ALL_TARGETS) if (!CRON_TARGETS.includes(target)) client.invalidateQueries(target)
+    if (client) for (const target of ALL_TARGETS) if (!CRON_TARGETS.includes(target)) invalidateTarget(client, target)
     others?.()
   }, TURN_END_CRON_REFRESH_MS)
+}
+
+/** Kinds whose writers touch no agent and no crewmate: a cron run, a lesson, a task
+ *  runner state, an update notice. Every one is announced by the gateway code that
+ *  wrote it. A frame made only of these leaves the crew registry and the roster
+ *  alone, so neither re-reads for it. The crons are the busy ones: a run pushes a
+ *  frame when it starts and when it ends. */
+const REGISTRY_NEUTRAL_KINDS: readonly string[] = [
+  'crons', 'cron_history', 'lessons', 'taskrunner', 'update_available', 'update_failed', 'updating',
+]
+
+/** Whether a `refresh` frame can have changed an agent, a template or a crewmate.
+ *  True for a frame with no kinds and for a kind this client does not know: only a
+ *  frame made entirely of known neutral kinds is ruled out. */
+export function refreshMayChangeRegistry(kinds?: readonly string[]): boolean {
+  return !kinds?.length || !kinds.every(kind => REGISTRY_NEUTRAL_KINDS.includes(kind))
 }
 
 /** `turn_end` ends a turn; `history` follows a close or a delete. */
@@ -239,20 +270,22 @@ export function invalidateRefreshQueries(
   if (!narrow) {
     const turnEnd = isTurnEndOnly(kinds)
     const held = turnEnd && Date.now() - turnEndOthersAt < TURN_END_CRON_REFRESH_MS
+    const registryUntouched = !refreshMayChangeRegistry(kinds)
     if (held) {
       turnEndOthersPending = true
       turnEndOthersNotify = onOthersStale
     } else {
-      // Everything is re-read below: a re-read owed to an earlier frame is paid.
-      turnEndOthersPending = false
+      // Everything is re-read below, so a re-read owed to an earlier frame is paid,
+      // except the registry's when this frame leaves it alone: that stays owed.
+      if (!registryUntouched) turnEndOthersPending = false
       if (turnEnd) turnEndOthersAt = Date.now()
       onOthersStale?.()
     }
     for (const target of ALL_TARGETS) {
-      if (held || (turnEnd && CRON_TARGETS.includes(target))) {
+      if (held || (turnEnd && CRON_TARGETS.includes(target)) || (registryUntouched && target === CREW_TARGET)) {
         qc.invalidateQueries({ ...target, predicate: query => query.state.status === 'error' })
       } else {
-        qc.invalidateQueries(target)
+        invalidateTarget(qc, target)
       }
     }
     if (turnEnd) scheduleTurnEndCronRefresh(qc, onCronsStale)
@@ -310,6 +343,8 @@ export function refreshServerStateAfterReconnect(queryClient: QueryClient): void
   // another tab, which is how the update switches learn of it) was never
   // delivered either. Only observed readers refetch.
   queryClient.invalidateQueries({ queryKey: ['kirocrewConfig'] })
+  queryClient.invalidateQueries({ queryKey: ['safety-switches'] })
+  queryClient.invalidateQueries({ queryKey: ['mcp-tool-grants'] })
   // The runtime monitor contract is fetched once with no staleTime, so a
   // gateway restart that registered a contributed monitor kind while the
   // socket was down would otherwise never refresh: its monitors would read as
@@ -366,6 +401,15 @@ export function refreshServerStateAfterReconnect(queryClient: QueryClient): void
   // itself on this same reconnect (and must NOT be cleared here — it
   // holds the pane, and the draft typed into it).
   forgetUnobservedMemberThreads(queryClient)
+  // A read that failed while the socket was down (the gateway or the relay's
+  // host was gone) and never held a value shows its panel's error: refetch it,
+  // on every client, so the panels come back with the connection. Only those:
+  // a query that kept its last value may sit under an unsaved draft, which a
+  // refetch would overwrite (the same rule as the auth recovery in
+  // api/client.ts).
+  for (const client of new Set([queryClient, ...recoverableQueryClients()])) {
+    void client.invalidateQueries({ predicate: q => q.state.status === 'error' && q.state.data === undefined })
+  }
 }
 
 /** The owner flipped the credential-redaction switch, possibly in ANOTHER
@@ -374,13 +418,21 @@ export function refreshServerStateAfterReconnect(queryClient: QueryClient): void
  *  side-panel tabs) and re-read the switch, so no dashboard document keeps
  *  showing raw credentials after redaction is back on. Owner sockets only
  *  receive this frame. */
-export function handleCredentialRedactionChanged(queryClient: QueryClient, d: { enabled?: unknown; changed_at?: unknown } | undefined): void {
+export function handleCredentialRedactionChanged(queryClient: QueryClient, d: { enabled?: unknown; changed_at?: unknown; locked_by_policy?: unknown } | undefined): void {
   // Seed the switch entry from the frame's own payload FIRST, so a
   // document that never mounted the Settings card still knows the
   // position it now runs under (the reconnect heal compares against
-  // it); the invalidate then re-reads the authoritative record.
+  // it); the invalidate then re-reads the authoritative record. A frame
+  // that does not say whether a policy locks the switch keeps the lock
+  // this document already read, so an open Settings card never shows a
+  // locked switch as movable while the re-read is in flight.
   if (d && typeof d.enabled === 'boolean') {
-    queryClient.setQueryData(['credential-redaction'], { enabled: d.enabled, changed_at: typeof d.changed_at === 'string' ? d.changed_at : '' })
+    const enabled = d.enabled
+    queryClient.setQueryData<CredentialRedactionState>(['credential-redaction'], prev => ({
+      enabled,
+      changed_at: typeof d.changed_at === 'string' ? d.changed_at : '',
+      locked_by_policy: typeof d.locked_by_policy === 'boolean' ? d.locked_by_policy : prev?.locked_by_policy === true,
+    }))
   }
   queryClient.invalidateQueries({ queryKey: ['credential-redaction'] })
   purgeDocumentBodiesForRedactionChange(queryClient)

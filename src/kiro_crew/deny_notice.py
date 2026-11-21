@@ -54,14 +54,22 @@ logger = logging.getLogger(__name__)
 #: them, which is the half doing the actual work of overwriting the model's wrong
 #: conclusion.
 
+#: What to do after a safety-policy block, shared with the dashboard's refusal
+#: recovery prompt (``dashboard.state_parts.injected_turns``): reroute to a path
+#: that does not reach the same effect, else hand over the exact step and go on.
+POLICY_REROUTE_TEXT = (
+    "use an allowed alternative that does not reach the same effect (for a shell "
+    "command, a read-only variant; for a publish, a branch and a pull request), or "
+    "— if none is left — say what you tried, give the exact step a person would "
+    "run, and continue with what you can do without it."
+)
+
 #: cause → (clause completing "The tool call you just made …", what to do next).
 _DENY_CAUSE_TEXT: dict[str, tuple[str, str]] = {
     DENY_CAUSE_POLICY: (
         "was blocked by a Kiro Crew safety policy before any of it ran: if it "
         "chained several shell commands, none of them ran, the earlier ones included",
-        "use an allowed alternative (for a shell command, a read-only variant), use "
-        "a different tool, or — if the block is correct and you genuinely cannot "
-        "proceed — say so and stop with the reason.",
+        POLICY_REROUTE_TEXT,
     ),
     DENY_CAUSE_SURFACE_POLICY: (
         "was refused by the tool policy of the surface this turn runs on, not by a "
@@ -367,7 +375,7 @@ async def steer_notice_into_refused_turn(
 
 #: How many times one sub-agent run resumes a turn its backend ended because the
 #: host refused a call. Each resume is a fresh model turn that may hit the gate
-#: again, so the count is bounded; past it the cancelled ending stands.
+#: again, so the count is bounded; past it the backend's ending stands.
 REFUSED_TURN_RESUME_MAX = 3
 
 
@@ -377,8 +385,11 @@ def build_refused_turn_resume_prompt(title: str, reason: str, *, cause: str) -> 
     Codex answers its only reject option for a shell command (``cancel``,
     ``ReviewDecision::Abort``) by aborting the WHOLE turn, so the steered notice
     never reaches a model inference and the model is left with ``aborted by
-    user``. The sub-agent run sends this as the next prompt on the same session
-    instead: the same notice, plus the fact that the turn was stopped. *title*
+    user``. opencode answers a reject by closing the call with its stock "user
+    rejected permission" text and ending the turn ``end_turn``, so the model
+    never reads the reason either. The sub-agent run sends this as the next
+    prompt on the same session instead: the same notice, plus the fact that the
+    turn was stopped. *title*
     and *reason* are redacted here, as :func:`steer_refusal_notice` does.
     Returns ``""`` when there is nothing to say.
     """

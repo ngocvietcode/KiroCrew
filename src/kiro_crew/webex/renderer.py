@@ -12,7 +12,7 @@ The budget is therefore split once, explicitly: ``_STATUS_EDIT_BUDGET`` frames
 of progress and ``_RESERVED_FINAL_EDITS`` held back so the final answer always
 has an edit left.
 
-* ``on_turn_start`` -- posts a "🤔 Thinking…" placeholder message.
+* ``on_turn_start`` -- posts a "Thinking…" placeholder message.
 * ``on_text_chunk`` -- buffered, and the buffer's tail rides the next status
   frame so a long agentic turn shows the answer forming rather than a bare tool
   name followed minutes later by everything at once.
@@ -72,12 +72,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Webex allows 10 edits per message. Split that budget ONCE, here, so the
-# arithmetic is readable rather than implied by a single constant: status frames
-# get the first slice and the rest is held back for the final answer. A status
-# frame that FAILS burns the whole remaining status budget (an edit-cap or
-# rate-limit 400 means further status edits will fail too), so the final edit
-# can never race the cap.
+# Webex allows 10 edits per message, split here: status frames get the first
+# slice, the rest is kept for the final answer. A FAILED status edit spends the
+# whole status budget (an edit-cap or rate-limit 400 means more would fail too),
+# so the final edit never races the cap.
 _WEBEX_EDIT_CAP = 10
 # One edit for the answer itself, plus one of margin: a follow-up chunk is a new
 # message rather than an edit, so the answer path spends exactly one.
@@ -159,21 +157,21 @@ def webex_display_safe(text: str) -> str:
 
 
 # Placeholder shown immediately while the agent is still generating.
-_THINKING = "🤔 Thinking…"
+_THINKING = "Thinking…"
 
-_ERROR_TEXT = "⚠️ Something went wrong — please try again."
+_ERROR_TEXT = "Error: Something went wrong — please try again."
 
-_STEER_NOTE = "↪️ _folded in your mid-turn message._"
+_STEER_NOTE = "↪ _folded in your mid-turn message._"
 
 # Shown when a follow-up chunk of a multi-message answer could not be delivered.
 # Without it the answer simply stops mid-sentence and anything posted after it (an
 # upload, a choice card) reads as attached to a reply the user believes is whole.
-_TRUNCATED_NOTE = "⚠️ _The rest of this answer could not be delivered — ask me to continue._"
+_TRUNCATED_NOTE = "Warning: _The rest of this answer could not be delivered — ask me to continue._"
 
 # Header for the reference-restoring message after a failed upload. Extraction has
 # already taken the markup out of the answer, so without this the file is missing
 # AND unmentioned.
-_UPLOAD_FAILED_HEADER = "⚠️ Couldn't upload these — they're on the machine at:"
+_UPLOAD_FAILED_HEADER = "Warning: Couldn't upload these — they're on the machine at:"
 
 # Lead-in on the choice card's message. Webex REQUIRES text or markdown alongside
 # a card, and that text is what a client which cannot render one receives — so the
@@ -358,7 +356,7 @@ class WebexRenderer(Renderer):
         # affordance, and it always ships. The card rides alongside it because the
         # inbound half of a press travels over the undocumented device websocket:
         # if that frame never arrives, a typed 1/2 still resolves the prompt.
-        text = f"🔐 Approve `{tool}`?\n\nReply **1** to approve or **2** to deny."
+        text = f"Approve `{tool}`?\n\nReply **1** to approve or **2** to deny."
         attachments = None
         if self.capabilities.rich_blocks and self._mint_approval_nonce is not None:
             # The nonce is minted by the approval REGISTRY, against the pending
@@ -429,12 +427,12 @@ class WebexRenderer(Renderer):
         content = webex_display_safe(body) or ("…" if ok else _ERROR_TEXT)
         if self._steered:
             content = f"{content}\n\n{_STEER_NOTE}"
-        # Byte-aware and fence-aware: Webex caps messages in UTF-8 bytes and
-        # tail-truncates anything larger, and nothing upstream seals a code fence,
-        # so a cut inside a fence closes it in one chunk and reopens it in the next.
-        # Off-loop: the redacting grade rescans per candidate boundary and can hold
-        # the thread for seconds, and the watchdog exits the process when the one
-        # shared loop goes quiet. ``_bounded_chunks`` re-cuts a whole-text answer.
+        # Byte-aware (Webex caps messages in UTF-8 bytes and tail-truncates the
+        # rest) and fence-aware (a cut inside a code fence closes it in one chunk
+        # and reopens it in the next). Off-loop: the redacting grade rescans each
+        # candidate boundary and can take seconds, and the watchdog exits the
+        # process when the shared loop stalls. ``_bounded_chunks`` re-cuts a
+        # whole-text answer.
         chunks = await asyncio.to_thread(_bounded_chunks, content) or ["…"]
         # The chunks that ship, not the source they were cut from: a boundary repair
         # can add a placeholder of its own, which the notice below has to count.
@@ -476,13 +474,12 @@ class WebexRenderer(Renderer):
         if uploads:
             await self._report_failed_uploads(await self._send_uploads(uploads))
         if card is not None:
-            # Its own message, threaded with the answer: Webex refuses to edit a
-            # message that carries an attachment, so folding the card in would
-            # forfeit the answer's edit and leave the card unretireable. The
-            # numbered choices ride the card message's markdown, the fallback Webex
-            # requires beside an attachment, so a client that cannot render cards
-            # still sees them (cards.py: a card is never the only affordance). The
-            # numbers match the button order.
+            # A separate message, threaded with the answer: Webex will not edit a
+            # message with an attachment, so a card folded into the answer would
+            # block its edit and could never be retired. The numbered choices go
+            # in the card message's markdown (the fallback Webex requires next to
+            # an attachment), so clients without cards still see them; numbers
+            # match the button order.
             sent = await self._client.send_message(
                 self._room_id,
                 self._numbered_text(_CHOICE_PROMPT, kept),
@@ -499,13 +496,10 @@ class WebexRenderer(Renderer):
                     self._numbered_text("", kept).lstrip("\n"),
                     parent_id=self._thread_id,
                 )
-        # Post-answer redaction notice, counted over the assembled answer the
-        # chunks above were cut from (the reference shape iMessage uses). A
-        # follow-up chunk that failed already announced its truncation, so a
-        # count over the full content can at most describe a placeholder the
-        # reader did not receive — the safe direction. Best-effort by the
-        # shared contract: the answer is out, so a failed notice send is
-        # logged, never raised.
+        # Redaction notice, counted over the whole answer the chunks came from
+        # (as iMessage does). If a follow-up chunk failed, the count may include
+        # a placeholder the reader never got, which errs safe. Best-effort: the
+        # answer is out, so a failed send is logged, never raised.
         cred_count, url_count = count_redaction_tags(delivered_text)
         if cred_count or url_count:
             try:
@@ -574,7 +568,7 @@ class WebexRenderer(Renderer):
         """
         parts = []
         if self._tool:
-            parts.append(f"🔧 Running: {self._tool}…")
+            parts.append(f"Running: {self._tool}…")
         tail = self.text()
         if tail and self._uploads_enabled():
             # Hide a local path the final answer will turn into an upload, so it

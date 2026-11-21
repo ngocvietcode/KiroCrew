@@ -124,10 +124,37 @@ class TestTheManifestField:
                 "agentReadOnlyDirs": [entry, "d"],
             }
         )
-        errors = [e for e in manifest.validate() if "credentialMasks file" in e]
+        errors = [e for e in manifest.validate() if "credentialMasks entry" in e]
         assert errors == [
-            "agentReadOnlyDirs[0] must not be or sit beneath a credentialMasks file (private)"
+            "agentReadOnlyDirs[0] must not be or sit beneath a credentialMasks entry (private)"
         ]
+
+    @pytest.mark.parametrize("entry", ["state", "state/inner"])
+    def test_a_dir_at_or_beneath_a_masked_directory_refuses_the_manifest(self, entry):
+        """A masked directory hides what is under it, so a read-only seal there fences nothing."""
+        manifest = AppManifest.from_dict(
+            {
+                "name": "demo",
+                "version": "1.0.0",
+                "credentialMasks": ["state/"],
+                "agentReadOnlyDirs": [entry, "d"],
+            }
+        )
+        errors = [e for e in manifest.validate() if "credentialMasks entry" in e]
+        assert errors == [
+            "agentReadOnlyDirs[0] must not be or sit beneath a credentialMasks entry (state/)"
+        ]
+
+    def test_a_trailing_slash_is_not_a_read_only_directory_form(self):
+        """Only ``credentialMasks`` has directory entries; here ``/`` is an empty segment."""
+        manifest = AppManifest.from_dict(
+            {"name": "demo", "version": "1.0.0", "agentReadOnlyDirs": ["notes/", "ok"]}
+        )
+        assert manifest.agentReadOnlyDirs == ["ok"]
+        assert any(
+            e.startswith("agentReadOnlyDirs[0] must not contain an empty")
+            for e in manifest.validate()
+        )
 
     def test_both_built_ins_declare_the_directories_core_used_to_fence(self):
         assert agent_readonly_dirs.declared_dirs(installed=False) == {
@@ -177,10 +204,10 @@ class TestTheDeclarationsAreListedWithinADeadline:
 
     @pytest.fixture(autouse=True)
     def _fresh_listing(self, _floor_monkeypatch):
-        _floor_monkeypatch.setattr(paths_targets, "_app_readonly_rows_cache", None)
-        _floor_monkeypatch.setattr(paths_targets, "_app_readonly_rows_pending", None)
+        _floor_monkeypatch.setattr(paths_targets._APP_READONLY_ROWS, "cache", None)
+        _floor_monkeypatch.setattr(paths_targets._APP_READONLY_ROWS, "pending", None)
         self.now = 1000.0
-        _floor_monkeypatch.setattr(paths_targets, "_app_readonly_rows_clock", lambda: self.now)
+        _floor_monkeypatch.setattr(paths_targets, "_app_rows_clock", lambda: self.now)
 
     def _counting_listing(self, monkeypatch, *, gate: threading.Event | None = None):
         listed = paths_targets._list_app_readonly_dir_rows
@@ -199,9 +226,9 @@ class TestTheDeclarationsAreListedWithinADeadline:
     def _let_the_listing_finish():
         # The pool may start a held listing only after every check has refused, so count
         # its starts once it has run.
-        pending = paths_targets._app_readonly_rows_pending
+        pending = paths_targets._APP_READONLY_ROWS.pending
         if pending is not None:
-            pending[1].result(FALLBACK_TIMEOUT_SECS)
+            pending[2].result(FALLBACK_TIMEOUT_SECS)
 
     def test_the_listing_runs_off_the_loop_and_is_reused_until_it_expires(self, home, monkeypatch):
         monkeypatch.setenv("KIROCREW_HOME", str(home))
@@ -216,7 +243,7 @@ class TestTheDeclarationsAreListedWithinADeadline:
         assert all(r and not security.is_unverifiable_path_refusal(r) for r in refusals)
         assert len(threads) == 1 and threads[0] != loop_thread
 
-        self.now += paths_targets._APP_READONLY_ROWS_TTL_SECS
+        self.now += paths_targets._APP_ROWS_TTL_SECS
         _, refusals = asyncio.run(gate_twice())
         assert refusals[0] and len(threads) == 2, "an expired listing is taken again"
 
@@ -227,7 +254,7 @@ class TestTheDeclarationsAreListedWithinADeadline:
         sibling = str(home / "apps" / "demo" / "data" / "other.md")
         monkeypatch.setattr(
             paths_targets,
-            "_APP_READONLY_ROWS_BUDGET_SECS",
+            "_APP_ROWS_BUDGET_SECS",
             0.05,  # flake-ok: the listing is held until the test ends, so it always runs out
         )
         gate = threading.Event()
@@ -252,7 +279,7 @@ class TestTheDeclarationsAreListedWithinADeadline:
         inside = str(_install(home, "demo", ["notes"]) / "notes" / "n.md")
         monkeypatch.setattr(
             paths_targets,
-            "_APP_READONLY_ROWS_BUDGET_SECS",
+            "_APP_ROWS_BUDGET_SECS",
             0.05,  # flake-ok: the listing is held until the test ends, so it always runs out
         )
         gate = threading.Event()
@@ -268,7 +295,7 @@ class TestTheDeclarationsAreListedWithinADeadline:
             # A second full wait would outlast the join below: only a refusal at once returns.
             monkeypatch.setattr(
                 paths_targets,
-                "_APP_READONLY_ROWS_BUDGET_SECS",
+                "_APP_ROWS_BUDGET_SECS",
                 3600.0,  # flake-ok: never waited on; it only has to outlast the bounded join
             )
             caller.start()

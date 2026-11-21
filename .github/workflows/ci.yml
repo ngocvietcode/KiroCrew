@@ -1,10 +1,17 @@
 name: CI
 
 on:
+  # Release branches (`release/**`) get the same lanes as main: a backport PR
+  # and the push that lands it are tested like any change to main. No merge
+  # queue runs there, so a push to a release branch runs the full matrix,
+  # macOS boot leg included (see e2e-boot-matrix). Fast Gate, Build and the
+  # Internal Content Scan Gate carry the same filter, and pr-readiness.yml
+  # counts these lanes on a release base only when that branch's own copy of
+  # this line lists it.
   push:
-    branches: [main]
+    branches: [main, "release/**"]
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
   # The merge queue tests each PR against the main it will actually land on.
   # A merge_group run is what makes "every PR was green" imply "main is green".
   merge_group:
@@ -622,7 +629,11 @@ jobs:
     # (fast-gate.yml has a push trigger) and this job consumes it.
     if: github.event_name != 'push' || vars.MERGE_QUEUE_ENABLED != 'true' || github.actor != 'github-merge-queue[bot]'
     runs-on: ${{ github.repository == 'kirodotdev/KiroCrew' && contains(fromJSON(vars.CODEBUILD_ACTOR_IDS || '[]'), github.actor_id) && (github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize') && github.event.pull_request.head.repo.full_name == github.repository)) && format('codebuild-kirocrew-gha-linux-{0}-{1}', github.run_id, github.run_attempt) || github.repository == 'kirodotdev/KiroCrew' && 'kirocrew-linux-4-core' || 'ubuntu-latest' }}
-    timeout-minutes: 15
+    # Covers TOTAL_BUDGET (2100s, await-fast-gate.sh) plus CANCEL_WAIT, so
+    # the step reports its own verdict instead of being killed mid-poll. At
+    # 40 it is no longer than changes plus backend-lint (15 + 25), so the
+    # longest needs chain merge-queue-readiness.yml is sized to is unchanged.
+    timeout-minutes: 40
     permissions:
       # actions:read is what lets this read another workflow's runs. Job-level
       # permissions REPLACE the top-level grant, so contents:read is restated.
@@ -699,7 +710,9 @@ jobs:
     # it.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !(vars.MERGE_QUEUE_ENABLED == 'true' && github.actor == 'github-merge-queue[bot]')
     runs-on: ${{ github.repository == 'kirodotdev/KiroCrew' && contains(fromJSON(vars.CODEBUILD_ACTOR_IDS || '[]'), github.actor_id) && (github.event_name == 'push' || github.event_name == 'merge_group' || (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize') && github.event.pull_request.head.repo.full_name == github.repository)) && format('codebuild-kirocrew-gha-linux-{0}-{1}', github.run_id, github.run_attempt) || github.repository == 'kirodotdev/KiroCrew' && 'kirocrew-linux-4-core' || 'ubuntu-latest' }}
-    timeout-minutes: 15
+    # Covers the probe's TOTAL_BUDGET (2100s, await-fast-gate.sh) plus
+    # LAND_BUDGET, so a gate evicted late in that wait is still cancelled.
+    timeout-minutes: 40
     permissions:
       # actions:write is what lets this cancel its own run (it also covers the
       # probe's reads). Job-level permissions REPLACE the top-level grant, so
@@ -814,8 +827,11 @@ jobs:
       # routinely NEWER than the event's base.sha and `--is-ancestor` against
       # that single commit correctly says no. What restores the probe is a
       # bounded deepening of the base BRANCH, which is also what the three-dot
-      # fallback inside ratchet_scope needs. `main` and not base.ref because
-      # origin/main is the literal ref ratchet_scope looks for.
+      # fallback inside ratchet_scope needs. The base BRANCH, not base.sha:
+      # `main` on a PR to main, merge group or push to main, the release branch
+      # on a PR or push to `release/**`. ratchet_scope reads the same branch
+      # from GITHUB_BASE_REF / GITHUB_REF_NAME, so the ref fetched here is the
+      # one it probes.
       #
       # If the base has moved further than the window, unshallow instead of
       # accepting the whole-tree fallback, so this job is never WORSE than the
@@ -824,6 +840,8 @@ jobs:
       # against ~296 MiB for depth 2 plus a 50-commit base, and a live PR's
       # merge ref sat 8 commits behind main.
       - name: Give the baselined gates their diff base (bounded)
+        env:
+          BASE_BRANCH: ${{ github.base_ref || github.event_name == 'push' && github.ref_name || 'main' }}
         run: |
           # Nothing happens on a complete repository, and that is a guard, not
           # an optimisation: a `--depth` fetch TRUNCATES a complete clone to
@@ -832,10 +850,10 @@ jobs:
           # lines are ever run outside a fresh CI checkout (#17146). A complete
           # clone already has what the gates need.
           if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
-            git fetch --no-tags --quiet --depth=50 origin main
-            if ! git merge-base --is-ancestor HEAD^1 origin/main 2>/dev/null; then
+            git fetch --no-tags --quiet --depth=50 origin "$BASE_BRANCH"
+            if ! git merge-base --is-ancestor HEAD^1 "origin/$BASE_BRANCH" 2>/dev/null; then
               echo "::notice::the base moved past the 50-commit window; unshallowing so the gates stay diff-scoped."
-              git fetch --no-tags --quiet --unshallow origin main
+              git fetch --no-tags --quiet --unshallow origin "$BASE_BRANCH"
             fi
           fi
 
@@ -2343,6 +2361,7 @@ jobs:
             test/test_pinned_order_real_sandbox.py \
             test/test_md_notebook_real_sandbox.py \
             test/test_sandbox_hidden_leaf_parent_pins.py \
+            test/test_app_credential_mask_dirs.py \
             test/test_member_records_real_sandbox.py \
             test/test_seal_parent_pin_real_sandbox.py \
             test/test_stand_in_stage_real_sandbox.py \
@@ -2789,6 +2808,7 @@ jobs:
           pytest -v -n0 --no-cov --timeout=1200 -m real_adapter \
             --junitxml="$RUNNER_TEMP/real-adapter-results.xml" \
             test/test_codex_session_mcp.py \
+            test/test_codex_chat_runtime_sharing_real.py \
             test/test_codex_session_mcp_approval.py \
             test/test_codex_inner_sandbox_approval.py \
             test/test_opencode_session_mcp.py \
@@ -2831,7 +2851,7 @@ jobs:
       - name: Require every contract test to have executed
         if: always()
         env:
-          MEASURED_CONTRACT_FLOOR: "57"
+          MEASURED_CONTRACT_FLOOR: "58"
           XFAIL_MODULE: "test.test_real_adapter_harness_probe"
         run: |
           python3 - <<'PY'
@@ -3672,6 +3692,35 @@ jobs:
             exit 1
           }
 
+  # The exported metric schema (src/kiro_crew/metrics/schema_manifest.json) is
+  # append-only: a row, key or value at the merge base must still be there at
+  # head. Its own job, not a step in backend-ratchets, because it judges a
+  # change against a base rather than the whole tree (the Main Ratchet Audit
+  # mirrors backend-ratchets outright). Stdlib only, so no install.
+  metrics-schema-history:
+    name: Metric Schema Only Grows
+    needs: [changes, await-fast-gate]
+    if: needs.changes.outputs.only_frontend != 'true'
+    runs-on: ${{ startsWith(needs.changes.outputs.linux_runner, 'codebuild-') && format('codebuild-kirocrew-gha-linux-{0}-{1}', github.run_id, github.run_attempt) || needs.changes.outputs.linux_runner || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Check that the exported metric schema only grows
+        env:
+          METRICS_SCHEMA_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'merge_group' && github.event.merge_group.base_sha || github.event.before }}
+        run: |
+          METRICS_SCHEMA_BASE_REF="$(bash "$GITHUB_WORKSPACE/.github/scripts/resolve-i18n-base.sh" \
+            "$METRICS_SCHEMA_BASE_REF" 'the metric schema gate')" || exit 1
+          export METRICS_SCHEMA_BASE="$METRICS_SCHEMA_BASE_REF"
+          # Self-test first: a weakened rule fails here, not as a silent pass.
+          python3 scripts/check_metrics_schema_history.py --test
+          python3 scripts/check_metrics_schema_history.py
+
   cfn-lint:
     name: CloudFormation Lint
     needs: [changes, await-fast-gate]
@@ -4257,7 +4306,18 @@ jobs:
       - name: Install Playwright browser (Chromium)
         timeout-minutes: 6
         working-directory: website
-        run: npx playwright install chromium
+        # Playwright 1.58 has no ubuntu26.04 host entry, and the fork runner
+        # (kirocrew-linux-4-core) now boots ubuntu-26.04, so `install` refuses
+        # with "does not support chromium on ubuntu26.04-x64". On that
+        # image only, use the ubuntu24.04 build; GITHUB_ENV carries it to the
+        # steps that launch the browser. Every other host is left as it was.
+        run: |
+          if [ -r /etc/os-release ] && . /etc/os-release && [ "${ID:-}" = ubuntu ] && [ "${VERSION_ID%%.*}" -ge 26 ] 2>/dev/null; then
+            export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="ubuntu24.04-$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')"
+            echo "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=$PLAYWRIGHT_HOST_PLATFORM_OVERRIDE" >> "$GITHUB_ENV"
+            echo "ubuntu ${VERSION_ID}: Playwright host platform set to $PLAYWRIGHT_HOST_PLATFORM_OVERRIDE"
+          fi
+          npx playwright install chromium
 
       - name: Resolve base for the i18n render-time gate
         # The base must be fetched first because this checkout is shallow; the
@@ -4322,7 +4382,18 @@ jobs:
         working-directory: website
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/ms-playwright
-        run: npx playwright install chromium
+        # Playwright 1.58 has no ubuntu26.04 host entry, and the fork runner
+        # (kirocrew-linux-4-core) now boots ubuntu-26.04, so `install` refuses
+        # with "does not support chromium on ubuntu26.04-x64". On that
+        # image only, use the ubuntu24.04 build; GITHUB_ENV carries it to the
+        # steps that launch the browser. Every other host is left as it was.
+        run: |
+          if [ -r /etc/os-release ] && . /etc/os-release && [ "${ID:-}" = ubuntu ] && [ "${VERSION_ID%%.*}" -ge 26 ] 2>/dev/null; then
+            export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="ubuntu24.04-$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')"
+            echo "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=$PLAYWRIGHT_HOST_PLATFORM_OVERRIDE" >> "$GITHUB_ENV"
+            echo "ubuntu ${VERSION_ID}: Playwright host platform set to $PLAYWRIGHT_HOST_PLATFORM_OVERRIDE"
+          fi
+          npx playwright install chromium
 
       - name: Build the profiling bundle and check render budgets
         working-directory: website
@@ -4476,7 +4547,18 @@ jobs:
         timeout-minutes: 6
         shell: bash
         working-directory: website
-        run: npx playwright install chromium
+        # Playwright 1.58 has no ubuntu26.04 host entry, and the fork runner
+        # (kirocrew-linux-4-core) now boots ubuntu-26.04, so `install` refuses
+        # with "does not support chromium on ubuntu26.04-x64". On that
+        # image only, use the ubuntu24.04 build; GITHUB_ENV carries it to the
+        # steps that launch the browser. Every other host is left as it was.
+        run: |
+          if [ -r /etc/os-release ] && . /etc/os-release && [ "${ID:-}" = ubuntu ] && [ "${VERSION_ID%%.*}" -ge 26 ] 2>/dev/null; then
+            export PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="ubuntu24.04-$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')"
+            echo "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=$PLAYWRIGHT_HOST_PLATFORM_OVERRIDE" >> "$GITHUB_ENV"
+            echo "ubuntu ${VERSION_ID}: Playwright host platform set to $PLAYWRIGHT_HOST_PLATFORM_OVERRIDE"
+          fi
+          npx playwright install chromium
 
       - name: MCP-App message rows render both delivery states (asserting harness)
         # The same self-asserting harness that produced the PR's screenshot
@@ -4564,6 +4646,30 @@ jobs:
         working-directory: website
         run: node scripts/capture-transcript-row-style.mjs --serve "$RUNNER_TEMP/transcript-row-style"
 
+      # Samples host pressure every 5 s so a gateway ended by its own loop-stall
+      # watchdog can be told apart from a runner that stopped scheduling it.
+      # /proc/pressure and /proc/stat are host-wide inside the container; a gap
+      # in this log's own timestamps means the sampler was frozen too.
+      - name: Start the host pressure sampler
+        id: host-pressure-sampler
+        run: |
+          (
+            set +e
+            cg="/sys/fs/cgroup$(sed -n 's/^0:://p' /proc/self/cgroup)"
+            while :; do
+              echo "=== $(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+              for f in /proc/pressure/cpu /proc/pressure/io /proc/pressure/memory \
+                /proc/loadavg "$cg/cpu.stat" "$cg/memory.events"; do
+                echo "--- $f"
+                cat "$f" || echo "read failed: $f"
+              done
+              echo "--- /proc/stat"
+              grep '^cpu ' /proc/stat || echo "read failed: /proc/stat"
+              sleep 5
+            done
+          ) </dev/null >"$RUNNER_TEMP/e2e-host-pressure.log" 2>&1 &
+          echo "$!" >"$RUNNER_TEMP/e2e-host-pressure.pid"
+
       - name: Run E2E and dedicated memory UI evidence in parallel
         # Smoke and UI both read the staged production bundle and share only the
         # read-only dependency/browser installs, with separate homes, ports and
@@ -4590,6 +4696,16 @@ jobs:
           # cannot drift: 30 on the CodeBuild fleet, 40 on the hosted route.
           KIROCREW_E2E_JOB_TIMEOUT_MINUTES: ${{ startsWith(needs.changes.outputs.linux_runner_large, 'codebuild-') && 30 || 40 }}
         run: exec python scripts/ci_e2e_parallel.py
+
+      # Only after a started sampler: a job that failed before run-as-runner
+      # has no ci-shell, so a run step here could not even start.
+      - name: Stop the host pressure sampler
+        if: ${{ always() && steps.host-pressure-sampler.outcome == 'success' }}
+        run: |
+          pid_file="$RUNNER_TEMP/e2e-host-pressure.pid"
+          if [ -f "$pid_file" ]; then
+            kill "$(cat "$pid_file")" 2>/dev/null || echo "host pressure sampler already gone"
+          fi
 
       - name: Upload read-aloud recovery evidence
         if: ${{ always() }}
@@ -4635,6 +4751,15 @@ jobs:
           path: |
             website/test-results/
             website/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload host pressure samples
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-host-pressure
+          path: ${{ runner.temp }}/e2e-host-pressure.log
           if-no-files-found: ignore
           retention-days: 7
 

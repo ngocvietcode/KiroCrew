@@ -126,20 +126,6 @@ export const APP_MANIFEST_KEY: Record<string, ManifestKeys> = {
     useCases: ['apps.awsControl.manifest.use_case_1'],
     configuration: ['apps.awsControl.manifest.configuration_1'],
   },
-  'channels': {
-    displayName: 'apps.channels.manifest.display_name',
-    description: 'apps.channels.manifest.description',
-    pageLabel: 'apps.channels.manifest.page_label',
-    highlights: [
-      'apps.channels.manifest.highlight_1',
-      'apps.channels.manifest.highlight_2',
-      'apps.channels.manifest.highlight_3',
-      'apps.channels.manifest.highlight_4',
-      'apps.channels.manifest.highlight_5',
-    ],
-    useCases: ['apps.channels.manifest.use_case_1'],
-    configuration: ['apps.channels.manifest.configuration_1'],
-  },
   'code-review-sage': {
     displayName: 'apps.codeReviewSage.manifest.display_name',
     description: 'apps.codeReviewSage.manifest.description',
@@ -425,6 +411,8 @@ export type AppL10nCarrier = { l10n?: unknown; manifest?: unknown }
 const L10N_TEXT_CAPS = { displayName: 120, description: 1000, pageLabel: 60 } as const
 const L10N_MAX_HIGHLIGHTS = 12
 const L10N_MAX_HIGHLIGHT_CHARS = 300
+/** A string's length in characters (code points), the unit the manifest parser's caps use. */
+const charCount = (s: string) => [...s].length
 
 /** The reader's locale entries, most specific first: `pt-BR`, then `pt`. */
 function l10nEntries(app: AppL10nCarrier | undefined): Record<string, unknown>[] {
@@ -473,7 +461,7 @@ function l10nEntries(app: AppL10nCarrier | undefined): Record<string, unknown>[]
 export function appL10nText(app: AppL10nCarrier | undefined, field: keyof typeof L10N_TEXT_CAPS): string | undefined {
   for (const entry of l10nEntries(app)) {
     const value = entry[field]
-    if (typeof value === 'string' && value && value.length <= L10N_TEXT_CAPS[field]) return value
+    if (typeof value === 'string' && value && charCount(value) <= L10N_TEXT_CAPS[field]) return value
   }
   return undefined
 }
@@ -483,7 +471,7 @@ function appL10nHighlights(app: AppL10nCarrier | undefined): string[] | undefine
   for (const entry of l10nEntries(app)) {
     const value = entry.highlights
     if (Array.isArray(value) && value.length > 0 && value.length <= L10N_MAX_HIGHLIGHTS
-      && value.every(item => typeof item === 'string' && item.length <= L10N_MAX_HIGHLIGHT_CHARS)) {
+      && value.every(item => typeof item === 'string' && charCount(item) <= L10N_MAX_HIGHLIGHT_CHARS)) {
       return value as string[]
     }
   }

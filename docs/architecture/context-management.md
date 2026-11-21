@@ -36,6 +36,21 @@ separately sourced strings and returns them joined.
 the middle — the part wrapped in `[SESSION CONTEXT …]`, and the only part injected
 once rather than per turn.
 
+**When a memory provider answers.** `build_session_context` asks
+`memory_provider.chokepoints.session_route` once. On the default config that is the
+builtin route and every block below is built as written. In `replace` mode the memory
+and lessons family comes from the provider's `context` items instead, rendered by
+`memory_provider/render.py` into the same frames and budgets (preferences and facts,
+the activity index, the background activity block, `[Learned corrections]`,
+`[Learned experience]`, `[Memory tools]` naming the provider), with every item scrubbed
+like recalled text; a provider that cannot answer leaves `[Memory unavailable] ...` and
+Crew's stores are not read. In `augment` mode one `[Memory from <name> (read-only)]`
+background block follows Crew's own, at most a quarter of the pool. A read-blocked
+(temporary) build asks nothing. A provider's `document` item (Global V1's
+`preferences.md` or `projects.md`, moved whole) renders where Crew renders that file. In
+`replace` mode a harness that reads `_meta.kiro.settings` is spawned with its own memory
+switched off, so no second memory adds a block of its own.
+
 ### Block order
 
 Each block is a bracket marker that is also a contract with the model.
@@ -61,7 +76,7 @@ begin on its own line; the assembly newline-terminates the caller's
 | 9 | `[USER PROFILE]` | onboarding answers in config | non-empty, `lessons` group |
 | 10 | `[WORKSPACE IDENTITY]` | `workspace_dir_for` | `kirocrew` agent only |
 | 11 | `[DOCUMENTATION]` | `_build_docs_section`, the packaged docs dir | `kirocrew` agent, `project` group |
-| 12 | `[Steering resources]` | `_load_steering_resources` → `file://*.md` in `~/.kiro/agents/kirocrew.json`, each anchored as kiro-cli anchors it (relative at the session's project, else `$HOME`; `~/` at `$HOME`; absolute at its own prefix), plus kiro-cli's inherited defaults (global steering; the project's steering and `AGENTS.md` when one is bound, except on Codex, which reads `AGENTS.md` from its working directory), front matter stripped; a `manual`/`auto`/`fileMatch` document withheld (`folder_steering.every_session_body`); gated by `context_assembly/inclusion.py` → `steering_resources_part` | **Claude Code and Codex backends** (`ACP_BACKENDS_CREW_LOADS_SPEC_STEERING`), `kirocrew` agent, `project` group, not a member chat; re-sent after a compaction (§2, item 8) |
+| 12 | `[Steering resources]` | `_load_steering_resources` → `file://*.md` in `~/.kiro/agents/kirocrew.json`, each anchored as kiro-cli anchors it (relative at the session's project, else `$HOME`; `~/` at `$HOME`; absolute at its own prefix), plus kiro-cli's inherited defaults (global steering; the project's steering and `AGENTS.md` when one is bound, except on Codex, OpenCode and Pi, which read `AGENTS.md` from their working directory), front matter stripped; a `manual`/`auto`/`fileMatch` document withheld (`folder_steering.every_session_body`); gated by `context_assembly/inclusion.py` → `steering_resources_part` | **Claude Code, Codex, OpenCode and Pi backends** (`ACP_BACKENDS_CREW_LOADS_SPEC_STEERING`), `kirocrew` agent, `project` group, not a member chat; re-sent after a compaction (§2, item 8) |
 | 13 | `[THREAD CONVERSATION HISTORY]` | `build_session_replay` (lossless, newest first), else `_recall_rows` truncation | new, non-resumed session |
 | 14 | `[PREVIOUS TURN WAS CANCELLED …]` | `_build_stop_event_notes` | recent user stop |
 | 15 | `[Memory …]` + `[Memory activity index]` + `[Memory activity]` + `[Memory tools]` | `memory.py` → `get_context`, `activity_index`, `get_activity_context` | not temporary, `memory` group; the activity block also needs `memory.inject_activity` |
@@ -99,7 +114,7 @@ envelope decides), `harness` where KAS (`native_steering`) or kiro-cli (while th
 workspace inherits default resources, or for a document the agent's own
 `resources` name) loads it, and `no` on a harness with no path (`_project_steering_delivered`).
 Where Crew writes the text it reads the writer itself, not a copy of its rules: on
-Claude Code and Codex (the `kirocrew` template the turn resolves) the rows come from
+Claude Code, Codex, OpenCode and Pi (the `kirocrew` template the turn resolves) the rows come from
 `context_assembly.agent_spec.steering_resource_documents`, the one list
 `_load_steering_resources` joins, so a document the load keeps is `yes`, one it
 withholds is `no`, and one it reads from outside the two trees (`AGENTS.md`, on
@@ -346,8 +361,8 @@ it adds:
 | `[Learned corrections — relevant to this message …]` | vector `turn_lessons` | `memory.inject_lessons_per_turn` (off by default), `lessons` group, not temporary or minimal; up to 3 lessons / 2,000 chars the session has not been shown |
 | `[Hook context:]` | `hooks.on_message` returning `HOOK_INJECT_CONTEXT` | matching hook |
 | `[CURRENT USER] <name>` | the sender's display name (for example WeCom `allowed_users[].name`) | a channel turn that carries a display name |
-| `[Task checklist — automatic recovery]` | `todo_recovery_prompt`, prepended to the message by `dashboard/chat_turn/prompt_assembly.py`; task text inside the untrusted TODO fence | a cold start without provider history, or a recovery still pending; it settles on the provider's first event |
-| `[Task checklist — person edited]` | `todo_sync_prompt`, prepended the same way | a warm turn with person edits not yet stated to the agent; marked stated on the provider's first event |
+| `[Task checklist — automatic recovery]` | `todo_recovery_prompt`, prepended to the message by `dashboard/chat_turn/prompt_assembly.py`; task text inside the untrusted TODO fence | a cold start without provider history, or a recovery still pending; it settles on the provider's first event. Never on a harness that keeps its checklist itself (`SessionCapabilities.keeps_own_checklist`, claude), which has no `todo_list` tool |
+| `[Task checklist — person edited]` | `todo_sync_prompt`, prepended the same way | a warm turn with person edits not yet stated to the agent; marked stated on the provider's first event. Never on a harness that keeps its checklist itself, as above |
 | `[REPLY FORMAT RULES]` + guidance | `_interactive_guidance` | interactive sessions, in every built message. At the wire, on a harness whose compaction Kiro Crew sees (kiro, kas, codex, claude) and a turn with no member essentials: once per engine conversation, and again after anything that can drop it. Everywhere else: every message |
 | `[CURRENT USER REQUEST …]` + the user's text | the turn | always last |
 
@@ -578,6 +593,13 @@ re-adds, once:
    session start, payload scrubbed of structural markers. kiro-cli loads the agent's
    `resources` natively and keeps them across its own compaction, so the kiro and
    KAS paths get nothing here.
+9. `[REINJECTED AFTER COMPACTION — goal-conductor]` — one line telling a
+   conductor to re-read the `goal-conductor` skill, whose body the compaction
+   dropped, via `context_assembly/turn.py` → `conductor_reread_part`: a chat on
+   `kirocrew-conductor` (or a deprecated alias of it; the pipeline, security and
+   team-lead conductors run their own skills), and a crewmate's DM thread under the
+   gate session start appends `conductor.patrol` with (dispatch tools held, ledger
+   tools on the binding). Workers, plain chats and minimal turns get nothing.
 
 If that turn does not land (cancelled, refused, errored), `rearm_reinjection` puts
 the flag back, so the context is never lost to a failed turn. A minimal-context turn

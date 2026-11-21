@@ -70,6 +70,7 @@ from kiro_crew.slack.approval_tokens import (  # noqa: F401 -- re-exported
     build_approval_token,
     split_approval_token,
 )
+from kiro_crew.slack.code_channels.binding import no_reactions as code_channel_quiet
 from kiro_crew.slack.files import (
     extract_outbound_with_audit,
     rejection_notes,
@@ -88,13 +89,14 @@ from kiro_crew.slack.handler import (
     _NO_RESPONSE,
     _STREAM_CONTINUED,
     _THINKING,
-    DELIVERY_DEBT_NOTICE,
     StatusReactionController,
     _append_footer_actions,
     build_timing_footer,
+    seal_stream,
 )
 from kiro_crew.slack.outbound import PostedOptions
 from kiro_crew.slack.renderer_session_status import ApprovalSessionStatus
+from kiro_crew.slack.renderer_stream_debt import StreamDebtNotice
 from kiro_crew.slack.reply_pieces import (  # noqa: F401 -- re-exported
     _NARRATION_MAX_CHARS,
     _SPLIT_HEADROOM,
@@ -507,7 +509,7 @@ class SlackApprovalDecider:
         return dec.session_key
 
 
-class SlackRenderer(ApprovalSessionStatus, Renderer):
+class SlackRenderer(ApprovalSessionStatus, StreamDebtNotice, Renderer):
     """Renders abstract output events onto a Slack thread.
 
     Holds (and exposes) the underlying ``SlackClientOps`` so the inline
@@ -552,8 +554,8 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
         # Message ts to react to (the user's triggering message). Falls back
         # to thread_ts so reactions still attach when not supplied separately.
         self._react_ts = react_ts or thread_ts or ""
-        self._reactions_enabled = reactions_enabled
-        # When slack.show_thinking is on, surface the model's reasoning as a 💭
+        self._reactions_enabled = reactions_enabled and not code_channel_quiet(channel)
+        # When slack.show_thinking is on, surface the model's reasoning as a Thinking
         # thread reply above the answer (mirrors native handle_message). Off =>
         # reasoning stays private, only the typing indicator moves.
         self._show_thinking = show_thinking
@@ -650,7 +652,7 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
         self._controller: Any = None
         self._finalized = False  # guards close() from double-finalizing
         # Redaction placeholders in text this turn shipped: the final answer
-        # body counted once at on_done, plus the posted 💭 reasoning. Feeds the
+        # body counted once at on_done, plus the posted Thinking reasoning. Feeds the
         # post-answer notice, mirroring the native handler's per-turn tally.
         self._redacted_creds = 0
         self._redacted_urls = 0
@@ -822,43 +824,6 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
         else:
             self._stream_debt = True
         return ok
-
-    async def _settle_stream_debt(self, ts: str) -> None:
-        """Disclose answer text Slack refused for good, on the message that lost it.
-
-        Called at every point a stream is abandoned, so the notice goes out while
-        an append can still reach the message the hole is in. Clearing the debt is
-        part of settling it: a second notice on a later message would report a gap
-        the reader has already been shown.
-
-        Sent directly rather than through ``_append_stream``: the notice is not
-        answer text, so it must not enter the delivery ledger, which the rescue
-        replays to the next turn as text the reader already established.
-
-        ``append_stream`` reports a refusal by RETURNING False -- the client turns
-        every exception into that return -- so the return value is the whole
-        signal, and leaving it unread hides the very loss this notice exists to
-        disclose. The two refusals that takes fall inside one Slack rate-limit or
-        outage window, so they are correlated rather than independent. On refusal
-        post a separate message, which does not depend on the stream that just
-        refused and, sent directly, stays out of the ledger too.
-        """
-        if not self._stream_debt:
-            return
-        self._stream_debt = False
-        notice_ok = False
-        try:
-            notice_ok = await self.slack.append_stream(self.channel, ts, DELIVERY_DEBT_NOTICE)
-        except Exception:
-            logger.warning("Slack: appending the delivery-debt notice failed")
-        if not notice_ok:
-            try:
-                await self.slack.post_message(self.channel, DELIVERY_DEBT_NOTICE, self.thread_ts)
-            except Exception:
-                logger.warning(
-                    "Slack: the delivery-debt notice reached neither the "
-                    "stream nor a separate message"
-                )
 
     async def _shown(self, raw: str) -> str:
         """Model text as a reader may see it outside the sealed reply.
@@ -1049,7 +1014,7 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
         covering all call sites (the native handler guards its twin the same
         way): the unguarded ``on_tool_call`` call site runs before any text
         streams, and a propagated Slack error there reaches the transport
-        catch-all in ``transport_dispatch``, which posts a terminal "🔧
+        catch-all in ``transport_dispatch``, which posts a terminal "Error:
         Something went wrong (transport path)" reply on a turn that is still
         live.
         """
@@ -1141,7 +1106,7 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
         if not self._active_task_id:
             return
         elapsed = self._tool_elapsed_str()
-        title = f"{self._active_task_title}  {elapsed}" if elapsed else self._active_task_title
+        title = f"{self._active_task_title} · {elapsed}" if elapsed else self._active_task_title
         outcome = self._tool_outcomes.pop(self._active_tool_call_id, "") or ""
         succeeded = not outcome or outcome == "completed"
         if succeeded:
@@ -1171,8 +1136,8 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
             return ""
         mins, secs = divmod(elapsed, 60)
         if mins:
-            return f"⏱ {int(mins)}m {secs:.1f}s"
-        return f"⏱ {secs:.1f}s"
+            return f"{int(mins)}m {secs:.1f}s"
+        return f"{secs:.1f}s"
 
     async def _tool_elapsed_updater(self) -> None:
         """Every 30s, refresh the active task card's title with elapsed time."""
@@ -1185,7 +1150,7 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
                 # Elapsed goes in the TITLE (Slack replaces title on same
                 # task_id), never details (which Slack appends).
                 await self._append_task(
-                    self._active_task_id, f"{self._active_task_title}  ⏱ {time_str}", "in_progress"
+                    self._active_task_id, f"{self._active_task_title} · {time_str}", "in_progress"
                 )
 
     def _start_tool_timer(self) -> None:
@@ -1331,7 +1296,7 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
         # a tool call folds it into that call's step (``on_tool_call``), and the
         # end of the turn sends what is left as the reply (``on_done``). The
         # thread status and the plan's steps are the progress signal meanwhile.
-        # Flush any accumulated reasoning as a 💭 reply first so it lands above
+        # Flush any accumulated reasoning as a Thinking reply first so it lands above
         # the answer (no-op when show_thinking is off or nothing accumulated).
         await self._maybe_post_thinking()
         await self._resume_from_suspended()
@@ -1469,14 +1434,14 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
             await self.slack.set_thread_status(self.channel, self.thread_ts or "", "is_typing")
         except Exception:
             logger.warning("Slack set_thread_status failed — skipping status", exc_info=True)
-        # When enabled, accumulate the reasoning so it can be posted as a 💭
+        # When enabled, accumulate the reasoning so it can be posted as a Thinking
         # thread reply above the answer (honors slack.show_thinking, matching
         # native). When disabled, reasoning is never accumulated or surfaced.
         if self._show_thinking:
             self._thinking_accumulated += text or ""
 
     async def _maybe_post_thinking(self) -> None:
-        """Post the accumulated reasoning as a 💭 thread reply, once per turn.
+        """Post the accumulated reasoning as a Thinking thread reply, once per turn.
 
         Called lazily when the first answer text arrives so the reasoning lands
         above the answer (mirrors native). Redacted before posting — reasoning
@@ -1490,10 +1455,10 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
             return
         reasoning = _display_safe(reasoning)
         # Reasoning is unbounded, and Slack rejects an over-limit message outright
-        # the whole 💭 reply, not its tail. Split it fence-safely so a long
+        # the whole Thinking reply, not its tail. Split it fence-safely so a long
         # chain of thought arrives as ordered replies instead of vanishing.
         posted_any = False
-        for chunk in await self._split_for_slack(f"💭 {reasoning}"):
+        for chunk in await self._split_for_slack(f"*Thinking*\n{reasoning}"):
             # Best-effort: MUST NOT raise. Reasoning is a
             # decorative side channel — the answer is delivered separately.
             try:
@@ -1781,6 +1746,7 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
                 # security property; the native path logs counts, this path stays
                 # silent to avoid adding a logger to the renderer.
                 clean_text = _display_safe(clean_text)
+        footer_inline = False  # the stream's seal carried the timing footer
         if self._stream_ts is not None:
             if self._use_slack_stream and clean_text:
                 # The answer-carrying delivery. The reply was held whole until
@@ -1828,11 +1794,17 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
                 # delivery ledger), and chat.stopStream only closes the live
                 # stream. A failed seal leaves the shown answer exactly where it
                 # is, so it stays best-effort — failing the turn here would record
-                # a failure for a turn the reader fully received.
-                try:
-                    await self.slack.stop_stream(self.channel, self._stream_ts, clean_text or None)
-                except Exception:
-                    logger.warning("Slack stop_stream failed at finalize", exc_info=True)
+                # a failure for a turn the reader fully received. With no [OPTIONS]
+                # the timing footer rides in the seal (see ``seal_stream``).
+                turn_elapsed = (self._now() - self._t0) if self._t0 else 0.0
+                footer_inline = await seal_stream(
+                    self.slack,
+                    self.channel,
+                    self._stream_ts,
+                    clean_text or None,
+                    None if options else build_timing_footer(turn_elapsed, None)[0],
+                    self.thread_ts,
+                )
             else:
                 # No-stream fallback: _stream_ts is a regular message ts (the
                 # _THINKING placeholder), not a stream handle — finalize it via
@@ -1895,7 +1867,7 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
             self._status_cleared = True
         except Exception:
             logger.warning("Slack set_thread_status failed — skipping status clear", exc_info=True)
-        # Timing footer (always posted at turn end), mirroring native.
+        # Timing footer, mirroring native (unless the stream's seal carried it).
         turn_elapsed = (self._now() - self._t0) if self._t0 else 0.0
         footer_blocks, footer_text = build_timing_footer(turn_elapsed, None)
         # Make the turn durable and stamp the control BEFORE it goes out. This is
@@ -1944,9 +1916,10 @@ class SlackRenderer(ApprovalSessionStatus, Renderer):
         # native handler's deferred-OPTIONS verdict -- one policy, both sites.
         footer_ts: str | None = None
         try:
-            footer_ts = await self.slack.post_blocks(
-                self.channel, footer_blocks, footer_text, self.thread_ts
-            )
+            if not footer_inline:
+                footer_ts = await self.slack.post_blocks(
+                    self.channel, footer_blocks, footer_text, self.thread_ts
+                )
         except Exception:
             logger.warning("Slack footer post_blocks failed — skipping footer", exc_info=True)
             if options:

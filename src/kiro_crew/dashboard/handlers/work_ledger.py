@@ -101,6 +101,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _ensure,
         _forward_remote_decide,
         _is_code_channel_worker,
+        _record_conductor_retire,
         _record_conductor_write,
         _refuse_code_channel_worker,
         _refuse_dispatch_without_ledger,
@@ -218,7 +219,6 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
 if TYPE_CHECKING:  # names it serves from outside the family, from their homes
     from kiro_crew import (  # noqa: F401
         conductor_patrol,
-        host_pressure,
         ledger_wake,
         session_ledger,
         work_ledger,

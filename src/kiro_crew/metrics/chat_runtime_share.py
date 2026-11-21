@@ -10,13 +10,15 @@ chats one crash takes down. These instruments answer them and nothing else.
 name                                               kind     attributes
 =================================================  =======  ======================================
 ``kirocrew.chat_runtime_share.toggled``            counter  ``state`` (on / off)
-``kirocrew.chat_runtime_share.placed``             counter  ``outcome``, ``reason``, ``tenants``
+``kirocrew.chat_runtime_share.placed``             counter  ``outcome``, ``reason``, ``tenants``,
+                                                            ``tree``
 ``kirocrew.chat_runtime_share.processes``          gauge    none: live processes placed by sharing
 ``kirocrew.chat_runtime_share.tenants``            gauge    none: chat leases on those processes
 ``kirocrew.chat_runtime_share.rss_sampled``        counter  ``tenants``, ``rss``
 ``kirocrew.chat_runtime_share.reclaimed``          counter  ``reason`` (rss)
 ``kirocrew.chat_runtime_share.process_died``       counter  ``expected``, ``tenants``
-``kirocrew.chat_runtime_share.turn_started``       counter  ``tenants``, ``delay``, ``harness``
+``kirocrew.chat_runtime_share.turn_started``       counter  ``tenants``, ``delay``, ``shared``,
+                                                            ``harness``
 ``kirocrew.chat_runtime_share.turn_ended``         counter  ``tenants``, ``outcome``, ``harness``
 ``kirocrew.chat_runtime_share.kas_queued``         counter  ``tenants``
 ``kirocrew.kas.engine_install``                    counter  ``outcome``, ``caller``
@@ -29,11 +31,14 @@ way every other switch reports adoption.
 **Every attribute value is closed.** Each set is a tuple below, and every input
 outside it maps to :data:`OTHER`. No session key, pid, path, model id, prompt or
 config value reaches an attribute. ``tenants`` is the chat lease count on the
-process, bucketed to ``0`` / ``1`` / ``2`` / ``3`` / ``4+``: ``0`` is a turn whose
+process, bucketed to ``0`` / ``1`` / ``2`` / ``3`` / ``4-7`` / ``8-10`` / ``11+``:
+``0`` is a turn whose
 session holds no chat lease on its process (a subagent on its host chat's process, or
 a background runtime), ``1`` is a chat
 alone on its process (unshared, or a shared process with one tenant left), and
-``2`` and up is a shared process.
+``2`` and up is a shared process. ``shared`` on ``turn_started`` is ``true`` when
+the turn's process was placed by sharing and ``false`` otherwise, preview off
+included, so one harness's shared and unshared turns read from one series.
 
 **A distribution is a bucket-labelled counter, not a histogram,** because
 ``product_metrics.PRODUCT_METRICS`` admits counters and gauges only: a histogram's
@@ -105,22 +110,36 @@ PLACED_OUTCOMES: tuple[str, ...] = ("spawned", "joined", "refused")
 
 #: Why an eligible-looking start kept its own process: the branch names
 #: ``chat_runtime_sharing.chat_sharing_ineligible_reason`` returns, plus
-#: ``native_subagents`` (``providers/chat_share.py``), plus ``none`` on a placement.
+#: ``native_subagents`` and ``auto_permission_mode``
+#: (``providers/chat_share.py``), plus ``none`` on a placement.
 #: ``sharing_disabled`` is listed because the function can return it, though the
 #: placement path returns before asking it while the preview is off.
-#: ``test_chat_runtime_share_metrics`` holds this set equal to the function's own.
+#: ``test_refusal_reasons_are_every_branch_the_eligibility_rule_returns`` holds this
+#: set equal to the function's own.
 REFUSAL_REASONS: tuple[str, ...] = (
     "sharing_disabled",
     "backend_not_chat_shareable",
+    "harness_switched_off",
     "kas_engine_not_shareable",
     "session_environment",
     "memory_mode_not_shareable",
     "origin_not_dashboard",
     "member_session",
     "native_subagents",
+    "auto_permission_mode",
 )
 
-TENANT_BUCKETS: tuple[str, ...] = ("0", "1", "2", "3", "4+")
+#: ``8-10`` holds the default per-process cap
+#: (``agent.chat_runtime_sharing_max_sessions``, 10), so a full process reads apart
+#: from a half-full one; ``11+`` is only reachable with a raised cap.
+TENANT_BUCKETS: tuple[str, ...] = ("0", "1", "2", "3", "4-7", "8-10", "11+")
+
+#: ``(upper edge INCLUSIVE, name)`` for every tenant bucket above ``3``.
+_TENANT_RANGES: tuple[tuple[int, str], ...] = ((7, "4-7"), (10, "8-10"))
+
+#: The kind of session tree a placed chat's process serves: a Bot's tree (every
+#: session a Bot opened, under its member identity) or any other chat tree.
+TREE_KINDS: tuple[str, ...] = ("chat", "bot")
 
 #: Prompt written to first event of that turn back, each edge INCLUSIVE.
 DELAY_BUCKET_EDGE_SECS: tuple[tuple[float, str], ...] = (
@@ -177,7 +196,12 @@ def tenants_bucket(count: Any) -> str:
     n = _number(count)
     if n is None or n < 0:
         return OTHER
-    return "4+" if n >= 4 else str(int(n))
+    if n < 4:
+        return str(int(n))
+    for edge, name in _TENANT_RANGES:
+        if n <= edge:
+            return name
+    return "11+"
 
 
 def delay_bucket(seconds: Any) -> str:
@@ -244,22 +268,49 @@ def chat_leases_on(runtime: Any, session_key: Any = "") -> int:
         return 0
 
 
+def on_shared_process(runtime: Any) -> bool:
+    """Whether *runtime* is a live process chat runtime sharing placed. Never raises.
+
+    ``True`` for a founder or a joiner, whatever its tenant count right now, so a
+    shared process down to one chat still reads shared; ``False`` for a process
+    only its own session's registration lease names.
+    """
+    try:
+        return RUNTIME_OWNERSHIP.placed_by_sharing(runtime)
+    except Exception:  # noqa: BLE001 -- a read for telemetry never breaks a turn
+        logger.debug("shared process read failed", exc_info=True)
+        return False
+
+
 def record_toggled(on: bool) -> None:
     """The preview moved to *on* (any writer: Settings, CLI, a hand edit)."""
     emit_counter(TOGGLED, {"state": "on" if on else "off"})
 
 
-def record_refused(reason: Any) -> None:
-    """An eligible-looking chat start, preview on, kept its own process."""
+def record_refused(reason: Any, *, backend: Any = None) -> None:
+    """An eligible-looking chat start, preview on, kept its own process.
+
+    ``harness`` names the backend it asked for, so a refusal reads per harness:
+    ``reason=harness_switched_off`` with ``harness=kas`` is KAS's own switch off.
+    """
     _note_sharing_in_use()
     emit_counter(
         PLACED,
-        {"outcome": "refused", "reason": _closed(reason, REFUSAL_REASONS), "tenants": NONE},
+        {
+            "outcome": "refused",
+            "reason": _closed(reason, REFUSAL_REASONS),
+            "tenants": NONE,
+            "tree": NONE,
+            ATTR_HARNESS: harness_for_backend(backend),
+        },
     )
 
 
-def record_placed(*, joined: bool, tenants: Any) -> None:
-    """A chat start landed: founded a process or joined one, with *tenants* after it."""
+def record_placed(*, joined: bool, tenants: Any, tree: Any = "chat", backend: Any = None) -> None:
+    """A chat start landed: founded a process or joined one, with *tenants* after it.
+
+    *tree* is the kind of session tree the process serves (:data:`TREE_KINDS`).
+    """
     _note_sharing_in_use()
     emit_counter(
         PLACED,
@@ -267,6 +318,8 @@ def record_placed(*, joined: bool, tenants: Any) -> None:
             "outcome": "joined" if joined else "spawned",
             "reason": NONE,
             "tenants": tenants_bucket(tenants),
+            "tree": _closed(tree, TREE_KINDS),
+            ATTR_HARNESS: harness_for_backend(backend),
         },
     )
 
@@ -289,13 +342,19 @@ def record_process_died(*, expected: Any, tenants: Any) -> None:
     )
 
 
-def record_turn_started(*, tenants: Any, delay_secs: Any, backend: Any) -> None:
-    """A turn's first event arrived *delay_secs* after its prompt was written."""
+def record_turn_started(*, tenants: Any, delay_secs: Any, backend: Any, shared: Any) -> None:
+    """A turn's first event arrived *delay_secs* after its prompt was written.
+
+    *shared* is whether the turn's process was placed by sharing
+    (:func:`on_shared_process`); an unshared turn, preview off included, reads
+    ``false``, so the two arms of the same harness compare on one series.
+    """
     emit_counter(
         TURN_STARTED,
         {
             "tenants": tenants_bucket(tenants),
             "delay": delay_bucket(delay_secs),
+            "shared": "true" if shared is True else "false",
             ATTR_HARNESS: harness_for_backend(backend),
         },
     )

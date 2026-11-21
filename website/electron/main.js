@@ -165,6 +165,9 @@ const store = new Store({
     closeAction: "background",
     // Only false hides it, and only while the close button quits. See tray-icon.js.
     showTrayIcon: true,
+    // Only true hides a minimized window, and only while a tray icon can bring
+    // it back. See minimize-to-tray.js.
+    minimizeToTray: false,
     linuxFrameless: null,
     // Written by gpu-crash-fallback.js when the GPU process dies at startup;
     // read before Chromium initializes on the next launch.
@@ -913,6 +916,15 @@ app.whenReady().then(async () => {
   });
   if (cleared && !mainWindow.isDestroyed()) await gateway.connect(mainWindow);
 
+  // Each app's shortcut bindings, apart from the shell's own settings. A store that
+  // cannot open leaves the host on an in-memory one.
+  let appWindowPrefsStore;
+  try {
+    appWindowPrefsStore = new Store({ name: "app-window-prefs", configFileMode: STORE_FILE_MODE });
+    tightenStoreFileMode(appWindowPrefsStore.path, { log: (message) => glog("app-window-prefs mode: " + message) });
+  } catch (error) {
+    glog("app-window-prefs: store unavailable — " + (error && error.message));
+  }
   // Optional companion surfaces start only after the primary gateway handoff.
   // Both are best-effort and must never block an otherwise usable dashboard.
   initMochi({
@@ -920,7 +932,10 @@ app.whenReady().then(async () => {
     fetchGatewayAuth: fetchMochiGatewayAuth,
     glog,
     getMainWindow: () => windows.getMainWindow(),
+    // Seeded from Mochi's own store before the host below reads them.
+    hostStores: { gatewayStore: store, prefsStore: appWindowPrefsStore },
   });
+  const appWindowDisplays = path.join(app.getPath("userData"), "app-window-displays.json");
   try {
     initCrewCompanion({
       backendUrl: BACKEND_URL,
@@ -932,6 +947,8 @@ app.whenReady().then(async () => {
       glog,
       getDashboardWindow: () => windows.focusedDashboardWindow() || null,
       surfaceApp: SURFACE_APP,
+      userDataDir: app.getPath("userData"),
+      displayMemoryPath: appWindowDisplays,
     });
   } catch (error) {
     glog("crew-companion: init failed — " + (error && error.message));
@@ -944,13 +961,14 @@ app.whenReady().then(async () => {
       cookieHeader: sessionCookieHeader,
       preloadPath: path.join(__dirname, "app-window-preload.js"),
       log: glog,
-      displayMemoryPath: path.join(app.getPath("userData"), "app-window-displays.json"),
+      displayMemoryPath: appWindowDisplays,
       showDashboardSession: (slotKey) => openDashboardSession(
         windows.focusedDashboardWindow() || null, BACKEND_URL, slotKey, SURFACE_APP,
       ),
       openExternal: (url) => openExternalSafely(shell.openExternal, url, glog),
       // Which crew each app's windows show is this computer's choice, kept by the shell.
       gatewayStore: store,
+      prefsStore: appWindowPrefsStore,
     });
     appWindowHost.start();
   } catch (error) {

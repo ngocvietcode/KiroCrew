@@ -86,8 +86,15 @@ kirocrew`). Onto that base:
    a PREVIOUS rebuild left behind is *reconciled*: the transport-independent keys
    the source owns (`timeout`, `disabled`) are overwritten, and one the source has
    since dropped is removed, so an edit to the source reaches the generated spec
-   instead of losing to the value the first rebuild froze. Every other key on the
-   entry is the user's and survives by omission, `autoApprove` included.
+   instead of losing to the value the first rebuild froze. `disabledTools` is
+   reconciled the same way when the source entry declares the server (a `command`
+   or a `url`): a changed list replaces the copy, a removed one is removed, and the
+   worker agent file derived from this spec follows. A placeholder the dashboard
+   wrote for a server another file declares (`{"disabled": true}`,
+   `{"disabledTools": [...]}`) starts nothing, so it leaves the entry's list as it
+   is. A list the `~/.kiro/crew/mcp.json` store sets (the dashboard's Apply) still
+   wins in step 4. Every other key on the entry is the user's and survives by
+   omission, `autoApprove` included.
    Reconciling retires the name, so a lower-priority scope cannot reconcile it
    again. `url` and `headers` are NOT reconciled — see the fallback's as-a-unit
    rule below. A stdio entry's `command`, `args` and `env` ARE, as one unit: the
@@ -106,8 +113,8 @@ kirocrew`). Onto that base:
    command unit (`command`, `args` and `env`), because that invocation is the
    edition's (`_refresh_dynamic_fields()` refreshes its `command` and `args`, and
    puts back any `env` key the edition ships that the entry lacks, keeping the
-   user's value for a key both set); only `timeout` and `disabled` are reconciled
-   onto it, here and in step 3.
+   user's value for a key both set); only `timeout`, `disabled` and (from a
+   declaring entry) `disabledTools` are reconciled onto it, here and in step 3.
 3. **Seam-contributed provider globals**, so they can only fill gaps the Kiro
    global did not: a name step 1 or step 2 already claimed in this pass has been
    retired, so it is left alone. Empty in this build.
@@ -547,6 +554,47 @@ is confirmed no longer enabled; absence from the on-disk map is not by itself
 proof (a clean rebuild starts from an empty map, and dropping on that basis made
 an enabled app's tools vanish).
 
+### Servers a connected computer exposes (`connected-computer-<name>`)
+
+A chat bound to a connected computer (feature preview; providers.md § Connected computers
+behaviors) can also use local MCP servers the user ticked in that computer's native
+consent. None of the merge above runs for them, and the gateway never starts them:
+
+- **What can be exposed** (`connected_computers/local_mcp.py`): a stdio server configured on
+  that computer, snapshotted (command, arguments, environment) at consent, so a later edit
+  of the local config cannot widen it. Refused, with the reason the consent shows: a remote
+  (HTTP) server, a server whose env reads a `secret://` value, Kiro Crew's own servers, a
+  disabled server, and a server whose `disabledTools` is unreadable or longer than 512.
+  Nothing ticked means nothing exposed; a plain stdio server the user ticks IS exposed, so
+  the feature is never met by refusing them all.
+- **Tools turned off locally** (`connected_computers/mcp_filter.py`): a server with
+  `disabledTools` is exposed with that list snapshotted, and the connector on the computer
+  keeps those tools off whatever the gateway sends. Each entry is read as kiro-cli reads
+  it (`mcp_filter.tool_is_turned_off`, the rule of `cron_script_mcp._tool_is_switched_off`):
+  exactly, and an entry with `*` or `?` also as an `fnmatchcase` glob, so `delete_*` keeps
+  `delete_repo` off; a glob holding `{`, `}` or `\` covers every tool. It forwards each request line
+  re-encoded (so a duplicate `name` key cannot smuggle a turned-off tool), answers a
+  `tools/call` for a turned-off tool with a tool error instead of forwarding it, drops a
+  line that is not JSON or is over 8 MiB, and trims the reply to each `tools/list` it
+  forwarded (at most 64 awaited at once; one past is refused). A server with no tool turned
+  off is relayed byte for byte.
+- **How it is mounted**: one loopback relay and bridge per exposed server
+  (`ConnectedComputerLaunch.local_mcp_servers`), named `connected-computer-<name>`
+  (`session_environment.CONNECTED_MCP_SERVER_PREFIX`) and appended to the session's
+  `mcpServers` after `workspace` (`acp/runtime_remote_workspace._remote_session_servers`,
+  which also drops any same-named entry the gateway had). The computer starts it, confined to
+  the shared folder like the workspace tools, only when the bridge dials.
+- **Who may call it**: the agent's own grants decide, as for any server. An agent granted
+  every server (`"*"`) gets it, an agent that names `@connected-computer-<name>` keeps it, and an agent
+  that grants neither does not gain it.
+- **Approval**: `platform.governance.may_skip_gate` never keeps a `@connected-computer-*` grant, so
+  every call reaches the PreToolUse gate (governance.md). In the chat's trust mode it runs
+  without asking, like every other tool in that mode.
+- **Compatibility**: while the preview is on, a server a person configured with a name
+  starting `connected-computer-` is also never auto-approved, on any session (a
+  `computer-use` server is not caught). With it off that
+  server keeps the answer it had before the preview (`governance._connected_computers_may_run`).
+
 ## Discovery and probing
 
 Source: `mcp_discovery.py`, a mirror facade (`kiro_crew._facade_mirror`) over sibling
@@ -766,15 +814,20 @@ the sharing rows and the gateway rewriter use; otherwise it is stdio.
   `clientSecret`, or keeps nothing Crew sends) and that is neither a Connections
   provider nor Crew-held offers no sign-in at all (`kasCannotSignIn` in
   `McpTab.tsx`). Neither the chat guidance nor Sign in could ever finish for it. A
-  block Crew does send (a public `clientId`) keeps the normal row. Its badge reads **Sign-in unavailable** whether or not a
+  block Crew does send (a public `clientId`) keeps the normal row. A row with no
+  `clientId` of its own at the url of a registry provider whose vendor has not
+  admitted Kiro yet (`vendor_approval_pending`, matched by url whatever the entry
+  is named: `vendorPendingProviderForServer`) is the same case, because the vendor
+  refuses the engine's client, so no chat sign-in can finish (#36337); its sentence
+  names the vendor instead of the server's own settings. Its badge reads **Sign-in unavailable** whether or not a
   Kiro CLI grant is held (a KAS chat does not use one), with no hover tip,
   and the row says in plain words that the server cannot sign in with this
   engine. The row cannot see the engine version, so an engine older than 0.66.104,
   which drops every block, is left to the chat notice. It offers no harness switch: a Kiro CLI pick runs on KAS wherever
   kiro-cli offers its v3 engine (`kiro_cli_pick_backend`, and the row also reads
   the `kiro_selection_runs_on_kas` probe), so the switch would
-  not reach the sign-in either. The chat says the same at session start in a
-  notice tagged
+  not reach the sign-in either. For an `oauthWithheld` server the chat says the
+  same at session start in a notice tagged
   `meta.kind: "mcp_sign_in_unsupported"`, which `TurnBlock.isAlwaysVisible` keeps
   out of the turn's folded steps.
 
@@ -1692,7 +1745,10 @@ connection-private, mid-call respawn and prewarm -- through `_acquire_backend`:
   setter, and never below the 30 s cold-start floor), settles the permit `success` (ready), `failure` (handshake failed;
   the permit is then held until the process is reaped) or `neutral` (no
   handshake ever arrived -- an unused prewarm or a client that never
-  initialised is not congestion). `settle` is exactly-once and separate from
+  initialised is not congestion). The watcher also ends, `neutral`, the moment
+  the backend process exits with no handshake in flight: a private backend dies
+  with its stub, so a stub that left before `initialize` must not hold a slot
+  (and the starts queued behind it) for the whole window. `settle` is exactly-once and separate from
   `release`, which is idempotent and settles `neutral` on its own; cancellation
   at any boundary is neutral. Prewarm settles neutral the moment the fork
   returns; it also re-reads the queue depth BEFORE EACH KEY and stands that key
@@ -2056,7 +2112,7 @@ in any state is a claim on the name, keeps refusing.
 
 A Bot's worker runs on `kirocrew-mate-worker`, and both that base spec and
 the Bot's own file live in `~/.kiro/mates/agents/`, which the agents loop
-above reads for one file only (the conductor, below). So the gateway start
+above reads for two files only (the conductor and worker specs, below). So the gateway start
 passes that folder to the same pass (`rewrite_kwargs`' `mate_source_dir`), and
 `mcp_gateway/mate_overlays.py` writes one overlay per Bot file to
 `<overlay_dir>/mates/<id>.json`. That subdirectory
@@ -2066,7 +2122,9 @@ an `~/.kiro/agents` agent of the same name, or the reverse.
 A Bot's chat runs the stock conductor spec, `kirocrew-mate-conductor.json` in
 that same folder, one file shared by every Bot, and its session looks its stubs
 up by that agent name. So the agents loop rewrites that one file as if it sat in
-`~/.kiro/agents/` (`mate_overlays.with_conductor_source`): its overlay is
+`~/.kiro/agents/` (`mate_overlays.with_conductor_source`), and the stock worker
+spec `kirocrew-mate-worker.json` beside it the same way (read only through a worker
+session's own record, below): its overlay is
 `<overlay_dir>/kirocrew-mate-conductor.json`, its stubs carry
 `--agent kirocrew-mate-conductor` whatever `name` the file declares (that
 folder is outside the sandbox's read-only seal), and its signature joins the fingerprint's
@@ -2125,11 +2183,20 @@ name, and only on KAS: `_pooled_session_servers_and_ref_spec` passes the session
 key on a positive `backend == kas` check, and `session_servers` answers
 `kirocrew-mate-worker` with that key only through
 `mate_overlays.worker_overlay_spec(overlay_dir, session_key)`. Every other host
-passes no key and keeps the by-name lookup it had. The record must be a
-Bot's worker, its Bot must own its file (`mate_file_for_member`), and
-the overlay must carry that Bot's identity. Only a wrapped server the
-Bot ADDS is returned (a base server wins the merge), and only one the
-governed merged worker spec still mounts unmuted and not registry-governed
+passes no key and gets no stub for `kirocrew-mate-worker`: the stock worker spec is
+rewritten like the conductor's (`with_conductor_source`), so
+`<overlay_dir>/kirocrew-mate-worker.json` exists, and a lookup by that name would
+hand its base stubs to a session without that session's merged limits. The record
+must be a Bot's worker. The base servers' stubs come from that worker overlay
+(its `name` must be `kirocrew-mate-worker`, and its stubs carry
+`--agent kirocrew-mate-worker`), so every Bot's worker shares Crew's own servers
+whether or not its Bot owns a file; their launch argv equals the conductor's
+stubs' apart from `--agent`, which is no pool dimension, so a worker joins the
+conductor's backends. A Bot that owns its file (`mate_file_for_member`) adds the
+stubs its overlay carries, which must carry that Bot's identity; only a wrapped
+server the Bot ADDS is taken from it (a base server wins the merge). Every stub,
+base or added, is returned only when the
+governed merged worker spec still mounts it unmuted and not registry-governed
 (`mcp_cleanup.mcp_entry_is_registry_governed`): the overlay is the last pass's,
 so an entry retyped `type: registry` since must not keep its old local stub.
 Each carries that spec's
@@ -2448,7 +2515,7 @@ Managed servers, registered by `agent._MANAGED_MCP_SERVERS` and installed into
 | `kirocrew-cron` | `kirocrew mcp-cron` (`mcp_cron.py` + `mcp_cron_*.py`) | `cron_add`, `cron_list`, `cron_update`, `cron_remove`, `cron_remove_all`, `cron_pause`, `cron_resume`, `cron_trigger`, `cron_secret_request` |
 | `kirocrew-core` | `kirocrew mcp-core` (`mcp_core.py` + `mcp_core_parts/` + `mcp_tools/`) | spawn/subagent, learn, task, messaging, artifact, workflow, knowledge and session-directive tools (see below) |
 | `kirocrew-computer` | `kirocrew mcp-computer` (`mcp_computer.py`) | `computer_list_apps`, `computer_launch_app`, `computer_get_state`, `computer_click`, `computer_drag`, `computer_type_text`, `computer_press_key`, `computer_set_value`, `computer_scroll`, `computer_perform_action`, `computer_end_turn` |
-| `kirocrew-dashboard` | `kirocrew mcp-dashboard` (`mcp_dashboard.py` + `mcp_dashboard_*.py`) | `chat_folder_tree`, `chat_folder_create`, `chat_folder_move`, `chat_folder_update`, `chat_folder_move_session`, `chat_folder_delete`, `chat_tag_list`, `chat_tag_create`, `chat_tag_update`, `chat_tag_assign`, `chat_tag_column_list`, `chat_tag_column_create`, `chat_tag_column_move`, `session_move_to_column`, `chat_session_pin`, `chat_session_pin_move`, `session_create`, `session_fork`, `session_stop`, `session_end_wait`, `session_retry`, `session_continue`, `session_set_model`, `session_reload`, `session_rename`, `session_generate_title`, `session_set_color`, `session_set_note`, `session_close`, `session_revive`, `session_history_list`, `session_send`, `session_broadcast`, `session_status`, `session_adopt`, `session_handoff`, `session_release`, `session_read_message`, `session_summary`, `session_queue`, `work_dispatch` |
+| `kirocrew-dashboard` | `kirocrew mcp-dashboard` (`mcp_dashboard.py` + `mcp_dashboard_*.py`) | `chat_folder_tree`, `chat_folder_create`, `chat_folder_move`, `chat_folder_update`, `chat_folder_move_session`, `chat_folder_delete`, `chat_tag_list`, `chat_tag_create`, `chat_tag_update`, `chat_tag_assign`, `chat_tag_column_list`, `chat_tag_column_create`, `chat_tag_column_move`, `session_move_to_column`, `chat_session_pin`, `chat_session_pin_move`, `session_create`, `session_fork`, `session_stop`, `session_end_wait`, `session_retry`, `session_continue`, `session_set_model`, `session_reload`, `session_rename`, `session_generate_title`, `session_set_color`, `session_set_note`, `session_close`, `session_revive`, `session_history_list`, `session_send`, `session_broadcast`, `session_status`, `session_adopt`, `session_handoff`, `session_release`, `session_read_message`, `session_summary`, `session_queue`, `work_dispatch`, `session_run_queued` |
 | `kirocrew-work` | `kirocrew mcp-work` (`mcp_work.py`) | `work_brief`, `work_report`, `work_ledger_read`, `work_ledger_rebuild`, `work_ask_record`, `work_ledger_record`, `accept_eval` |
 | `kirocrew-crew-log` | `kirocrew mcp-crew-log` (`mcp_crew_log.py`) | `crew_log_list`, `crew_log_read`, `crew_log_projection` |
 | `kirocrew-debug` | `kirocrew mcp-debug` (`mcp_debug.py`) | `debug_gateway`, `debug_refusals`, `debug_threads`, `debug_processes`, `debug_snapshots` |
@@ -3165,8 +3232,8 @@ answers `tools/list` from):
 - **Session-bound directives** (`session_directive.DIRECTIVE_TOOLS`):
   `nothing_to_do`, `suggest_followup`, `monitor_start`, `monitor_watch`,
   `monitor_update`, `monitor_stop`, `autonudge_stop`, `set_project`,
-  `reset_conversation`, `chat_tag`. `ask_question` is not one: it blocks and
-  returns the answers as its own result (see the stateful-tool model below).
+  `reset_conversation`, `chat_tag`, `chat_rename`. `ask_question` is not one: it
+  blocks and returns the answers as its own result (see the stateful-tool model below).
 - **Memory recall (V1 and V2):** `memory_recall` resolves authenticated session identity
   once through `require_strict_session_key` and passes that same identity to the gateway.
   Missing identity returns the shared gate's refusal and installation diagnosis.
@@ -3513,7 +3580,7 @@ of its responsibility:
 |---|---|
 | `control.py` | `task_run`, `wait` and its deferred step, `route_crew`, `select_crew`, `register_hook`, `ask_question` and its card wait, `HANDLERS` |
 | `control_parts/schemas.py` | every control descriptor, and the structured-arming and runtime-ceiling reads that shape one |
-| `control_parts/directive.py` | `_emit_directive`, and the tools whose effect is one directive: `nothing_to_do`, `set_project`, `reset_conversation`, `chat_tag`, `suggest_followup` |
+| `control_parts/directive.py` | `_emit_directive`, and the tools whose effect is one directive: `nothing_to_do`, `set_project`, `reset_conversation`, `chat_tag`, `chat_rename`, `suggest_followup` |
 | `control_parts/monitor.py` | `monitor_start`, `monitor_watch`, `monitor_inspect`, `monitor_update`, `monitor_stop`, `autonudge_stop`, and their context and preflight refusals |
 | `control_parts/mcp_wait.py` | `mcp_server_wait` with its deferred step, and the text the model is given for each state a server can be in |
 | `spawn.py` | `spawn_run` with its deferred step and receipt, `spawn_continue`, `spawn_steer`, `spawn_release`, `resource_status`, `HANDLERS` |
@@ -3976,8 +4043,13 @@ are resolved whole and in dependency order, whatever order the descriptors are
 declared in: a child picks the parent placement on its surface whose viewport
 does not conflict with its own, inherits that placement's chain, route and
 requirements, and must name `parentPlacement` when two compatible parent
-placements differ. The index's `input_digest` is a digest of
-the committed index's own content (never a clock or a git hash), so an edit to an
+placements differ. The committed file does not carry its own `input_digest`
+or per-kind counts: both changed on almost every UI edit, so two PRs on
+different pages conflicted on the same lines. The reader computes the digest
+as sha256 of the file's text (`parse_index_text` in `ui_index_load.py`), the
+same value the generator stamps on the auto tier; the counts are printed by the
+generator and the `--report`. The digest is over the committed index's own
+content (never a clock or a git hash), so an edit to an
 input that changes nothing in the index, such as a label no location uses, leaves
 the committed file byte-identical and does not stale it. `npm run gen:ui -- --check` regenerates in memory and
 byte-compares the COMMITTED index (generated and curated tiers only; the auto
@@ -4324,7 +4396,8 @@ may overlap, and `sessions` excludes `composer`. `settings` is split: its listin
 names one `settings.<tab>` sub-area per Settings tab (`sub_areas`, with the
 localized tab label and a count) and lists only what no sub-area holds. An area
 may name `related` areas (Settings and Customize; Connections and Settings,
-whose Agent Harness tab holds the model sign-in; Shell and Sessions, whose chat
+whose Agent Harness tab holds the model provider sign-in and whose Kiro account
+tab holds the Kiro sign-in; Shell and Sessions, whose chat
 side panel holds the built-in browser).
 
 Each entry is compact: `id`, `label` (or `description` for a live-data label),
@@ -4392,7 +4465,8 @@ everywhere, and `--auto-out` refuses `src/kiro_crew/docs/`.
 
 The artifact (`buildAutoArtifact` in `scripts/lib/ui-index.mjs`) holds only the
 auto locations and the labels they use, plus `base_input_digest`, the
-`input_digest` of the committed index it hangs off, and the build-time core
+`input_digest` of the committed index it hangs off (sha256 of that file's text,
+computed by the reader since the file does not carry it), and the build-time core
 coverage numbers. The committed index's digest no longer carries anything the
 auto tier derived. `ui_index_load.py` merges the artifact at load only after checking
 all of it: schema, `artifact: "auto"`, `base_input_digest` equal to the
@@ -5989,7 +6063,7 @@ in its parent's slot.
 **Return a session directive and let the session-aware consumer apply it.** This
 is what `nothing_to_do`, `monitor_start`, `monitor_watch`, `monitor_update`,
 `monitor_stop`, `autonudge_stop`, `set_project`, `suggest_followup`,
-`reset_conversation` and `chat_tag` do (`session_directive.DIRECTIVE_TOOLS`). The tool validates its arguments and
+`reset_conversation`, `chat_tag` and `chat_rename` do (`session_directive.DIRECTIVE_TOOLS`). The tool validates its arguments and
 returns a human-readable confirmation plus a marker line carrying the validated
 payload and **no session key**. `_on_tool_result` (`dashboard/chat_turn/tool_results.py`)
 decodes the marker, applies the effect against **its own** `slot.key`, then

@@ -34,6 +34,8 @@ type Draft = {
   session_folder: string
   /** Open a Slack thread in the owner's bot DM for every new dashboard session on its first message. */
   auto_link_sessions: boolean
+  /** List conversations that start in Slack in the session list (on by default). */
+  show_in_session_list: boolean
   /** Slack Code: the registered switches and the code-channel defaults. */
   code: SlackCodeDraft
 }
@@ -50,6 +52,8 @@ function draftFrom(c: SlackConfigData): Draft {
     session_folder_on: !!c.session_folder,
     session_folder: c.session_folder ?? '',
     auto_link_sessions: !!c.auto_link_sessions,
+    // Absent (an older gateway) reads as on, the gateway's own default.
+    show_in_session_list: c.show_in_session_list !== false,
     code: slackCodeDraftFrom(c),
   }
 }
@@ -394,14 +398,22 @@ export function SlackPanel() {
       // to "Slack", which is what the toggle's description promises.
       session_folder: draft.session_folder_on ? (draft.session_folder.trim() || CHANNEL_NAME) : '',
       auto_link_sessions: draft.auto_link_sessions,
-      ...(codeBaseline.current ? slackCodePayload(draft.code, codeBaseline.current) : {}),
+      show_in_session_list: draft.show_in_session_list,
+      ...(codeBaseline.current
+        ? slackCodePayload(
+          draft.code,
+          codeBaseline.current,
+          // config.local.json sets "Always use conductor mode", or may: never send it.
+          (data?.code_channel_conductor_mode_overlay_state ?? 'absent') !== 'absent',
+        )
+        : {}),
     }
     if (botClear) payload.bot_token_clear = true
     else if (botToken.trim()) payload.bot_token = botToken.trim()
     if (appClear) payload.app_token_clear = true
     else if (appToken.trim()) payload.app_token = appToken.trim()
     saveMut.mutate(payload)
-  }, [draft, botToken, appToken, botClear, appClear, saveMut])
+  }, [draft, botToken, appToken, botClear, appClear, saveMut, data?.code_channel_conductor_mode_overlay_state])
 
   if (isLoading) return <p className="text-[13px] text-muted p-4">{i18nT('pages.settings.slackPanel.loading_slack_config')}</p>
   // Nothing to lose here: the form is not mounted in this branch.
@@ -609,7 +621,7 @@ export function SlackPanel() {
           {/* Optional auto-connect of every new dashboard session, always into
               the owner's bot DM. Off by default: the thread carries the
               session's title and first prompt into Slack. */}
-          <div className="border-t border-border mt-4 pt-4">
+          <div className="border-t border-border mt-3 pt-3">
             <SettingsToggle
               label={i18nT('pages.settings.slackPanel.auto_link_sessions')}
               description={i18nT('pages.settings.slackPanel.auto_link_sessions_desc_summary')}
@@ -620,9 +632,22 @@ export function SlackPanel() {
               configKey="slack.auto_link_sessions"
             />
           </div>
+          {/* Whether conversations that start in Slack are listed in the session
+              list. On by default; off leaves them out of the list only. */}
+          <div className="border-t border-border mt-3 pt-3">
+            <SettingsToggle
+              label={i18nT('pages.settings.slackPanel.show_in_session_list')}
+              description={i18nT('pages.settings.slackPanel.show_in_session_list_desc_summary')}
+              hint={i18nT('pages.settings.slackPanel.show_in_session_list_desc')}
+              checked={draft.show_in_session_list}
+              onChange={v => upd({ show_in_session_list: v })}
+              disabled={ro}
+              configKey="slack.show_in_session_list"
+            />
+          </div>
           {/* Optional per-channel session filing. Off by default: Slack
               conversations stay unfiled in the sidebar, as before. */}
-          <div className="border-t border-border mt-4 pt-4">
+          <div className="border-t border-border mt-3 pt-3">
             <SettingsToggle
               label={i18nT('pages.settings.botChannelPanel.file_sessions_in_folder')}
               hint={i18nT('pages.settings.botChannelPanel.file_sessions_in_folder_desc', { channel: CHANNEL_NAME })}
@@ -655,7 +680,7 @@ export function SlackPanel() {
       </SettingsSection>
 
       {/* ── Save (hidden on read-only remote sessions) ── */}
-      {!ro && <div className="flex flex-wrap items-center gap-3 mt-1 mb-4">
+      {!ro && <div className="flex flex-row-reverse flex-wrap items-center gap-3 mt-3 mb-4 max-w-[720px]">
         <Btn primary onClick={handleSave} disabled={saveMut.isPending}>
           {saveMut.isPending ? i18nT('pages.settings.slackPanel.saving') : i18nT('pages.settings.slackPanel.save_slack_settings')}
         </Btn>

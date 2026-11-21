@@ -99,7 +99,9 @@ def test_refusal_reasons_are_every_branch_the_eligibility_rule_returns():
         and node.value.value
     }
     assert returned, "the AST harvest found nothing; this guard would be vacuous"
-    assert set(crs.REFUSAL_REASONS) == returned | {"native_subagents"}
+    # Two refusals resolve_chat_share adds after the rule: a spec that spawns
+    # native sub-agents, and a claude chat in Auto permission mode.
+    assert set(crs.REFUSAL_REASONS) == returned | {"native_subagents", "auto_permission_mode"}
 
 
 def test_metrics_spells_no_preview_reader_of_its_own():
@@ -176,8 +178,24 @@ def test_bucket_edges_are_inclusive():
     assert crs.rss_bucket(512) == "le_512m"
     assert crs.rss_bucket(8193) == "gt_8g"
     assert crs.tenants_bucket(1) == "1"
-    assert crs.tenants_bucket(7) == "4+"
+    assert crs.tenants_bucket(3) == "3"
+    assert crs.tenants_bucket(4) == "4-7"
+    assert crs.tenants_bucket(7) == "4-7"
+    # The default per-process cap is 10: a full process reads apart from a half-full one.
+    assert crs.tenants_bucket(8) == "8-10"
+    assert crs.tenants_bucket(10) == "8-10"
+    assert crs.tenants_bucket(11) == "11+"
+    assert crs.tenants_bucket(64) == "11+"
     assert crs.tenants_bucket(True) == crs.OTHER
+
+
+def test_the_tenant_buckets_split_around_the_default_cap():
+    """The bucket that holds the shipped cap is not the one that holds four chats."""
+    from kiro_crew.config.sections_agent import AgentConfig
+
+    cap = AgentConfig().chat_runtime_sharing_max_sessions
+    assert crs.tenants_bucket(cap) != crs.tenants_bucket(4)
+    assert crs.tenants_bucket(cap) != crs.tenants_bucket(cap + 1)
 
 
 # -- adoption -------------------------------------------------------------------
@@ -228,14 +246,17 @@ def test_a_founding_and_a_joining_placement_are_counted_with_their_tenants(rec):
 
     async def scenario():
         for n in (1, 2):
-            p = make_placement(session_key=f"dashboard:chat-{n}-1790000000")
+            p = make_placement(
+                session_key=f"dashboard:chat-{n}-1790000000",
+                tree_root="dashboard:chat-1-1790000000",
+            )
             p._read_confirmation = confirming(("gen-1", "acct-A", "auto", False, True))
             await p.place(spawn)
 
     asyncio.run(scenario())
     assert _named(rec, crs.PLACED) == [
-        {"outcome": "spawned", "reason": "none", "tenants": "1"},
-        {"outcome": "joined", "reason": "none", "tenants": "2"},
+        {"outcome": "spawned", "reason": "none", "tenants": "1", "tree": "chat", "harness": "kiro"},
+        {"outcome": "joined", "reason": "none", "tenants": "2", "tree": "chat", "harness": "kiro"},
     ]
 
 
@@ -266,7 +287,53 @@ def test_a_refused_start_is_counted_with_its_reason(rec):
 
     assert asyncio.run(scenario()) is None
     assert _named(rec, crs.PLACED) == [
-        {"outcome": "refused", "reason": "session_environment", "tenants": "none"}
+        {
+            "outcome": "refused",
+            "reason": "session_environment",
+            "tenants": "none",
+            "tree": "none",
+            "harness": "kas",
+        }
+    ]
+
+
+def test_a_harness_switched_off_is_counted_under_that_harness(rec):
+    from chat_runtime_sharing_helpers import _PlacementProvider
+
+    from kiro_crew.acp_backends import ACP_BACKEND_KAS
+    from kiro_crew.providers import chat_share
+    from kiro_crew.providers.chat_share import resolve_chat_share
+
+    cfg = _cfg(True)
+    cfg.agent.chat_runtime_sharing_harnesses = {ACP_BACKEND_KAS: False}
+
+    async def scenario():
+        with (
+            patch("kiro_crew.config.live.snapshot", return_value=cfg),
+            patch.object(chat_share, "kas_chat_sharing_ready", return_value=True),
+        ):
+            return await resolve_chat_share(
+                _PlacementProvider(backend=ACP_BACKEND_KAS),
+                work_dir="/home/u/.kirocrew/workspace",
+                agent="kirocrew",
+                sandbox_mode="auto",
+                extra_env={},
+                mcp_gateway_overlay=None,
+                mcp_gateway_socket=None,
+                configured_model="",
+                launch_agent="",
+                remote_workspace=False,
+            )
+
+    assert asyncio.run(scenario()) is None
+    assert _named(rec, crs.PLACED) == [
+        {
+            "outcome": "refused",
+            "reason": "harness_switched_off",
+            "tenants": "none",
+            "tree": "none",
+            "harness": "kas",
+        }
     ]
 
 
@@ -444,10 +511,13 @@ class _Backend:
 @pytest.mark.parametrize(
     ("leases", "session_key", "delay", "stop", "backend", "want"),
     [
-        (2, "dashboard:chat-0-1", 12.0, "end_turn", "kas", ("2", "le_20s", "ok", "kas")),
-        # A subagent on its host chat's shared process holds no lease there.
-        (2, "subagent:sub-1", 0.0, "end_turn", "kas", ("0", "le_1s", "ok", "kas")),
-        (0, "", 0.0, "error: tool stall", "", ("0", "le_1s", "tool_stall", "kiro")),
+        (2, "dashboard:chat-0-1", 12.0, "end_turn", "kas", ("2", "le_20s", "ok", "kas", "true")),
+        # Eight chats on one process read apart from four.
+        (8, "dashboard:chat-0-1", 0.5, "end_turn", "kas", ("8-10", "le_1s", "ok", "kas", "true")),
+        # A subagent on its host chat's shared process holds no lease there, and
+        # its turn still runs on a shared process.
+        (2, "subagent:sub-1", 0.0, "end_turn", "kas", ("0", "le_1s", "ok", "kas", "true")),
+        (0, "", 0.0, "error: tool stall", "", ("0", "le_1s", "tool_stall", "kiro", "false")),
     ],
 )
 async def test_a_turn_counts_its_start_delay_and_how_it_ended(
@@ -471,12 +541,128 @@ async def test_a_turn_counts_its_start_delay_and_how_it_ended(
         async for _ev in handle.prompt("hello", timeout=FALLBACK_TIMEOUT_SECS):
             pass
 
-    tenants, bucket, outcome, label = want
+    tenants, bucket, outcome, label, shared = want
     assert _named(rec, crs.TURN_STARTED) == [
-        {"tenants": tenants, "delay": bucket, "harness": label}
+        {"tenants": tenants, "delay": bucket, "shared": shared, "harness": label}
     ]
     assert _named(rec, crs.TURN_ENDED) == [
         {"tenants": tenants, "outcome": outcome, "harness": label}
+    ]
+
+
+def test_only_a_process_sharing_placed_reads_shared():
+    """A registration lease is keyed by the runtime itself; a placement by its key."""
+    alone, placed = _Runtime(21), _Runtime(22)
+    _leases(alone, 1, key=alone)
+    _leases(placed, 1, key="key-b")
+    assert crs.on_shared_process(alone) is False
+    assert crs.on_shared_process(placed) is True
+    assert crs.on_shared_process(_Runtime(23)) is False
+    assert crs.on_shared_process(None) is False
+
+
+class _UnsharedClient:
+    """What ``AcpClient.stream_events`` reads, for a turn on a process of its own."""
+
+    def __init__(self, clock: _Clock, *, delay: float, backend: str) -> None:
+        self._acp_backend = backend
+        self._registered_session = False
+        # The injected turn clock, moved by this double's backend instead of by waiting.
+        self._turn_clock = clock.monotonic
+        self._turn_done = asyncio.Event()
+        self._clock = clock
+        self._delay = delay
+
+    @property
+    def backend(self) -> str:
+        return self._acp_backend
+
+    async def ensure_ready(self) -> None:
+        pass
+
+    async def _send_prompt(self, message, *, allow_image=True, prompt_gate=None) -> int:
+        return 7
+
+    async def _dispatch_prompt_events(self, req_id: int, timeout: float):
+        from kiro_crew.acp.types import EVENT_COMPLETE, EVENT_TEXT_CHUNK, AcpEvent
+
+        self._clock.now += self._delay
+        yield AcpEvent(kind=EVENT_TEXT_CHUNK, text="pong")
+        yield AcpEvent(kind=EVENT_COMPLETE, stop_reason="end_turn")
+
+
+def test_a_real_client_times_its_turn_start_on_the_monotonic_clock():
+    """Production reads ``time.monotonic``; only a test's double replaces it."""
+    from kiro_crew.acp.client import AcpClient
+
+    assert AcpClient(acp_backend="goose")._turn_clock is time.monotonic
+
+
+def test_registration_marks_a_client_that_owns_its_process():
+    """The registry's lease call marks an ``AcpClient`` on any channel, nothing else.
+
+    The handle arm reads one tenant for every registered session through its lease,
+    a Slack or Telegram chat as much as a dashboard one, so the client arm keys on
+    the same registration, never on the session key's channel.
+    """
+    from kiro_crew.acp.client import AcpClient
+
+    for key in ("dashboard:chat-0-1", "slack:C1:123.45", "telegram:42", "cron:job-1"):
+        client = AcpClient(acp_backend="goose", session_key=key)
+        assert client._registered_session is False
+        asyncio.run(ro.acquire_session_lease(SimpleNamespace(_client=client)))
+        assert client._registered_session is True, key
+    stand_in = MagicMock()
+    asyncio.run(ro.acquire_session_lease(stand_in))
+    assert stand_in._registered_session is not True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("backend", "registered", "tenants"),
+    [
+        ("goose", True, "1"),
+        ("deepseek", True, "1"),
+        ("claude", True, "1"),
+        # A subagent or worker-pool client is never registered: no chat lease,
+        # as the handle arm reads a session that holds none.
+        ("goose", False, "0"),
+    ],
+)
+async def test_a_turn_on_a_process_of_its_own_is_counted_unshared(
+    rec, backend, registered, tenants
+):
+    """The arm a goose, deepseek or claude session takes when it does not share.
+
+    The span is read from the client's injected ``_turn_clock``, which the double's
+    backend moves 3 s: a ``le_5s`` bucket is only reachable through that injection.
+    """
+    from kiro_crew.acp import client_turn
+    from kiro_crew.metrics.harness import harness_for_backend
+
+    clock = _Clock()
+    client = _UnsharedClient(clock, delay=3.0, backend=backend)
+    if registered:
+        # The registry's own call, on the provider that wraps this client.
+        await ro.acquire_session_lease(SimpleNamespace(_client=client))
+    passthrough = SimpleNamespace(
+        watched=lambda _c, events: events, traced=lambda _c, events: events
+    )
+    with (
+        patch.object(client_turn, "turn_anomalies", passthrough),
+        patch.object(client_turn, "trace_turns", passthrough),
+    ):
+        stream = client_turn.stream_events(client, "hello", timeout=FALLBACK_TIMEOUT_SECS)
+        kinds = [ev.kind async for ev in stream]
+
+    assert kinds == ["text_chunk", "complete"]
+    assert _named(rec, crs.TURN_STARTED) == [
+        {
+            "tenants": tenants,
+            "delay": "le_5s",
+            "shared": "false",
+            "harness": harness_for_backend(backend),
+        }
     ]
 
 

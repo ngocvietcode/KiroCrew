@@ -262,8 +262,11 @@ downloading or loading, memory falls back to keyword search and switches to
 semantic search as soon as the model is ready — no restart needed. Requires
 ~610MB disk for the model and ~700MB RAM once the model is loaded. The model
 loads when something first needs a vector and unloads after 60 minutes without
-one (`memory.embedding_idle_evict_secs`, `0` keeps it loaded); the first search
-after that waits a few seconds for it to load again. Background work (filling in
+one, or after 10 minutes on a machine with 16 GiB of memory or less
+(`memory.embedding_idle_evict_secs`, `"auto"` by default, `0` keeps it loaded, a
+number you set is always kept). On such a machine, opening, typing in or sending
+to a chat, and any channel message, load it again before your message needs it;
+elsewhere the first search after an unload waits a few seconds for it. Background work (filling in
 missing vectors, consolidation) never holds up your message: your search runs
 first and the background text starts over.
 
@@ -364,6 +367,22 @@ scheduled jobs.
   exits 1. The `markdown` collection is never imported, and a private Bot (V2)
   store refuses the import: use the dashboard copy, which keeps provenance.
   Embeddings are built later by the gateway; `memory stats` shows the progress.
+
+## Comparing Memory Providers
+
+You can compare memory providers, Crew's own memory included, on public benchmarks or
+on questions drawn from your own memory, through the owner's
+`/api/memory/provider/bench` routes. A plan shows which providers run, whether each
+keeps data on this machine, how the test data is cleaned up, and how many model calls
+answering and grading may take. Nothing runs until you start the planned run.
+
+- A run writes only to throwaway test stores, never to the memory you use.
+- Benchmark data is downloaded when first needed, from a fixed upstream version.
+- "Your own memory" works on a read-only copy. Anything that looks like a secret is
+  dropped from the copy, not masked. A provider that keeps data elsewhere gets the copy
+  only after you tick the box for that run.
+- Results keep ids and scores, not your memory's text.
+- An agent cannot start a run: there is no tool or CLI command for it.
 
 ## Editing Memory
 

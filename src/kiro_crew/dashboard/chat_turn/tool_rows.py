@@ -8,6 +8,7 @@ import asyncio
 import hashlib
 from typing import TYPE_CHECKING, Any
 
+from kiro_crew import redaction_seams
 from kiro_crew.agent_sdk.spec_hooks import post_tool_identity
 from kiro_crew.dashboard.chat_utils import (
     _tool_identity_fields,
@@ -39,10 +40,10 @@ if TYPE_CHECKING:
     )
     from kiro_crew.dashboard.chat_turn.decisions_hooks import _tool_risk_meta
     from kiro_crew.dashboard.chat_turn.deny_chokepoints import _redact_display_text
+    from kiro_crew.dashboard.chat_turn.file_change_shapes import _client_cwd, _snapshot_tool_writes
     from kiro_crew.dashboard.chat_turn.file_changes import (
         _failed_write_entries,
         _record_turn_snapshot,
-        _snapshot_write_target,
     )
     from kiro_crew.dashboard.chat_turn.native_cards import (
         _append_native_output,
@@ -137,6 +138,34 @@ def _tcid_identity_key(tcid: str | None) -> str:
     return hashlib.sha256(canonical.encode("utf-8", "replace")).hexdigest()[:16]
 
 
+def _sel_label_digest(text: str) -> str:
+    """Fixed-size stand-in for a model-authored title or kind; ``""`` stays ``""``."""
+    return hashlib.sha256(text.encode("utf-8", "replace")).hexdigest() if text else ""
+
+
+def _note_sel_tool_label(turn: _ChatTurn, tool_call_id: str | None, title: str, kind: str) -> bool:
+    """Record the title and kind the SEL now holds for a call; False when unchanged.
+
+    A ``tool_call_update`` omits a field it does not change, so an empty title or
+    kind keeps the recorded value, and an update that changes neither adds
+    nothing to the audit trail. Only a key that names one call is tracked, so the
+    turn's first-source map bounds how many calls this record holds, and each
+    field is kept as a digest, because a shell title is the whole command and has
+    no length bound. Any other id returns True: its update is logged rather than
+    compared with another call's record.
+    """
+    key = _tcid_identity_key(tool_call_id)
+    if not key or key not in turn._tcid_first_source or key in turn._tcid_collapsed:
+        return True
+    prev = turn._sel_tool_labels.get(key)
+    title_d, kind_d = _sel_label_digest(title), _sel_label_digest(kind)
+    label = (title_d or prev[0], kind_d or prev[1]) if prev else (title_d, kind_d)
+    if label == prev:
+        return False
+    turn._sel_tool_labels[key] = label
+    return True
+
+
 def _tool_meta(event: "LLMEvent") -> dict[str, str] | None:
     """Build the meta dict persisted on a tool message — `tool_call_id`,
     `purpose`, and the full redacted `input`. Output is appended later by the
@@ -168,7 +197,45 @@ def _tool_meta(event: "LLMEvent") -> dict[str, str] | None:
         # does not have to parse ``@server/tool`` out of the title; both are
         # optional there, so a row without them still renders.
         **_tool_identity_fields(event),
+        # The argument naming a read call's file, present only when the backend
+        # marked one (``AcpEvent.read_path_arg``): the row's thumbnail strip reads
+        # the input under that name, so a live row and a replayed one preview alike.
+        **_read_path_fields(event),
     }
+
+
+def _read_path_fields(event: "LLMEvent") -> dict[str, str]:
+    """``read_path_arg`` for a tool row, present only when the event carries one."""
+    arg = getattr(event, "read_path_arg", "")
+    return {"read_path_arg": arg} if isinstance(arg, str) and arg else {}
+
+
+def _withdraw_read_path_arg(state: Any, slot: Any, tcid: str) -> None:
+    """Clear ``read_path_arg`` from the tool rows of call *tcid*, stored and live.
+
+    For a read that ended without completing (failed, refused or cancelled): it read
+    no file, so its row previews none. Claude Code's own permission refusal arrives
+    that way, as a ``failed`` update. Each marked row is patched by its own ``ts``
+    with an empty mark, which the open tab's meta merge reads as "no file named".
+    """
+    for row in slot.messages:
+        meta = row.get("meta") if row.get("role") == "tool" else None
+        if not isinstance(meta, dict) or meta.get("tool_call_id") != tcid:
+            continue
+        if meta.pop("read_path_arg", None) is None:
+            continue
+        ts = str(row.get("ts") or "")
+        if not ts:
+            continue
+        try:
+            state.broadcast_ws(
+                "chat_message_update",
+                {"slot": slot.key, "ts": ts, "meta": {"read_path_arg": ""}},
+            )
+        except Exception:
+            # The stored row is already unmarked; a client reconciles from slot
+            # detail on its next fetch.
+            logger.debug("read mark withdrawal broadcast failed", exc_info=True)
 
 
 def _tool_call_ws_payload(event: "LLMEvent") -> dict[str, str | bool]:
@@ -339,13 +406,8 @@ async def _on_tool_call(turn: _ChatTurn, event) -> None:
     # (authoritative) over a disk read which races with the write.
     # Offloaded: strReplace reconstruction reads the file from
     # disk, and a slow/hung filesystem must not stall the loop.
-    _file_snapshot = await asyncio.to_thread(
-        _snapshot_write_target,
-        event.raw_tool_params,
-        diff_old_text=event.diff_old_text,
-        diff_path=event.diff_path,
-    )
-    if _file_snapshot:
+    _file_snapshots = await asyncio.to_thread(_snapshot_tool_writes, event, _client_cwd(client))
+    for _file_snapshot in _file_snapshots:
         _record_turn_snapshot(
             slot,
             _file_snapshot,
@@ -385,14 +447,16 @@ async def _on_tool_call(turn: _ChatTurn, event) -> None:
     if _risk_meta:
         _tool_row_meta = {**(_tool_row_meta or {}), **_risk_meta}
     slot.append("tool", f"🔧 {_tool_payload['tool']}", "msg msg-tool", meta=_tool_row_meta)
+    _sel_title = _redact_display_text(event.title)
     sel().log_tool_invocation(
         session_key=session_key,
         agent=slot.agent or "kirocrew",
         source="dashboard",
-        tool_name=_redact_display_text(event.title),
+        tool_name=_sel_title,
         tool_kind=event.tool_kind,
         outcome="invoked",
     )
+    _note_sel_tool_label(turn, event.tool_call_id, _sel_title, event.tool_kind or "")
     # AskUserQuestion: validate, then post through the server-side
     # owner so the card carries a ``card_id`` and retires with the
     # next user row / consumed steer like every other question card.
@@ -542,8 +606,11 @@ async def _on_tool_call(turn: _ChatTurn, event) -> None:
                 _mirror_active_task = f"tool_{_mirror_task_counter}"
                 turn._mirror_active_task = _mirror_active_task
                 _task_title = event.tool_purpose or _mirror_task_label(event)
-                _task_title, _ = redact_exfiltration_urls(_task_title)
-                _task_title, _ = redact_credentials(_task_title)
+                # The thread's task title is a channel post: it never stands down
+                # with the turn's CHAT seam.
+                with redaction_seams.output_seam(redaction_seams.CHANNELS):
+                    _task_title, _ = redact_exfiltration_urls(_task_title)
+                    _task_title, _ = redact_credentials(_task_title)
                 _task_title = _task_title[:75]
                 _mirror_active_task_title = _task_title
                 turn._mirror_active_task_title = _mirror_active_task_title
@@ -630,18 +697,16 @@ async def _on_tool_call_update(turn: _ChatTurn, event) -> None:
         # block (authoritative) over a disk read which races with
         # the write. Offloaded: reconstruction reads from disk and
         # a slow/hung filesystem must not stall the loop.
-        _file_snapshot_upd = await asyncio.to_thread(
-            _snapshot_write_target,
-            event.raw_tool_params,
-            diff_old_text=event.diff_old_text,
-            diff_path=event.diff_path,
+        _file_snapshots_upd = await asyncio.to_thread(
+            _snapshot_tool_writes, event, _client_cwd(turn.client)
         )
-        if _file_snapshot_upd:
+        for _file_snapshot_upd in _file_snapshots_upd:
             _record_turn_snapshot(
                 slot,
                 _file_snapshot_upd,
                 _tcid_identity_key(getattr(event, "tool_call_id", None)),
             )
+        if _file_snapshots_upd:
             # A refinement can follow its failed result, even as the
             # call's first snapshot: claim no diff, while the id still
             # names one call.
@@ -685,15 +750,17 @@ async def _on_tool_call_update(turn: _ChatTurn, event) -> None:
         )
         # Update the audit log so the SEL trail captures the
         # refined title/kind, not just the "Terminal"/"grep" stub
-        # logged at the initial EVENT_TOOL_CALL.
-        sel().log_tool_invocation(
-            session_key=session_key,
-            agent=slot.agent or "kirocrew",
-            source="dashboard",
-            tool_name=_title_upd,
-            tool_kind=_kind_upd,
-            outcome="refined",
-        )
+        # logged at the initial EVENT_TOOL_CALL. Backends re-send the
+        # same title on most updates, so only a change is logged.
+        if _note_sel_tool_label(turn, event.tool_call_id, _title_upd, _kind_upd):
+            sel().log_tool_invocation(
+                session_key=session_key,
+                agent=slot.agent or "kirocrew",
+                source="dashboard",
+                tool_name=_title_upd,
+                tool_kind=_kind_upd,
+                outcome="refined",
+            )
         # Patch the persisted tool message in place so its content
         # shows the refined title and meta carries the populated
         # input.  Walk in reverse and break on the first match —

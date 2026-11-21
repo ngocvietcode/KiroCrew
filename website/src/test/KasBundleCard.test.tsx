@@ -8,6 +8,7 @@
  * - "Install" starts the gateway's install, and the card shows its progress from
  *   the status the server returns;
  * - an install failure renders the server's remedy text;
+ * - a host that cannot run the engine names why in place of Install, once;
  * - a saved switch is reported as pending a restart, because the setting is
  *   boot-only, and nothing says so before a save;
  * - a status poll that fails while an earlier status is still cached is reported,
@@ -20,11 +21,13 @@
  *   with the switch off, muted again while a save waits for a restart.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { act, fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { renderWithProviders } from './helpers'
 import { api, type KasBundleStatus } from '../api/client'
 import { KAS_BUNDLE_CONFIG_KEY, KasBundleCard } from '../pages/developer/KasBundleCard'
-import { __resetGatewayConnectedForTests, setGatewayConnected } from '../utils/errorReport'
+import {
+  __resetErrorJournalForTests, __resetGatewayConnectedForTests, attachReport, consumeChatHandoff, recordError, setGatewayConnected,
+} from '../utils/errorReport'
 
 vi.mock('../api/client', async importOriginal => {
   const mod = await importOriginal<typeof import('../api/client')>()
@@ -76,6 +79,17 @@ describe('KasBundleCard', () => {
     patchConfig.mockClear()
   })
 
+  it('names the sharing preview, not kiro-cli, when the preview picked the engine', async () => {
+    kasBundleStatus.mockResolvedValue({
+      ...INSTALLED,
+      route: { route: 'bundle', automatic: true, reason: 'chat_runtime_sharing', summary: '' },
+    })
+    renderWithProviders(<KasBundleCard />)
+    const note = await screen.findByTestId('kas-bundle-route-auto')
+    expect(note).toHaveTextContent('The ACP runtime sharing preview is on')
+    expect(note).not.toHaveTextContent('Kiro CLI')
+  })
+
   it('offers Install and holds the switch off while nothing is installed', async () => {
     kasBundleStatus.mockResolvedValue(BASE)
     renderWithProviders(<KasBundleCard />)
@@ -83,6 +97,27 @@ describe('KasBundleCard', () => {
     expect(screen.getByText('KAS engine 0.66.33 is not installed yet.')).toBeInTheDocument()
     expect(toggle()).toHaveAttribute('aria-disabled', 'true')
     expect(screen.getByTestId('restart-badge')).toHaveAttribute('data-key', KAS_BUNDLE_CONFIG_KEY)
+  })
+
+  it('names why a host cannot run the engine instead of offering an install it refuses', async () => {
+    const reason = "Kiro Crew cannot install its KAS engine: this host's glibc (2.26) is older than KAS requires (glibc 2.28+)."
+    kasBundleStatus.mockResolvedValue({ ...BASE, host_unsupported: reason })
+    renderWithProviders(<KasBundleCard />)
+    expect(await screen.findByTestId('kas-bundle-host-unsupported')).toHaveTextContent(reason)
+    expect(screen.queryByTestId('kas-bundle-install')).toBeNull()
+    expect(screen.queryByText('KAS engine 0.66.33 is not installed yet.')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(toggle()).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('reports a refused install on such a host once, as an error, with no Install', async () => {
+    const reason = "Kiro Crew cannot install its KAS engine: this host's glibc (2.26) is older than KAS requires (glibc 2.28+)."
+    kasBundleStatus.mockResolvedValue({ ...BASE, host_unsupported: reason, error: reason })
+    renderWithProviders(<KasBundleCard />)
+    expect(await screen.findByRole('alert')).toHaveTextContent(reason)
+    expect(screen.getAllByText(reason)).toHaveLength(1)
+    expect(screen.queryByTestId('kas-bundle-host-unsupported')).toBeNull()
+    expect(screen.queryByTestId('kas-bundle-install')).toBeNull()
   })
 
   it('lets the switch be turned on once installed, through the config PATCH', async () => {
@@ -194,6 +229,25 @@ describe('KasBundleCard', () => {
     expect(toggle()).not.toHaveAttribute('aria-disabled')
     fireEvent.click(toggle())
     await waitFor(() => expect(patchConfig).toHaveBeenCalledWith('agent.kas_bundle', false))
+  })
+
+  it("hands the agent the failed install request's own report", async () => {
+    // The notice words the failure from the catalog, so it cannot find the
+    // report by its text; the request's report must ride with the error.
+    __resetErrorJournalForTests()
+    kasBundleStatus.mockResolvedValue(BASE)
+    const report = recordError({
+      source: 'api', message: 'download failed: 503', status: 503, code: 'kas_download_failed',
+      endpoint: '/api/kas-bundle/install',
+    })
+    kasBundleInstall.mockRejectedValue(attachReport(new Error('download failed: 503'), report))
+    renderWithProviders(<KasBundleCard />)
+    fireEvent.click(await screen.findByTestId('kas-bundle-install'))
+    const alert = await screen.findByRole('alert')
+    fireEvent.click(within(alert).getByRole('button', { name: 'Ask the agent' }))
+    const prompt = consumeChatHandoff() ?? ''
+    expect(prompt).toContain('HTTP 503')
+    expect(prompt).toContain('kas_download_failed')
   })
 
   it('starts the install and shows the progress the server reports', async () => {

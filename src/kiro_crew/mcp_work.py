@@ -94,6 +94,7 @@ from kiro_crew.work_vocab import (
     WORK_ASK_OUTCOME_CHARS,
     WORK_ASK_WHAT_CHARS,
     WORK_ASK_WHY_CHARS,
+    WORK_CONDUCTOR_RETIRE_REASONS,
     worker_statuses,
 )
 
@@ -161,6 +162,7 @@ _RECORD_FIELDS: tuple[str, ...] = (
     "fails",
     "concurrency_cap",
     "new_goal",
+    "reason",
 )
 
 #: Fields ``work_ledger_read`` forwards as a query string. Same defence as
@@ -431,9 +433,7 @@ def _ledger_tool_definitions() -> list[dict[str, Any]]:
                 "when the next step arrives. On 'blocked' "
                 "or 'question', set reason when only a person can move it: 'approval' "
                 "when a tool approval timed out or is waiting, 'needs_human' only for "
-                "credentials or a permission only a person can grant, spend, an "
-                "irreversible step or deleting someone else's work, a costly preference "
-                "nobody can infer, or a choice the person said they want to make; leave "
+                "an ask case (a)-(e) in your CRITICAL RULES; leave "
                 "it unset for a build or service. A choice you can recommend is "
                 "'question' without needs_human, naming your recommendation and why. A "
                 "ledger whose open items all wait on a person holds the conductor's "
@@ -447,13 +447,11 @@ def _ledger_tool_definitions() -> list[dict[str, Any]]:
                 "a step after the calls that prove what it reports have returned. "
                 "Which item this lands on "
                 "is resolved from your own session — there is no item parameter."
-                " The whole report is one 64 KB crew-log line as JSON (a non-ASCII "
-                "character can count up to twelve bytes), so a report at every field cap with "
-                "non-ASCII text can be refused work_entry_too_large before anything is "
-                "written; keep summary and artifacts to what a reader needs. An item "
-                "from before the record whose committed acceptance is itself wider "
-                "than a line is refused work_item_too_large, which no shorter report "
-                "cures: the refusal names the conductor's accept as the remedy."
+                " The whole report must fit one 64 KB crew-log line as JSON (a non-ASCII "
+                "character can cost twelve bytes) or it is refused work_entry_too_large; "
+                "keep it to what a reader needs. An item whose committed acceptance is "
+                "itself wider than a line is refused work_item_too_large: no shorter "
+                "report cures it, only the conductor's accept."
             ),
             "inputSchema": {
                 "type": "object",
@@ -501,6 +499,13 @@ def _ledger_tool_definitions() -> list[dict[str, Any]]:
                             "On 'progress': when you will resume, an ISO-8601 time with a "
                             "zone, ahead of now by at most 24 hours. Refused with any other "
                             "status. Each report replaces it."
+                        ),
+                    },
+                    "discussion": {
+                        "type": "object",
+                        "description": (
+                            "Only when hosting a discussion: its whole state for the "
+                            "Board; fields and caps in docs/work-ledger.md."
                         ),
                     },
                 },
@@ -669,14 +674,13 @@ def _ledger_tool_definitions() -> list[dict[str, Any]]:
                 "its report channel is now cut (bind a new item to it to restore it). "
                 "A close that carries verdict records it first, then closes: settle "
                 "a pass with action=close state=accepted verdict=pass. If the verdict "
-                "write is refused the item stays open. "
-                "Caps refuse rather than truncate, naming the field. The whole write is "
-                "one 64 KB crew-log line as JSON (a non-ASCII character can count up to twelve "
-                "bytes), so a write at every field cap with non-ASCII text can be "
-                "refused work_entry_too_large before anything is written. A write about "
-                "an item from before the record whose committed acceptance is wider "
-                "than a line is refused work_item_too_large until an accept with a "
-                "smaller acceptance records the item whole."
+                "write is refused the item stays open. 'retire' frees your crew-bound item "
+                "for another crew; owner-sent turns only. "
+                "Caps refuse rather than truncate, naming the field. A write that does "
+                "not fit one 64 KB crew-log line as JSON (non-ASCII counts up to twelve "
+                "bytes) is refused work_entry_too_large. An older item whose acceptance "
+                "is wider than a line is refused work_item_too_large until an accept "
+                "with a smaller acceptance records it whole."
             ),
             "inputSchema": {
                 "type": "object",
@@ -691,6 +695,7 @@ def _ledger_tool_definitions() -> list[dict[str, Any]]:
                             "close",
                             "goal",
                             "accept",
+                            "retire",
                         ],
                         "description": "Which write to perform.",
                     },
@@ -769,6 +774,7 @@ def _ledger_tool_definitions() -> list[dict[str, Any]]:
                             "item count again. Needs `goal`. Rewording keeps the count."
                         ),
                     },
+                    "reason": {"type": "string", "enum": list(WORK_CONDUCTOR_RETIRE_REASONS)},
                 },
                 "required": ["action"],
             },
@@ -1096,7 +1102,7 @@ def _call_tool_inner(name: str, args: dict[str, Any]) -> str:
         payload = {
             k: v
             for k, v in args.items()
-            if k in ("status", "summary", "artifacts", "pr", "reason", "wake_at")
+            if k in ("status", "summary", "artifacts", "pr", "reason", "wake_at", "discussion")
         }
         resp = _post(_REPORT_PATH, payload, session_key=caller_key)
         if resp.get("error"):

@@ -145,6 +145,26 @@ def _probe_adoption_health(port: int, health_path: str) -> bool:
     return _health_probe(port, health_path, timeout=3).healthy
 
 
+def _adoption_allowed() -> bool:
+    """Whether a healthy listener on an app's port may be adopted or re-bound.
+
+    ``agent.apps_never_adopt_backend_listener`` on means never: the gateway adopts or
+    re-binds no listener it did not start in this run. Off keeps the default of adopting,
+    and so does a config that fails to load, with one warning.
+    """
+    try:
+        from kiro_crew.config.loader import KiroCrewConfig
+
+        cfg = KiroCrewConfig.load()
+        return cfg.agent.apps_never_adopt_backend_listener is not True
+    except Exception as exc:  # noqa: BLE001 - an unreadable setting keeps the default
+        logger.warning(
+            "Could not read apps_never_adopt_backend_listener (%s); adopting, as when the setting is off",
+            exc,
+        )
+        return True
+
+
 def _capture_adopted_owners(
     app_name: str, port: int, health_path: str
 ) -> tuple[list[int], dict[int, str]] | None:
@@ -325,9 +345,9 @@ def spawned_backend_owner(pid: int) -> str | None:
     this gateway cannot vouch for.
 
     The answer is the registry key the backend was started under, which is the
-    app identity every other registry read uses; the owner-token mint stamps it
-    into its audit record so a token minted by an app is attributed to that app
-    rather than to an anonymous local process.
+    app identity every other registry read uses; the owner-token mint refuses a
+    caller this names and stamps the key into its ``app-backend-refused`` audit
+    record.
 
     The ancestry walk runs OUTSIDE ``_lock``: it reads ``/proc`` per candidate,
     and the snapshot taken under the lock is all the registry state it needs.

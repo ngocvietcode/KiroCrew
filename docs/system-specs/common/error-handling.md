@@ -69,6 +69,9 @@ AcpError (base, acp/transport_errors.py) — carries `transient`, the retry verd
 
 AcpRuntimeError (base, acp/session_handle_runtime_contract.py)
 ├── AcpRuntimeDead            — the underlying process has died
+├── AcpScopeAdmissionTimeout  — the user systemd manager did not admit the
+│                                agent's scope within its bound; transient=False,
+│                                because each retry adds one more transient unit
 ├── AcpRequestTimeout         — a request's response missed its budget
 │   ├── AcpSessionStartTimeout — `session/new` timed out while a collector owns
 │   │                            the possible late result (acp/runtime_session_create.py)
@@ -109,7 +112,7 @@ instead of the row simply disappearing.
 | Integer field in a dashboard JSON body | Read through `dashboard/body_numbers.body_int`, which raises `ValueError` for `1e999`/`-1e999` (infinite floats after `json.loads`) where `int()` raises `OverflowError`. The handler's own `except (TypeError, ValueError)` then gives the infinite value the same 400 or fallback any other malformed value gets there, never a 500. A site does not add `OverflowError` to its own except clause instead |
 | Skill index (`list_skills`) | One global SKILL.md that is not UTF-8 or cannot be opened → one warning naming the file, that row dropped, every other row listed. Never a failed listing: the index feeds every chat turn and `GET /api/skills`. Rationale: [memory-skills-hooks](../modules/memory-skills-hooks.md) |
 | Process spawn | Backend-specific executable resolver, including trusted-path checks where required; clear error if missing |
-| A host that does not answer (`kirocrew kas login`, the KAS engine manifest fetch) | The message names the host and leads with the cause in plain words. `asset_downloader.network_failure_cause` reads it from the exception types (urllib's `URLError.reason`, aiohttp's `os_error`), never their text: `connection refused`, `the host name could not be resolved` or `timed out`. Any other failure keeps the library's own text, which is then the only clue there is, and so does an aiohttp exception with no `host` (a connect timeout names its host only in its text) |
+| A host that does not answer (`kirocrew kas login`, the KAS engine manifest fetch, `kirocrew update` (its release feed and the manifest and wheel fetch), `kirocrew memory forget`, the policy fetch, a pinned download) | The message names what it was reaching and leads with the cause in plain words. `asset_downloader.network_failure_cause` reads it from the exception types (urllib's `URLError.reason`, aiohttp's `os_error`), never their text: `connection refused`, `the host name could not be resolved` or `timed out`. Any other failure keeps the library's own text, which is then the only clue there is, and so does an aiohttp exception with no `host` (a connect timeout names its host only in its text). A site that already had its own rule keeps it: the policy fetch passes that other text through its sanitizer, `kirocrew update` shows its manifest and wheel failure redacted (`wheel_apply.shown_failure_text`), `kirocrew memory forget` answers a refused or missing dashboard socket at the credential mint with its own sentence pointing at the dashboard Memory page, and a pinned download (`download_to`) reports only the exception's type, because the text can carry a credentialed url |
 | Notes git subprocess (`md_notebook/git_ops.py`) | A non-zero exit reports git's last 3 stderr lines PLUS the first transport-caused line when one sits outside that tail. git ends every fetch/push failure with the same access-rights boilerplate and prints an SSH diagnosis first, so a tail alone reports a permission problem the operator does not have (a host reachable only via `~/.ssh/config` never resolved at all). The extra line widens what the message reports; it does not decide whether the command failed. |
 | Auto-Improvement git step (`auto_improvement/backend/clone_setup.py`) | A failed clone, branch list, checkout or fetch reports git's last 2 stderr lines after dropping blank lines and git's access-rights advisory (`Please make sure you have the correct access rights` / `and the repository exists.`), redacted and then bounded. The advisory follows every transport or auth fatal, so keeping it reports a repository problem in place of the `Permission denied (publickey).` line above it. |
 | App Store install clone, pinned fetch and pull (`apps/registry_pipeline/checkout.py`) | A credential-free (catalog or `index`-tier registry) fetch of an ssh remote whose output holds ssh's own `ssh: Could not resolve hostname` line returns `git_clone_failed_strict_ssh_route` with a fixed sentence: the fetch ran in the strict sandbox, which hides `~/.ssh`, so neither `~/.ssh/config` nor the ssh-agent applied, and a host reachable only through an ssh config route is installed from the operator's own clone with `kirocrew app install <dir>`. It carries no proxy hint, because ssh never reads `HTTPS_PROXY`; an owner-credentialed clone and an HTTPS remote keep the network hint. |
@@ -403,6 +406,17 @@ never touch AWS, so naming Bedrock sent their users chasing throttling that does
 not exist. The verb stays "throttling" in both forms so
 `llm_helpers._TRANSIENT_MARKERS` ("throttl") still classifies the formatted
 message as transient; the retry verdict is unchanged, only the subject noun moves.
+Kiro's **per-user request-rate limit** (HTTP 429 reason `USER_REQUEST_RATE_EXCEEDED`,
+or the engine's "sending requests faster than your rate limit allows") is worded
+ahead of that branch by `acp/user_rate_limit_errors.py`: the limit is per user, not
+per model, so `USER_RATE_LIMIT_TEXT` says a model switch will not help and to wait,
+instead of the throttle row's switch-model advice. Only the wording is its own; the
+retry verdict and the throttle tag still come from the frame's throttle tokens, and
+the text keeps "throttling" for the same `_TRANSIENT_MARKERS` reason.
+`_raise_acp_error` also stamps `AcpError.user_rate_limit` on such a throttle, and
+`AcpError.server_error` on a transient provider 5xx (`acp_error_is_server_error` reads
+it, with the same text fallback as `acp_error_is_throttle`); the dashboard model
+fallback reads both (`modules/model-fallback.md`).
 
 A **network-path drop** is the one transient class that waits by time rather
 than by count. `AcpError.connection_failure` is set from the raw frame when the

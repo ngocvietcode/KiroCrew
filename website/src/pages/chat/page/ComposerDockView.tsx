@@ -74,6 +74,7 @@ import { i18nT } from '../../../i18n/t'
 import { acpBackendName } from '../../../api/acpBackend'
 import { fmtDateFields, fmtNumber } from '../../../i18n/format'
 import { useSlotRunsHere } from '../../../components/sessionEnvironmentHooks'
+import { stagedProjectTurnKey } from '../../../components/chat-input/stagedProject'
 
 /**
  * The main composer, with its callback props held at stable identities. This
@@ -210,6 +211,7 @@ interface ComposerDockViewProps {
   refusedPress: ReturnType<typeof useRefusedPress>['refusedPress']
   setRefusedPress: ReturnType<typeof useRefusedPress>['setRefusedPress']
   send: ReturnType<typeof useComposerSend>['send']
+  composerSend: ReturnType<typeof useComposerSend>['composerSend']
   pickModel: (modelName: string) => void
   setProject: (path: string) => Promise<void>
   /** A project pick on this chat is still waiting on its route. */
@@ -251,6 +253,10 @@ interface ComposerDockViewProps {
   effortAutoNote?: boolean
   /** The active slot's ultracode switch, from its selection-capabilities read. */
   ultracode?: boolean
+  /** The active slot's Fast mode switch (the read's `fast` field). */
+  fastMode?: boolean
+  /** Why that switch cannot be turned on (the read's `fast_unavailable` field). */
+  fastUnavailable?: string
   modelMarker: 'auto' | 'default' | null
   pinModelToAgentMut: ReturnType<typeof useComposerChips>['pinModelToAgentMut']
   projectBranch: string
@@ -311,9 +317,9 @@ interface ComposerDockViewProps {
    *  with the chip pressed (a toggle), the memory chip is held, and the agent
    *  slot shows nothing. */
   crewChipPressed?: boolean
-  /** The gateway refuses any agent switch of this chat (a Crew Mode chat with a
-   *  message, `crew_mode_locked`) while the Crew Mode preview is off on this
-   *  device: no agent picker, and no Crew Mode mark either. */
+  /** The gateway refuses any agent switch of this chat (a conductor mode chat with
+   *  a message, `crew_mode_locked`) in a build without conductor mode (LTS): no
+   *  agent picker, and no conductor mode mark either. */
   agentSwitchLocked?: boolean
   /** The main pane holds a Crew Mode worker: the composer is that worker's steer
    *  composer. It looks like the conductor's normal composer; a running turn
@@ -338,11 +344,11 @@ export default function ComposerDockView({
   automationSnapshotFailed, setAutomationOpen, prefillHint, setPrefillHint, pasteSlice, pendingFiles, pendingSessions, resizedInfo, unstageSessionRef, uploading, agentBtnRect, anchorAgentBtn,
   projectPickerOpen, setProjectPickerOpen, anchorProjectBtn, projectBtnRect, pendingDirs, composerRef, composerVoiceOptions, isMac, cancelUpload, composerUploadFiles, dropTargetProps, handleCapture,
   handleFileOpen, handleOptimizeResult, search, tabsCtl, uploadCount, sendHeld, composerBandRef, scrollBottom, handleResumeSession, composerRootChange, composerUserEdit, followUpMulti,
-  followUpOptions, followUpPicked, followUpPickedRef, followUpSourceKey, toggleFollowUpOption, dashCfg, jevAutoConsented, refusedPress, setRefusedPress, send, pickModel, setProject, projectSwitching, switchAgent,
+  followUpOptions, followUpPicked, followUpPickedRef, followUpSourceKey, toggleFollowUpOption, dashCfg, jevAutoConsented, refusedPress, setRefusedPress, send, composerSend, pickModel, setProject, projectSwitching, switchAgent,
   currentSlot, activeFolderName, anchorSessionControl, openSessionControl, refreshSessionControlStatuses, sessionControlKey, sessionControlRect, sessionControls, setOpenSessionControl,
   activeAgentName, attachmentAnnouncement, clampOutOfTokens, handleAddToContext, mentionKeyEdit, optimizerMentionGuard, mentionEditRange, removeDirChip, removeFileChip, selectPickedFile, followupAddToSession,
   followupStartInNewChat, followupStartInWorktree, displayMode, _modelPinActive, _modelPinAgent, _modelPinPinned, _pinShownModel, _slotProject, defaultEffort, effectiveEffort, effortLevelsOverride,
-  effortSupported, effortAutoNote = false, ultracode, modelMarker, pinModelToAgentMut, projectBranch, projectGit, projectGitError, shownModel, cardOwnsRecovery, resumeAfterSignIn, continuable, continuing, handleContinue, interrupted, dockGutter, dockRef,
+  effortSupported, effortAutoNote = false, ultracode, fastMode, fastUnavailable, modelMarker, pinModelToAgentMut, projectBranch, projectGit, projectGitError, shownModel, cardOwnsRecovery, resumeAfterSignIn, continuable, continuing, handleContinue, interrupted, dockGutter, dockRef,
   endQuoteFlight, flyingQuote, inputAreaRef, isAtBottom, answerQuestionCard, handleCancelQueued, handleEditQueued, handleEditOpenQueued, handleInterruptQueued, handleReorderQueued, keepQuestionAnswer, queuedMessages,
   queuePendingIds, steer, stopTurn, systemDeliveryCount, handleEditLastRequest, composerOptimizing, handleOptimizingChange, memorySwitching, showComposerMemoryChip, switchMemoryMode, composerAbove, typingLock, composerPresence,
   composerSessionControls, crewModeOffered, crewModeMidChatOffered = false, turnOnCrewMode, turnOffCrewMode, crewModeSwitching = null, agentPickerHidden = false, crewChipPressed = false, agentSwitchLocked = false, steerWorker, steerWorkerRoot = '',
@@ -356,6 +362,9 @@ export default function ComposerDockView({
   const [followupStartSends] = usePersistedBool(FOLLOWUP_START_SENDS_KEY, false)
   // App composer actions: rows in "+" whose apps insert plain text.
   const composerActions = useComposerActionItems()
+  // A queued turn opens without the composer going idle; the staged-pick badge
+  // re-takes its start project from this (#20350).
+  const projectTurnKey = useMemo(() => stagedProjectTurnKey(messages), [messages])
   // Someone else holds the typing lock: no dictation may start into the draft.
   const voiceOptions = useMemo(
     () => (typingLock ? { ...composerVoiceOptions, startBlocked: true } : composerVoiceOptions),
@@ -598,7 +607,7 @@ export default function ComposerDockView({
                     <CrewWorkerComposerGate root={steerWorkerRoot} worker={activeSlot} workerTitle={steerWorker ?? ''}
                       waitingForApproval={!!currentSlot?.pending_approval} />
                   ) : (
-                    // Without the gate (the Crew Mode preview off) a send the server
+                    // Without the gate (a build without conductor mode, LTS) a send the server
                     // still took as a steer can come back unrecorded: say so here.
                     <CrewSteerUnrecordedNotice worker={activeSlot}
                       workerTitle={currentSlot ? sessionDisplayTitle(currentSlot) : ''} />
@@ -621,12 +630,14 @@ export default function ComposerDockView({
               // (typing, paste, undo, picker inserts), never for a parent-driven
               // seed -- so it is the signal that arms the prefill hint's expiry.
               onChange={composerUserEdit}
-              onSend={() => { if (!steerRootClosed && steerFits()) send() }}
+              // A refused send leaves the draft in the box, so it reports "not
+              // confirmed" and a restored stash entry is kept.
+              onSend={() => (!steerRootClosed && steerFits() ? composerSend() : Promise.resolve(false))}
               terminalCommands={activeSlot && !currentSlot ? 'pending'
                 : currentSlot?.executor === 'remote' || runsHere === false ? 'remote'
                   : currentSlot && runsHere === undefined ? 'pending' : 'local'}
               canSteer={composerBusy}
-              onSteer={opts => { if (!steerRootClosed && steerFits(opts?.text)) steer(opts) }}
+              onSteer={opts => (!steerRootClosed && steerFits(opts?.text) ? steer(opts) : Promise.resolve(false))}
               // AND a turn actually running. `composerBusy` is also true when only
               // background sub-agents are working, and there is no turn to decide
               // ABOUT in that state: the send starts a fresh turn and the point
@@ -692,6 +703,8 @@ export default function ComposerDockView({
               optimizerMentionGuard={optimizerMentionGuard}
               mentionEditRange={mentionEditRange}
               project={currentSlot?.project || ''}
+              turnProject={currentSlot?.turn_project}
+              turnProjectFallback={currentSlot?.turn_project_fallback}
               projectBranch={projectBranch}
               projectDetached={!projectGitError && !!projectGit?.detached}
               isMac={isMac}
@@ -760,6 +773,7 @@ export default function ComposerDockView({
               showContextTokens={chatConfig.showContextTokens}
               environmentSlot={activeSlot}
               isRunning={composerBusy}
+              projectTurnKey={projectTurnKey}
               projectLocked={projectLocked}
               projectSwitching={projectSwitching}
               /* Composed with `interrupted`, matching the ErrorCard gate above.
@@ -897,6 +911,8 @@ export default function ComposerDockView({
                 defaultEffort={defaultEffort}
                 effortLevelsOverride={effortLevelsOverride}
                 ultracode={ultracode}
+                fastMode={fastMode}
+                fastUnavailable={fastUnavailable}
                 onManageModels={modelPickerConfigured ? undefined : () => {
                   setModelDropdown(false)
                   navigate(settingsPath({ tab: 'chat', sub: 'models', highlight: 'key:dashboard.model_picker_hidden_models' }))

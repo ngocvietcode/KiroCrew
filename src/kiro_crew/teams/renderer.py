@@ -91,10 +91,10 @@ _PROGRESS_THROTTLE_S = 3.0
 #: 2 s. Teams' per-thread budget is 7 requests/second, so this spends about 4% of it.
 _TYPING_REFRESH_S = 4.0
 
-_ERROR_TEXT = "⚠️ Something went wrong — please try again."
+_ERROR_TEXT = "Error: Something went wrong — please try again."
 
 #: What the progress bubble becomes when the reply has no text to replace it with.
-_PROGRESS_DONE_TEXT = "✅ Done"
+_PROGRESS_DONE_TEXT = "Done"
 
 # Refusal lines appended to one answer before they are summarized. A reply that
 # referenced a dozen unusable paths must explain itself without burying the answer.
@@ -308,7 +308,7 @@ class TeamsRenderer(Renderer):
         if self._progress_opened and now - self._last_progress < _PROGRESS_THROTTLE_S:
             return
         self._last_progress = now
-        await self._write_progress(f"🔧 {self._tool_title}…")
+        await self._write_progress(f"Running {self._tool_title}…")
 
     async def on_prompt_choice(
         self,
@@ -362,7 +362,7 @@ class TeamsRenderer(Renderer):
             # prompt the user never saw, then denying with no explanation.
             self._decider.abandon(rid)
             await self._say(
-                "⚠️ Could not show the approval prompt for "
+                "Warning: Could not show the approval prompt for "
                 f"`{title}`, so the tool was not run. Try again."
             )
             return
@@ -439,13 +439,11 @@ class TeamsRenderer(Renderer):
         # redaction came from one would otherwise announce none.
         cred_count, url_count = count_redaction_tags("\n".join(chunks))
         if cred_count or url_count:
-            # The answer above carries a redaction placeholder, so a follow-up
-            # notice tells the reader the text was rewritten. Counted over the
-            # DELIVERED body (a failed chunk raises out of the loop above, so
-            # reaching here means the text shipped), and best-effort by the
-            # shared contract: the answer is already out, so a failed notice
-            # send is logged, never raised. Posted before the options card so
-            # the card stays adjacent to the choices it asks about.
+            # The answer holds a redaction placeholder, so tell the reader the
+            # text was rewritten. Counted over the DELIVERED body (a failed chunk
+            # raises above, so the text shipped). Best-effort: the answer is
+            # out, so a failed send is logged, never raised. Sent before the
+            # options card so the card stays next to its choices.
             try:
                 await self._client.send_message(
                     self._conversation_id,
@@ -724,9 +722,9 @@ class TeamsRenderer(Renderer):
             return body
         for rejection in rejections:
             logger.info("Teams: local image not sent (%s)", rejection.reason)
-        lines = [f"⚠️ {rejection}" for rejection in rejections[:_MAX_REJECTION_LINES]]
+        lines = [f"Warning: {rejection}" for rejection in rejections[:_MAX_REJECTION_LINES]]
         if len(rejections) > _MAX_REJECTION_LINES:
-            lines.append(f"⚠️ …and {len(rejections) - _MAX_REJECTION_LINES} more")
+            lines.append(f"Warning: …and {len(rejections) - _MAX_REJECTION_LINES} more")
         note = "\n".join(lines)
         return f"{body}\n\n{note}" if body else note
 

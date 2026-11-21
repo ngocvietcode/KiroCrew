@@ -19,6 +19,13 @@ import { retryDelayPolicy, retryPolicy } from '../api/queryClient'
 import { reportSeamCollision } from '../apps/seamCollision'
 import { safeSetItem } from '../utils/safeStorage'
 import {
+  normalizeThemeSchedule,
+  readStoredThemeSchedule,
+  scheduledMode,
+  type ThemeSchedule,
+} from '../utils/themeSchedule'
+import { useThemeSchedule } from './useThemeSchedule'
+import {
   adoptServerLiquidGlass,
   readLiquidGlass,
   type TranslucentPanelsStored,
@@ -49,7 +56,7 @@ import { i18nT } from '../i18n/t'
 import { PRIVACY_NOTICE_VERSION } from '../components/privacyNotice'
 import type { ThemeLoaderIconName } from '../themeLoaderIcons'
 
-export type ModePreference = 'dark' | 'light' | 'system'
+export type ModePreference = 'dark' | 'light' | 'system' | 'schedule'
 export type ResolvedMode = 'dark' | 'light'
 export type ColorTheme = string  // built-in slug or 'custom-{slug}'
 
@@ -193,8 +200,10 @@ function getSystemMode(): ResolvedMode {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-function resolveMode(pref: ModePreference): ResolvedMode {
-  return pref === 'system' ? getSystemMode() : pref
+function resolveMode(pref: ModePreference, schedule: ThemeSchedule = readStoredThemeSchedule()): ResolvedMode {
+  if (pref === 'system') return getSystemMode()
+  if (pref === 'schedule') return scheduledMode(schedule)
+  return pref
 }
 
 /**
@@ -524,6 +533,11 @@ export interface ThemeContextValue {
   preference: ModePreference
   cycle: () => void
   setTheme: (pref: ModePreference) => void
+  /** The times Scheduled mode switches at, in the device's time zone. */
+  schedule: ThemeSchedule
+  setSchedule: (schedule: ThemeSchedule) => void
+  /** The last `setSchedule` save was refused; this device still uses those times. */
+  scheduleSaveFailed: boolean
   colorTheme: ColorTheme
   setColorTheme: (t: ColorTheme) => void
   /**
@@ -603,7 +617,7 @@ export interface ThemeContextValue {
   markOnboarded: () => void
   markImportOnboarded: () => void
   /** Persists the ack (and the notice version unless told not to); rejects, marking nothing, when the write fails. */
-  markPrivacyAcked: (ack?: { noticeVersion?: boolean }) => Promise<void>
+  markPrivacyAcked: (ack?: { noticeVersion?: boolean; kiroTelemetry?: boolean }) => Promise<void>
   addCustomTheme: (data: Omit<CustomThemeData, 'slug'> & { slug?: string }) => Promise<CustomThemeData>
   deleteCustomTheme: (slug: string) => Promise<void>
   /** Refetch the installed-theme catalog once; `true` when it now reflects the
@@ -1134,8 +1148,14 @@ function useThemeState(): ThemeContextValue {
       import_onboarded?: boolean
       privacy_acked?: boolean
       privacy_ack_version?: number
+      kiro_telemetry_ack_version?: number
     }) => api.updateThemeConfig(body),
   })
+  // Its own observer: a mode or colour write right after would drop this save's onError.
+  const { mutate: persistSchedule } = useMutation({
+    mutationFn: (body: { schedule_light: string; schedule_dark: string }) => api.updateThemeConfig(body),
+  })
+  const { schedule, setSchedule, adoptSchedule, saveFailed: scheduleSaveFailed } = useThemeSchedule(mode, setResolved, persistSchedule)
 
   // Fetch workspace theme config from server on boot.
   // Server is the source of truth; localStorage is a render cache.
@@ -1188,9 +1208,14 @@ function useThemeState(): ThemeContextValue {
     const onboarding = legacyMigrationStartedRef.current
       ? 'keep'
       : needsLegacyMigration ? 'migrate' : 'adopt'
+    // Saved as a pair; a workspace that never saved one keeps this browser's.
+    const servedSchedule = bootData.schedule_light || bootData.schedule_dark
+      ? normalizeThemeSchedule(bootData.schedule_light, bootData.schedule_dark)
+      : null
+    if (servedSchedule) adoptSchedule(servedSchedule)
     if (modeChanged) {
       setMode(bootData.mode as ModePreference)
-      setResolved(resolveMode(bootData.mode as ModePreference))
+      setResolved(resolveMode(bootData.mode as ModePreference, servedSchedule ?? schedule))
     }
     if (colorChanged) setColorThemeState(bootData.color)
     if (typeof bootData.privacy_ack_version === 'number') {
@@ -1299,10 +1324,11 @@ function useThemeState(): ThemeContextValue {
   // rather than only pulled on window focus so switching Dark → Auto un-pins
   // `prefers-color-scheme` immediately; Chromium then fires a change event on
   // the media query below if the effective value moved. No-op in a browser.
+  // Scheduled has no OS-side equivalent, so the shell is pinned to what it resolved to.
   useEffect(() => {
     const bridge = window.electronAPI
-    bridge?.setThemeMode?.(mode)
-  }, [mode])
+    bridge?.setThemeMode?.(mode === 'schedule' ? resolved : mode)
+  }, [mode, resolved])
 
   // Sync the Windows titleBarOverlay colors whenever the resolved dark/light
   // mode changes. The overlay strip must match the dashboard chrome at all
@@ -1311,6 +1337,18 @@ function useThemeState(): ThemeContextValue {
     const bridge = window.electronAPI
     bridge?.setTitleBarOverlayTheme?.(resolved)
   }, [resolved])
+
+  // Read the target token, not body.backgroundColor: the body's colour
+  // transition can still be between palettes when this frame runs.
+  useEffect(() => {
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    if (!meta) return
+    const id = requestAnimationFrame(() => {
+      const background = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()
+      if (background) meta.content = background
+    })
+    return () => cancelAnimationFrame(id)
+  }, [resolved, colorTheme, themeVersion])
 
   // Report the resolved accent to the Electron shell (if present) so the NEXT
   // launch's boot splash (loading.html) paints in the user's chosen colour.
@@ -1373,10 +1411,14 @@ function useThemeState(): ThemeContextValue {
     persistTheme({ mode: pref })
   }, [persistTheme])
 
+  // From Scheduled, a toggle is a manual pick of the other appearance: a hop to
+  // Auto would often change nothing on screen.
   const cycleMode = useCallback(() => {
-    const next: ModePreference = mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system'
+    const next: ModePreference = mode === 'schedule'
+      ? (resolved === 'dark' ? 'light' : 'dark')
+      : mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system'
     setMode_(next)
-  }, [mode, setMode_])
+  }, [mode, resolved, setMode_])
 
   const setColorTheme = useCallback((t: ColorTheme) => {
     // No-op a same-value re-select: nothing changes, and flipping themeSwitching
@@ -1613,10 +1655,18 @@ function useThemeState(): ThemeContextValue {
   // chapter stays open on a failed write instead of claiming the user was told.
   // `noticeVersion: false` records only that the chapter was passed: the text
   // shown did not say local recording is on, so the version stays where it was.
-  const markPrivacyAcked = useCallback(async ({ noticeVersion = true }: { noticeVersion?: boolean } = {}) => {
+  // `kiroTelemetry` records that the text shown named the build's Kiro telemetry
+  // destination: only that acknowledgement lets it export (`kiro_export.notice_shown`).
+  const markPrivacyAcked = useCallback(async (
+    { noticeVersion = true, kiroTelemetry = false }: { noticeVersion?: boolean; kiroTelemetry?: boolean } = {},
+  ) => {
     await api.updateThemeConfig(
       noticeVersion
-        ? { privacy_acked: true, privacy_ack_version: PRIVACY_NOTICE_VERSION }
+        ? {
+            privacy_acked: true,
+            privacy_ack_version: PRIVACY_NOTICE_VERSION,
+            ...(kiroTelemetry ? { kiro_telemetry_ack_version: PRIVACY_NOTICE_VERSION } : {}),
+          }
         : { privacy_acked: true },
     )
     safeSetItem('mc-privacy-acked', '1')
@@ -1629,6 +1679,9 @@ function useThemeState(): ThemeContextValue {
     preference: mode,
     cycle: cycleMode,
     setTheme: setMode_,
+    schedule,
+    setSchedule,
+    scheduleSaveFailed,
     colorTheme,
     setColorTheme,
     themeSwitching,

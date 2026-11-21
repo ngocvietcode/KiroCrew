@@ -34,6 +34,8 @@ def _make_cfg(
     privacy_ack_version: int = 0,
     crewmates_onboarded: bool = False,
     translucent_panels: str = "",
+    theme_schedule_light: str = "",
+    theme_schedule_dark: str = "",
 ):
     """Build a mock KiroCrewConfig with dashboard display fields.
 
@@ -52,6 +54,8 @@ def _make_cfg(
     cfg.dashboard.privacy_ack_version = privacy_ack_version
     cfg.dashboard.crewmates_onboarded = crewmates_onboarded
     cfg.dashboard.translucent_panels = translucent_panels
+    cfg.dashboard.theme_schedule_light = theme_schedule_light
+    cfg.dashboard.theme_schedule_dark = theme_schedule_dark
     return cfg
 
 
@@ -123,6 +127,8 @@ async def test_theme_boot_returns_defaults() -> None:
     body = json.loads(resp.body)
     assert body == {
         "mode": "",
+        "schedule_light": "",
+        "schedule_dark": "",
         "color": "",
         "language": "",
         "translucent_panels": "",
@@ -151,6 +157,8 @@ async def test_theme_boot_returns_configured_values() -> None:
     body = json.loads(resp.body)
     assert body == {
         "mode": "dark",
+        "schedule_light": "",
+        "schedule_dark": "",
         "color": "kiro",
         "language": "",
         "translucent_panels": "on",
@@ -179,6 +187,8 @@ async def test_theme_config_get() -> None:
     body = json.loads(resp.body)
     assert body == {
         "mode": "light",
+        "schedule_light": "",
+        "schedule_dark": "",
         "color": "emerald",
         "language": "",
         "translucent_panels": "",
@@ -247,6 +257,8 @@ async def test_theme_config_put_updates_and_persists(cfg_file: Path) -> None:
     assert resp.status == 200
     assert json.loads(resp.body) == {
         "mode": "dark",
+        "schedule_light": "",
+        "schedule_dark": "",
         "color": "monokai",
         "language": "",
         "translucent_panels": "",
@@ -339,6 +351,29 @@ async def test_theme_config_put_persists_privacy_ack_version(cfg_file: Path) -> 
 
 
 @pytest.mark.asyncio
+async def test_theme_config_put_persists_the_kiro_telemetry_ack_version(cfg_file: Path) -> None:
+    """Written only when the chapter's text named the Kiro telemetry destination."""
+    _write(cfg_file, {"dashboard": {"privacy_acked": True}})
+    resp = await _put(
+        {"privacy_acked": True, "privacy_ack_version": 3, "kiro_telemetry_ack_version": 3}
+    )
+    assert resp.status == 200
+    stored = _read(cfg_file)["dashboard"]
+    assert stored["kiro_telemetry_ack_version"] == 3
+    assert type(stored["kiro_telemetry_ack_version"]) is int
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("value", [True, -1, "3", 10**6])
+async def test_theme_config_put_refuses_a_bad_kiro_telemetry_ack_version(
+    cfg_file: Path, value: object
+) -> None:
+    _write(cfg_file, {"dashboard": {"privacy_acked": True}})
+    with pytest.raises(web.HTTPBadRequest):
+        await _put({"kiro_telemetry_ack_version": value})
+
+
+@pytest.mark.asyncio
 async def test_privacy_ack_version_does_not_fall_back_to_onboarded(cfg_file: Path) -> None:
     """An existing user (onboarded, acked) reads version 0, so the new notice shows once."""
     _write(cfg_file, {"dashboard": {"onboarded": True, "privacy_acked": True}})
@@ -385,10 +420,42 @@ async def test_theme_config_put_persists_translucent_panels(cfg_file: Path) -> N
 
 
 @pytest.mark.asyncio
+async def test_theme_config_put_persists_a_schedule(cfg_file: Path) -> None:
+    """Scheduled mode and its two times are workspace-backed like the mode.
+
+    Stored here rather than only in the browser, so a second browser or the
+    desktop app switches at the same times; '' returns a time to its default.
+    """
+    _write(cfg_file, {})
+    resp = await _put({"mode": "schedule", "schedule_light": "06:30", "schedule_dark": "21:15"})
+    assert resp.status == 200
+    dashboard = _read(cfg_file)["dashboard"]
+    assert dashboard["theme_mode"] == "schedule"
+    assert (dashboard["theme_schedule_light"], dashboard["theme_schedule_dark"]) == (
+        "06:30",
+        "21:15",
+    )
+    body = json.loads(resp.body)
+    assert (body["mode"], body["schedule_light"], body["schedule_dark"]) == (
+        "schedule",
+        "06:30",
+        "21:15",
+    )
+    resp = await _put({"schedule_light": ""})
+    assert json.loads(resp.body)["schedule_light"] == ""
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "body",
     [
         {"mode": "invalid"},
+        # Only the 24-hour HH:MM a browser time field submits is a time.
+        {"schedule_light": "7:00"},
+        {"schedule_dark": "24:00"},
+        {"schedule_dark": "19:00:00"},
+        {"schedule_dark": "19:00\n"},
+        {"schedule_light": 700},
         # A bool is the shape a client would reach for first; it is refused so
         # the stored value is always one of the three strings the loader reads.
         {"translucent_panels": True},
@@ -411,6 +478,11 @@ async def test_theme_config_put_persists_translucent_panels(cfg_file: Path) -> N
     ],
     ids=[
         "mode",
+        "schedule_one_digit_hour",
+        "schedule_hour_24",
+        "schedule_seconds",
+        "schedule_trailing_newline",
+        "schedule_int",
         "translucent_panels_bool",
         "translucent_panels_word",
         "onboarded",

@@ -146,7 +146,7 @@ async def _screen_tool_call(turn: _SlackTurn, event: LLMEvent) -> None:
             _flagged_title, _ = redact_exfiltration_urls(event.title)
             _flagged_title, _ = redact_credentials(_flagged_title)
             answer.accumulated += (
-                f"\n⚠️ _Tool `{_flagged_title}` flagged by security "
+                f"\nWarning: _Tool `{_flagged_title}` flagged by security "
                 f"hooks (already executing; cannot be stopped here)._"
             )
             sel().log_tool_invocation(
@@ -188,6 +188,13 @@ async def _answer_permission_request(
     _agent = turn._agent
     answer = turn.answer
     task = turn.task
+    from kiro_crew import mate_held_rules
+
+    # A moved Bot's limit its worker could not carry exactly (``mate_held_rules``):
+    # no rung below approves a call it covers on its own; it reaches the prompt.
+    _held = await asyncio.to_thread(
+        mate_held_rules.held_for, event, session_key=session_key, agent=_agent or ""
+    )
     # Check tool hooks for auto-approve
     if context_builder:
         tool_result = await run_in_tool_gate_pool(
@@ -198,7 +205,7 @@ async def _answer_permission_request(
             agent=_agent or "",
             **hook_gate_kwargs(event),
         )
-        if tool_result.action == TOOL_AUTO_APPROVE:
+        if tool_result.action == TOOL_AUTO_APPROVE and not _held:
             # The hook granted this by NAME (its `auto_approve_tools`
             # globs, or the read-only allowlist). Honour it only
             # while each program name in the command still resolves
@@ -280,11 +287,11 @@ async def _answer_permission_request(
             # event.title is LLM-authored — redact before posting.
             _blocked_title, _ = redact_exfiltration_urls(event.title)
             _blocked_title, _ = redact_credentials(_blocked_title)
-            answer.accumulated += f"\n🚫 _Tool `{_blocked_title}` blocked by hooks._"
+            answer.accumulated += f"\n_Tool `{_blocked_title}` blocked by hooks._"
             return False
 
     # auto_approve_subagent_spawn → auto-approve spawn_run tool calls
-    if _should_auto_approve_spawn(context_builder, event):
+    if not _held and _should_auto_approve_spawn(context_builder, event):
         approval_sent = await client.approve_tool(event.request_id)
         if approval_sent is False:
             _outcome, _meta = _batch_refusal_outcome(client, event.request_id)
@@ -310,7 +317,7 @@ async def _answer_permission_request(
         )
         return False
 
-    if approval_mode == APPROVAL_AUTO:
+    if approval_mode == APPROVAL_AUTO and not _held:
         approval_sent = await client.approve_tool(event.request_id)
         if approval_sent is False:
             _outcome, _meta = _batch_refusal_outcome(client, event.request_id)
@@ -338,7 +345,7 @@ async def _answer_permission_request(
 
     # Trust mode (per-session) or YOLO mode (owner-only global) → auto-approve
     _yolo_now = is_yolo_mode()
-    if _yolo_now or is_session_trusted(session_key):
+    if not _held and (_yolo_now or is_session_trusted(session_key)):
         approval_sent = await client.approve_tool(event.request_id)
         if approval_sent is False:
             _outcome, _meta = _batch_refusal_outcome(client, event.request_id)
@@ -607,10 +614,10 @@ async def _request_approval(
     try:
         await slack.delete_message(channel, approval_ts)
     except Exception:
-        status = "✅ Approved" if outcome == _OUTCOME_APPROVED else "🚫 Rejected"
+        status = "Approved" if outcome == _OUTCOME_APPROVED else "Rejected"
         title_safe, _ = redact_exfiltration_urls(event.title)
         title_safe, _ = redact_credentials(title_safe)
-        await _safe_update(slack, channel, approval_ts, f"🔐 *{title_safe}* — {status}")
+        await _safe_update(slack, channel, approval_ts, f"*{title_safe}* — {status}")
 
     return outcome
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 # Read by no code here; the ``work_ledger`` facade serves it from this module.
@@ -26,6 +26,7 @@ from kiro_crew.work_vocab import (
     WORK_VERDICTS,
     WORK_WORKER_STATUSES,
     coerce_ask,
+    coerce_discussion,
     coerce_retired_bindings,
 )
 
@@ -209,7 +210,7 @@ CODE_ITEM_CLOSED = "item_closed"
 CODE_ITEM_CAP_EXCEEDED = "item_cap_exceeded"
 CODE_GOAL_CONCURRENCY_CAP_REACHED = "goal_concurrency_cap_reached"
 #: A ``create`` while host memory is critical (rfc-work-ledger-resource-pressure §3.5).
-CODE_HOST_PRESSURE_CRITICAL = "host_pressure_critical"
+CODE_HOST_MEMORY_CRITICAL = "host_memory_critical"
 CODE_CREW_LOG_INCOMPLETE = "crew_log_incomplete"
 CODE_CACHE_DIRTY = "cache_dirty"
 CODE_DEPTH_EXCEEDED = "depth_exceeded"
@@ -395,7 +396,7 @@ class WorkItem:
     Conductor-owned: ``title``, ``acceptance``, ``state``, ``verdict``, ``decision``,
     ``worker_session_key``, ``round``, ``fails``, ``ask``.
     Worker-owned: ``status``, ``reason``, ``wake_at``, ``summary``, ``artifacts``,
-    ``pr``, ``last_report_at``.
+    ``pr``, ``discussion``, ``last_report_at``.
     Server-owned: ``item_id``, ``created_at``, ``closed_at``, ``decided_at``,
     ``pending_since``.
 
@@ -452,6 +453,10 @@ class WorkItem:
     #: and ``close`` clear it. Serialized only when set, so an item that never asked
     #: is stored exactly as before.
     ask: dict[str, Any] | None = None
+    #: Where a discussion this item's worker hosts stands, from its last report
+    #: (:func:`~kiro_crew.work_vocab.coerce_discussion`), or ``None``. Every report
+    #: replaces it, so one without it clears it. Serialized only when set.
+    discussion: dict[str, Any] | None = None
     schema: int = SCHEMA_VERSION
     #: When the crew log first held this item whole (its recorded create, or the
     #: baseline its first recorded mutation carried). Empty until then: the write
@@ -472,6 +477,8 @@ class WorkItem:
             out["retired_bindings"] = [dict(b) for b in self.retired_bindings]
         if self.ask:
             out["ask"] = dict(self.ask)
+        if self.discussion:
+            out["discussion"] = dict(self.discussion)
         return out
 
     def _base_dict(self) -> dict[str, Any]:
@@ -538,6 +545,7 @@ class WorkItem:
             decided_at=_as_opt_str(raw.get("decided_at")),
             pending_since=_as_opt_str(raw.get("pending_since")),
             ask=coerce_ask(raw.get("ask")),
+            discussion=coerce_discussion(raw.get("discussion")),
             recorded_at=_as_str(raw.get("recorded_at")),
             schema=_as_int(raw.get("schema"), SCHEMA_VERSION),
         )
@@ -637,6 +645,36 @@ def _now_iso() -> str:
     :mod:`kiro_crew.session_ledger` writes, so two ledgers read side by side sort
     against each other."""
     return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
+def _parse_iso(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_stamp(value: str) -> datetime | None:
+    """An ISO-8601 stamp as an AWARE datetime, or ``None`` when it is not one.
+
+    :func:`_now_iso` writes local time with an offset; a stamp without one (a caller's
+    ``since``, an older record) is taken as local time, because comparing naive with
+    aware raises and a read filter must never raise.
+
+    A naive stamp at either end of the calendar (``0001-01-01T00:00:00``,
+    ``9999-12-31T23:59:59``) may not shift into the local zone, and the platform raises
+    ``OverflowError`` or ``ValueError`` depending on the host. Such a sentinel is read as
+    UTC, so ``since=0001-01-01T00:00:00`` means "everything", never a failed read.
+    """
+    parsed = _parse_iso(value)
+    if parsed is None:
+        return None
+    if parsed.tzinfo is not None:
+        return parsed
+    try:
+        return parsed.astimezone()
+    except (OverflowError, ValueError, OSError):
+        return parsed.replace(tzinfo=timezone.utc)
 
 
 # Named by the path callers import it from, so a traceback or an error chain renders

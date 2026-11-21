@@ -291,7 +291,7 @@ async def logo(request: web.Request) -> web.StreamResponse:
 
 
 async def api_branding(request: web.Request) -> web.Response:
-    """GET /api/dashboard/branding — bot name and avatar config.
+    """GET /api/dashboard/branding — bot name, instance label and avatar config.
 
     Reads the config the live watcher has already adopted. Every dashboard tab
     asks for branding, and ``KiroCrewConfig.load()`` rebuilds every config
@@ -320,6 +320,7 @@ async def api_branding(request: web.Request) -> web.Response:
     return web.json_response(
         {
             "bot_name": cfg.dashboard.bot_name or "Sao Khuê",
+            "instance_label": cfg.dashboard.instance_label,
             "avatar": "/logo.png",
             "direct_local": is_direct_local_request(request),
             "desktop_launcher": await asyncio.to_thread(platform_compat.desktop_launcher_available),
@@ -509,6 +510,11 @@ async def api_ready(request: web.Request) -> web.Response:
 _LANGUAGE_TAG_RE = re.compile(r"^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,2}$")
 
 
+#: A 24-hour ``HH:MM``, the value a browser's time field submits. Matched with
+#: ``fullmatch``: a ``$`` anchor would also accept a trailing newline.
+_CLOCK_TIME_RE = re.compile(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]")
+
+
 def _theme_payload(cfg: KiroCrewConfig) -> dict[str, object]:
     """Workspace display preferences shared by the boot + config endpoints.
 
@@ -522,7 +528,10 @@ def _theme_payload(cfg: KiroCrewConfig) -> dict[str, object]:
 
     The notice version is also reported as current while local recording is off
     (the heartbeat turned off with ``telemetry.enabled`` unset, a written
-    ``false``, or ``DO_NOT_TRACK``): a user who opted out is not asked again.
+    ``false``, or ``DO_NOT_TRACK``): a user who opted out is not asked again. The
+    one exception is a written ``false`` older builds put in every new config
+    (``kiro_export.off_offer_due``): that user sees the current notice once, in
+    its off form, which asks whether to turn recording on.
     """
     from kiro_crew.beacon import PRIVACY_NOTICE_VERSION
     from kiro_crew.edition import is_lts
@@ -532,10 +541,12 @@ def _theme_payload(cfg: KiroCrewConfig) -> dict[str, object]:
         recording_on = _metrics_provider._consent_enabled(cfg.telemetry)
     except Exception:  # noqa: BLE001 - unknown keeps today's behaviour
         recording_on = True
-    notice_current = lts or not recording_on
+    notice_current = lts or (not recording_on and not _off_offer_due(cfg))
 
     return {
         "mode": cfg.dashboard.theme_mode or "",
+        "schedule_light": cfg.dashboard.theme_schedule_light or "",
+        "schedule_dark": cfg.dashboard.theme_schedule_dark or "",
         "color": cfg.dashboard.theme_color or "",
         "language": cfg.dashboard.language or "",
         "translucent_panels": cfg.dashboard.translucent_panels or "",
@@ -545,10 +556,38 @@ def _theme_payload(cfg: KiroCrewConfig) -> dict[str, object]:
         "privacy_ack_version": (
             max(cfg.dashboard.privacy_ack_version, PRIVACY_NOTICE_VERSION)
             if notice_current
-            else cfg.dashboard.privacy_ack_version
+            else _ack_version_for_the_chapter(cfg)
         ),
         "crewmates_onboarded": cfg.dashboard.crewmates_onboarded,
     }
+
+
+def _off_offer_due(cfg: Any) -> bool:
+    try:
+        from kiro_crew.metrics import kiro_export
+
+        return kiro_export.off_offer_due(cfg)
+    except Exception:  # noqa: BLE001 - not due, as before
+        return False
+
+
+def _ack_version_for_the_chapter(cfg: Any) -> int:
+    """The acknowledged notice version, held back while Kiro telemetry is owed.
+
+    An acknowledgement whose text never named the build's Kiro telemetry
+    destination (a chapter whose text did not name it, a redirected
+    ``kirocrew telemetry enable``) leaves that destination waiting, so the
+    chapter, which names it, shows once more. Unreadable: the stored value.
+    """
+    stored = cfg.dashboard.privacy_ack_version
+    try:
+        from kiro_crew.metrics import kiro_export
+
+        if kiro_export.destinations() and not kiro_export.notice_shown(cfg):
+            return min(stored, cfg.dashboard.kiro_telemetry_ack_version)
+    except Exception:  # noqa: BLE001 - the stored value, as before
+        logger.debug("kiro telemetry notice state unreadable", exc_info=True)
+    return stored
 
 
 async def api_theme_boot(request: web.Request) -> web.Response:
@@ -558,17 +597,18 @@ async def api_theme_boot(request: web.Request) -> web.Response:
     workspace theme and UI language before the token flow completes. Contains
     no secrets — only workspace-level display preferences and onboarding flags.
     """
-    cfg = KiroCrewConfig.load()
-    return web.json_response(_theme_payload(cfg))
+    # Off the loop: the payload reads config files and the policy profiles.
+    cfg = await asyncio.to_thread(KiroCrewConfig.load)
+    return web.json_response(await asyncio.to_thread(_theme_payload, cfg))
 
 
 async def api_theme_config(request: web.Request) -> web.Response:
     """GET/PUT /api/config/theme — read or update workspace display settings.
 
     GET returns the current config. PUT accepts
-    {mode?, color?, language?, translucent_panels?, onboarded?, import_onboarded?,
-    privacy_acked?, privacy_ack_version?, crewmates_onboarded?} and persists ONLY
-    those ``dashboard.*`` keys.
+    {mode?, schedule_light?, schedule_dark?, color?, language?, translucent_panels?,
+    onboarded?, import_onboarded?, privacy_acked?, privacy_ack_version?,
+    crewmates_onboarded?} and persists ONLY those ``dashboard.*`` keys.
 
     The PUT is a locked delta read-modify-write, never a whole-document
     ``KiroCrewConfig.save()``. A momentarily unreadable ``config.json`` (a torn
@@ -582,8 +622,8 @@ async def api_theme_config(request: web.Request) -> web.Response:
     refused (500 ``config_unreadable``) with its bytes untouched.
     """
     if request.method == "GET":
-        cfg = KiroCrewConfig.load()
-        return web.json_response(_theme_payload(cfg))
+        cfg = await asyncio.to_thread(KiroCrewConfig.load)
+        return web.json_response(await asyncio.to_thread(_theme_payload, cfg))
 
     # PUT
     denied = await require_owner_dashboard_request(request, "config.theme.write")
@@ -600,9 +640,17 @@ async def api_theme_config(request: web.Request) -> web.Response:
     updates: dict[str, object] = {}
     if "mode" in body:
         mode = body["mode"]
-        if mode not in ("", "dark", "light", "system"):
-            raise web.HTTPBadRequest(text="mode must be '', 'dark', 'light', or 'system'")
+        if mode not in ("", "dark", "light", "system", "schedule"):
+            raise web.HTTPBadRequest(
+                text="mode must be '', 'dark', 'light', 'system', or 'schedule'"
+            )
         updates["theme_mode"] = mode
+    for key in ("schedule_light", "schedule_dark"):
+        if key in body:
+            value = body[key]
+            if value != "" and not (isinstance(value, str) and _CLOCK_TIME_RE.fullmatch(value)):
+                raise web.HTTPBadRequest(text=f"{key} must be '' or a 24-hour HH:MM time")
+            updates[f"theme_{key}"] = value
     if "color" in body:
         color = body["color"]
         if not isinstance(color, str) or len(color) > 64:
@@ -638,17 +686,19 @@ async def api_theme_config(request: web.Request) -> web.Response:
             updates[flag] = body[flag]
     # A real int only, for the same reason: ``True`` is an int in Python and
     # would store as 1.
-    if "privacy_ack_version" in body:
-        version = body["privacy_ack_version"]
+    for key in ("privacy_ack_version", "kiro_telemetry_ack_version"):
+        if key not in body:
+            continue
+        version = body[key]
         if (
             not isinstance(version, int)
             or isinstance(version, bool)
             or not 0 <= version <= PRIVACY_ACK_VERSION_MAX
         ):
             raise web.HTTPBadRequest(
-                text=f"privacy_ack_version must be an integer from 0 to {PRIVACY_ACK_VERSION_MAX}"
+                text=f"{key} must be an integer from 0 to {PRIVACY_ACK_VERSION_MAX}"
             )
-        updates["privacy_ack_version"] = version
+        updates[key] = version
 
     if updates:
 
@@ -682,7 +732,7 @@ async def api_theme_config(request: web.Request) -> web.Response:
             )
 
     cfg = await asyncio.to_thread(KiroCrewConfig.load)
-    return web.json_response(_theme_payload(cfg))
+    return web.json_response(await asyncio.to_thread(_theme_payload, cfg))
 
 
 async def pwa_file(request: web.Request) -> web.StreamResponse:
@@ -736,6 +786,7 @@ for _owner in _OWNERS:
 if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and IDEs
     from kiro_crew.dashboard.handlers.core_config_models import (
         _KAS_VAULT_IDENTITY_KEY,
+        _LIVE_IDENTITY_KEY,
         _ROLE_PIN_REVALIDATING,
         _ROLE_PIN_REVALIDATION_MAX_RESELECTS,
         _active_advertised_ids,
@@ -747,6 +798,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _provider_backend,
         _read_kas_vault_identity,
         _revalidate_role_pin_evidence,
+        _spawned_for_another_account,
         _validate_role_model,
     )
     from kiro_crew.dashboard.handlers.core_config_patch import (
@@ -1052,7 +1104,7 @@ async def api_logout(request: web.Request) -> web.Response:
     unauthorized revocation.
     """
     import kiro_crew.dashboard.handlers as _h  # noqa: F811
-    from kiro_crew.dashboard.token_auth import revoke_all_sessions  # noqa: F811
+    from kiro_crew.dashboard.token_auth import revoke_all_sessions_async  # noqa: F811
 
     # Reachable over loopback TCP or the dashboard's AF_UNIX socket. A unix peer
     # has an EMPTY request.remote, so the loopback test alone would 403 the
@@ -1081,13 +1133,14 @@ async def api_logout(request: web.Request) -> web.Response:
         )
         return web.json_response({"error": "invalid secret"}, status=403)
 
-    # Fail-closed: bump_revocation_gen raises when the persisted counter
-    # cannot be read (bumping from an assumed base could persist a LOWER
+    # Fail-closed: the counter bump raises when neither the live nor the
+    # persisted counter can be read (bumping from an assumed base could persist a LOWER
     # counter, resurrecting revoked sessions after restart) or when the write
     # fails (the counter is left unchanged, so the revocation did not take
-    # effect). Report the failure instead of a false success.
+    # effect). Report the failure instead of a false success. Only the counter
+    # write runs on a worker thread, so a slow disk delays this request, not the loop.
     try:
-        revoke_all_sessions()
+        await revoke_all_sessions_async()
     except OSError:
         logger.warning("logout failed: could not persist session revocation", exc_info=True)
         _sel().log_api_access(

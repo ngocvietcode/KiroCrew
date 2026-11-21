@@ -197,6 +197,7 @@ def build_session_context(
             steering_dirs=steering_dirs,
             desk_withheld=ctx._desk_withheld(execution_context, desk_member),
             provider_type=provider_type,
+            dispatch_mounted=member_dispatch_mounted,
         )
 
     # Minimal V1 is date/time + agent identity (~30-50k tokens less per cron
@@ -260,25 +261,16 @@ def build_session_context(
         _marks.append((label, time.monotonic()))
 
     # Critical rules (diff rendering, OPTIONS buttons, absolute-path file
-    # links). These are the built-in kirocrew assistant's dashboard/Slack UI
-    # contracts and apply to ALL providers — including Claude Code. The
-    # dashboard renders clickable input-box options only from the
-    # [OPTIONS: ...] text tag (see dashboard/state_parts/slot_transcript.py and the frontend
-    # AssistantMessage), so CC must be told to emit it too or the options
-    # never render.
+    # links): the built-in assistant's dashboard/Slack UI contracts, for ALL
+    # providers including Claude Code. The dashboard renders input-box options
+    # only from the [OPTIONS: ...] tag (dashboard/state_parts/slot_transcript.py
+    # and the frontend AssistantMessage), so every backend must be told to emit it.
     #
-    # A CUSTOM app agent can OPT OUT: it ships its own system prompt that
-    # defines its own output contract (e.g. an agent that writes prose
-    # through its own MCP tools, with no diff block or [OPTIONS:] footer),
-    # and injecting the kirocrew assistant's mandates on top both
-    # conflicts with that contract and — on a safety-tuned model — reads as
-    # an attempt to override the agent's identity, which the model then
-    # refuses as prompt injection. The opt-out is per-agent via
-    # ``includeCrewContext: false``; DEFAULT is to inject (a plain custom
-    # agent with no flag still gets the rules, same as the built-in). The
-    # tags still RENDER for any agent that emits them (the dashboard parses
-    # them regardless); this only stops the host from MANDATING them where an
-    # agent has declared it does not want them.
+    # A CUSTOM app agent can OPT OUT with ``includeCrewContext: false``: its own
+    # system prompt defines its output contract, and these mandates on top
+    # conflict with it and, on a safety-tuned model, read as prompt injection.
+    # DEFAULT is to inject, even for a custom agent with no flag. The tags still
+    # RENDER for any agent that emits them; the opt-out only stops MANDATING them.
     held = native_documents or {}
     if ctx._agent_includes_crew_context(agent):
         rules = ctx._critical_rules_for(session_key, runtime_source)
@@ -381,6 +373,7 @@ def build_session_context(
             member,
             include_briefing=not blocks_reads,
             desk_withheld=ctx._desk_withheld(execution_context, desk_member),
+            dispatch_mounted=member_dispatch_mounted,
         )
         if _member_section:
             append_required(_member_section)
@@ -428,7 +421,7 @@ def build_session_context(
     max_context_chars = caps.max_context
 
     # Steering files from agent config resources: only on a harness that reads
-    # no agent ``resources`` (Claude Code, Codex), since kiro-cli loads them
+    # no agent ``resources`` (Claude Code, Codex, OpenCode, Pi), since kiro-cli loads them
     # natively. The gate is shared with post-compaction re-injection.
     steering_ctx = _inclusion.steering_resources_part(
         agent=agent,
@@ -465,8 +458,8 @@ def build_session_context(
         )
         if compressed_history:
 
-            compressed_history, _ = ctx.redact_exfiltration_urls(compressed_history)
-            compressed_history, _ = ctx.redact_credentials(compressed_history)
+            with ctx.redaction_seams.output_seam(ctx.redaction_seams.ACP_PROMPT):
+                compressed_history, _ = ctx.redact_credentials(compressed_history)
             compressed_history = ctx._MODE_IDENTITY_RE.sub("", compressed_history)
             logger.info(
                 "🔍 build_session_context: session_key=%s LLM-compressed " "history (%d chars)",
@@ -491,8 +484,8 @@ def build_session_context(
             if recent:
                 history_block = _replay.thread_history_text(recent, caps)
                 if history_block:
-                    history_block, _ = ctx.redact_exfiltration_urls(history_block)
-                    history_block, _ = ctx.redact_credentials(history_block)
+                    with ctx.redaction_seams.output_seam(ctx.redaction_seams.ACP_PROMPT):
+                        history_block, _ = ctx.redact_credentials(history_block)
                     parts.append(_history_header + history_block + "\n[End of thread history]\n\n")
     elif session_key and resumed:
         logger.info(
@@ -520,19 +513,52 @@ def build_session_context(
             member, member_is_id=bool(execution_context and execution_context.member_id)
         )[0]
     )
-    memory, member_vectors, activity_ranked = _store_admission.session_memory_parts(
-        self,
-        blocks,
-        private=private,
-        blocks_reads=blocks_reads,
-        effective_groups=effective_groups,
-        workspace=workspace,
-        memory_store=memory_store,
-        caps=caps,
-        essentials=essentials,
-        cfg=_cfg,
-        query_text=query_text,
+    # Which memory answers: Crew's own (the path below, unchanged) or a provider
+    # that replaces it. ``route_for`` is the only selection point
+    # (``kiro_crew.memory_provider``); on a default config it answers builtin
+    # without reading anything.
+    from kiro_crew.memory_provider import chokepoints as _memory_provider
+
+    # A read-blocked (temporary) build reads no memory at all, so it asks nothing.
+    memory_route = (
+        _memory_provider.BUILTIN_ROUTE
+        if blocks_reads
+        else _memory_provider.session_route(memory_store, session_key)
     )
+    provider_rules_index: int | None = None
+    if memory_route.replaces:
+        memory, member_vectors, activity_ranked = None, None, False
+        if not blocks_reads:
+            provider_rules_index = _memory_provider.replace_session_parts(
+                blocks,
+                memory_route,
+                memory_store=memory_store,
+                session_key=session_key,
+                execution_context=execution_context,
+                project=project,
+                query_text=query_text,
+                caps=caps,
+                include_memory=_inclusion._group_included(
+                    effective_groups, _inclusion.CONTEXT_GROUP_MEMORY
+                ),
+                include_lessons=_inclusion._group_included(
+                    effective_groups, _inclusion.CONTEXT_GROUP_LESSONS
+                ),
+            )
+    else:
+        memory, member_vectors, activity_ranked = _store_admission.session_memory_parts(
+            self,
+            blocks,
+            private=private,
+            blocks_reads=blocks_reads,
+            effective_groups=effective_groups,
+            workspace=workspace,
+            memory_store=memory_store,
+            caps=caps,
+            essentials=essentials,
+            cfg=_cfg,
+            query_text=query_text,
+        )
     _mark("memory")
 
     # Skills. Three cases, in precedence order:
@@ -577,6 +603,24 @@ def build_session_context(
         query_text=query_text,
     )
     # V2 essential rules are query-free; V1 retains its query-ranked lessons.
+    if memory_route.replaces:
+        lessons_part_index = provider_rules_index
+    elif (
+        memory_route.augments
+        and not blocks_reads
+        and _inclusion._group_included(effective_groups, _inclusion.CONTEXT_GROUP_MEMORY)
+    ):
+        # A read-only provider adds one background block after Crew's own blocks.
+        _memory_provider.augment_session_part(
+            blocks,
+            memory_route,
+            memory_store=memory_store,
+            session_key=session_key,
+            execution_context=execution_context,
+            project=project,
+            query_text=query_text,
+            caps=caps,
+        )
     _mark("lessons")
 
     # Source snippets may exist only in this conversation's log, not in the

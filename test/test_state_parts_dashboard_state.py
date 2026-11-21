@@ -272,6 +272,12 @@ _BASE_STATE_MEMBERS: dict[str, tuple[str, bool, bool, str]] = {
         False,
         "(self, matches: 'Callable[[dict[str, Any]], bool]') -> 'int'",
     ),
+    "acknowledge_visible_notifications": (
+        "function",
+        True,
+        False,
+        "(self, hidden: 'Callable[[dict[str, Any]], bool]') -> 'bool'",
+    ),
     "add_fold_watch_listener": (
         "function",
         False,
@@ -330,6 +336,12 @@ _BASE_STATE_MEMBERS: dict[str, tuple[str, bool, bool, str]] = {
     "cancel_questions_for_slot": ("function", False, False, "(self, slot_key: 'str') -> 'int'"),
     "channel_status": ("function", False, False, "(self) -> 'dict[str, dict[str, Any]]'"),
     "clear_notifications": ("function", True, False, "(self) -> 'None'"),
+    "clear_visible_notifications": (
+        "function",
+        True,
+        False,
+        "(self, hidden: 'Callable[[dict[str, Any]], bool]') -> 'tuple[bool, list[Any]]'",
+    ),
     "clear_question_pending": (
         "function",
         False,
@@ -711,6 +723,13 @@ _BASE_STATE_MEMBERS: dict[str, tuple[str, bool, bool, str]] = {
     "serialize_slots": (
         "function",
         False,
+        False,
+        "(self, *, include_check_status: 'bool' = False, dashboard_user: 'bool' = "
+        "False) -> 'list'",
+    ),
+    "serialize_slots_yielding": (
+        "function",
+        True,
         False,
         "(self, *, include_check_status: 'bool' = False, dashboard_user: 'bool' = "
         "False) -> 'list'",

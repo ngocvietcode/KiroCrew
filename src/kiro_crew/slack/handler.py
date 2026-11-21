@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING, Any, cast
 if TYPE_CHECKING:
     from kiro_crew.dashboard.state import DashboardState
 
-from kiro_crew import name_grant, runtime_death
+from kiro_crew import name_grant, redaction_seams, runtime_death
 from kiro_crew._facade_compose import compose as _facade_compose
 from kiro_crew.acp.client import AcpError, AcpProcessDied, AcpPromptBusy, AcpTimeoutError
 from kiro_crew.acp.types import (
@@ -74,8 +74,10 @@ from kiro_crew.config.paths import kiro_agents_dir, peek_data_home
 from kiro_crew.constants import (  # noqa: F401 - read by the owners
     DENY_CAUSE_APPROVAL_TIMEOUT,
     DENY_CAUSE_POLICY,
+    OPTIONS_RE_LINE,
     STEER_NOTICE_BOUND_SECS,
     is_control_tag_tail,
+    relocate_glued_tail_marker,
     strip_control_comments,
 )
 from kiro_crew.context import (
@@ -337,6 +339,8 @@ from kiro_crew.slack.handler_runtime.dispatch import (  # noqa: F401
 from kiro_crew.slack.handler_runtime.finalize import (  # noqa: F401
     _append_footer_actions,
     _backfill_late_link,
+    _block_texts,
+    _footer_landed,
     _maybe_auto_title_slack,
     _mirror_to_dashboard,
     _post_review_draft,
@@ -344,6 +348,7 @@ from kiro_crew.slack.handler_runtime.finalize import (  # noqa: F401
     _review_drafts_pop,
     _review_drafts_set,
     build_timing_footer,
+    seal_stream,
 )
 from kiro_crew.slack.handler_runtime.inbound import (  # noqa: F401
     LinkedRoute,
@@ -393,8 +398,10 @@ from kiro_crew.slack.handler_runtime.stream import (  # noqa: F401
     _comment_hold_is_protocol,
     _filter_options_brackets,
     _resolve_comment_hold,
+    _resolve_options_hold,
     _safe_final_update,
     _safe_update,
+    _settle_options_head,
     _ts_before,
 )
 from kiro_crew.slack.handler_runtime.turn import (  # noqa: F401
@@ -410,6 +417,9 @@ from kiro_crew.slack.handler_runtime.voice import (  # noqa: F401
     _safe_voice_reply,
     _str_or_default,
     load_voice_reply_config,
+)
+from kiro_crew.slack.linked_thread_images import (  # noqa: F401 - read by the owners
+    store_for_slot as store_linked_thread_images,
 )
 from kiro_crew.slack.outbound import PostedOptions
 from kiro_crew.slack.sessions_view import (  # noqa: F401 - read by the owners
@@ -512,7 +522,7 @@ _IDENTITY_NAME_MAX = 200
 
 # Slack UX strings
 _THINKING = "_Thinking…_"
-_THINKING_PLACEHOLDER = "💭 _Thinking…_"
+_THINKING_PLACEHOLDER = "*Thinking…*"
 _WORKING = "Working…"
 #: Row meta key naming the Slack message a thread import read the row from.
 _SLACK_TS_META = "slack_ts"
@@ -544,7 +554,7 @@ DELIVERY_DEBT_NOTICE = (
 )
 
 # Max chars of reasoning to surface inline in Slack before truncating. Keeps
-# the 💭 Thinking block from becoming a wall of text; the full
+# the Thinking block from becoming a wall of text; the full
 # reasoning remains available in the dashboard Activity panel.
 _THINKING_PREVIEW_LIMIT = 600
 
@@ -561,7 +571,7 @@ def _condense_thinking(mrkdwn: str, *, limit: int = _THINKING_PREVIEW_LIMIT) -> 
         limit: Soft character cap before truncation.
 
     Returns:
-        A Slack-mrkdwn string headed by ``💭 *Thinking*``.
+        A Slack-mrkdwn string headed by ``*Thinking*``.
     """
     text = mrkdwn.strip()
     truncated = False
@@ -577,7 +587,7 @@ def _condense_thinking(mrkdwn: str, *, limit: int = _THINKING_PREVIEW_LIMIT) -> 
         truncated = True
     quoted = "\n".join(f"> {ln}" if ln.strip() else ">" for ln in text.splitlines())
     suffix = "\n> _…full reasoning in dashboard Activity_" if truncated else ""
-    return f"💭 *Thinking*\n{quoted}{suffix}"
+    return f"*Thinking*\n{quoted}{suffix}"
 
 
 # Pending approvals: keyed by f"{channel}:{approval_msg_ts}"
@@ -761,7 +771,7 @@ _COMPACTION_FAILED_RETRIES = 2
 # directly, never through the turn's own reply path: the abandoned attempt
 # persists nothing and mirrors nothing, so the conversation log records the
 # message once, with the reply the replay produces.
-_COMPACTION_RETRY_NOTICE = "⟳ Compaction failed — retrying…"
+_COMPACTION_RETRY_NOTICE = "Compaction failed — retrying…"
 
 # Terminals the session handle synthesizes for a turn the backend never
 # finished: its own turn ceiling ("timeout") and a stale turn its probe
@@ -769,7 +779,7 @@ _COMPACTION_RETRY_NOTICE = "⟳ Compaction failed — retrying…"
 # is failed, the thread is told, and the session is reset so the next message
 # starts a fresh runtime.
 _UNFINISHED_STOP_REASONS = frozenset({"timeout", STOP_REASON_STALE_RECOVER})
-_TIMEOUT_REPLY = "⏱️ Request timed out. Please try again."
+_TIMEOUT_REPLY = "Error: Request timed out. Please try again."
 
 
 @dataclass(frozen=True)
@@ -875,6 +885,7 @@ def _iter_cc_agent_names(cc_plugins_dir: Path | None = None) -> Iterator[str]:
             if agent_name:
                 yield agent_name
         except Exception:
+            # One unreadable or malformed agent file must not hide the rest.
             continue
 
 
@@ -1103,9 +1114,11 @@ async def handle_message(
         session_key=session_key,
     )
     try:
-        if await _dispatch_before_turn(turn) and await _run_turn(turn):
-            await _deliver_answer(turn)
-            await turn.fire_stop_hooks()
+        # Everything the turn posts is channel egress, which the owner switch governs.
+        with redaction_seams.output_seam(redaction_seams.CHANNELS):
+            if await _dispatch_before_turn(turn) and await _run_turn(turn):
+                await _deliver_answer(turn)
+                await turn.fire_stop_hooks()
     except asyncio.CancelledError:
         # A cancel (``!stop``, warm-pool reclaim, shutdown) can land at any await
         # in any phase, and ``CancelledError`` passes every ``except Exception``

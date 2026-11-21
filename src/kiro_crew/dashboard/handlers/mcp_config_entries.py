@@ -84,11 +84,11 @@ def _find_server_spec_anywhere(name: str) -> dict | None:
         # owned keys so the scope copy holds only what the sources hold; the
         # next rebuild re-projects the live client into the spec regardless.
         from kiro_crew.connections.oauth_clients import (  # noqa: PLC0415
-            provider_for_server,
+            projected_provider_for_server,
             strip_preregistered_oauth_client,
         )
 
-        if provider_for_server(name, found) is not None:
+        if projected_provider_for_server(name, found) is not None:
             found = strip_preregistered_oauth_client(found)
         return found
     for path in (
@@ -431,6 +431,11 @@ def _set_tool_overrides(name: str, tool_overrides: dict[str, bool]) -> list[str]
     removes them.  Creates the entry if absent (sourcing full spec from
     any scope so the server keeps loading).
 
+    The entry is the one key :func:`_resolve_key_from_read` resolves from this
+    call's own read, so the ``playwright-mcp`` row edits a raw
+    ``npm:@playwright/mcp`` entry in place; a name that is the alias of several
+    entries changes nothing.
+
     Returns a list of tool names whose state changed. A store that exists but is
     not a readable MCP config changes nothing and is not written, since writing
     back an empty read would drop every other server in it.
@@ -442,7 +447,11 @@ def _set_tool_overrides(name: str, tool_overrides: dict[str, bool]) -> list[str]
         logger.warning("tool overrides for %r not applied: store mcp.json unreadable", name)
         return []
     servers = data.setdefault("mcpServers", {})
-    entry = servers.get(name)
+    try:
+        key = _resolve_key_from_read(servers, name)
+    except AmbiguousServerKey:
+        return []
+    entry = servers.get(key) if key is not None else None
     if not isinstance(entry, dict):
         # Seed from the best-available spec so the server keeps its config.
         base = _find_server_spec_anywhere(name) or {}

@@ -58,6 +58,85 @@ EMBEDDING_PROVIDERS = ("llama_cpp", OLLAMA_HTTP_PROVIDER)
 OLLAMA_DEFAULT_URL = "http://127.0.0.1:11434"
 
 
+#: ``memory.provider.mode`` values; :mod:`kiro_crew.memory_provider.resolver` says what each does.
+MEMORY_PROVIDER_MODES = ("builtin", "replace", "augment")
+#: ``memory_stores.<name>.provider_mode`` values.
+STORE_PROVIDER_MODES = ("inherit", "builtin")
+MEMORY_PROVIDER_TIMEOUT_DEFAULT_SECS = 3.0
+MEMORY_PROVIDER_TIMEOUT_MAX_SECS = 10.0
+
+
+@dataclass
+class MemoryProviderConfig:
+    """Which memory provider answers. Written only by ``PUT /api/memory/provider``."""
+
+    mode: str = field(
+        default="builtin",
+        metadata=_meta(
+            "Memory Provider Mode",
+            "'builtin' uses Crew's own memory. 'replace' hands all learned memory to "
+            "the provider named by memory.provider.id; Crew's own memory stays on disk "
+            "untouched and comes back when switched back. 'augment' keeps Crew's own "
+            "memory and adds the provider as a read-only source. Changed only from "
+            "the owner's PUT /api/memory/provider, and applies to new chats.",
+            enum=list(MEMORY_PROVIDER_MODES),
+        ),
+    )
+    id: str = field(
+        default="",
+        metadata=_meta(
+            "Memory Provider",
+            "The provider in use, as 'app:<app id>/<provider id>'. Kept after a switch "
+            "back to 'builtin' so chats that started on the provider stay on it.",
+        ),
+    )
+    timeout_secs: float = field(
+        default=MEMORY_PROVIDER_TIMEOUT_DEFAULT_SECS,
+        metadata=_meta(
+            "Memory Provider Timeout",
+            "Seconds a chat's first message waits for the provider's memory before "
+            "the chat starts with a 'memory unavailable' notice (0.5 to 10).",
+        ),
+    )
+    switched_at: float = field(
+        default=0.0,
+        metadata=_meta(
+            "Memory Provider Switched At",
+            "When the mode or provider last changed (epoch seconds). Chats created "
+            "before it keep the provider they started with.",
+        ),
+    )
+    stop_learning_ack: bool = field(
+        default=False,
+        metadata=_meta(
+            "Memory Provider Learning Stop Acknowledged",
+            "The owner accepted that automatic learning stops in 'replace' mode "
+            "because the provider takes no consolidation input.",
+        ),
+    )
+
+    @classmethod
+    def from_raw(cls, section: object) -> MemoryProviderConfig:
+        """Normalize: anything unreadable is the built-in default."""
+        if not isinstance(section, dict):
+            return cls()
+        mode = section.get("mode")
+        provider_id = section.get("id")
+        timeout = section.get("timeout_secs")
+        switched = section.get("switched_at")
+        if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
+            timeout = MEMORY_PROVIDER_TIMEOUT_DEFAULT_SECS
+        if isinstance(switched, bool) or not isinstance(switched, (int, float)):
+            switched = 0.0
+        return cls(
+            mode=mode if mode in MEMORY_PROVIDER_MODES else "builtin",
+            id=provider_id.strip() if isinstance(provider_id, str) else "",
+            timeout_secs=min(MEMORY_PROVIDER_TIMEOUT_MAX_SECS, max(0.5, float(timeout))),
+            switched_at=max(0.0, float(switched)),
+            stop_learning_ack=section.get("stop_learning_ack") is True,
+        )
+
+
 @dataclass
 class MemoryConfig:
     embedding_provider: str = field(
@@ -163,13 +242,16 @@ class MemoryConfig:
             "Settings is never paced.",
         ),
     )
-    embedding_idle_evict_secs: int = field(
-        default=3600,
+    embedding_idle_evict_secs: int | str = field(
+        default="auto",
         metadata=_meta(
             "Unload Embedding Model When Idle (seconds)",
             "Seconds without any embedding before the embedding model is unloaded "
             "from memory. The next search or memory write loads it again, which takes "
-            "a few seconds. 0 keeps the model loaded.",
+            "a few seconds. 0 keeps the model loaded. 'auto' (the default) is 600 on "
+            "a machine with 16 GiB of memory or less, where opening, typing in or "
+            "sending to a chat and any channel message load the model again before "
+            "it is needed, and 3600 elsewhere. A number you set is always kept.",
         ),
     )
     embedding_weight_repack: bool = field(
@@ -188,8 +270,12 @@ class MemoryConfig:
             "Run Embeddings in a Child Process",
             "Load the embedding model and run inference in a separate low-priority "
             "process, so embedding work never competes with the gateway itself. Off "
-            "by default: the model runs inside the gateway. Takes effect at the next "
-            "model load.",
+            "by default: the model runs inside the gateway. The child cannot yet stop "
+            "a long background embedding when you ask for one, so a search or prompt "
+            "can wait behind it and fall back to keyword results; turn it on only if "
+            "the gateway itself is slow under embedding load. If the child cannot "
+            "start, the model loads inside the gateway instead. Takes effect at the "
+            "next model load.",
         ),
     )
     consolidation_write_child_process: bool = field(
@@ -432,8 +518,9 @@ class MemoryConfig:
             "or state) and what it does with it. 'off' (default) keeps today's "
             "prompt and writes. 'shadow' writes every fact as before and only "
             "logs, within fixed size caps, what routing would do. 'enforce' skips a "
-            "state item (a PR, CI or branch status that GitHub, git or the work "
-            "ledger already holds) and writes facts and events as before. Stored "
+            "state item (the status of tracked work, such as a code change under "
+            "review, a ticket, a CI run or a branch, or a next step, a count or a "
+            "worktree path) and writes facts and events as before. Stored "
             "facts are never changed.",
             enum=list(KIND_ROUTING_MODES),
         ),
@@ -608,6 +695,14 @@ class MemoryConfig:
     migrated: bool = field(
         default=False,
         metadata=_meta("Migrated", "Whether memory has been migrated to vector store."),
+    )
+    provider: MemoryProviderConfig = field(
+        default_factory=MemoryProviderConfig,
+        metadata=_meta(
+            "Memory Provider",
+            "Which memory answers: Crew's own (default) or a provider an installed app "
+            "serves. See memory.provider.mode.",
+        ),
     )
 
 
@@ -977,6 +1072,15 @@ class MemoryStoreConfig:
             "Override embedding backend for this store. Empty inherits from top-level memory "
             "(embeddings are always-on; per-store disable is not supported).",
             enum=["", "llama_cpp"],
+        ),
+    )
+    provider_mode: str = field(
+        default="inherit",
+        metadata=_meta(
+            "Memory Provider Mode",
+            "'inherit' follows memory.provider; 'builtin' keeps this store on Crew's "
+            "own memory whatever memory.provider says.",
+            enum=list(STORE_PROVIDER_MODES),
         ),
     )
 

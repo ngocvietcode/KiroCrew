@@ -47,6 +47,7 @@ binders still read a few fields of the line by hand.
 from __future__ import annotations
 
 import logging
+import operator
 import re
 import uuid
 from collections.abc import Callable, Mapping
@@ -68,7 +69,7 @@ from kiro_crew.dashboard.slot_queue_repository import (
     queue_persist_signature,
     sanitize_restored_queue,
 )
-from kiro_crew.history import transcript_stem
+from kiro_crew.history import transcript_stem, transcript_stems
 from kiro_crew.memory_stores import named_store_or_empty
 from kiro_crew.messaging.link import is_channel_session_key
 from kiro_crew.validation import ARTIFACT_SLUG_RE, normalize_theme_consent_sha
@@ -157,6 +158,9 @@ class Resume:
     disk_meta_observed: bool = True
     app: str = ""
     history_key: str = ""
+    #: Whether a non-plain mode the line carries is kept, decided off the loop by the
+    #: caller (``apps.hidden_sessions.resume_keeps_mode``); otherwise it resumes plain.
+    keeps_mode: bool = True
 
 
 Purpose = Restore | Resume
@@ -257,6 +261,9 @@ class Field:
     merge: Writer | None = None
     read: Callable[[_Read], None] | None = None
     why: str = ""
+
+
+_PICKED = operator.attrgetter("_project_picked")
 
 
 def _titled(slot: Any) -> bool:
@@ -382,7 +389,8 @@ def _read_agent(r: _Read) -> None:
         agent = r.purpose.agent
         if agent is None:
             # The session the conversation runs on names the committed choice.
-            session = r.meta.get("linked_session_key") or slot_transcript_key(r.purpose.name)
+            history_key = slot_transcript_key(r.purpose.name)
+            session = own_linked_session_key(r.meta, history_key) or history_key
             agent = cp._restored_agent_name(str(session), r.meta)
         r.slot.agent = agent
     elif r.meta.get("agent"):
@@ -479,6 +487,8 @@ def _read_mode(r: _Read) -> None:
 
         if mode == members_mod.DM_SLOT_MODE:
             return
+        if mode and not r.purpose.keeps_mode:
+            return
     if mode:
         r.slot.mode = mode
 
@@ -533,9 +543,9 @@ def _read_app_agent_owner(r: _Read) -> None:
 
 
 def _read_project(r: _Read) -> None:
-    from kiro_crew.dashboard.transcript_binding import seed_project_from_disk
+    from kiro_crew.dashboard.transcript_binding import seed_project_line
 
-    seed_project_from_disk(r.state, r.slot, r.meta.get("project") or "")
+    seed_project_line(r.state, r.slot, r.meta)
 
 
 def _read_executor(r: _Read) -> None:
@@ -865,13 +875,42 @@ def _read_forked_from(r: _Read) -> None:
     _restore_fork_lineage(r.slot, r.meta)
 
 
+def _refuse_foreign_link(history_key: str, link: str) -> None:
+    logger.warning(
+        "Leaving %s unbound: its persisted linked_session_key %r names another transcript",
+        history_key,
+        link,
+    )
+    from kiro_crew.dashboard import chat_persistence as cp  # circular import: facade imports owners
+
+    try:
+        cp.sel().log_governance_decision(
+            session_key=history_key,
+            tool_name="chat:adopt_persisted_binding",
+            scope="chat.linked_session_key",
+            item=link,
+            outcome="denied",
+            rule="own_linked_session_key",
+            layer="hydration",
+            reason="the persisted binding names another transcript",
+        )
+    except Exception:
+        logger.debug("persisted-binding refusal audit failed", exc_info=True)
+
+
 def _read_linked_session_key(r: _Read) -> None:
     # Rebinds the slot to the session its conversation runs on; skipped, the
     # slot would answer from a dashboard-only session and the channel thread
     # would stop seeing its replies.
     slot, meta, purpose = r.slot, r.meta, r.purpose
-    if meta.get("linked_session_key"):
-        slot.linked_session_key = str(meta["linked_session_key"])
+    history_key = (
+        purpose.history_key if isinstance(purpose, Recent) else slot_transcript_key(purpose.name)
+    )
+    link = own_linked_session_key(meta, history_key)
+    if meta.get("linked_session_key") and not link:
+        _refuse_foreign_link(history_key, str(meta["linked_session_key"]))
+    if link:
+        slot.linked_session_key = link
     elif isinstance(purpose, Recent):
         if is_channel_session_key(purpose.history_key) and r.state.sessions:
             # Resolved from the session map, never derived from the filename:
@@ -1075,6 +1114,8 @@ FIELDS: tuple[Field, ...] = (
         merge=_always(lambda s: s.project),
         read=_read_project,
     ),
+    # Restored by ``_read_project``: a pick only ever comes back beside its directory.
+    Field("project_picked", _ALL, "_project_picked", _flag(_PICKED), _always(_PICKED)),
     # Written while a local turn is between admission and teardown and omitted
     # otherwise -- slot ownership makes the omission the durable clear; the merge,
     # which cannot delete a key, writes the cleared ``0`` / ``None``.
@@ -1532,6 +1573,7 @@ LINE_ORDER: tuple[str, ...] = (
     "crew_mode_agent",
     "app_agent_owner",
     "project",
+    "project_picked",
     "executor",
     "instance_id",
     "remote_slot",
@@ -1599,6 +1641,7 @@ MERGE_ORDER: tuple[str, ...] = (
     "crew_mode_agent",
     "app_agent_owner",
     "project",
+    "project_picked",
     "app",
     "origin",
     "created_by",
@@ -1651,11 +1694,22 @@ def encode(slot: _ChatSlot, *, folds: SaveFolds, merge: bool = False) -> dict:
     return out
 
 
+def own_linked_session_key(meta: Mapping[str, Any], history_key: str) -> str:
+    """The line's ``linked_session_key`` when it names *history_key*'s own file, else ``""``.
+
+    Every save writes a linked slot's line into its link's own transcript
+    (``slot_history_key``), so a genuine link always names the file it is read
+    from. The line is agent-writable, and a link naming any other file would
+    route the slot's turns to a conversation the tab does not show.
+    """
+    link = str(meta.get("linked_session_key") or "")
+    return link if link and transcript_stem(history_key) in transcript_stems(link) else ""
+
+
 def _own_link(meta: Mapping[str, Any], history_key: str, prefix: str | tuple[str, ...]) -> str:
     """The line's *prefix* link when it names *history_key*'s own file, else ``""``."""
-    link = str(meta.get("linked_session_key") or "")
-    same_file = transcript_stem(link) == transcript_stem(history_key)
-    return link if link.startswith(prefix) and same_file else ""
+    link = own_linked_session_key(meta, history_key)
+    return link if link.startswith(prefix) else ""
 
 
 def own_cron_link(meta: Mapping[str, Any], history_key: str) -> str:
@@ -1691,7 +1745,7 @@ def slot_args(meta: dict[str, Any], purpose: Purpose) -> dict[str, Any]:
         if purpose.purpose == RESTORE:
             # PERSISTED provenance only: a name is not evidence.
             args["channel_origin"] = bool(meta.get("channel_origin")) or bool(
-                meta.get("linked_session_key")
+                own_linked_session_key(meta, slot_transcript_key(purpose.name))
             )
     args["origin"] = str(meta.get("origin") or "")
     return args

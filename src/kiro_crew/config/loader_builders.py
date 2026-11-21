@@ -12,6 +12,7 @@ from collections.abc import Mapping, MutableMapping
 from datetime import datetime, timezone
 
 from kiro_crew import platform_compat
+from kiro_crew.acp_backends import CHAT_RUNTIME_SHARING_HARNESSES
 from kiro_crew.agent_spec_pins import coerce_spec_pins
 from kiro_crew.config import sections as _sections
 from kiro_crew.config.loader_document import (
@@ -813,6 +814,8 @@ def _agent_section_fields(agent_data: dict) -> AgentConfig:
             "kas_fail_closed_web_fetch_blocked", _safe_bool
         ),
         kas_bundle_url=_sections.coerce_kas_bundle_url(section.get("kas_bundle_url")),
+        kas_sso_start_url=str(section.get("kas_sso_start_url") or "").strip(),
+        kas_sso_region=str(section.get("kas_sso_region") or "").strip(),
         native_skill_projection=section.read("native_skill_projection", _safe_bool),
         default_agent=section.get("default_agent"),
         crew_mode_agent=_crew_mode_agent_or_default(section.get("crew_mode_agent")),
@@ -838,6 +841,9 @@ def _agent_section_fields(agent_data: dict) -> AgentConfig:
             )
         ),
         apps_allow_third_party=section.read("apps_allow_third_party", _safe_bool),
+        apps_never_adopt_backend_listener=section.read(
+            "apps_never_adopt_backend_listener", _safe_bool
+        ),
         sandbox_readonly_paths=(
             [p for p in _ro_paths if isinstance(p, str) and p]
             if isinstance(_ro_paths := section.get("sandbox_readonly_paths"), list)
@@ -889,6 +895,9 @@ def _agent_section_fields(agent_data: dict) -> AgentConfig:
         chat_runtime_sharing_max_sessions=section.read(
             "chat_runtime_sharing_max_sessions", _safe_int, 1, 64
         ),
+        chat_runtime_sharing_harnesses=_chat_runtime_sharing_harnesses(
+            section.get("chat_runtime_sharing_harnesses")
+        ),
         agent_started_turns=bool(section.get("agent_started_turns")),
         max_subagents=section.read("max_subagents", _safe_int, 0, SUBAGENT_AUTO_MAX_CEILING),
         max_stop_hook_nudges=section.read("max_stop_hook_nudges", _safe_int, 0),
@@ -922,6 +931,7 @@ def _agent_section_fields(agent_data: dict) -> AgentConfig:
         # true; see the normalization above the `_validate_config_data`
         # call. `_safe_bool` here is the final guard for a real bool.
         session_control=section.read("session_control", _safe_bool),
+        orchestrator_memory=section.read("orchestrator_memory", _safe_bool),
         # Default false: a missing key and a malformed one both leave it off.
         session_manager_chain=section.read("session_manager_chain", _safe_bool),
         peer_steer_loss_recovery=section.read("peer_steer_loss_recovery", _safe_bool),
@@ -944,12 +954,12 @@ def _agent_section_fields(agent_data: dict) -> AgentConfig:
         # bool.
         crew_panel=section.read("crew_panel", _safe_bool),
         subagent_cost_gb=section.read("subagent_cost_gb", _safe_float),
-        subagent_cpu_cost_cores=section.read("subagent_cpu_cost_cores", _safe_float),
         subagent_auto_max=section.read(
             "subagent_auto_max", _safe_int, 3, SUBAGENT_AUTO_MAX_CEILING
         ),
         subagent_spawn_stagger_secs=section.read("subagent_spawn_stagger_secs", _safe_float),
         windows_background_qos=section.read("windows_background_qos", _safe_bool),
+        subagent_light_tier=section.read("subagent_light_tier", _safe_bool),
         spawn_min_memory_gb=section.read("spawn_min_memory_gb", _safe_float),
         resource_pressure_gb=section.read("resource_pressure_gb", _safe_float),
         resource_critical_gb=section.read("resource_critical_gb", _safe_float),
@@ -1168,6 +1178,7 @@ def _build_session_config(session_data: dict) -> SessionConfig:
             lo=_sections.IDLE_COMPACTION_MIN_CONTEXT_PCT_MIN,
             hi=_sections.IDLE_COMPACTION_MIN_CONTEXT_PCT_MAX,
         ),
+        worker_context_cap=bool(section.get("worker_context_cap")),
         # Clamped on the read, like the sibling floats: 0 is the sentinel for
         # "use the built-in budget" and any positive value is the wait, so a
         # hand-edited negative collapses to 0 (fallback) and an oversized value
@@ -1297,6 +1308,7 @@ def _build_telemetry_config(telemetry_data: dict) -> TelemetryConfig:
         traces_otlp_headers_secret=section.read("traces_otlp_headers_secret", _dict_or_default),
         traces_otlp_headers_env=section.read("traces_otlp_headers_env", _dict_or_default),
         traces_conductor_mode=str(section.get("traces_conductor_mode")),
+        accept_traceparent=bool(section.get("accept_traceparent")),
         beacon_enabled=bool(section.get("beacon_enabled")),
         beacon_endpoint=str(section.get("beacon_endpoint")),
         plan_alert_pcts=section.read("plan_alert_pcts", _percent_list),
@@ -1333,6 +1345,21 @@ def _default_session_folder_or_empty(value: object) -> str:
     folder store, so a value that names none reads as unfiled there.
     """
     return value.strip() if isinstance(value, str) else ""
+
+
+def _chat_runtime_sharing_harnesses(value: object) -> dict:
+    """``agent.chat_runtime_sharing_harnesses`` as ``{harness: bool}`` over the table.
+
+    Every harness in ``CHAT_RUNTIME_SHARING_HARNESSES`` is present, at its stored
+    value when that is a literal ``true``/``false`` and at its default otherwise. A
+    name the table does not hold is dropped, so a hand edit cannot switch on a
+    harness that is not safe to share.
+    """
+    stored = value if isinstance(value, dict) else {}
+    return {
+        name: stored[name] if isinstance(stored.get(name), bool) else default
+        for name, default in CHAT_RUNTIME_SHARING_HARNESSES.items()
+    }
 
 
 def _feature_previews(value: object, default: dict) -> dict:
@@ -1375,6 +1402,7 @@ def _build_dashboard_config(_degraded: set[str], dashboard_data: dict) -> Dashbo
         crewmates_in_agent_picker=section.read("crewmates_in_agent_picker", _safe_bool),
         feature_previews=section.read("feature_previews", _feature_previews),
         dynamic_dashboard_cards=section.read("dynamic_dashboard_cards", _safe_bool),
+        audit_secret_reads=section.read("audit_secret_reads", _safe_bool),
         qr_session_until_restart=section.read("qr_session_until_restart", _safe_bool),
         qr_session_persist_across_restart=section.read(
             "qr_session_persist_across_restart", _safe_bool
@@ -1462,14 +1490,18 @@ def _build_dashboard_config(_degraded: set[str], dashboard_data: dict) -> Dashbo
             section.get("default_session_folder")
         ),
         theme_mode=section.get("theme_mode"),
+        theme_schedule_light=section.get("theme_schedule_light"),
+        theme_schedule_dark=section.get("theme_schedule_dark"),
         sso_login_flags=str(section.get("sso_login_flags")),
         theme_color=section.get("theme_color"),
+        instance_label=_sanitize_bot_name(section.get("instance_label")),
         language=str(section.get("language")),
         recent_tint_count=section.read(
             "recent_tint_count", _safe_int, RECENT_TINT_COUNT_MIN, RECENT_TINT_COUNT_MAX
         ),
         show_unread_dot=section.read("show_unread_dot", _safe_bool),
         command_bar_enabled=section.read("command_bar_enabled", _safe_bool),
+        channels_enabled=section.read("channels_enabled", _safe_bool),
         folder_sort=section.read("folder_sort", _folder_sort_from),
         session_sort=section.read("session_sort", _session_sort_from),
         unfiled_sessions_above_folders=section.read("unfiled_sessions_above_folders", _safe_bool),
@@ -1505,6 +1537,9 @@ def _build_dashboard_config(_degraded: set[str], dashboard_data: dict) -> Dashbo
         privacy_ack_version=section.read(
             "privacy_ack_version", _safe_int, 0, _sections.PRIVACY_ACK_VERSION_MAX
         ),
+        kiro_telemetry_ack_version=section.read(
+            "kiro_telemetry_ack_version", _safe_int, 0, _sections.PRIVACY_ACK_VERSION_MAX
+        ),
         crewmates_onboarded=section.read("crewmates_onboarded", _safe_bool),
         user_role=str(section.get("user_role")),
         user_role_other=str(section.get("user_role_other")),
@@ -1516,6 +1551,7 @@ def _build_dashboard_config(_degraded: set[str], dashboard_data: dict) -> Dashbo
         ),
         milestones_enabled=section.read("milestones_enabled", _safe_bool),
         folder_suggestions_enabled=bool(section.get("folder_suggestions_enabled")),
+        folder_suggestions_auto_apply=section.read("folder_suggestions_auto_apply", _safe_bool),
         project_tags_enabled=section.read("project_tags_enabled", _safe_bool),
         topic_tags_enabled=section.read("topic_tags_enabled", _safe_bool),
         tips_cadence_hours=section.read("tips_cadence_hours", _safe_float, lo=0.0),

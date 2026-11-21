@@ -19,7 +19,7 @@ from typing import Any
 
 from aiohttp import web
 
-from kiro_crew import conductor_patrol, host_pressure, ledger_wake, session_ledger, work_ledger
+from kiro_crew import conductor_patrol, ledger_wake, session_ledger, work_ledger
 from kiro_crew.dashboard import session_control
 from kiro_crew.dashboard.handlers.work_ledger_caller import (
     _caller_key,
@@ -84,9 +84,8 @@ async def api_work_ledger_get(request: web.Request) -> web.Response:
     if remote_on:
         # Remote dispatch (preview): pull each open remote item's peer copy and file
         # what is new BEFORE the snapshot below, outside its lock (the pull is network).
-        from kiro_crew.dashboard.handlers import remote_ingest, remote_puller
+        from kiro_crew.dashboard.handlers import remote_ingest
 
-        remote_puller.ensure_running(request.app["state"])
         await remote_ingest.ingest_board(request.app["state"], key)
     # Under the board lock for the same reason the brief read is: a write's
     # cache commit and its record append are two steps, and a read between them
@@ -103,10 +102,11 @@ async def api_work_ledger_get(request: web.Request) -> web.Response:
         shown = [item for item in items if _passes_filters(item, options)]
         event_tails: dict[str, list[work_ledger.WorkEvent]] = {}
         if not compact:
-            for item in shown:
-                event_tails[item.item_id] = await asyncio.to_thread(
-                    _tail_events, key, item.item_id, tail
-                )
+            # Every shown item's tail in one executor hop: this hold is the one the
+            # Crew board's build waits on, so it must not grow with the board.
+            event_tails = await asyncio.to_thread(
+                lambda: {item.item_id: _tail_events(key, item.item_id, tail) for item in shown}
+            )
     assert record is not None
 
     state: DashboardState = request.app["state"]
@@ -175,16 +175,10 @@ async def api_work_ledger_get(request: web.Request) -> web.Response:
             f"read, so it is no longer one to return it to: {why}.",
         )
     _audit(key, "work_ledger_read", "ok", resources=f"{len(rows)} item(s)")
-    # The host's memory pressure while an episode is open, absent otherwise
-    # (rfc-work-ledger-resource-pressure §3.2). Host-wide, so the same block on
-    # every board, a code channel's included; read off the loop, it is a file.
-    pressure = await asyncio.to_thread(host_pressure.read)
     if published_only:
         return web.json_response(
             _published_payload(
-                record,
-                [(item, bool(row.get("stale"))) for item, row in zip(shown, rows)],
-                pressure=pressure,
+                record, [(item, bool(row.get("stale"))) for item, row in zip(shown, rows)]
             )
         )
     # ``goal_items_used`` is derived, never stored: the goal's item count, read
@@ -199,8 +193,6 @@ async def api_work_ledger_get(request: web.Request) -> web.Response:
         goal_items_used=record.goal_items_used,
         max_depth=depth_cap,
     )
-    if pressure is not None:
-        conductor["host_pressure"] = pressure
     payload: dict[str, Any] = {"conductor": conductor, "items": rows}
     if compact:
         payload["compact"] = True
@@ -396,16 +388,12 @@ _PUBLISHED_NOTE = (
 def _published_payload(
     record: work_ledger.ConductorRecord | None,
     items: list[tuple[work_ledger.WorkItem, bool]],
-    *,
-    pressure: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """A ledger read (or a record reply) as a code channel's conductor may see it.
 
     Built from ``session_control.published_item_fields`` and nothing else, so the
     rule for what reaches a code channel lives in ONE place. The conductor header
-    keeps its counters and the goal's first line (``session_control.published_goal``),
-    and a read's ``host_pressure`` level, since the pause rule turns on it. Only the
-    level and its timing: the memory figure stays in the dashboard.
+    keeps its counters and the goal's first line (``session_control.published_goal``).
     """
     conductor: dict[str, Any] = {}
     if record is not None:
@@ -415,10 +403,6 @@ def _published_payload(
             "goal_items_used": record.goal_items_used,
             "goal": session_control.published_goal(record.goal),
         }
-        if pressure is not None:
-            conductor["host_pressure"] = {
-                name: pressure[name] for name in ("level", "since", "age_secs")
-            }
     return {
         "conductor": conductor,
         "items": [

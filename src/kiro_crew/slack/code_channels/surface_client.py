@@ -10,6 +10,7 @@ pinned channel; nothing here chooses one.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from kiro_crew.slack.code_channels.client import CodeChannelsClient, _error_code, _response_data
@@ -27,7 +28,9 @@ MAX_COMMANDS = 10
 #: ``conversations.canvases.create`` answers this when the channel has one; a
 #: second create can never succeed and is never attempted.
 CANVAS_ALREADY_EXISTS = "channel_canvas_already_exists"
-#: The session statuses an agent may set (``closed`` is Slack's, via archive).
+#: The session statuses an agent may set. ``closed`` is never sent: a code
+#: channel ends with ``agents.conversations.archive``, and ``closed`` would not
+#: archive it (code channel lifecycle).
 AGENT_STATUSES = frozenset({"processing", "suspended", "active"})
 VIEW_TYPES = frozenset({"html", "block_kit", "canvas"})
 
@@ -49,7 +52,12 @@ class SurfaceClient(CodeChannelsClient):
     """Views, canvas, commands, summary, rename, status and archive."""
 
     async def _call(
-        self, method: str, body: dict[str, Any], *, query: bool = False
+        self,
+        method: str,
+        body: dict[str, Any],
+        *,
+        query: bool = False,
+        gate: Callable[[], bool] | None = None,
     ) -> dict[str, Any]:
         """Every surface call goes through the channel policy first.
 
@@ -77,7 +85,14 @@ class SurfaceClient(CodeChannelsClient):
         # nothing more, whichever await the Stop landed in.
         if channel and not surface.commit_if_not_stopped(channel):
             raise CodeChannelApiError(method, STOPPED)
-        return await super()._call(method, body, query=query)
+        # The calling site's own fence (activation, a rebind, the board's
+        # scope; ``surface.send_fence``), asked here for the same reason.
+        refused = surface.send_refusal_now()
+        if refused:
+            raise CodeChannelApiError(method, STOPPED if refused == "stopped" else refused)
+        # A write carrying the board's workers asks its *gate* last of all, in
+        # the base ``_call`` right before the raw send (no await between).
+        return await super()._call(method, body, query=query, gate=gate)
 
     async def set_view(
         self,
@@ -142,6 +157,17 @@ class SurfaceClient(CodeChannelsClient):
         _check_size(markdown, "markdown")
         body = {"channel": channel_id, "canvas_id": canvas_id, "content": markdown}
         await self._call("agents.conversations.setCanvasContent", body)
+
+    async def get_canvas(self, channel_id: str, canvas_id: str) -> dict[str, Any]:
+        """``agents.conversations.getCanvas``: the canvas and its OPEN comment threads.
+
+        Resolved threads are left out (Slack's default). Slack caps the answer at
+        the 100 newest threads and 100 newest replies per thread, oldest first.
+        """
+        _check_id(channel_id, "channel_id")
+        _check_id(canvas_id, "canvas_id")
+        body = {"channel": channel_id, "canvas_id": canvas_id, "include_resolved": False}
+        return await self._call("agents.conversations.getCanvas", body)
 
     async def set_summary_message(self, channel_id: str, message_ts: str) -> None:
         """Record *message_ts* as the channel's ``code_channel.summary_message``."""

@@ -20,6 +20,21 @@ export interface CrewWorkItemFacts {
   looping?: boolean
 }
 
+/** A conductor mode board's settled verdict (`dashboard/conductor_mode_run.py`):
+ *  `done` (items, every one closed, no patrol loop on), `stopped` (items open, no
+ *  patrol loop on), else `''`. */
+export interface ConductorModeRun {
+  settled: '' | 'done' | 'stopped'
+  open: number
+  accepted: number
+  not_done: number
+  /** A stop at the patrol's time or budget bound. */
+  at_limit: boolean
+  /** The conductor's patrol loop is on. An unsettled run without it (a new goal
+   *  with no item yet) is waiting on the conductor's next step, not working. */
+  patrol_on: boolean
+}
+
 /** A conductor's work ledger in brief (`crew_work` on its slot row). */
 export interface CrewWorkFacts {
   open: number
@@ -31,6 +46,9 @@ export interface CrewWorkFacts {
   /** The conductor itself holds a live loop (its patrol), which picks a stalled
    *  item up; absent from a gateway that predates it. */
   conductor_looping?: boolean
+  /** The board's settled verdict; absent for a board with no item yet, and from a
+   *  gateway that predates it. */
+  run?: ConductorModeRun
   items: CrewWorkItemFacts[]
 }
 
@@ -60,6 +78,10 @@ export interface TodoList {
   completed: number
   total: number
   current: string
+  /** True on a list the harness keeps itself (an ACP `plan`, e.g. Claude Code's
+   * checklist): no click can reach it, so the pill shows it read-only and the
+   * gateway refuses a tick with `todo_read_only`. Absent on a `todo_list` list. */
+  read_only?: boolean
 }
 
 /**
@@ -110,6 +132,14 @@ export interface McpSessionReport {
    * Optional because an older gateway sends no such key.
    */
   restart_to_load?: string[]
+  /**
+   * The servers in ``restart_to_load`` because a config write changed them after
+   * the session started, not because a credential was missing. Optional because
+   * an older gateway sends no such key.
+   */
+  reload_pending?: string[]
+  /** Advisory: remote servers Crew's credential-free probe saw ask for a sign-in (opencode). Never a reason to call a server unusable. */
+  sign_in_suspected?: string[]
   /**
    * The servers this session cannot use right now, by what is true of each.
    * Optional: a gateway or an agent backend that does not report it sends no
@@ -247,6 +277,9 @@ export interface ChatDonePayload extends TurnIdentityFields {
   slot: string
   continuing?: boolean
   needs_input?: boolean
+  /** Whole seconds from the run's first turn to this frame; only on a frame
+   *  that ends the run, and only when the gateway saw the run start. */
+  run_seconds?: number
 }
 
 export interface ChatSlot extends TurnIdentityFields {
@@ -321,6 +354,8 @@ export interface ChatSlot extends TurnIdentityFields {
   /** Of those, the restored cards no drain starts on its own (`readyQueueDepth`).
    *  Absent on an older gateway. */
   queue_held_depth?: number
+  /** The ISO instant this chat will resume by itself after its usage limit resets; present only while that wait is armed. */
+  limit_continue_at?: string
   /** Set when this session is a Slack code channel's (see `CodeChannelInfo`). */
   code_channel?: CodeChannelInfo
   /** Code channels are on but not read yet, so this Slack-linked row may still
@@ -363,6 +398,11 @@ export interface ChatSlot extends TurnIdentityFields {
    *  chat shows its pending approvals and question cards, and the mate's
    *  Sessions tab lists such rows. Absent elsewhere. */
   mate_root?: string
+  /** True on a conversation that started in Slack while
+   *  `slack.show_in_session_list` is off (`dashboard/slack_session_list.py`).
+   *  The person's session lists leave it out unless it is the open session
+   *  (`crewModeView`), and its unread entry adds to no count. Absent otherwise. */
+  slack_list_hidden?: boolean
   /** The conductor the chat runs in Crew Mode (`crew_mode_agent` on the slot), "" when
    *  it never turned on: it marks the chat as Crew Mode until the gateway moves it onto
    *  the configured `agent.crew_mode_agent`. */
@@ -440,6 +480,13 @@ export interface ChatSlot extends TurnIdentityFields {
    * accepts the turn). Only ever true while `running`; absent from an older
    * gateway. */
   wake_starting?: boolean
+  /** The directory the running turn's process works in. `project` follows a
+   * pick made mid-reply at once; this does not. Null when no turn has claimed
+   * its session yet, absent from an older gateway. */
+  turn_project?: string | null
+  /** `turn_project` is the default folder a hidden scratch project fell back
+   * to, not a pick. Absent from an older gateway. */
+  turn_project_fallback?: boolean
   // Soft-stop state machine
   stop_state?: 'idle' | 'soft_pending' | 'killing'
   /** An automatic context compaction holds the session right now. Not a turn,
@@ -559,7 +606,7 @@ export interface SideSnapshot {
   last_run_id?: string
   /** A side turn is in flight, so a submit would steer or queue. */
   running?: boolean
-  messages?: Array<{ id: string; run_id?: string; role: 'user' | 'assistant'; content: string; ts: string; steer?: boolean; is_error?: boolean }>
+  messages?: Array<{ id: string; run_id?: string; role: 'user' | 'assistant'; content: string; ts: string; steer?: boolean; is_error?: boolean; link_blocks?: unknown }>
   /** `rev` counts the entry's edits, as the edit frame reports it, so a reader
    *  can tell which of two copies of the entry is newer. */
   queue?: Array<{ id: string; content: string; ts: string; rev?: number }>
@@ -572,7 +619,7 @@ export interface ChatMessage {
   /** Structured metadata for role-specific data (e.g. tool_input for permission messages). */
   meta?: Record<string, unknown>
   /** Regenerated variants of an assistant message (most recent last). */
-  variants?: { content: string; ts?: string; blocked_links?: unknown; redactions?: unknown }[]
+  variants?: { content: string; ts?: string; link_blocks?: unknown; redactions?: unknown }[]
   /** Which variant index is currently active. */
   variant_idx?: number
   /** Counter for consecutive identical tool message deduplication. */
@@ -681,6 +728,7 @@ export interface SubagentActivity {
    *  while `stalled` holds there is by definition no activity to reset it. */
   stalledAt?: number
   retrying?: boolean      // transient-backend retry (or cancel auto-continue) in flight
+  parentStopped?: boolean  // parent turn was stopped; agent still runs but is orphaned
   approval_id?: string
   /** The coordinator request a pending spawn waits on (types/approvalTarget). */
   approval_target?: CoordinatorApprovalTarget

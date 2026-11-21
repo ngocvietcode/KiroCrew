@@ -36,7 +36,7 @@ Gateway session auth (token/cookie) gates the proxy entrance as with all builtin
    detection + abort (refused while that base is a guess — see Base Branch Resolution)
 6. **GitHub PR status** — TTL-cached `gh pr list` queries for merge state
 7. **Make Live** — repoint the live gateway at another worktree via a
-   live-target pointer file (no service definition is ever mutated)
+   live-target pointer file (the installed unit file is never edited)
 
 ## Backend component boundaries
 
@@ -139,6 +139,21 @@ own `/api/apps/<app>/` or `/apps/<app>/` namespace):
 `host_grants.py` is a data module, and the package `__init__` imports its two route
 modules inside `register_routes` only: the seam is read in the MCP servers and the
 config loader, which must not pay for the gateway route graph.
+
+**Adopted onto its own repository.** The wheel pins the app (`apps/adoption-pins.json`,
+[app-kit-platform.md § 33](app-kit-platform.md#33-former-built-in-adoption)) at
+`KiroCrewCaptain/kirocrew-app-dev-fleet` with `minAppSdkLevel` 7, the level of the exact
+`=/api/apps` entry its backend-down banner reads (its `agentTools` need level 2), so a
+host whose record is builtin-owned swaps it in place onto that tree at a restart, keeping
+`data/`, `.app_secret`, the approved grants and `enabled`; the rail keeps `/dev-fleet`
+and the `Server` glyph. The repository's `app.json` declares the same `permissions` as
+the wheel copy (its own namespaces, the gateway's `make-live`, `restart-gateway`,
+`pod-token` and `create-release-worktree` routes, `=/api/apps`, `network` and
+`terminal`) and the same `agentTools`, so E9 holds nothing back; its backend starts from a
+launcher file in the adopted tree. The grants in the table above are keyed by the
+installed name and read from the shipped package, so the adopted record keeps them while
+the wheel copy ships. A fix to the app lands in that repository first; a change to the
+wheel copy needs its `App repo:` line.
 
 ## Main Checkout Discovery
 
@@ -294,7 +309,7 @@ verification. Route names below are relative to that prefix.
 
 | Route | Description |
 |-------|-------------|
-| `/apps/dev-fleet/api/health` | Liveness + gateway **start identity**: `{status, start_id}`. `start_id` is the live unit's `ExecMainStartTimestampMonotonic` (launchd: job PID; foreground last resort: run-marker pid; `null` when unavailable); the dashboard polls it to detect the NEW process after a restart (see Action narration). Served on the proxied `/api/` namespace because the gateway only forwards `/apps/dev-fleet/api/*` to the backend. (The bare `/health` carries the same body but is HMAC-exempt and reached only by the gateway's own internal liveness poll.) |
+| `/apps/dev-fleet/api/health` | Liveness + gateway **start identity**: `{status, start_id}`. `start_id` is the live unit's `ExecMainStartTimestampMonotonic` (launchd: job PID; foreground last resort: run-marker pid; `null` when unavailable); the dashboard polls it to detect the NEW process after a restart (see Action narration). Served on the proxied `/api/` namespace because the gateway only forwards `/apps/dev-fleet/api/*` to the backend. Concurrent requests share one identity read, and a finished read is reused for 2 s (`_GATEWAY_START_ID_TTL`). The bare `/health` answers `{status}` only, with no service-manager read. It is HMAC-exempt and reached only by the gateway's own internal liveness poll. |
 | `/apps/dev-fleet/api/fleet` | Lightweight worktree + pod list (polled every 12s), including `main_repo` and `main_repo_inferred`. `?fresh=1` forces cache bypass. Answers `{worktrees: [], needs_setup: true}` when no main checkout was found (see Main Checkout Discovery) and `{worktrees: [], error}` when a named checkout is unreadable. |
 | `/apps/dev-fleet/api/worktree?name=` | Lazy per-branch detail: PR, commits, disk usage |
 | `/apps/dev-fleet/api/pod/logs?name=&n=` | Pod journal tail (recent N lines, default 120, clamped to 1..1000) |
@@ -1239,12 +1254,19 @@ scheduling the restart and hands it to the frontend:
   in its `run/gateway-<port>.pid` sidecar — written before readiness is
   published, rewritten by the replacement, and consumed by the same
   changed-identity comparison unchanged.
-- The current identity is reported by extending the existing **`/health`**
-  surface (`{status, start_id}`). Because the gateway proxies only
-  `/apps/dev-fleet/api/*` to the backend, the same handler is registered at
-  **`/api/health`** and the dashboard polls **`/apps/dev-fleet/api/health`**
-  (the bare `/health` stays HMAC-exempt for the gateway's internal liveness
-  poll). The gateway is treated as recovered ONLY when the reported `start_id`
+- The current identity is reported on the proxied **`/api/health`** route
+  (`{status, start_id}`), and the dashboard polls
+  **`/apps/dev-fleet/api/health`**, because the gateway proxies only
+  `/apps/dev-fleet/api/*` to the backend. The bare `/health` is liveness only
+  (`{status}`): it stays HMAC-exempt for the gateway's internal 15 s liveness
+  poll and reads nothing from the service manager, because each identity read
+  can spawn two `systemctl` scopes. `/api/health` reads the identity through
+  `_cached_gateway_start_id`: concurrent requests share one in-flight read, and
+  a finished read (a stamp, or `null`, also for a read that raised) is reused
+  for 2 s. The handshake polls about every 2 s, so the reuse delays recovery by
+  at most one poll. `_restart_gateway` and `_make_live` call the uncached
+  `_gateway_start_id` right before the bounce. The gateway is treated as
+  recovered ONLY when the reported `start_id`
   DIFFERS from the one captured before the restart. A 200 from the old process
   still winding down returns the SAME identity and is correctly NOT counted as
   recovered.
@@ -1782,8 +1804,9 @@ Dev Fleet backend — repoints the live gateway at a different worktree by writi
 **live-target pointer file** (`live_target.json`). The gateway resolves this
 pointer at startup and `execve`s into the named checkout's own `kirocrew` binary
 — moving the working directory and `PATH` with it. An `execve` that fails leaves
-the installed build booting in the directory it started in. No service definition is
-ever mutated.
+the installed build booting in the directory it started in. The installed unit file is
+never edited. When Dev Fleet can drive a systemd user unit, the cutover also restages
+that unit's drop-in (see *Three outcomes*).
 
 The exec's `PATH` is the checkout's venv `bin`, then the inherited `PATH`, or, when
 none is inherited, the platform's default search path (`os.defpath`) without its
@@ -1879,7 +1902,8 @@ choose the gateway's next image. Instead:
   (`repository._find_worktree_by_path`) and the live-path resolution
   (`_live_worktree_path`'s pointer/running-checkout comparison and the launchd
   link read) hop to the subprocess executor, and the service backends' own
-  filesystem work (the systemd drop-in write, the launchd launcher write, plist
+  filesystem work (the systemd drop-in write, the stat that picks the live unit's
+  name, the launchd launcher write, plist
   probes before status and restart, the foreground confinement/marker scan and
   detached spawn) does the same inside `gateway_service.py`; only in-memory state
   and the `_MAKE_LIVE_LOCK` checks stay inline.
@@ -1997,10 +2021,14 @@ choose the gateway's next image. Instead:
 ### Live-worktree resolution
 
 `_live_worktree_path()` checks `live_target.read_target()` FIRST (after the
-TTL cache), before any launchd/systemd service-definition probe. A cutover
-writes the pointer and never touches the service definition, so the unit's
+TTL cache), before any launchd/systemd service-definition probe. A staged-only
+cutover writes the pointer and does not restage the service definition, so the unit's
 `WorkingDirectory` still names the checkout the gateway was installed from.
 Reading the definition first would report that stale checkout as live.
+A service definition answers only with a path that `live_target.validate` accepts
+as a checkout (`_service_checkout`). The unit that `kirocrew service install`
+writes sets `WorkingDirectory` to the home directory, so the probe goes on to the
+`path=` of `ExecStart`, and then to the running checkout.
 When neither the pointer nor a service definition names a checkout (a gateway
 started by hand on a host with no installed service), the answer is the
 checkout the gateway is executing (`_running_checkout`). Like any other answer it
@@ -2093,6 +2121,31 @@ Fleet can also bounce the gateway:
   `StartLimitBurst` counts operator-requested starts too, so a few cutovers in a
   row would otherwise leave it stopped with `start-limit-hit`. A crash loop after
   the restart is still capped.
+  On Linux the live unit is the first of `kirocrew.service` (the name the setup
+  guide and the user-scope remedy of `kirocrew service install` write) and
+  `kirocrew-gateway.service` whose unit file is in `$XDG_CONFIG_HOME/systemd/user/`
+  (`~/.config/systemd/user/` when the variable is unset), else `kirocrew.service`.
+  When both unit files exist, the user unit whose cgroup holds the gateway is the
+  answer, in any state. The gateway reads its own `/proc/self/cgroup`. The Dev
+  Fleet backend runs in a transient scope, so it reads its parents up to the
+  gateway. A unit that relaunches is `active` for a moment of each attempt, so its
+  state cannot decide. When no read finds a unit, one `systemctl --user is-active
+  kirocrew.service kirocrew-gateway.service` picks the first that is `active`,
+  `reloading` or `refreshing`, else `kirocrew.service`. The status, the restart and
+  the drop-in then name that unit.
+  Inside a pod the unit is the pod's own. With one unit file or none, the choice is a
+  file stat that runs off the loop, so the fleet poll starts no `systemctl` for it.
+  `systemctl --user cat` still decides whether the manager knows that unit. Before the restart the
+  cutover restages the unit's `make-live.conf` drop-in, so `WorkingDirectory` and
+  `ExecStart` name the target. The drop-in's `PATH` is the target's venv `bin`,
+  then the gateway's own `PATH` (the unit's entries, because the cutover runs in
+  the gateway the unit started), then `~/.local/bin`, `/usr/local/bin`, `/usr/bin`
+  and `/bin`. Each entry is kept once, in its first place. An inherited entry that
+  is not absolute, or that has a control character, is left out. The venv `bin`
+  that holds the gateway's interpreter, which is the venv `bin` of the checkout the
+  cutover replaces, is left out too, so each cutover adds no entry. On macOS the
+  launcher that the cutover writes for the LaunchAgent gets its `PATH` the same
+  way (`gateway_service.cutover_path`), so the agent's own entries stay on it.
 - **Foreground last resort**: when the manager probe reports one of
   `no_systemd` / `no_user_unit` / `no_launchd` / `no_agent` — nothing to drive at
   all, e.g. a terminal-launched gateway on a host whose per-user systemd cannot

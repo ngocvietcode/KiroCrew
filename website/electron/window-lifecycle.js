@@ -17,6 +17,7 @@ const {
   setCloseAction,
 } = require("./close-action");
 const { getTrayIcon, setTrayIcon } = require("./tray-icon");
+const { createMinimizeToTray } = require("./minimize-to-tray");
 const { attachHtmlFullScreen } = require("./html-fullscreen");
 const { menuBarCanOverlap } = require("./fullscreen-top-reserve");
 const {
@@ -93,6 +94,33 @@ const WINDOWS_TITLEBAR_MENU_IDS = new Set([
   "window-menu",
   "help-menu",
 ]);
+
+/**
+ * The dashboard session's request headers with the Referer cut down.
+ *
+ * The dashboard URL can carry its sign-in token, so no request sends it. A frame
+ * the page embeds keeps the referring page's origin, never its path or query:
+ * an embed host such as YouTube refuses to play without one (its Error 153), and
+ * the dashboard CSP `frame-src` already limits frames to the origins it admits
+ * (an app's are the `ui.frameSources` the owner approved). Every other request
+ * sends no Referer. Chromium never sends one a page's policy withholds, so this
+ * only ever narrows.
+ */
+function dashboardRequestHeaders(details) {
+  const headers = { ...details.requestHeaders };
+  const referer = headers.Referer;
+  delete headers.Referer;
+  if (referer && details.resourceType === "subFrame") {
+    let origin = "null";
+    try {
+      origin = new URL(referer).origin;
+    } catch {
+      /* no usable referrer: send none */
+    }
+    if (origin !== "null") headers.Referer = `${origin}/`;
+  }
+  return headers;
+}
 
 /**
  * Own every dashboard window and the security policy of the sessions they use.
@@ -627,12 +655,11 @@ function createWindowLifecycle(options) {
     };
     armWindowOpen(view.webContents);
 
-    // Do not leak the dashboard URL/token as a Referer to resources it embeds.
+    // Do not leak the dashboard URL/token as a Referer (dashboardRequestHeaders).
     // This listener remains attached at the same per-window setup point; moving
     // it to a one-time global policy would be a behavior change.
     view.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
-      delete details.requestHeaders.Referer;
-      callback({ requestHeaders: details.requestHeaders });
+      callback({ requestHeaders: dashboardRequestHeaders(details) });
     });
 
     // Give renderer-triggered downloads (e.g. the Portability "Download Export
@@ -1025,6 +1052,7 @@ function createWindowLifecycle(options) {
         persist();
       },
     }));
+    mainWindow.on("minimize", minimizeToTray.minimizeHandler(mainWindow));
 
     return mainWindow;
   }
@@ -1145,6 +1173,9 @@ function createWindowLifecycle(options) {
     syncTray();
     return state;
   }
+
+  // Minimize to tray needs a tray to bring the window back (minimize-to-tray.js).
+  const minimizeToTray = createMinimizeToTray({ store, platform, trayShown: () => tray !== null, log: glog });
 
   async function promptRemoteHost() {
     const focused = BaseWindow.getFocusedWindow() || mainWindow;
@@ -1826,6 +1857,7 @@ function createWindowLifecycle(options) {
       get: () => getTrayIcon(store, { isMac: IS_MAC }),
       set: setTrayIconAndLog,
     },
+    minimizeToTray: { get: minimizeToTray.get, set: minimizeToTray.set },
     getSummonWindow,
     focusedDashboardWindow,
     focusedDashboardWebContents,
@@ -1887,4 +1919,5 @@ module.exports = {
   HEADER_CSS_PX,
   WINDOWS_TITLEBAR_MENU_IDS,
   createWindowLifecycle,
+  dashboardRequestHeaders,
 };

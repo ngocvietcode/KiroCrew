@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
@@ -30,11 +30,12 @@ import {
 } from './OnboardingChapterShell'
 import GithubLogo from './icons/GithubLogo'
 import { Btn } from './ui'
-import { readCompanySignIn, rememberCompanySignIn } from '../utils/companySignIn'
+import { initialCompanySignIn, rememberCompanySignIn } from '../utils/companySignIn'
 import ErrorNotice from './ErrorNotice'
 import { copyToClipboard } from '../utils/clipboard'
 import { safeHref } from '../utils/safeHref'
 import { clearCachedModels } from '../providers/adapters/acp'
+import { RELAY_VIEWER_CREWS_KEY, closeRelayCrews } from '../hooks/useRelayViewerCrews'
 import { providerLabel, type KasLoginProvider } from './kasProviderLabel'
 
 import { i18nT } from '../i18n/t'
@@ -53,6 +54,7 @@ const LOOPBACK_POLL_INTERVAL_MS = 2_000
 const LOOPBACK_SLOW_HINT_MS = 30_000
 // The begin error's DOM id, so the SSO field it names can point at it.
 const SSO_ERROR_ID = 'kas-sso-begin-error'
+const SSO_PREFILLED_ID = 'kas-sso-start-url-prefilled'
 
 // `extra` keeps Company SSO's start URL and region, so Start over can begin the
 // same sign-in again without the form.
@@ -246,25 +248,44 @@ function ProviderButton({
   primary,
   disabled,
   onClick,
+  hint,
 }: {
   icon: ReactNode
   label: string
   primary?: boolean
   disabled?: boolean
   onClick: () => void
+  /** One line under the button saying what the choice is, read as its description. */
+  hint?: string
 }) {
   const { card } = useChrome()
+  const hintId = useId()
   const base = card
     ? 'flex min-h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-[13px] transition-all focus-ring active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40'
     : 'flex h-11 w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg text-sm transition-all focus-ring active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40'
   const variant = primary && !card
     ? 'btn-sweep border-none bg-accent font-semibold text-accent-fg hover:bg-accent-hover hover:shadow-[0_0_20px_var(--accent-glow)]'
     : 'border border-border bg-transparent font-medium text-text hover:border-border-strong hover:bg-bg-hover'
-  return (
-    <button type="button" disabled={disabled} onClick={onClick} className={`${base} ${variant}`}>
+  const button = (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      aria-describedby={hint ? hintId : undefined}
+      className={`${base} ${variant}`}
+    >
       {icon}
       {label}
     </button>
+  )
+  if (!hint) return button
+  return (
+    <div className="mb-1 flex flex-col gap-1">
+      {button}
+      <p id={hintId} className="px-1 text-[12px] leading-snug text-muted">
+        {hint}
+      </p>
+    </div>
   )
 }
 
@@ -272,12 +293,15 @@ function Chooser({
   busy,
   beginError,
   beginErrorCode,
+  companyDefault,
   onPick,
 }: {
   busy: boolean
   beginError: string
   /** The begin refusal's `code`, or '' (see apiErrorCode). */
   beginErrorCode: string
+  /** The gateway's default company portal (`KasLoginStatus.company_sign_in`). */
+  companyDefault?: KasLoginStatus['company_sign_in']
   onPick: (provider: KasLoginProvider, extra?: KasLoginExtra) => void
 }) {
   // The company-SSO choice expands an inline form (start URL + region) instead of
@@ -285,10 +309,14 @@ function Chooser({
   // start until the user supplies it.
   const organisationOnly = useContext(OrganisationOnlyContext)
   const [ssoOpen, setSsoOpen] = useState(organisationOnly)
-  // Seeded from the last company sign-in submitted on this browser, so a reload
-  // or gateway restart does not hand back an empty field.
-  const [startUrl, setStartUrl] = useState(() => readCompanySignIn().startUrl)
-  const [region, setRegion] = useState(() => readCompanySignIn().region)
+  // Seeded from the last company sign-in submitted on this browser, else the
+  // gateway's default portal, so a person need not look the URL up.
+  const [initial] = useState(() => initialCompanySignIn(companyDefault))
+  const [startUrl, setStartUrl] = useState(initial.startUrl)
+  const [region, setRegion] = useState(initial.region)
+  // A URL the gateway filled in says where it came from, so a person trusts it
+  // enough to press Continue. The note goes once they edit the field.
+  const [urlFromDefault, setUrlFromDefault] = useState(initial.fromDefault)
   const startUrlReady = startUrl.trim().length > 0
   // The 400s the user fixes in this form: the error names the field (both, when
   // AWS's answer names neither) and is tied to it, instead of sending them to
@@ -345,6 +373,7 @@ function Chooser({
             <ProviderButton
               icon={<IdCard className="lucide-inline" />}
               label={i18nT('components.kasLogin.continue_with_builder_id')}
+              hint={i18nT('components.kasLogin.builder_id_hint')}
               disabled={busy}
               onClick={() => onPick('builder_id')}
             />
@@ -381,14 +410,30 @@ function Chooser({
                 spellCheck={false}
                 aria-label={i18nT('components.kasLogin.sso_start_url_label')}
                 aria-invalid={startUrlBad || undefined}
-                aria-describedby={startUrlBad ? SSO_ERROR_ID : undefined}
+                aria-describedby={
+                  [urlFromDefault && SSO_PREFILLED_ID, startUrlBad && SSO_ERROR_ID]
+                    .filter(Boolean)
+                    .join(' ') || undefined
+                }
                 autoFocus
                 value={startUrl}
-                onChange={(e) => setStartUrl(e.target.value)}
+                onChange={(e) => {
+                  setStartUrl(e.target.value)
+                  setUrlFromDefault(false)
+                }}
                 placeholder={i18nT('components.kasLogin.sso_start_url_placeholder')}
                 className="focus-ring mt-1 w-full rounded-lg border border-border bg-bg px-3 py-2 font-mono text-[13px] font-normal text-text-strong placeholder:text-muted aria-invalid:border-danger"
               />
             </label>
+            {urlFromDefault && (
+              <p
+                id={SSO_PREFILLED_ID}
+                className="mt-1 text-[12px] leading-relaxed text-muted"
+                data-testid="kas-login-sso-prefilled"
+              >
+                {i18nT('components.kasLogin.sso_start_url_prefilled')}
+              </p>
+            )}
             <p className="mt-1 text-[12px] leading-relaxed text-muted">
               {i18nT('components.kasLogin.sso_helper')}
             </p>
@@ -424,6 +469,7 @@ function Chooser({
           <ProviderButton
             icon={<Building2 className="lucide-inline" />}
             label={i18nT('components.kasLogin.continue_with_company_sso')}
+            hint={i18nT('components.kasLogin.company_sso_hint')}
             disabled={busy}
             onClick={() => setSsoOpen(true)}
           />
@@ -876,6 +922,9 @@ function KasLoginFlow({
   // credential to land supersedes the stored one. Cleared when the poll answers
   // authorized (the status re-read then shows the new account) or on cancel.
   const [reauth, setReauth] = useState(false)
+  // Read by the authorized effect below without re-running it on every toggle.
+  const reauthRef = useRef(reauth)
+  reauthRef.current = reauth
   // Set when a switch's new credential landed but the previous slot could not
   // be removed (`previous_identity_not_removed`): the old account still takes
   // precedence, and the signed-in view must say so until the user acts.
@@ -968,20 +1017,27 @@ function KasLoginFlow({
   // sign-in is confirmed: the poll answering 'authorized', and a cancel whose
   // fresh status read finds the credential already stored (the poll is detached
   // by then and never reports 'authorized' for it).
-  const forgetModelList = useCallback(() => {
+  const invalidateSignInCaches = useCallback(() => {
     clearCachedModels()
     void queryClient.resetQueries({ queryKey: ['available-models'] })
     // The usage reading names the previous account too (the Kiro sign-in card
     // shows its e-mail): drop it rather than show that name until the next poll.
     void queryClient.resetQueries({ queryKey: ['kiro-usage'] })
+    // A switch can keep every status field unchanged while replacing the account.
+    void queryClient.invalidateQueries({ queryKey: ['kas-login-sources'] })
+    // Team Crews are listed for the account: the new one's list, not the old one's.
+    void queryClient.resetQueries({ queryKey: RELAY_VIEWER_CREWS_KEY })
   }, [queryClient])
 
   const authorized = pollQuery.data?.status === 'authorized'
   const authorizedCode = pollQuery.data?.code
   useEffect(() => {
     if (!authorized) return
+    // A Switch account landed: open relay Crew windows ran as the old account,
+    // so close them now rather than at their next renewal.
+    if (reauthRef.current) void closeRelayCrews()
     void queryClient.invalidateQueries({ queryKey: QUERY_KEY })
-    forgetModelList()
+    invalidateSignInCaches()
     // A switch whose old slot could not be removed is a sign-in that landed AND
     // a failure the user has to act on: the previous account still wins by slot
     // priority, so the re-read status will keep showing it. Kept as a notice
@@ -991,7 +1047,7 @@ function KasLoginFlow({
     setSession(null)
     setFellBack(false)
     setReauth(false)
-  }, [authorized, authorizedCode, forgetModelList, queryClient])
+  }, [authorized, authorizedCode, invalidateSignInCaches, queryClient])
 
   // Loopback degradation: a listener nobody reached (timeout — the browser is
   // not on this machine) or that failed before persisting a token restarts the
@@ -1046,7 +1102,8 @@ function KasLoginFlow({
       // A sign-in that landed under the cancel is still a sign-in: the model
       // list is the new account's now, and the poll that would have dropped the
       // old one is already detached.
-      if (landed) forgetModelList()
+      if (landed) invalidateSignInCaches()
+      if (landed && reauth) void closeRelayCrews()
       return landed ? 'signed_in' : 'signed_out'
     } catch {
       return 'unknown'
@@ -1287,6 +1344,7 @@ function KasLoginFlow({
             : '')
         }
         beginErrorCode={apiErrorCode(beginDevice.error)}
+        companyDefault={status.company_sign_in}
         onPick={(provider, extra) => {
           beginDevice.reset()
           beginLoopback.reset()

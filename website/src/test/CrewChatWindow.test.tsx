@@ -72,7 +72,6 @@ import {
   openCrewWindow, closeCrewWindow, useCrewWindow, reloadCrewWindowForTest, writeCrewDraft,
   capsRetryInterval,
 } from '../pages/chat/crew-window/crewWindowStore'
-import { crewModePreviewOn } from './crewModePreview'
 import { crewWindowSlot } from '../pages/chat/crew-window/crewWindowRenderers'
 import { DICTATION_NOTE, _resetDictationProvenance, isDictated, markDictated } from '../chat-core/composer/dictationProvenance'
 import { queryClient as globalQueryClient } from '../api/queryClient'
@@ -375,6 +374,21 @@ describe('CrewChatWindow', () => {
     const box = await screen.findByRole('textbox')
     fireEvent.change(box, { target: { value: 'half a thought' } })
     await waitFor(() => expect(sessionStorage.getItem('kirocrew.crewDrafts') ?? '').toContain('half a thought'))
+  })
+
+  // The peer's send reports no delivery receipt, so the prompt stash (which
+  // keeps a restored draft until delivery is confirmed) is off here: Ctrl+S
+  // leaves the draft in the composer and writes no stash entry.
+  it('does not offer the prompt stash, whose restored drafts it could not consume', async () => {
+    renderWindow()
+    const box = await screen.findByRole('textbox')
+    fireEvent.change(box, { target: { value: 'not for the stash' } })
+    fireEvent.keyDown(box, { key: 's', ctrlKey: true })
+    expect(box).toHaveValue('not for the stash')
+    const stashKeys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i) ?? '')
+      .filter(key => key.startsWith('mc-prompt-stash'))
+    expect(stashKeys).toEqual([])
+    expect(screen.queryByTestId('prompt-stash-status-line')).toBeNull()
   })
 
   it('offers no card for an approval it cannot tie to one peer row', async () => {
@@ -1512,6 +1526,3 @@ describe('CrewChatWindow', () => {
     expect(FakeEventSource.all[0].close).toHaveBeenCalled()
   })
 })
-
-// Last, after the file's own hooks that clear localStorage: Crew Mode is a feature preview.
-crewModePreviewOn()

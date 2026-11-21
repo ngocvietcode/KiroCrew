@@ -120,17 +120,17 @@ order once the turn stops: everybody in a thread shares its session, so that
 stop only withdraws what its caller sent. A stop that escalates to a hard
 stop, and **Kill Now**, still tear the session down with its whole queue,
 every member's messages included. Three
-answers, one per outcome: "⏹ Execution stopped." when the turn stopped
-cooperatively, "⛔ Execution stopped — session reset." when it had to be
+answers, one per outcome: "Execution stopped." when the turn stopped
+cooperatively, "Execution stopped — session reset." when it had to be
 escalated to a hard stop, and "Nothing running." when no turn was active.
 
 Authorization: owner and allowed users. Unauthorized callers get
-"⛔ Not authorized." and an audit log entry under `slack.stop_command`.
+"Blocked: Not authorized." and an audit log entry under `slack.stop_command`.
 
 ## Streaming
 
 Responses stream in real-time via progressive Slack message edits. A cursor
-(▍) shows during streaming. Tool calls appear as 🔧 _tool name_ inline.
+(▍) shows during streaming. Tool calls appear inline by name.
 
 With `slack.reactions_enabled` on, where Slack shows the bot's native thread status
 ("is working on your request") your message gets no reaction; elsewhere it gets 👀
@@ -188,6 +188,30 @@ be reached, the session simply stays unconnected, and you can connect it from th
 session actions menu later.
 
 Off by default. Applies to the next new session with no restart.
+
+## Slack conversations in the session list
+
+Conversations that start in Slack (threads, DMs and channel mentions) appear in
+the dashboard's session list next to your other sessions, so you can read or
+continue one from either side. Turn off **Show Slack conversations in the session
+list** at `/settings/channels/slack` (`slack.show_in_session_list`) to keep them
+out of that list. This setting changes the list only:
+
+- The conversations keep working in Slack exactly as before.
+- They stay in History and search. Open one from there, from a notification or
+  from a link, and it shows in the main pane with its row while it is the open
+  session.
+- One waiting on your approval or answer keeps its row until you answer, and
+  hidden conversations add nothing to unread counts.
+- Nothing is closed, archived or deleted. Turn the setting back on and they are
+  listed again, including conversations that started while it was off.
+- Sessions you start in the dashboard and connect to Slack, and Slack code
+  channel sessions with their helper agents, are always listed.
+
+On by default. Applies when saved, with no restart. The separate
+`dashboard.surface_channel_sessions` setting stops every messaging channel's
+conversations from being added to the session list at the next restart; this
+one is for Slack only and takes effect at once.
 
 ## OPTIONS Buttons
 
@@ -250,6 +274,9 @@ your own workspace.
    `message.groups`, `app_mention`, `app_home_opened`, `file_change`, and
    `member_joined_channel`. Install or reinstall the app to grant the scopes and
    get the bot token (`xoxb-`).
+   When you open the bot's Home tab, Kiro Crew publishes its status page there;
+   set `slack.home_tab_builtin` to `false` to keep a Home view you publish
+   yourself with the same bot instead.
 5. **Set credentials** in `~/.kiro/crew/.env` (`SLACK_APP_TOKEN`, `SLACK_BOT_TOKEN`, `KIROCREW_OWNER_ID`). Slack has no `enabled` setting: both Slack tokens opt the channel in.
 6. **Slash command** (optional) — the command name is configurable via
    `slack.command` in config.json (default: `kirocrew`). Each app instance
@@ -291,8 +318,46 @@ exactly as with the switch off, and the page says why under the switch.
   steps warn you there.
 - **Code channels** (`slack.code_channels`) lets the agent open a Slack code channel for
   coding work: one channel per task, with a context bar, a diff tab and channel commands.
+  When the channel's agent starts helper agents for pieces of the work (**Let code
+  channels start helper agents**), the channel also gets a pinned **work board**, kept
+  up to date in place: one line of counts ("2 working · 1 waiting on you · 1 of 4 done"),
+  then one task per helper agent with Slack's own status mark, what it is doing right
+  now (the command it is running or the file it is editing, with secrets and your
+  paths taken out), how long it has been at it, and its PR with its CI checks. The
+  channel's Code tab shows the channel's own changes, then each helper agent's
+  commits under its name, and the wrap-up lists each helper agent's outcome. A helper agent that needs you gets a threaded reply that mentions you, and the
+  channel's status shows it is waiting on you. **Stop** (or `!stop`) in the channel
+  stops the channel's own agent, the running turn of every helper agent it started
+  and their sub-agents, and says how many it stopped and how many it could not stop. A
+  session on the board that the channel's agent did not start as a helper (a chat
+  filed in the channel's folder, for one) is not stopped; the reply says how many
+  such sessions still run. Stop does not hold them yet: a message
+  queued for a stopped helper, its own timer or patrol, or the channel's agent can
+  start it again. Keeping them stopped until someone writes is a follow-up change. On
+  the board, a task waiting on you links to its chat. A code channel adds no reactions to your
+  messages: its progress is the channel's status and the board. In the dashboard the helper agents sit under the channel's session, in
+  the channel's folder (a channel whose chat has conductor mode on keeps them out of folders, as conductor mode does everywhere).
+  The context bar holds Slack's maximum of five items: the helper agents in one item
+  (for example "2 working · 1 needs you") that opens the board, the repository, the
+  branch, **Stop** while the channel's own agent is working (it is Slack's own Stop
+  button: it stops that turn, the helper agents and their sub-agents, as above), and the channel's pull request with its tests. With no
+  pull request yet, once the branch has commits, the last item is a **Create PR** button
+  (it does what `/create-pr` does). **Open in dashboard** (a plain link, shown when your
+  dashboard has an https address; you need to be signed in to it) takes a slot only
+  when one is free; in a channel with a work board, the board links the channel's
+  session instead.
+  A button answers only the people who may use Kiro Crew; anyone else is told so
+  privately. Comments people leave on the **Plan** tab reach the channel's agent as
+  feedback from the person who wrote them. When the channel already has Slack's maximum
+  of five tabs, the agent's tab it updated least recently makes room for a new one; the
+  Plan tab, the Code tab and tabs others added are never removed. The channel's
+  pull request is also its linked resource in Slack, and the work board is its live
+  summary until the wrap-up replaces it. If Slack stops accepting the channel's updates
+  (it is no longer a code channel, or Kiro Crew is no longer its agent), the dashboard
+  says so once.
   It adds the `code_channels:manage`, `chat:write.customize`, `canvases:write`,
-  `channels:write.invites` and `groups:write.invites` scopes. Your workspace must have
+  `channels:write.invites`, `groups:write.invites` and `pins:write` scopes (the last
+  lets the work board pin itself in its channel). Your workspace must have
   Slack code channels enabled.
 
 **Defaults for new code channels** (`slack.code_channel_defaults`, applied without a
@@ -300,12 +365,17 @@ restart): a folder, an agent, a model, a reasoning effort and an approval mode. 
 them; anything empty falls through:
 
 - folder: the default folder here, else a top-level **Code channels** folder. That folder is
-  created the first time a code channel needs it, with `kirocrew-conductor` as its default
-  agent, so a code channel with nothing set runs the conductor there. **New folder…** in
+  created the first time a code channel needs it, with no default agent, so a code channel
+  with nothing set runs your default agent there (an auto folder an earlier release created
+  with `kirocrew-conductor`, never changed since, counts as having none for code channels; a
+  dashboard **New chat** in it still gets `kirocrew-conductor` until you clear the folder's
+  agent). **New folder…** in
   the folder list creates a sidebar folder (name, optional project directory and default
   agent) and selects it;
 - agent: the default agent here, then the folder's default agent, then the agent Slack
-  already uses. The list offers every agent a chat can run, the shipped ones included,
+  already uses. **Always use conductor mode** (`conductor_mode`, every build but LTS)
+  instead runs every new code channel in conductor mode on `agent.crew_mode_agent`, over both.
+  The list offers every agent a chat can run, the shipped ones included,
   except background-only ones (`kirocrew-lite`, `kirocrew-guest`, `kirocrew-heartbeat`);
 - project: the folder's project directory, then the project of the thread the channel was
   opened from;

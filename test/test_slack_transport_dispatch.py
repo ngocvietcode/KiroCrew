@@ -43,7 +43,7 @@ from kiro_crew.acp.types import (
 from kiro_crew.messaging.link import canonical_key
 from kiro_crew.slack import handler as slack_handler
 from kiro_crew.slack import transport_dispatch
-from kiro_crew.testing.synthetic_credentials import SAMPLE_AWS_SECRET
+from kiro_crew.testing.synthetic_credentials import SAMPLE_SLACK_BOT_TOKEN
 
 
 def _run_transport(monkeypatch, thread_agent=None, agent_override=None, **extra):
@@ -533,7 +533,7 @@ def test_member_memory_refusal_redacts_before_posting(monkeypatch):
     from kiro_crew.memory_stores import UnknownMemoryStore
 
     private_path = "/home/alice/.kiro/crew/memory_stores/member-one/memory.db"
-    credential = SAMPLE_AWS_SECRET  # synthetic AWS secret
+    credential = SAMPLE_SLACK_BOT_TOKEN  # synthetic Slack bot token
     failure = UnknownMemoryStore(f"memory_unavailable: cannot open {private_path}; {credential}")
     monkeypatch.setattr(
         transport_dispatch, "session_store_for_turn", AsyncMock(side_effect=failure)
@@ -563,7 +563,7 @@ def test_classified_acp_error_reaches_the_user(monkeypatch):
         transport_dispatch, "session_store_for_turn", AsyncMock(side_effect=failure)
     )
     slack, _sessions = _run_transport_text(monkeypatch, "hello there")
-    assert f"❌ {failure}" in _posts(slack)
+    assert f"Error: {failure}" in _posts(slack)
 
 
 def test_classified_acp_error_is_redacted_on_the_wire(monkeypatch):
@@ -579,7 +579,7 @@ def test_classified_acp_error_is_redacted_on_the_wire(monkeypatch):
     )
     slack, _sessions = _run_transport_text(monkeypatch, "hello there")
     posted = "\n".join(_posts(slack))
-    assert "❌ The monthly usage limit has been reached. cannot read " in posted
+    assert "Error: The monthly usage limit has been reached. cannot read " in posted
     assert private_path not in posted and "alice" not in posted
 
 
@@ -593,13 +593,13 @@ class TestTransportErrorText:
     def test_classified_acp_error_shows_its_reason(self):
         err = _classified_acp_error("The monthly usage limit has been reached.")
         assert err.usage_limit
-        assert transport_dispatch._transport_error_text(err) == f"❌ {err}"
+        assert transport_dispatch._transport_error_text(err) == f"Error: {err}"
         assert "monthly usage limit" in str(err)
 
     def test_prompt_busy_shows_its_reason(self):
         err = _classified_acp_error("Prompt already in progress")
         assert isinstance(err, AcpPromptBusy)
-        assert transport_dispatch._transport_error_text(err) == f"❌ {err}"
+        assert transport_dispatch._transport_error_text(err) == f"Error: {err}"
 
     def test_prompt_busy_with_provider_text_keeps_the_generic_reply(self):
         # Busy named only in ``message``: the formatter's curated busy branch
@@ -624,34 +624,35 @@ class TestTransportErrorText:
 
     def test_classified_acp_error_is_redacted_before_posting(self):
         private_path = "/Users/alice/secret/x"
-        credential = SAMPLE_AWS_SECRET  # synthetic AWS secret
+        credential = SAMPLE_SLACK_BOT_TOKEN  # synthetic Slack bot token
         err = AcpError(
             f"Backend refused: cannot read {private_path}; key {credential}",
             transient=False,
             user_worded=True,
         )
         text = transport_dispatch._transport_error_text(err)
-        assert text.startswith("❌ Backend refused: cannot read ")
+        assert text.startswith("Error: Backend refused: cannot read ")
         assert private_path not in text and "alice" not in text
         assert credential not in text
 
     @pytest.mark.parametrize("split", ["{h}*{r}*", "{h}**{r}**", "{h}_{r}_", "{h}`{r}`"])
     def test_a_key_split_by_display_markup_is_redacted(self, split):
-        # A synthetic 40-character AWS secret split after its first 4 characters.
-        head, rest = SAMPLE_AWS_SECRET[:4], SAMPLE_AWS_SECRET[4:]
+        # A synthetic Slack bot token split after its first 4 characters. (No ``_``
+        # in it: the display form drops that as markup.)
+        head, rest = SAMPLE_SLACK_BOT_TOKEN[:4], SAMPLE_SLACK_BOT_TOKEN[4:]
         err = _classified_acp_error(
             "The monthly usage limit has been reached. key " + split.format(h=head, r=rest)
         )
         assert err.user_worded and rest in str(err)
         text = transport_dispatch._transport_error_text(err)
-        assert text.startswith("❌ The monthly usage limit has been reached.")
+        assert text.startswith("Error: The monthly usage limit has been reached.")
         assert rest not in text
 
     def test_classified_acp_error_is_truncated(self):
         cap = transport_dispatch._TRANSPORT_ERROR_DETAIL_MAX_CHARS
         err = _classified_acp_error("The monthly usage limit has been reached. " + "x" * cap)
         assert err.user_worded and len(str(err)) > cap
-        assert transport_dispatch._transport_error_text(err) == "❌ " + str(err)[:cap]
+        assert transport_dispatch._transport_error_text(err) == "Error: " + str(err)[:cap]
 
     @pytest.mark.parametrize(
         "message",

@@ -185,6 +185,9 @@ CHANNEL_AGENT_BLOCKED_TOOLS: tuple[str, ...] = (
     "read_slack_history",
     # Reads and reorders a worker's queued instructions; same exfiltration reason.
     "session_queue",
+    # Stops a running turn and chooses what the target runs next, so it carries
+    # `session_stop`'s containment reason and `session_send`'s together.
+    "session_run_queued",
     # The fan-out verb, blocked for the reason `session_send` is and then some: one
     # call with `all: true` reaches every session the caller created, so a channel agent acting on
     # words from a thread other people are in would relay them into the user's
@@ -195,6 +198,9 @@ CHANNEL_AGENT_BLOCKED_TOOLS: tuple[str, ...] = (
     # whoever is in that thread -- the same exfiltration `session_read_message` is
     # blocked for, one step shallower.
     "session_status",
+    # The remote-crew roster: crew names and their agents, the same
+    # exfiltration reason as session_status.
+    "crew_list",
     "session_create",
     # Creates, opens, binds and seeds a worker in one call: session_create's and
     # session_send's containment reasons together.
@@ -1037,6 +1043,8 @@ async def run_channel_agent(
             )
             if client is None:
                 break
+            # One claim for life: a stricter sandbox recycles it here; the check below re-acquires.
+            await sessions.recycle_if_sandbox_tightened(agent.session_key)
             if sessions.get_provider(agent.session_key) is not client:
                 # IDENTITY, not presence: a clear-context discard pops this key and shuts the
                 # cached provider down, and a later claim can re-register a DIFFERENT one under it.
@@ -1501,7 +1509,20 @@ async def _stream_task(
                 # YOLO mode (global) or channel trust — auto-approve. A
                 # ``gateway --approval yolo`` grant is for dashboard chats only.
                 _yolo = bool(is_yolo and is_yolo()) and safety_override().is_cli_launch is not True
-                if _yolo or (channel.trusted and session_mode_permitted("trust")):
+                from kiro_crew import mate_held_rules
+
+                # A moved Bot's limit its worker could not carry exactly
+                # (``mate_held_rules``): neither YOLO, channel trust nor a trusted
+                # command answers a call it covers; it reaches the card.
+                _held = bool(
+                    await asyncio.to_thread(
+                        mate_held_rules.held_for,
+                        event,
+                        session_key=agent.session_key,
+                        agent=agent.agent_name,
+                    )
+                )
+                if not _held and (_yolo or (channel.trusted and session_mode_permitted("trust"))):
                     approval_outcome = (
                         "auto_approved_yolo" if _yolo else "auto_approved_channel_trust"
                     )
@@ -1548,7 +1569,7 @@ async def _stream_task(
                 )
                 # Non-None past this block only for a matched grant that was declined.
                 _ng_refusal: name_grant.Refusal | None = None
-                if (agent._trusted_commands or agent._trusted_bases) and _cmd:
+                if (agent._trusted_commands or agent._trusted_bases) and _cmd and not _held:
                     matched = _match_trusted_channel_command(_cmd, agent)
                     if matched:
                         # The grant names a PROGRAM; the shell resolves that
@@ -1629,14 +1650,13 @@ async def _stream_task(
                 # authority. ``tool_input_redacted`` is transport provenance:
                 # re-running the scanners cannot reveal bytes an ACP transport
                 # already removed. Either signal makes the command display-only.
-                from kiro_crew.security import redact_with_findings
+                from kiro_crew.security import redact, redact_with_findings, refuses
 
                 _safe_cmd, _cmd_credential_redacted, _cmd_url_redacted = redact_with_findings(_cmd)
                 _command_grantable = bool(_cmd) and not (
                     bool(getattr(event, "tool_input_redacted", False))
                     or _cmd_credential_redacted
-                    or _cmd_url_redacted
-                    or _safe_cmd != _cmd
+                    or refuses(_cmd, redact)
                     or "[REDACTED" in _cmd
                 )
                 if _cmd:

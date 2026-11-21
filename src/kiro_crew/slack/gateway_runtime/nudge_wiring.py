@@ -643,6 +643,19 @@ async def _init_autonudge(self: GatewayOrchestrator) -> None:
 
         return ledger_wake.worker_closed(self.dashboard_state, session_key)
 
+    async def _pull_remote_reports(conductor_key: str) -> None:
+        """Bind the patrol tick's remote report pull to this gateway's dashboard.
+
+        The logic is ``remote_puller.on_patrol_tick``; imported here so a gateway
+        with no remote dispatch never loads it on its startup path.
+        """
+        state = self.dashboard_state
+        if state is None:
+            return
+        from kiro_crew.dashboard.handlers import remote_puller
+
+        await remote_puller.on_patrol_tick(state, conductor_key)
+
     self.autonudge_svc = AutoNudgeService(
         base_dir=data_home(),
         on_fire=_fire,
@@ -651,6 +664,7 @@ async def _init_autonudge(self: GatewayOrchestrator) -> None:
         emit_judge_notice=_emit_judge_notice,
         worker_running=_worker_slot_running,
         worker_closed=_worker_slot_closed,
+        pull_remote_reports=_pull_remote_reports,
     )
 
     def _monitor_owner_session_id(loop: NudgeLoop) -> str:
@@ -869,7 +883,7 @@ def _notify_nudge_expired(self: GatewayOrchestrator, loop: NudgeLoop) -> bool:
         # runtime budget each came to preempt it in turn.
         #
         # An OWED terminal turn is terminal news too, and it is the third way this
-        # same precedence has been lost. A CHANNEL-bound loop deliberately does not
+        # same precedence has been lost. A gated pull-request loop deliberately does not
         # settle on observation -- it learns its watch finished from a delivered turn,
         # so the probe records the owed turn in ``terminal_pending`` and leaves the
         # loop active with no ``outcome`` and no ``MONITOR_TERMINAL_REASON``. If that

@@ -704,7 +704,7 @@ so it still loads. `_run_side_turn` requests the base agent's session with
 `AcpProvider` to `AcpClient`. A pooled child was started without that shape, and
 none can serve the session: a `side:` (or `thread:`) key is stateless, so it never
 claims from the warm pool (`bypass_stateless`). The claude client then starts the
-session confined (`AcpClient._claude_session_meta`):
+session confined (`ClaudeAcpClient._claude_session_meta`):
 
 - `tools` holds only the read built-ins (`Read`, `Grep`, `Glob`, `WebFetch`,
   `WebSearch`; `acp/harness_tool_names.CLAUDE_READ_ONLY_BUILTINS`), so no write
@@ -760,7 +760,8 @@ named on every session instead (`harness_tool_id`, through
 refuse a call. The shape rides
 `_meta.claudeCode.options`, which only an adapter at
 `CLAUDE_ACP_SETTING_SOURCES_MIN_VERSION` or newer is verified to honour. Below it
-(read from the installed package by `claude_adapter_honours_session_options`) the
+(read by `claude_adapter_honours_session_options` from the adapter's package.json,
+or for a wrapper script from the version it reported at its latest handshake) the
 turn runs `REJECT_ALL` and a warning names the upgrade, and a handshake that
 reports an older version stops the session before its first prompt. The session
 has no shell, so its boundary prompt is `SIDE_BOUNDARY_PROMPT_NO_SHELL`, which

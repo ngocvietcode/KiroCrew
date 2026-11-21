@@ -117,6 +117,7 @@ from kiro_crew.dashboard.chat_api.app_admission import (  # noqa: F401
     _app_claim_refused,
     _app_may_send_to_slot,
     _app_resume_refusal,
+    _app_send_refused,
     _app_slot_acquisition_denial,
     _app_slot_acquisition_recheck,
     _deny_app_session_settings,
@@ -247,7 +248,6 @@ from kiro_crew.dashboard.chat_api.session_relaunch import (  # noqa: F401
 )
 from kiro_crew.dashboard.chat_api.slot_approval import (  # noqa: F401
     _STRICT_NATIVE_ACTIONS,
-    _TEAMMATE_DECISIONS,
     _apply_inherited_postures,
     _approval_target_required,
     _deny_approval_mode,
@@ -266,7 +266,6 @@ from kiro_crew.dashboard.chat_api.slot_approval import (  # noqa: F401
     _still_owning,
     _strict_native_owner,
     _sweep_pending_approvals,
-    _teammate_decision_refusal,
     api_chat_mode,
     api_chat_slot_approve,
     apply_approval_mode,
@@ -274,6 +273,7 @@ from kiro_crew.dashboard.chat_api.slot_approval import (  # noqa: F401
     deny_session_approval_caller,
 )
 from kiro_crew.dashboard.chat_api.slot_create import (  # noqa: F401
+    _app_hides_own_mode,
     _birth_default_project,
     _check_new_slot_assignment,
     _created_slot_row,
@@ -309,9 +309,12 @@ from kiro_crew.dashboard.chat_api.slot_discard import api_chat_slot_discard  # n
 from kiro_crew.dashboard.chat_api.slot_effort import (  # noqa: F401
     _configured_backend_for_slot,
     _own_models_field,
+    _write_session_switch,
+    api_chat_slot_fast_mode,
     api_chat_slot_reasoning_effort,
     api_chat_slot_selection_capabilities,
     api_chat_slot_ultracode,
+    configured_backend_for_session,
 )
 from kiro_crew.dashboard.chat_api.slot_guards import (  # noqa: F401
     _CommitToken,
@@ -400,6 +403,10 @@ from kiro_crew.dashboard.chat_api.turn_stop import (  # noqa: F401
     _cancel_cron_run,
     _cancel_target,
     _compaction_in_flight,
+    _decline_compacting_interrupt,
+    _dispatch_run_now_idle,
+    _interrupt_claimed_turn,
+    _log_interrupt,
     _make_stop_resolver,
     _may_cancel_cron_run,
     _open_stop_event_card,
@@ -557,6 +564,7 @@ from kiro_crew.dashboard.handlers._shared import (  # noqa: F401
     cron_creator_admission,
     cron_mode_refusal,
     cron_slot_creator,
+    message_required_error,
     read_bounded_json,
     string_field_error,
 )
@@ -592,8 +600,10 @@ from kiro_crew.dashboard.slot_buffers import (  # noqa: F401
 )
 from kiro_crew.dashboard.slot_color import write_slot_color  # noqa: F401
 from kiro_crew.dashboard.slot_ownership import (  # noqa: F401
+    BOT_IDENTITY_DENIED,
     SESSION_CONTROL_DENIED,
     app_may_control_session,
+    app_names_bot,
     app_new_key_refusal,
     app_owns_slot_session,
     app_owns_transcript_meta,
@@ -605,6 +615,7 @@ from kiro_crew.dashboard.slot_ownership import (  # noqa: F401
     member_thread_grant,
     own_session_key,
     read_session_control_grant,
+    selects_bot_identity,
     session_grant,
     slot_not_found,
     transcript_acquisition_reason,
@@ -630,6 +641,7 @@ from kiro_crew.dashboard.slot_projection import (  # noqa: F401
 from kiro_crew.dashboard.slot_queue_repository import (  # noqa: F401
     RESTORED_QUEUE_KEY,
     RESTORED_SEND_CHOSEN_KEY,
+    clear_run_now_choice,
     refused_durable_ids,
     warn_if_not_durable,
 )

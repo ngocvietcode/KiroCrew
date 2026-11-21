@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import enum
 import re
+from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -43,6 +44,7 @@ if TYPE_CHECKING:
         redact_credentials,
         redact_exfiltration_urls,
         sel,
+        store_linked_thread_images,
         update_config_locked,
     )
 
@@ -703,6 +705,7 @@ class LinkedRoute(enum.Enum):
     UNROUTED = "unrouted"  # no linked slot took it: normal routing continues
     ROUTED = "routed"  # run or queued on the linked slot
     REFUSED = "refused"  # answered with a refusal; nothing was appended
+    HELD = "held"  # the caller's gate refused it last: nothing appended or said
 
 
 async def route_linked_thread(
@@ -717,6 +720,7 @@ async def route_linked_thread(
     user_meta: dict[str, Any] | None = None,
     turn_context: str | None = None,
     interpret_commands: bool = True,
+    admit: Callable[[], Awaitable[bool]] | None = None,
 ) -> LinkedRoute:
     """Route a Slack message to a linked dashboard slot, if one is linked.
 
@@ -748,6 +752,9 @@ async def route_linked_thread(
     a pending entry would be taken by whichever turn starts first.
     *interpret_commands* off (an OPTIONS answer) hands *text* over with commands
     off, so the slot reads it as content, never as a ``/`` command.
+    *admit* (the caller's live gate: a code channel's fences) is asked last,
+    after every await here and right before the row is appended or the turn
+    starts; False holds the message (:attr:`LinkedRoute.HELD`).
     """
     if not (_dashboard_state and hasattr(_dashboard_state, "get_linked_slot")):
         return LinkedRoute.UNROUTED
@@ -847,6 +854,7 @@ async def route_linked_thread(
                 user_meta=user_meta,
                 turn_context=turn_context,
                 interpret_commands=interpret_commands,
+                admit=admit,
             )
 
     # A channel pinned to an agent is served only by that agent. A slot on any
@@ -893,10 +901,76 @@ async def route_linked_thread(
         return LinkedRoute.REFUSED
 
     _linked_slot_key = _linked_slot.key
+    # Before the redaction and the handoff: the turn below runs after this
+    # message's handler task has deleted its downloaded files. The copy awaits,
+    # so the slot is checked again once it is back: still registered, and for an
+    # unpinned route still the thread's owner.
+    _stored = await store_linked_thread_images(
+        _dashboard_state,
+        _linked_slot,
+        text,
+        still_current=lambda: (
+            _dashboard_state._slots.get(_linked_slot_key) is _linked_slot  # type: ignore[attr-defined]
+            and (route_pinned or _dashboard_state.get_linked_slot(reply_ts) is _linked_slot)
+        ),
+    )
+    if _stored is None:
+        # The slot was closed, deleted or relinked during the copy. A pinned
+        # route reads as a pinned route with no live slot. An unpinned one is
+        # resolved again and pinned to what it resolves to, as after the window
+        # load above, which bounds this to one more pass.
+        if route_pinned:
+            return LinkedRoute.UNROUTED
+        _relinked = _dashboard_state.get_linked_slot(reply_ts)
+        if _relinked is None:
+            if await closed_dashboard_owner_refused(
+                text,
+                session_key,
+                user_id,
+                channel,
+                slack,
+                reply_ts,
+                interpret_commands=interpret_commands,
+            ):
+                return LinkedRoute.REFUSED
+            return LinkedRoute.UNROUTED
+        return await route_linked_thread(
+            text,
+            session_key,
+            user_id,
+            channel,
+            slack,
+            reply_ts,
+            target_slot=_relinked,
+            route_pinned=True,
+            user_meta=user_meta,
+            turn_context=turn_context,
+            interpret_commands=interpret_commands,
+            admit=admit,
+        )
+    text = _stored
+    if admit is not None:
+        # The caller's own live gate, asked after every await above (the agent
+        # read, the window load, the image copy) and right before anything is
+        # appended or started; the slot is checked again after its await. Fails
+        # closed: a gate that raises holds the message. Nothing below awaits
+        # until the row is appended and the turn started or queued; keep it so.
+        # HELD is silent here: the caller says why.
+        try:
+            admitted = await admit()
+        except Exception:
+            logger.debug("linked route gate failed for %s", channel, exc_info=True)
+            admitted = False
+        if not admitted or not (
+            _dashboard_state._slots.get(_linked_slot_key) is _linked_slot  # type: ignore[attr-defined]
+            and (route_pinned or _dashboard_state.get_linked_slot(reply_ts) is _linked_slot)
+        ):
+            return LinkedRoute.HELD
     # Who wrote the text this slot is about to carry, for the code-channel
     # dispatch exemption: it admits a channel-origin turn only while every author
     # on record is the Slack owner (``is_owner``; this one passed
-    # ``is_allowed_user`` above, which only lets the text in).
+    # ``is_allowed_user`` above, which only lets the text in). Recorded once the
+    # text is sure to be appended: a held message carried nothing.
     from kiro_crew.dashboard.session_control_parts.code_channel_exemption import (
         note_channel_sender,
     )

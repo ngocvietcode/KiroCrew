@@ -343,6 +343,9 @@ def init_session_fields(self: _ChatSlot) -> None:
     #: crewmate's worker report may wake its creator
     #: (``dashboard.mate_thread_wakes``); never persisted or restored.
     self._reports_to_creator = False
+    #: A code-channel conductor's work at a glance (``work_aggregate``), written by
+    #: the channel's work board on each refresh; ``None`` when it has no workers.
+    self._work_aggregate = None
     #: Slot key of the session-control caller that REVIVED this slot from
     #: history, or "". Cap attribution only: ``creator_slot_count`` counts it
     #: beside ``_created_by`` for the per-caller slot cap, since a revive keeps
@@ -403,7 +406,7 @@ def init_session_fields(self: _ChatSlot) -> None:
     # rather than re-arm the same load.
     self._eager_spawn_reported_resume = False
     # Consecutive failed background starts, and the monotonic time before
-    # which the next one waits (chat_runner._note_eager_spawn_failure).
+    # which the next one waits (chat_turn.eager_spawn._note_eager_spawn_failure).
     self._eager_spawn_failures = 0
     self._eager_spawn_retry_at = 0.0
     # Unclaimed-prefetch teardown timer (resume prefetch). At most one per

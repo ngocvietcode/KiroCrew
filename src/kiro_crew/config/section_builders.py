@@ -65,6 +65,7 @@ from kiro_crew.config.memory_sections import (
     STARTUP_RECALL_TIMEOUT_MAX_SECS,
     KnowledgeConfig,
     MemoryConfig,
+    MemoryProviderConfig,
     SessionSummaryConfig,
     SkillsConfig,
     _coerce_embedding_provider,
@@ -148,7 +149,7 @@ from kiro_crew.stt.limits import MIN_IDLE_EVICT_SECS as _STT_IDLE_EVICT_SECS_MIN
 from kiro_crew.stt.limits import MIN_PARTIAL_INTERVAL_MS as _STT_MIN_PARTIAL_INTERVAL_MS
 from kiro_crew.stt.limits import MIN_SILENCE_MS as _STT_MIN_SILENCE_MS
 from kiro_crew.stt.limits import MIN_TIMEOUT_SECS as _STT_MIN_TIMEOUT_SECS
-from kiro_crew.work_vocab import WORK_MAX_DEPTH_MAX, WORK_MAX_DEPTH_MIN
+from kiro_crew.work_vocab import WORK_MAX_DEPTH_MAX, WORK_MAX_DEPTH_MIN, coerce_dispatch_tags
 
 logger = logging.getLogger("kiro_crew.config.loader")
 
@@ -245,6 +246,9 @@ def _build_work_ledger_config(work_ledger_data: dict) -> WorkLedgerConfig:
         remote_dispatch_retire_minutes=_positive_gb(
             work_ledger_data, "remote_dispatch_retire_minutes"
         ),
+        remote_dispatch_tags=list(
+            coerce_dispatch_tags(work_ledger_data.get("remote_dispatch_tags"))
+        ),
     )
 
 
@@ -302,6 +306,19 @@ def _history_idle_hours(section: SectionReader) -> float:
     return hours
 
 
+def _embedding_idle_evict_secs(raw: object) -> int | str:
+    """``"auto"``, or a stored number of seconds the operator chose.
+
+    The same reading as ``embeddings_settings.embedding_idle_evict_secs``, which the
+    evictor uses: a non-negative number is kept (``0`` never unloads; capped at a
+    year), and anything else, ``"auto"`` included, is ``"auto"``, which picks by
+    machine size at run time.
+    """
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)) or raw < 0:
+        return "auto"
+    return min(int(raw), 365 * 24 * 3600)
+
+
 def _build_memory_config(memory_data: dict) -> MemoryConfig:
     section = SectionReader(MemoryConfig, memory_data)
     return MemoryConfig(
@@ -316,9 +333,8 @@ def _build_memory_config(memory_data: dict) -> MemoryConfig:
         # deliberate opt-in to the interactive pool.
         embedding_bulk_threads=section.read("embedding_bulk_threads", _safe_int, 0, 256),
         embedding_bulk_duty=section.read("embedding_bulk_duty", _safe_float, 0.05, 1.0),
-        # 0 is the documented "never unload" sentinel, so the floor is 0.
-        embedding_idle_evict_secs=section.read(
-            "embedding_idle_evict_secs", _safe_int, 0, 365 * 24 * 3600
+        embedding_idle_evict_secs=_embedding_idle_evict_secs(
+            section.get("embedding_idle_evict_secs")
         ),
         embedding_weight_repack=section.read("embedding_weight_repack", _safe_bool),
         embedding_child_process=section.read("embedding_child_process", _safe_bool),
@@ -381,6 +397,7 @@ def _build_memory_config(memory_data: dict) -> MemoryConfig:
             "startup_recall_timeout_secs", _safe_float, 0.0, STARTUP_RECALL_TIMEOUT_MAX_SECS
         ),
         migrated=section.get("migrated"),
+        provider=MemoryProviderConfig.from_raw(memory_data.get("provider")),
     )
 
 
@@ -495,6 +512,8 @@ def _build_mcp_config(mcp_data: dict) -> McpConfig:
         # schema validator before this runs, so it reads as absent and the default
         # applies rather than a guess at what the text meant.
         honour_auto_approve=section.get("honour_auto_approve") is True,
+        # Opt-in, off by default: only a real ``true`` turns the write fence on.
+        protect_kiro_permission_rules=section.get("protect_kiro_permission_rules") is True,
     )
 
 
@@ -647,10 +666,13 @@ def _handle_email_domains(raw: object) -> list[str]:
 
 
 def _relay_viewer_targets(section: SectionReader) -> dict[str, str]:
-    """The viewer's control plane URL, credential reference and Crew domain, or "" for a bad one.
+    """The viewer's control plane URL, credential reference and Crew domain, "" for a bad reference.
 
     The URL carries the person's sign-in, so it is held to the lease URL's rule:
-    https://, or http:// only for a loopback port-forward. The credential setting
+    https://, or http:// only for a loopback port-forward. A value that breaks it is
+    kept as set, with a warning, so the viewer refuses it as not set up instead of
+    reading it as empty (the built-in control plane); every reader checks it again.
+    The credential setting
     names where a credential is and never holds one, so a value that is not
     secret://NAME or an absolute path is dropped, and the warning does not repeat
     it. Imported here, not at module load, so config load pulls in no relay
@@ -667,7 +689,6 @@ def _relay_viewer_targets(section: SectionReader) -> dict[str, str]:
                 "tunnel.relay_viewer_cps_url ignored: %s",
                 problem.replace("lease service", "control plane"),
             )
-            url = ""
         if ref and credential_reference_problem(ref) is not None:
             logger.warning(
                 "tunnel.relay_viewer_credential ignored: it must be secret://NAME or the "
@@ -763,11 +784,16 @@ def _build_slack_config(slack_data: dict) -> SlackConfig:
         use_tunnel_url=bool(section.get("use_tunnel_url")),
         show_thinking=bool(section.get("show_thinking")),
         dm_single_session=bool(section.get("dm_single_session")),
+        # Default True: a missing or non-boolean value keeps the built-in page.
+        home_tab_builtin=section.read("home_tab_builtin", _safe_bool),
         home_tab_sessions_per_kind=section.read("home_tab_sessions_per_kind", _safe_int),
         sessions_limit=section.read("sessions_limit", _safe_int),
         # Default False: a missing or unparseable value must mean "open no
         # thread", never the reverse.
         auto_link_sessions=section.read("auto_link_sessions", _safe_bool),
+        # Default True: a missing or unparseable value keeps Slack conversations
+        # listed, as they were before the setting existed.
+        show_in_session_list=section.read("show_in_session_list", _safe_bool),
         # Default False for all three: an unparseable value must never declare the
         # app an agent, open code channels or let a code channel dispatch work.
         agent_sessions=section.read("agent_sessions", _safe_bool),
@@ -807,6 +833,8 @@ def _build_code_channel_defaults(raw: object) -> CodeChannelDefaultsConfig:
         model=_code_channel_default_str(data.get("model")),
         reasoning_effort=effort if is_valid_effort(effort) else None,
         approval_mode=_code_channel_approval_mode(data.get("approval_mode")),
+        # Only a real ``true`` is stored on; anything else reads as off (unset).
+        conductor_mode=True if data.get("conductor_mode") is True else None,
     )
 
 

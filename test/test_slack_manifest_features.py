@@ -108,12 +108,14 @@ class TestRendering:
             "chat:write.customize",
             "code_channels:manage",
             "groups:write.invites",
+            "pins:write",
         )
         assert change.added_events == (
             "agent_session_stopped",
             "channel_archive",
             "channel_rename",
             "channel_unarchive",
+            "code_channel_action",
             "group_archive",
             "group_rename",
             "group_unarchive",
