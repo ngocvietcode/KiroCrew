@@ -1038,6 +1038,7 @@ def test_only_unpinned_broken_budgets_adopt_themselves():
         "telemetry.retention_days",
         "telemetry.max_total_mb",
         "memory.embedding_idle_evict_secs",
+        "agent.mcp_registry_mode",
     }
 
 

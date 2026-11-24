@@ -561,6 +561,19 @@ SUPERSEDED_DEFAULTS: tuple[SupersededDefault, ...] = (
         note="a stored number, 3600 included, is kept as your choice; auto picks by memory size",
         applies=_small_memory_host_applies,
     ),
+    # Registry mode is off by default again, so a session mounts its agent's MCP
+    # servers (app servers included) on every backend without an admin catalog.
+    #
+    # REPORT-ONLY: true is also what an account an enterprise MCP registry governs
+    # sets on purpose, so a stored true is the owner's to keep or adopt.
+    SupersededDefault(
+        dotted_key="agent.mcp_registry_mode",
+        old_default=True,
+        new_default=False,
+        changed_in="saokhue: mcp registry off by default",
+        note="true withholds every agent-spec MCP server on Sao Khuê and KAS; "
+        "keep it only on an account an enterprise MCP registry governs",
+    ),
 )
 
 

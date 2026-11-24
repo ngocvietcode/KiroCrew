@@ -223,7 +223,7 @@ class AgentConfig:
         ),
     )
     mcp_registry_mode: bool = field(
-        default=True,
+        default=False,
         metadata=_meta(
             "Enterprise MCP Registry Mode",
             "Set true when this Kiro account is governed by an enterprise MCP "
@@ -232,8 +232,8 @@ class AgentConfig:
             "mode the client connects ONLY to mcpServers entries carrying "
             "'type': \"registry\" that resolve to a catalog entry of the same "
             "name, so Kiro Crew stamps that marker on the servers it manages. "
-            "This build defaults to true; set false on a personal account: with "
-            "no registry configured the filter inverts and registry-marked entries are the ones dropped. "
+            "Leave false on a personal account: with no registry configured the "
+            "filter inverts and registry-marked entries are the ones dropped. "
             "The administrator must also allow-list, by those exact names, every "
             "managed kirocrew-* server Kiro Crew mounts: kirocrew-core, "
             "kirocrew-cron and kirocrew-computer by default, plus any opt-in "
