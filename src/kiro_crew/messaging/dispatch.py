@@ -241,6 +241,16 @@ def build_directive_consumer(
         # turn owes the thread no empty-turn notice.
         return outcome.ends_turn
 
+    def _claim_parked(input_digest: str, not_before: float) -> dict[str, Any] | None:
+        # The out-of-band half ``messaging.directive_tracker`` uses on a backend
+        # whose tool calls carry no trusted tool name (KAS). It claims only from
+        # THIS consumer's own session, so the tracker never names a session.
+        # Deferred import, for the same cycle as the applier above.
+        from kiro_crew.directive_queue import claim
+
+        return claim(session_key, input_digest, not_before=not_before)
+
+    setattr(_consume, "claim_parked", _claim_parked)
     return _consume
 
 
@@ -700,6 +710,12 @@ class ChannelTurns:
         # session is acquired.
         if Drift.NO_GOVERNANCE_BACKSTOP not in drift and not await inbound_permitted(channel):
             return self._outcome(Verdict.DENIED, monitor)
+        from kiro_crew.start_priority import StartPriority  # noqa: F811
+        from kiro_crew.stats import Stats  # in-function: keeps them off the facade
+
+        # Only a message a person sent counts; a loop or monitor wake starts BACKGROUND.
+        if asker.start_priority is StartPriority.FOREGROUND:
+            Stats().inc_message_admitted()
         agent = asker.agent or self._agent()
         if asker.resumed:
             # A resumed session must run as ITSELF: on a cold start ``get_or_create``

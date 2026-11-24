@@ -363,7 +363,7 @@ class TestTheVaultIdentity:
 
         reads: list[str] = []
 
-        def _read() -> str:
+        def _read(*_a: object) -> str:
             reads.append("vault")
             return _ID
 

@@ -77,6 +77,7 @@ SECTION_CLASS: dict[str, str] = {
     "tunnel": "TunnelConfig",
     "network": "NetworkConfig",
     "saokhue": "SaokhueConfig",
+    "heartbeat": "HeartbeatConfig",
 }
 
 #: ``| `sec.key` | … | `default` |`` — the shape every per-section table row uses.

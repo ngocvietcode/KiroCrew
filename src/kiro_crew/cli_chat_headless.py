@@ -347,24 +347,20 @@ def transcript_path(slot: str) -> Path:
     return Path(data_home()) / "sessions" / f"dashboard_{slot}.jsonl"
 
 
-def transcript_credits(path: Path) -> float:
-    """Sum of ``meta.turn_stats.credits`` over a slot's transcript; 0 when absent."""
-    total = 0.0
-    try:
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError:
-        return 0.0
-    for line in lines:
-        try:
-            entry = json.loads(line)
-        except ValueError:
-            continue
-        meta = entry.get("meta") if isinstance(entry, dict) else None
-        stats = meta.get("turn_stats") if isinstance(meta, dict) else None
-        value = stats.get("credits") if isinstance(stats, dict) else None
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            total += float(value)
-    return total
+def usage_credits(slots: set[str], since: float) -> float:
+    """The credits the per-turn usage store holds for *slots*' turns since *since*.
+
+    Read from the usage rows (``<data home>/usage/tokens``) every billed turn writes
+    when it ends, whether or not it left a reply. A transcript's ``meta.turn_stats``
+    is not enough: it sits on the turn's reply row, so a turn that ends on tool calls
+    with no reply (a conductor turn that stops after ``autonudge_stop``) has no
+    footer and its credits were missed. The window starts at the run's own start, so
+    a run of any length keeps every turn it paid for.
+    """
+    from kiro_crew.dashboard.handlers.usage import slot_turn_usage
+
+    days = max(time.time() - since, 0.0) / 86400
+    return sum(float(row.get("credits", 0.0)) for k in slots for row in slot_turn_usage(k, days))
 
 
 def ledger_items(client: "GatewayClient", slot: str) -> list[dict[str, Any]]:
@@ -585,13 +581,13 @@ def spawn_credits(client: GatewayClient, slots: set[str], settled: Spawns) -> fl
 
 
 def run_spend(client: GatewayClient, slots: set[str], since: float, settled: Spawns) -> float:
-    """The run's credits: its chats' saved turns plus its finished background agents.
+    """The run's credits: its chats' finished turns plus its finished background agents.
 
     Both halves use the same chat set, so the agents of a chat closed between two
     polls (found only from its transcript) count as well.
     """
     chats = spend_slots(slots, since)
-    spent = sum(transcript_credits(transcript_path(k)) for k in chats)
+    spent = usage_credits(chats, since)
     return spent + spawn_credits(client, chats, settled)
 
 
@@ -961,6 +957,19 @@ def main(args: argparse.Namespace) -> int:
         opts = options_from_args(args)
     except UsageError as exc:
         print(f"kirocrew chat --headless: {exc}", file=sys.stderr)
+        return EXIT_USAGE
+    from kiro_crew.cloud.aws import _in_agent_session
+
+    # A run signs in as the owner and can open a Trust chat, which an agent's own
+    # shell must not do outside its session's approval mode.
+    if _in_agent_session():
+        print(
+            "kirocrew chat --headless: refused inside an agent session: it signs in as "
+            "the owner and opens a new chat outside this session's approval mode. "
+            "Run it yourself from a normal terminal, or start a sub-agent from the "
+            "agent instead (spawn_run).",
+            file=sys.stderr,
+        )
         return EXIT_USAGE
     from kiro_crew.config import KiroCrewConfig
     from kiro_crew.port_resolution import resolve_client_port

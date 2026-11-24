@@ -657,6 +657,7 @@ async def _turn_slash_gate(turn: _ChatTurn) -> _Flow | None:
                     _directive_source_channels=getattr(turn, "_directive_source_channels", ()),
                     _card_origin=turn._card_origin,
                     _prompt_on_channel=turn._prompt_on_channel,
+                    _slack_voice=turn._slack_voice,
                     _turn_actor=_turn_actor,
                 )
             elif status == "blocked":
@@ -921,6 +922,8 @@ async def _turn_slash_gate(turn: _ChatTurn) -> _Flow | None:
     turn._mirror_thinking_ts = ""
     # Whether this turn posted its prompt echo; a recovery requeue reads it.
     turn._mirror_echo_posted = False
+    # Whether the owner was told Slack did not reconnect (``slack_reply_client``).
+    turn._mirror_owner_told = False
     _mirror_chan: str | None = ""
     turn._mirror_chan = _mirror_chan
     _mirror_active_task = ""

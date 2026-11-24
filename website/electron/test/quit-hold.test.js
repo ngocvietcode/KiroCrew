@@ -118,6 +118,6 @@ test("a later quit tracks the stop of a gateway started after an earlier stop se
 test("main.js hands the quit-time gateway stop to the hold and consults it on will-quit", () => {
   // The module is inert unless both lifecycle handlers call it.
   const main = fs.readFileSync(path.join(__dirname, "..", "main.js"), "utf8");
-  assert.match(main, /quitHold\.track\(gateway\.stopOnQuit\(\)\)/);
+  assert.match(main, /quitHold\.track\(gateway\.stopOnQuit\(\{ userStop: [^}]*\}\)\)/);
   assert.match(main, /app\.on\("will-quit", \(event\) => \{[\s\S]*?quitHold\.onWillQuit\(event\)/);
 });
