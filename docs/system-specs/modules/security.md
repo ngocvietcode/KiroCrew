@@ -251,6 +251,21 @@ asymmetry is the point: the separation between the operator's template and the
 crew's published data is what the containment story rests on, so the write is the
 threat and the read is not.
 
+The packaged install tree is on the file-tool write gate too
+(`edition_install_fence.install_root_write`, reached from
+`sensitive_write_path_refusal`), in an LTS build and in every packaged build of the
+Sao Khuê fork (`saokhue_permission_surface.fences_install_tree`). The OS sandbox
+already seals that tree read-only for sandboxed children; the gate adds the refusal
+for an edit the gateway judges, including one an MCP server outside the sandbox
+serves. Reads stay open, and a from-source checkout has no packaged tree, so nothing
+is fenced there. The fork needs it because Sao Khuê CLI's permission surface IS that
+installed code: `AcpClient._permission_surface_governed` answers True for a backend in
+`ACP_BACKENDS_CREW_OWNED_PERMISSION_SURFACE` only while
+`saokhue_permission_surface.permission_surface_fenced` shows the server it launches
+lies in the fenced tree. On native Windows no OS sandbox stands behind the gate, so a
+shell command is not fenced by the OS there, the same strength the fenced
+`~/.claude/settings.json` has for claude.
+
 Both are also in `sandbox._CREW_NO_ALIAS_LEAVES`, which REFUSES the spawn when the
 leaf is reachable under a second name — a symlink, or a regular file carrying an
 extra hardlink. Every other SEALED ceiling only warns and continues, because a

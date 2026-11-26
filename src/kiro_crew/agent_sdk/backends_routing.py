@@ -150,6 +150,15 @@ ACP_BACKENDS_SIDE_READONLY = frozenset(
 # detail); its rows carry no membership, so this set alone is the scope.
 ACP_BACKENDS_META_IDENTITY: FrozenSet[str] = frozenset({ACP_BACKEND_GOOSE})
 
+# Backends whose harness is Kiro Crew's own installed code, which asks
+# ``session/request_permission`` before every tool call it runs and keeps no allow list
+# of its own, so its permission surface is Crew-governed exactly while that code is on
+# the install-tree write fence (``saokhue_permission_surface.permission_surface_fenced``).
+# Read by ``AcpClient._permission_surface_governed``, the precondition a member DM
+# session's session-control and crew-panel mounts ask on a backend whose routing is not
+# enforced; claude meets the same precondition through the settings file Crew seeds.
+ACP_BACKENDS_CREW_OWNED_PERMISSION_SURFACE: FrozenSet[str] = frozenset({ACP_BACKEND_SAOKHUE})
+
 # Backends whose ``session/request_permission`` names no ``kind`` and whose
 # tool_call ``kind`` is SAFE to carry onto the permission event, so the gate's
 # write-plane routing for ``edit``/``delete`` sees the harness's classification.

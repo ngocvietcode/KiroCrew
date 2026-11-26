@@ -1250,6 +1250,19 @@ def _antigravity_session_mcp_servers(self: AcpClient) -> list:
     return self._session_mcp_servers()
 
 
+def _saokhue_session_mcp_servers(self: AcpClient) -> list:
+    """MCP server array passed to a Sao Khuê ``session/new`` / ``session/load``.
+
+    ``saokhue_server`` reads the agent spec's own servers itself (its projection is
+    ``NATIVE``), so it is outside ``ACP_BACKENDS_SESSION_MCP_ARRAY`` and this is not
+    the spec. It is the mirror-less member mounts (:meth:`_mirrorless_member_mounts`)
+    the launch warmed: a member DM session's session-control and crew-panel servers,
+    held to the same switch-offs as on every other member backend, and empty for any
+    other session. In-memory only (harness-parity H13).
+    """
+    return list(self._session_mcp_cache or [])
+
+
 def _pi_session_mcp_servers(self: AcpClient) -> list:
     """MCP server array passed to a pi ``session/new`` / ``session/load``.
 

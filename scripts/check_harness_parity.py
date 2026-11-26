@@ -473,6 +473,7 @@ X_REGISTRATION_PENDING: dict[str, str] = {
 # membership rides standard ACP, routing, or something off the wire.
 HARNESS_EXEMPT_SETS: dict[str, str] = {
     "ACP_BACKENDS_KNOWN": "routing-only: the acp_backend vocabulary",
+    "ACP_BACKENDS_CREW_OWNED_PERMISSION_SURFACE": "Crew-side: the harness is Crew's own fenced code",
     "ACP_BACKENDS_KIRO_FAMILY": "routing-only: kiro-cli and KAS as a family",
     "ACP_BACKENDS_ACP_RUNTIME": "routing-only: AcpRuntime vs AcpClient transport",
     "ACP_BACKENDS_ACP_CLIENT_SPAWNABLE": "routing-only: which spawn branch runs",

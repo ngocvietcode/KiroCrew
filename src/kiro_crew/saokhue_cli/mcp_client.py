@@ -6,9 +6,12 @@ An owner of :mod:`kiro_crew.acp.saokhue_server`; it never imports that facade.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
+import re
+from collections.abc import Container
 from typing import Any
 
 from kiro_crew.saokhue_cli.base import (
@@ -19,6 +22,41 @@ from kiro_crew.saokhue_cli.base import (
 )
 
 logger = logging.getLogger("kiro_crew.acp.saokhue_server")
+
+#: Longest function name the Chat Completions ``tools`` array accepts.
+MAX_FUNCTION_NAME_LEN = 64
+#: A character the Chat Completions function-name rule (``^[a-zA-Z0-9_-]{1,64}$``)
+#: refuses. An app server is named ``<app>:<server>``, so its colon is one.
+_UNSAFE_FUNCTION_CHARS = re.compile(r"[^A-Za-z0-9_-]")
+#: Hex digits of the digest that keeps a shortened or colliding name unique.
+_NAME_DIGEST_LEN = 8
+
+
+def mcp_function_name(server: str, tool: str, taken: Container[str] = ()) -> str:
+    """The function name the model calls *server*'s *tool* by.
+
+    ``mcp__<server>__<tool>`` with every character the function-name rule refuses
+    written as ``_``, as Claude Code, OpenCode and MiMo Code spell an MCP tool. A
+    gateway refuses a request whose ``tools`` carry one invalid name, so an
+    unescaped ``sme-connect:connect`` would cost the session every tool, not just
+    that server's. A name past :data:`MAX_FUNCTION_NAME_LEN`, or one already in
+    *taken* (two servers that differ only in an escaped character), is cut and
+    ends in a digest of the original pair, so each pair keeps a distinct name. The
+    caller maps the name back to the pair it was made from; nothing parses it.
+    """
+    spelled = _UNSAFE_FUNCTION_CHARS.sub("_", f"mcp__{server}__{tool}")
+    if len(spelled) <= MAX_FUNCTION_NAME_LEN and spelled not in taken:
+        return spelled
+    digest = hashlib.sha256(f"{server}\0{tool}".encode()).hexdigest()
+    keep = MAX_FUNCTION_NAME_LEN - _NAME_DIGEST_LEN - 1
+    name = f"{spelled[:keep]}_{digest[:_NAME_DIGEST_LEN]}"
+    # A digest prefix shared with a taken name: lengthen the digest into the head.
+    extra = _NAME_DIGEST_LEN
+    while name in taken and extra < len(digest):
+        extra += 1
+        keep = MAX_FUNCTION_NAME_LEN - extra - 1
+        name = f"{spelled[:keep]}_{digest[:extra]}"
+    return name
 
 
 class StdioMcpClient:

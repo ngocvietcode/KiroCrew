@@ -94,7 +94,7 @@ from kiro_crew.saokhue_cli.base import (
     saokhue_auth_path,
 )
 from kiro_crew.saokhue_cli.cli import _cli_login, _cli_logout, _cli_models, _cli_status
-from kiro_crew.saokhue_cli.mcp_client import StdioMcpClient
+from kiro_crew.saokhue_cli.mcp_client import StdioMcpClient, mcp_function_name
 from kiro_crew.saokhue_cli.tls import (
     _aiohttp_ssl,
     _urlopen_resilient,
@@ -152,16 +152,30 @@ class SaokhueAcpServer:
         return res if isinstance(res, dict) else {}
 
     def _load_agent_spec(self, agent_name: str, cwd: str) -> dict[str, Any]:
-        """Load ``<config_dir>/agents/<agent_name>.json``, ``~/.kiro/agents/<agent_name>.json``, or member snapshot."""
+        """The spec this session runs on: the agent's own, or a crewmate worker's.
+
+        A crewmate's worker session (``kirocrew-mate-worker`` with a session key) runs
+        on the worker base plus its crewmate's file, the spec every other backend's
+        projection reads (``session_mcp_crewmate._crewmate_worker_spec``). A worker
+        whose kit cannot be read raises rather than run without it; every other agent
+        keeps its own spec.
+        """
+        from kiro_crew.acp.session_mcp_crewmate import _crewmate_worker_spec
+
+        session_key = (os.environ.get("KIROCREW_SESSION_KEY") or "").strip()
+        spec = _crewmate_worker_spec(
+            agent_name, self._read_agent_spec(agent_name, cwd) or None, session_key
+        )
+        return spec if isinstance(spec, dict) else {}
+
+    def _read_agent_spec(self, agent_name: str, cwd: str) -> dict[str, Any]:
+        """``agent_name``'s spec as the session projection reads it, else from disk."""
         with contextlib.suppress(Exception):
             from kiro_crew.acp import session_mcp as _session_mcp
 
-            snap = _session_mcp.agent_spec_snapshot(agent_name, cwd)
+            snap = _session_mcp.agent_spec_snapshot(agent_name, work_dir=cwd)
             if isinstance(snap, dict) and snap:
                 return snap
-            worker = _session_mcp._crewmate_worker_spec(agent_name)
-            if isinstance(worker, dict) and worker:
-                return worker
         candidates = [
             config_dir() / "agents" / f"{agent_name}.json",
             Path(cwd) / ".kiro" / "agents" / f"{agent_name}.json",
@@ -292,21 +306,9 @@ class SaokhueAcpServer:
                         "from_wire": False,
                     }
 
-        extra_wire = list(wire_servers)
-        if not zero_tools:
-            with contextlib.suppress(Exception):
-                from kiro_crew.acp import session_mcp as _session_mcp
-
-                session_key = (os.environ.get("KIROCREW_SESSION_KEY") or "").strip()
-                if session_key:
-                    for extra_srv in (
-                        _session_mcp.member_dispatch_session_server(session_key),
-                        _session_mcp.member_panel_session_server(session_key),
-                    ):
-                        if isinstance(extra_srv, dict) and extra_srv.get("name"):
-                            extra_wire.append(extra_srv)
-
-        for item in extra_wire:
+        # A member session's session-control and crew-panel servers arrive here, on
+        # the session/new array Crew composes (``AcpClient._saokhue_session_mcp_servers``).
+        for item in wire_servers:
             if not isinstance(item, dict):
                 continue
             name = str(item.get("name") or "").strip()
@@ -326,7 +328,7 @@ class SaokhueAcpServer:
                 "command": command,
                 "args": [str(a) for a in (item.get("args") or ())],
                 "env": env_map,
-                "from_wire": item in wire_servers,
+                "from_wire": True,
             }
 
         return list(by_name.values()), disabled, zero_tools
@@ -354,7 +356,7 @@ class SaokhueAcpServer:
                     t_name = str(tool.get("name") or "").strip()
                     if not t_name or (name, t_name) in session.disabled_tools:
                         continue
-                    fn_name = f"mcp__{name}__{t_name}"
+                    fn_name = mcp_function_name(name, t_name, session.mcp_tool_map)
                     session.mcp_tool_map[fn_name] = (name, t_name)
                 if entry.get("from_wire"):
                     await self.send_notification(

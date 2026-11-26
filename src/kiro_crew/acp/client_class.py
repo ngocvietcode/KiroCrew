@@ -77,7 +77,10 @@ from kiro_crew.acp.types import (
     model_registry_namespace,
 )
 from kiro_crew.agent import DerivedSpecSnapshot
-from kiro_crew.agent_sdk.backends import POLICY_ID_BY_BACKEND
+from kiro_crew.agent_sdk.backends import (
+    ACP_BACKENDS_CREW_OWNED_PERMISSION_SURFACE,
+    POLICY_ID_BY_BACKEND,
+)
 from kiro_crew.agent_sdk.capabilities import capabilities_for
 from kiro_crew.config.paths import KEYLESS_WORK_DIR_NAME, config_dir
 from kiro_crew.mcp_gateway.claim import mint_stub_session_token
@@ -878,6 +881,7 @@ class AcpClient:
     _mimocode_session_mcp_servers = _client_mcp_array._mimocode_session_mcp_servers
     _copilot_session_mcp_servers = _client_mcp_array._copilot_session_mcp_servers
     _antigravity_session_mcp_servers = _client_mcp_array._antigravity_session_mcp_servers
+    _saokhue_session_mcp_servers = _client_mcp_array._saokhue_session_mcp_servers
     _pi_session_mcp_servers = _client_mcp_array._pi_session_mcp_servers
     _republish_pi_mcp_handoff = _client_mcp_array._republish_pi_mcp_handoff
     _discard_pi_mcp_handoff = _client_mcp_array._discard_pi_mcp_handoff
@@ -1056,9 +1060,16 @@ class AcpClient:
 
     @property
     def _permission_surface_governed(self) -> bool:
-        """Whether Crew controls this session's native permission surface through a
-        settings file it seeds. Never here: this class seeds none."""
-        return False
+        """Whether Crew controls this session's native permission surface.
+
+        This class seeds no settings file, so only a harness that IS Crew's own code
+        (``ACP_BACKENDS_CREW_OWNED_PERMISSION_SURFACE``) can answer True, and only
+        while that code is on the install-tree write fence."""
+        if self.backend not in ACP_BACKENDS_CREW_OWNED_PERMISSION_SURFACE:
+            return False
+        from kiro_crew.saokhue_permission_surface import permission_surface_fenced
+
+        return permission_surface_fenced()
 
     def release_settings_seed_claim(self) -> None:
         """Hand back this client's settings-seed registrations, synchronously: it holds none."""

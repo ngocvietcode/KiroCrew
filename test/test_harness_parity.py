@@ -1028,6 +1028,7 @@ _ADAPTER_MCP_SEAMS = {
     "CopilotLaunch": "copilot",
     "AntigravityLaunch": "antigravity",
     "PiLaunch": "pi",
+    "SaokhueLaunch": "saokhue",
 }
 
 

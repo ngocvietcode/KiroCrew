@@ -69,7 +69,15 @@ def test_lts_leaves_reads_and_siblings_open(install: Path, lts, tmp_path: Path) 
 
 def test_oss_is_unchanged(install: Path, monkeypatch) -> None:
     monkeypatch.setattr("kiro_crew.edition.EDITION", "oss")
+    # The Sao Khuê fork fences every packaged build; a plain oss build does not.
+    monkeypatch.setattr("kiro_crew.saokhue_permission_surface.fences_install_tree", lambda: False)
     assert security.sensitive_write_path_refusal(str(install / "server.py")) is None
+
+
+def test_the_saokhue_fork_fences_its_oss_build(install: Path, monkeypatch) -> None:
+    monkeypatch.setattr("kiro_crew.edition.EDITION", "oss")
+    assert security.is_sensitive_write_path(str(install / "server.py")) is True
+    assert security.is_sensitive_path(str(install / "server.py")) is False
 
 
 def test_source_checkout_has_nothing_to_fence(lts, monkeypatch, tmp_path: Path) -> None:

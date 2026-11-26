@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -1098,3 +1099,129 @@ def test_a_signed_out_status_leaves_the_picker_list_alone(monkeypatch: Any) -> N
 
     assert registry.advertised_models("saokhue") == []
     assert state.frames == []
+
+
+_FUNCTION_NAME_RULE = re.compile(r"^[a-zA-Z0-9_-]{1,64}$")
+
+
+def test_an_app_server_tool_is_named_within_the_function_name_rule() -> None:
+    from kiro_crew.saokhue_cli.mcp_client import mcp_function_name
+
+    assert mcp_function_name("kirocrew-core", "spawn_run") == "mcp__kirocrew-core__spawn_run"
+    name = mcp_function_name("sme-connect:connect", "sme_case_get")
+    assert name == "mcp__sme-connect_connect__sme_case_get"
+    assert _FUNCTION_NAME_RULE.match(name)
+
+
+def test_a_long_or_colliding_tool_name_stays_valid_and_distinct() -> None:
+    from kiro_crew.saokhue_cli.mcp_client import mcp_function_name
+
+    long_a = mcp_function_name("app:" + "s" * 40, "tool_" + "a" * 30)
+    long_b = mcp_function_name("app:" + "s" * 40, "tool_" + "a" * 30 + "b")
+    assert _FUNCTION_NAME_RULE.match(long_a) and _FUNCTION_NAME_RULE.match(long_b)
+    assert long_a != long_b
+    # "a:b" and "a_b" escape to the same spelling; the second keeps its own name.
+    first = mcp_function_name("a:b", "t")
+    second = mcp_function_name("a_b", "t", {first})
+    assert first == "mcp__a_b__t"
+    assert second != first and _FUNCTION_NAME_RULE.match(second)
+
+
+def test_mounted_app_tools_reach_the_model_under_valid_names_and_map_back(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    server, _frames = _server_capturing_frames(tmp_path, monkeypatch)
+    tools_by_server = {
+        "sme-connect:connect": [{"name": "sme_case_get"}, {"name": "sme_review_add"}],
+        "kirocrew-core": [{"name": "spawn_run"}],
+    }
+
+    class _FakeMcpClient:
+        def __init__(self, name: str, **_kwargs: Any) -> None:
+            self.name = name
+            self.tools = tools_by_server[name]
+
+        async def start(self) -> None:
+            return None
+
+        async def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(saokhue_server, "StdioMcpClient", _FakeMcpClient)
+    session = _bare_session(tmp_path)
+    entries = [
+        {"name": name, "command": "x", "args": [], "env": {}, "from_wire": False}
+        for name in tools_by_server
+    ]
+    asyncio.run(server._mount_mcp_servers(session, entries))
+
+    names = [t["function"]["name"] for t in server._build_openai_tools(session)]
+    assert all(_FUNCTION_NAME_RULE.match(n) for n in names), names
+    assert sorted(session.mcp_tool_map.values()) == [
+        ("kirocrew-core", "spawn_run"),
+        ("sme-connect:connect", "sme_case_get"),
+        ("sme-connect:connect", "sme_review_add"),
+    ]
+    assert set(session.mcp_tool_map) <= set(names)
+
+
+def test_every_tool_call_asks_first_and_a_refused_one_never_runs(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    """The property ``ACP_BACKENDS_CREW_OWNED_PERMISSION_SURFACE`` rests on, for both kinds.
+
+    A built-in file write and an MCP call each send ``session/request_permission`` before
+    running, and a refusal leaves the file unwritten and the MCP server uncalled.
+    """
+    server, _frames = _server_capturing_frames(tmp_path, monkeypatch)
+    called: list[tuple[str, dict[str, Any]]] = []
+
+    class _McpClient:
+        tools = [{"name": "sme_case_get"}]
+
+        async def call_tool(self, name: str, args: dict[str, Any]) -> tuple[str, bool]:
+            called.append((name, args))
+            return "ran", False
+
+    session = _bare_session(tmp_path)
+    fn_name = "mcp__sme-connect_connect__sme_case_get"
+    session.mcp_clients["sme-connect:connect"] = _McpClient()  # type: ignore[assignment]
+    session.mcp_tool_map[fn_name] = ("sme-connect:connect", "sme_case_get")
+    server._sessions[session.session_id] = session
+    target = tmp_path / "written.txt"
+    turns_left = [
+        [
+            {
+                "id": "call_w",
+                "function": {
+                    "name": "fs_write",
+                    "arguments": json.dumps({"path": str(target), "content": "x"}),
+                },
+            },
+            {"id": "call_m", "function": {"name": fn_name, "arguments": "{}"}},
+        ],
+        [],
+    ]
+
+    async def _turn(_session: Any, _messages: Any, _tools: Any) -> Any:
+        return "", turns_left.pop(0), 1, 1, 0, 0, 0.0
+
+    asked: list[dict[str, Any]] = []
+
+    async def _ask(method: str, params: dict[str, Any], **_kw: Any) -> dict[str, Any]:
+        assert method == saokhue_server.METHOD_REQUEST_PERMISSION
+        asked.append(params)
+        return {"outcome": {"outcome": "selected", "optionId": "reject-once"}}
+
+    monkeypatch.setattr(server, "_stream_saokhue_turn", _turn)
+    monkeypatch.setattr(server, "send_server_request", _ask)
+
+    asyncio.run(server.handle_prompt({"sessionId": session.session_id, "prompt": "go"}))
+
+    assert [p["toolCall"]["toolCallId"] for p in asked] == ["call_w", "call_m"]
+    assert asked[1]["_meta"]["kiro"]["mcpTool"]["identity"] == {
+        "serverName": "sme-connect:connect",
+        "toolName": "sme_case_get",
+    }
+    assert not target.exists()
+    assert called == []

@@ -12,11 +12,12 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 from kiro_crew import agent as agent_mod
 from kiro_crew.acp import managed_agent_shadow as managed_shadow_mod
 from kiro_crew.acp.child_env_defaults import apply_child_env_defaults
-from kiro_crew.acp.harness.base import ProcessAdapter, SpawnContext, SpawnPlan
+from kiro_crew.acp.harness.base import ProcessAdapter, ProcessSession, SpawnContext, SpawnPlan
 from kiro_crew.acp.transport_errors import AcpError
 from kiro_crew.agent import ForkGovernanceUnresolved
 from kiro_crew.agent_sdk.backends import ACP_BACKEND_SAOKHUE
@@ -103,9 +104,7 @@ class SaokhueLaunch(ProcessAdapter):
                 logger.warning("pre-spawn agent materialization failed", exc_info=True)
 
             try:
-                await asyncio.to_thread(
-                    agent_mod.require_fork_governance, ctx.agent, ctx.work_dir
-                )
+                await asyncio.to_thread(agent_mod.require_fork_governance, ctx.agent, ctx.work_dir)
             except ForkGovernanceUnresolved as exc:
                 raise AcpError(str(exc)) from exc
 
@@ -124,6 +123,12 @@ class SaokhueLaunch(ProcessAdapter):
             if shadowed:
                 raise AcpError(shadowed)
 
+        # A member DM session's session-control and crew-panel servers reach the
+        # server only through the session/new array (it reads the spec's own servers
+        # itself), so the array is warmed off the loop before the spawn.
+        if ctx.session is not None:
+            await ctx.session._prepare_session_mcp()
+
         argv = [sys.executable, SAOKHUE_SERVER_SCRIPT, "acp"]
         if ctx.agent:
             argv += ["--agent", ctx.agent]
@@ -134,6 +139,10 @@ class SaokhueLaunch(ProcessAdapter):
             spawn_label="saokhue-cli acp",
             stderr_label="saokhue-cli",
         )
+
+    def session_mcp_servers(self, session: ProcessSession) -> list[dict[str, Any]]:
+        """The Sao Khuê session's member mounts, warmed by the spawn."""
+        return session._saokhue_session_mcp_servers()
 
     def apply_spawn_env(self, env: dict[str, str], *, spawned_binary: str | None = None) -> None:
         """Forward Sao Khuê CLI configuration from ``~/.kiro/crew/.env`` and child env defaults."""
