@@ -161,6 +161,7 @@ from kiro_crew.cron_service.fields import (  # noqa: F401
 )
 from kiro_crew.cron_service.grant_resurface import resurface_stale_grant
 from kiro_crew.dashboard import cautious_boot, start_dashboard, token_secret
+from kiro_crew.dashboard.bind_refresh import bind_refused_exit_code
 from kiro_crew.dashboard.chat_persistence import (
     rehydrate_slot_from_history_async,
     wait_for_unwinding_turns,
@@ -1019,6 +1020,7 @@ class GatewayOrchestrator:
     _cron_run_single = _cron_turn._cron_run_single
     # gateway_runtime/cron_delivery.py
     _deliver_cron_agent_result = _cron_delivery._deliver_cron_agent_result
+    _deliver_cron_reminder = _cron_delivery._deliver_cron_reminder
     # gateway_runtime/heartbeat_turns.py
     _init_heartbeat = _heartbeat._init_heartbeat
     # gateway_runtime/nudge_channel_fire.py

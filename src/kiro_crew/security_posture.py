@@ -524,10 +524,11 @@ NON_EGRESS_REDACTION_MODULES: frozenset[str] = frozenset(
         # does for a dashboard turn. A hook process is not an audience: nothing is
         # emitted to a reader here.
         "messaging/tool_hooks.py",
-        # A cron turn's Stop fire scrubs the reply before a local hook script reads
-        # it on stdin, as messaging/tool_hooks.py does for a channel turn. A hook
-        # process is not an audience: nothing is emitted to a reader here.
+        # A cron or ``kirocrew chat`` turn's Stop fire scrubs the reply before a local
+        # hook script reads it on stdin, as messaging/tool_hooks.py does for a channel
+        # turn. A hook process is not an audience: nothing is emitted to a reader here.
         "cron_service/turn_hooks.py",
+        "cli_chat_spec_hooks.py",
         # ``autonudge_service/store_loader.py``'s ``_load`` credential-scrubs a persisted
         # ``banner`` in memory and attempts to persist the masked value back, so a banner
         # written to the store out-of-band (a hand-edited file, or a direct
@@ -821,6 +822,7 @@ NON_EGRESS_REDACTION_MODULES: frozenset[str] = frozenset(
         "dashboard/chat_turn/native_cards.py",
         "dashboard/chat_turn/permission_prompt.py",
         "dashboard/chat_turn/prompt_assembly.py",
+        "dashboard/chat_turn/prompt_file_notice.py",
         "dashboard/chat_turn/queue_drain.py",
         "dashboard/chat_turn/recipient.py",
         "dashboard/chat_turn/session_events.py",

@@ -656,7 +656,7 @@ export function AboutPanel() {
           </span>
         </span>
       )}
-      <AboutPanelUpdateChanges notes={updateState?.notes || ''} version={updateState?.version || ''} runningVersion={info?.version || ''} bytesAreStable={desktopBytesAreStable} />
+      <AboutPanelUpdateChanges notes={updateState?.notes || ''} version={updateState?.version || ''} runningVersion={info?.version || ''} bytesAreStable={desktopBytesAreStable} desktopLts={info?.channel === 'lts'} />
     </div>
   ) : null
 
@@ -1004,7 +1004,8 @@ export function AboutPanel() {
                       {i18nT('pages.settings.aboutPanel.update_channel_requires', { channel: info.requiredChannel })}
                     </span>
                   )}
-                  <LockedByPolicyBadge />
+                  {/* Only an LTS build requires a channel, and no policy moves it. */}
+                  <LockedByPolicyBadge setByEdition />
                 </span>
               ) : channel}
           </Row>
@@ -1014,7 +1015,8 @@ export function AboutPanel() {
             <Row label={i18nT('pages.settings.aboutPanel.update_channel')}>
               <span className="inline-flex items-center gap-2">
                 {channelLabel(effectiveGwChannel)}
-                <LockedByPolicyBadge />
+                {/* `lts` is the edition's own channel; no policy moves it. */}
+                <LockedByPolicyBadge setByEdition />
               </span>
             </Row>
           </div>

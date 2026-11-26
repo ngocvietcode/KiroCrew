@@ -45,6 +45,7 @@ if TYPE_CHECKING:
         EVENT_COMPLETE,
         EVENT_PERMISSION_REQUEST,
         EVENT_TEXT_CHUNK,
+        EVENT_THINKING_CHUNK,
         EVENT_TOOL_CALL,
         EVENT_TOOL_RESULT,
         FALLBACK_CANDIDATE_ATTEMPTS,
@@ -342,12 +343,12 @@ async def _run_inner_impl(
     #
     # The one sharing decision (``_sharing_plan``), which admission also read
     # to price this start: template execution, not ``keep``, the eligibility
-    # predicate, and no model / reasoning-effort pin.
+    # predicate, no reasoning-effort pin, and a model only where the parent's
+    # runtime takes one per session.
     #
     # An UNPINNED start may take a model from ``model.route``'s derived tiers
     # (``decisions.model_route_derive``, off by default). Decided before the
-    # sharing plan, which reads the routed model as a pin: a routed model
-    # cannot be applied to the parent's already-started runtime.
+    # sharing plan, which reads the routed model as a pin.
     await _route_unpinned_start(info, kind, self._manager._sessions)
     plan = self._manager._sharing_plan(
         info, child_aws_profile=await self._resolve_child_aws_profile(info)
@@ -671,11 +672,14 @@ async def _run_inner_impl(
     _person_rejected = [False]
     _refusal_resumes = [0]
     # Whether the model wrote or called anything after the latest refusal.
-    # opencode answers ``reject_once`` by ending a clean turn ``end_turn`` on
-    # the refusal itself, which leaves it unanswered; other harnesses go on
-    # after a reject, so only opencode's clean ending is read as one.
+    # A harness with ``ends_turn_on_permission_reject`` (opencode, on
+    # ``reject_once``) ends a clean turn ``end_turn`` on the refusal itself,
+    # which leaves it unanswered; other harnesses go on after a reject, so only
+    # that clean ending is read as one.
     _refusal_answered = [False]
-    _reject_ends_turn = getattr(client, "is_opencode_backend", False) is True
+    from kiro_crew.agent_sdk.capabilities import capabilities_of
+
+    _reject_ends_turn = capabilities_of(client).ends_turn_on_permission_reject
     # Set when the stream ends on a generate failure after real output.
     _kept_after_generate_failure = False
     # One run owns one immutable manager deadline. Capture a transport
@@ -1076,8 +1080,10 @@ async def _run_inner_impl(
                     # Two attempts per candidate
                     # (FALLBACK_CANDIDATE_ATTEMPTS), ~2s backoff each —
                     # NOT the exponential same-model curve; see
-                    # llm_helpers Case 2.75 for the rationale.
-                    if not _fb_state.chain:
+                    # llm_helpers Case 2.75 for the rationale. Kiro's
+                    # per-user rate limit is shared by every model: a swap
+                    # cannot clear it, so it surfaces as its own error.
+                    if not _fb_state.chain or getattr(exc, "user_rate_limit", False) is True:
                         raise
                     if not _fb_state.should_retry_active():
                         _cand = await advance_fallback_candidate(
@@ -1163,17 +1169,36 @@ async def _run_inner_impl(
     # The harness the run is on: opencode names a Crew tool only in its title.
     _harness = getattr(getattr(client, "client", None), "backend", None)
     _harness = _harness if isinstance(_harness, str) else None
-    from kiro_crew.acp_backends import ACP_BACKEND_CLAUDE, ACP_BACKEND_PI
+    from kiro_crew.agent_sdk.capabilities import capabilities_for
+
+    _fused_names = _harness is not None and (
+        capabilities_for(_harness).names_crew_tools_by_fused_name
+    )
 
     def _harness_servers() -> tuple[str, ...]:
-        # pi and claude name a Crew tool only by a fused name, read as Crew's only
-        # for a server the session handed the harness; read at each dispatch, since
-        # a respawn hands the servers again.
+        # A harness with ``names_crew_tools_by_fused_name`` (pi, claude) names a
+        # Crew tool only by a fused name, read as Crew's only for a server the
+        # session handed the harness; read at each dispatch, since a respawn hands
+        # the servers again.
         names = getattr(getattr(client, "client", None), "_harness_mcp_server_names", None)
-        if _harness not in (ACP_BACKEND_PI, ACP_BACKEND_CLAUDE) or not callable(names):
+        if not _fused_names or not callable(names):
             return ()
         found = names()
         return tuple(found) if isinstance(found, (tuple, list)) else ()
+
+    from kiro_crew.context_management import cap_streaming_text
+    from kiro_crew.security import StreamRedactor
+
+    # The run's reasoning goes to its card and its status read only: never the
+    # result, its file or the parent's report. Redacted as a stream, so a
+    # credential split across two thinking chunks never reaches the wire.
+    _thinking = StreamRedactor()
+
+    async def _send_thinking(text: str) -> None:
+        if not text:
+            return
+        info.streaming_thinking = cap_streaming_text(info.streaming_thinking + text)
+        await self._manager._fire_event("subagent_thinking", info, {"text": text})
 
     async for event in _stream_with_transient_retry():
         # Refresh the activity clock for every event kind that BELONGS to
@@ -1209,6 +1234,10 @@ async def _run_inner_impl(
         # one.
         if not event.runtime_global:
             await self._manager._touch_activity(info)
+        if event.kind != EVENT_THINKING_CHUNK and not event.runtime_global:
+            # Any sender's frame may sit between two thoughts: release, never flush,
+            # so a credential split around it is still read whole.
+            await _send_thinking(_thinking.release_at_boundary())
         if event.kind == EVENT_TEXT_CHUNK:
             # The CC/raw provider only learns its served model once the
             # backend answers the first turn — by the first text chunk that
@@ -1254,6 +1283,9 @@ async def _run_inner_impl(
             else:
                 _result_file_started = await self._manager._start_result_file(info, result_text)
             await self._manager._fire_event("subagent_chunk", info, {"text": redacted})
+        elif event.kind == EVENT_THINKING_CHUNK:
+            # A thought's last plain word ("now.") goes with its chunk, not after the reply.
+            await _send_thinking(_thinking.feed(event.text) + _thinking.release_sentence_end())
         elif event.kind == EVENT_PERMISSION_REQUEST:
             # Both kiro-cli and claude-agent-acp surface tool calls via
             # session/request_permission. Every one is settled by the run's
@@ -1568,6 +1600,9 @@ async def _run_inner_impl(
             _complete_event = event
             usage.settle(event)
             break
+
+    # The run's end lands whatever the thinking redactor still holds.
+    await _send_thinking(_thinking.flush())
 
     # A provider may finish without an explicit completion event. Its
     # current prompt stats are still the authoritative billing record.

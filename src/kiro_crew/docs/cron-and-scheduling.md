@@ -36,7 +36,7 @@ kirocrew cron add "board" "" --every 1800 --script ~/.kiro/crew/crons/board.py:r
 kirocrew cron add "disk" "" --every 600 --command "df -h /" --timeout 30 --timeout-secs 60  # zero-token command job
 kirocrew cron add "digest" "summarize the news" --every 86400 --folder "Veille"  # filed in a Schedule-page folder
 kirocrew cron update <job-id> --name "new name" --message "new prompt" --approval-mode auto
-kirocrew cron update <job-id> --folder "Reports"   # move to a folder; --folder "" moves it out
+kirocrew cron update <job-id> --folder "Reports"   # move to a folder; --folder= moves it out
 kirocrew cron update <job-id> --model <id> --timezone America/New_York --no-persistent-session --minimal-context
 kirocrew cron list
 kirocrew cron list --folder "Veille"                # only that folder; --folder - lists ungrouped jobs
@@ -49,7 +49,7 @@ With `--script`, `--agent` must name a Bot. The job is then bound to that Bot, a
 
 A `--script` file must already live under `~/.kiro/crew/crons/`; the CLI registers it, it does not copy it. `--script` and `--command` are mutually exclusive, as are `--every`/`--cron`/`--at`; `--agent` goes with `--script` only as a Bot name (above). Every refusal prints on stderr and exits non-zero with nothing written (2 for a flag-combination error, 1 for a validation, security or store refusal), so an installer can register a job headlessly.
 
-`cron update` changes a job in place, so its id and run history stay. It takes `--model`, `--timezone`, `--[no-]persistent-session`, `--[no-]minimal-context`, `--[no-]hide-in-chat` and `--[no-]silent`, with the meanings they have on `cron add`; a flag left out leaves its setting alone. `--model ""` clears the model override and `--timezone ""` puts the job back on the configured timezone.
+`cron update` changes a job in place, so its id and run history stay. It takes `--model`, `--timezone`, `--[no-]persistent-session`, `--[no-]minimal-context`, `--[no-]hide-in-chat` and `--[no-]silent`, with the meanings they have on `cron add`; a flag left out leaves its setting alone. `--model=` clears the model override and `--timezone=` puts the job back on the configured timezone.
 
 ### Via Slack
 
@@ -230,6 +230,10 @@ cron_add(
 
 The reaper tracks per-run session keys so it can still SIGKILL stuck ephemeral sessions.
 
+### A Reminder Only (`notify_only`)
+
+A job's `message` is a prompt: at each run an agent reads it and acts on it, with its tools. For "remind me to X", set `notify_only: true`. Each run then delivers the message to you as written (the dashboard bell, plus the job's channel or Slack) and starts no agent turn, so no tool runs. It cannot be combined with `command` or `script`.
+
 ### A New Chat per Run (`new_chat_per_run`)
 
 A stateless job has no chat tab: its result reaches the bell, Slack and the job's History, but there is no conversation to reply in. Reopened from History, such a run's transcript is read-only: it can be read but not replied to, so start a new chat to follow up on it. Set `new_chat_per_run: true` to give every run its own tab, `Cron: <name> | <run time>`, on that run's own fresh session. Open it and reply like any other chat, for example to approve a draft the run wrote; the next run starts clean in a tab of its own.
@@ -368,5 +372,6 @@ If the key names no recorded session the command still succeeds but warns: a bra
 
 - **Failure alerts** — a failed run delivers its REASON to the dashboard bell and (when Slack is configured) to the job's channel or the owner's DM, not only to the gateway log. Covers all three job kinds and a fire-time policy denial, which is otherwise invisible.
 - **Failure dedup** — a repeat of the same reason withholds the Slack DM and marks the bell as suppressed; a different reason alerts in full, and the DM returns after an hour. A `silent: true` job alerts nowhere. Both still count toward auto-pause: dedup silences the DM, never the evidence. Success clears the failure state, so a relapse alerts fresh.
+- **Host sign-in wait** — on an edition whose tools sign in with the host's own credential, a scheduled agent turn does not start while that sign-in has expired. The run is held, not counted as a failure, and the owner is told once per wait how to sign in again, even for a `silent: true` job. A manual **Run** still starts, and command and script jobs do not wait.
 - **Alert threshold** — `alert_after_failures` (default 1) is how many failed runs in a row it takes before the failure message is sent; earlier failures only ring the dashboard bell. A policy denial and the run that auto-pauses the job always alert. Set to 2, a 10-minute watcher with a one-off failure pages nobody; `silent` is not the tool for that, since it also hides the job's results.
 - **Zombie reaper** — a periodic sweep (every 60s) force-kills a cron execution that runs past its deadline. The deadline is per job: its `timeout_secs`, capped at 24 hours and never below 30 minutes, and for a `script` or `command` job also the time it may spend in the run queue, the fire-time gate and the claim-time vet before its own code starts. Prevents resource leaks from stuck jobs. When the kill cannot be delivered or confirmed, the run's `last_error` ends `; kill failed: <reason>` and its audit outcome is `failed`. Cancelling a run behaves the same.

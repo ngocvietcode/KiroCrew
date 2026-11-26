@@ -554,6 +554,7 @@ from kiro_crew.dashboard.handlers.tailnet import (  # noqa: E402, F401
     api_tailnet_status,
 )
 from kiro_crew.dashboard.handlers.tailnet_mobile import (  # noqa: E402, F401
+    api_tailnet_mobile_clear_overrides,
     api_tailnet_mobile_configure,
     api_tailnet_mobile_publish,
     api_tailnet_mobile_qr,
@@ -1126,6 +1127,7 @@ from kiro_crew.dashboard.handlers.core import (  # noqa: E402, F401
     api_kirocrew_config_patch,
     api_live,
     api_logout,
+    api_logout_link,
     api_ready,
     api_security_posture,
     api_security_stats,

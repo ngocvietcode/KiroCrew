@@ -838,16 +838,20 @@ def user_tool_bin_dirs(home: str) -> list[str]:
 
 
 def _extra_path_templates() -> tuple[str, ...]:
-    """:data:`_EXTRA_PATH_DIRS`, minus the fixed POSIX roots on Windows.
+    """:data:`_EXTRA_PATH_DIRS`, minus the ones that name nothing on Windows.
 
     ``/opt/homebrew/bin``, ``/usr/local/bin`` and Linuxbrew's
     ``/home/linuxbrew/.linuxbrew/bin`` name nothing on Windows, where
     Python 3.12's ``isabs`` still accepts them and they resolve against the
     current drive (``C:\\opt\\homebrew\\bin``), a folder any local account can
-    create. Every ``{home}``/``{mise_data}`` template stays.
+    create. ``{home}/.toolbox/bin`` is not Toolbox's folder there either
+    (:func:`_windows_toolbox_bin_dir` is), so it would only rank a folder
+    nothing installs into ahead of the real one.
     """
     if platform_compat.IS_WINDOWS:
-        return tuple(d for d in _EXTRA_PATH_DIRS if not d.startswith("/"))
+        return tuple(
+            d for d in _EXTRA_PATH_DIRS if not d.startswith("/") and d != "{home}/.toolbox/bin"
+        )
     return _EXTRA_PATH_DIRS
 
 
@@ -917,11 +921,7 @@ def augmented_path(base_path: str = "", *, home: str | None = None) -> str:
     # prepended in this order, so the override's own ``kirocrew`` never shadows it.
     lead = extra + pinned if pinned else []
     extra += pinned
-    extra += [
-        e
-        for d in _extra_path_templates()
-        if (e := _validated_bin_dir(d.format(home=resolved_home, mise_data=mise_data)))
-    ]
+    extra += user_tool_bin_dirs(resolved_home)
     if platform_compat.IS_WINDOWS and (
         toolbox_bin := _windows_toolbox_bin_dir(resolved_home, home)
     ):
@@ -1627,20 +1627,31 @@ def expand_spec_args(args: Any, *, server: str | None = None) -> Any:
     from kiro_crew.mcp_gateway.rewriter import _expand_env_placeholders
 
     source = {name: value for name in _SPEC_ARG_VARS if (value := os.environ.get(name))}
-    # On Windows the home and login-name live under USERPROFILE/USERNAME, not
-    # HOME/USER, so a POSIX-written ``${HOME}``/``${USER}`` would stay literal
-    # (the process has no HOME). Fill each missing name from its Windows twin so
-    # the one home Path.home() already resolves there (see managed_mcp.py's
-    # _HOME_DERIVING_ENV_KEYS) reaches the spec. A set HOME/USER still wins, and
-    # no name outside _SPEC_ARG_VARS is read, so no other value reaches argv.
-    if platform_compat.IS_WINDOWS:
-        for name, twin in (("HOME", "USERPROFILE"), ("USER", "USERNAME")):
-            if name not in source and (value := source.get(twin)):
-                source[name] = value
+    # The twins are read from this filtered source, so no name outside
+    # _SPEC_ARG_VARS is read and no other value reaches argv.
+    source.update(windows_twin_fills(source))
     return [
         _expand_env_placeholders(a, source=source, server=server) if isinstance(a, str) else a
         for a in args
     ]
+
+
+def windows_twin_fills(source: Mapping[str, str]) -> dict[str, str]:
+    """The ``HOME``/``USER`` values *source* lacks, read from their Windows twins.
+
+    Windows keeps the home and login name in ``USERPROFILE``/``USERNAME`` and the
+    process may have no ``HOME``/``USER``, so a POSIX-written ``${HOME}`` would
+    stay literal. A name missing or empty in *source* is filled from its twin,
+    the one home ``Path.home()`` resolves there (see managed_mcp.py's
+    ``_HOME_DERIVING_ENV_KEYS``); a set one still wins. ``{}`` off Windows.
+    """
+    if not platform_compat.IS_WINDOWS:
+        return {}
+    return {
+        name: value
+        for name, twin in (("HOME", "USERPROFILE"), ("USER", "USERNAME"))
+        if not source.get(name) and (value := source.get(twin))
+    }
 
 
 def activate_mise(env: MutableMapping[str, str] | None = None) -> list[str]:
