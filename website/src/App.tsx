@@ -82,6 +82,7 @@ import { usePinnedScrollOrigin } from './hooks/usePinnedScrollOrigin'
 // Side effect: closes a terminal tab when its shell exits (main window and popout).
 import './utils/terminalExitClose'
 import { focusPopout as focusTerminalPopout } from './utils/terminalPopout'
+import { preloadTerminalOnIntent } from './components/terminalSessions'
 import { mainStackingClass } from './utils/terminalFullscreen'
 import MigrationCheck from './components/MigrationCheck'
 import CrashReportNotice from './components/CrashReportNotice'
@@ -445,7 +446,7 @@ export default function App() {
   const shell = useAppShell()
   const {
     isEmbed, isPopout, initialPopoutPath, appPopoutRoute, updateAvailable, settingsDotLabel, terminalEnabled, terminalPoppedOut,
-    bottomTerminalOpen, mobileConnect, activeSlotProject, terminalPosition, navigate, mayLeaveForNavigation,
+    bottomTerminalOpen, mobileConnect, getActiveSlotProject, terminalPosition, navigate, mayLeaveForNavigation,
     colorTheme, onboarded, markOnboarded, markImportOnboarded, firstRun,
     lookPreviewFrame, branding, avatar, isMobile, bottomDock, activeInstanceId, macFullscreen, macInset,
     topReservePx, focusActive, topPeek, railPeek, topPeekTrigger, railPeekTrigger, topChromeShown,
@@ -463,7 +464,7 @@ export default function App() {
   // The first-run sign-in hides this app behind it, so the local layers hide too.
   const signInHeld = useFirstRunSignInHeld()
   // "Run in terminal" from a code block outside every chat, on any route.
-  const runInTerminal = useRunInTerminalShellBridge(activeSlotProject, !isPopout && !isEmbed)
+  const runInTerminal = useRunInTerminalShellBridge(getActiveSlotProject, !isPopout && !isEmbed)
   usePinnedScrollOrigin(shellRef)
   // The dock terminal fills the content area only while maximized, so <main>
   // becomes its own stacking context ONLY then — confining the fullscreen panel
@@ -609,6 +610,7 @@ export default function App() {
           secondary={<>
             {terminalEnabled && (
               <NavItem
+                ref={preloadTerminalOnIntent}
                 navId="terminal"
                 path="#"
                 label={i18nT('app.terminal')}
@@ -617,7 +619,7 @@ export default function App() {
                 pressed={bottomTerminalOpen || terminalPoppedOut}
                 collapsed
                 touch
-                onClickOverride={() => { onActivate(); if (terminalPoppedOut) focusTerminalPopout(); else toggleBottomTerminal(activeSlotProject) }}
+                onClickOverride={() => { onActivate(); if (terminalPoppedOut) focusTerminalPopout(); else toggleBottomTerminal(getActiveSlotProject()) }}
               />
             )}
             {railRow(capabilitiesSurface)}
@@ -672,6 +674,7 @@ export default function App() {
 
   return (
     <ZoomProvider>
+    {shell.tabTitle}
     <WsContext.Provider value={{ subscribeLogs, subscribeSubagents, forceReconnect }}>
     {/* A crew's pop-out framed by a desktop hub's window learns its host here;
         no-op when not framed. */}

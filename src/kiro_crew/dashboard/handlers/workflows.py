@@ -293,6 +293,14 @@ async def _run_scope_refusal(
     refusal = await _private_memory_refusal(request, "workflow.access")
     if refusal is not None:
         return refusal
+    from kiro_crew.dashboard.handlers._shared import require_owner_for_dashboard_caller
+
+    # ``authorize_run`` below takes a dashboard session as the owner, and a run
+    # snapshot carries its script source, so the session must be the owner's or a
+    # teammate's first. Internal callers stay under their run binding.
+    owner_denied = await require_owner_for_dashboard_caller(request, "workflow.access")
+    if owner_denied is not None:
+        return owner_denied
     svc = _svc(request)
     registry = getattr(svc, "registry", None)
     handle = registry.get(run_id) if registry is not None else None
@@ -443,6 +451,15 @@ def _expected_id(value: Any) -> tuple[Optional[str], Optional[web.Response]]:
     return value, None
 
 
+def _builtin_error(out: dict[str, Any]) -> web.Response:
+    """A write that named a built-in workflow: refused, a copy can be saved instead."""
+    return _error(
+        _redact_obj(out.get("error") or "a built-in workflow cannot be changed"),
+        "workflow_definition_builtin",
+        409,
+    )
+
+
 async def api_workflow_definition_update(request: web.Request) -> web.Response:
     """PATCH /api/workflows/definitions/{ref} — append a validated revision."""
     denied = _require_dashboard_user(request, _OP_DEFINITION_UPDATE)
@@ -496,6 +513,8 @@ async def api_workflow_definition_update(request: web.Request) -> web.Response:
             "workflow_definition_not_found",
             404,
         )
+    if out.get("builtin"):
+        return _builtin_error(out)
     if out.get("conflict"):
         return web.json_response(
             {
@@ -554,6 +573,8 @@ async def api_workflow_definition_remove(request: web.Request) -> web.Response:
             "workflow_definition_conflict",
             409,
         )
+    if out.get("builtin"):
+        return _builtin_error(out)
     if not out.get("ok"):
         return _error("no such saved workflow", "workflow_definition_not_found", 404)
     definition = out.get("definition") or {}
@@ -959,6 +980,12 @@ async def api_workflow_runs(request: web.Request) -> web.Response:
     refusal = await _private_memory_refusal(request, "workflow.list")
     if refusal is not None:
         return refusal
+    from kiro_crew.dashboard.handlers._shared import require_owner_for_dashboard_caller
+
+    # Refused once here rather than once per run in the scope check below.
+    owner_denied = await require_owner_for_dashboard_caller(request, "workflow.list")
+    if owner_denied is not None:
+        return owner_denied
     runs = []
     for snapshot in svc.list_runs():
         if await _run_scope_refusal(request, snapshot["run_id"]) is None:
@@ -1094,6 +1121,7 @@ def _run_update_refusal(out: dict[str, Any]) -> web.Response:
         ("source_not_original", "workflow_run_source_not_original", 409),
         ("source_changed", "workflow_run_source_changed", 409),
         ("conflict", "workflow_definition_conflict", 409),
+        ("builtin", "workflow_definition_builtin", 409),
         ("unchanged", "workflow_definition_unchanged", 400),
         ("format_mismatch", "workflow_definition_format_mismatch", 400),
     )

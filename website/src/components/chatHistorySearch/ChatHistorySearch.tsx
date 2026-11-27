@@ -34,6 +34,10 @@ const DEBOUNCE_MS = 250
 /** Steps searched on their own while the list is still short; past it, a button. */
 const AUTO_STEPS = 8
 const AUTO_HITS = 20
+/** Re-reads of the counts while the chat's search cache is still being built:
+ *  1 s, 2 s, then 4 s after each reply that says `indexing`. */
+const INDEXING_RETRIES = 3
+const INDEXING_FIRST_RETRY_MS = 1000
 const DAY_S = 86_400
 const DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/
 
@@ -145,6 +149,12 @@ export default function ChatHistorySearch({ slotKey, bot, onClose, focusNonce, e
     queryFn: ({ signal }) => api.chatHistoryCounts(slotKey, countParams, signal),
     enabled,
     staleTime: 60_000,
+    // While the server builds the chat's search cache it answers from a row
+    // walk; read again a few times so the whole-chat counts show without a
+    // new search. `dataUpdateCount` is the replies this key has had.
+    refetchInterval: ({ state }) => (state.data?.indexing && state.dataUpdateCount <= INDEXING_RETRIES
+      ? INDEXING_FIRST_RETRY_MS * 2 ** (state.dataUpdateCount - 1)
+      : false),
   })
   // A walk the server cut at its row budget is not the whole chat, so its
   // numbers (a 0 above all) are not shown as totals.
@@ -305,14 +315,17 @@ export default function ChatHistorySearch({ slotKey, bot, onClose, focusNonce, e
                   result never scrolls away. The other tabs share one row that
                   scrolls sideways when the panel is narrow (a phone), its
                   scrollbar hidden, its clipped edges faded (`edge-fade-x`), and
-                  the chosen tab kept in view. */}
+                  the chosen tab kept in view. The row scrolls sideways only:
+                  `overflow-x-auto` alone turns overflow-y to auto too, and the
+                  tabs' 1px underline overlap (-mb-px) then lets a phone drag
+                  their labels up and down over the list below. */}
               <div role="tablist" aria-label={i18nT('components.chatHistorySearch.tabs_label')} className="flex items-end min-w-0 flex-1" data-testid="chat-history-tablist">
                 {tabButton(tabs[0])}
                 <div
                   ref={setTabsScroller}
                   data-fade-left={tabEdges.left ? '' : undefined}
                   data-fade-right={tabEdges.right ? '' : undefined}
-                  className="edge-fade-x flex flex-nowrap min-w-0 flex-1 overflow-x-auto scrollbar-none"
+                  className="edge-fade-x flex flex-nowrap min-w-0 flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x scrollbar-none"
                   data-testid="chat-history-tabs"
                 >
                   {tabs.slice(1).map(tabButton)}

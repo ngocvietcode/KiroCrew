@@ -66,6 +66,7 @@ function readPanel(file: string): string {
  * an unlisted file fails, so the choice is always conscious.
  */
 const UNMAPPED_PANELS: Record<string, string> = {
+  'MemoryPanel.tsx': 'Settings > Memory, the memory page for Global memory and each bot: records, profile docs and backups, no config setting',
   'remoteCrewTunnelError.tsx': "a Remote Crew row's connect-failure text (one sentence, the raw error folded under it); zero controls, no setting",
   'BrowserEngineSection.tsx': "the Browser tab's Engine row under More (Harness and Chromium versions) with a Redownload action; status and one action, no setting of its own",
   'BrowserStatusCard.tsx': "the Browser tab's main card (browser, status dot, one state-dependent Install / Retry / Allow / Connect / Disconnect action); it reports the engine and holds no setting",
@@ -357,6 +358,18 @@ const WAIVED_BARE_CONTROLS: Record<string, { counts: BareCounts; reason: string 
   'SecurityPanelTrust.tsx': {
     counts: { Checkbox: 1 },
     reason: 'a confirm-modal ack (blanket third-party app trust)',
+  },
+  'McpManagementHero.tsx': {
+    counts: { input: 1 },
+    reason:
+      'the Review dialog\'s per-server "Always trust changes to this server" box: part of one ' +
+      'approval press, stored with that server\'s launch approval, not a config path',
+  },
+  'McpManagementLaunchReview.tsx': {
+    counts: { input: 1 },
+    reason:
+      'a shared row\'s "Always trust changes to this server" box, shown only to take the ' +
+      'choice off: it lives in the launch approval store, not a config path',
   },
   'SettingsSearch.tsx': {
     counts: { input: 1 },

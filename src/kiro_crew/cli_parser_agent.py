@@ -792,6 +792,7 @@ Examples:
   kirocrew artifact show cr-queue --version 2
   kirocrew artifact show cr-queue --meta
   kirocrew artifact show cr-queue --docx cr-queue.docx
+  kirocrew artifact show cr-queue --xlsx cr-queue.xlsx
   kirocrew artifact update cr-queue --content-file widget.html
   kirocrew artifact versions cr-queue
   kirocrew artifact delete cr-queue
@@ -826,6 +827,14 @@ Examples:
         help=(
             "Write a markdown or text artifact to a NEW Word file, one paragraph per source "
             "line with only headings styled; an existing file is refused"
+        ),
+    )
+    show_form.add_argument(
+        "--xlsx",
+        metavar="FILE",
+        help=(
+            "Write the tables of a markdown or text artifact to a NEW spreadsheet file, one "
+            "sheet per table with every cell as text; an existing file is refused"
         ),
     )
 
@@ -938,6 +947,17 @@ def register_memory_parser(sub: _Commands) -> None:
         "--cancel-pending",
         action="store_true",
         help="Cancel a staged memory restore without changing active memory",
+    )
+    mem_restore_choice.add_argument(
+        "--merge-from",
+        default=None,
+        help=(
+            "Add back only the rows a member store is missing, from a memory.db of the same "
+            "store (such as the one in a superseded-* copy); dry run unless --apply"
+        ),
+    )
+    mem_restore.add_argument(
+        "--apply", action="store_true", help="With --merge-from: write the merge"
     )
     mem_create = mem_sub.add_parser(
         "create-store",
@@ -1056,7 +1076,6 @@ def register_memory_parser(sub: _Commands) -> None:
         "--stage",
         default=None,
         choices=[
-            "relevance_rule",
             "lesson_origin_gate",
             "lesson_tier_policy",
             "fact_origin_gate",

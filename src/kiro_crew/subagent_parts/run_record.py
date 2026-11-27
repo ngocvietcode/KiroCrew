@@ -671,6 +671,10 @@ class SubagentInfo:
     # on the _shared_provider directly.
     _session_sharing: bool = False
     _shared_provider: Any = None  # AcpSessionProvider when _session_sharing=True
+    # A place held on a KAS parent's process from the moment the run decides to
+    # share, before its session exists (``_kas_shared_slot_taken``); cleared when
+    # the run falls back to a dedicated process.
+    _shared_slot_reserved: bool = False
     # True when the run inherited a remote session environment: its cost samples
     # go to the ``@remote`` bucket.
     _remote_workspace: bool = False
@@ -691,6 +695,9 @@ class SubagentInfo:
     # session; a second loss is terminal.
     _session_not_found_retry_used: bool = False
     _force_dedicated: bool = False
+    # Why the last sharing check said no ("" when it said yes), for the run's
+    # placement log line (``run_start._should_use_session_sharing_impl``).
+    _placement_reason: str = ""
     # The run's completed-ending CLAIM, a one-shot token like ``_finalized``:
     # taken synchronously by a whole answer (a successful complete event,
     # post-processed into ``result``) when no stop got there first (``done``,

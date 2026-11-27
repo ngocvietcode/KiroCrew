@@ -9,7 +9,11 @@ The package itself (`acp/__init__.py`) imports none of these modules. Each name 
 access, through a module `__getattr__`, and nothing is cached, so importing one ACP
 module loads only what that module imports. `test/test_package_import_ratchet.py` holds
 `import kiro_crew.acp` to the `kiro_crew` and `kiro_crew.acp` modules in a fresh
-interpreter, so an eager import put back fails.
+interpreter, so an eager import put back fails. It also fails when a fresh
+`import kiro_crew.dashboard.state` loads `acp/client.py` or `acp/session_handle.py`: the
+agent SDK's vocabulary modules (`agent_sdk/drivers/acp_vocab.py`, `acp_turn_vocab.py`)
+read each name they re-export from the owner module that defines it, not through those
+two.
 
 Module-level code moved out of the two transports lives in the owner modules
 below: `acp/runtime_start.py` serves the runtime alone, the six host adapters
@@ -629,7 +633,7 @@ generated one-run key -- `subagent:<16 hex>` from `SubagentManager._mint_agent_i
 (eight hex on the shipped builds whose directories the sweep also recognises),
 `cron:<8 hex job>:<8 hex run>` from `build_cron_session_context`,
 `memory-consolidation:<store>:<32 hex>` from `llm_helpers.background_turn` (discards
-the key when the call ends), `judge:<uuid4 hex>` from `decisions/impl_llm.py`
+the key when the call, or the consolidation pass that reuses it, ends), `judge:<uuid4 hex>` from `decisions/impl_llm.py`
 (destroyed on return), `taskrunner:refine:<epoch ms>` from
 `dashboard/handlers/taskrunner.py`, `hook:default:<epoch s>-<token_hex(6)>` from
 `dashboard/handlers/hooks.py` (per-request default webhook key), or
@@ -1420,6 +1424,25 @@ to an empty string before redaction, cache lookup, or event construction. A
 shell-cache hit whose value is `False` sets `shell_classified=True` — it is a
 resolved non-shell call, not a cache miss — and a structured-params cache hit
 sets `raw_params_trusted=True`.
+
+**A reused `toolCallId` whose arguments contradict the cache is refused.** The id
+is model-authored, so a cached entry is evidence about the call that wrote it. When
+a permission request states its own arguments (`rawInput`, `input` or `params`,
+the first non-empty one) and they contradict the structured params cached for the
+same origin-scoped id (`_dispatch._args_name_another_call`: a non-dict on either
+side that is not equal, or a key both dicts carry with two different string
+values), neither side wins. `build_permission_event` builds the event from the
+request's own arguments with every cache read as a miss, so it carries no trust,
+and marks it `AcpEvent.tool_call_id_reused`. Every site that answers a permission
+request refuses that event before any other refusal, consumer, card or rule sees
+it: `AcpClient._refuse_reused_call_id` on the turn loop and on `_handle_permission`
+(whatever the session judges; SEL reason `tool_call_id_reused`, no host notice,
+like the identity-drift refusals beside it) and
+`AcpSessionHandle._refuse_reused_call_id` on the handle (SEL error
+`tool_call_id_reused`, host notice cause `reused_call_id`). Arguments that equal the
+cached ones, extend them with keys the cache lacks, or are absent keep the cached
+provenance. Not caught: arguments sharing no key with the cache, and a non-string
+value (a seeded path list); closing those needs a gateway-minted call id.
 
 Both transports use `_dispatch.select_tool_title`; the direct client imports
 it as `_select_tool_title`. A confirmed shell call prefers `rawInput.description`,
@@ -3051,8 +3074,12 @@ turn is told which servers are still starting (`[MCP SERVERS]`,
 (`mcp_server_wait`). Codex is the exception: it fixes a turn's tools when the turn
 starts, after waiting about a second for its servers, so a server still starting
 then serves no tool of that turn. Its harness therefore has codex-acp hold
-`session/new` until every server in the array is ready or failed, up to
-`CodexHarness.MCP_STARTUP_AWAIT_MS` ([providers](providers.md)).
+`session/new`, and the `session/resume` a re-opened chat is restored with, until
+every server in the array is ready or failed, up to
+`CodexHarness.MCP_STARTUP_AWAIT_MS` ([providers](providers.md)). codex-acp
+ignores that request on `session/load`, so codex restores with `session/resume`
+(`ACP_BACKENDS_RESUME_WITHOUT_LOAD`). The wait is the adapter's, so it holds every
+Codex start and re-open alike, whoever waits on it.
 
 **The first turn of a start that skipped them.** Being told is what makes not
 waiting safe, and not every turn is told. So the start records the servers it
@@ -5915,13 +5942,14 @@ host whose glibc is below the release's floor for its architecture the install
 refuses up front, before any download, naming the found glibc, the minimum, the
 Node key and why; nothing is published. There are two pins, one engine release:
 `KAS_PIN_VERSION` (nodejs.org Node and the npm onnxruntime, floor 2.28) and
-`KAS_PIN_AL2_VERSION` (`KAS_PIN_VERSION` plus `-al2`: the same engine and Node
+`KAS_PIN_AL2_VERSION` (`KAS_PIN_VERSION` plus `-al2.2`: the same engine and Node
 release republished with the Amazon Linux 2 builds from `packaging/kas-al2/` on
-linux-x64, floor 2.26). `kas_pin.host_pin_version()` picks the AL2 pin only on a
+linux-x64 and linux-arm64, floor 2.26). `kas_pin.host_pin_version()` picks the AL2 pin only on a
 Linux host whose glibc reads below 2.28 and whose Node key the AL2 pin lists in
-`KAS_PIN_GLIBC_FLOORS` below 2.28 (today linux-x64 only; linux-arm64 joins in the
-commit that pins an AL2 release carrying arm64 builds); every other host (arm64
-until then, macOS, Windows, Linux at 2.28+ or with an unreadable glibc) gets
+`KAS_PIN_GLIBC_FLOORS` below 2.28 (linux-x64 and linux-arm64, from the
+`-al2.2` republish that added the arm64 builds; `-al2.<n>` is the republish
+revision, since a published version is never overwritten); every other host
+(macOS, Windows, Linux at 2.28+ or with an unreadable glibc) gets
 `KAS_PIN_VERSION`.
 It is read on every call, so a host that moves to glibc 2.28+ installs the normal
 pin on its next install check, and one that stays at 2.28+ never picks the AL2 pin.
@@ -6789,7 +6817,7 @@ until the reap has settled, so being cancelled twice cannot skip it. Pinned by t
 ### Codex under Crew's OS sandbox
 
 Crew keeps its mandatory credential mask around the adapter. The spawn environment
-sets `CODEX_ACP_EXTERNAL_SANDBOX=true`. When `session/new` (or `session/load`)
+sets `CODEX_ACP_EXTERNAL_SANDBOX=true`. When `session/new` (or the restore)
 advertises `mode=external-sandbox`, both drivers write that value
 (`ACP_BACKEND_PREFERRED_PERMISSION_CONFIG`, `permission_value_for`). An adapter that
 does not offer it gets `mode=read-only`, the required floor, as before; a session
