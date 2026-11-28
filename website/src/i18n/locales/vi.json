@@ -22180,7 +22180,9 @@
       "chat_model_picker": "Nút mô hình trong ô tin nhắn. Nó hiển thị mô hình của cuộc trò chuyện này và mở bộ chọn mô hình.",
       "chat_session_title": "Tiêu đề của phiên ở đầu cuộc trò chuyện. Văn bản của nó là tên phiên; nhấp vào để đổi tên phiên.",
       "composer_approval_mode": "Bộ chọn chế độ phê duyệt trong hàng điều khiển của ô tin nhắn. Nó đặt việc chỉ các tra cứu chạy mà không hỏi (Bình thường), cả các tìm kiếm bộ nhớ, trò chuyện, skill và kiến thức của chính nó cũng chạy (Đọc), phiên này được tin cậy (Tin cậy), hay mọi thứ đều được tự động phê duyệt (YOLO).",
-      "composer_voice_input": "Nút micrô trong ô tin nhắn. Nhấn để đọc chính tả thay vì gõ; trên màn hình cảm ứng, nó chuyển giữa bàn phím và giữ-để-nói."
+      "composer_voice_input": "Nút micrô trong ô tin nhắn. Nhấn để đọc chính tả thay vì gõ; trên màn hình cảm ứng, nó chuyển giữa bàn phím và giữ-để-nói.",
+      "members_bot_sessions_switch": "Công tắc ở đầu thẻ Phiên của một bot, trên thẻ hồ sơ của bot đó. Nhãn của nó có tên bot; khi bật, các phiên của bot đó cũng hiện trong danh sách Phiên của chính bạn.",
+      "composer_project_aws_profile": "Hàng hồ sơ AWS ở cuối bộ chọn dự án, mở bằng nút thư mục bên dưới ô tin nhắn. Nó ghi thư mục của cuộc trò chuyện này và hồ sơ AWS mà các cuộc trò chuyện mới trong thư mục đó dùng; mở nó để chọn một hồ sơ đã đăng ký trong ứng dụng AWS Control hoặc đã gắn với một thư mục trong aws.project_profiles, gõ tên một hồ sơ khác, hoặc quay về đăng nhập AWS của chính gateway. Các hồ sơ chỉ có trong cấu hình AWS của máy tính không được liệt kê: khi không nguồn nào có hồ sơ, hàng này không hiện, vì vậy hãy đăng ký một hồ sơ trong AWS Control → Add accounts → Register selected. Trang tài liệu Configuration, mục An AWS profile per project, giải thích việc này."
     }
   },
   "sharedCrew": {
